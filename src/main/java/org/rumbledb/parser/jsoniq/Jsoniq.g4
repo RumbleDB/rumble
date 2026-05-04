@@ -102,17 +102,8 @@ decimalFormatDecl: KW_DECLARE (
                    )
                    (DFPropertyName EQUAL stringLiteral)*;
 
-eqName: qname | URIQualifiedName ;
-
 BracedURILiteral: 'Q' '{' (~[&{}])* '}' ;
 URIQualifiedName: BracedURILiteral NCName ;
-
-qname                   : ((ns=NCName | nskw=keyword)COLON)?
-                          (local_name=NCName | local_namekw = keyword);
-
-// matches the definition of NCName in the XQuery 3.1 spec
-// this includes all the valid characters, including all the keywords
-ncName: NCName | keyword ;
 
 DFPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -166,8 +157,6 @@ functionDecl: KW_DECLARE (annotations) KW_FUNCTION fn_name=functionName LPAREN p
               (KW_AS return_type=sequenceType)?
               // replaced functionBody to match the JSONiq grammar and the XQuery Scripting Extension spec
               ( LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=KW_EXTERNAL) ;
-
-functionName: qname ;
 
 // renamed from functionParams to paramList to match the JSONiq grammar
 paramList: param (COMMA param)* ;
@@ -320,7 +309,7 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)?;
 
 isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)?;
 
@@ -373,18 +362,18 @@ blockExpr : LBRACE statementsAndExpr RBRACE ;
 
 ///////////////////////// Updating Expressions
 
-insertExpr              : Kinsert Kjson to_insert_expr=exprSingle Kinto main_expr=exprSingle (KW_AT Kposition pos_expr=exprSingle)?
-                        | Kinsert Kjson pairConstructor ( COMMA pairConstructor )* Kinto main_expr=exprSingle;
+insertExpr              : Kinsert KW_JSON to_insert_expr=exprSingle Kinto main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
+                        | Kinsert KW_JSON pairConstructor ( COMMA pairConstructor )* Kinto main_expr=exprSingle;
 
-deleteExpr              : Kdelete Kjson updateLocator;
+deleteExpr              : Kdelete KW_JSON updateLocator;
 
-renameExpr              : Krename Kjson updateLocator KW_AS name_expr=exprSingle;
+renameExpr              : Krename KW_JSON updateLocator KW_AS name_expr=exprSingle;
 
-replaceExpr             : Kreplace Kvalue Kof Kjson updateLocator Kwith replacer_expr=exprSingle;
+replaceExpr             : Kreplace Kvalue KW_OF KW_JSON updateLocator Kwith replacer_expr=exprSingle;
 
-transformExpr           : Kcopy copyDecl ( COMMA copyDecl )* Kmodify mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
+transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
 
-appendExpr              : Kappend Kjson to_append_expr=exprSingle Kinto array_expr=exprSingle;
+appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle Kinto array_expr=exprSingle;
 
 updateLocator           : main_expr=postFixExpr;
 
@@ -702,6 +691,130 @@ parenthesizedItemTest: LPAREN itemType RPAREN ;
 
 attributeDeclaration: attributeName ;
 
+// NAMES ///////////////////////////////////////////////////////////////////////
+
+// walkers need to split into prefix+localpart by the ':'
+eqName: qname | URIQualifiedName ;
+
+// renamed from qName to qname to match the JSONiq grammar
+// added support for keywords as namespace names
+// the FullQName production catches the case where the namespace name is NOT a keyword
+// whereas the (ns=ncName COLON)? local_name=ncName production catches the case where the (optional) namespace name is a keyword
+qname: FullQName | (ns=ncName COLON)? local_name=ncName ;
+
+// matches the definition of NCName in the XQuery 3.1 spec
+// this includes all the valid characters, including all the keywords
+ncName: NCName | keyword ;
+
+// function names should be valid NCNames, but limited by the constraint of reserved-function-names
+// as defined in the XQuery 3.1 spec
+// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
+// replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
+functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
+
+keywordOKForFunction: KW_ANCESTOR
+       | KW_ANCESTOR_OR_SELF
+       | KW_AND
+       | KW_AS
+       | KW_ASCENDING
+       | KW_AT
+       | KW_BASE_URI
+       | KW_BOUNDARY_SPACE
+       | KW_BY
+       | KW_CASE
+       | KW_CAST
+       | KW_CASTABLE
+       | KW_CHILD
+       | KW_COLLATION
+       | KW_CONSTRUCTION
+       | KW_COPY_NS
+       | KW_COUNT
+       | KW_DECLARE
+       | KW_DEFAULT
+       | KW_DESCENDANT
+       | KW_DESCENDANT_OR_SELF
+       | KW_DESCENDING
+       | KW_DIV
+       | KW_DOCUMENT
+       | KW_ELSE
+       | KW_EMPTY
+       | KW_ENCODING
+       | KW_EQ
+       | KW_EVERY
+       | KW_EXCEPT
+       | KW_EXTERNAL
+       | KW_FOLLOWING
+       | KW_FOLLOWING_SIBLING
+       | KW_FOR
+       | KW_FUNCTION
+       | KW_GE
+       | KW_GREATEST
+       | KW_GROUP
+       | KW_GT
+       | KW_IDIV
+       | KW_IMPORT
+       | KW_IN
+       | KW_INHERIT
+       | KW_INSTANCE
+       | KW_INTERSECT
+       | KW_IS
+       | KW_LAX
+       | KW_LE
+       | KW_LEAST
+       | KW_LET
+       | KW_LT
+       | KW_MOD
+       | KW_MODULE
+       | KW_NAMESPACE
+       | KW_NE
+       | KW_NO_INHERIT
+       | KW_NO_PRESERVE
+       | KW_OF
+       | KW_OPTION
+       | KW_OR
+       | KW_ORDER
+       | KW_ORDERED
+       | KW_ORDERING
+       | KW_PARENT
+       | KW_PRECEDING
+       | KW_PRECEDING_SIBLING
+       | KW_PRESERVE
+       | KW_RETURN
+       | KW_SATISFIES
+       | KW_SCHEMA
+       | KW_SELF
+       | KW_SOME
+       | KW_STABLE
+       | KW_START
+       | KW_STRICT
+       | KW_STRIP
+       | KW_THEN
+       | KW_TO
+       | KW_TREAT
+       | KW_UNION
+       | KW_UNORDERED
+       | KW_VALIDATE
+       | KW_VARIABLE
+       | KW_VERSION
+       | KW_WHERE
+       | KW_JSONIQ
+       // XQuery Scripting Extension keywords
+       | KW_BREAK
+       | KW_LOOP
+       | KW_CONTINUE
+       | KW_EXIT
+       | KW_RETURNING
+       | KW_WHILE
+       //  Updating expressions keywords
+       | KW_COPY
+       | KW_MODIFY
+       | KW_APPEND
+       | KW_JSON
+       | KW_POSITION
+       | KW_UPDATING
+       ;
+
+
 ///////////////////////// Types
 
 arrayConstructor        :  '[' expr? ']';
@@ -722,14 +835,14 @@ keyword                : KW_JSONIQ
                         | KW_DEFAULT
                         | KW_ELSE
                         | KW_GREATEST
-                        | Kinstance
+                        | KW_INSTANCE
                         | Kstatically
                         | KW_IS
                         | KW_ITEM
                         | KW_LEAST
                         | Knot
                         | NullLiteral
-                        | Kof
+                        | KW_OF
                         | KW_OR
                         | KW_THEN
                         | KW_TO
@@ -801,13 +914,13 @@ keyword                : KW_JSONIQ
                         | Kdelete
                         | Krename
                         | Kreplace
-                        | Kappend
-                        | Kcopy
-                        | Kmodify
+                        | KW_APPEND
+                        | KW_COPY
+                        | KW_MODIFY
                         | Kinto
                         | Kvalue
                         | Kwith
-                        | Kposition
+                        | KW_POSITION
                         | KW_VALIDATE
                         | Kannotate
                         | KW_BREAK
@@ -817,7 +930,7 @@ keyword                : KW_JSONIQ
                         | KW_RETURNING
                         | KW_WHILE
                         | KW_PI
-                        | Kjson
+                        | KW_JSON
                         | KW_TEXT
                         | KW_UPDATING
                         | Kcreate
@@ -866,6 +979,9 @@ keyword                : KW_JSONIQ
                         | KW_COMMENT
                         | KW_MAP
                         | KW_ARRAY
+                        | KW_UNION
+                        | KW_INTERSECT
+                        | KW_EXCEPT
                         ;
 
 ///////////////////////// literals
@@ -953,9 +1069,10 @@ EscapeApos: 'escapeaposref637daa-5838-4675-975a-782077b371b9';
 CDATA: 'cdataref637daa-5838-4675-975a-782077b371b9';
 
 PRAGMA: 'pragmaref637daa-5838-4675-975a-782077b371b9';
-FullQName: 'fullqnameref637daa-5838-4675-975a-782077b371b9';
-NCNameWithLocalWildcard: 'ncnamewithlocalwildcard637daa-5838-4675-975a-782077b371b9';
-NCNameWithPrefixWildcard: 'ncnamewithprefixwildcardef637daa-5838-4675-975a-782077b371b9';
+FullQName: NCName ':' NCName ;
+NCNameWithLocalWildcard:  NCName ':' '*' ;
+NCNameWithPrefixWildcard: '*' ':' NCName ; 
+
 
 KW_FOR                    : 'for';
 
@@ -1062,9 +1179,9 @@ Knot                    : 'not' ;
 
 KW_TO                     : 'to' ;
 
-Kinstance               : 'instance' ;
+KW_INSTANCE               : 'instance' ;
 
-Kof                     : 'of' ;
+KW_OF                     : 'of' ;
 
 Kstatically             : 'statically' ;
 
@@ -1147,11 +1264,11 @@ Krename                 : 'rename';
 
 Kreplace                : 'replace';
 
-Kcopy                   : 'copy';
+KW_COPY                   : 'copy';
 
-Kmodify                 : 'modify';
+KW_MODIFY                 : 'modify';
 
-Kappend                 : 'append';
+KW_APPEND                 : 'append';
 
 Kinto                   : 'into';
 
@@ -1159,9 +1276,9 @@ Kvalue                  : 'value';
 
 Kwith                   : 'with';
 
-Kposition               : 'position';
+KW_POSITION               : 'position';
 
-Kjson                   : 'json';
+KW_JSON                   : 'json';
 
 KW_UPDATING               :  'updating';
 

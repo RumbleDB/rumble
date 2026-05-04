@@ -151,6 +151,7 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -163,6 +164,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -186,6 +188,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
     private String code;
+    private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
 
     public TranslationVisitor(
             StaticContext moduleContext,
@@ -198,6 +201,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         this.configuration = configuration;
         this.isMainModule = isMainModule;
         this.code = code;
+        this.dirElemNamespaceFrames = new ArrayDeque<>();
     }
 
     // endregion expr
@@ -517,13 +521,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         Name name = null;
         if (ctx.local_name != null) {
             localName = ctx.local_name.getText();
-        } else {
-            localName = ctx.local_namekw.getText();
         }
         if (ctx.ns != null) {
             prefix = ctx.ns.getText();
-        } else if (ctx.nskw != null) {
-            prefix = ctx.nskw.getText();
         }
         if (prefix == null) {
             if (isFunction) {
@@ -550,7 +550,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         List<Annotation> annotations = processAnnotations(ctx.annotations());
-        Name name = parseName(ctx.functionName().qname(), true, false, false);
+        Name name = parseFunctionName(ctx.functionName());
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
@@ -593,6 +593,50 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                 isExternal,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    private Name nameForUnprefixedFunction(String localName) {
+        String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
+        if (uri != null) {
+            return new Name(uri, "", localName);
+        }
+        return Name.createVariableInDefaultFunctionNamespace(localName);
+    }
+
+    public Name parseFunctionName(JsoniqParser.FunctionNameContext ctx) {
+        if (ctx.URIQualifiedName() != null) {
+            return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                createMetadataFromContext(ctx)
+            );
+        } else if (ctx.FullQName() != null) {
+            // Handle FullQName by parsing its text content
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException(
+                        "Invalid FullQName format: " + fullQNameText,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            String prefix = fullQNameText.substring(0, colonIndex);
+            String localName = fullQNameText.substring(colonIndex + 1);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
+            }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    generateMetadata(ctx.getStop())
+            );
+        } else if (ctx.keywordOKForFunction() != null) {
+            // if the rule matches a keyword, the prefix is not defined
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
+        } else {
+            // Handle NCName case
+            String localName = ctx.NCName().getText();
+            return nameForUnprefixedFunction(localName);
+        }
     }
 
     /**
@@ -1675,6 +1719,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (child instanceof JsoniqParser.LiteralContext) {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
+            return this.visitLiteral((JsoniqParser.LiteralContext) child);
+        }
         if (child instanceof TerminalNode) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
@@ -1706,6 +1753,12 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
+        }
+        if (child instanceof JsoniqParser.LiteralContext) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        }
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         if (child instanceof TerminalNode) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
@@ -1907,7 +1960,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name.qname(), true, false, false);
+        Name name = parseFunctionName(ctx.functionName());
         return processFunctionCall(
             name,
             getArgumentsFromArgumentListContext(ctx.argumentList()),
@@ -1951,7 +2004,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name.qname(), true, false, false);
+        Name name = parseFunctionName(ctx.functionName());
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());
@@ -2926,6 +2979,15 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
 
         return parsedAnnotations;
+    }
+
+    private String resolvePrefixForDirConstructor(String prefix) {
+        for (Map<String, String> frame : this.dirElemNamespaceFrames) {
+            if (frame.containsKey(prefix)) {
+                return frame.get(prefix);
+            }
+        }
+        return this.moduleContext.resolveNamespace(prefix);
     }
 
     private void processDecimalFormatDeclaration(
