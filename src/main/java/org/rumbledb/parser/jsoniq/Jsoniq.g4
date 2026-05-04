@@ -341,7 +341,8 @@ objectLookup            : '.' ( kw=keyword | lt=stringLiteral | nc=NCName | pe=p
 primaryExpr             : NullLiteral
                         | Ktrue
                         | Kfalse
-                        | literal
+                        | Literal
+                        | stringLiteral
                         | varRef
                         | parenthesizedExpr
                         | contextItemExpr
