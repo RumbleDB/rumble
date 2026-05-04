@@ -2147,8 +2147,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         }
         external = (ctx.external != null);
         Expression expr = null;
-        if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+        if (ctx.expr() != null) {
+            expr = (Expression) this.visitExpr(ctx.expr());
             if (seq != null) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
@@ -2758,7 +2758,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
         bindNamespace(
-            ctx.NCName().getText(),
+            ctx.ncName().getText(),
             processURILiteral(ctx.uriLiteral()),
             generateMetadata(ctx.getStop())
         );
@@ -2839,9 +2839,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             exception.initCause(e);
             throw exception;
         }
-        if (ctx.NCName() != null) {
+        if (ctx.ncName() != null) {
             bindNamespace(
-                ctx.NCName().getText(),
+                ctx.ncName().getText(),
                 resolvedURI.toString(),
                 generateMetadata(ctx.getStop())
             );
@@ -2886,7 +2886,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             ctx,
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
-            ctx.dfPropertyName(),
+            ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
             metadata

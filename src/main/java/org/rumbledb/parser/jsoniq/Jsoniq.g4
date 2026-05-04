@@ -94,22 +94,18 @@ decimalFormatDecl: KW_DECLARE (
                       (KW_DECIMAL_FORMAT eqName)
                     | (KW_DEFAULT KW_DECIMAL_FORMAT)
                    )
-                   (dfPropertyName EQUAL stringLiteral)*;
-
-moduleImport            : 'import' KW_MODULE (KW_NAMESPACE prefix=NCName EQUAL)? targetNamespace=uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?;
-
-namespaceDecl: KW_DECLARE KW_NAMESPACE NCName EQUAL uriLiteral;
-
-
-
-
+                   (DFPropertyName EQUAL stringLiteral)*;
 
 eqName: qname ;
 
-qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (local_name=NCName | local_namekw = keyWords);
+qname                   : ((ns=NCName | nskw=keyword)':')?
+                          (local_name=NCName | local_namekw = keyword);
 
-dfPropertyName          : 'decimal-separator'
+// matches the definition of NCName in the XQuery 3.1 spec
+// this includes all the valid characters, including all the keywords
+ncName: NCName | keyword ;
+
+DFPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
                         | 'infinity'
                         | 'minus-sign'
@@ -120,14 +116,37 @@ dfPropertyName          : 'decimal-separator'
                         | 'digit'
                         | 'pattern-separator';
 
-// TODO: Assignable variable decl
-varDecl                 : KW_DECLARE annotations KW_VARIABLE varRef (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
+moduleImport: KW_IMPORT KW_MODULE
+              (KW_NAMESPACE prefix=ncName EQUAL)?
+              targetNamespace=uriLiteral
+              (KW_AT uriLiteral (COMMA uriLiteral)*)? ;
 
-contextItemDecl         : KW_DECLARE Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external='external' (COLON_EQ exprSingle)?));
+
+namespaceDecl: KW_DECLARE KW_NAMESPACE ncName EQUAL uriLiteral ;
+
+varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
+         // replaced "$" varName with varRef to match the JSONiq grammar
+         varRef
+         // replaced with the typeDeclaration production to match the JSONiq grammar
+         (KW_AS sequenceType)?
+         (
+          // replaced with the varValue production to match the JSONiq grammar
+            (COLON_EQ expr)
+          // replaced with the varDefaultValue production to match the JSONiq grammar
+          | (external=KW_EXTERNAL (COLON_EQ expr)?)
+          | (LBRACE varValue RBRACE)
+          | (external=KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
+         ) ;
+
+varValue: expr ;
+
+varDefaultValue: expr ;
+
+contextItemDecl         : KW_DECLARE Kcontext Kitem (KW_AS sequenceType)? ((COLON_EQ exprSingle) | (external=EXTERNAL (COLON_EQ exprSingle)?));
 
 functionDecl            : KW_DECLARE annotations 'function' fn_name=qname LPAREN paramList? RPAREN
                           (KW_AS return_type=sequenceType)?
-                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external='external');
+                          (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE | is_external=EXTERNAL);
 
 typeDecl                : KW_DECLARE Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -139,7 +158,7 @@ paramList               : param (COMMA param)*;
 
 param                   : DOLLAR name=qname (KW_AS sequenceType)? ;
 
-annotations                 : annotation* ;
+annotations: annotation* ;
 
 // added the updating keyword to support the out-of-spec updating expressions extension
 annotation                  : ('%' name=qname (LPAREN Literal (COMMA Literal)* RPAREN)? | updating=Kupdating);
@@ -251,9 +270,7 @@ catchClause: KW_CATCH
              // replaced with the catchErrorList production to match the JSONiq grammar
              (jokers+='*' | errors+=qname) (VBAR (jokers+='*' | errors+=qname))* LBRACE catch_expression=expr RBRACE;
 
-///////////////////////// expression
-
-orExpr                  : main_expr=andExpr ( Kor rhs+=andExpr )*;
+orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
 andExpr                 : main_expr=notExpr ( Kand rhs+=notExpr )*;
 
@@ -305,7 +322,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
+objectLookup            : '.' ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
                         | Ktrue
@@ -521,7 +538,7 @@ uriLiteral              : stringLiteral;
 
 stringLiteral           : STRING;
 
-keyWords                : KW_JSONIQ
+keyword                : KW_JSONIQ
                         | KW_MODULE
                         | KW_NAMESPACE
                         | Kand
@@ -595,6 +612,7 @@ keyWords                : KW_JSONIQ
                         | KW_INHERIT
                         | KW_NO_INHERIT
                         | KW_DECIMAL_FORMAT
+                        | KW_EXTERNAL
                         | Kunordered
                         | Ktrue
                         | Kfalse
@@ -633,7 +651,7 @@ keyWords                : KW_JSONIQ
                         | Kedit
                         | Kbefore
                         | Kafter
-                        | Kimport
+                        | KW_IMPORT
                         | Kschema
                         | Knamespace
                         | Kelement
@@ -828,6 +846,8 @@ KW_NO_INHERIT            : 'no-inherit';
 
 KW_DECIMAL_FORMAT       : 'decimal-format';
 
+KW_EXTERNAL             : 'external';
+
 Ktrue                   : 'true';
 
 Kfalse                  : 'false';
@@ -898,7 +918,7 @@ Kbefore                 : 'before';
 
 
 ///////////////////////// XPath
-Kimport                 : 'import';
+KW_IMPORT                 : 'import';
 Kschema                 : 'schema';
 Knamespace              : KW_NAMESPACE;
 Kelement                : 'element';
