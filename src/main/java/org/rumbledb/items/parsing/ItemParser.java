@@ -96,10 +96,22 @@ public class ItemParser implements Serializable {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq, metadata);
     }
 
+    /**
+     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, ExceptionMetadata)}
+     * instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     */
+    @Deprecated
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         return getItemFromObject(object, true, metadata);
     }
 
+    /**
+     * Parses a JSON object from the given reader.
+     *
+     * @param object the JSON reader.
+     * @param metadata exception metadata if an error is thrown.
+     * @return the parsed item.
+     */
     public static Item getItemFromObject(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
         try {
             Item result = parseOptionlessJSON(object, isJSONiq, metadata);
@@ -111,17 +123,22 @@ public class ItemParser implements Serializable {
     }
 
     /**
-     * Parses a JSON string, accessible via a reader, to an item.
-     * 
-     * @param object the JSON reader.
-     * @param metadata exception metadata is an error is thrown.
-     * @return the parsed item.
+     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, ExceptionMetadata)}
+     * instead. This method is kept for backward compatibility and defaults to JSONiq mode.
      */
     @Deprecated
     public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata) {
         return parseOptionlessJSON(object, true, metadata);
     }
 
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     *
+     * @param object the JSON reader.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     *
+     */
     public static Item parseOptionlessJSON(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
         try {
             if (object.peek() == JsonToken.STRING) {
