@@ -866,6 +866,9 @@ keyword                : KW_JSONIQ
                         | KW_COMMENT
                         | KW_MAP
                         | KW_ARRAY
+                        | KW_UNION
+                        | KW_INTERSECT
+                        | KW_EXCEPT
                         ;
 
 ///////////////////////// literals

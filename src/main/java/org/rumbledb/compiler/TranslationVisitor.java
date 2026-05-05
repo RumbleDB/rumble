@@ -1675,6 +1675,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         if (child instanceof JsoniqParser.LiteralContext) {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
+            return this.visitLiteral((JsoniqParser.LiteralContext) child);
+        }
         if (child instanceof TerminalNode) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
@@ -1706,6 +1709,12 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                     unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
+        }
+        if (child instanceof JsoniqParser.LiteralContext) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        }
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         if (child instanceof TerminalNode) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
