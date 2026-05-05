@@ -1589,7 +1589,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
         if (mainExpression instanceof ObjectLookupExpression) {
             return ((ObjectLookupExpression) mainExpression).getMainExpression();
         } else if (mainExpression instanceof ArrayLookupExpression) {
@@ -1600,7 +1600,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
         if (mainExpression instanceof ObjectLookupExpression) {
             return ((ObjectLookupExpression) mainExpression).getLookupExpression();
         } else if (mainExpression instanceof ArrayLookupExpression) {
@@ -1614,7 +1614,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     // region postfix
     @Override
-    public Node visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {
+    public Node visitPostfixExpr(JsoniqParser.PostfixExprContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext) {
@@ -2365,7 +2365,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitAssignStatement(JsoniqParser.AssignStatementContext ctx) {
-        Name paramName = parseName(ctx.qname(), false, false, false);
+        Name paramName = parseEqName(ctx.varName().eqName(), false, false, false, false);
         Expression exprSingle = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new AssignStatement(exprSingle, paramName, createMetadataFromContext(ctx));
     }
@@ -2506,8 +2506,8 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         BlockStatement catchAllBlockStatement = null;
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
-            for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false, false, false);
+            for (JsoniqParser.EqNameContext qnameCtx : catchCtx.errors) {
+                Name name = parseEqName(qnameCtx, false, false, false, false);
                 if (!catchBlockStatements.containsKey(name.getLocalName())) {
                     catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
                 }
@@ -2635,9 +2635,9 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
     }
 
     private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
-        if (relativeContext.stepExpr().size() == 1 && relativeContext.stepExpr(0).postFixExpr() != null) {
+        if (relativeContext.stepExpr().size() == 1 && relativeContext.stepExpr(0).postfixExpr() != null) {
             // We only have a postfix expression, not a path expression
-            return this.visitPostFixExpr(relativeContext.stepExpr(0).postFixExpr());
+            return this.visitPostfixExpr(relativeContext.stepExpr(0).postfixExpr());
         }
         return getSlashes(relativeContext, null);
     }
@@ -2715,7 +2715,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
 
     @Override
     public Node visitStepExpr(JsoniqParser.StepExprContext ctx) {
-        if (ctx.postFixExpr() == null) {
+        if (ctx.postfixExpr() == null) {
             Expression stepExpr = getStep(ctx.axisStep());
             for (JsoniqParser.PredicateContext predicateContext : ctx.axisStep().predicateList().predicate()) {
                 Expression predicate = (Expression) this.visitPredicate(predicateContext);
@@ -2727,7 +2727,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             }
             return stepExpr;
         }
-        return this.visitPostFixExpr(ctx.postFixExpr());
+        return this.visitPostfixExpr(ctx.postfixExpr());
     }
 
     private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {

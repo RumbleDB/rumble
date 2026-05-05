@@ -129,16 +129,10 @@ varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE
          (KW_AS sequenceType)?
          (
           // replaced with the varValue production to match the JSONiq grammar
-            (COLON_EQ expr)
+            (COLON_EQ exprSingle)
           // replaced with the varDefaultValue production to match the JSONiq grammar
-          | (external=KW_EXTERNAL (COLON_EQ expr)?)
-          | (LBRACE varValue RBRACE)
-          | (external=KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
+          | (external=KW_EXTERNAL (COLON_EQ exprSingle)?)
          ) ;
-
-varValue: expr ;
-
-varDefaultValue: expr ;
 
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
                  //(KW_AS itemType)?
@@ -586,7 +580,6 @@ kindTest: documentTest
         | commentTest
         | textTest
         | namespaceNodeTest
-        | mlNodeTest
         | binaryNodeTest
         | anyKindTest
         ;
@@ -648,26 +641,6 @@ typedArrayTest: KW_ARRAY LPAREN sequenceType RPAREN ;
 parenthesizedItemTest: LPAREN itemType RPAREN ;
 
 attributeDeclaration: attributeName ;
-
-
-
-
-mlNodeTest: mlArrayNodeTest
-          | mlObjectNodeTest
-          | mlNumberNodeTest
-          | mlBooleanNodeTest
-          | mlNullNodeTest
-          ;
-
-mlArrayNodeTest: KW_ARRAY_NODE LPAREN stringLiteral? RPAREN ;
-
-mlObjectNodeTest: KW_OBJECT_NODE LPAREN stringLiteral? RPAREN ;
-
-mlNumberNodeTest: KW_NUMBER_NODE LPAREN stringLiteral? RPAREN ;
-
-mlBooleanNodeTest: KW_BOOLEAN_NODE LPAREN stringLiteral? RPAREN ;
-
-mlNullNodeTest: KW_NULL_NODE LPAREN stringLiteral? RPAREN ;
 
 // NAMES ///////////////////////////////////////////////////////////////////////
 
@@ -950,7 +923,7 @@ statement               : applyStatement
                         | breakStatement
                         | continueStatement
                         | exitStatement
-                        | flowrStatement
+                        | flworStatement
                         | ifStatement
                         | switchStatement
                         | tryCatchStatement
@@ -972,7 +945,7 @@ continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
 exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
 
 // replaced with the initialClause production to match the JSONiq grammar
-flowrStatement          : (start_for=forClause| start_let=letClause)
+flworStatement          : (start_for=forClause| start_let=letClause)
                         // replaced with the intermediateClause production to match the JSONiq grammar
                           (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
                         // replaced with the returnStatement production to match the JSONiq grammar

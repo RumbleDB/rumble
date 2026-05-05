@@ -102,19 +102,6 @@ decimalFormatDecl: KW_DECLARE (
                    )
                    (DFPropertyName EQUAL stringLiteral)*;
 
-BracedURILiteral: 'Q' '{' (~[&{}])* '}' ;
-URIQualifiedName: BracedURILiteral NCName ;
-
-DFPropertyName          : 'decimal-separator'
-                        | 'grouping-separator'
-                        | 'infinity'
-                        | 'minus-sign'
-                        | 'NaN'
-                        | 'percent'
-                        | 'per-mille'
-                        | 'zero-digit'
-                        | 'digit'
-                        | 'pattern-separator';
 
 schemaImport: KW_IMPORT KW_SCHEMA
               schemaPrefix?
@@ -309,9 +296,9 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)?;
+instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
-isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)?;
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
@@ -345,7 +332,7 @@ validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr
 
 validationMode: KW_LAX | KW_STRICT ;
 
-annotateExpr            : Kannotate KW_TYPE sequenceType LBRACE expr RBRACE;
+annotateExpr            : KW_ANNOTATE KW_TYPE sequenceType LBRACE expr RBRACE;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
@@ -357,8 +344,6 @@ arrayUnboxing           : '[' ']';
 
 objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
-blockExpr : LBRACE statementsAndExpr RBRACE ;
-
 
 ///////////////////////// XPath
 
@@ -368,7 +353,7 @@ pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePa
 
 relativePathExpr: stepExpr (sep+=(SLASH|DSLASH) stepExpr)* ;
 
-stepExpr: postFixExpr | axisStep ;
+stepExpr: postfixExpr | axisStep ;
 
 axisStep: (reverseStep | forwardStep) predicateList ;
 
@@ -404,7 +389,7 @@ wildcard: STAR            # allNames
         | ( BracedURILiteral STAR )# BracedURILiteral
         ;
 
-postFixExpr: main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)*;
+postfixExpr: main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)* ;
 
 argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
@@ -426,7 +411,6 @@ primaryExpr: literal
            | varRef
            | parenthesizedExpr
            | contextItemExpr
-           | objectConstructor
            | functionCall
            | orderedExpr
            | unorderedExpr
@@ -434,6 +418,8 @@ primaryExpr: literal
            | functionItemExpr
            | objectConstructor
            | arrayConstructor
+           | stringConstructor
+           | unaryLookup
            | blockExpr
            ;
 
@@ -550,11 +536,32 @@ namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 // renamed from mapConstructor to objectConstructor to match the JSONiq grammar
-objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE
-                 | merge_operator+='{|' expr '|}';
+objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE | merge_operator+='{|' expr '|}' ;
 
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
+
+arrayConstructor:  '[' expr? ']';
+
+curlyArrayConstructor: KW_ARRAY enclosedExpression ;
+
+stringConstructor: ENTER_STRING stringConstructorContent EXIT_STRING;
+
+stringConstructorContent: stringConstructorChars (stringConstructorInterpolation stringConstructorChars)* ;
+
+charNoGrave           : BASIC_CHAR | LBRACE | RBRACKET;
+charNoLBrace          : BASIC_CHAR | GRAVE | RBRACKET;
+charNoRBrack          : BASIC_CHAR | GRAVE | LBRACE;
+stringConstructorChars: (BASIC_CHAR 
+                            | charNoGrave charNoLBrace
+                            | charNoRBrack charNoGrave charNoGrave
+                            | charNoGrave
+                            | LBRACE                                                      
+                            )* ;
+
+stringConstructorInterpolation: ENTER_INTERPOLATION expr EXIT_INTERPOLATION ;
+
+unaryLookup: QUESTION keySpecifier ;
 
 // TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
 
@@ -577,7 +584,7 @@ itemType: kindTest
         // removes the need for a separate atomicOrUnionType rule
         | NullLiteral
         | eqName
-        ;
+        | parenthesizedItemTest ;
 
 kindTest: documentTest
         | elementTest
@@ -592,7 +599,7 @@ kindTest: documentTest
         | anyKindTest
         ;
 
-anyKindTest: KW_NODE LPAREN RPAREN ;
+anyKindTest: KW_NODE LPAREN STAR? RPAREN ;
 
 binaryNodeTest: KW_BINARY LPAREN RPAREN ;
 
@@ -773,6 +780,12 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_UPDATING
        ;
 
+// STRING LITERALS /////////////////////////////////////////////////////////////
+
+uriLiteral: stringLiteral ;
+
+stringLiteral: STRING;
+
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
 
@@ -789,6 +802,8 @@ statements                  : statement* ;
 statementsAndExpr           : statements expr ;
 
 statementsAndOptionalExpr   : statements expr? ;
+
+// Statements
 
 statement               : applyStatement
                         | assignStatement
@@ -817,8 +832,11 @@ continueStatement       : KW_CONTINUE KW_LOOP SEMICOLON ;
 
 exitStatement           : KW_EXIT KW_RETURNING exprSingle SEMICOLON ;
 
+// replaced with the initialClause production to match the JSONiq grammar
 flworStatement          : (start_for=forClause| start_let=letClause)
+                        // replaced with the intermediateClause production to match the JSONiq grammar
                           (forClause | letClause | whereClause | groupByClause | orderByClause | countClause)*
+                        // replaced with the returnStatement production to match the JSONiq grammar
                           KW_RETURN returnStmt=statement ;
 
 ifStatement             :  KW_IF LPAREN test_expr=expr RPAREN
@@ -827,10 +845,13 @@ ifStatement             :  KW_IF LPAREN test_expr=expr RPAREN
 
 switchStatement         : KW_SWITCH LPAREN condExpr=expr RPAREN cases+=switchCaseStatement+ KW_DEFAULT KW_RETURN def=statement ;
 
+// replaced with the switchCaseOperand production to match the JSONiq grammar
 switchCaseStatement     : (KW_CASE cond+=exprSingle)+ KW_RETURN ret=statement ;
 
 tryCatchStatement       : KW_TRY try_block=blockStatement catches+=catchCaseStatement+ ;
 
+// added to match the JSONiq grammar
+// replaced the CatchErrorList production rule to match the JSONiq grammar
 catchCaseStatement      : KW_CATCH (jokers+=wildcard | errors+=eqName) (VBAR (jokers+=wildcard | errors+=eqName))* catch_block=blockStatement;
 
 // replaced "$" varName with varRef to match the JSONiq grammar
@@ -874,54 +895,50 @@ exprSimple              : quantifiedExpr
                         | insertIndexExpr
                         | insertSearchExpr
                         ;
-///////////////////////// Updating Expressions
 
-insertExpr              : Kinsert KW_JSON to_insert_expr=exprSingle Kinto main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
-                        | Kinsert KW_JSON pairConstructor ( COMMA pairConstructor )* Kinto main_expr=exprSingle;
+blockExpr : LBRACE statementsAndExpr RBRACE ;
 
-deleteExpr              : Kdelete KW_JSON updateLocator;
+// Updating expressions (out-of-spec)
+// these are not referenced anywhere in the XQuery spec or in the XQuery Scripting Extension spec
+// they are ported from the original grammar, and likely to be derived from JSONiq
 
-renameExpr              : Krename KW_JSON updateLocator KW_AS name_expr=exprSingle;
+insertExpr              : KW_INSERT KW_JSON to_insert_expr=exprSingle KW_INTO main_expr=exprSingle (KW_AT KW_POSITION pos_expr=exprSingle)?
+                        | KW_INSERT KW_JSON pairConstructor ( COMMA pairConstructor )* KW_INTO main_expr=exprSingle;
 
-replaceExpr             : Kreplace Kvalue KW_OF KW_JSON updateLocator Kwith replacer_expr=exprSingle;
+deleteExpr              : KW_DELETE KW_JSON updateLocator;
+
+renameExpr              : KW_RENAME KW_JSON updateLocator KW_AS name_expr=exprSingle;
+
+replaceExpr             : KW_REPLACE KW_VALUE KW_OF KW_JSON updateLocator KW_WITH replacer_expr=exprSingle;
 
 transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_expr=exprSingle KW_RETURN ret_expr=exprSingle;
 
-appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle Kinto array_expr=exprSingle;
+appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle KW_INTO array_expr=exprSingle;
 
-updateLocator           : main_expr=postFixExpr;
+updateLocator           : main_expr=postfixExpr;
 
 copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
-// TODO: Direct element constructors
-
-
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (Kwith content=exprSingle)?;
+createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
 
-deleteIndexExpr         : Kdelete ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
-deleteSearchExpr        : Kdelete content=exprSingle Kfrom Kcollection;
+deleteSearchExpr        : KW_DELETE content=exprSingle Kfrom Kcollection;
 
-insertIndexExpr         : Kinsert content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) Kinto Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) KW_INTO Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
-insertSearchExpr        : Kinsert content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle Kinto Kcollection;
+insertSearchExpr        : KW_INSERT content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle KW_INTO Kcollection;
 
-truncateCollectionExpr  : (Kdelete | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+truncateCollectionExpr  : (KW_DELETE | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
-editCollectionExpr      : Kedit target=exprSingle Kinto content=exprSingle KW_IN Kcollection;
+editCollectionExpr      : Kedit target=exprSingle KW_INTO content=exprSingle KW_IN Kcollection;
 
 
 
 
 ///////////////////////// Types
-
-arrayConstructor        :  '[' expr? ']';
-
-uriLiteral              : stringLiteral;
-
-stringLiteral           : STRING;
 
 keyword                : KW_JSONIQ
                         | KW_MODULE
@@ -1010,19 +1027,19 @@ keyword                : KW_JSONIQ
                         | Ktrue
                         | Kfalse
                         | KW_TYPE
-                        | Kinsert
-                        | Kdelete
-                        | Krename
-                        | Kreplace
+                        | KW_INSERT
+                        | KW_DELETE
+                        | KW_RENAME
+                        | KW_REPLACE
                         | KW_APPEND
                         | KW_COPY
                         | KW_MODIFY
-                        | Kinto
-                        | Kvalue
-                        | Kwith
+                        | KW_INTO
+                        | KW_VALUE
+                        | KW_WITH
                         | KW_POSITION
                         | KW_VALIDATE
-                        | Kannotate
+                        | KW_ANNOTATE
                         | KW_BREAK
                         | KW_LOOP
                         | KW_CONTINUE
@@ -1168,6 +1185,11 @@ EscapeApos: 'escapeaposref637daa-5838-4675-975a-782077b371b9';
 
 CDATA: 'cdataref637daa-5838-4675-975a-782077b371b9';
 
+ENTER_STRING: 'enterstringref637daa-5838-4675-975a-782077b371b9';
+EXIT_STRING: 'exitstringref637daa-5838-4675-975a-782077b371b9';
+BASIC_CHAR: 'basiccharref637daa-5838-4675-975a-782077b371b9';
+ENTER_INTERPOLATION: 'enterinterpolationref637daa-5838-4675-975a-782077b371b9';
+EXIT_INTERPOLATION: 'exitinterpolationref637daa-5838-4675-975a-782077b371b9';
 PRAGMA: 'pragmaref637daa-5838-4675-975a-782077b371b9';
 FullQName: NCName ':' NCName ;
 NCNameWithLocalWildcard:  NCName ':' '*' ;
@@ -1344,7 +1366,7 @@ KW_VALIDATE               : 'validate';
 KW_LAX : 'lax';
 KW_STRICT : 'strict';
 
-Kannotate               : 'annotate';
+KW_ANNOTATE               : 'annotate';
 
 KW_DECLARE                : 'declare';
 
@@ -1356,13 +1378,13 @@ KW_VARIABLE               : 'variable';
 
 KW_OPTION                : 'option';
 
-Kinsert                 : 'insert';
+KW_INSERT                 : 'insert';
 
-Kdelete                 : 'delete';
+KW_DELETE                 : 'delete';
 
-Krename                 : 'rename';
+KW_RENAME                 : 'rename';
 
-Kreplace                : 'replace';
+KW_REPLACE                : 'replace';
 
 KW_COPY                   : 'copy';
 
@@ -1370,11 +1392,11 @@ KW_MODIFY                 : 'modify';
 
 KW_APPEND                 : 'append';
 
-Kinto                   : 'into';
+KW_INTO                   : 'into';
 
-Kvalue                  : 'value';
+KW_VALUE                  : 'value';
 
-Kwith                   : 'with';
+KW_WITH                   : 'with';
 
 KW_POSITION               : 'position';
 
@@ -1549,3 +1571,17 @@ noQuotesNoBracesNoAmpNoLAng:
                    )+
  ;
 
+
+BracedURILiteral: 'Q' '{' (~[&{}])* '}' ;
+URIQualifiedName: BracedURILiteral NCName ;
+
+DFPropertyName          : 'decimal-separator'
+                        | 'grouping-separator'
+                        | 'infinity'
+                        | 'minus-sign'
+                        | 'NaN'
+                        | 'percent'
+                        | 'per-mille'
+                        | 'zero-digit'
+                        | 'digit'
+                        | 'pattern-separator';
