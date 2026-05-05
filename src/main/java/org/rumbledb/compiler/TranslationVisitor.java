@@ -151,6 +151,7 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -514,28 +515,98 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         return prolog;
     }
 
-    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType, boolean isAnnotation) {
+    /**
+     * Resolves a QName while parsing an XQuery construct.
+     * <p>
+     * <strong>Prefix resolution (any prefixed QName):</strong> the prefix is always resolved with
+     * {@link #resolvePrefixForDirConstructor}, which consults {@link #dirElemNamespaceFrames} from innermost to
+     * outermost, then falls back to {@link org.rumbledb.context.StaticContext#resolveNamespace(String)} on the module
+     * context. So prefixed names can use namespace bindings established by {@code xmlns} / {@code xmlns:prefix} on an
+     * enclosing direct element constructor, in source order, as well as prolog and imported bindings.
+     * <p>
+     * <strong>Unprefixed names:</strong> which default applies depends on the role flags (mutually exclusive in
+     * typical use). These flags do not turn off prefix resolution for prefixed QNames; they only select behavior when
+     * there is no prefix.
+     * <ul>
+     * <li>{@code isFunction}: unprefixed function name (module default function namespace; not read from
+     * {@code dirElemNamespaceFrames}).</li>
+     * <li>{@code isType}: unprefixed type name; uses the in-scope default element/type namespace from
+     * {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} (constructor {@code xmlns=""} and/or
+     * prolog defaults) when bound; otherwise {@link Name#createVariableInDefaultTypeNamespace}.</li>
+     * <li>{@code isAnnotation}: unprefixed annotation EQName; same default-namespace rule as types when a default is
+     * bound; otherwise {@link Name#createVariableInDefaultAnnotationsNamespace}.</li>
+     * <li>{@code isElementConstructor}: unprefixed name in a direct element start tag or static computed element name;
+     * uses default element namespace from {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} if
+     * bound, otherwise no namespace ({@link Name#createVariableInNoNamespace}).</li>
+     * <li>Otherwise: no namespace ({@link Name#createVariableInNoNamespace}), e.g. variables.</li>
+     * </ul>
+     * The {@code isElementConstructor} parameter remains necessary so unprefixed <em>element tag</em> names are not
+     * treated like unprefixed type names or plain NCNames: default-namespace and fallback rules differ (see branches
+     * above).
+     */
+    public Name parseName(
+            JsoniqParser.QnameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
         String localName = null;
         String prefix = null;
         Name name = null;
-        if (ctx.local_name != null) {
+
+        if (ctx.FullQName() != null) {
+            // Handle FullQName by parsing its text content
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException(
+                        "Invalid FullQName format: " + fullQNameText,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            prefix = fullQNameText.substring(0, colonIndex);
+            localName = fullQNameText.substring(colonIndex + 1);
+        } else {
+            // Handle the labeled ncName case
             localName = ctx.local_name.getText();
+            if (ctx.ns != null) {
+                prefix = ctx.ns.getText();
+            }
         }
-        if (ctx.ns != null) {
-            prefix = ctx.ns.getText();
-        }
+
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInDefaultFunctionNamespace(localName);
+                name = nameForUnprefixedFunction(localName);
             } else if (isType) {
-                name = Name.createVariableInDefaultTypeNamespace(localName);
+                String defaultTypeNs = resolvePrefixForDirConstructor("");
+                if (defaultTypeNs != null) {
+                    name = new Name(defaultTypeNs, "", localName);
+                } else {
+                    name = Name.createVariableInDefaultTypeNamespace(localName);
+                }
             } else if (isAnnotation) {
-                name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                String defaultAnnotationNs = resolvePrefixForDirConstructor("");
+                if (defaultAnnotationNs != null) {
+                    name = new Name(defaultAnnotationNs, "", localName);
+                } else {
+                    name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                }
+            } else if (isElementConstructor) {
+                String defaultElementNs = resolvePrefixForDirConstructor("");
+                if (defaultElementNs != null) {
+                    name = new Name(defaultElementNs, "", localName);
+                } else {
+                    name = Name.createVariableInNoNamespace(localName);
+                }
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
         } else {
-            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                name = new Name(namespace, prefix, localName);
+            }
         }
         if (name != null) {
             return name;
@@ -556,7 +627,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
+                paramName = parseName(param.qname(), false, false, false, false);
                 paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -650,7 +721,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             boolean isElementConstructor
     ) {
         if (ctx.qname() != null) {
-            return parseName(ctx.qname(), isFunction, isType, isAnnotation);
+            return parseName(ctx.qname(), isFunction, isType, isAnnotation, isElementConstructor);
         }
         return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
@@ -681,7 +752,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             pe.initCause(e);
             throw pe;
         }
-        Name name = parseName(ctx.qname(), false, true, false);
+        Name name = parseName(ctx.qname(), false, true, false, false);
         String schemaLanguage = null;
         if (ctx.schema != null) {
             schemaLanguage = ctx.schema.getText();
@@ -2028,7 +2099,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false, false, false);
+                paramName = parseName(param.qname(), false, false, false, false);
                 paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
