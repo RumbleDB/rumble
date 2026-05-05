@@ -778,6 +778,7 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_JSON
        | KW_POSITION
        | KW_UPDATING
+       | KW_LAST
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
@@ -923,11 +924,11 @@ copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
 createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
 
-deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=Klast) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=KW_LAST) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 deleteSearchExpr        : KW_DELETE content=exprSingle Kfrom Kcollection;
 
-insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=Klast ) KW_INTO Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=KW_LAST ) KW_INTO Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 insertSearchExpr        : KW_INSERT content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle KW_INTO Kcollection;
 
@@ -1057,7 +1058,7 @@ keyword                : KW_JSONIQ
                         | Kicebergtable
                         | Ktruncate
                         | Kfirst
-                        | Klast
+                        | KW_LAST
                         | Kfrom
                         | Kedit
                         | Kbefore
@@ -1418,7 +1419,7 @@ Ktruncate               : 'truncate';
 
 Kfirst                  : 'first';
 
-Klast                   : 'last';
+KW_LAST                   : 'last';
 
 Kfrom                   : 'from';
 
