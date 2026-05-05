@@ -86,6 +86,7 @@ public class ItemParser implements Serializable {
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
+    @Deprecated
     public static Item getItemFromString(String string, ExceptionMetadata metadata) {
         string = "[ " + string + " ]";
         JsonReader object = new JsonReader(new StringReader(string));
@@ -107,12 +108,12 @@ public class ItemParser implements Serializable {
     }
 
     /**
-     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, ExceptionMetadata)}
+     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata)}
      *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
      */
     @Deprecated
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
-        return getItemFromObject(object, true, metadata);
+        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata);
     }
 
     /**
@@ -122,9 +123,14 @@ public class ItemParser implements Serializable {
      * @param metadata exception metadata if an error is thrown.
      * @return the parsed item.
      */
-    public static Item getItemFromObject(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
+    public static Item getItemFromObject(
+            JsonReader object,
+            boolean isJSONiq,
+            String numberFormat,
+            ExceptionMetadata metadata
+    ) {
         try {
-            Item result = parseOptionlessJSON(object, isJSONiq, metadata);
+            Item result = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
             object.peek();
             return result;
         } catch (Exception e) {
@@ -135,12 +141,12 @@ public class ItemParser implements Serializable {
     }
 
     /**
-     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, ExceptionMetadata)}
+     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata)}
      *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
      */
     @Deprecated
     public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata) {
-        return parseOptionlessJSON(object, true, metadata);
+        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata);
     }
 
     /**
@@ -151,7 +157,12 @@ public class ItemParser implements Serializable {
      * @return the parsed item.
      *
      */
-    public static Item parseOptionlessJSON(JsonReader object, boolean isJSONiq, ExceptionMetadata metadata) {
+    public static Item parseOptionlessJSON(
+            JsonReader object,
+            boolean isJSONiq,
+            String numberFormat,
+            ExceptionMetadata metadata
+    ) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
@@ -159,7 +170,7 @@ public class ItemParser implements Serializable {
 
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
-                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                return JSONParser.getItemFromJSONNumber(number, numberFormat);
             }
 
             if (object.peek() == JsonToken.BOOLEAN) {
@@ -172,7 +183,7 @@ public class ItemParser implements Serializable {
 
                 object.beginArray();
                 while (object.hasNext()) {
-                    Item value = parseOptionlessJSON(object, isJSONiq, metadata);
+                    Item value = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
 
                     if (value == null) {
                         containsJavaNull = true;
@@ -214,7 +225,7 @@ public class ItemParser implements Serializable {
                         continue;
                     }
 
-                    Item value = parseOptionlessJSON(object, isJSONiq, metadata);
+                    Item value = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
 
                     if (value == null) {
                         containsJavaNull = true;

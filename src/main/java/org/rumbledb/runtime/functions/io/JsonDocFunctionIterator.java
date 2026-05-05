@@ -45,6 +45,12 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         boolean isJSONiq = getConfiguration().getQueryLanguage().equals("jsoniq10");
 
+        JSONParsingOptions options = JSONParsingOptions.resolveOptions(
+            optionsItem,
+            isJSONiq,
+            getMetadata()
+        );
+
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
 
         if (optionsItem == null) {
@@ -56,7 +62,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 )
             ) {
                 JsonReader object = new JsonReader(new InputStreamReader(is));
-                return ItemParser.getItemFromObject(object, isJSONiq, getMetadata());
+                return ItemParser.getItemFromObject(object, isJSONiq, options.getNumberFormat(), getMetadata());
             } catch (CannotRetrieveResourceException e) {
                 UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
                 ex.initCause(e);
@@ -68,7 +74,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
                 return ItemParser.getItemFromJSONString(
                     jsonText,
-                    JSONParsingOptions.defaultInstance(),
+                    options,
                     getConfiguration().getXmlVersion(),
                     isJSONiq,
                     getMetadata()
@@ -76,7 +82,6 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
 
-        JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, getMetadata());
 
         String jsonText = readJsonResource(uri);
 
