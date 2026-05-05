@@ -2790,7 +2790,13 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         false
                     );
                     if (attributeTestContext.typeName() != null) {
-                        Name typeName = parseEqName(attributeTestContext.typeName().eqName(), false, false, false, false);
+                        Name typeName = parseEqName(
+                            attributeTestContext.typeName().eqName(),
+                            false,
+                            false,
+                            false,
+                            false
+                        );
                         return new AttributeTest(elementName, typeName);
                     } else {
                         return new AttributeTest(elementName, null);
