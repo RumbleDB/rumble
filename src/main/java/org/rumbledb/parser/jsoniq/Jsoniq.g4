@@ -775,6 +775,7 @@ keywordOKForFunction: KW_ANCESTOR
        //  Updating expressions keywords
        | KW_COPY
        | KW_MODIFY
+       | KW_REPLACE
        | KW_APPEND
        | KW_JSON
        | KW_POSITION
