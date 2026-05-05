@@ -58,7 +58,9 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 JsonReader object = new JsonReader(new InputStreamReader(is));
                 return ItemParser.getItemFromObject(object, isJSONiq, getMetadata());
             } catch (CannotRetrieveResourceException e) {
-                throw new UnavailableResourceException(e.getMessage(), getMetadata());
+                UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+                ex.initCause(e);
+                throw ex;
             } catch (UnavailableResourceException e) {
                 throw e;
             } catch (Exception e) {
@@ -106,7 +108,9 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
-            throw new UnavailableResourceException(e.getMessage(), metadata);
+            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+            ex.initCause(e);
+            throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "The URI supplied to fn:json-doc() is invalid or cannot be resolved.",
@@ -131,7 +135,9 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
-            throw new UnavailableResourceException(e.getMessage(), getMetadata());
+            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+            ex.initCause(e);
+            throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Unable to read, resolve, or decode the resource supplied to fn:json-doc().",

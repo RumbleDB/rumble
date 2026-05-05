@@ -122,25 +122,25 @@ public final class JSONParsingOptions implements Serializable {
                 Collections.singletonList(argument)
             );
 
-            List<Item> result = functionItem.getBodyIterator().materialize(functionContext);
-
-            if (result == null || result.size() != 1) {
-                throw new InvalidJSONException(
+            Item result;
+            try {
+                result = functionItem.getBodyIterator().materializeAtMostOneItemOrNull(functionContext);
+                if (result == null || !result.isString()) {
+                    throw new InvalidJSONException(
+                            "Invalid result returned by option 'fallback': expected exactly one xs:string.",
+                            metadata
+                    );
+                }
+            } catch (MoreThanOneItemException e) {
+                InvalidJSONException ex = new InvalidJSONException(
                         "Invalid result returned by option 'fallback': expected exactly one xs:string.",
                         metadata
                 );
+                ex.initCause(e);
+                throw ex;
             }
 
-            Item resultItem = result.get(0);
-            if (resultItem == null || !resultItem.isString()) {
-                throw new InvalidJSONException(
-                        "Invalid result returned by option 'fallback': expected exactly one xs:string, but got "
-                            + (resultItem == null ? "empty-sequence()" : resultItem.getDynamicType()),
-                        metadata
-                );
-            }
-
-            return resultItem.getStringValue();
+            return result.getStringValue();
         } catch (RumbleException e) {
             throw e;
         } catch (Exception e) {

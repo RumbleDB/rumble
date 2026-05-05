@@ -128,7 +128,9 @@ public class ItemParser implements Serializable {
             object.peek();
             return result;
         } catch (Exception e) {
-            throw new InvalidJSONException("Invalid JSON object!", metadata);
+            InvalidJSONException ex = new InvalidJSONException("Invalid JSON object!", metadata);
+            ex.initCause(e);
+            throw ex;
         }
     }
 
