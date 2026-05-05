@@ -13,7 +13,7 @@ import static org.apache.spark.sql.functions.lit;
 public class EditTuplePrimitive implements UpdatePrimitive {
     private Item target;
     private Dataset<Row> contents;
-    private Row targetRow;
+    // private Row targetRow;
     private final Collection collection;
 
     public EditTuplePrimitive(Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
