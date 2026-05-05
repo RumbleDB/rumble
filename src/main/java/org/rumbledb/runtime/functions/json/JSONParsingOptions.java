@@ -41,7 +41,7 @@ public final class JSONParsingOptions implements Serializable {
     // Default Values as per W3C xpath-functions-31 specification, section 17.5.1
     public static final boolean DEFAULT_LIBERAL = false;
     public static final String DEFAULT_DUPLICATES = DUPLICATES_USE_FIRST;
-    public static final boolean DEFAULT_ESCAPE = true;
+    public static final boolean DEFAULT_ESCAPE = false;
     public static final Function<String, String> DEFAULT_FALLBACK = s -> "\uFFFD";
 
     private final boolean liberal;
@@ -194,7 +194,7 @@ public final class JSONParsingOptions implements Serializable {
         boolean liberal = JSONParsingOptions.DEFAULT_LIBERAL;
         String duplicates = JSONParsingOptions.DEFAULT_DUPLICATES;
 
-        boolean escape = false;
+        boolean escape = JSONParsingOptions.DEFAULT_ESCAPE;
         boolean escapeExplicitlySet = false;
 
         String numberFormat = JSONParsingOptions.getDefaultNumberFormat(isJSONiq);
@@ -274,8 +274,7 @@ public final class JSONParsingOptions implements Serializable {
             );
         }
 
-        JSONParsingOptions options = new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat);
-        return options;
+        return new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat);
     }
 
     private static String validatedStringOption(
