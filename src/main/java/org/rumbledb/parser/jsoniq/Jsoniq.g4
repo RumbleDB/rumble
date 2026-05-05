@@ -762,6 +762,8 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_VERSION
        | KW_WHERE
        | KW_JSONIQ
+       | KW_TABLE
+       | KW_DELTA_FILE
        // XQuery Scripting Extension keywords
        | KW_BREAK
        | KW_LOOP
@@ -920,17 +922,17 @@ copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
+createCollectionExpr    : Kcreate Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | Kicebergtable) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
 
-deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=KW_LAST) num=exprSingle? ) Kfrom Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=KW_LAST) num=exprSingle? ) Kfrom Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 deleteSearchExpr        : KW_DELETE content=exprSingle Kfrom Kcollection;
 
-insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=KW_LAST ) KW_INTO Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=KW_LAST ) KW_INTO Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 insertSearchExpr        : KW_INSERT content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle KW_INTO Kcollection;
 
-truncateCollectionExpr  : (KW_DELETE | Ktruncate) Kcollection collectionMode=(Ktable | Kdeltafile | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
+truncateCollectionExpr  : (KW_DELETE | Ktruncate) Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | Kicebergtable) LPAREN collection_name=exprSimple RPAREN;
 
 editCollectionExpr      : Kedit target=exprSingle KW_INTO content=exprSingle KW_IN Kcollection;
 
@@ -1050,8 +1052,8 @@ keyword                : KW_JSONIQ
                         | KW_UPDATING
                         | Kcreate
                         | Kcollection
-                        | Ktable
-                        | Kdeltafile
+                        | KW_TABLE
+                        | KW_DELTA_FILE
                         | Kicebergtable
                         | Ktruncate
                         | Kfirst
@@ -1404,9 +1406,9 @@ Kcreate                 : 'create';
 
 Kcollection             : 'collection';
 
-Ktable                  : 'table';
+KW_TABLE                  : 'table';
 
-Kdeltafile              : 'delta-file';
+KW_DELTA_FILE              : 'delta-file';
 
 Kicebergtable           : 'iceberg-table';
 
