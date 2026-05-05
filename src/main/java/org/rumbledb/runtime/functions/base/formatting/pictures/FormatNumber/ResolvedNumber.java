@@ -81,17 +81,17 @@ class ResolvedNumber {
         return "ResolvedNumber{"
             +
             "type='"
-            + type
+            + this.type
             + '\''
             +
             ", decimalValue="
-            + decimalValue
+            + this.decimalValue
             +
             ", doubleValue="
-            + doubleValue
+            + this.doubleValue
             +
             ", floatValue="
-            + floatValue
+            + this.floatValue
             +
             ", isNegative="
             + isNegative
