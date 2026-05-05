@@ -310,7 +310,7 @@ arrowExpr: main_expr=unaryExpr (ARROW function+=arrowFunctionSpecifier arguments
 
 unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
-valueExpr: validate_expr=validateExpr | extensionExpr | annotate_expr=annotateExpr | simpleMap_expr=simpleMapExpr ;
+valueExpr: validate_expr=validateExpr | extensionExpr | simpleMap_expr=simpleMapExpr ;
 
 /* 
  * this token was added to prevent the antlr error
@@ -331,8 +331,6 @@ nodeComp: KW_IS | (LANGLE LANGLE) | (RANGLE RANGLE) ;
 validateExpr: KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE ;
 
 validationMode: KW_LAX | KW_STRICT ;
-
-annotateExpr            : KW_ANNOTATE KW_TYPE sequenceType LBRACE expr RBRACE;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
@@ -1040,7 +1038,6 @@ keyword                : KW_JSONIQ
                         | KW_WITH
                         | KW_POSITION
                         | KW_VALIDATE
-                        | KW_ANNOTATE
                         | KW_BREAK
                         | KW_LOOP
                         | KW_CONTINUE
@@ -1366,8 +1363,6 @@ KW_VALIDATE               : 'validate';
 
 KW_LAX : 'lax';
 KW_STRICT : 'strict';
-
-KW_ANNOTATE               : 'annotate';
 
 KW_DECLARE                : 'declare';
 
