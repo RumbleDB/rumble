@@ -9,12 +9,16 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public final class JSONParsingOptions {
+public final class JSONParsingOptions implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     public static final String DUPLICATES_REJECT = "reject";
     public static final String DUPLICATES_USE_FIRST = "use-first";
     public static final String DUPLICATES_USE_LAST = "use-last";

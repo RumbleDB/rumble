@@ -98,7 +98,7 @@ public class ItemParser implements Serializable {
 
     /**
      * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, ExceptionMetadata)}
-     * instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
      */
     @Deprecated
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
@@ -124,7 +124,7 @@ public class ItemParser implements Serializable {
 
     /**
      * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, ExceptionMetadata)}
-     * instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
      */
     @Deprecated
     public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata) {
