@@ -38,7 +38,11 @@ import org.apache.spark.sql.types.StructType;
 import java.time.ZoneId;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidJSONException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -62,7 +66,13 @@ import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Collections;
+import java.util.Set;
 
 public class ItemParser implements Serializable {
 
