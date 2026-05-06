@@ -1311,7 +1311,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     identifier,
                     arguments,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                    expression.isUpdating()
+                    expression.isUpdating(),
+                    expression.isTailCallOptimization()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());

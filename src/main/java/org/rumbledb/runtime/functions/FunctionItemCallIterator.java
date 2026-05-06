@@ -56,6 +56,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     // calculated fields
     private boolean isPartialApplication;
+    private boolean isTailOptimization;
     private RuntimeIterator functionBodyIterator;
     private Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
@@ -64,7 +65,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean isTailOptimization
     ) {
         super(null, staticContext);
         for (RuntimeIterator arg : functionArguments) {
@@ -73,6 +75,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             } else {
                 this.children.add(arg);
             }
+        }
+        if (isTailOptimization) {
+            this.isPartialApplication = true;
+            this.isTailOptimization = true;
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
@@ -221,9 +227,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
+        Name functionItemName = this.functionItem.getIdentifier().getName();
+        if (this.isTailOptimization) {
+            functionItemName = Name.TAIL_CALL_OPTIMIZATION;
+        }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
-                        this.functionItem.getIdentifier().getName(),
+                        functionItemName,
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
@@ -240,7 +250,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                staticContext.withStaticType(
+                this.staticContext.withStaticType(
                     SequenceType.createSequenceType("function(*)")
                 ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
         );
