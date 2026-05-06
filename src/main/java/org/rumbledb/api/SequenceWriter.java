@@ -1,7 +1,6 @@
 package org.rumbledb.api;
 
 import java.net.URI;
-
 import java.util.List;
 import java.util.Map;
 
@@ -153,16 +152,35 @@ public class SequenceWriter {
     public SequenceWriter format(String source) {
         SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
         params.setMethod(source);
-        if (this.dataFrameWriter != null && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
-            return createNewInstance(
-                this.dataFrameWriter.format(source),
-                null,
-                params
-            );
-        } else {
-            SaveMode newMode = (this.dataFrameWriter == null) ? this.mode : this.dataFrameWriter.curmode();
-            return createNewInstance(null, newMode, params);
+        if (this.dataFrameWriter != null) {
+            if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+                return createNewInstance(
+                    this.dataFrameWriter.format(source),
+                    null,
+                    params
+                );
+            } else {
+                SaveMode newMode = this.dataFrameWriter.curmode();
+                return createNewInstance(null, newMode, params);
+            }
         }
+        if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+            try {
+                Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
+                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+                if (requestedPartitions > 0) {
+                    dataFrame = dataFrame.repartition(requestedPartitions);
+                }
+                return createNewInstance(
+                    dataFrame.write().format(source),
+                    null,
+                    params
+                );
+            } catch (CannotInferSchemaOnNonStructuredDataException e) {
+                return createNewInstance(null, this.mode, params);
+            }
+        }
+        return createNewInstance(null, this.mode, params);
     }
 
     public SequenceWriter option(String key, String value) {

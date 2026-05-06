@@ -2657,8 +2657,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         external = (ctx.external != null);
         Expression expr = null;
-        if (ctx.expr() != null) {
-            expr = (Expression) this.visitExpr(ctx.expr());
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
             if (seq != null) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
@@ -2742,8 +2742,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (content instanceof XQueryParser.ExitStatementContext) {
             return this.visitExitStatement((XQueryParser.ExitStatementContext) content);
         }
-        if (content instanceof XQueryParser.FlowrStatementContext) {
-            return this.visitFlowrStatement((XQueryParser.FlowrStatementContext) content);
+        if (content instanceof XQueryParser.FlworStatementContext) {
+            return this.visitFlworStatement((XQueryParser.FlworStatementContext) content);
         }
         if (content instanceof XQueryParser.IfStatementContext) {
             return this.visitIfStatement((XQueryParser.IfStatementContext) content);
@@ -2816,7 +2816,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     @Override
-    public Node visitFlowrStatement(XQueryParser.FlowrStatementContext ctx) {
+    public Node visitFlworStatement(XQueryParser.FlworStatementContext ctx) {
         Clause clause;
         // Check for start clause. Only for or let allowed.
         if (ctx.start_for == null) {

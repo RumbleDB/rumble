@@ -357,7 +357,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     this.getStaticType().getItemType(),
                     context,
                     true,
-                    staticContext
+                    this.staticContext
                 );
             } else {
                 JavaRDD<Item> rdd = this.getRDD(context);
@@ -367,7 +367,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     type,
                     context,
                     true,
-                    staticContext
+                    this.staticContext
                 );
             }
         }
@@ -379,7 +379,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 this.getStaticType().getItemType(),
                 context,
                 true,
-                staticContext
+                this.staticContext
             );
         } else {
             ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
@@ -388,7 +388,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 type,
                 context,
                 true,
-                staticContext
+                this.staticContext
             );
         }
     }

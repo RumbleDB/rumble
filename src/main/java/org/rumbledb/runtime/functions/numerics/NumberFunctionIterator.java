@@ -50,7 +50,7 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 items.get(0),
                 BuiltinTypesCatalogue.doubleItem,
                 getMetadata(),
-                staticContext
+                this.staticContext
             );
         }
 
@@ -63,7 +63,7 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 anyItem,
                 BuiltinTypesCatalogue.doubleItem,
                 getMetadata(),
-                staticContext
+                this.staticContext
             );
             if (result != null) {
                 return result;
