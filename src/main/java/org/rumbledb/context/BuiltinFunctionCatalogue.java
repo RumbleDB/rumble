@@ -3808,7 +3808,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
-        "null?",
+        "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3819,8 +3819,8 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
-        "string",
-        "null?",
+        "QName?",
+        "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3831,9 +3831,23 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
+        "QName?",
         "string",
+        "()",
+        ThrowErrorIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction error_with_code_description_and_object = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "",
+                "error"
+        ),
+        "QName?",
         "string",
-        "null?",
+        "item*",
+        "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -4143,6 +4157,10 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(error.getIdentifier(), error);
         builtinFunctions.put(error_with_code.getIdentifier(), error_with_code);
         builtinFunctions.put(error_with_code_and_description.getIdentifier(), error_with_code_and_description);
+        builtinFunctions.put(
+            error_with_code_description_and_object.getIdentifier(),
+            error_with_code_description_and_object
+        );
         builtinFunctions.put(item_type.getIdentifier(), item_type);
         builtinFunctions.put(is_null.getIdentifier(), is_null);
         builtinFunctions.put(
