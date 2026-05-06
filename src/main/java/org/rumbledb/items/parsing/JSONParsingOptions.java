@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.json;
+package org.rumbledb.items.parsing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -107,7 +107,6 @@ public final class JSONParsingOptions implements Serializable {
             + "]";
     }
 
-    // TODO look over this
     private static String callFallbackFunction(Item functionItem, String escapedSequence, ExceptionMetadata metadata) {
         try {
             if (functionItem == null || !functionItem.isFunction()) {

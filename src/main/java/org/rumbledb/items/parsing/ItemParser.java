@@ -44,7 +44,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import org.rumbledb.runtime.update.primitives.Collection;

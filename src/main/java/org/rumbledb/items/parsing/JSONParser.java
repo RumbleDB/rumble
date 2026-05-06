@@ -5,7 +5,6 @@ import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.functions.xml.XMLUtils;
 
 import java.util.ArrayList;

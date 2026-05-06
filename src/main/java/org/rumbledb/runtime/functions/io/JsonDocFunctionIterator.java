@@ -9,7 +9,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.runtime.functions.json.JSONParsingOptions;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

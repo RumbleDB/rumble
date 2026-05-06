@@ -28,7 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.json.JSONParsingOptions;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.StringReader;
 import java.util.List;
