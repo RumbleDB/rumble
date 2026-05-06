@@ -131,6 +131,7 @@ public class ObjectItem implements Item {
                 // add all keys to the keyList
                 keyList.add(key);
                 if (keyValuePairs.get(key) instanceof List<?>) {
+                    @SuppressWarnings("unchecked")
                     List<Item> values = (List<Item>) keyValuePairs.get(key);
                     // for each key, convert the lists of values into arrayItems
                     if (values.size() > 1) {

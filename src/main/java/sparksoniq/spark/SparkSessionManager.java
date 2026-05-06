@@ -201,6 +201,7 @@ public class SparkSessionManager {
             Configurator.setLevel("akka", LOG_LEVEL);
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
+            this.session.sparkContext().setLogLevel("WARN");
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
