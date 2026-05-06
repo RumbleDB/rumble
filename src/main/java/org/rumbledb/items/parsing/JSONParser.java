@@ -4,12 +4,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.json.JSONParsingOptions;
 import org.rumbledb.runtime.functions.xml.XMLUtils;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -399,7 +397,7 @@ public final class JSONParser {
 
         String number = this.input.substring(start, this.position);
         try {
-            return getItemFromJSONNumber(number, this.options.getNumberFormat());
+            return ItemParser.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
             InvalidJSONException error = new InvalidJSONException(
                     "Invalid number literal '" + number + "'. [position " + start + "]",
@@ -964,29 +962,6 @@ public final class JSONParser {
             return "\\u" + hex4(c);
         }
         return String.valueOf(c);
-    }
-
-
-    static Item getItemFromJSONNumber(String number, String numberFormat) {
-        if (JSONParsingOptions.NUMBER_FORMAT_DOUBLE.equals(numberFormat)) {
-            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-        }
-
-        if (JSONParsingOptions.NUMBER_FORMAT_DECIMAL.equals(numberFormat)) {
-            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-        }
-
-        if (JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE.equals(numberFormat)) {
-            if (number.contains("E") || number.contains("e")) {
-                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-            }
-            if (number.contains(".")) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-            }
-            return ItemFactory.getInstance().createIntegerItem(number);
-        }
-
-        throw new OurBadException("Unexpected number-format: " + numberFormat);
     }
 
     /**

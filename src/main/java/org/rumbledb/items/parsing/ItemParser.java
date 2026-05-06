@@ -170,7 +170,7 @@ public class ItemParser implements Serializable {
 
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
-                return JSONParser.getItemFromJSONNumber(number, numberFormat);
+                return getItemFromJSONNumber(number, numberFormat);
             }
 
             if (object.peek() == JsonToken.BOOLEAN) {
@@ -278,6 +278,38 @@ public class ItemParser implements Serializable {
             r.initCause(e);
             throw r;
         }
+    }
+
+    /**
+     * Returns the appropriate numeric Item for a JSON number.
+     * Since XQuery 4.0 introduces the `number-format` option for `json-doc` and `parse-json`,
+     * the returned Item type depends on the resolved number format.
+     *
+     * @param number the JSON number as a string
+     * @param numberFormat the resolved number-format option from the JSON parsing options
+     * @return a DoubleItem or DecimalItem if explicitly requested; if the format is adaptive,
+     *         the method returns the most appropriate numeric Item based on the input value
+     */
+    static Item getItemFromJSONNumber(String number, String numberFormat) {
+        if (JSONParsingOptions.NUMBER_FORMAT_DOUBLE.equals(numberFormat)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+        }
+
+        if (JSONParsingOptions.NUMBER_FORMAT_DECIMAL.equals(numberFormat)) {
+            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+        }
+
+        if (JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE.equals(numberFormat)) {
+            if (number.contains("E") || number.contains("e")) {
+                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+            }
+            if (number.contains(".")) {
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+            }
+            return ItemFactory.getInstance().createIntegerItem(number);
+        }
+
+        throw new OurBadException("Unexpected number-format: " + numberFormat);
     }
 
     /**
