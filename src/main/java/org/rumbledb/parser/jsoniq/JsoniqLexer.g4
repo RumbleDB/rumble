@@ -76,6 +76,9 @@ BACKSLASH       : '\\';
 
 ARROW : '=>';
 
+LBRACE_VBAR : '{|';
+RBRACE_VBAR : '|}';
+
 KW_DIV : 'div';
 KW_MOD : 'mod';
 KW_IDIV : 'idiv';
@@ -378,6 +381,9 @@ Knull_node              : 'null-node';
 Knumber_node            : 'number-node';
 Kobject_node            : 'object-node';
 KW_COMMENT                : 'comment';
+KW_JSOUND : 'jsound';
+KW_VERBOSE : 'verbose';
+KW_COMPACT : 'compact';
 
 ///////////////////////// Scripting keywords
 KW_BREAK                  : 'break' ;

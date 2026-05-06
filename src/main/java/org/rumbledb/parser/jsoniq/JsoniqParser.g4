@@ -163,11 +163,11 @@ annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating
 
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
-typeDecl                : KW_DECLARE KW_TYPE type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+typeDecl                : KW_DECLARE KW_TYPE type_name=qname KW_AS (schema=schemaLanguage)? type_definition=exprSingle;
 
-schemaLanguage          : 'jsound' 'compact'
-                        | 'jsound' 'verbose'
-                        | 'json' 'schema';
+schemaLanguage          : KW_JSOUND KW_COMPACT
+                        | KW_JSOUND KW_VERBOSE
+                        | KW_JSON KW_SCHEMA;
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -340,9 +340,9 @@ extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
 simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
-arrayLookup             : '[' '[' expr ']' ']';
+arrayLookup             : LBRACKET LBRACKET expr RBRACKET RBRACKET;
 
-arrayUnboxing           : '[' ']';
+arrayUnboxing           : LBRACKET RBRACKET;
 
 objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
@@ -538,12 +538,12 @@ namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 // renamed from mapConstructor to objectConstructor to match the JSONiq grammar
-objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE | merge_operator+='{|' expr '|}' ;
+objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE | merge_operator+=LBRACE_VBAR expr RBRACE_VBAR ;
 
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
 
-arrayConstructor:  '[' expr? ']';
+arrayConstructor:  LBRACKET expr? RBRACKET;
 
 curlyArrayConstructor: KW_ARRAY enclosedExpression ;
 
