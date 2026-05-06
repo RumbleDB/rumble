@@ -162,30 +162,30 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeException errorToThrow(String type) {
-        switch (this.errorCode) {
-            case DynamicTypeTreatErrorCode:
-                return new TreatException(
-                        type
-                            + " cannot be treated as type "
-                            + this.sequenceType,
-                        this.getMetadata()
-                );
-            case UnexpectedTypeErrorCode:
-                return new UnexpectedTypeException(
-                        type
-                            + " is not expected here. The expected type is "
-                            + this.sequenceType,
-                        this.getMetadata()
-                );
-            case InvalidInstance:
-                return new InvalidInstanceException(
-                        "Invalid instance because of arity mismatch. The expected arity is "
-                            + this.sequenceType.getArity(),
-                        this.getMetadata()
-                );
-            default:
-                return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+        if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
+            return new TreatException(
+                    type
+                        + " cannot be treated as type "
+                        + this.sequenceType,
+                    this.getMetadata()
+            );
         }
+        if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
+            return new UnexpectedTypeException(
+                    type
+                        + " is not expected here. The expected type is "
+                        + this.sequenceType,
+                    this.getMetadata()
+            );
+        }
+        if (this.errorCode.equals(ErrorCode.InvalidInstance)) {
+            return new InvalidInstanceException(
+                    "Invalid instance because of arity mismatch. The expected arity is "
+                        + this.sequenceType.getArity(),
+                    this.getMetadata()
+            );
+        }
+        return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
     }
 
     @Override
