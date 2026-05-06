@@ -1608,6 +1608,10 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             } else {
+                System.err.println("Unknown postfix child:");
+                System.err.println("Class: " + child.getClass().getName());
+                System.err.println("Text:  " + child.getText());
+                System.err.println("Tree:  " + child.toStringTree());
                 throw new OurBadException("Unrecognized postfix expression found.");
             }
         }
