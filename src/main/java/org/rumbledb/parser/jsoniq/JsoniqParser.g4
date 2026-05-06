@@ -14,9 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
+ * Authors: Matteo Agnoletto (EPMatt) and RumbleDB team.
  *
- * A parser grammar for XQuery 3.1 that includes the XQuery Scripting Extensions, and additional update features.
+ * A parser grammar for JSONiq 1.0/3.1 that includes the XQuery Scripting Extensions, and additional update features.
  * This file is based on the XQuery parser grammar from the xqdoc project:
  * https://github.com/xqdoc/xqdoc/blob/master/src/main/antlr4/org/xqdoc/XQueryParser.g4
  * 
@@ -24,17 +24,16 @@
  * 
  */
 
-parser grammar XQueryParser;
+parser grammar JsoniqParser;
 
 @header {
 // Java header
-package org.rumbledb.parser.xquery;
+package org.rumbledb.parser.jsoniq;
 }
 
 options {
-  tokenVocab=XQueryLexer;
+  tokenVocab=JsoniqLexer;
 }
-
 
 // Mostly taken from http://www.w3.org/TR/xquery/#id-grammar, with some
 // simplifications:
@@ -53,11 +52,11 @@ options {
 moduleAndThisIsIt       : module EOF;
 
 module : // replaced with the versionDecl production to match the JSONiq grammar
-         (KW_XQUERY KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
+         (KW_JSONIQ KW_VERSION vers=stringLiteral (KW_ENCODING encoding=stringLiteral)? SEMICOLON)?
          // TODO: subsequent optional main modules are currently ignored
-         (libraryModule | (main=mainModule (SEMICOLON versionDecl? mainModule)* )) ;
+         (libraryModule | main=mainModule) ;
 
-versionDecl: KW_XQUERY KW_VERSION version=stringLiteral
+versionDecl: KW_JSONIQ KW_VERSION version=stringLiteral
              (KW_ENCODING encoding=stringLiteral)?
              SEMICOLON ;
 
@@ -73,6 +72,7 @@ prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleI
 // added to match the JSONiq grammar
 annotatedDecl: functionDecl
               | varDecl
+              | typeDecl
               | contextItemDecl
               | optionDecl
               ;
@@ -163,6 +163,11 @@ annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating
 
 optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
 
+typeDecl                : KW_DECLARE KW_TYPE type_name=qname KW_AS (schema=schemaLanguage)? type_definition=exprSingle;
+
+schemaLanguage          : KW_JSOUND KW_COMPACT
+                        | KW_JSOUND KW_VERBOSE
+                        | KW_JSON KW_SCHEMA;
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
 
@@ -277,7 +282,9 @@ enclosedExpression: LBRACE expr? RBRACE ;
 
 orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
-andExpr: main_expr=comparisonExpr (KW_AND rhs+=comparisonExpr)* ;
+andExpr: main_expr=notExpr ( KW_AND rhs+=notExpr )*;
+
+notExpr: op+=Knot ? main_expr=comparisonExpr;
 
 comparisonExpr: main_expr=stringConcatExpr (  op+=compOp rhs+=stringConcatExpr )? ;
 
@@ -293,7 +300,9 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
@@ -330,6 +339,15 @@ validationMode: KW_LAX | KW_STRICT ;
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
 simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
+
+arrayLookup             : LBRACKET LBRACKET expr RBRACKET RBRACKET;
+
+arrayUnboxing           : LBRACKET RBRACKET;
+
+objectLookup            : DOT ( kw=keyword | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
+
+
+///////////////////////// XPath
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
@@ -373,8 +391,7 @@ wildcard: STAR            # allNames
         | ( BracedURILiteral STAR )# BracedURILiteral
         ;
 
-
-postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
+postfixExpr: main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList | lookup)* ;
 
 argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
@@ -390,6 +407,9 @@ keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | 
 arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
 
 primaryExpr: literal
+           | NullLiteral
+           | Ktrue
+           | Kfalse
            | varRef
            | parenthesizedExpr
            | contextItemExpr
@@ -415,7 +435,7 @@ varName: eqName ;
 
 parenthesizedExpr: LPAREN expr? RPAREN ;
 
-contextItemExpr: DOT ;
+contextItemExpr: DOUBLE_DOLLAR ;
 
 orderedExpr: KW_ORDERED enclosedExpression ;
 
@@ -454,13 +474,11 @@ dirAttributeValue    : dirAttributeValueApos
                      ;
 
 dirAttributeContentQuot : contentChar                     
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
 dirAttributeContentApos : contentChar                    
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
                         ;
@@ -520,14 +538,12 @@ namedFunctionRef: fn_name=functionName HASH arity=IntegerLiteral ;
 inlineFunctionExpr: annotations KW_FUNCTION LPAREN paramList? RPAREN (KW_AS return_type=sequenceType)? (LBRACE (fn_body=statementsAndOptionalExpr) RBRACE) ;
 
 // renamed from mapConstructor to objectConstructor to match the JSONiq grammar
-objectConstructor: KW_MAP LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE ;
+objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RBRACE | merge_operator+=LBRACE_VBAR expr RBRACE_VBAR ;
 
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
-pairConstructor: lhs=exprSingle (COLON | COLON_EQ) rhs=exprSingle ;
+pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
 
-arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
-
-squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
+arrayConstructor:  LBRACKET expr? RBRACKET;
 
 curlyArrayConstructor: KW_ARRAY enclosedExpression ;
 
@@ -559,7 +575,7 @@ singleType: item=itemType (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
+sequenceType: LPAREN RPAREN | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
 
 itemType: kindTest
         | (KW_ITEM LPAREN RPAREN)
@@ -568,6 +584,7 @@ itemType: kindTest
         | arrayTest
         // simplification compared to XQuery 3.1 grammar
         // removes the need for a separate atomicOrUnionType rule
+        | NullLiteral
         | eqName
         | parenthesizedItemTest ;
 
@@ -663,58 +680,6 @@ ncName: NCName | keyword ;
 // replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
 functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
 
-keyword: keywordOKForFunction | keywordNotOKForFunction ;
-
-keywordNotOKForFunction:
-         KW_ATTRIBUTE
-       | KW_COMMENT
-       | KW_DOCUMENT_NODE
-       | KW_ELEMENT
-       | KW_EMPTY_SEQUENCE
-       | KW_IF
-       | KW_ITEM
-       | KW_CONTEXT
-       | KW_NODE
-       | KW_PI
-       | KW_SCHEMA_ATTR
-       | KW_SCHEMA_ELEM
-       | KW_BINARY
-       | KW_TEXT
-       | KW_TYPESWITCH
-       | KW_SWITCH
-       | KW_NAMESPACE_NODE
-       | KW_TYPE
-       | KW_TUMBLING
-       | KW_TRY
-       | KW_CATCH
-       | KW_ONLY
-       | KW_WHEN
-       | KW_SLIDING
-       | KW_DECIMAL_FORMAT
-       | KW_WINDOW
-       | KW_MAP
-       | KW_END
-       | KW_ALLOWING
-       | KW_ARRAY
-       | DFPropertyName
-// MarkLogic JSON computed constructor
-       | KW_ARRAY_NODE
-       | KW_BOOLEAN_NODE
-       | KW_NULL_NODE
-       | KW_NUMBER_NODE
-       | KW_OBJECT_NODE
-// eXist-db update keywords
-       | KW_UPDATE
-       | KW_REPLACE
-       | KW_WITH
-       | KW_VALUE
-       | KW_INSERT
-       | KW_INTO
-       | KW_DELETE
-       | KW_NEXT
-       | KW_RENAME
-       ;
-
 keywordOKForFunction: KW_ANCESTOR
        | KW_ANCESTOR_OR_SELF
        | KW_AND
@@ -800,7 +765,10 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_VARIABLE
        | KW_VERSION
        | KW_WHERE
-       | KW_XQUERY
+       | KW_JSONIQ
+       | KW_TABLE
+       | KW_DELTA_FILE
+       | KW_ICEBERG_TABLE
        // XQuery Scripting Extension keywords
        | KW_BREAK
        | KW_LOOP
@@ -811,92 +779,19 @@ keywordOKForFunction: KW_ANCESTOR
        //  Updating expressions keywords
        | KW_COPY
        | KW_MODIFY
+       | KW_REPLACE
        | KW_APPEND
        | KW_JSON
        | KW_POSITION
        | KW_UPDATING
+       | KW_LAST
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
 
 uriLiteral: stringLiteral ;
 
-stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | EscapeQuot | stringContentQuot )* Quot ;
-stringLiteralApos : Apos (PredefinedEntityRef | CharRef | EscapeApos | stringContentApos )* Apos ;
-
-stringLiteral : stringLiteralQuot
-              | stringLiteralApos
-              ;
-
-stringContentQuot : ContentChar+
-                  | LBRACE expr? RBRACE?
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng                  
-                  | stringLiteralApos
-                  ;
-
-stringContentApos : ContentChar+
-                  | LBRACE expr? RBRACE?
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng                  
-                  | stringLiteralQuot
-                  ;
-
-// ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
-
-noQuotesNoBracesNoAmpNoLAng:
-                   ( keyword
-                   | ( IntegerLiteral
-                     | DecimalLiteral
-                     | DoubleLiteral
-                     //| stringLiteral
-                     | PRAGMA
-                     | EQUAL
-                     | HASH
-                     | NOT_EQUAL
-                     | LPAREN
-                     | RPAREN
-                     | LBRACKET
-                     | RBRACKET
-                     | STAR
-                     | PLUS
-                     | MINUS
-                     | TILDE
-                     | COMMA
-                     | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
-                     | MOD
-                     | DOT
-                     | GRAVE
-                     | DDOT
-                     | COLON
-                     | CARAT
-                     | COLON_EQ
-                     | SEMICOLON
-                     | SLASH
-                     | DSLASH
-                     | BACKSLASH
-                     | COMMENT
-                     | VBAR
-                     | RANGLE
-                     | QUESTION
-                     | AT
-                     | DOLLAR
-                     | BANG
-                     | FullQName
-                     | URIQualifiedName
-                     | NCNameWithLocalWildcard
-                     | NCNameWithPrefixWildcard
-                     | NCName
-                     | ContentChar
-                     )
-                   )+
- ;
+stringLiteral: STRING;
 
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
@@ -999,6 +894,13 @@ exprSimple              : quantifiedExpr
                         | replaceExpr
                         | transformExpr
                         | appendExpr
+                        | createCollectionExpr
+                        | truncateCollectionExpr
+                        | deleteIndexExpr
+                        | deleteSearchExpr
+                        | editCollectionExpr
+                        | insertIndexExpr
+                        | insertSearchExpr
                         ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
@@ -1020,6 +922,239 @@ transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_exp
 
 appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle KW_INTO array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( lookup )+; 
+updateLocator           : main_expr=postfixExpr;
 
 copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
+
+///////////////////////// Top Level Updating Expressions
+
+createCollectionExpr    : Kcreate Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
+
+deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=KW_LAST) num=exprSingle? ) Kfrom Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+deleteSearchExpr        : KW_DELETE content=exprSingle Kfrom Kcollection;
+
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=KW_LAST ) KW_INTO Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+insertSearchExpr        : KW_INSERT content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle KW_INTO Kcollection;
+
+truncateCollectionExpr  : (KW_DELETE | Ktruncate) Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+editCollectionExpr      : Kedit target=exprSingle KW_INTO content=exprSingle KW_IN Kcollection;
+
+
+
+
+///////////////////////// Types
+
+keyword                : KW_JSONIQ
+                        | KW_MODULE
+                        | KW_NAMESPACE
+                        | KW_AND
+                        | KW_CAST
+                        | KW_CASTABLE
+                        | KW_COLLATION
+                        | KW_CONTEXT
+                        | KW_DECLARE
+                        | KW_DEFAULT
+                        | KW_ELSE
+                        | KW_GREATEST
+                        | KW_INSTANCE
+                        | Kstatically
+                        | KW_IS
+                        | KW_ITEM
+                        | KW_LEAST
+                        | Knot
+                        | NullLiteral
+                        | KW_OF
+                        | KW_OR
+                        | KW_THEN
+                        | KW_TO
+                        | KW_TREAT
+                        | KW_TYPESWITCH
+                        | KW_VERSION
+                        | KW_SWITCH
+                        | KW_CASE
+                        | KW_TRY
+                        | KW_CATCH
+                        | KW_SOME
+                        | KW_EVERY
+                        | KW_SATISFIES
+                        | KW_STABLE
+                        | KW_VARIABLE
+                        | KW_ASCENDING
+                        | KW_DESCENDING
+                        | KW_EMPTY
+                        | KW_ALLOWING
+                        | KW_AS
+                        | KW_AT
+                        | KW_IN
+                        | KW_IF
+                        | KW_FOR
+                        | KW_LET
+                        | KW_WHERE
+                        | KW_GROUP
+                        | KW_BY
+                        | KW_COUNT
+                        | KW_RETURN
+                        | KW_TUMBLING
+                        | KW_WINDOW
+                        | KW_SLIDING
+                        | KW_START
+                        | KW_WHEN
+                        | KW_ONLY
+                        | KW_END
+                        | KW_PREVIOUS
+                        | KW_NEXT
+                        | KW_BASE_URI
+                        | KW_CONSTRUCTION
+                        | KW_PRESERVE
+                        | KW_STRIP
+                        | KW_BOUNDARY_SPACE
+                        | KW_ENCODING
+                        | KW_ORDERING
+                        | KW_ORDERED
+                        | KW_UNORDERED
+                        | KW_ORDER
+                        | KW_COPY_NS
+                        | KW_NO_PRESERVE
+                        | KW_INHERIT
+                        | KW_NO_INHERIT
+                        | KW_DECIMAL_FORMAT
+                        | KW_EXTERNAL
+                        | KW_UNORDERED
+                        | KW_FUNCTION
+                        | KW_OPTION
+                        | KW_EQ
+                        | KW_NE
+                        | KW_LT
+                        | KW_LE
+                        | KW_GT
+                        | KW_GE
+                        | Ktrue
+                        | Kfalse
+                        | KW_TYPE
+                        | KW_INSERT
+                        | KW_DELETE
+                        | KW_RENAME
+                        | KW_REPLACE
+                        | KW_APPEND
+                        | KW_COPY
+                        | KW_MODIFY
+                        | KW_INTO
+                        | KW_VALUE
+                        | KW_WITH
+                        | KW_POSITION
+                        | KW_VALIDATE
+                        | KW_BREAK
+                        | KW_LOOP
+                        | KW_CONTINUE
+                        | KW_EXIT
+                        | KW_RETURNING
+                        | KW_WHILE
+                        | KW_PI
+                        | KW_JSON
+                        | KW_TEXT
+                        | KW_UPDATING
+                        | Kcreate
+                        | Kcollection
+                        | KW_TABLE
+                        | KW_DELTA_FILE
+                        | KW_ICEBERG_TABLE
+                        | Ktruncate
+                        | Kfirst
+                        | KW_LAST
+                        | Kfrom
+                        | Kedit
+                        | Kbefore
+                        | Kafter
+                        | KW_IMPORT
+                        | KW_SCHEMA
+                        | Knamespace
+                        | KW_ELEMENT
+                        | SLASH
+                        | DSLASH
+                        | AT
+                        | KW_CHILD
+                        | KW_DESCENDANT
+                        | KW_ATTRIBUTE
+                        | KW_SELF
+                        | KW_DESCENDANT_OR_SELF
+                        | KW_FOLLOWING_SIBLING
+                        | KW_FOLLOWING
+                        | KW_PARENT
+                        | KW_ANCESTOR
+                        | KW_PRECEDING_SIBLING
+                        | KW_PRECEDING
+                        | KW_ANCESTOR_OR_SELF
+                        | KW_NODE
+                        | KW_BINARY
+                        | KW_DOCUMENT
+                        | KW_DOCUMENT_NODE
+                        | KW_NAMESPACE_NODE
+                        | KW_SCHEMA_ATTR
+                        | KW_SCHEMA_ELEM
+                        | Karray_node
+                        | Kboolean_node
+                        | Knull_node
+                        | Knumber_node
+                        | Kobject_node
+                        | KW_COMMENT
+                        | KW_MAP
+                        | KW_ARRAY
+                        | KW_UNION
+                        | KW_INTERSECT
+                        | KW_EXCEPT
+                        ;
+
+
+noQuotesNoBracesNoAmpNoLAng:
+                   ( keyword
+                   | ( IntegerLiteral
+                     | DecimalLiteral
+                     | DoubleLiteral
+                     //| stringLiteral
+                     | PRAGMA
+                     | EQUAL
+                     | HASH
+                     | NOT_EQUAL
+                     | LPAREN
+                     | RPAREN
+                     | LBRACKET
+                     | RBRACKET
+                     | STAR
+                     | PLUS
+                     | MINUS
+                     | TILDE
+                     | COMMA
+                     | ARROW
+                     | KW_NEXT
+                     | KW_PREVIOUS
+                     | MOD
+                     | DOT
+                     | GRAVE
+                     | DDOT
+                     | COLON
+                     | CARAT
+                     | COLON_EQ
+                     | SEMICOLON
+                     | SLASH
+                     | DSLASH
+                     | BACKSLASH
+                     | COMMENT
+                     | VBAR
+                     | RANGLE
+                     | QUESTION
+                     | AT
+                     | DOLLAR
+                     | BANG
+                     | FullQName
+                     | URIQualifiedName
+                     | NCNameWithLocalWildcard
+                     | NCNameWithPrefixWildcard
+                     | NCName
+                     | ContentChar
+                     )
+                   )+
+ ;
+
