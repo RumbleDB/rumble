@@ -241,7 +241,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             this.functionItem,
             this.staticContext,
             this.isPartialApplication ? ExecutionMode.LOCAL : calleeExecutionMode,
-            this.functionArguments
+            this.functionArguments,
+            false
         );
     }
 

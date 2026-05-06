@@ -40,7 +40,7 @@ public class VisitorHelpers {
 
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
         RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.isPrintIteratorTree() || conf.debug()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.err.println(sb);
@@ -58,7 +58,7 @@ public class VisitorHelpers {
 
     private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
+        if (conf.printInferredTypes() || conf.debug()) {
             printTree(module, conf);
         }
     }
@@ -66,34 +66,46 @@ public class VisitorHelpers {
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
         // Annotate recursive functions as such
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             System.err.println("***************************************");
             System.err.println("Function dependencies visitor");
             System.err.println("***************************************");
         }
         new FunctionDependenciesVisitor().visit(result, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         // Inline non-recursive functions
         if (conf.functionInlining()) {
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Function inlining");
                 System.err.println("***************************************");
             }
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 printTree(result, conf);
             }
         }
-        if (conf.isPrintIteratorTree()) {
+        // Apply tail call optimization
+        if (conf.tailCallOptimization()) {
+            if (conf.debug()) {
+                System.err.println("***************************************");
+                System.err.println("Tail call optimization");
+                System.err.println("***************************************");
+            }
+            result = (MainModule) new TailCallOptimizationVisitor().visit(result, null);
+            if (conf.debug()) {
+                printTree(result, conf);
+            }
+        }
+        if (conf.debug()) {
             System.err.println("***************************************");
             System.err.println("Projection pushdown");
             System.err.println("***************************************");
         }
         result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(result, conf);
         }
         return result;
@@ -196,78 +208,81 @@ public class VisitorHelpers {
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Parsing program");
                 System.err.println("***************");
             }
             MainModule mainModule = (MainModule) visitor.visit(main);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Pruning modules");
                 System.err.println("***************");
             }
             pruneModules(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("**********************");
                 System.err.println("Resolving dependencies");
                 System.err.println("**********************");
             }
             resolveDependencies(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating sequential classifications");
                 System.err.println("*************************************");
             }
             populateSequentialClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Applying type independent optimizations");
                 System.err.println("***************************************");
             }
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************");
                 System.err.println("Populating static context");
                 System.err.println("*************************");
             }
             populateStaticContext(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating expression classifications");
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("********************************");
                 System.err.println("Verify composability constraints");
                 System.err.println("********************************");
             }
             verifyComposabilityConstraints(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("**************");
                 System.err.println("Infering types");
                 System.err.println("**************");
             }
             inferTypes(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("************************");
                 System.err.println("Applying type dependent optimizations");
                 System.err.println("************************");
             }
             mainModule = applyTypeDependentOptimizations(mainModule);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Populating execution modes");
                 System.err.println("***************************************");
             }
             populateExecutionModes(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating expression classifications");
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                printTree(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -319,6 +334,9 @@ public class VisitorHelpers {
             populateExecutionModes(mainModule, configuration);
             // TODO populate expression classifications here?
             // populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                printTree(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -439,13 +457,13 @@ public class VisitorHelpers {
     }
 
     private static void populateExecutionModes(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         if (!conf.parallelExecution()) {
             LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
             visitor.visit(module, module.getStaticContext());
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 printTree(module, conf);
             }
             if (module.numberOfUnsetExecutionModes() > 0) {
@@ -460,7 +478,7 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
 
@@ -494,7 +512,7 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(module, module.getStaticContext());
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         if (module.numberOfUnsetExecutionModes() > 0) {
@@ -505,26 +523,26 @@ public class VisitorHelpers {
     }
 
     private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(module, module.getStaticContext());
 
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
     }
 
     private static void populateExpressionClassifications(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
 
         ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
         visitor.visit(module, ExpressionClassification.SIMPLE);
 
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
     }
@@ -533,14 +551,14 @@ public class VisitorHelpers {
             MainModule mainModule,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
 
         SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
         visitor.visit(mainModule, new DescendentSequentialProperties(false, false));
 
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
     }
@@ -550,14 +568,14 @@ public class VisitorHelpers {
             MainModule mainModule,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
 
         ComposabilityVisitor visitor = new ComposabilityVisitor();
         visitor.visit(mainModule, null);
 
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
     }

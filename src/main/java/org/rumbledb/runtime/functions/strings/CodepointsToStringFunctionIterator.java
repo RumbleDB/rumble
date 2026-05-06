@@ -28,7 +28,8 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import java.math.BigInteger;
+import org.rumbledb.runtime.functions.xml.XMLUtils;
+
 import java.util.List;
 
 public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -56,66 +57,28 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
                 if (!item.isInteger()) {
                     throw new UnexpectedTypeException("Integer item expected", argIter.getMetadata());
                 }
+                int codepoint;
 
-                BigInteger bi = item.getIntegerValue();
-
-                if (bi.signum() < 0 || bi.compareTo(BigInteger.valueOf(0x10FFFFL)) > 0) {
+                try {
+                    codepoint = item.getIntegerValue().intValueExact();
+                } catch (ArithmeticException e) {
                     throw new CodepointNotValidException(
-                            "Non-Unicode codepoint: " + bi + " (must be 0..0x10FFFF)",
-                            argIter.getMetadata()
+                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                            this.children.get(0).getMetadata()
                     );
                 }
-
-                int cp = bi.intValue();
-
-                if (!isValidCodePoint(cp, xmlVersion)) {
+                if (!XMLUtils.isValidCodePoint(codepoint, xmlVersion)) {
                     throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: "
-                                + cp
-                                + " (for XML "
-                                + (xmlVersion.equals("1.0") ? "1.0" : "1.1")
-                                + ")",
-                            argIter.getMetadata()
+                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                            this.children.get(0).getMetadata()
                     );
                 }
-
-                sb.appendCodePoint(cp);
+                sb.appendCodePoint(codepoint);
             }
         } finally {
             argIter.close();
         }
 
         return ItemFactory.getInstance().createStringItem(sb.toString());
-    }
-
-    private static boolean isPermittedControlCharacter(int codepoint, String xmlVersion) {
-        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
-        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
-
-        if (!(isC0 || isC1)) {
-            return false;
-        }
-
-        if (xmlVersion.equals("1.0")) {
-            return codepoint == 9 || codepoint == 10 || codepoint == 13;
-        } else {
-            return codepoint != 0;
-        }
-    }
-
-    private static boolean isValidCodePoint(int codepoint, String xmlVersion) {
-        if (codepoint < 0 || codepoint > 1114111)
-            return false;
-
-        boolean isC0 = (codepoint >= 0 && codepoint <= 31);
-        boolean isC1 = (codepoint >= 127 && codepoint <= 159);
-
-        if (isC0 || isC1) {
-            return isPermittedControlCharacter(codepoint, xmlVersion);
-        }
-
-        return (codepoint <= 55295)
-            || (57344 <= codepoint && codepoint <= 65533)
-            || (65536 <= codepoint);
     }
 }
