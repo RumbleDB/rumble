@@ -27,26 +27,44 @@
     <property name="parser.dir" value="${src.dir}/parser/jsoniq"/>
     <property name="antlr.jar" value="./lib/antlr-4.13.1-complete.jar"/>
 
-
+    <!-- Clean the ANTLR generated files for the parser-->
     <target name="clean-parser">
-        <delete file="/org/rumbledb/parser/jsoniq/Jsoniq.tokens"/>
-        <delete file="/org/rumbledb/parser/jsoniq/JsoniqLexer.java"/>
-        <delete file="/org/rumbledb/parser/jsoniq/JsoniqParser.java"/>
-        <delete file="/org/rumbledb/parser/jsoniq/JsoniqBaseVisitor.java"/>
-        <delete file="/org/rumbledb/parser/jsoniq/JsoniqVisitor.java"/>
-        <delete file="/org/rumbledb/parser/jsoniq/JsoniqLexer.tokens"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqParser.interp"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqParser.java"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqParser.tokens"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqParserVisitor.java"/>
     </target>
-
+    
+    <!-- Clean the ANTLR generated files for the lexer-->
+    <target name="clean-lexer">
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqLexer.interp"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqLexer.java"/>
+        <delete file="/org/rumbledb/parser/Jsoniq/JsoniqLexer.tokens"/>
+    </target>
+    
+    <!-- Generate the parser class, from the parser grammar file -->
     <target name="generate-parser">
-        <echo message="ANTLR4 ${parser.dir}/Jsoniq.g4" level="info"/>
+        <echo message="ANTLR4 ${parser.dir}/JsoniqParser.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="${parser.dir}/Jsoniq.g4"/>
+            <arg value="${parser.dir}/JsoniqParser.g4"/>
             <arg value="-o"/>
-            <!-- <arg value="${parser.dir}" /> -->
             <arg value="."/>   <!-- put results in *.g4's directory -->
             <arg value="-no-listener"/>
             <arg value="-visitor"/>
+        </java>
+    </target>
+    
+    <!-- Generate the lexer class, from the lexer grammar file -->
+    <target name="generate-lexer">
+        <echo message="ANTLR4 ${parser.dir}/JsoniqLexer.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/JsoniqLexer.g4"/>
+            <arg value="-o"/>
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
         </java>
     </target>
 
