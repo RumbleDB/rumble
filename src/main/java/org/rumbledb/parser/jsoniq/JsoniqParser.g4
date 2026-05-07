@@ -827,20 +827,20 @@ keywordOKForFunction: KW_ANCESTOR
                         | KW_INSERT
                         | KW_DELETE
                         | KW_RENAME
+                        | KW_TRUNCATE
+                        | KW_EDIT
                         | KW_INTO
                         | KW_VALUE
+                        | KW_FROM
                         | KW_WITH
-                        | Kbefore
-                        | Kafter
-                        | Kfirst
-                        | Kcreate
-                        | Kcollection
+                        | KW_BEFORE
+                        | KW_AFTER
+                        | KW_FIRST
+                        | KW_CREATE
+                        | KW_COLLECTION
                         | KW_TABLE
                         | KW_DELTA_FILE
                         | KW_ICEBERG_TABLE
-                        | Ktruncate
-                        | Kfrom
-                        | Kedit
                         | KW_NEXT
                         | KW_PREVIOUS
        ;
@@ -850,6 +850,58 @@ keywordOKForFunction: KW_ANCESTOR
 uriLiteral: stringLiteral ;
 
 stringLiteral: STRING;
+
+// ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
+
+noQuotesNoBracesNoAmpNoLAng:
+                   ( keyword
+                   | ( IntegerLiteral
+                     | DecimalLiteral
+                     | DoubleLiteral
+                     //| stringLiteral
+                     | PRAGMA
+                     | EQUAL
+                     | HASH
+                     | NOT_EQUAL
+                     | LPAREN
+                     | RPAREN
+                     | LBRACKET
+                     | RBRACKET
+                     | STAR
+                     | PLUS
+                     | MINUS
+                     | TILDE
+                     | COMMA
+                     | ARROW
+                     | KW_NEXT
+                     | KW_PREVIOUS
+                     | MOD
+                     | DOT
+                     | GRAVE
+                     | DDOT
+                     | COLON
+                     | CARAT
+                     | COLON_EQ
+                     | SEMICOLON
+                     | SLASH
+                     | DSLASH
+                     | BACKSLASH
+                     | COMMENT
+                     | VBAR
+                     | RANGLE
+                     | QUESTION
+                     | AT
+                     | DOLLAR
+                     | BANG
+                     | FullQName
+                     | URIQualifiedName
+                     | NCNameWithLocalWildcard
+                     | NCNameWithPrefixWildcard
+                     | NCName
+                     | ContentChar
+                     )
+                   )+
+ ;
 
 // XQuery Scripting Extension /////////////////////////////////////////////////////////////
 // the following section contains rules for the XQuery Scripting Extension Proposal
@@ -986,74 +1038,16 @@ copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
 
 ///////////////////////// Top Level Updating Expressions
 
-createCollectionExpr    : Kcreate Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
+createCollectionExpr    : KW_CREATE KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
 
-deleteIndexExpr         : KW_DELETE ( (first=Kfirst | last=KW_LAST) num=exprSingle? ) Kfrom Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+deleteIndexExpr         : KW_DELETE ( (first=KW_FIRST | last=KW_LAST) num=exprSingle? ) KW_FROM KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
 
-deleteSearchExpr        : KW_DELETE content=exprSingle Kfrom Kcollection;
+deleteSearchExpr        : KW_DELETE content=exprSingle KW_FROM KW_COLLECTION;
 
-insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=Kfirst | last=KW_LAST ) KW_INTO Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=KW_FIRST | last=KW_LAST ) KW_INTO KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
 
-insertSearchExpr        : KW_INSERT content=exprSingle (before=Kbefore | after=Kafter) target=exprSingle KW_INTO Kcollection;
+insertSearchExpr        : KW_INSERT content=exprSingle (before=KW_BEFORE | after=KW_AFTER) target=exprSingle KW_INTO KW_COLLECTION;
 
-truncateCollectionExpr  : (KW_DELETE | Ktruncate) Kcollection collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+truncateCollectionExpr  : (KW_DELETE | KW_TRUNCATE) KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
 
-editCollectionExpr      : Kedit target=exprSingle KW_INTO content=exprSingle KW_IN Kcollection;
-
-
-
-
-///////////////////////// Types
-
-
-
-noQuotesNoBracesNoAmpNoLAng:
-                   ( keyword
-                   | ( IntegerLiteral
-                     | DecimalLiteral
-                     | DoubleLiteral
-                     //| stringLiteral
-                     | PRAGMA
-                     | EQUAL
-                     | HASH
-                     | NOT_EQUAL
-                     | LPAREN
-                     | RPAREN
-                     | LBRACKET
-                     | RBRACKET
-                     | STAR
-                     | PLUS
-                     | MINUS
-                     | TILDE
-                     | COMMA
-                     | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
-                     | MOD
-                     | DOT
-                     | GRAVE
-                     | DDOT
-                     | COLON
-                     | CARAT
-                     | COLON_EQ
-                     | SEMICOLON
-                     | SLASH
-                     | DSLASH
-                     | BACKSLASH
-                     | COMMENT
-                     | VBAR
-                     | RANGLE
-                     | QUESTION
-                     | AT
-                     | DOLLAR
-                     | BANG
-                     | FullQName
-                     | URIQualifiedName
-                     | NCNameWithLocalWildcard
-                     | NCNameWithPrefixWildcard
-                     | NCName
-                     | ContentChar
-                     )
-                   )+
- ;
-
+editCollectionExpr      : KW_EDIT target=exprSingle KW_INTO content=exprSingle KW_IN KW_COLLECTION;
