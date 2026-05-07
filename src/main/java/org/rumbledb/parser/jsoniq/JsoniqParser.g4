@@ -543,8 +543,6 @@ objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RB
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
 
-arrayConstructor:  squareArrayConstructor | curlyArrayConstructor ;
-
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
 squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
@@ -877,8 +875,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | TILDE
                      | COMMA
                      | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
                      | MOD
                      | DOT
                      | GRAVE
