@@ -697,9 +697,6 @@ keywordNotOKForFunction:
        | KW_ALLOWING
        | KW_ARRAY
        | DFPropertyName
-// eXist-db update keywords
-       | KW_UPDATE
-       | KW_NEXT
        ;
 
 keywordOKForFunction: KW_ANCESTOR
