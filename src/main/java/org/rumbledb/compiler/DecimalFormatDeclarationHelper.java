@@ -5,7 +5,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.DecimalFormatPropertyLengthException;
+import org.rumbledb.exceptions.DecimalFormatPropertyInvalidValueException;
 import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.DecimalFormatPropertyConflictException;
@@ -149,7 +149,7 @@ public final class DecimalFormatDeclarationHelper {
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
         if (value == null || value.codePointCount(0, value.length()) != 1) {
-            throw new DecimalFormatPropertyLengthException(
+            throw new DecimalFormatPropertyInvalidValueException(
                     "Decimal format property '" + propertyName + "' must be exactly one character.",
                     metadata
             );
