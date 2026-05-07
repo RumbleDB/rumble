@@ -347,6 +347,8 @@ KW_AFTER                  : 'after';
 
 KW_BEFORE                 : 'before';
 
+KW_EMPTY_SEQUENCE                 : 'empty-sequence';
+
 
 ///////////////////////// XPath
 KW_IMPORT                 : 'import';
