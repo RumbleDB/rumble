@@ -276,7 +276,6 @@ KW_JSON:               'json';
 KW_POSITION:           'position';
 KW_UPDATING:           'updating';
 
-KW_EMPTY_SEQUENCE:     'empty-sequence';
 KW_LAST:               'last';
 KW_TRUNCATE:           'truncate';
 KW_EDIT:               'edit';
