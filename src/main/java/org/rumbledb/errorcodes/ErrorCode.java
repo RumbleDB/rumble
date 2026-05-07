@@ -140,7 +140,9 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
     DirectElementConstructorTagMismatchErrorCode("XQST0118"),
-    InvalidDecimalFormatPropertyConflict("XQST0098"),
+    DecimalFormatPropertyLengthErrorCode("XQST0097"),
+    DecimalFormatPropertyConflictErrorCode("XQST0098"),
+    DuplicateDecimalFormatPropertyErrorCode("XQST0114"),
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),

@@ -5,8 +5,10 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.DecimalFormatPropertyLengthException;
+import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidDecimalFormatPropertyConflict;
+import org.rumbledb.exceptions.DecimalFormatPropertyConflictException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 
@@ -55,7 +57,7 @@ public final class DecimalFormatDeclarationHelper {
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
-                throw new SemanticException(
+                throw new DuplicateDecimalFormatPropertyException(
                         "Decimal format property defined more than once: " + propertyName,
                         metadata
                 );
@@ -147,7 +149,7 @@ public final class DecimalFormatDeclarationHelper {
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
         if (value == null || value.codePointCount(0, value.length()) != 1) {
-            throw new SemanticException(
+            throw new DecimalFormatPropertyLengthException(
                     "Decimal format property '" + propertyName + "' must be exactly one character.",
                     metadata
             );
@@ -162,7 +164,7 @@ public final class DecimalFormatDeclarationHelper {
             ExceptionMetadata metadata
     ) {
         if (!characters.add(codePoint)) {
-            throw new InvalidDecimalFormatPropertyConflict(
+            throw new DecimalFormatPropertyConflictException(
                     "Decimal format contains duplicate picture-string character at property: " + propertyName,
                     metadata
             );

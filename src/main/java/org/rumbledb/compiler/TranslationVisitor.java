@@ -1324,7 +1324,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) { // TODO KEEP
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1332,7 +1332,7 @@ public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
                             )
                         );
                     } else {
-                        throw new ParsingException(
+                        throw new ParsingException( // TODO KEEP
                                 "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
                                 createMetadataFromContext(ctx)
                         );

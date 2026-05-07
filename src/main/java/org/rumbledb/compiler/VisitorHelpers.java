@@ -181,6 +181,8 @@ public class VisitorHelpers {
             // overwrite default version if query specifies jsoniq version
             if (query.startsWith("jsoniq version \"3.1\"")) {
                 configuration.setQueryLanguage("jsoniq31");
+            } else if (query.startsWith("jsoniq version \"4.0\"")) {
+                configuration.setQueryLanguage("jsoniq40");
             } else if (query.startsWith("jsoniq version \"1.0\"")) {
                 configuration.setQueryLanguage("jsoniq10");
             }
@@ -366,6 +368,8 @@ public class VisitorHelpers {
             // overwrite default version if query specifies jsoniq version
             if (query.startsWith("jsoniq version \"3.1\"")) {
                 configuration.setQueryLanguage("jsoniq31");
+            } else if (query.startsWith("jsoniq version \"4.0\"")) {
+                configuration.setQueryLanguage("jsoniq40");
             } else if (query.startsWith("jsoniq version \"1.0\"")) {
                 configuration.setQueryLanguage("jsoniq10");
             }

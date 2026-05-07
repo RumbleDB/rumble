@@ -519,7 +519,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         if (this.arguments.containsKey("default-language")) {
             this.queryLanguage = this.arguments.get("default-language");
         } else {
-            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future // TODO KEEP
         }
 
         if (this.arguments.containsKey("static-base-uri")) {
@@ -1085,7 +1085,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     /**
      * Sets the version of the query language to use.
-     * Possible values: jsoniq10, jsoniq31, xquery30, xquery31.
+     * Possible values: jsoniq10, jsoniq40, jsoniq31, xquery30, xquery31.
      *
      * @param version the version of the query language to use.
      */
