@@ -697,12 +697,6 @@ keywordNotOKForFunction:
        | KW_ALLOWING
        | KW_ARRAY
        | DFPropertyName
-// MarkLogic JSON computed constructor
-       | KW_ARRAY_NODE
-       | KW_BOOLEAN_NODE
-       | KW_NULL_NODE
-       | KW_NUMBER_NODE
-       | KW_OBJECT_NODE
 // eXist-db update keywords
        | KW_UPDATE
        | KW_REPLACE

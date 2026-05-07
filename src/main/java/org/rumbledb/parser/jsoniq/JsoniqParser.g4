@@ -680,6 +680,42 @@ ncName: NCName | keyword ;
 // replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
 functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
 
+keyword: keywordOKForFunction | keywordNotOKForFunction ;
+
+keywordNotOKForFunction:
+         KW_ATTRIBUTE
+       | KW_COMMENT
+       | KW_DOCUMENT_NODE
+       | KW_ELEMENT
+       | KW_EMPTY_SEQUENCE
+       | KW_IF
+       | KW_ITEM
+       | KW_CONTEXT
+       | KW_NODE
+       | KW_PI
+       | KW_SCHEMA_ATTR
+       | KW_SCHEMA_ELEM
+       | KW_BINARY
+       | KW_TEXT
+       | KW_TYPESWITCH
+       | KW_SWITCH
+       | KW_NAMESPACE_NODE
+       | KW_TYPE
+       | KW_TUMBLING
+       | KW_TRY
+       | KW_CATCH
+       | KW_ONLY
+       | KW_WHEN
+       | KW_SLIDING
+       | KW_DECIMAL_FORMAT
+       | KW_WINDOW
+       | KW_MAP
+       | KW_END
+       | KW_ALLOWING
+       | KW_ARRAY
+       | DFPropertyName
+                        ;
+
 keywordOKForFunction: KW_ANCESTOR
        | KW_ANCESTOR_OR_SELF
        | KW_AND
@@ -766,9 +802,6 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_VERSION
        | KW_WHERE
        | KW_JSONIQ
-       | KW_TABLE
-       | KW_DELTA_FILE
-       | KW_ICEBERG_TABLE
        // XQuery Scripting Extension keywords
        | KW_BREAK
        | KW_LOOP
@@ -785,6 +818,31 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_POSITION
        | KW_UPDATING
        | KW_LAST
+       // JSONiq specific
+                        | NullLiteral
+                        | Ktrue
+                        | Kfalse
+                        | Knot
+                        | Kstatically
+                        | KW_INSERT
+                        | KW_DELETE
+                        | KW_RENAME
+                        | KW_INTO
+                        | KW_VALUE
+                        | KW_WITH
+                        | Kbefore
+                        | Kafter
+                        | Kfirst
+                        | Kcreate
+                        | Kcollection
+                        | KW_TABLE
+                        | KW_DELTA_FILE
+                        | KW_ICEBERG_TABLE
+                        | Ktruncate
+                        | Kfrom
+                        | Kedit
+                        | KW_NEXT
+                        | KW_PREVIOUS
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
@@ -947,165 +1005,6 @@ editCollectionExpr      : Kedit target=exprSingle KW_INTO content=exprSingle KW_
 
 ///////////////////////// Types
 
-keyword                : KW_JSONIQ
-                        | KW_MODULE
-                        | KW_NAMESPACE
-                        | KW_AND
-                        | KW_CAST
-                        | KW_CASTABLE
-                        | KW_COLLATION
-                        | KW_CONTEXT
-                        | KW_DECLARE
-                        | KW_DEFAULT
-                        | KW_ELSE
-                        | KW_GREATEST
-                        | KW_INSTANCE
-                        | Kstatically
-                        | KW_IS
-                        | KW_ITEM
-                        | KW_LEAST
-                        | Knot
-                        | NullLiteral
-                        | KW_OF
-                        | KW_OR
-                        | KW_THEN
-                        | KW_TO
-                        | KW_TREAT
-                        | KW_TYPESWITCH
-                        | KW_VERSION
-                        | KW_SWITCH
-                        | KW_CASE
-                        | KW_TRY
-                        | KW_CATCH
-                        | KW_SOME
-                        | KW_EVERY
-                        | KW_SATISFIES
-                        | KW_STABLE
-                        | KW_VARIABLE
-                        | KW_ASCENDING
-                        | KW_DESCENDING
-                        | KW_EMPTY
-                        | KW_ALLOWING
-                        | KW_AS
-                        | KW_AT
-                        | KW_IN
-                        | KW_IF
-                        | KW_FOR
-                        | KW_LET
-                        | KW_WHERE
-                        | KW_GROUP
-                        | KW_BY
-                        | KW_COUNT
-                        | KW_RETURN
-                        | KW_TUMBLING
-                        | KW_WINDOW
-                        | KW_SLIDING
-                        | KW_START
-                        | KW_WHEN
-                        | KW_ONLY
-                        | KW_END
-                        | KW_PREVIOUS
-                        | KW_NEXT
-                        | KW_BASE_URI
-                        | KW_CONSTRUCTION
-                        | KW_PRESERVE
-                        | KW_STRIP
-                        | KW_BOUNDARY_SPACE
-                        | KW_ENCODING
-                        | KW_ORDERING
-                        | KW_ORDERED
-                        | KW_UNORDERED
-                        | KW_ORDER
-                        | KW_COPY_NS
-                        | KW_NO_PRESERVE
-                        | KW_INHERIT
-                        | KW_NO_INHERIT
-                        | KW_DECIMAL_FORMAT
-                        | KW_EXTERNAL
-                        | KW_UNORDERED
-                        | KW_FUNCTION
-                        | KW_OPTION
-                        | KW_EQ
-                        | KW_NE
-                        | KW_LT
-                        | KW_LE
-                        | KW_GT
-                        | KW_GE
-                        | Ktrue
-                        | Kfalse
-                        | KW_TYPE
-                        | KW_INSERT
-                        | KW_DELETE
-                        | KW_RENAME
-                        | KW_REPLACE
-                        | KW_APPEND
-                        | KW_COPY
-                        | KW_MODIFY
-                        | KW_INTO
-                        | KW_VALUE
-                        | KW_WITH
-                        | KW_POSITION
-                        | KW_VALIDATE
-                        | KW_BREAK
-                        | KW_LOOP
-                        | KW_CONTINUE
-                        | KW_EXIT
-                        | KW_RETURNING
-                        | KW_WHILE
-                        | KW_PI
-                        | KW_JSON
-                        | KW_TEXT
-                        | KW_UPDATING
-                        | Kcreate
-                        | Kcollection
-                        | KW_TABLE
-                        | KW_DELTA_FILE
-                        | KW_ICEBERG_TABLE
-                        | Ktruncate
-                        | Kfirst
-                        | KW_LAST
-                        | Kfrom
-                        | Kedit
-                        | Kbefore
-                        | Kafter
-                        | KW_IMPORT
-                        | KW_SCHEMA
-                        | Knamespace
-                        | KW_ELEMENT
-                        | SLASH
-                        | DSLASH
-                        | AT
-                        | KW_CHILD
-                        | KW_DESCENDANT
-                        | KW_ATTRIBUTE
-                        | KW_SELF
-                        | KW_DESCENDANT_OR_SELF
-                        | KW_FOLLOWING_SIBLING
-                        | KW_FOLLOWING
-                        | KW_PARENT
-                        | KW_ANCESTOR
-                        | KW_PRECEDING_SIBLING
-                        | KW_PRECEDING
-                        | KW_ANCESTOR_OR_SELF
-                        | KW_NODE
-                        | KW_BINARY
-                        | KW_DOCUMENT
-                        | KW_DOCUMENT_NODE
-                        | KW_NAMESPACE_NODE
-                        | KW_SCHEMA_ATTR
-                        | KW_SCHEMA_ELEM
-                        | Karray_node
-                        | Kboolean_node
-                        | Knull_node
-                        | Knumber_node
-                        | Kobject_node
-                        | KW_COMMENT
-                        | KW_MAP
-                        | KW_ARRAY
-                        | KW_UNION
-                        | KW_INTERSECT
-                        | KW_EXCEPT
-                        ;
 
 
 noQuotesNoBracesNoAmpNoLAng:
