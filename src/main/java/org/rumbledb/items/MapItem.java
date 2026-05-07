@@ -101,10 +101,10 @@ public class MapItem implements Item {
 
     private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
         this.storage.put(key, valueSequence);
-        if (allKeysString && !key.isString()) {
+        if (this.allKeysString && !key.isString()) {
             this.allKeysString = false;
         }
-        if (allValuesSingletons && valueSequence.size() != 1) {
+        if (this.allValuesSingletons && valueSequence.size() != 1) {
             this.allValuesSingletons = false;
         }
     }

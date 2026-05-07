@@ -25,44 +25,42 @@ public class TreatAsClosure implements Function<Item, Boolean> {
     @Override
     public Boolean call(Item input) throws Exception {
         if (!InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            input.getDynamicType().toString()
-                                + " cannot be treated as type "
-                                + this.sequenceType.getItemType().getIdentifierString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.metadata
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            input.getDynamicType().toString()
-                                + " is not expected here. The expected type is "
-                                + this.sequenceType.getItemType().getIdentifierString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.metadata
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
+            if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
+                throw new TreatException(
+                        input.getDynamicType().toString()
+                            + " cannot be treated as type "
+                            + this.sequenceType.getItemType().getIdentifierString()
+                            + this.sequenceType.getArity().getSymbol(),
+                        this.metadata
+                );
             }
+            if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
+                throw new UnexpectedTypeException(
+                        input.getDynamicType().toString()
+                            + " is not expected here. The expected type is "
+                            + this.sequenceType.getItemType().getIdentifierString()
+                            + this.sequenceType.getArity().getSymbol(),
+                        this.metadata
+                );
+            }
+            throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
         }
         if (this.sequenceType.isEmptySequence()) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            input.getDynamicType().toString()
-                                + " cannot be treated as type empty-sequence()",
-                            this.metadata
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            input.getDynamicType().toString()
-                                + " is not expected here. The expected type is empty-sequence()",
-                            this.metadata
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
+            if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
+                throw new TreatException(
+                        input.getDynamicType().toString()
+                            + " cannot be treated as type empty-sequence()",
+                        this.metadata
+                );
             }
+            if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
+                throw new UnexpectedTypeException(
+                        input.getDynamicType().toString()
+                            + " is not expected here. The expected type is empty-sequence()",
+                        this.metadata
+                );
+            }
+            throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
         }
         return true;
     }

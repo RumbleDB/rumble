@@ -9,4 +9,4 @@ parse-json(()),
 parse-json("{\"foo\":\"bar\"}"),
 parse-json(unparsed-text("../../../queries/SpreadOverMultipleLinesDocument.json")),
 (unparsed-text-lines("../../../queries/denormalized.json")!parse-json($$))[1],
-try { parse-json("{\"foo\":\"bar}") } catch XPST0003 { () }
+try { parse-json("{\"foo\":\"bar}") } catch FOJS0001 { () }
