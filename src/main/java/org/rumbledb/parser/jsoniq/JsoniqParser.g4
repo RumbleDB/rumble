@@ -284,7 +284,7 @@ orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
 andExpr: main_expr=notExpr ( KW_AND rhs+=notExpr )*;
 
-notExpr: op+=Knot ? main_expr=comparisonExpr;
+notExpr: op+=KW_NOT ? main_expr=comparisonExpr;
 
 comparisonExpr: main_expr=stringConcatExpr (  op+=compOp rhs+=stringConcatExpr )? ;
 
@@ -302,7 +302,7 @@ intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)
 
 instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
-isStaticallyExpr        : main_expr=treatExpr ( KW_IS Kstatically seq=sequenceType)? ;
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS KW_STATICALLY seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
@@ -407,9 +407,9 @@ keySpecifier: (nc=ncName | in=IntegerLiteral | pe=parenthesizedExpr | wc=STAR | 
 arrowFunctionSpecifier: eqName | varRef | parenthesizedExpr ;
 
 primaryExpr: literal
-           | NullLiteral
-           | Ktrue
-           | Kfalse
+           | KW_NULL
+           | KW_TRUE
+           | KW_FALSE
            | varRef
            | parenthesizedExpr
            | contextItemExpr
@@ -584,7 +584,7 @@ itemType: kindTest
         | arrayTest
         // simplification compared to XQuery 3.1 grammar
         // removes the need for a separate atomicOrUnionType rule
-        | NullLiteral
+        | KW_NULL
         | eqName
         | parenthesizedItemTest ;
 
@@ -819,11 +819,11 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_UPDATING
        | KW_LAST
        // JSONiq specific
-                        | NullLiteral
-                        | Ktrue
-                        | Kfalse
-                        | Knot
-                        | Kstatically
+                        | KW_NULL
+                        | KW_TRUE
+                        | KW_FALSE
+                        | KW_NOT
+                        | KW_STATICALLY
                         | KW_INSERT
                         | KW_DELETE
                         | KW_RENAME

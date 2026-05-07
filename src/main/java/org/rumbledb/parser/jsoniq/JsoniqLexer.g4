@@ -218,7 +218,7 @@ KW_ARRAY : 'array';
 
 KW_AND                    : 'and';
 
-Knot                    : 'not' ;
+KW_NOT                    : 'not' ;
 
 KW_TO                     : 'to' ;
 
@@ -226,7 +226,7 @@ KW_INSTANCE               : 'instance' ;
 
 KW_OF                     : 'of' ;
 
-Kstatically             : 'statically' ;
+KW_STATICALLY             : 'statically' ;
 
 KW_IS                     : 'is' ;
 
@@ -276,9 +276,9 @@ KW_ELEMENT             : 'element';
 
 KW_SCHEMA             : 'schema';
 
-Ktrue                   : 'true';
+KW_TRUE                   : 'true';
 
-Kfalse                  : 'false';
+KW_FALSE                  : 'false';
 
 KW_TYPE                   : 'type';
 
@@ -402,7 +402,7 @@ fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
 fragment HEX            : [0-9a-fA-F];
 
-NullLiteral             : 'null';
+KW_NULL             : 'null';
 
 IntegerLiteral          : Digits ;
 
