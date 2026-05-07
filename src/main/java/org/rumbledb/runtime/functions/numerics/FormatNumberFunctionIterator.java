@@ -15,6 +15,8 @@ import java.util.Map;
 
 public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    private static final long serialVersionUID = 1L;
+
     public FormatNumberFunctionIterator(
             List<RuntimeIterator> children,
             RuntimeStaticContext staticContext
@@ -33,13 +35,13 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
         if (valueItem == null) {
             return ItemFactory.getInstance()
                 .createStringItem(
-                    staticContext.getDefaultDecimalFormat().getNanSymbol()
+                    this.staticContext.getDefaultDecimalFormat().getNanSymbol()
                 );
         }
 
-        DecimalFormatDefinition defaultDecimalFormat = staticContext.getDefaultDecimalFormat();
-        Map<Name, DecimalFormatDefinition> decimalFormats = staticContext.getDecimalFormats();
-        Map<String, String> namespaces = staticContext.getStaticallyKnownNamespaces();
+        DecimalFormatDefinition defaultDecimalFormat = this.staticContext.getDefaultDecimalFormat();
+        Map<Name, DecimalFormatDefinition> decimalFormats = this.staticContext.getDecimalFormats();
+        Map<String, String> namespaces = this.staticContext.getStaticallyKnownNamespaces();
 
         DecimalFormatDefinition decimalFormat = defaultDecimalFormat;
         if (decimalFormatNameItem != null) {

@@ -169,7 +169,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         arguments.add(memberIterator);
         RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
-            staticContext,
+            this.staticContext,
             ExecutionMode.LOCAL,
             arguments,
             false
