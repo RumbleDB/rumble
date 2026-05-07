@@ -323,9 +323,9 @@ KW_JSON                   : 'json';
 
 KW_UPDATING               :  'updating';
 
-Kcreate                 : 'create';
+KW_CREATE                 : 'create';
 
-Kcollection             : 'collection';
+KW_COLLECTION             : 'collection';
 
 KW_TABLE                  : 'table';
 
@@ -333,19 +333,19 @@ KW_DELTA_FILE              : 'delta-file';
 
 KW_ICEBERG_TABLE           : 'iceberg-table';
 
-Ktruncate               : 'truncate';
+KW_TRUNCATE               : 'truncate';
 
-Kfirst                  : 'first';
+KW_FIRST                  : 'first';
 
 KW_LAST                   : 'last';
 
-Kfrom                   : 'from';
+KW_FROM                   : 'from';
 
-Kedit                   : 'edit';
+KW_EDIT                   : 'edit';
 
-Kafter                  : 'after';
+KW_AFTER                  : 'after';
 
-Kbefore                 : 'before';
+KW_BEFORE                 : 'before';
 
 
 ///////////////////////// XPath
