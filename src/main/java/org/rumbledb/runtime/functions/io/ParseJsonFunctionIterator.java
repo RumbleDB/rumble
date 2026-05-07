@@ -51,18 +51,18 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (stringItem == null) {
             return null;
         }
-        boolean isJSONiq = getConfiguration().getQueryLanguage().equals("jsoniq10");
-        JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, isJSONiq, getMetadata());
+        boolean isJSONiq10 = getConfiguration().getQueryLanguage().equals("jsoniq10");
+        JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, isJSONiq10, getMetadata());
         if (optionsItem == null) {
             try {
                 JsonReader object = new JsonReader(new StringReader(stringItem.getStringValue()));
-                return ItemParser.getItemFromObject(object, isJSONiq, options.getNumberFormat(), getMetadata());
+                return ItemParser.getItemFromObject(object, isJSONiq10, options.getNumberFormat(), getMetadata());
             } catch (Exception e) {
                 return ItemParser.getItemFromJSONString(
                     stringItem.getStringValue(),
                     options,
                     staticContext.getConfiguration().getXmlVersion(),
-                    isJSONiq,
+                    isJSONiq10,
                     getMetadata()
                 );
             }
@@ -71,7 +71,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             stringItem.getStringValue(),
             options,
             staticContext.getConfiguration().getXmlVersion(),
-            isJSONiq,
+            isJSONiq10,
             getMetadata()
         );
     }

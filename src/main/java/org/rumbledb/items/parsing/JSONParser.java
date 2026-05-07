@@ -63,14 +63,14 @@ public final class JSONParser {
     private final ExceptionMetadata metadata;
     private final JSONParsingOptions options;
     private final String xmlVersion;
-    private final boolean isJSONiq;
+    private final boolean isJSONiq10;
     private int position;
 
     private JSONParser(
             String input,
             JSONParsingOptions options,
             String xmlVersion,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
         if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
@@ -78,11 +78,11 @@ public final class JSONParser {
         } else {
             this.input = input;
         }
-        this.options = options == null ? JSONParsingOptions.defaultInstance(isJSONiq) : options;
+        this.options = options == null ? JSONParsingOptions.defaultInstance(isJSONiq10) : options;
         this.metadata = metadata;
         this.position = 0;
         this.xmlVersion = xmlVersion;
-        this.isJSONiq = isJSONiq;
+        this.isJSONiq10 = isJSONiq10;
     }
 
     // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
@@ -90,13 +90,13 @@ public final class JSONParser {
             String jsonText,
             JSONParsingOptions options,
             String xmlVersion,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
         if (jsonText == null) {
             return null;
         }
-        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, isJSONiq, metadata);
+        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, isJSONiq10, metadata);
         return parser.parseDocument();
     }
 
@@ -153,7 +153,7 @@ public final class JSONParser {
                 return ItemFactory.getInstance().createBooleanItem(false);
             case 'n':
                 parseLiteral("null");
-                if (isJSONiq)
+                if (isJSONiq10)
                     return ItemFactory.getInstance().createNullItem();
                 return null;
             default:
