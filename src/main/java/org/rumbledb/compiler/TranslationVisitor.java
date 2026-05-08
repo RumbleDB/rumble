@@ -146,6 +146,7 @@ import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
+import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
@@ -1900,10 +1901,50 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        if (ctx.expr() == null) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.SquareArrayConstructorContext) {
+            JsoniqParser.SquareArrayConstructorContext sqCtx = (JsoniqParser.SquareArrayConstructorContext) child;
+            List<JsoniqParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
+            if (memberCtxs == null || memberCtxs.isEmpty()) {
+                return new ArrayConstructorExpression(
+                        new ArrayList<>(),
+                        true,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            List<Expression> memberExpressions = new ArrayList<>();
+            if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
+                // Thus, we concatenate all expressions into a single comma expression.
+                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                }
+                Expression commaExpression = new CommaExpression(
+                        memberExpressions,
+                        createMetadataFromContext(ctx)
+                );
+                return new ArrayConstructorExpression(
+                        commaExpression,
+                        createMetadataFromContext(sqCtx)
+                );
+            } else {
+                // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
+                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                }
+                return new ArrayConstructorExpression(
+                        memberExpressions,
+                        true,
+                        createMetadataFromContext(ctx)
+                );
+            }
+        }
+        // else curlyArrayConstructor
+        JsoniqParser.CurlyArrayConstructorContext childCtx = (JsoniqParser.CurlyArrayConstructorContext) child;
+        if (childCtx.enclosedExpression() == null) {
             return new ArrayConstructorExpression(createMetadataFromContext(ctx));
         }
-        Expression content = (Expression) this.visitExpr(ctx.expr());
+        Expression content = (Expression) this.visitEnclosedExpression(childCtx.enclosedExpression());
         return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
     }
 
