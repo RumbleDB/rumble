@@ -183,7 +183,7 @@ public class VisitorHelpers {
             return parseXQueryMainModule(query, uri, configuration);
         }
         if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
-            return parseXQueryMainModule(query, uri, configuration);
+            return parseJSONiqMainModule(query, uri, configuration);
         } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
@@ -369,7 +369,7 @@ public class VisitorHelpers {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         }
         if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
-            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
