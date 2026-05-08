@@ -229,13 +229,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitModule(XQueryParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            if (ctx.vers.getText().trim().equals("1.0")) {
+            if (ctx.vers.getText().trim().equals("\"1.0\"")) {
                 this.version = "1.0";
                 this.moduleContext.setQueryLanguage("jsoniq10");
-            } else if (ctx.vers.getText().trim().equals("3.1")) {
+            } else if (ctx.vers.getText().trim().equals("\"3.0\"")) {
+                this.version = "3.0";
+                this.moduleContext.setQueryLanguage("jsoniq31");
+            } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
                 this.version = "3.1";
                 this.moduleContext.setQueryLanguage("jsoniq31");
-            } else if (ctx.vers.getText().trim().equals("4.0")) {
+            } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
                 this.version = "4.0";
                 this.moduleContext.setQueryLanguage("jsoniq40");
             } else {

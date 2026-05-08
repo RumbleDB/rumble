@@ -196,9 +196,8 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
-            if (main == null) {
+            JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
+            if (modulectx == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
             if (configuration.debug()) {
@@ -206,7 +205,7 @@ public class VisitorHelpers {
                 System.err.println("Parsing program");
                 System.err.println("***************");
             }
-            MainModule mainModule = (MainModule) visitor.visit(main);
+            MainModule mainModule = (MainModule) visitor.visit(modulectx);
             if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Pruning modules");
@@ -313,8 +312,7 @@ public class VisitorHelpers {
         );
         try {
             // TODO Handle module extras
-            XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            XQueryParser.MainModuleContext main = module.module().main;
+            XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -377,8 +375,7 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
+            JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -422,7 +419,7 @@ public class VisitorHelpers {
         );
         try {
             // TODO Handle module extras
-            XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
+            XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
