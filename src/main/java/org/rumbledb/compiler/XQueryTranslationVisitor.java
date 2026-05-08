@@ -146,7 +146,6 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
-import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
