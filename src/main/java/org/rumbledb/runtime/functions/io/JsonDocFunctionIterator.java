@@ -1,22 +1,27 @@
 package org.rumbledb.runtime.functions.io;
 
-import com.google.gson.stream.JsonReader;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.items.parsing.JSONParsingOptions;
-
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnavailableResourceException;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
+import com.google.gson.stream.JsonReader;
 
 public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -34,9 +39,9 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         RuntimeIterator pathIterator = this.children.get(0);
         RuntimeIterator optionsIterator = this.children.size() > 1 ? this.children.get(1) : null;
 
-        Item pathItem = pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item pathItem = pathIterator.materializeFirstItemOrNull(context);
         Item optionsItem = optionsIterator != null
-            ? optionsIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+            ? optionsIterator.materializeFirstItemOrNull(context)
             : null;
 
         if (pathItem == null) {
@@ -51,13 +56,13 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             getMetadata()
         );
 
-        URI uri = resolveJsonDocURI(pathItem.getStringValue(), getMetadata());
+        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
 
         if (optionsItem == null) {
             try (
                 InputStream is = FileSystemUtil.getDataInputStream(
                     uri,
-                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                    context.getRumbleRuntimeConfiguration(),
                     getMetadata()
                 )
             ) {
@@ -70,7 +75,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             } catch (UnavailableResourceException e) {
                 throw e;
             } catch (Exception e) {
-                String jsonText = readJsonResource(uri);
+                String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
 
                 return ItemParser.getItemFromJSONString(
                     jsonText,
@@ -83,7 +88,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
 
-        String jsonText = readJsonResource(uri);
+        String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
 
         return ItemParser.getItemFromJSONString(
             jsonText,
@@ -94,10 +99,10 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 
-    private URI resolveJsonDocURI(String href, ExceptionMetadata metadata) {
+    private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
         try {
             URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
+                staticBaseUri,
                 href,
                 metadata
             );
@@ -113,7 +118,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
-            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), metadata);
             ex.initCause(e);
             throw ex;
         } catch (Exception e) {
@@ -128,32 +133,32 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
 
-    private String readJsonResource(URI uri) {
+    private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         try (
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                getMetadata()
+                conf,
+                metadata
             )
         ) {
-            return readAll(is);
+            return readAll(is, metadata);
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
-            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), metadata);
             ex.initCause(e);
             throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Unable to read, resolve, or decode the resource supplied to fn:json-doc().",
-                    getMetadata()
+                    metadata
             );
             ex.initCause(e);
             throw ex;
         }
     }
 
-    private String readAll(InputStream is) {
+    private static String readAll(InputStream is, ExceptionMetadata metadata) {
         try {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             byte[] data = new byte[8192];
@@ -165,7 +170,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Unable to read or decode the resource supplied to fn:json-doc().",
-                    getMetadata()
+                    metadata
             );
             ex.initCause(e);
             throw ex;
