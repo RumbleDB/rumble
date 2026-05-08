@@ -1968,7 +1968,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
-        if (itemTypeContext.NullLiteral() != null) {
+        if (itemTypeContext.KW_NULL() != null) {
             return BuiltinTypesCatalogue.nullItem;
         }
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
