@@ -145,7 +145,7 @@ import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.parser.jsoniq.JsoniqBaseVisitor;
+import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
@@ -181,7 +181,7 @@ import java.util.stream.Collectors;
  *
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
-public class TranslationVisitor extends JsoniqBaseVisitor<Node> {
+public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
