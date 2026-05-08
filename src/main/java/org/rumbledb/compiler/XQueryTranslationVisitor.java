@@ -209,12 +209,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         if (configuration.getQueryLanguage().equals("xquery10")) {
             this.version = "1.0";
+            this.moduleContext.setQueryLanguage("xquery10");
         } else if (configuration.getQueryLanguage().equals("xquery30")) {
             this.version = "3.0";
+            this.moduleContext.setQueryLanguage("xquery30");
         } else if (configuration.getQueryLanguage().equals("xquery31")) {
             this.version = "3.1";
+            this.moduleContext.setQueryLanguage("xquery31");
         } else if (configuration.getQueryLanguage().equals("xquery40")) {
             this.version = "4.0";
+            this.moduleContext.setQueryLanguage("xquery40");
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported query language version: " + configuration.getQueryLanguage(),

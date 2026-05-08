@@ -174,7 +174,17 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        } else if (query.startsWith("jsoniq")) {
+            return parseJSONiqMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
             return parseJSONiqMainModule(query, uri, configuration);
@@ -350,7 +360,17 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.startsWith("xquery")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (query.startsWith("jsoniq")) {
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);

@@ -203,10 +203,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.code = code;
         if (configuration.getQueryLanguage().equals("jsoniq10")) {
             this.version = "1.0";
+            this.moduleContext.setQueryLanguage("jsoniq10");
         } else if (configuration.getQueryLanguage().equals("jsoniq31")) {
             this.version = "3.1";
+            this.moduleContext.setQueryLanguage("jsoniq31");
         } else if (configuration.getQueryLanguage().equals("jsoniq40")) {
             this.version = "4.0";
+            this.moduleContext.setQueryLanguage("jsoniq40");
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported query language version: " + configuration.getQueryLanguage(),
