@@ -174,9 +174,9 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        if (query.startsWith("xquery")) {
+        if (query.contains("xquery version")) {
             return parseXQueryMainModule(query, uri, configuration);
-        } else if (query.startsWith("jsoniq")) {
+        } else if (query.contains("jsoniq version")) {
             return parseJSONiqMainModule(query, uri, configuration);
         }
         if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
@@ -360,9 +360,9 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (query.startsWith("xquery")) {
+        if (query.contains("xquery version")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
-        } else if (query.startsWith("jsoniq")) {
+        } else if (query.contains("jsoniq version")) {
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
         if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
