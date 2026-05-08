@@ -190,6 +190,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
+    private String version;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
@@ -205,6 +206,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
+
+        if (configuration.getQueryLanguage().equals("xquery10")) {
+            this.version = "1.0";
+        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+            this.version = "3.0";
+        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+            this.version = "3.1";
+        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+            this.version = "4.0";
+        } else {
+            throw new UnsupportedFeatureException(
+                    "Unsupported query language version: " + configuration.getQueryLanguage(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
     }
 
     // endregion expr
@@ -212,6 +228,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(XQueryParser.ModuleContext ctx) {
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
+            if (ctx.vers.getText().trim().equals("1.0")) {
+                this.version = "1.0";
+            } else if (ctx.vers.getText().trim().equals("3.1")) {
+                this.version = "3.1";
+            } else if (ctx.vers.getText().trim().equals("4.0")) {
+                this.version = "4.0";
+            } else {
+                throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            }
+        }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
                 return this.visitMainModule(ctx.mainModule().get(0));

@@ -188,6 +188,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private boolean isMainModule;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private String version;
 
     public TranslationVisitor(
             StaticContext moduleContext,
@@ -200,6 +201,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.configuration = configuration;
         this.isMainModule = isMainModule;
         this.code = code;
+        if (configuration.getQueryLanguage().equals("jsoniq10")) {
+            this.version = "1.0";
+        } else if (configuration.getQueryLanguage().equals("jsoniq31")) {
+            this.version = "3.1";
+        } else if (configuration.getQueryLanguage().equals("jsoniq40")) {
+            this.version = "4.0";
+        } else {
+            throw new UnsupportedFeatureException(
+                    "Unsupported query language version: " + configuration.getQueryLanguage(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         this.dirElemNamespaceFrames = new ArrayDeque<>();
     }
 
@@ -208,12 +221,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        if (
-            !(ctx.vers == null)
-                && !ctx.vers.isEmpty()
-                && (!ctx.vers.getText().trim().equals("1.0") || !ctx.vers.getText().trim().equals("3.1"))
-        ) {
-            throw new JsoniqVersionException(createMetadataFromContext(ctx));
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
+            if (ctx.vers.getText().trim().equals("1.0")) {
+                this.version = "1.0";
+            } else if (ctx.vers.getText().trim().equals("3.1")) {
+                this.version = "3.1";
+            } else if (ctx.vers.getText().trim().equals("4.0")) {
+                this.version = "4.0";
+            } else {
+                throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            }
         }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
@@ -1461,7 +1478,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                    if (this.version.equals("1.0")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1869,7 +1886,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                    if (this.version.equals("1.0")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1912,7 +1929,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 );
             }
             List<Expression> memberExpressions = new ArrayList<>();
-            if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+            if (this.version.equals("1.0")) {
                 // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
                 // Thus, we concatenate all expressions into a single comma expression.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
@@ -1927,6 +1944,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(sqCtx)
                 );
             } else {
+                System.err.println("Not concatenating to comma.");
                 // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
                     memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
