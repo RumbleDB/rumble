@@ -1,54 +1,86 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <title>Public Rumble page</title>
-    <script type="text/javascript">
-      $(document).ready(function() {
-        $('#submit').click(function() {
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Public - RumbleDB</title>
 
-          query = $('#query').val();
-          $.post(
-            '/jsoniq',
-            query,
-            function(data) {
-              if(data.values) {
-                $("#result").html(data.values.map(x => JSON.stringify(x)).join('\n'))
-              } else if (data["error-message"])
-              {
-                $("#result").html(data["error-message"])
-              }
-            },
-            'json'
-          );
+    <style>
+        body {
+            font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif;
+            text-align: center;
+        }
 
-          return false;       
-          
-        });
+        h1, h2 {
+            color: #336699;
+        }
 
-      });
-</script>
-  </head>
-  <body>
-  <div style="margin: auto; text-align: center; ">
-    <div id="div-in-row" style="display: inline-block; margin-top: 80px;">
-    <span style="float: left; margin-right: 80px;">
-      <h2 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; ">JSONiq query</h2>
-    <textarea id="query" placeholder="Type your query here" rows="25" cols="60" style="margin-top: 40px;">
-      1+1
-    </textarea>
-    </span>
-    <span style="float: right; margin-left: 80px;">
-      <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
-      <textarea id="result" placeholder="Results" rows="25" cols="60" style="margin-top: 40px;">
-      </textarea>
-    </span>
+        #query, #results {
+            width: 44vw;
+            max-width: 600px;
+        }
+    </style>
+
+    <script>
+        function rumbleEvaluate() {
+            const resultsElement = document.getElementById('results');
+            const query = document.getElementById('query').value;
+            const button = document.querySelector('button[type="submit"]');
+            const buttonText = button.textContent;
+
+            button.disabled = true;
+            button.textContent = 'Evaluating…';
+            resultsElement.value = '';
+
+            fetch('/jsoniq', { method: 'POST', body: query })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.values) {
+                        resultsElement.value = data.values.map(x => JSON.stringify(x)).join('\n');
+                    } else if (data['error-message']) {
+                        resultsElement.value = data['error-message'];
+                    }
+                })
+                .catch(err => {
+                    resultsElement.value = 'Network error: ' + err.message;
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.textContent = buttonText;
+                });
+
+            return false;
+        }
+    </script>
+</head>
+
+<body>
+
+<h1 style="font-weight: bold">RumbleDB</h1>
+
+<form onsubmit="return rumbleEvaluate()">
+    <div style="margin: auto">
+        <div style="display: inline-block;">
+
+            <div style="float: left;">
+                <h2 style="margin-top: 0">JSONiq query</h2>
+                <textarea id="query" spellcheck="false" placeholder="Type your query here" rows="20" required
+                          style="display: block; margin: 20px" aria-label="JSONiq query">1 + 1</textarea>
+            </div>
+
+            <div style="float: right">
+                <h2 style="margin-top: 0">Results</h2>
+                <textarea id="results" placeholder="Results" rows="20" readonly
+                          style="display: block; margin: 20px" aria-label="Results"></textarea>
+            </div>
+
+        </div>
     </div>
-    <div>
-      <button id="submit" style="margin: 20px; padding: 10px;">Evaluate with RumbleDB 2.0.0</button>
-    </div>
 
-  </div>
-  </body>
+    <button type="submit" style="margin: 0 auto; padding: 10px">
+        Evaluate with RumbleDB 2.0.0
+    </button>
+</form>
+
+</body>
 </html>
