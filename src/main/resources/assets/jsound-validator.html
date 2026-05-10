@@ -1,89 +1,141 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-  <title>Public Rumble page</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>JSound validator - RumbleDB</title>
 
-  <script type="text/javascript">
+    <style>
+        body {
+            font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif;
+            text-align: center;
+        }
 
-        document.documentElement.style.setProperty('--color-result', "black");
-        $(document).ready(function() {
-          $('#submit').click(function() {
-            // this is compact
-            schema1 = $('#schema').val();
-            instance1 = $('#instance').val();
-            if (document.getElementById('selectSchemaType').selectedIndex == 0) {
-              query = "declare type local:mytype as  " + schema1 + "; validate type local:mytype {" + instance1 + "}";
-            } else {
-              query = "declare type local:mytype as jsound verbose " + schema1 + "; validate type local:mytype {" + instance1 + "}";
-            }
-            $.post(
-              '/jsoniq',
-              query,
-              function(data) {
-                if(data.values) {
-                  document.documentElement.style.setProperty('--color-result', "green");
-                  $("#result").html(data.values.map(x => JSON.stringify(x)).join('\n'))
-                } else if (data["error-message"])
-                {
-                  document.documentElement.style.setProperty('--color-result', "red");
-                  let error_msg = data["error-message"].substring(data["error-message"].indexOf('Message'), data["error-message"].indexOf('Metadata'));
-                  switch (data["error-code"]) {
-                    case "XPST0003":
-                      $("#result").html("A parsing error was raised, please check that you entered a correct schema.\n" + error_msg)
-                      break;
-                    case "XQST0012":
-                      $("#result").html("An invalid schema exception was raised, please check the validity of the schema you entered.")
-                      break;
-                    default:
-                      $("#result").html("An error has occured.\n" + error_msg)
-                  }
+        h1, h2 {
+            color: #336699;
+        }
 
-                }
-              },
-              'json'
-            );
+        #result {
+            border: solid 3px #ccc;
+        }
 
-          });
+        #result.valid {
+            border-color: #017801;
+        }
 
-        });
-  </script>
+        #result.invalid {
+            border-color: #c10101;
+        }
+
+        #schema, #instance {
+            width: 44vw;
+            max-width: 600px;
+        }
+
+        #result {
+            width: 90vw;
+            max-width: 600px;
+        }
+    </style>
+
+    <script>
+        function rumbleValidate() {
+            const resultElement = document.getElementById('result');
+            const schema = document.getElementById('schema').value;
+            const instance = document.getElementById('instance').value;
+            const schemaType = document.getElementById('selectSchemaType').value;
+            const button = document.querySelector('button[type="submit"]');
+            const buttonText = button.textContent;
+
+            const schemaPrefix = schemaType === 'jsoundverbose' ? 'jsound verbose ' : '';
+            const body = 'declare type local:mytype as ' + schemaPrefix + schema +
+                '; validate type local:mytype {' + instance + '}';
+
+            button.disabled = true;
+            button.textContent = 'Validating…';
+            resultElement.value = '';
+            resultElement.className = '';
+
+            fetch('/jsoniq', { method: 'POST', body })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.values) {
+                        resultElement.className = 'valid';
+                        resultElement.value = data.values.map(x => JSON.stringify(x)).join('\n');
+                    } else if (data['error-message']) {
+                        resultElement.className = 'invalid';
+
+                        const msg = data['error-message'];
+                        const start = msg.indexOf('Message');
+                        const end = msg.indexOf('Metadata');
+                        const excerpt = (start !== -1 && end !== -1 && end > start)
+                            ? msg.substring(start, end)
+                            : msg;
+
+                        switch (data['error-code']) {
+                            case 'XPST0003':
+                                resultElement.value = 'A parsing error was raised, please check that you entered a correct schema.\n' + excerpt;
+                                break;
+                            case 'XQST0012':
+                                resultElement.value = 'An invalid schema exception was raised, please check the validity of the schema you entered.';
+                                break;
+                            default:
+                                resultElement.value = 'An error has occurred.\n' + excerpt;
+                        }
+                    }
+                })
+                .catch(err => {
+                    resultElement.className = 'invalid';
+                    resultElement.value = 'Network error: ' + err.message;
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.textContent = buttonText;
+                });
+
+            return false;
+        }
+    </script>
 </head>
+
 <body>
 
-<h1 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; margin-bottom: -10px; ">JSound validator</h1>
-<div style="margin: auto; text-align: center; ">
-  <div id="div-in-row" style="display: inline-block;">
-    <span id="schema-div" style="float: left;">
-      <div>
-        <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Schema</h2>
-        <body>Pick the schema type: </body>
-        <select id="selectSchemaType" name="selectSchemaType" style="margin-bottom: 15px;">
-          <option value="jsoundcompact" selected="selected">JSound compact</option>
-          <option value="jsoundverbose">JSound verbose</option>
-        </select>
-      </div>
-      <textarea id="schema" spellcheck="false" oninput="update(this.value); sync_scroll(this);" onscroll="sync_scroll(this);" onkeydown="check_tab(this, event);" placeholder="Type your schema here" rows="20" cols="75" style="margin: 10px;">{"foo":"string"}</textarea>
+<h1 style="font-weight: bold">JSound Validator - RumbleDB</h1>
 
-    </span>
+<form onsubmit="return rumbleValidate()">
+    <div style="margin: auto">
+        <div id="panels" style="display: inline-block;">
 
-    <span id="instance-div"  style="float: right;">
-      <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Instance</h2>
+            <div class="panel" style="float: left;">
+                <h2 style="margin-top: 0">Schema</h2>
 
-      <div id="instance-txtarea" style="margin-top: 63px;">
-        <textarea id="instance" name="instance" placeholder="Type your instance here" rows="20" cols="75">{"foo":"bar"}</textarea>
-      </div>
+                <label for="selectSchemaType">Pick the schema type: </label>
+                <select id="selectSchemaType" name="selectSchemaType" style="margin-bottom: 15px;">
+                    <option value="jsoundcompact" selected>JSound compact</option>
+                    <option value="jsoundverbose">JSound verbose</option>
+                </select>
 
-    </span>
-  </div>
-  <div>
-    <button id="submit" style="margin: 0 auto; padding: 10px;">Validate with RumbleDB 2.0.0</button>
-  </div>
+                <textarea id="schema" spellcheck="false" placeholder="Type your schema here" rows="20" required
+                          style="display: block; margin: 5px">{"foo":"string"}</textarea>
+            </div>
 
-  <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
-  <textarea id="result" placeholder="Results come here" rows="15" cols="80" style="border: solid 3px var(--color-result);">The results will appear here.</textarea>
-</div>
+            <div class="panel" style="float: right">
+                <h2 style="margin-top: 0; margin-bottom: 62px;">Instance</h2>
+
+                <textarea id="instance" name="instance" placeholder="Type your instance here" rows="20" required
+                          style="display: block; margin: 5px" aria-label="Instance">{"foo":"bar"}</textarea>
+            </div>
+
+        </div>
+    </div>
+
+    <button type="submit" style="margin: 0 auto; padding: 10px">
+        Validate with RumbleDB 2.0.0
+    </button>
+</form>
+
+<h2>Results</h2>
+<textarea id="result" placeholder="Results will appear here." rows="15" readonly aria-label="Results"></textarea>
+
 </body>
-
 </html>
