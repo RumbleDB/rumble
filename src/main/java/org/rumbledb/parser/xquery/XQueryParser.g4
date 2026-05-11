@@ -293,7 +293,9 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS KW_STATICALLY seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
@@ -697,22 +699,6 @@ keywordNotOKForFunction:
        | KW_ALLOWING
        | KW_ARRAY
        | DFPropertyName
-// MarkLogic JSON computed constructor
-       | KW_ARRAY_NODE
-       | KW_BOOLEAN_NODE
-       | KW_NULL_NODE
-       | KW_NUMBER_NODE
-       | KW_OBJECT_NODE
-// eXist-db update keywords
-       | KW_UPDATE
-       | KW_REPLACE
-       | KW_WITH
-       | KW_VALUE
-       | KW_INSERT
-       | KW_INTO
-       | KW_DELETE
-       | KW_NEXT
-       | KW_RENAME
        ;
 
 keywordOKForFunction: KW_ANCESTOR
@@ -811,10 +797,33 @@ keywordOKForFunction: KW_ANCESTOR
        //  Updating expressions keywords
        | KW_COPY
        | KW_MODIFY
+       | KW_REPLACE
        | KW_APPEND
        | KW_JSON
        | KW_POSITION
        | KW_UPDATING
+       | KW_LAST
+       // JSONiq specific
+                        | KW_STATICALLY
+                        | KW_INSERT
+                        | KW_DELETE
+                        | KW_RENAME
+                        | KW_TRUNCATE
+                        | KW_EDIT
+                        | KW_INTO
+                        | KW_VALUE
+                        | KW_FROM
+                        | KW_WITH
+                        | KW_BEFORE
+                        | KW_AFTER
+                        | KW_FIRST
+                        | KW_CREATE
+                        | KW_COLLECTION
+                        | KW_TABLE
+                        | KW_DELTA_FILE
+                        | KW_ICEBERG_TABLE
+                        | KW_NEXT
+                        | KW_PREVIOUS
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
@@ -868,8 +877,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | TILDE
                      | COMMA
                      | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
                      | MOD
                      | DOT
                      | GRAVE
@@ -999,6 +1006,13 @@ exprSimple              : quantifiedExpr
                         | replaceExpr
                         | transformExpr
                         | appendExpr
+                        | createCollectionExpr
+                        | truncateCollectionExpr
+                        | deleteIndexExpr
+                        | deleteSearchExpr
+                        | editCollectionExpr
+                        | insertIndexExpr
+                        | insertSearchExpr
                         ;
 
 blockExpr : LBRACE statementsAndExpr RBRACE ;
@@ -1020,6 +1034,22 @@ transformExpr           : KW_COPY copyDecl ( COMMA copyDecl )* KW_MODIFY mod_exp
 
 appendExpr              : KW_APPEND KW_JSON to_append_expr=exprSingle KW_INTO array_expr=exprSingle;
 
-updateLocator           : main_expr=primaryExpr ( lookup )+; 
+updateLocator           : main_expr=postfixExpr;
 
 copyDecl                : var_ref=varRef COLON_EQ src_expr=exprSingle;
+
+///////////////////////// Top Level Updating Expressions
+
+createCollectionExpr    : KW_CREATE KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN (KW_WITH content=exprSingle)?;
+
+deleteIndexExpr         : KW_DELETE ( (first=KW_FIRST | last=KW_LAST) num=exprSingle? ) KW_FROM KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+deleteSearchExpr        : KW_DELETE content=exprSingle KW_FROM KW_COLLECTION;
+
+insertIndexExpr         : KW_INSERT content=exprSingle ( (KW_AT pos=exprSingle) | first=KW_FIRST | last=KW_LAST ) KW_INTO KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+insertSearchExpr        : KW_INSERT content=exprSingle (before=KW_BEFORE | after=KW_AFTER) target=exprSingle KW_INTO KW_COLLECTION;
+
+truncateCollectionExpr  : (KW_DELETE | KW_TRUNCATE) KW_COLLECTION collectionMode=(KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name=exprSimple RPAREN;
+
+editCollectionExpr      : KW_EDIT target=exprSingle KW_INTO content=exprSingle KW_IN KW_COLLECTION;

@@ -276,6 +276,21 @@ KW_JSON:               'json';
 KW_POSITION:           'position';
 KW_UPDATING:           'updating';
 
+// JSONiq updates
+KW_LAST:               'last';
+KW_TRUNCATE:           'truncate';
+KW_EDIT:               'edit';
+KW_FROM:               'from';
+KW_BEFORE:             'before';
+KW_AFTER:              'after';
+KW_FIRST:              'first';
+KW_CREATE:             'create';
+KW_COLLECTION:         'collection';
+KW_TABLE:              'table';
+KW_DELTA_FILE:         'delta-file';
+KW_ICEBERG_TABLE:      'iceberg-table';
+KW_STATICALLY:         'statically';
+
 // NAMES
 
 // added the BracedURILiteral rule

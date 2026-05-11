@@ -14,6 +14,7 @@ import org.rumbledb.types.SequenceType;
 public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    private String queryLanguage;
     private RumbleRuntimeConfiguration configuration;
     private SequenceType staticType;
     private ExecutionMode executionMode;
@@ -27,6 +28,7 @@ public class RuntimeStaticContext implements Serializable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("RuntimeStaticContext {\n");
+        sb.append("  query language: ").append(this.queryLanguage).append("\n");
         sb.append("  configuration: ").append(this.configuration).append("\n");
         sb.append("  staticType: ").append(this.staticType).append("\n");
         sb.append("  executionMode: ").append(this.executionMode).append("\n");
@@ -42,6 +44,7 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext(
             RuntimeStaticContext oldContext
     ) {
+        this.queryLanguage = oldContext.queryLanguage;
         this.configuration = oldContext.configuration;
         this.staticType = oldContext.staticType;
         this.executionMode = oldContext.executionMode;
@@ -79,6 +82,7 @@ public class RuntimeStaticContext implements Serializable {
         this.staticallyKnownNamespaces = staticContext == null
             ? Collections.emptyMap()
             : staticContext.getInScopeNamespaceBindings();
+        this.queryLanguage = staticContext == null ? null : staticContext.getQueryLanguage();
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
         this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
         this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
@@ -161,6 +165,16 @@ public class RuntimeStaticContext implements Serializable {
     public void dropDecimalFormats() {
         this.decimalFormats = null;
         this.defaultDecimalFormat = null;
+    }
+
+    /**
+     * Returns the query language associated with this context, which is used for error reporting and to determine the
+     * semantics of certain operations. The returned query language is never {@code null}.
+     * 
+     * @return the query language.
+     */
+    public String getQueryLanguage() {
+        return this.queryLanguage;
     }
 
     /**
