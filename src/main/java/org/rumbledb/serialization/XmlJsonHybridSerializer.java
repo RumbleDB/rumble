@@ -45,8 +45,7 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            if(item.isArrayOfItems())
-            {
+            if (item.isArrayOfItems()) {
                 for (Item member : item.getItemMembers()) {
                     sb.append(separator);
                     if (firstTime) {
