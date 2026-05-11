@@ -85,7 +85,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                         this.functionIdentifier,
                         this.staticContext,
                         this.functionArguments,
-                        tailCallOptimizationCandidate
+                        this.tailCallOptimizationCandidate
                     );
             }
             this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);

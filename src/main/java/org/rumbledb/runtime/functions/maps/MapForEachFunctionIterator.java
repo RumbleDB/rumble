@@ -125,7 +125,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         callbackArguments.add(this.mutableValueSequenceIterator);
         this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
             this.actionFunction,
-            staticContext,
+            this.staticContext,
             ExecutionMode.LOCAL,
             callbackArguments,
             false
