@@ -168,7 +168,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
 
         RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
-            staticContext,
+            this.staticContext,
             ExecutionMode.LOCAL,
             arguments,
             false

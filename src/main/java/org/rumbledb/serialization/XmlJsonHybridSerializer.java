@@ -1,5 +1,7 @@
 package org.rumbledb.serialization;
 
+import java.util.List;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
@@ -43,16 +45,37 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            for (Item member : item.getItemMembers()) {
-                sb.append(separator);
-                if (firstTime) {
-                    separator = "," + separator;
-                    firstTime = false;
+            if (item.isArrayOfItems()) {
+                for (Item member : item.getItemMembers()) {
+                    sb.append(separator);
+                    if (firstTime) {
+                        separator = "," + separator;
+                        firstTime = false;
+                    }
+                    if (this.params.getIndent()) {
+                        serialize(member, sb, indent + "  ", false);
+                    } else {
+                        serialize(member, sb, "", false);
+                    }
                 }
-                if (this.params.getIndent()) {
-                    serialize(member, sb, indent + "  ", false);
-                } else {
-                    serialize(member, sb, "", false);
+            } else {
+                for (List<Item> memberSequence : item.getSequenceMembers()) {
+                    sb.append(separator);
+                    if (firstTime) {
+                        separator = "," + separator;
+                        firstTime = false;
+                    }
+                    sb.append("(");
+                    boolean firstTimeInner = true;
+                    for (Item member : memberSequence) {
+                        sb.append(separator);
+                        if (firstTimeInner) {
+                            separator = "," + separator;
+                            firstTime = false;
+                        }
+                        serialize(member, sb, "", false);
+                    }
+                    sb.append(")");
                 }
             }
             if (this.params.getIndent()) {
