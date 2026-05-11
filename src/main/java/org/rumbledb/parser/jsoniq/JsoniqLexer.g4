@@ -218,7 +218,7 @@ KW_ARRAY : 'array';
 
 KW_AND                    : 'and';
 
-Knot                    : 'not' ;
+KW_NOT                    : 'not' ;
 
 KW_TO                     : 'to' ;
 
@@ -226,7 +226,7 @@ KW_INSTANCE               : 'instance' ;
 
 KW_OF                     : 'of' ;
 
-Kstatically             : 'statically' ;
+KW_STATICALLY             : 'statically' ;
 
 KW_IS                     : 'is' ;
 
@@ -276,9 +276,9 @@ KW_ELEMENT             : 'element';
 
 KW_SCHEMA             : 'schema';
 
-Ktrue                   : 'true';
+KW_TRUE                   : 'true';
 
-Kfalse                  : 'false';
+KW_FALSE                  : 'false';
 
 KW_TYPE                   : 'type';
 
@@ -323,9 +323,9 @@ KW_JSON                   : 'json';
 
 KW_UPDATING               :  'updating';
 
-Kcreate                 : 'create';
+KW_CREATE                 : 'create';
 
-Kcollection             : 'collection';
+KW_COLLECTION             : 'collection';
 
 KW_TABLE                  : 'table';
 
@@ -333,19 +333,21 @@ KW_DELTA_FILE              : 'delta-file';
 
 KW_ICEBERG_TABLE           : 'iceberg-table';
 
-Ktruncate               : 'truncate';
+KW_TRUNCATE               : 'truncate';
 
-Kfirst                  : 'first';
+KW_FIRST                  : 'first';
 
 KW_LAST                   : 'last';
 
-Kfrom                   : 'from';
+KW_FROM                   : 'from';
 
-Kedit                   : 'edit';
+KW_EDIT                   : 'edit';
 
-Kafter                  : 'after';
+KW_AFTER                  : 'after';
 
-Kbefore                 : 'before';
+KW_BEFORE                 : 'before';
+
+KW_EMPTY_SEQUENCE                 : 'empty-sequence';
 
 
 ///////////////////////// XPath
@@ -402,7 +404,7 @@ fragment UNICODE        : 'u' HEX HEX HEX HEX;
 
 fragment HEX            : [0-9a-fA-F];
 
-NullLiteral             : 'null';
+KW_NULL             : 'null';
 
 IntegerLiteral          : Digits ;
 
