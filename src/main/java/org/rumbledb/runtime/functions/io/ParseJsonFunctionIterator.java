@@ -70,7 +70,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return ItemParser.getItemFromJSONString(
             stringItem.getStringValue(),
             options,
-            staticContext.getConfiguration().getXmlVersion(),
+            this.staticContext.getConfiguration().getXmlVersion(),
             isJSONiq10,
             getMetadata()
         );

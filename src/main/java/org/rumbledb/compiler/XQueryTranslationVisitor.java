@@ -190,7 +190,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
-    private String version;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
@@ -208,16 +207,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.xQueryTokenStream = xQueryTokenStream;
 
         if (configuration.getQueryLanguage().equals("xquery10")) {
-            this.version = "1.0";
             this.moduleContext.setQueryLanguage("xquery10");
         } else if (configuration.getQueryLanguage().equals("xquery30")) {
-            this.version = "3.0";
             this.moduleContext.setQueryLanguage("xquery30");
         } else if (configuration.getQueryLanguage().equals("xquery31")) {
-            this.version = "3.1";
             this.moduleContext.setQueryLanguage("xquery31");
         } else if (configuration.getQueryLanguage().equals("xquery40")) {
-            this.version = "4.0";
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -229,16 +224,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitModule(XQueryParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             if (ctx.vers.getText().trim().equals("\"1.0\"")) {
-                this.version = "1.0";
                 this.moduleContext.setQueryLanguage("jsoniq10");
             } else if (ctx.vers.getText().trim().equals("\"3.0\"")) {
-                this.version = "3.0";
                 this.moduleContext.setQueryLanguage("jsoniq31");
             } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
-                this.version = "3.1";
                 this.moduleContext.setQueryLanguage("jsoniq31");
             } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
-                this.version = "4.0";
                 this.moduleContext.setQueryLanguage("jsoniq40");
             } else {
                 throw new JsoniqVersionException(createMetadataFromContext(ctx));
