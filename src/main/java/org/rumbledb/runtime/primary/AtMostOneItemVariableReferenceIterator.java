@@ -20,38 +20,28 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.types.SequenceType;
-
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class AtMostOneItemVariableReferenceIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private SequenceType sequence;
     private Name variableName;
 
     public AtMostOneItemVariableReferenceIterator(
             Name variableName,
-            SequenceType seq,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.variableName = variableName;
-        this.sequence = seq;
-    }
-
-    public SequenceType getSequence() {
-        return this.sequence;
     }
 
     public Name getVariableName() {
