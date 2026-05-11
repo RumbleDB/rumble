@@ -543,7 +543,9 @@ objectConstructor: KW_MAP? LBRACE (pairConstructor (COMMA pairConstructor)*)? RB
 // renamed from mapConstructorEntry to pairConstructor to match the JSONiq grammar
 pairConstructor: lhs=exprSingle (COLON | COLON_EQ | QUESTION) rhs=exprSingle ;
 
-arrayConstructor:  LBRACKET expr? RBRACKET;
+arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
+
+squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
 
 curlyArrayConstructor: KW_ARRAY enclosedExpression ;
 
@@ -575,7 +577,7 @@ singleType: item=itemType (question+=QUESTION)? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType: LPAREN RPAREN | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
+sequenceType: (KW_EMPTY_SEQUENCE? LPAREN RPAREN) | (item=itemType (question+=QUESTION|star+=STAR|plus+=PLUS)? );
 
 itemType: kindTest
         | (KW_ITEM LPAREN RPAREN)
@@ -714,7 +716,7 @@ keywordNotOKForFunction:
        | KW_ALLOWING
        | KW_ARRAY
        | DFPropertyName
-                        ;
+       ;
 
 keywordOKForFunction: KW_ANCESTOR
        | KW_ANCESTOR_OR_SELF
@@ -873,8 +875,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | TILDE
                      | COMMA
                      | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
                      | MOD
                      | DOT
                      | GRAVE

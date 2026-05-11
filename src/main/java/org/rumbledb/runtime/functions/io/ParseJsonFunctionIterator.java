@@ -51,7 +51,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (stringItem == null) {
             return null;
         }
-        boolean isJSONiq10 = getConfiguration().getQueryLanguage().equals("jsoniq10");
+        boolean isJSONiq10 = this.staticContext.getQueryLanguage().equals("jsoniq10");
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, isJSONiq10, getMetadata());
         if (optionsItem == null) {
             try {
@@ -61,7 +61,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 return ItemParser.getItemFromJSONString(
                     stringItem.getStringValue(),
                     options,
-                    staticContext.getConfiguration().getXmlVersion(),
+                    this.staticContext.getConfiguration().getXmlVersion(),
                     isJSONiq10,
                     getMetadata()
                 );
