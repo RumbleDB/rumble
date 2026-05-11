@@ -30,7 +30,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,12 +46,12 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticTarget;
-    private final AtomizationIterator nameIterator;
-    private final AtomizationIterator contentIterator;
+    private final DataFunctionIterator nameIterator;
+    private final DataFunctionIterator contentIterator;
 
     public ComputedPIConstructorRuntimeIterator(
             String staticTarget,
-            AtomizationIterator contentIterator,
+            DataFunctionIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -64,8 +64,8 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     }
 
     public ComputedPIConstructorRuntimeIterator(
-            AtomizationIterator nameIterator,
-            AtomizationIterator contentIterator,
+            DataFunctionIterator nameIterator,
+            DataFunctionIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(nameIterator, contentIterator), staticContext);

@@ -57,6 +57,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String MAP_NS = "http://www.w3.org/2005/xpath-functions/map";
     public static final String ARRAY_NS = "http://www.w3.org/2005/xpath-functions/array";
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+    public static final String XML_NS = "http://www.w3.org/XML/1998/namespace";
     public static final String JS_NS = "http://jsoniq.org/types";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final String AN_NS = "http://www.w3.org/2012/xquery";
@@ -67,6 +68,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
     public static final Name TEMP_VAR1 = createVariableInNoNamespace("$d3094969-fe9a-4cad-95e5-88475bbee008");
     public static final Name TEMP_VAR2 = createVariableInNoNamespace("$a6b2b9fb-f60a-4ba2-af60-e668256c49ec");
+    public static final Name TAIL_CALL_OPTIMIZATION = createVariableInNoNamespace(
+        "$186e9958-978d-421c-96dd-9306ff5644b8"
+    );
 
     public Name() {
         this.namespace = null;

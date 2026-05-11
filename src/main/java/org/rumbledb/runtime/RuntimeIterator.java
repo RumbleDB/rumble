@@ -20,11 +20,18 @@
 
 package org.rumbledb.runtime;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -53,18 +60,10 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
@@ -160,7 +159,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 // returns true even if sequence has more items according to spec
                 return true;
             } else {
-                if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+                if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
                     if (item.isObject() || item.isArray()) {
                         this.close();
                         return true;
@@ -280,6 +279,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getConfiguration();
     }
 
+    public RuntimeStaticContext getRuntimeStaticContext() {
+        return this.staticContext;
+    }
+
     public boolean isRDDOrDataFrame() {
         if (this.staticContext.getExecutionMode() == ExecutionMode.UNSET) {
             throw new OurBadException("isRDDorDataFrame field in iterator without execution mode being set.");
@@ -353,7 +356,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     this.getStaticType().getItemType(),
                     context,
                     true,
-                    getConfiguration()
+                    this.staticContext
                 );
             } else {
                 JavaRDD<Item> rdd = this.getRDD(context);
@@ -363,7 +366,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     type,
                     context,
                     true,
-                    getConfiguration()
+                    this.staticContext
                 );
             }
         }
@@ -375,7 +378,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 this.getStaticType().getItemType(),
                 context,
                 true,
-                getConfiguration()
+                this.staticContext
             );
         } else {
             ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
@@ -384,7 +387,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 type,
                 context,
                 true,
-                getConfiguration()
+                this.staticContext
             );
         }
     }

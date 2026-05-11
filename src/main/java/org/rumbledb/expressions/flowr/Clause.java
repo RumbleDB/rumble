@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -248,8 +249,10 @@ public abstract class Clause extends Node {
     ) {
         return new RuntimeStaticContext(
                 conf,
+                null,
                 getHighestExecutionMode(visitorConfig),
-                getMetadata()
+                getMetadata(),
+                this.staticContext
         );
     }
 }

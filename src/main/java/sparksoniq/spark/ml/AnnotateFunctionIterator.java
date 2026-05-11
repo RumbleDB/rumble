@@ -48,7 +48,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     schemaType,
                     context,
                     true,
-                    getConfiguration()
+                    this.staticContext
                 );
             }
 
@@ -59,7 +59,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     schemaType,
                     context,
                     true,
-                    getConfiguration()
+                    this.staticContext
                 );
             }
 
@@ -69,7 +69,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 schemaType,
                 context,
                 true,
-                getConfiguration()
+                this.staticContext
             );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(

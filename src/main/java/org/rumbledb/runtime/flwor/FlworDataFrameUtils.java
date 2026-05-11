@@ -74,6 +74,7 @@ import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
+import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
@@ -126,6 +127,7 @@ public class FlworDataFrameUtils {
         kryo.register(IntegerItem.class);
         kryo.register(IntItem.class);
         kryo.register(NullItem.class);
+        kryo.register(QNameItem.class);
         kryo.register(StringItem.class);
         kryo.register(TimeItem.class);
         kryo.register(YearMonthDurationItem.class);

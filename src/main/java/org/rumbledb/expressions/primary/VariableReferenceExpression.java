@@ -50,7 +50,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
 
     // default to item* if type is null
     public SequenceType getType() {
-        return this.type == null ? SequenceType.ITEM_STAR : this.type;
+        return this.type == null ? SequenceType.createSequenceType("item*") : this.type;
     }
 
     public SequenceType getActualType() {

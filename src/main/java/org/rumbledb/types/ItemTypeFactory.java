@@ -581,6 +581,116 @@ public class ItemTypeFactory {
     }
 
     /**
+     * Typed XQuery map type map(K, V) as a restriction of map(*).
+     *
+     * @param keyAtomicType must be an atomic type (typically from xs: namespace)
+     * @param valueSequenceType sequence type of map values
+     */
+    public static MapItemType mapOf(ItemType keyAtomicType, SequenceType valueSequenceType) {
+        return new MapItemType(null, BuiltinTypesCatalogue.mapItem, keyAtomicType, valueSequenceType);
+    }
+
+    /**
+     * Typed XQuery array type array(T) as a restriction of array(*).
+     *
+     * @param memberSequenceType sequence type of array members
+     */
+    public static ItemType xqueryArrayOf(SequenceType memberSequenceType) {
+        if (memberSequenceType == null) {
+            throw new OurBadException("Array member sequence type cannot be null.");
+        }
+        if (memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+            return BuiltinTypesCatalogue.xqueryArrayItem;
+        }
+        return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSequenceType);
+    }
+
+    /**
+     * Wildcard XQuery element node type element().
+     *
+     * @return wildcard element node type
+     */
+    public static ItemType elementNodeItemType() {
+        return BuiltinTypesCatalogue.elementNode;
+    }
+
+    /**
+     * Named XQuery element node type element(N).
+     *
+     * @param nodeName node QName restriction
+     * @return named element node type
+     */
+    public static ItemType elementNodeItemType(Name nodeName) {
+        if (nodeName == null) {
+            throw new OurBadException("Element node name cannot be null.");
+        }
+        return new ElementNodeItemType(nodeName);
+    }
+
+    /**
+     * Wildcard XQuery attribute node type attribute().
+     *
+     * @return wildcard attribute node type
+     */
+    public static ItemType attributeNodeItemType() {
+        return BuiltinTypesCatalogue.attributeNode;
+    }
+
+    /**
+     * Named XQuery attribute node type attribute(N).
+     *
+     * @param nodeName node QName restriction
+     * @return named attribute node type
+     */
+    public static ItemType attributeNodeItemType(Name nodeName) {
+        if (nodeName == null) {
+            throw new OurBadException("Attribute node name cannot be null.");
+        }
+        return new AttributeNodeItemType(nodeName);
+    }
+
+    /**
+     * Wildcard XQuery document node type document-node().
+     *
+     * @return wildcard document node type
+     */
+    public static ItemType documentNodeItemType() {
+        return BuiltinTypesCatalogue.documentNode;
+    }
+
+    /**
+     * Restricted XQuery document node type document-node(element(...)).
+     *
+     * @param elementTestType element-test type restriction
+     * @return restricted document node type
+     */
+    public static ItemType documentNodeItemType(ItemType elementTestType) {
+        if (elementTestType == null) {
+            throw new OurBadException("Document node element-test type cannot be null.");
+        }
+        return new DocumentNodeItemType(elementTestType);
+    }
+
+    /**
+     * Wildcard XQuery processing-instruction node type processing-instruction().
+     *
+     * @return wildcard processing-instruction node type
+     */
+    public static ItemType processingInstructionNodeItemType() {
+        return BuiltinTypesCatalogue.processingInstructionNode;
+    }
+
+    /**
+     * Restricted XQuery processing-instruction node type processing-instruction(N).
+     *
+     * @param targetName raw target-name restriction, normalized with fn:normalize-space
+     * @return restricted processing-instruction node type
+     */
+    public static ItemType processingInstructionNodeItemType(String targetName) {
+        return new PINodeItemType(targetName);
+    }
+
+    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object

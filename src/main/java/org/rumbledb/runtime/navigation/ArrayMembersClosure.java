@@ -19,11 +19,17 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
 
         if (!(arg0.isArray())) {
             return results.iterator();
-        } else {
+        }
+
+        if (arg0.isArrayOfItems()) {
             for (Item item : arg0.getItems()) {
                 if (item != null) {
                     results.add(item);
                 }
+            }
+        } else {
+            for (java.util.List<Item> member : arg0.getSequenceMembers()) {
+                results.addAll(member);
             }
         }
 

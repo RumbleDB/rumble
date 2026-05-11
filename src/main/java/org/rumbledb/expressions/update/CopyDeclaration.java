@@ -32,7 +32,7 @@ public class CopyDeclaration {
         if (this.sourceExpression != null && this.sourceExpression.getStaticSequenceType() != null) {
             return this.sourceExpression.getStaticSequenceType();
         }
-        return SequenceType.ITEM_STAR;
+        return SequenceType.createSequenceType("item*");
     }
 
 

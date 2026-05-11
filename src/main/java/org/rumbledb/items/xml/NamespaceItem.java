@@ -4,7 +4,9 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -86,12 +88,13 @@ public class NamespaceItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        // Spec: "dm: node-name If the prefix is not empty, returns an xs:QName with the value of the prefix property in
-        // the
-        // local-name and an empty namespace name, otherwise returns the empty sequence."
-        // For practical purposes, we return the prefix (may be empty).
-        return this.prefix;
+    public Name nodeName() {
+        // XDM 3.1: if the prefix is not empty, node-name is an xs:QName with the prefix as the local name and an
+        // empty namespace name; otherwise the empty sequence.
+        if (this.prefix == null || this.prefix.isEmpty()) {
+            return null;
+        }
+        return NamespaceBindingUtils.nameLocalOnly(this.prefix);
     }
 
     /**

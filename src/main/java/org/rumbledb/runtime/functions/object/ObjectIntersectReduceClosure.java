@@ -67,7 +67,7 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
                 Item value = v2.getItemByKey(key);
                 Item prevValue = keyValuePairs.get(key).get(0);
                 for (Item elem : value.getItems())
-                    prevValue.putItem(elem);
+                    prevValue.appendItem(elem);
             }
         }
 

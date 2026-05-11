@@ -26,7 +26,7 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumbledb</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
     <packaging>jar</packaging>
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
@@ -221,6 +221,7 @@
                         <phase>generate-sources</phase>
                         <configuration>
                             <target>
+                                <ant antfile="build_antlr_parser.xml" target="generate-lexer"/>
                                 <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
                                 <ant antfile="build_antlr_parser_xquery.xml" target="generate-lexer"/>
                                 <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
@@ -397,7 +398,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.7</version>
+            <version>42.7.11</version>
         </dependency>
         <dependency>
             <groupId>org.mongodb.spark</groupId>

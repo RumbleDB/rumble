@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -41,11 +42,20 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         super(arguments, staticContext);
     }
 
+    private Item stringResultFromItem(Item item) {
+        try {
+            return ItemFactory.getInstance().createStringItem(item.getStringValue());
+        } catch (FunctionItemStringValueException e) {
+            throw new FunctionItemStringValueException(e.getMessage(), getMetadata());
+        }
+    }
+
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return ItemFactory.getInstance().createStringItem(items.get(0).getStringValue());
+            Item contextItem = items.get(0);
+            return stringResultFromItem(contextItem);
         }
 
         Item item = this.children.get(0)
@@ -55,7 +65,7 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
 
-        return ItemFactory.getInstance().createStringItem(item.getStringValue());
+        return stringResultFromItem(item);
     }
 
 }

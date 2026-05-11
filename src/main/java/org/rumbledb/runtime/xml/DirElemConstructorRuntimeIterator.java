@@ -22,12 +22,14 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,20 +42,23 @@ import java.util.List;
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private String tagName;
+    private Name elementName;
     private List<RuntimeIterator> content;
     private List<AttributeNodeRuntimeIterator> attributes;
+    private List<NamespaceDeclaration> namespaceDeclarations;
 
     public DirElemConstructorRuntimeIterator(
-            String tagName,
+            Name elementName,
             List<RuntimeIterator> content,
             List<AttributeNodeRuntimeIterator> attributes,
+            List<NamespaceDeclaration> namespaceDeclarations,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(content, attributes), staticContext);
         this.content = content;
         this.attributes = attributes;
-        this.tagName = tagName;
+        this.namespaceDeclarations = namespaceDeclarations;
+        this.elementName = elementName;
     }
 
     @Override
@@ -153,7 +158,19 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                 );
             }
         }
-        // process attributes
+        // process namespace declaration attributes (they create namespace nodes, not attribute nodes)
+        if (this.namespaceDeclarations != null) {
+            for (NamespaceDeclaration declaration : this.namespaceDeclarations) {
+                String prefix = declaration.getPrefix();
+                String uri = declaration.getUri();
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                namespaces.add(
+                    ItemFactory.getInstance()
+                        .createXmlNamespaceNode(prefix, uri)
+                );
+            }
+        }
+        // process regular attributes
         if (this.attributes != null) {
             for (RuntimeIterator iterator : this.attributes) {
                 iterator.open(contextToUse);
@@ -162,18 +179,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        String[] namespaceBinding = NamespaceBindingUtils.parseNamespaceDeclarationAttribute(item);
-                        if (namespaceBinding != null) {
-                            String prefix = namespaceBinding[0];
-                            String uri = namespaceBinding[1];
-                            NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
-                            namespaces.add(
-                                ItemFactory.getInstance()
-                                    .createXmlNamespaceNode(prefix, uri)
-                            );
-                        } else {
-                            attributes.add(item);
-                        }
+                        attributes.add(item);
                     }
                 }
                 iterator.close();
@@ -183,7 +189,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
-                this.tagName,
+                this.elementName,
                 content,
                 attributes
             );

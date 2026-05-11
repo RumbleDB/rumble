@@ -176,7 +176,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (item.isNode()) {
             return true;
         }
-        if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+        if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
             if (item.isObject() || item.isArray()) {
                 return true;
             }

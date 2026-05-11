@@ -466,7 +466,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
             }
-            return CastIterator.castItemToType(itemResult, this.returnType, getMetadata());
+            return CastIterator.castItemToType(itemResult, this.returnType, getMetadata(), this.staticContext);
 
         }
 

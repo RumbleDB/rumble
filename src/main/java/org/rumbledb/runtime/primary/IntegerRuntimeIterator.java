@@ -51,8 +51,8 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "" + this.item.getIntValue(),
-                SequenceType.INTEGER
+                "" + this.item.getIntegerValue(),
+                SequenceType.createSequenceType("integer")
         );
     }
 }

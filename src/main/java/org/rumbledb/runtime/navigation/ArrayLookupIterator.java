@@ -55,6 +55,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     private RuntimeIterator iterator;
     private int lookup;
     private Item nextResult;
+    private java.util.Queue<Item> lookupResultQueue;
 
     public ArrayLookupIterator(
             RuntimeIterator array,
@@ -68,8 +69,16 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
+            if (this.lookupResultQueue != null && !this.lookupResultQueue.isEmpty()) {
+                Item result = this.lookupResultQueue.poll();
+                if (this.lookupResultQueue.isEmpty()) {
+                    this.lookupResultQueue = null;
+                    setNextResult();
+                }
+                return result;
+            }
+            Item result = this.nextResult;
+            setNextResult();
             return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
@@ -83,6 +92,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
+        this.lookupResultQueue = null;
         this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -121,6 +131,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupPosition(this.currentDynamicContextForLocalExecution);
+        this.lookupResultQueue = null;
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -132,10 +143,22 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isArray()) {
                 if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    // -1 for Jsoniq convention, arrays start from 1
-                    Item result = item.getItemAt(this.lookup - 1);
-                    this.nextResult = result;
-                    break;
+                    if (item.isArrayOfItems()) {
+                        this.nextResult = item.getItemAt(this.lookup - 1);
+                    } else {
+                        java.util.List<Item> memberSeq = item.getSequenceAt(this.lookup - 1);
+                        if (!memberSeq.isEmpty()) {
+                            this.nextResult = memberSeq.get(0);
+                            if (memberSeq.size() > 1) {
+                                this.lookupResultQueue = new java.util.LinkedList<>(
+                                        memberSeq.subList(1, memberSeq.size())
+                                );
+                            }
+                        }
+                    }
+                    if (this.nextResult != null) {
+                        break;
+                    }
                 }
             }
         }

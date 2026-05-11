@@ -60,8 +60,12 @@ public class ElementTest implements NodeTest {
         return this.elementName != null && this.typeName == null;
     }
 
-    public String getElementName() {
-        return this.elementName.getLocalName();
+    /**
+     * Expanded name from the kind test (namespace URI + local name). Only valid when
+     * {@link #isNameWithoutTypeCheck()} is true.
+     */
+    public Name getElementName() {
+        return this.elementName;
     }
 
     public boolean isWildcardOnly() {

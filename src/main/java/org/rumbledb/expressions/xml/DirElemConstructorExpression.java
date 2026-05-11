@@ -19,6 +19,7 @@
  */
 package org.rumbledb.expressions.xml;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -34,40 +35,43 @@ import java.util.List;
  *      Constructors</a>
  */
 public class DirElemConstructorExpression extends Expression {
-    /** The node name of the element */
-    private final String nodeName;
+    /** Resolved expanded name of the element (compile-time). */
+    private final Name elementName;
     /** The content of the element */
     private final List<Expression> content;
     /** The attributes of the element */
     private final List<Expression> attributes;
+    /** Namespace declaration entries (xmlns / xmlns:prefix) in source order. */
+    private final List<NamespaceDeclaration> namespaceDeclarations;
 
     /**
      * Constructor for a direct element constructor.
      * 
-     * @param tagName The node name of the element
+     * @param elementName Resolved expanded name of the element
      * @param content The content of the element
      * @param attributes The attributes of the element
+     * @param namespaceDeclarations Namespace declaration entries (not attribute nodes)
      * @param metadata The exception metadata
      */
     public DirElemConstructorExpression(
-            String tagName,
+            Name elementName,
             List<Expression> content,
             List<Expression> attributes,
+            List<NamespaceDeclaration> namespaceDeclarations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.nodeName = tagName;
+        this.elementName = elementName;
         this.content = content;
         this.attributes = attributes;
+        this.namespaceDeclarations = namespaceDeclarations;
     }
 
     /**
-     * Get the node name of the element
-     * 
-     * @return The node name of the element
+     * Resolved expanded name of the element.
      */
-    public String getNodeName() {
-        return this.nodeName;
+    public Name getNodeName() {
+        return this.elementName;
     }
 
     /**
@@ -88,6 +92,10 @@ public class DirElemConstructorExpression extends Expression {
         return this.attributes;
     }
 
+    public List<NamespaceDeclaration> getNamespaceDeclarations() {
+        return this.namespaceDeclarations;
+    }
+
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDirElemConstructor(this, argument);
@@ -96,12 +104,12 @@ public class DirElemConstructorExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.content != null) {
-            result.addAll(this.content);
-        }
-        // in the XML data model, attributes are considered children
+        // in direct element constructors, attributes occur in the start tag before content
         if (this.attributes != null) {
             result.addAll(this.attributes);
+        }
+        if (this.content != null) {
+            result.addAll(this.content);
         }
         return result;
     }
@@ -109,7 +117,13 @@ public class DirElemConstructorExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("<" + this.nodeName);
+        sb.append("<" + this.elementName);
+        if (this.namespaceDeclarations != null && !this.namespaceDeclarations.isEmpty()) {
+            for (NamespaceDeclaration declaration : this.namespaceDeclarations) {
+                declaration.serializeToJSONiq(sb);
+                sb.append(" ");
+            }
+        }
         if (this.attributes != null && !this.attributes.isEmpty()) {
             for (Expression attr : this.attributes) {
                 attr.serializeToJSONiq(sb, indent);
@@ -124,7 +138,7 @@ public class DirElemConstructorExpression extends Expression {
             }
             indentIt(sb, indent);
         }
-        sb.append("</" + this.nodeName + ">\n");
+        sb.append("</" + this.elementName + ">\n");
     }
 
 }

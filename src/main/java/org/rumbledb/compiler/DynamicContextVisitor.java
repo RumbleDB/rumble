@@ -217,7 +217,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             SequenceType sequenceType = variableDeclaration.getSequenceType();
             Item item = null;
             if (
-                !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
+                !sequenceType.equals(SequenceType.createSequenceType("()"))
                     && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
             ) {
                 URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(

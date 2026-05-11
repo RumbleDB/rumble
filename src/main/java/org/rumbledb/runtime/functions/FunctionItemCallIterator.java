@@ -20,6 +20,11 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -42,13 +47,6 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.rumbledb.types.SequenceType.ITEM_STAR;
-
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
@@ -58,6 +56,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     // calculated fields
     private boolean isPartialApplication;
+    private boolean isTailOptimization;
     private RuntimeIterator functionBodyIterator;
     private Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
@@ -66,7 +65,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public FunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean isTailOptimization
     ) {
         super(null, staticContext);
         for (RuntimeIterator arg : functionArguments) {
@@ -75,6 +75,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             } else {
                 this.children.add(arg);
             }
+        }
+        if (isTailOptimization) {
+            this.isPartialApplication = true;
+            this.isTailOptimization = true;
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
@@ -125,7 +129,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         && !this.functionItem.getSignature()
                             .getParameterTypes()
                             .get(i)
-                            .equals(ITEM_STAR)
+                            .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
                     ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
@@ -136,12 +140,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
-                            getConfiguration(),
-                            sequenceType,
-                            executionMode,
-                            this.functionArguments.get(i).getMetadata()
-                    );
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
+                        .withExecutionMode(executionMode)
+                        .withMetadata(this.functionArguments.get(i).getMetadata());
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
@@ -226,9 +227,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
+        Name functionItemName = this.functionItem.getIdentifier().getName();
+        if (this.isTailOptimization) {
+            functionItemName = Name.TAIL_CALL_OPTIMIZATION;
+        }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
-                        this.functionItem.getIdentifier().getName(),
+                        functionItemName,
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
@@ -245,7 +250,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
+                this.staticContext.withStaticType(
+                    SequenceType.createSequenceType("function(*)")
+                ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
         );
     }
 

@@ -16,12 +16,12 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONSTRAINTS,
-                FacetTypes.CONTENT,
-                FacetTypes.CLOSED
+                ConstrainingFacetTypes.ENUMERATION,
+                ConstrainingFacetTypes.CONSTRAINTS,
+                ConstrainingFacetTypes.CONTENT,
+                ConstrainingFacetTypes.CLOSED
             )
     );
 
@@ -168,6 +168,10 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
+        if (((ItemType) other).isMapItemType()) {
+            // delegate to the map item type equality check
+            return other.equals(this);
+        }
         return isEqualTo((ItemType) other);
     }
 
@@ -212,8 +216,52 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
+    }
+
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isMapItemType()) {
+            return this.getObjectAsMapType().isSubtypeOf(superType);
+        }
+        if (superType.isFunctionItemType()) {
+            // Delegate object/function relationships to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().isSubtypeOf(superType);
+        }
+        return ItemType.super.isSubtypeOf(superType);
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.equals(other)) {
+            return this;
+        }
+        if (other.isMapItemType()) {
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        if (other.isFunctionItemType()) {
+            // Delegate object/function LCS to map semantics:
+            // js:object = map(xs:string, item)
+            return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
+        }
+        return ItemType.super.findLeastCommonSuperTypeWith(other);
+    }
+
+    private ItemType getObjectAsMapType() {
+        return ItemTypeFactory.mapOf(
+            BuiltinTypesCatalogue.stringItem,
+            SequenceType.createSequenceType("item")
+        );
     }
 
     @Override

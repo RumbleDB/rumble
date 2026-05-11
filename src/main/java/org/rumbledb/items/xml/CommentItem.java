@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -80,12 +81,10 @@ public class CommentItem implements Item {
      * XDM 3.1 Section 6.6 Comment Node Accessors — node-name.
      *
      * "For a Comment Node, dm:node-name returns the empty sequence."
-     *
-     * An empty string is used here to represent the empty sequence.
      */
     @Override
-    public String nodeName() {
-        return "";
+    public Name nodeName() {
+        return null;
     }
 
     @Override

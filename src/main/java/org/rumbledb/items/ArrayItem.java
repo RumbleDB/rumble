@@ -28,10 +28,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ArrayItem implements Item {
@@ -84,45 +87,7 @@ public class ArrayItem implements Item {
         return true;
     }
 
-    public void append(Item other) {
-        this.arrayItems.add(other);
-    }
-
-
-    public List<Item> getItems() {
-        return this.arrayItems;
-    }
-
-    @Override
-    public Item getItemAt(int i) {
-        if (i >= this.arrayItems.size() || i < 0) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + (i + 1) + ", of array with length: " + this.arrayItems.size(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-        }
-        return this.arrayItems.get(i);
-    }
-
-    @Override
-    public void putItem(Item value) {
-        this.arrayItems.add(value);
-    }
-
-    @Override
-    public void putItemAt(Item value, int i) {
-        this.arrayItems.add(i, value);
-    }
-
-    @Override
-    public void putItemsAt(List<Item> values, int i) {
-        this.arrayItems.addAll(i, values);
-    }
-
-    @Override
-    public void removeItemAt(int i) {
-        this.arrayItems.remove(i);
-    }
+    // region arrays
 
     @Override
     public boolean isArray() {
@@ -130,9 +95,116 @@ public class ArrayItem implements Item {
     }
 
     @Override
+    public boolean isArrayOfItems() {
+        return true;
+    }
+
+    @Override
     public int getSize() {
         return this.arrayItems.size();
     }
+
+    @Deprecated
+    @Override
+    public List<Item> getItems() {
+        return this.arrayItems;
+    }
+
+    @Override
+    public List<Item> getItemMembers() {
+        return this.arrayItems;
+    }
+
+    @Override
+    public List<List<Item>> getSequenceMembers() {
+        List<List<Item>> result = new ArrayList<>(this.arrayItems.size());
+        for (Item item : this.arrayItems) {
+            result.add(Collections.singletonList(item));
+        }
+        return result;
+    }
+
+    @Override
+    public Item getItemAt(int position) throws ArrayIndexOutOfBoundsException {
+        if (position >= this.arrayItems.size() || position < 0) {
+            throw new ArrayIndexOutOfBoundsException(
+                    "Tried to access array index: "
+                        + (position + 1)
+                        + ", of array with length: "
+                        + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        return this.arrayItems.get(position);
+    }
+
+    @Override
+    public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
+        Item member = this.getItemAt(position);
+        return Collections.singletonList(member);
+    }
+
+    @Override
+    public void append(Item item) {
+        appendItem(item);
+    }
+
+    @Override
+    public void appendItem(Item item) {
+        this.arrayItems.add(item);
+    }
+
+    @Override
+    public void appendSequence(List<Item> sequence) throws OurBadException {
+        if (sequence.size() == 1) {
+            this.arrayItems.add(sequence.get(0));
+            return;
+        }
+        throw new OurBadException("ArrayItem only supports singleton member sequences.");
+    }
+
+    @Override
+    public void putItemAt(Item item, int index) {
+        this.arrayItems.add(index, item);
+    }
+
+    @Override
+    public void putSequenceAt(List<Item> sequence, int index) throws OurBadException {
+        if (sequence.size() == 1) {
+            this.arrayItems.set(index, sequence.get(0));
+            return;
+        }
+        throw new OurBadException("ArrayItem only supports singleton member sequences.");
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) {
+        this.arrayItems.addAll(i, items);
+    }
+
+    @Override
+    public void putSequencesAt(List<List<Item>> sequences, int index) throws OurBadException {
+        List<Item> items = new ArrayList<>(sequences.size());
+        for (List<Item> seq : sequences) {
+            if (seq.size() != 1) {
+                throw new OurBadException("ArrayItem only supports singleton member sequences.");
+            }
+            items.add(seq.get(0));
+        }
+        this.arrayItems.addAll(index, items);
+    }
+
+    @Override
+    public void removeItemAt(int index) {
+        this.arrayItems.remove(index);
+    }
+
+    @Override
+    public void removeSequenceAt(int index) {
+        this.arrayItems.remove(index);
+    }
+
+    // endregion arrays
 
     @Override
     public void write(Kryo kryo, Output output) {
@@ -275,6 +347,14 @@ public class ArrayItem implements Item {
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
         // return getItems();
+    }
+
+    @Override
+    public String getStringValue() {
+        throw new FunctionItemStringValueException(
+                FunctionItemStringValueException.DEFAULT_MESSAGE,
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     @Override

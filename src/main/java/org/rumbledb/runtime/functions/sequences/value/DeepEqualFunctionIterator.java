@@ -26,20 +26,30 @@ import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
+
 import scala.Tuple2;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
+
+    private static boolean sameExpandedNodeName(Item node1, Item node2) {
+        Name q1 = node1.nodeName();
+        Name q2 = node2.nodeName();
+        return Objects.equals(q1, q2);
+    }
 
 
     public DeepEqualFunctionIterator(
@@ -131,13 +141,47 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return true;
         }
 
+        if (item1.isMap() && item2.isMap()) {
+            List<Item> keys1 = item1.getItemKeys();
+            List<Item> keys2 = item2.getItemKeys();
+            if (keys1.size() != keys2.size()) {
+                return false;
+            }
+            for (Item k1 : keys1) {
+                List<Item> v1 = item1.getSequenceByKey(k1);
+                List<Item> v2 = item2.getSequenceByKey(k1);
+                if (v1 == null || v2 == null) {
+                    return false;
+                }
+                if (!checkDeepEqual(v1, v2)) {
+                    return false;
+                }
+            }
+            for (Item k2 : keys2) {
+                if (item1.getSequenceByKey(k2) == null) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (item1.isArray() && item2.isArray()) {
+            if (item1.getSize() != item2.getSize()) {
+                return false;
+            }
+            for (int i = 0; i < item1.getSize(); i++) {
+                if (!checkDeepEqual(item1.getSequenceAt(i), item2.getSequenceAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
         // If both items are nodes, use node-specific deep-equal logic
         if (item1.isNode() && item2.isNode()) {
             return checkNodesDeepEqual(item1, item2);
         }
 
-        // For non-node items, use the default equals implementation
-        return item1.equals(item2);
+        return AtomicDeepEqual.deepEqual(item1, item2);
     }
 
     /**
@@ -177,7 +221,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         // if and only if both the following conditions are satisfied:
         if (node1.isProcessingInstructionNode() && node2.isProcessingInstructionNode()) {
             // 5a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-            if (!node1.nodeName().equals(node2.nodeName())) {
+            if (!sameExpandedNodeName(node1, node2)) {
                 return false;
             }
             // 5b: The string-values of the two nodes are equal.
@@ -248,7 +292,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      */
     private boolean checkElementNodesDeepEqual(Item element1, Item element2) {
         // 3a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-        if (!element1.nodeName().equals(element2.nodeName())) {
+        if (!sameExpandedNodeName(element1, element2)) {
             return false;
         }
 
@@ -288,7 +332,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      */
     private boolean checkAttributeNodesDeepEqual(Item attr1, Item attr2) {
         // 4a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
-        if (!attr1.nodeName().equals(attr2.nodeName())) {
+        if (!sameExpandedNodeName(attr1, attr2)) {
             return false;
         }
 

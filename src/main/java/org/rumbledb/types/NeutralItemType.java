@@ -63,7 +63,7 @@ public class NeutralItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("neutral type does not support facets");
     }
 

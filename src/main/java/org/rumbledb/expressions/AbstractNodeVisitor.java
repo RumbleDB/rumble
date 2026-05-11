@@ -46,6 +46,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -60,6 +61,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -230,6 +232,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitObjectConstructor(ObjectConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitMapConstructor(MapConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -482,6 +488,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTypeDeclaration(TypeDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitOptionDeclaration(OptionDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
 

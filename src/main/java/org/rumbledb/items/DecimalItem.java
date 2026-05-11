@@ -138,7 +138,7 @@ public class DecimalItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, this.value.toString(), SequenceType.DECIMAL);
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("decimal"));
     }
 
     public boolean isNumeric() {

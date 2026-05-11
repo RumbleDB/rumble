@@ -40,7 +40,7 @@ public class VisitorHelpers {
 
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
         RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.isPrintIteratorTree() || conf.debug()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.err.println(sb);
@@ -58,7 +58,7 @@ public class VisitorHelpers {
 
     private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
+        if (conf.printInferredTypes() || conf.debug()) {
             printTree(module, conf);
         }
     }
@@ -66,34 +66,46 @@ public class VisitorHelpers {
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
         // Annotate recursive functions as such
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             System.err.println("***************************************");
             System.err.println("Function dependencies visitor");
             System.err.println("***************************************");
         }
         new FunctionDependenciesVisitor().visit(result, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         // Inline non-recursive functions
         if (conf.functionInlining()) {
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Function inlining");
                 System.err.println("***************************************");
             }
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 printTree(result, conf);
             }
         }
-        if (conf.isPrintIteratorTree()) {
+        // Apply tail call optimization
+        if (conf.tailCallOptimization()) {
+            if (conf.debug()) {
+                System.err.println("***************************************");
+                System.err.println("Tail call optimization");
+                System.err.println("***************************************");
+            }
+            result = (MainModule) new TailCallOptimizationVisitor().visit(result, null);
+            if (conf.debug()) {
+                printTree(result, conf);
+            }
+        }
+        if (conf.debug()) {
             System.err.println("***************************************");
             System.err.println("Projection pushdown");
             System.err.println("***************************************");
         }
         result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(result, conf);
         }
         return result;
@@ -162,15 +174,19 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.contains("xquery version")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        } else if (query.contains("jsoniq version")) {
+            return parseJSONiqMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseJSONiqMainModule(query, uri, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
-            // overwrite default version if query specifies jsoniq version
-            if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setQueryLanguage("jsoniq31");
-            } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setQueryLanguage("jsoniq10");
-            }
             return parseJSONiqMainModule(query, uri, configuration);
         }
 
@@ -190,83 +206,85 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
-            if (main == null) {
+            JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
+            if (modulectx == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Parsing program");
                 System.err.println("***************");
             }
-            MainModule mainModule = (MainModule) visitor.visit(main);
-            if (configuration.isPrintIteratorTree()) {
+            MainModule mainModule = (MainModule) visitor.visit(modulectx);
+            if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Pruning modules");
                 System.err.println("***************");
             }
             pruneModules(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("**********************");
                 System.err.println("Resolving dependencies");
                 System.err.println("**********************");
             }
             resolveDependencies(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating sequential classifications");
                 System.err.println("*************************************");
             }
             populateSequentialClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Applying type independent optimizations");
                 System.err.println("***************************************");
             }
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************");
                 System.err.println("Populating static context");
                 System.err.println("*************************");
             }
             populateStaticContext(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating expression classifications");
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("********************************");
                 System.err.println("Verify composability constraints");
                 System.err.println("********************************");
             }
             verifyComposabilityConstraints(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("**************");
                 System.err.println("Infering types");
                 System.err.println("**************");
             }
             inferTypes(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("************************");
                 System.err.println("Applying type dependent optimizations");
                 System.err.println("************************");
             }
             mainModule = applyTypeDependentOptimizations(mainModule);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("***************************************");
                 System.err.println("Populating execution modes");
                 System.err.println("***************************************");
             }
             populateExecutionModes(mainModule, configuration);
-            if (configuration.isPrintIteratorTree()) {
+            if (configuration.debug()) {
                 System.err.println("*************************************");
                 System.err.println("Populating expression classifications");
                 System.err.println("*************************************");
             }
             populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                printTree(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -290,15 +308,21 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                true,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
-            XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            XQueryParser.MainModuleContext main = module.module().main;
+            XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -311,6 +335,9 @@ public class VisitorHelpers {
             populateExecutionModes(mainModule, configuration);
             // TODO populate expression classifications here?
             // populateExpressionClassifications(mainModule, configuration);
+            if (configuration.isPrintIteratorTree()) {
+                printTree(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -333,15 +360,19 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
+        if (query.contains("xquery version")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (query.contains("jsoniq version")) {
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
-            // overwrite default version if query specifies jsoniq version
-            if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setQueryLanguage("jsoniq31");
-            } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setQueryLanguage("jsoniq10");
-            }
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
 
@@ -364,8 +395,7 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
+            JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -393,16 +423,23 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
+        XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration, query);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
+                moduleContext,
+                false,
+                configuration,
+                query,
+                xQueryTokens
+        );
         try {
             // TODO Handle module extras
-            XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
+            XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -423,13 +460,13 @@ public class VisitorHelpers {
     }
 
     private static void populateExecutionModes(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         if (!conf.parallelExecution()) {
             LocalExecutionModeVisitor visitor = new LocalExecutionModeVisitor(conf);
             visitor.visit(module, module.getStaticContext());
-            if (conf.isPrintIteratorTree()) {
+            if (conf.debug()) {
                 printTree(module, conf);
             }
             if (module.numberOfUnsetExecutionModes() > 0) {
@@ -444,7 +481,7 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = module.numberOfUnsetExecutionModes();
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
 
@@ -478,7 +515,7 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(module, module.getStaticContext());
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         if (module.numberOfUnsetExecutionModes() > 0) {
@@ -489,26 +526,26 @@ public class VisitorHelpers {
     }
 
     private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(module, module.getStaticContext());
 
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
     }
 
     private static void populateExpressionClassifications(Module module, RumbleRuntimeConfiguration conf) {
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
 
         ExpressionClassificationVisitor visitor = new ExpressionClassificationVisitor();
         visitor.visit(module, ExpressionClassification.SIMPLE);
 
-        if (conf.isPrintIteratorTree()) {
+        if (conf.debug()) {
             printTree(module, conf);
         }
     }
@@ -517,14 +554,14 @@ public class VisitorHelpers {
             MainModule mainModule,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
 
         SequentialClassificationVisitor visitor = new SequentialClassificationVisitor(mainModule.getProlog());
         visitor.visit(mainModule, new DescendentSequentialProperties(false, false));
 
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
     }
@@ -534,14 +571,14 @@ public class VisitorHelpers {
             MainModule mainModule,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
 
         ComposabilityVisitor visitor = new ComposabilityVisitor();
         visitor.visit(mainModule, null);
 
-        if (configuration.isPrintIteratorTree()) {
+        if (configuration.debug()) {
             printTree(mainModule, configuration);
         }
     }

@@ -84,19 +84,17 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
 
             // Use the generic XDM 3.1 node-name accessor defined on Item and implemented
             // by XML node item classes (see Item.nodeName()).
-            String nodeName = node.nodeName();
+            Name nodeName = node.nodeName();
 
-            // If the node has no name (for example, document, comment, text, or a namespace node
-            // without a name), the accessor returns null or the empty string. In both cases,
-            // fn:name returns the zero-length string.
-            if (nodeName == null || nodeName.isEmpty()) {
+            // If the node has no name (document, comment, text, or a namespace node with empty prefix),
+            // dm:node-name is the empty sequence (null here). fn:name returns the zero-length string.
+            if (nodeName == null) {
                 return new StringItem("");
             }
 
             // For named nodes (elements, attributes, processing instructions, namespace nodes with
-            // a non-empty name), return the lexical form of the QName or name as provided by
-            // the node implementation.
-            return new StringItem(nodeName);
+            // a non-empty name), return the lexical form of the QName (fn:string(fn:node-name($arg))).
+            return new StringItem(nodeName.toString());
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
     }

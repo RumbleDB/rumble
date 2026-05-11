@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -113,8 +114,8 @@ public class TextItem implements Item {
     }
 
     @Override
-    public String nodeName() {
-        return "";
+    public Name nodeName() {
+        return null;
     }
 
     /**
@@ -149,7 +150,7 @@ public class TextItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.content));
     }
 
     @Override
@@ -221,13 +222,20 @@ public class TextItem implements Item {
         return Collections.emptyList();
     }
 
+
     /**
-     * XDM 3.1 Section 6.7 Text Node Accessors — type-name.
+     * XDM 3.1 Section 6.7 Text Node Accessors — type-name:
      *
-     * For a Text Node, dm:type-name returns the empty sequence.
+     * For a Text Node, dm:type-name returns xs:untypedAtomic.
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        return Collections.singletonList(
+            ItemFactory.getInstance()
+                .createAnnotatedItem(
+                    ItemFactory.getInstance().createStringItem("untypedAtomic"),
+                    BuiltinTypesCatalogue.QNameItem
+                )
+        );
     }
 }

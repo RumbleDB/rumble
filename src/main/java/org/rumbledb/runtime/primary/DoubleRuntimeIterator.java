@@ -50,7 +50,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getDoubleValue(),
-                SequenceType.DOUBLE
+                SequenceType.createSequenceType("double")
         );
     }
 }

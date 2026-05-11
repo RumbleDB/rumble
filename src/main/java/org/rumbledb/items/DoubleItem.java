@@ -179,7 +179,7 @@ public class DoubleItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, SequenceType.DOUBLE);
+        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("double"));
     }
 
     @Override
