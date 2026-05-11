@@ -325,6 +325,7 @@ NameStartChar: [_a-zA-Z]
 fragment
 NameChar: NameStartChar
         | '-'
+        | '.'
         | [0-9]
         | '\u00A1'..'\u00BF'
         | '\u0300'..'\u036F'
