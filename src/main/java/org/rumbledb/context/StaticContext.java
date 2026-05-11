@@ -112,7 +112,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticBaseURI = staticBaseURI;
         this.queryLanguage = configuration.getQueryLanguage() != null
             ? configuration.getQueryLanguage()
-            : queryLanguage;
+            : this.queryLanguage;
         this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
