@@ -53,6 +53,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
+    private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
@@ -93,6 +94,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     public StaticContext() {
         this.parent = null;
         this.staticBaseURI = null;
+        this.queryLanguage = null;
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
@@ -108,6 +110,9 @@ public class StaticContext implements Serializable, KryoSerializable {
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
+        this.queryLanguage = configuration.getQueryLanguage() != null
+            ? configuration.getQueryLanguage()
+            : queryLanguage;
         this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
@@ -123,6 +128,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
+        this.queryLanguage = null;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.contextItemStaticType = null;
@@ -149,6 +155,20 @@ public class StaticContext implements Serializable, KryoSerializable {
         throw new OurBadException("Configuration not set.");
     }
 
+    public void setQueryLanguage(String queryLanguage) {
+        this.queryLanguage = queryLanguage;
+    }
+
+    public String getQueryLanguage() {
+        if (this.queryLanguage != null) {
+            return this.queryLanguage;
+        }
+        if (this.parent != null) {
+            return this.parent.getQueryLanguage();
+        }
+        throw new OurBadException("Query language not set.");
+    }
+
     public URI getStaticBaseURI() {
         if (this.staticBaseURI != null) {
             return this.staticBaseURI;
@@ -156,7 +176,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             return this.parent.getStaticBaseURI();
         }
-        throw new OurBadException("Static context not set.");
+        throw new OurBadException("Static base URI not set.");
     }
 
     public void setStaticBaseUri(URI staticBaseURI) {

@@ -122,6 +122,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -189,6 +190,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
+    private String version;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
@@ -204,6 +206,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
+
+        if (configuration.getQueryLanguage().equals("xquery10")) {
+            this.version = "1.0";
+            this.moduleContext.setQueryLanguage("xquery10");
+        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+            this.version = "3.0";
+            this.moduleContext.setQueryLanguage("xquery30");
+        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+            this.version = "3.1";
+            this.moduleContext.setQueryLanguage("xquery31");
+        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+            this.version = "4.0";
+            this.moduleContext.setQueryLanguage("xquery40");
+        }
     }
 
     // endregion expr
@@ -211,6 +227,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(XQueryParser.ModuleContext ctx) {
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
+            if (ctx.vers.getText().trim().equals("\"1.0\"")) {
+                this.version = "1.0";
+                this.moduleContext.setQueryLanguage("jsoniq10");
+            } else if (ctx.vers.getText().trim().equals("\"3.0\"")) {
+                this.version = "3.0";
+                this.moduleContext.setQueryLanguage("jsoniq31");
+            } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
+                this.version = "3.1";
+                this.moduleContext.setQueryLanguage("jsoniq31");
+            } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
+                this.version = "4.0";
+                this.moduleContext.setQueryLanguage("jsoniq40");
+            } else {
+                throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            }
+        }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
                 return this.visitMainModule(ctx.mainModule().get(0));
@@ -1223,13 +1256,28 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitIsStaticallyExpr(ctx.main_expr);
         if (ctx.seq == null || ctx.seq.isEmpty()) {
             return mainExpression;
         }
         XQueryParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
         return new InstanceOfExpression(
+                mainExpression,
+                sequenceType,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitIsStaticallyExpr(XQueryParser.IsStaticallyExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new IsStaticallyExpression(
                 mainExpression,
                 sequenceType,
                 createMetadataFromContext(ctx)

@@ -43,7 +43,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
 
-        boolean isJSONiq = getConfiguration().getQueryLanguage().equals("jsoniq10");
+        boolean isJSONiq = this.staticContext.getQueryLanguage().equals("jsoniq10");
 
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(
             optionsItem,

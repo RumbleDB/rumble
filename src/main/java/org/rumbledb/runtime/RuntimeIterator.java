@@ -160,7 +160,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 // returns true even if sequence has more items according to spec
                 return true;
             } else {
-                if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+                System.err.println("Query language: " + this.staticContext.getQueryLanguage());
+                if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
                     if (item.isObject() || item.isArray()) {
                         this.close();
                         return true;
