@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,18 +30,44 @@ final class FormattingOptionsResolver {
 
         String language = getOptionalString(languageItem);
         String calendar = getOptionalString(calendarItem);
-        String place = getOptionalString(placeItem);
+
+        String rawPlace = getOptionalString(placeItem);
+        String place = normalizePlace(rawPlace);
+        ZoneId placeZoneId = resolvePlaceZoneId(place);
 
         String calendarMode = resolveCalendarMode(calendar, pictureStringForErrors, metadata);
 
-        // place aktuell noch ignoriert, aber bewusst schon eingelesen
-        return FormattingOptions.extended(language, calendarMode);
+        return FormattingOptions.extended(language, calendarMode, place, placeZoneId);
     }
 
     private static String getOptionalString(Item item) {
         return item != null && !item.isNull()
             ? item.getStringValue()
             : null;
+    }
+
+    private static String normalizePlace(String place) {
+        if (place == null) {
+            return null;
+        }
+
+        String trimmed = place.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static ZoneId resolvePlaceZoneId(String place) {
+        if (place == null) {
+            return null;
+        }
+
+        try {
+            return ZoneId.of(place);
+        } catch (DateTimeException e) {
+            // Conservative behavior:
+            // Unknown places such as "us" are still useful as name hints,
+            // but they are not valid Java ZoneIds and should not fail formatting.
+            return null;
+        }
     }
 
     static String resolveCalendarMode(

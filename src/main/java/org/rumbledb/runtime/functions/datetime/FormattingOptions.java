@@ -1,35 +1,80 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import java.time.ZoneId;
 import java.util.Locale;
 
-import org.rumbledb.runtime.functions.base.formatting.language.LanguageSupport;
+
+import java.time.ZoneId;
+import java.util.Locale;
 
 final class FormattingOptions {
+
     final String language;
-    final Locale locale;
     final String calendarMode;
+    final Locale locale;
     final boolean useFiveArgumentSemantics;
+
+    final String place;
+    final ZoneId placeZoneId;
 
     private FormattingOptions(
             String language,
-            Locale locale,
             String calendarMode,
-            boolean useFiveArgumentSemantics
+            Locale locale,
+            boolean useFiveArgumentSemantics,
+            String place,
+            ZoneId placeZoneId
     ) {
         this.language = language;
-        this.locale = locale;
         this.calendarMode = calendarMode;
+        this.locale = locale;
         this.useFiveArgumentSemantics = useFiveArgumentSemantics;
+        this.place = place;
+        this.placeZoneId = placeZoneId;
     }
 
     static FormattingOptions legacy() {
-        String language = null;
-        Locale locale = LanguageSupport.resolveLocale(language);
-        return new FormattingOptions(language, locale, CalendarMode.DEFAULT, false);
+        return new FormattingOptions(
+                null,
+                CalendarMode.DEFAULT,
+                Locale.US,
+                false,
+                null,
+                null
+        );
     }
 
     static FormattingOptions extended(String language, String calendarMode) {
-        Locale locale = LanguageSupport.resolveLocale(language);
-        return new FormattingOptions(language, locale, calendarMode, true);
+        return extended(language, calendarMode, null, null);
+    }
+
+    static FormattingOptions extended(
+            String language,
+            String calendarMode,
+            String place,
+            ZoneId placeZoneId
+    ) {
+        Locale locale = resolveLocale(language);
+
+        return new FormattingOptions(
+                language,
+                calendarMode,
+                locale,
+                true,
+                place,
+                placeZoneId
+        );
+    }
+
+    boolean hasPlaceZoneId() {
+        return this.placeZoneId != null;
+    }
+
+    private static Locale resolveLocale(String language) {
+        if (language == null || language.trim().isEmpty()) {
+            return Locale.US;
+        }
+
+        return Locale.forLanguageTag(language);
     }
 }

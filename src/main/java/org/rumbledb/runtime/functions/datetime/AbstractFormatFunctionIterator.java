@@ -38,21 +38,48 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         if (valueItem.isNull()) {
             return valueItem;
         }
+        String pictureString = pictureItem.getStringValue();
 
         FormattingOptions formattingOptions = FormattingOptionsResolver.resolve(
             this.children.size(),
             languageItem,
             calendarItem,
             placeItem,
-            pictureItem.serialize(),
+            pictureString,
             getMetadata()
         );
+
 
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
-        String result = TemporalPictureFormatter.format(
+        /*
+         * System.err.println(
+         * "[[Debug]] temporal_value: "
+         * + temporalValue
+         * +
+         * "\npictureString:"
+         * + pictureString
+         * +
+         * "\nlanguage: "
+         * + formattingOptions.language
+         * +
+         * "\ncalendar_mode: "
+         * + formattingOptions.calendarMode
+         * +
+         * "\nlocale: "
+         * + formattingOptions.locale
+         * );
+         */
+
+        OffsetDateTime renderingValue = TemporalTimezoneSupport.valueForRendering(
             temporalValue,
+            hasExplicitTimezone,
+            formattingOptions
+        );
+
+        String result = TemporalPictureFormatter.format(
+            renderingValue,
             pictureItem.getStringValue(),
             pictureItem.serialize(),
             hasExplicitTimezone,
@@ -67,4 +94,6 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);
 
     protected abstract boolean supportsComponent(char component);
+
+
 }

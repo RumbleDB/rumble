@@ -37,6 +37,10 @@ final class TimezonePictureParser {
             throw invalidPicture(pictureStringForErrors, metadata);
         }
 
+        if ("N".equals(core) || "n".equals(core) || "Nn".equals(core)) {
+            return ParsedTimezonePicture.named(core);
+        }
+
         if (component == 'z') {
             return parseNumericTimezone(core, true, useZForZero, pictureStringForErrors, metadata);
         }

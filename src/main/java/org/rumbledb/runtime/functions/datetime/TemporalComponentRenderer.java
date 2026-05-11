@@ -38,23 +38,30 @@ final class TemporalComponentRenderer {
         switch (parsed.kind) {
             case ParsedVariableMarker.Kind.ROMAN:
                 return formatRoman(value, parsed, formattingOptions, pictureStringForErrors, metadata);
+
             case ParsedVariableMarker.Kind.ALPHABETIC:
                 return formatAlphabetic(value, parsed, formattingOptions, pictureStringForErrors, metadata);
+
             case ParsedVariableMarker.Kind.NUMERIC:
                 if (parsed.component == 'f') {
                     return formatFractionalSeconds(value, parsed, formattingOptions, pictureStringForErrors, metadata);
                 }
                 return formatNumericComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
+
             case ParsedVariableMarker.Kind.NAME:
                 return formatNamedComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
+
             case ParsedVariableMarker.Kind.WORDS:
                 return formatWordsComponent(value, parsed, formattingOptions, pictureStringForErrors, metadata);
+
             case ParsedVariableMarker.Kind.TIMEZONE:
                 return TemporalFormattingSupport.formatTimezone(
-                    value.getOffset(),
+                    value,
                     parsed.timezonePicture,
-                    hasExplicitTimezone
+                    hasExplicitTimezone,
+                    formattingOptions
                 );
+
             case ParsedVariableMarker.Kind.DEFAULT:
             default:
                 if (parsed.component == 'f') {
@@ -138,13 +145,16 @@ final class TemporalComponentRenderer {
                 value = LanguageRegistry.resolve(formattingOptions.language)
                     .dayName(dt.getDayOfWeek(), parsed.minWidth, parsed.maxWidth);
                 break;
+
             case 'M':
                 value = LanguageRegistry.resolve(formattingOptions.language)
                     .monthName(dt.getMonth(), parsed.minWidth, parsed.maxWidth);
                 break;
+
             case 'P':
                 value = getAmPmName(dt, parsed, formattingOptions);
                 break;
+
             default:
                 throw unsupported(pictureStringForErrors, metadata, parsed.presentation);
         }
@@ -158,11 +168,14 @@ final class TemporalComponentRenderer {
             FormattingOptions formattingOptions
     ) {
         boolean am = dt.getHour() < 12;
+
         switch (parsed.nameForm) {
             case ParsedVariableMarker.NameForm.LOWER:
                 return am ? "am" : "pm";
+
             case ParsedVariableMarker.NameForm.UPPER:
                 return am ? "AM" : "PM";
+
             case ParsedVariableMarker.NameForm.TITLE:
             default:
                 return am ? "Am" : "Pm";
@@ -207,6 +220,7 @@ final class TemporalComponentRenderer {
         switch (parsed.component) {
             case 'Y':
                 return maybeAppendOrdinal(Integer.toString(dt.getYear()), dt.getYear(), parsed, formattingOptions);
+
             case 'M':
                 return maybeAppendOrdinal(
                     Integer.toString(dt.getMonthValue()),
@@ -214,6 +228,7 @@ final class TemporalComponentRenderer {
                     parsed,
                     formattingOptions
                 );
+
             case 'D':
                 return maybeAppendOrdinal(
                     Integer.toString(dt.getDayOfMonth()),
@@ -221,6 +236,7 @@ final class TemporalComponentRenderer {
                     parsed,
                     formattingOptions
                 );
+
             case 'd':
                 return maybeAppendOrdinal(
                     Integer.toString(dt.getDayOfYear()),
@@ -228,9 +244,11 @@ final class TemporalComponentRenderer {
                     parsed,
                     formattingOptions
                 );
+
             case 'F':
                 return LanguageRegistry.resolve(formattingOptions.language)
                     .dayAbbreviation(dt.getDayOfWeek(), 3);
+
             case 'W':
                 return maybeAppendOrdinal(
                     Integer.toString(dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)),
@@ -238,31 +256,42 @@ final class TemporalComponentRenderer {
                     parsed,
                     formattingOptions
                 );
+
             case 'w':
                 int wom = weekOfMonth(dt, formattingOptions);
                 return maybeAppendOrdinal(Integer.toString(wom), wom, parsed, formattingOptions);
+
             case 'H':
                 return Integer.toString(dt.getHour());
+
             case 'h':
                 return Integer.toString(hour12(dt.getHour()));
+
             case 'm':
                 return zeroPad(dt.getMinute(), 2);
+
             case 's':
                 return zeroPad(dt.getSecond(), 2);
+
             case 'P':
                 return dt.getHour() < 12 ? "am" : "pm";
+
             case 'Z':
                 return TemporalFormattingSupport.formatTimezone(
-                    dt.getOffset(),
+                    dt,
                     ParsedTimezonePicture.defaultNumeric(),
-                    hasExplicitTimezone
+                    hasExplicitTimezone,
+                    formattingOptions
                 );
+
             case 'z':
                 return TemporalFormattingSupport.formatTimezone(
-                    dt.getOffset(),
+                    dt,
                     ParsedTimezonePicture.defaultGmt(),
-                    hasExplicitTimezone
+                    hasExplicitTimezone,
+                    formattingOptions
                 );
+
             default:
                 throw unsupported(pictureStringForErrors, metadata, parsed.presentation);
         }
@@ -270,6 +299,7 @@ final class TemporalComponentRenderer {
 
     private static int weekOfMonth(OffsetDateTime dt, FormattingOptions formattingOptions) {
         int wom = dt.get(WeekFields.ISO.weekOfMonth());
+
         if (
             formattingOptions != null
                 && formattingOptions.useFiveArgumentSemantics
@@ -280,6 +310,7 @@ final class TemporalComponentRenderer {
             return previousMonth.withDayOfMonth(previousMonth.toLocalDate().lengthOfMonth())
                 .get(WeekFields.ISO.weekOfMonth());
         }
+
         return wom;
     }
 
@@ -292,6 +323,7 @@ final class TemporalComponentRenderer {
         if (parsed.ordinal) {
             return base + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
         }
+
         return base;
     }
 
@@ -305,28 +337,40 @@ final class TemporalComponentRenderer {
         switch (component) {
             case 'Y':
                 return dt.getYear();
+
             case 'M':
                 return dt.getMonthValue();
+
             case 'D':
                 return dt.getDayOfMonth();
+
             case 'd':
                 return dt.getDayOfYear();
+
             case 'W':
                 return dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+
             case 'w':
                 return weekOfMonth(dt, formattingOptions);
+
             case 'F':
                 return dt.getDayOfWeek().getValue();
+
             case 'H':
                 return dt.getHour();
+
             case 'h':
                 return hour12(dt.getHour());
+
             case 'm':
                 return dt.getMinute();
+
             case 's':
                 return dt.getSecond();
+
             case 'P':
                 return dt.getHour() < 12 ? 0 : 1;
+
             default:
                 throw unsupported(pictureStringForErrors, metadata, String.valueOf(component));
         }
@@ -339,9 +383,16 @@ final class TemporalComponentRenderer {
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
-        int value = getNumericComponentValue(dt, parsed.component, formattingOptions, pictureStringForErrors, metadata);
+        int value = getNumericComponentValue(
+            dt,
+            parsed.component,
+            formattingOptions,
+            pictureStringForErrors,
+            metadata
+        );
 
         NumericPicture pic = parsed.numericPicture;
+
         if (pic == null) {
             int defaultMinWidth = defaultNumericMinWidth(parsed.component);
             String digits = Integer.toString(value);
@@ -355,6 +406,7 @@ final class TemporalComponentRenderer {
             if (parsed.ordinal) {
                 digits = digits + NumericFormattingSupport.ordinalSuffix(value, formattingOptions.language);
             }
+
             return digits;
         }
 
@@ -394,7 +446,8 @@ final class TemporalComponentRenderer {
         switch (component) {
             case 'm':
             case 's':
-                return 2; // TODO this seams too broad and makes runtime tests fail
+                return 2;
+
             default:
                 return 1;
         }
@@ -449,20 +502,20 @@ final class TemporalComponentRenderer {
             fractionDigits = "0";
         }
 
-        String mapped = mapDigitsAndInsertSeparators(
+        return mapDigitsAndInsertSeparators(
             fractionDigits,
             pattern.zeroDigit,
             pattern
         );
-
-        return mapped;
     }
 
     private static String suppressTrailingZeros(String digits, int minDigits) {
         int end = digits.length();
+
         while (end > minDigits && end > 0 && digits.charAt(end - 1) == '0') {
             end--;
         }
+
         return digits.substring(0, end);
     }
 
@@ -473,20 +526,24 @@ final class TemporalComponentRenderer {
     ) {
         StringBuilder sb = new StringBuilder();
         int usedDigits = Math.min(digits.length(), pattern.activeDigits);
+
         for (int i = 0; i < usedDigits; i++) {
             char d = digits.charAt(i);
             sb.appendCodePoint(zeroDigit + (d - '0'));
+
             String sep = pattern.separatorAfterIndex(i);
             if (sep != null) {
                 sb.append(sep);
             }
         }
+
         if (digits.length() > usedDigits) {
             for (int i = usedDigits; i < digits.length(); i++) {
                 char d = digits.charAt(i);
                 sb.appendCodePoint(zeroDigit + (d - '0'));
             }
         }
+
         return sb.toString();
     }
 
@@ -496,25 +553,31 @@ final class TemporalComponentRenderer {
 
     private static String canonicalFractionDigits(OffsetDateTime dt) {
         int nanos = dt.getNano();
+
         if (nanos == 0) {
             return "0";
         }
+
         String digits = String.format("%09d", nanos);
         int end = digits.length();
+
         while (end > 1 && digits.charAt(end - 1) == '0') {
             end--;
         }
+
         return digits.substring(0, end);
     }
 
     private static int adjustValueForWidthBeforePresentation(int value, ParsedVariableMarker parsed) {
         if (parsed.component == 'Y' && parsed.maxWidth > 0) {
             String digits = Integer.toString(Math.abs(value));
+
             if (digits.length() > parsed.maxWidth) {
                 int reduced = Integer.parseInt(digits.substring(digits.length() - parsed.maxWidth));
                 return value < 0 ? -reduced : reduced;
             }
         }
+
         return value;
     }
 
@@ -531,6 +594,7 @@ final class TemporalComponentRenderer {
         if (width <= 0 || value.length() >= width) {
             return value;
         }
+
         return "0".repeat(width - value.length()) + value;
     }
 
@@ -538,6 +602,7 @@ final class TemporalComponentRenderer {
         if (value.length() >= width) {
             return value;
         }
+
         return value + "0".repeat(width - value.length());
     }
 
@@ -545,6 +610,7 @@ final class TemporalComponentRenderer {
         if (width <= 0 || value.length() >= width) {
             return value;
         }
+
         return value + " ".repeat(width - value.length());
     }
 
@@ -558,6 +624,7 @@ final class TemporalComponentRenderer {
             pictureStringForErrors,
             modifier
         );
+
         return new UnsupportedFeatureException(message, metadata);
     }
 
@@ -601,32 +668,40 @@ final class TemporalComponentRenderer {
                     if (mandatory == 0) {
                         throw new IllegalArgumentException("Invalid fractional pattern");
                     }
+
                     sawOptional = true;
                     active++;
+
                     if (pendingSeparator.length() > 0 && active > 1) {
                         tmpSeparators[active - 2] = pendingSeparator.toString();
                         pendingSeparator.setLength(0);
                     }
+
                     lastWasActive = true;
                     continue;
                 }
 
                 if (Character.getType(cp) == Character.DECIMAL_DIGIT_NUMBER) {
                     int z = NumericPictureParser.zeroDigitOf(cp);
+
                     if (zeroDigit < 0) {
                         zeroDigit = z;
                     } else if (zeroDigit != z) {
                         throw new IllegalArgumentException("Mixed digit families");
                     }
+
                     if (sawOptional) {
                         throw new IllegalArgumentException("Mandatory digit after optional digit");
                     }
+
                     mandatory++;
                     active++;
+
                     if (pendingSeparator.length() > 0 && active > 1) {
                         tmpSeparators[active - 2] = pendingSeparator.toString();
                         pendingSeparator.setLength(0);
                     }
+
                     lastWasActive = true;
                     continue;
                 }
@@ -634,6 +709,7 @@ final class TemporalComponentRenderer {
                 if (!lastWasActive) {
                     throw new IllegalArgumentException("Invalid fractional separator placement");
                 }
+
                 pendingSeparator.appendCodePoint(cp);
                 lastWasActive = false;
             }
@@ -641,9 +717,11 @@ final class TemporalComponentRenderer {
             if (mandatory == 0) {
                 throw new IllegalArgumentException("No mandatory digit");
             }
-            if (!pendingSeparator.isEmpty()) {
+
+            if (pendingSeparator.length() > 0) {
                 throw new IllegalArgumentException("Trailing separator");
             }
+
             if (zeroDigit < 0) {
                 zeroDigit = '0';
             }
@@ -658,6 +736,7 @@ final class TemporalComponentRenderer {
             if (this.raw == null || this.raw.isEmpty()) {
                 return true;
             }
+
             if (this.separatorsAfterSlot.length != 0) {
                 return false;
             }

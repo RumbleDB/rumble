@@ -1,9 +1,12 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
-
+import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
+
+import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.base.formatting.timezone.TimezoneNameContext;
+import org.rumbledb.runtime.functions.base.formatting.timezone.TimezoneNameRegistry;
 
 final class TemporalFormattingSupport {
 
@@ -14,6 +17,7 @@ final class TemporalFormattingSupport {
         if (parsed.nameForm == null) {
             return value;
         }
+
         switch (parsed.nameForm) {
             case ParsedVariableMarker.NameForm.UPPER:
                 return value.toUpperCase(locale);
@@ -45,27 +49,166 @@ final class TemporalFormattingSupport {
     static String toTitleCaseWords(String value, Locale locale) {
         StringBuilder sb = new StringBuilder(value.length());
         boolean start = true;
+
         for (int i = 0; i < value.length(); i++) {
             char ch = value.charAt(i);
+
             if (Character.isLetter(ch) && start) {
                 sb.append(String.valueOf(ch).toUpperCase(locale));
                 start = false;
             } else {
                 sb.append(ch);
+
                 if (ch == ' ' || ch == '-') {
                     start = true;
                 }
             }
         }
+
         return sb.toString();
     }
 
-    static String formatTimezone(ZoneOffset offset, ParsedTimezonePicture tz, boolean hasExplicitTimezone) {
-        if (tz.military) {
-            return formatMilitaryTimezone(offset, hasExplicitTimezone);
+    static String formatTimezone(
+            OffsetDateTime value,
+            ParsedTimezonePicture tz,
+            boolean hasExplicitTimezone
+    ) {
+        return formatTimezone(value, tz, hasExplicitTimezone, null);
+    }
+
+    static String formatTimezone(
+            OffsetDateTime value,
+            ParsedTimezonePicture tz,
+            boolean hasExplicitTimezone,
+            FormattingOptions options
+    ) {
+        if (!hasExplicitTimezone) {
+            return tz.military ? "J" : "";
         }
 
+        if (tz.named) {
+            return formatNamedTimezone(value, tz, options);
+        }
+
+        if (tz.military) {
+            return formatMilitaryTimezone(value.getOffset(), true);
+        }
+
+        return formatNumericTimezone(value.getOffset(), tz);
+    }
+
+    static String formatTimezone(
+            ZoneOffset offset,
+            ParsedTimezonePicture tz,
+            boolean hasExplicitTimezone
+    ) {
+        return formatTimezone(offset, tz, hasExplicitTimezone, null);
+    }
+
+    static String formatTimezone(
+            ZoneOffset offset,
+            ParsedTimezonePicture tz,
+            boolean hasExplicitTimezone,
+            FormattingOptions options
+    ) {
+        if (!hasExplicitTimezone) {
+            return tz.military ? "J" : "";
+        }
+
+        if (tz.named) {
+            return formatNamedTimezoneFromOffset(offset, tz, options);
+        }
+
+        if (tz.military) {
+            return formatMilitaryTimezone(offset, true);
+        }
+
+        return formatNumericTimezone(offset, tz);
+    }
+
+    private static String formatNamedTimezone(
+            OffsetDateTime value,
+            ParsedTimezonePicture tz,
+            FormattingOptions options
+    ) {
+        String result = TimezoneNameRegistry.resolve(
+            value,
+            timezoneNameContext(options)
+        );
+
+        if (result == null) {
+            result = formatNumericTimezone(
+                value.getOffset(),
+                ParsedTimezonePicture.defaultNumeric()
+            );
+        }
+
+        return applyTimezoneNamePresentation(result, tz.namePresentation, options);
+    }
+
+    private static String formatNamedTimezoneFromOffset(
+            ZoneOffset offset,
+            ParsedTimezonePicture tz,
+            FormattingOptions options
+    ) {
+        String result = TimezoneNameRegistry.resolve(
+            offset,
+            timezoneNameContext(options)
+        );
+
+        if (result == null) {
+            result = formatNumericTimezone(
+                offset,
+                ParsedTimezonePicture.defaultNumeric()
+            );
+        }
+
+        return applyTimezoneNamePresentation(result, tz.namePresentation, options);
+    }
+
+    private static TimezoneNameContext timezoneNameContext(FormattingOptions options) {
+        if (options == null) {
+            return new TimezoneNameContext(null, null, Locale.ROOT);
+        }
+
+        return new TimezoneNameContext(
+                options.place,
+                options.placeZoneId,
+                options.locale
+        );
+    }
+
+    private static String applyTimezoneNamePresentation(
+            String value,
+            String presentation,
+            FormattingOptions options
+    ) {
+        Locale locale = options == null || options.locale == null
+            ? Locale.ROOT
+            : options.locale;
+
+        if ("n".equals(presentation)) {
+            return value.toLowerCase(locale);
+        }
+
+        if ("Nn".equals(presentation)) {
+            if (value.isEmpty()) {
+                return value;
+            }
+
+            return value.substring(0, 1).toUpperCase(locale)
+                + value.substring(1).toLowerCase(locale);
+        }
+
+        return value;
+    }
+
+    private static String formatNumericTimezone(
+            ZoneOffset offset,
+            ParsedTimezonePicture tz
+    ) {
         int totalMinutes = offset.getTotalSeconds() / 60;
+
         if (tz.useZForZero && totalMinutes == 0 && !tz.gmtPrefix) {
             return "Z";
         }
@@ -112,6 +255,7 @@ final class TemporalFormattingSupport {
         }
 
         int totalSeconds = offset.getTotalSeconds();
+
         if (totalSeconds % 3600 != 0) {
             int absMinutes = Math.abs(totalSeconds / 60);
             int h = absMinutes / 60;
@@ -121,18 +265,23 @@ final class TemporalFormattingSupport {
         }
 
         int h = totalSeconds / 3600;
+
         if (h == 0) {
             return "Z";
         }
+
         if (h >= 1 && h <= 9) {
             return String.valueOf((char) ('A' + h - 1));
         }
+
         if (h >= 10 && h <= 12) {
             return String.valueOf((char) ('K' + h - 10));
         }
+
         if (h <= -1 && h >= -12) {
             return String.valueOf((char) ('N' + (-h) - 1));
         }
+
         return offset.getId();
     }
 }

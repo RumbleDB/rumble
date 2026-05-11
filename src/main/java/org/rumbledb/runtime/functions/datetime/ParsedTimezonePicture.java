@@ -1,8 +1,3 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.
- */
-
 package org.rumbledb.runtime.functions.datetime;
 
 final class ParsedTimezonePicture {
@@ -17,6 +12,10 @@ final class ParsedTimezonePicture {
     final boolean compactNoSeparator;
     final boolean military;
 
+
+    final boolean named;
+    final String namePresentation;
+
     private ParsedTimezonePicture(
             boolean gmtPrefix,
             boolean alwaysShowMinutes,
@@ -27,7 +26,9 @@ final class ParsedTimezonePicture {
             boolean useZForZero,
             boolean minutesOptionalIfZero,
             boolean compactNoSeparator,
-            boolean military
+            boolean military,
+            boolean named,
+            String namePresentation
     ) {
         this.gmtPrefix = gmtPrefix;
         this.alwaysShowMinutes = alwaysShowMinutes;
@@ -39,18 +40,37 @@ final class ParsedTimezonePicture {
         this.minutesOptionalIfZero = minutesOptionalIfZero;
         this.compactNoSeparator = compactNoSeparator;
         this.military = military;
+        this.named = named;
+        this.namePresentation = namePresentation;
     }
 
     static ParsedTimezonePicture military() {
-        return new ParsedTimezonePicture(false, false, ":", 2, 2, '0', false, false, false, true);
+        return new ParsedTimezonePicture(false, false, ":", 2, 2, '0', false, false, false, true, false, null);
     }
 
     static ParsedTimezonePicture defaultNumeric() {
-        return new ParsedTimezonePicture(false, true, ":", 2, 2, '0', false, false, false, false);
+        return new ParsedTimezonePicture(false, true, ":", 2, 2, '0', false, false, false, false, false, null);
     }
 
     static ParsedTimezonePicture defaultGmt() {
-        return new ParsedTimezonePicture(true, true, ":", 2, 2, '0', false, false, false, false);
+        return new ParsedTimezonePicture(true, true, ":", 2, 2, '0', false, false, false, false, false, null);
+    }
+
+    static ParsedTimezonePicture named(String namePresentation) {
+        return new ParsedTimezonePicture(
+                false,
+                true,
+                ":",
+                2,
+                2,
+                '0',
+                false,
+                false,
+                false,
+                false,
+                true,
+                namePresentation
+        );
     }
 
     static ParsedTimezonePicture custom(
@@ -74,7 +94,9 @@ final class ParsedTimezonePicture {
                 useZForZero,
                 minutesOptionalIfZero,
                 compactNoSeparator,
-                false
+                false,
+                false,
+                null
         );
     }
 }
