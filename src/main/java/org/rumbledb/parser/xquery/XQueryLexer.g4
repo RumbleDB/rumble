@@ -287,7 +287,7 @@ KW_CREATE:             'create';
 KW_COLLECTION:         'collection';
 KW_TABLE:              'table';
 KW_DELTA_FILE:         'delta-file';
-W_ICEBERG_TABLE:       'iceberg-table';
+KW_ICEBERG_TABLE:       'iceberg-table';
 
 // NAMES
 
