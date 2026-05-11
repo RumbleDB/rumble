@@ -64,13 +64,13 @@ public final class JSONParsingOptions implements Serializable {
         this.numberFormat = numberFormat;
     }
 
-    public static JSONParsingOptions defaultInstance(boolean isJSONiq) {
+    public static JSONParsingOptions defaultInstance(boolean isJSONiq10) {
         return new JSONParsingOptions(
                 DEFAULT_LIBERAL,
                 DEFAULT_DUPLICATES,
                 DEFAULT_ESCAPE,
                 DEFAULT_FALLBACK,
-                getDefaultNumberFormat(isJSONiq)
+                getDefaultNumberFormat(isJSONiq10)
         );
     }
 
@@ -97,13 +97,13 @@ public final class JSONParsingOptions implements Serializable {
     @Override
     public String toString() {
         return "[ liberal: "
-            + liberal
+            + this.liberal
             + ", duplicates: "
-            + duplicates
+            + this.duplicates
             + ", escape: "
-            + escape
+            + this.escape
             + ", fallback: "
-            + fallback
+            + this.fallback
             + "]";
     }
 
@@ -187,7 +187,7 @@ public final class JSONParsingOptions implements Serializable {
 
     public static JSONParsingOptions resolveOptions(
             Item optionsItem,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
         boolean liberal = JSONParsingOptions.DEFAULT_LIBERAL;
@@ -196,13 +196,13 @@ public final class JSONParsingOptions implements Serializable {
         boolean escape = JSONParsingOptions.DEFAULT_ESCAPE;
         boolean escapeExplicitlySet = false;
 
-        String numberFormat = JSONParsingOptions.getDefaultNumberFormat(isJSONiq);
+        String numberFormat = JSONParsingOptions.getDefaultNumberFormat(isJSONiq10);
 
         Function<String, String> fallback = JSONParsingOptions.DEFAULT_FALLBACK;
         boolean fallbackExplicitlySet = false;
 
         if (optionsItem == null) {
-            return JSONParsingOptions.defaultInstance(isJSONiq);
+            return JSONParsingOptions.defaultInstance(isJSONiq10);
         }
 
         if (!optionsItem.isMap()) {
@@ -228,7 +228,7 @@ public final class JSONParsingOptions implements Serializable {
                     duplicates = validatedStringOption(
                         "duplicates",
                         requireSingleStringOption("duplicates", sequence, metadata),
-                        isJSONiq,
+                        isJSONiq10,
                         metadata
                     );
                     break;
@@ -241,7 +241,7 @@ public final class JSONParsingOptions implements Serializable {
                     numberFormat = validatedStringOption(
                         "number-format",
                         requireSingleStringOption("number-format", sequence, metadata),
-                        isJSONiq,
+                        isJSONiq10,
                         metadata
                     );
                     break;
@@ -279,12 +279,12 @@ public final class JSONParsingOptions implements Serializable {
     private static String validatedStringOption(
             String optionName,
             String optionValue,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
         if (optionValue == null) {
             if (optionName.equals("number-format")) {
-                return JSONParsingOptions.getDefaultNumberFormat(isJSONiq);
+                return JSONParsingOptions.getDefaultNumberFormat(isJSONiq10);
             }
             return JSONParsingOptions.DEFAULT_DUPLICATES;
         }
@@ -350,8 +350,8 @@ public final class JSONParsingOptions implements Serializable {
         return sequence.get(0);
     }
 
-    private static String getDefaultNumberFormat(boolean isJSONiq) {
-        if (isJSONiq)
+    private static String getDefaultNumberFormat(boolean isJSONiq10) {
+        if (isJSONiq10)
             return JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE;
         return JSONParsingOptions.NUMBER_FORMAT_DOUBLE;
     }

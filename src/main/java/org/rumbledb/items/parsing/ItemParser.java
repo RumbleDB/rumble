@@ -100,10 +100,10 @@ public class ItemParser implements Serializable {
             String string,
             JSONParsingOptions options,
             String xmlVersion,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
-        return JSONParser.parse(string, options, xmlVersion, isJSONiq, metadata);
+        return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
     }
 
     /**
@@ -124,12 +124,12 @@ public class ItemParser implements Serializable {
      */
     public static Item getItemFromObject(
             JsonReader object,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             String numberFormat,
             ExceptionMetadata metadata
     ) {
         try {
-            Item result = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
+            Item result = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata);
             object.peek();
             return result;
         } catch (Exception e) {
@@ -158,7 +158,7 @@ public class ItemParser implements Serializable {
      */
     public static Item parseOptionlessJSON(
             JsonReader object,
-            boolean isJSONiq,
+            boolean isJSONiq10,
             String numberFormat,
             ExceptionMetadata metadata
     ) {
@@ -182,7 +182,7 @@ public class ItemParser implements Serializable {
 
                 object.beginArray();
                 while (object.hasNext()) {
-                    Item value = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
+                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata);
 
                     if (value == null) {
                         containsJavaNull = true;
@@ -224,7 +224,7 @@ public class ItemParser implements Serializable {
                         continue;
                     }
 
-                    Item value = parseOptionlessJSON(object, isJSONiq, numberFormat, metadata);
+                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata);
 
                     if (value == null) {
                         containsJavaNull = true;
@@ -261,7 +261,7 @@ public class ItemParser implements Serializable {
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
 
-                if (isJSONiq) {
+                if (isJSONiq10) {
                     return ItemFactory.getInstance().createNullItem();
                 }
 
