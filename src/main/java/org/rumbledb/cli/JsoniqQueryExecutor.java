@@ -20,10 +20,6 @@
 
 package org.rumbledb.cli;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.DataFrameWriter;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -32,14 +28,13 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.Serializer;
 
-import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -48,7 +43,6 @@ public class JsoniqQueryExecutor {
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
@@ -101,74 +95,43 @@ public class JsoniqQueryExecutor {
 
         long startTime = System.currentTimeMillis();
         Rumble rumble = new Rumble(this.configuration);
-        SequenceOfItems sequence = rumble.runQuery(queryUri);
-
-        if (
-            !this.configuration.getOutputFormat().equals("json")
-                &&
-                !sequence.availableAsDataFrame()
-        ) {
-            throw new CliException(
-                    "Rumble cannot output another format than JSON if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
-            );
-        }
-        if (sequence.availableAsDataFrame() && outputPath != null) {
-            Dataset<Row> df = sequence.getAsDataFrame();
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                df = df.repartition(this.configuration.getNumberOfOutputPartitions());
-            }
-            DataFrameWriter<Row> writer = df.write();
-            Map<String, String> options = this.configuration.getOutputFormatOptions();
-            for (String key : options.keySet()) {
-                writer.option(key, options.get(key));
-                System.err.println("[INFO] Writing with option " + key + " : " + options.get(key));
-            }
-            String format = this.configuration.getOutputFormat();
-            System.err.println("[INFO] Writing to format " + format);
-            switch (format) {
-                case "json":
-                    writer.json(outputPath);
-                    break;
-                case "csv":
-                    writer.csv(outputPath);
-                    break;
-                case "parquet":
-                    writer.parquet(outputPath);
-                    break;
-                default:
-                    writer.format(format).save(outputPath);
-            }
-        } else if (sequence.availableAsRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = sequence.getAsRDD();
-            JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
-            if (this.configuration.getNumberOfOutputPartitions() > 0) {
-                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
-            }
-
-            outputRDD.saveAsTextFile(outputPath);
-        } else {
-            outputList = new ArrayList<>();
-            long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
-            List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
-            if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
-            } else {
-                System.out.println(String.join("\n", lines));
-            }
-            if (materializationCount != -1) {
-                System.err.println(
-                    "Warning! The output sequence contains "
-                        + materializationCount
-                        + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --materialization-cap parameter at startup"
+        SequenceOfItems sequence = null;
+        if (this.configuration.getQuery() != null) {
+            if (this.configuration.getQueryPath() != null) {
+                throw new CliException(
+                        "It is not possible to specify both a --query and a --query-path. It is either or."
                 );
+            }
+            sequence = rumble.runQuery(this.configuration.getQuery());
+        } else {
+            sequence = rumble.runQuery(queryUri);
+        }
+
+        if (outputPath != null) {
+            sequence.write().save(outputPath);
+        } else {
+            // No output path specified, we serialize to the standard output.
+            outputList = new ArrayList<>();
+            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
+
+            Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
+
+            List<String> lines = outputList.stream()
+                .map(serializer::serialize)
+                .collect(Collectors.toList());
+            System.out.println(String.join("\n", lines));
+            if (materializationCount != -1) {
+                issueMaterializationWarning(materializationCount, this.configuration.getResultSizeCap());
                 if (outputPath == null) {
                     System.err.println(
                         "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
                     );
                 }
             }
+        }
+
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
 
         long endTime = System.currentTimeMillis();
@@ -186,15 +149,33 @@ public class JsoniqQueryExecutor {
         return outputList;
     }
 
+    public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {
+        if (materializationCount == Long.MAX_VALUE) {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + "too many items and its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
+            );
+        } else {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + materializationCount
+                    + " items but its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
+            );
+        }
+    }
+
     public long runInteractive(String query, List<Item> resultList) throws IOException {
+        resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query);
-        if (!sequence.availableAsRDD()) {
-            return sequence.populateList(resultList);
+        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
-        resultList.clear();
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
     }
 
 }

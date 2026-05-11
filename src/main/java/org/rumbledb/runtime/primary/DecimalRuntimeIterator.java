@@ -22,9 +22,10 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import java.math.BigDecimal;
 
@@ -34,8 +35,8 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private Item item;
 
-    public DecimalRuntimeIterator(BigDecimal value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
-        super(null, executionMode, iteratorMetadata);
+    public DecimalRuntimeIterator(BigDecimal value, RuntimeStaticContext staticContext) {
+        super(null, staticContext);
         this.item = ItemFactory.getInstance().createDecimalItem(value);
 
     }
@@ -43,5 +44,14 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         return this.item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getDecimalValue(),
+                SequenceType.createSequenceType("decimal")
+        );
     }
 }

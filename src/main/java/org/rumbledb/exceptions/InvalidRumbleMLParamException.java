@@ -26,11 +26,18 @@ public class InvalidRumbleMLParamException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
+    String message;
+
     public InvalidRumbleMLParamException(String message, ExceptionMetadata metadata) {
         super(
             "Invalid Param; " + message,
             ErrorCode.InvalidRumbleMLParamErrorCode,
             metadata
         );
+        this.message = message;
+    }
+
+    public String getMLMessage() {
+        return this.message;
     }
 }

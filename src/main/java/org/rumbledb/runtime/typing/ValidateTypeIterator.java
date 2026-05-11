@@ -1,0 +1,755 @@
+package org.rumbledb.runtime.typing;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
+import org.rumbledb.exceptions.DatesWithTimezonesNotSupported;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidInstanceException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.NeutralItemType;
+import org.rumbledb.types.TypeMappings;
+
+import static org.apache.spark.sql.functions.expr;
+
+import sparksoniq.spark.SparkSessionManager;
+
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+public class ValidateTypeIterator extends HybridRuntimeIterator {
+
+    private static final long serialVersionUID = 1L;
+
+    private ItemType itemType;
+
+    private boolean isValidate;
+
+    public ValidateTypeIterator(
+            RuntimeIterator instance,
+            ItemType itemType,
+            boolean isValidate,
+            RuntimeStaticContext staticContext
+    ) {
+        super(Collections.singletonList(instance), staticContext);
+        this.itemType = itemType;
+        this.isValidate = isValidate;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        RuntimeIterator inputDataIterator = this.children.get(0);
+        if (!this.itemType.isResolved()) {
+            this.itemType.resolve(context, getMetadata());
+        }
+        if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
+            throw new OurBadException(
+                    "Cannot build a dataframe for a type not compatible with DataFrames: "
+                        + this.itemType.getIdentifierString()
+            );
+        }
+
+        try {
+
+            if (inputDataIterator.isDataFrame()) {
+                JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                ItemType actualType = inputDataAsDataFrame.getItemType();
+                if (actualType.isSubtypeOf(this.itemType)) {
+                    return inputDataAsDataFrame;
+                }
+                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                return convertRDDToValidDataFrame(
+                    inputDataAsRDDOfItems,
+                    this.itemType,
+                    context,
+                    this.isValidate,
+                    this.staticContext
+                );
+            }
+
+            if (inputDataIterator.isRDDOrDataFrame()) {
+                JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, this.staticContext);
+            }
+
+            List<Item> items = inputDataIterator.materialize(context);
+            return convertLocalItemsToDataFrame(items, this.itemType, context, this.isValidate, this.staticContext);
+        } catch (InvalidInstanceException ex) {
+            InvalidInstanceException e = new InvalidInstanceException(
+                    "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
+                    getMetadata()
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    public static JSoundDataFrame convertRDDToValidDataFrame(
+            JavaRDD<Item> itemRDD,
+            ItemType itemType,
+            DynamicContext context,
+            boolean isValidate,
+            RuntimeStaticContext staticContext
+    ) {
+        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
+            throw new OurBadException(
+                    "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
+            );
+        }
+        StructType schema = convertToDataFrameSchema(itemType);
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
+                    return convertLocalItemToRow(item, schema, context);
+                }
+            }
+        );
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
+                itemType
+        );
+    }
+
+    public static JSoundDataFrame convertRDDToVariantDataFrame(
+            JavaRDD<Item> itemRDD
+    ) {
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        DataTypes.StringType,
+                        false
+                    )
+                }
+        );
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return RowFactory.create(item.serializeAsJSON());
+                }
+            }
+        );
+
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .createDataFrame(rowRDD, schema)
+                    .withColumn(
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
+                    ),
+                BuiltinTypesCatalogue.item
+        );
+    }
+
+    public static StructType convertToDataFrameSchema(ItemType itemType) {
+        if (itemType.isAtomicItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
+        if (itemType.isArrayItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
+        if (!itemType.isObjectItemType()) {
+            throw new InvalidInstanceException(
+                    "Error while checking against the DataFrame schema: it is not an object, an array, or an atomic type: "
+                        + itemType
+            );
+
+        }
+        List<StructField> fields = new ArrayList<>();
+        try {
+            for (String columnName : itemType.getObjectContentFacet().keySet()) {
+                StructField field = createStructField(
+                    columnName,
+                    itemType.getObjectContentFacet().get(columnName).getType(),
+                    !itemType.getObjectContentFacet().get(columnName).isRequired()
+                );
+                fields.add(field);
+            }
+        } catch (IllegalArgumentException ex) {
+            InvalidInstanceException e = new InvalidInstanceException(
+                    "Error while applying the schema; " + ex.getMessage()
+            );
+            e.initCause(ex);
+            throw e;
+        }
+        return DataTypes.createStructType(fields);
+    }
+
+    private static StructField createStructField(String columnName, ItemType item, boolean nullable) {
+        DataType type = convertToDataType(item);
+        return DataTypes.createStructField(columnName, type, nullable);
+    }
+
+    private static DataType convertToDataType(ItemType itemType) {
+        if (itemType.isArrayItemType()) {
+            ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet();
+            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType);
+            return DataTypes.createArrayType(arrayContentsType);
+        }
+
+        if (itemType.isObjectItemType()) {
+            return convertToDataFrameSchema(itemType);
+        }
+        return TypeMappings.getDataFrameDataTypeFromItemType(itemType);
+    }
+
+    public static JSoundDataFrame convertLocalItemsToDataFrame(
+            List<Item> items,
+            ItemType itemType,
+            DynamicContext context,
+            boolean isValidate,
+            RuntimeStaticContext staticContext
+    ) {
+        if (items.isEmpty()) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    itemType
+            );
+        }
+        StructType schema = convertToDataFrameSchema(itemType);
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
+            Row row = convertLocalItemToRow(item, schema, context);
+            rows.add(row);
+        }
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
+                itemType
+        );
+    }
+
+    public static JSoundDataFrame convertLocalItemsToVariantDataFrame(
+            List<Item> items
+    ) {
+        if (items.isEmpty()) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    BuiltinTypesCatalogue.item
+            );
+        }
+        StructType schema = new StructType(
+                new StructField[] {
+                    DataTypes.createStructField(
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        DataTypes.StringType,
+                        false
+                    )
+                }
+        );
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            rows.add(RowFactory.create(item.serializeAsJSON()));
+        }
+        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        dataFrame = dataFrame.withColumn(
+            SparkSessionManager.nonObjectJSONiqItemColumnName,
+            expr("parse_json(`" + SparkSessionManager.nonObjectJSONiqItemColumnName + "`)")
+        );
+
+        return new JSoundDataFrame(
+                dataFrame,
+                BuiltinTypesCatalogue.item
+        );
+    }
+
+    private static Row convertLocalItemToRow(Item item, StructType schema, DynamicContext context) {
+        int numColumns = schema.fields().length;
+        Object[] rowColumns = new Object[numColumns];
+        for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
+            StructField field = schema.fields()[fieldIndex];
+            Object rowColumn = convertColumn(item, field, context);
+            rowColumns[fieldIndex] = rowColumn;
+        }
+        return RowFactory.create(rowColumns);
+    }
+
+    private static Object convertColumn(Item item, StructField field, DynamicContext context) {
+        String fieldName = field.name();
+        DataType fieldDataType = field.dataType();
+        if (fieldName.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+            return getRowColumnFromItemUsingDataType(
+                item,
+                fieldDataType,
+                context
+            );
+        }
+        Item columnValueItem = item.getItemByKey(fieldName);
+        return getRowColumnFromItemUsingDataType(
+            columnValueItem,
+            fieldDataType,
+            context
+        );
+    }
+
+    private static Object getRowColumnFromItemUsingDataType(
+            Item item,
+            DataType dataType,
+            DynamicContext context
+    ) {
+        if (item == null) {
+            return null;
+        }
+        try {
+            if (dataType instanceof ArrayType) {
+                List<Item> arrayItems = item.getItems();
+                Object[] arrayItemsForRow = new Object[arrayItems.size()];
+                DataType elementType = ((ArrayType) dataType).elementType();
+                for (int i = 0; i < arrayItems.size(); i++) {
+                    Item arrayItem = item.getItemAt(i);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
+                        arrayItem,
+                        elementType,
+                        context
+                    );
+                }
+                return arrayItemsForRow;
+            }
+
+            if (dataType instanceof StructType) {
+                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType, context);
+            }
+
+            if (dataType.equals(DataTypes.BooleanType)) {
+                return item.getBooleanValue();
+            }
+            if (dataType.equals(DataTypes.IntegerType)) {
+                return item.getIntValue();
+            }
+            if (dataType.equals(DataTypes.ByteType)) {
+                return (byte) item.getIntValue();
+            }
+            if (dataType.equals(DataTypes.ShortType)) {
+                return (short) item.getIntValue();
+            }
+            if (dataType.equals(DataTypes.LongType)) {
+                return item.getIntegerValue().longValue();
+            }
+            if (dataType.equals(DataTypes.DoubleType)) {
+                return item.getDoubleValue();
+            }
+            if (dataType.equals(DataTypes.FloatType)) {
+                return item.getFloatValue();
+            }
+            if (dataType instanceof DecimalType) {
+                return item.getDecimalValue();
+            }
+            if (dataType.equals(DataTypes.StringType)) {
+                return item.getStringValue();
+            }
+            if (dataType.equals(DataTypes.NullType)) {
+                return null;
+            }
+            if (dataType.equals(DataTypes.DateType)) {
+                if (!context.getRumbleRuntimeConfiguration().dateWithTimezone()) {
+                    if (item.hasTimeZone()) {
+                        throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
+                    }
+                }
+                return Date.valueOf(item.getDateTimeValue().toLocalDate());
+            }
+            if (dataType.equals(DataTypes.TimestampType)) {
+                return Timestamp.valueOf(item.getDateTimeValue().toLocalDateTime());
+            }
+            if (dataType.equals(DataTypes.BinaryType)) {
+                return item.getBinaryValue();
+            }
+        } catch (OurBadException ex) {
+            // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
+            throw new InvalidInstanceException(ex.getJSONiqErrorMessage());
+        }
+
+        throw new OurBadException(
+                "Unhandled item type found while generating rows: '" + dataType + "' ."
+        );
+    }
+
+
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, this.staticContext));
+    }
+
+    @Override
+    protected void openLocal() {
+        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.children.get(0).close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.children.get(0).hasNext();
+    }
+
+    @Override
+    protected Item nextLocal() {
+        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
+    }
+
+    private static Item validate(
+            Item item,
+            ItemType itemType,
+            ExceptionMetadata metadata,
+            boolean isValidate,
+            RuntimeStaticContext staticContext
+    ) {
+        if (!isValidate) {
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+        }
+        if (itemType.isAtomicItemType()) {
+            if (!item.isAtomic()) {
+                throw new InvalidInstanceException(
+                        "Expected an atomic item for type " + itemType.getIdentifierString()
+                );
+            }
+            if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
+                return item;
+            }
+            try {
+                Item castType = CastIterator.castItemToType(
+                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
+                    itemType,
+                    metadata,
+                    staticContext
+                );
+                if (castType == null) {
+                    throw new InvalidInstanceException(
+                            "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+                    );
+                }
+                return castType;
+            } catch (Exception e) {
+                throw new InvalidInstanceException(
+                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+                );
+            }
+        }
+        if (itemType.isArrayItemType()) {
+            if (!item.isArray()) {
+                throw new InvalidInstanceException(
+                        "Expected array item for array type " + itemType.getIdentifierString()
+                );
+            }
+            List<Item> members = new ArrayList<>();
+            for (Item member : item.getItems()) {
+                members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, staticContext));
+            }
+
+            // Test of length facets
+            Integer minLength = itemType.getMinLengthFacet();
+            Integer maxLength = itemType.getMaxLengthFacet();
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
+            if (minLength != null && members.size() < minLength) {
+                throw new InvalidInstanceException(
+                        "Array has " + members.size() + " members but the type requires at least " + minLength
+                );
+            }
+            if (maxLength != null && members.size() > maxLength) {
+                throw new InvalidInstanceException(
+                        "Array has " + members.size() + " members but the type requires at most " + maxLength
+                );
+            }
+
+            // Test of uniqueness
+            if (itemType.getArrayContentFacet().isObjectItemType()) {
+                Map<String, FieldDescriptor> contentFacets = itemType.getArrayContentFacet().getObjectContentFacet();
+                List<String> uniqueKeys = new ArrayList<>();
+                for (Map.Entry<String, FieldDescriptor> entry : contentFacets.entrySet()) {
+                    if (entry.getValue().isUnique()) {
+                        uniqueKeys.add(entry.getKey());
+                    }
+                }
+                if (!uniqueKeys.isEmpty()) {
+                    Set<List<Item>> uniqueCombinations = new HashSet<>();
+                    for (Item member : members) {
+                        List<Item> combination = new ArrayList<>();
+                        for (String uniqueKey : uniqueKeys) {
+                            combination.add(member.getItemByKey(uniqueKey));
+                        }
+                        if (!uniqueCombinations.add(combination)) {
+                            throw new InvalidInstanceException(
+                                    "Duplicate combination found for unique keys " + uniqueKeys
+                            );
+                        }
+                    }
+                }
+            }
+
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
+        }
+        if (itemType.isObjectItemType()) {
+            if (!item.isObject()) {
+                throw new InvalidInstanceException(
+                        "Expected an object item for object type "
+                            + itemType.toString()
+                            + ", but have "
+                            + item.serialize()
+                );
+            }
+            List<String> keys = new ArrayList<>();
+            List<Item> values = new ArrayList<>();
+            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
+            for (String key : item.getKeys()) {
+                if (facets.containsKey(key)) {
+                    FieldDescriptor fieldDescriptor = facets.get(key);
+                    ItemType expectedType = fieldDescriptor.getType();
+                    Item value = item.getItemByKey(key);
+                    if (value.isNull()) {
+                        if (expectedType.equals(BuiltinTypesCatalogue.nullItem) || expectedType.isUnionType()) {
+                            keys.add(key);
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                        } else if (fieldDescriptor.isRequired()) {
+                            throw new InvalidInstanceException(
+                                    "Null associated with required key in object type "
+                                        + itemType.getIdentifierString()
+                                        + " : "
+                                        + key
+                            );
+                        } else if (!staticContext.getConfiguration().getLaxJSONNullValidation()) {
+                            keys.add(key);
+                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                        } else {
+                            // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
+                            // and only treat null as absent if the cast fails.
+                            try {
+                                Item validatedNullValue = validate(
+                                    item.getItemByKey(key),
+                                    expectedType,
+                                    metadata,
+                                    true,
+                                    staticContext
+                                );
+                                keys.add(key);
+                                values.add(validatedNullValue);
+                            } catch (InvalidInstanceException ex) {
+                                // Keep lax behavior: consider JSON null as absent for optional fields.
+                            }
+                        }
+                    } else {
+                        keys.add(key);
+                        values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                    }
+                } else {
+                    if (itemType.getClosedFacet()) {
+                        throw new InvalidInstanceException(
+                                "Unexpected key in closed object type + "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key
+                        );
+                    }
+                    keys.add(key);
+                    values.add(item.getItemByKey(key));
+                }
+            }
+            for (String key : facets.keySet()) {
+                if (!item.getKeys().contains(key)) {
+                    Item defaultValue = facets.get(key).getDefaultValue();
+                    if (defaultValue != null) {
+                        keys.add(key);
+                        values.add(defaultValue);
+                    }
+                    if (facets.get(key).isRequired()) {
+                        throw new InvalidInstanceException(
+                                "Missing required key in object type + "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key
+                        );
+                    }
+                }
+            }
+            Item objectItem = ItemFactory.getInstance()
+                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA, true);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(objectItem, itemType);
+        }
+        if (itemType.isFunctionItemType()) {
+            if (!item.isFunction()) {
+                throw new InvalidInstanceException(
+                        "Expected function item of type " + itemType.getIdentifierString()
+                );
+            }
+            return item;
+        }
+        if (itemType.isUnionType()) {
+            List<ItemType> memberTypes = itemType.getTypes();
+            if (item.isNull()) {
+                for (ItemType memberType : memberTypes) {
+                    if (memberType.equals(BuiltinTypesCatalogue.nullItem)) {
+                        continue;
+                    }
+                    try {
+                        return validate(item, memberType, metadata, true, staticContext);
+                    } catch (InvalidInstanceException ex) {
+                        // try next type
+                    }
+                }
+            }
+            for (ItemType memberType : memberTypes) {
+                try {
+                    return validate(item, memberType, metadata, true, staticContext);
+                } catch (InvalidInstanceException ex) {
+                    // try next type
+                }
+            }
+            throw new InvalidInstanceException(
+                    "Item " + item.serialize() + " does not conform to union type " + itemType.getIdentifierString()
+            );
+        }
+        return item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.isValidate) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return this.children.get(0).generateNativeQuery(nativeClauseContext);
+    }
+
+
+    public static ItemType inferSchemaTypeOfVariantDataFrame(Dataset<Row> df, ExceptionMetadata metadata) {
+        if (df.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
+        df.createOrReplaceTempView("variant_table");
+
+        Dataset<Row> schemaDf = SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .sql(
+                String.format(
+                    "SELECT schema_of_variant_agg(`%s`) AS ddl FROM variant_table",
+                    SparkSessionManager.nonObjectJSONiqItemColumnName
+                )
+            );
+        String ddl = schemaDf.collectAsList().get(0).getString(0);
+
+        if (ddl.contains("VARIANT")) {
+            throw new CannotInferSchemaOnNonStructuredDataException(
+                    "Cannot infer fully structured schema on non-structured data. The detected schema is: " + ddl,
+                    metadata
+            );
+        }
+
+        ddl = ddl.replace("OBJECT<", "STRUCT<");
+        ItemType type = ItemTypeFactory.createItemType(
+            DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.nonObjectJSONiqItemColumnName, ddl))
+        );
+        type = type.getObjectContentFacet().get(SparkSessionManager.nonObjectJSONiqItemColumnName).getType();
+        return type;
+    }
+
+    public static ItemType inferSchemaTypeOfRDDItems(
+            JavaRDD<Item> itemRDD,
+            ExceptionMetadata metadata
+    ) {
+        // Handle empty RDD
+        if (itemRDD.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
+
+        // Neutral element for aggregation
+        ItemType neutralElement = new NeutralItemType();
+
+        // Aggregate using Spark's aggregate method with findLeastCommonSuperTypeLax
+        ItemType result = itemRDD.aggregate(
+            neutralElement,
+            (ItemType acc, Item item) -> {
+                ItemType itemType = item.getDynamicType();
+                return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeLax(itemType);
+            },
+            (ItemType a, ItemType b) -> {
+                if (a.equals(neutralElement))
+                    return b;
+                if (b.equals(neutralElement))
+                    return a;
+                return a.findLeastCommonSuperTypeLax(b);
+            }
+        );
+
+        return result;
+    }
+
+    public static ItemType inferSchemaTypeOfLocalItems(
+            List<Item> items,
+            ExceptionMetadata metadata
+    ) {
+        if (items.isEmpty()) {
+            return BuiltinTypesCatalogue.item;
+        }
+
+        ItemType result = items.get(0).getDynamicType();
+        for (int i = 1; i < items.size(); i++) {
+            result = result.findLeastCommonSuperTypeLax(items.get(i).getDynamicType());
+        }
+
+        return result;
+    }
+}

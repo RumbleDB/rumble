@@ -8,8 +8,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -58,8 +58,13 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBinaryValue();
+    }
+
+    @Override
     public String getStringValue() {
-        return this.stringValue;
+        return this.stringValue.toUpperCase();
     }
 
     private static boolean checkInvalidHexBinaryFormat(String hexBinaryString) {
@@ -98,11 +103,6 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return this.getStringValue().toUpperCase();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeInt(this.getValue().length);
         output.writeBytes(this.getValue());
@@ -117,7 +117,7 @@ public class HexBinaryItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.hexBinaryItem;
+        return BuiltinTypesCatalogue.hexBinaryItem;
     }
 
     @Override

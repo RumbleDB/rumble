@@ -22,51 +22,56 @@ package org.rumbledb.runtime.functions.numerics.exponential;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
-public class Exp10FunctionIterator extends LocalFunctionCallIterator {
+public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public Exp10FunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item exponent = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            try {
-                return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.castToDoubleValue()));
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item exponent = this.children.get(0).materializeFirstItemOrNull(context);
+        if (exponent == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " exp10 function", getMetadata());
+        return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext powerQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (powerQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(powerQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "POW( "
+            + "10.0"
+            + ", "
+            + powerQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                powerQuery,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, powerQuery.getResultingType().getArity())
+        );
+    }
 
 }

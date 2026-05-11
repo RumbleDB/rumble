@@ -24,65 +24,55 @@ package org.rumbledb.runtime.functions.io;
 import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.StringReader;
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
+public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private transient Item string;
-
     public ParseJsonFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.string = this.children.get(0).materializeFirstItemOrNull(context);
-        this.hasNext = this.string != null;
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.string = this.children.get(0).materializeFirstItemOrNull(context);
-        this.hasNext = this.string != null;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item stringItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item optionsItem = this.children.size() > 1 ? this.children.get(1).materializeFirstItemOrNull(context) : null;
+        if (stringItem == null) {
+            return null;
+        }
+        boolean isJSONiq = this.staticContext.getQueryLanguage().equals("jsoniq10");
+        JSONParsingOptions options = JSONParsingOptions.resolveOptions(optionsItem, isJSONiq, getMetadata());
+        if (optionsItem == null) {
             try {
-                JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
-                return ItemParser.getItemFromObject(object, getMetadata());
-            } catch (IteratorFlowException e) {
-                RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                ex.initCause(e);
-                throw ex;
+                JsonReader object = new JsonReader(new StringReader(stringItem.getStringValue()));
+                return ItemParser.getItemFromObject(object, isJSONiq, options.getNumberFormat(), getMetadata());
+            } catch (Exception e) {
+                return ItemParser.getItemFromJSONString(
+                    stringItem.getStringValue(),
+                    options,
+                    this.staticContext.getConfiguration().getXmlVersion(),
+                    isJSONiq,
+                    getMetadata()
+                );
             }
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-parse function", getMetadata());
+        return ItemParser.getItemFromJSONString(
+            stringItem.getStringValue(),
+            options,
+            staticContext.getConfiguration().getXmlVersion(),
+            isJSONiq,
+            getMetadata()
+        );
     }
-
-
 }

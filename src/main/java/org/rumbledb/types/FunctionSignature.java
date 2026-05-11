@@ -26,14 +26,24 @@ import java.util.List;
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
+    private boolean isUpdating;
     private static final long serialVersionUID = 1L;
+
+    public FunctionSignature(
+            List<SequenceType> parameterTypes,
+            SequenceType returnType,
+            boolean isUpdating
+    ) {
+        this.parameterTypes = parameterTypes;
+        this.returnType = returnType;
+        this.isUpdating = isUpdating;
+    }
 
     public FunctionSignature(
             List<SequenceType> parameterTypes,
             SequenceType returnType
     ) {
-        this.parameterTypes = parameterTypes;
-        this.returnType = returnType;
+        this(parameterTypes, returnType, false);
     }
 
 
@@ -45,11 +55,36 @@ public class FunctionSignature implements Serializable {
         return this.returnType;
     }
 
+    public boolean isUpdating() {
+        return this.isUpdating;
+    }
+
     @Override
     public boolean equals(Object instance) {
         return instance instanceof FunctionSignature
             && this.getParameterTypes() == ((FunctionSignature) instance).getParameterTypes()
             && this.getReturnType() == ((FunctionSignature) instance).getReturnType();
+    }
+
+    public boolean isSubtypeOf(FunctionSignature other) {
+        // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type
+        // errors)
+        // this return type must be a subtype of other return type
+        if (!this.returnType.isSubtypeOf(other.returnType)) {
+            return false;
+        }
+        int paramsLength = this.parameterTypes.size();
+        // must have same number of parameters
+        if (paramsLength != other.parameterTypes.size()) {
+            return false;
+        }
+        for (int i = 0; i < paramsLength; ++i) {
+            // any parameter type of other must be a subtype of the corresponding parameter of this
+            if (!other.parameterTypes.get(i).isSubtypeOf(this.parameterTypes.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

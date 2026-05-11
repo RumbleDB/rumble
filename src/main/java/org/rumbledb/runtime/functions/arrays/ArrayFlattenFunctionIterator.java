@@ -24,9 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -44,10 +43,9 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
 
     public ArrayFlattenFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = arguments.get(0);
     }
 
@@ -85,7 +83,6 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
         }
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -94,7 +91,13 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     private void flatten(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                flatten(item.getItems());
+                if (item.isArrayOfItems()) {
+                    flatten(item.getItemMembers());
+                } else {
+                    for (java.util.List<Item> member : item.getSequenceMembers()) {
+                        flatten(member);
+                    }
+                }
             } else {
                 this.nextResults.add(item);
             }

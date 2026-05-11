@@ -22,54 +22,94 @@ package org.rumbledb.runtime.functions.numerics.exponential;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
-public class PowFunctionIterator extends LocalFunctionCallIterator {
+public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public PowFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item base = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item exponent = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            try {
-                this.hasNext = false;
-                return ItemFactory.getInstance()
-                    .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item base = this.children.get(0).materializeFirstItemOrNull(context);
+        if (base == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " pow function", getMetadata());
+        Item exponent = this.children.get(1)
+            .materializeFirstItemOrNull(context);
+        if (exponent == null) {
+            return null;
+        }
+        try {
+            double baseDouble = base.castToDoubleValue();
+            double exponentDouble = exponent.castToDoubleValue();
+
+            // special cases where java doesnt implement IEEE754 standard
+            // 1 or -1 to the power of INF or -INF should be 1
+            if (Math.abs(baseDouble) == 1 && Double.isInfinite(exponentDouble)) {
+                return ItemFactory.getInstance().createDoubleItem(1);
+            }
+            // 1 (but not -1!) to the power of NaN should be 1
+            if (baseDouble == 1 && Double.isNaN(exponentDouble)) {
+                return ItemFactory.getInstance().createDoubleItem(1);
+            }
+
+            return ItemFactory.getInstance()
+                .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
+
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (baseQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext exponentQuery = this.children.get(1)
+            .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
+        if (exponentQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(baseQuery.getResultingType().getArity())
+                ||
+                SequenceType.Arity.OneOrMore.isSubtypeOf(exponentQuery.getResultingType().getArity())
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        SequenceType.Arity resultingArity = (baseQuery.getResultingType().getArity() == SequenceType.Arity.One
+            && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        String resultingQuery = "pow( "
+            + baseQuery.getResultingQuery()
+            + ", "
+            + exponentQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                exponentQuery,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
+        );
+    }
 
 }

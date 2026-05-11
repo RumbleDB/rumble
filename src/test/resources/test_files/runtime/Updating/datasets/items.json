@@ -1,0 +1,8 @@
+{"itemNO" : "1001", "description" : "Red Bicycle", "offered_by" : "U01", "start_date" : "1999-01-05", "end_date" : "1999-01-20", "reserve_price" : 40}
+{"itemNO" : "1002", "description" : "Motorcycle", "offered_by" : "U02", "start_date" : "1999-02-11", "end_date" : "1999-03-15", "reserve_price" : 500}
+{"itemNO" : "1003", "description" : "Old Bicycle", "offered_by" : "U02", "start_date" : "1999-01-10", "end_date" : "1999-02-20", "reserve_price" : 25}
+{"itemNO" : "1004", "description" : "Tricycle", "offered_by" : "U01", "start_date" : "1999-02-25", "end_date" : "1999-03-08", "reserve_price" : 15}
+{"itemNO" : "1005", "description" : "Tennis Racket", "offered_by" : "U03", "start_date" : "1999-03-19", "end_date" : "1999-04-30", "reserve_price" : 20}
+{"itemNO" : "1006", "description" : "Helicopter", "offered_by" : "U03", "start_date" : "1999-05-05", "end_date" : "1999-05-25", "reserve_price" : 50000}
+{"itemNO" : "1007", "description" : "Racing Bicycle", "offered_by" : "U04", "start_date" : "1999-01-20", "end_date" : "1999-02-20", "reserve_price" : 200}
+{"itemNO" : "1008", "description" : "Broken Bicycle", "offered_by" : "U01", "start_date" : "1999-02-05", "end_date" : "1999-03-06", "reserve_price" : 25}

@@ -22,11 +22,15 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ArrayItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,26 +38,103 @@ import java.util.List;
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private boolean isFixedSlotsArrayConstructor;
 
+    /**
+     * Curly array constructor: single child whose items become singleton members.
+     */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
+        this.isFixedSlotsArrayConstructor = false;
         if (arrayItems != null) {
             this.children.add(arrayItems);
+        }
+    }
+
+    /**
+     * Square array constructor: each child iterator produces one member (possibly a sequence).
+     */
+    public ArrayRuntimeIterator(
+            List<RuntimeIterator> memberIterators,
+            boolean isFixedSlotsArrayConstructor,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
+        if (memberIterators != null) {
+            this.children.addAll(memberIterators);
         }
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        List<Item> result = new ArrayList<>();
-        if (!this.children.isEmpty()) {
-            result.addAll(this.children.get(0).materialize(dynamicContext));
+        if (isEffectiveFixedSlotsArrayConstructor()) {
+            boolean allSingleton = true;
+            List<List<Item>> memberSequences = new ArrayList<>();
+            for (RuntimeIterator child : this.children) {
+                List<Item> member = child.materialize(dynamicContext);
+                if (allSingleton && member.size() != 1) {
+                    allSingleton = false;
+                }
+                memberSequences.add(member);
+            }
+            if (allSingleton) {
+                List<Item> items = new ArrayList<>();
+                for (List<Item> member : memberSequences) {
+                    items.add(member.get(0));
+                }
+                return ItemFactory.getInstance().createArrayItem(items, true);
+            } else {
+                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+            }
         }
-        Item item = ItemFactory.getInstance().createArrayItem(result);
-        return item;
+        List<Item> result = new ArrayList<>();
+        for (RuntimeIterator child : this.children) {
+            result.addAll(child.materialize(dynamicContext));
+        }
+        return ItemFactory.getInstance().createArrayItem(result, true);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (isEffectiveFixedSlotsArrayConstructor()) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.children.size() == 1) {
+            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+            if (childQuery == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String resultingQuery;
+            if (this.children.get(0) instanceof CommaExpressionIterator) {
+                resultingQuery = childQuery.getResultingQuery();
+            } else {
+                resultingQuery = "array( "
+                    + childQuery.getResultingQuery()
+                    + " )";
+            }
+            return new NativeClauseContext(
+                    childQuery,
+                    resultingQuery,
+                    new SequenceType(
+                            ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),
+                            SequenceType.Arity.One
+                    )
+            );
+        } else {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "array()",
+                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
+            );
+        }
+    }
+
+    private boolean isEffectiveFixedSlotsArrayConstructor() {
+        return this.isFixedSlotsArrayConstructor;
     }
 }

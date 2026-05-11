@@ -1,21 +1,23 @@
 package org.rumbledb.api;
 
-import java.net.URI;
-import java.io.IOException;
-
+import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
+
 import sparksoniq.spark.SparkSessionManager;
+
+import java.io.IOException;
+import java.net.URI;
 
 /**
  * The entry point for Java applications that want to execute JSONiq queries with Rumble.
  *
  * The query must be provided as a string and a sequence of items is returned.
  *
- * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file
+ * It is possible for the queries to use the text-file() and json-lines() functions if Spark and either the local file
  * system or HDFS are properly configured.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
@@ -25,13 +27,31 @@ public class Rumble {
     private RumbleRuntimeConfiguration configuration;
 
     /**
-     * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+     * Creates a new Rumble instance. This initializes a brand new Spark session.
      *
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        SparkSessionManager.getInstance().getOrCreateSession();
+    }
+
+    /**
+     * Creates a new Rumble instance. It uses the supplied spark session.
+     *
+     */
+    public Rumble(SparkSession session) {
+        this.configuration = new RumbleRuntimeConfiguration();
+        SparkSessionManager.getInstance(session);
+    }
+
+    /**
+     * Gets the configuration
+     * 
+     * @return the configuration
+     */
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return this.configuration;
     }
 
     /**
@@ -50,6 +70,7 @@ public class Rumble {
             mainModule,
             this.configuration
         );
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
@@ -70,6 +91,23 @@ public class Rumble {
             mainModule,
             this.configuration
         );
+
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+    }
+
+    /**
+     * Creates JSONiq Expression Tree from a query and returns serialization of the Tree.
+     *
+     * @param query the content of the JSONiq or XQuery main module.
+     * @return serialization of the JSONiq Expression Tree.
+     */
+    public String serializeToJSONiq(String query) {
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            query,
+            this.configuration
+        );
+        StringBuffer stringBuffer = new StringBuffer();
+        mainModule.serializeToJSONiq(stringBuffer, 0);
+        return stringBuffer.toString();
     }
 }

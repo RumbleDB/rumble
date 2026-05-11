@@ -31,5 +31,6 @@ public enum FLWOR_CLAUSES {
     RETURN,
     FOR_VAR,
     LET_VAR,
-    GROUP_VAR
+    GROUP_VAR,
+    FILTER
 }

@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 public class BooleanItem implements Item {
@@ -52,6 +52,16 @@ public class BooleanItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBooleanValue();
+    }
+
+    @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.getBooleanValue();
     }
@@ -59,11 +69,6 @@ public class BooleanItem implements Item {
     @Override
     public boolean isBoolean() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.getValue());
     }
 
     @Override
@@ -93,11 +98,28 @@ public class BooleanItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.booleanItem;
+        return BuiltinTypesCatalogue.booleanItem;
     }
 
     @Override
     public boolean isAtomic() {
         return true;
     }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "BOOLEAN";
+    }
+
 }

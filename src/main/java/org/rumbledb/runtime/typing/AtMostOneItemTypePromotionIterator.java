@@ -2,7 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -10,7 +10,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -30,15 +31,14 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             RuntimeIterator iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        if (!executionMode.equals(ExecutionMode.LOCAL)) {
+        if (!getHighestExecutionMode().equals(ExecutionMode.LOCAL)) {
             throw new OurBadException(
                     "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
             );
@@ -56,9 +56,15 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(context, getMetadata());
+        }
         Item item = null;
         try {
             item = this.iterator.materializeAtMostOneItemOrNull(context);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(context, getMetadata());
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
@@ -90,21 +96,71 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (item.isFunction()) {
             return item;
         }
-        if (item.isAnyURI() && this.itemType.equals(AtomicItemType.stringItem)) {
+        if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if (item.isFloat() && this.itemType.equals(AtomicItemType.doubleItem)) {
+        if (item.isFloat() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(AtomicItemType.doubleItem)) {
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(AtomicItemType.floatItem)) {
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
         }
         throw new UnexpectedTypeException(
                 this.exceptionMessage
                     + item.getDynamicType().toString()
+                    + " cannot be promoted to type "
+                    + this.sequenceType
+                    + ".",
+                getMetadata()
+        );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (value.equals(NativeClauseContext.NoNativeQuery)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (value.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
+            return value;
+        }
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.stringItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
+        ) {
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS STRING)",
+                    new SequenceType(BuiltinTypesCatalogue.stringItem, value.getResultingType().getArity())
+            );
+        }
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+                && (value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)
+                    || value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem))
+        ) {
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, value.getResultingType().getArity())
+            );
+        }
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.floatItem)
+                && value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.decimalItem)
+        ) {
+            return new NativeClauseContext(
+                    value,
+                    "CAST (" + value.getResultingQuery() + " AS FLOAT)",
+                    new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
+            );
+        }
+        throw new UnexpectedTypeException(
+                this.exceptionMessage
+                    + value.getResultingType().getItemType().toString()
                     + " cannot be promoted to type "
                     + this.sequenceType
                     + ".",

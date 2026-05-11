@@ -1,0 +1,32 @@
+name: Feature Request
+description: Suggest a new feature for the project
+labels: ["feature"]
+
+body:
+  - type: markdown
+    attributes:
+      value: "## Feature Request 🚀\nPlease describe the feature you would like to see implemented."
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: "Feature Description"
+      description: "What is the problem or need that this feature will address? Please provide a clear and concise description."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "How do you suggest we implement this feature? If applicable, provide code snippets or pseudocode."
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: "Additional Context"
+      description: "Include any other context, screenshots, or references that might help in implementing the feature."
+    validations:
+      required: false

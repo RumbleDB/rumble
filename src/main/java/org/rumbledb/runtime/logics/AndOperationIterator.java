@@ -24,11 +24,13 @@ import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -39,10 +41,9 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     public AndOperationIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
     }
@@ -64,5 +65,40 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
         return ItemFactory.getInstance()
             .createBooleanItem((leftEffectiveBooleanValue && rightEffectiveBooleanValue));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+            new NativeClauseContext(leftResult, null, null)
+        );
+        if (rightResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (
+            SequenceType.Arity.OneOrMore.isSubtypeOf(leftResult.getResultingType().getArity())
+                ||
+                SequenceType.Arity.OneOrMore.isSubtypeOf(rightResult.getResultingType().getArity())
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        SequenceType.Arity resultingArity = (leftResult.getResultingType().getArity() == SequenceType.Arity.One
+            && rightResult.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        String resultingQuery = "( "
+            + leftResult.getResultingQuery()
+            + " AND "
+            + rightResult.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                rightResult,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.booleanItem, resultingArity)
+        );
     }
 }

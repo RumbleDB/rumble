@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : "string", "bar" : "string" }, { "foo" : { "bar" : "correct" } }, { "foo" : { "bar" : AaBb } }, { "foo" : { "bar" : [ 1, 2 ] } }, { "foo" : { "bar" : { "hel" : "lo" } } })" :)
+(:JIQS: ShouldRun; Output="({ "foo" : "string", "bar" : "string" }, { "foo" : { "bar" : "correct" } }, { "foo" : { "bar" : "AaBb" } }, { "foo" : { "bar" : [ 1, 2 ] } }, { "foo" : { "bar" : { "hel" : "lo" } } })" :)
 typeswitch("Hello world!")
 case hexBinary? return parallelize(for $i in 1 to 1000 return {"foo": 1, "bar": hexBinary("0123")})[500]
 case boolean+ return parallelize(for $i in 1 to 1000 return {"foo": 1, "bar": true})[500]

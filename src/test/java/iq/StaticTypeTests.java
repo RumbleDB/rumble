@@ -3,17 +3,14 @@ package iq;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import iq.base.AnnotationsTestsBase;
+import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaRDD;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.Item;
-import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -37,7 +34,12 @@ public class StaticTypeTests extends AnnotationsTestsBase {
     public static final String javaVersion =
         System.getProperty("java.version");
     public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", new Function0<String>() {
+            @Override
+            public String apply() {
+                return "unknown";
+            }
+        });
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
@@ -59,6 +61,7 @@ public class StaticTypeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
@@ -77,106 +80,18 @@ public class StaticTypeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath(), StaticTypeTests.configuration);
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        @SuppressWarnings("unused")
-        String actualOutput;
-        if (!sequence.availableAsRDD()) {
-            actualOutput = runIterators(sequence);
-        } else {
-            actualOutput = getRDDResults(sequence);
-        }
-        // For static typing check we just need to check that the program run, no need to compare the output
-        Assert.assertTrue(true);
-    }
-
-    protected String runIterators(SequenceOfItems sequence) {
-        String actualOutput = getIteratorOutput(sequence);
-        return actualOutput;
-    }
-
-    protected String getIteratorOutput(SequenceOfItems sequence) {
-        sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
-                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
-                        ||
-                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
-        }
-    }
-
-    private String getRDDResults(SequenceOfItems sequence) {
-        JavaRDD<Item> rdd = sequence.getAsRDD();
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = new ArrayList<String>();
-        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
-
-        if (collectedOutput.isEmpty()) {
-            return "";
-        }
-
-        if (collectedOutput.size() == 1) {
-            return collectedOutput.get(0);
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append(", ");
-        }
-
-        String result = sb.toString();
-        result = result.substring(0, result.length() - 2);
-        result += ")";
-        return result;
+        testAnnotations(
+            this.testFile.getAbsolutePath(),
+            StaticTypeTests.configuration,
+            false,
+            StaticTypeTests.configuration.applyUpdates(),
+            StaticTypeTests.configuration.getResultSizeCap()
+        );
     }
 }

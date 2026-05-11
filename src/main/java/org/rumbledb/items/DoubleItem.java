@@ -24,13 +24,17 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -65,6 +69,53 @@ public class DoubleItem implements Item {
     @Override
     public double getDoubleValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getDoubleValue();
+    }
+
+    @Override
+    public String getStringValue() {
+        if (Double.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Double.compare(this.value, -0d) == 0) {
+            return "-0";
+        }
+        if (Double.compare(this.value, 0d) == 0) {
+            return "0";
+        }
+        double abs = Math.abs(this.value);
+        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero at the end of the
+        // string)
+        if (abs >= 0.00000001 && abs < 1000000) {
+            String c = new BigDecimal(Double.toString(this.value)).toString();
+            if (c.charAt(c.length() - 1) == '0') {
+                c = StringUtils.chop(c);
+                if (c.charAt(c.length() - 1) == '.') {
+                    c = StringUtils.chop(c);
+                }
+            }
+            return c;
+        }
+        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by multiplying by an order
+        // of magnitude
+        // and manually decreasing the exponent with a string builder
+        if (abs > 1 && abs < 100000000) {
+            String str = Double.toString(this.value * 10);
+            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
+            return sb.toString();
+        }
+        return Double.toString(this.value);
     }
 
     @Override
@@ -103,27 +154,8 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        if (Double.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Double.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Double.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Double.compare(this.value, 0d) == 0) {
-            return "0";
-        }
-        if (Double.compare(this.value, -0d) == 0) {
-            return "-0";
-        }
-        double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
-        }
-        return Double.toString(this.value);
+    public boolean isNaN() {
+        return Double.isNaN(this.value);
     }
 
     @Override
@@ -142,7 +174,12 @@ public class DoubleItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.doubleItem;
+        return BuiltinTypesCatalogue.doubleItem;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("double"));
     }
 
     @Override
@@ -153,5 +190,33 @@ public class DoubleItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DOUBLE";
     }
 }

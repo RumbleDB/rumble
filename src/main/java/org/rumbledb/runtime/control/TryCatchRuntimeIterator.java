@@ -20,10 +20,8 @@
 
 package org.rumbledb.runtime.control;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -33,6 +31,7 @@ import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 
 
 public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
@@ -50,10 +49,9 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             RuntimeIterator tryExpression,
             Map<String, RuntimeIterator> catchExpressions,
             RuntimeIterator catchAllExpression,
-            ExecutionMode mode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, mode, iteratorMetadata);
+        super(null, staticContext);
         this.children.add(tryExpression);
         for (RuntimeIterator value : catchExpressions.values())
             this.children.add(value);

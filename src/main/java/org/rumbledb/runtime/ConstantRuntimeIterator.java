@@ -22,8 +22,7 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 
 public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -32,10 +31,9 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public ConstantRuntimeIterator(
             Item item,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
         this.item = item;
     }
 

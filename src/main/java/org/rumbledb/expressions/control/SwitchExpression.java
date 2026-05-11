@@ -21,10 +21,8 @@
 package org.rumbledb.expressions.control;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -73,16 +71,32 @@ public class SwitchExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.defaultExpression.getHighestExecutionMode(visitorConfig);
-
-        if (this.highestExecutionMode == ExecutionMode.RDD) {
-            for (SwitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
-                    this.highestExecutionMode = ExecutionMode.LOCAL;
-                    break;
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("switch (");
+        this.testCondition.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+        for (SwitchCase c : this.cases) {
+            indentIt(sb, indent + 1);
+            sb.append("case (");
+            for (int i = 0; i < c.getAllExpressions().size(); i++) {
+                c.getAllExpressions().get(i).serializeToJSONiq(sb, 0);
+                if (i == c.getAllExpressions().size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
                 }
             }
+            sb.append("return (");
+            c.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+
+        if (this.defaultExpression != null) {
+            indentIt(sb, indent + 1);
+            sb.append("default return (");
+            this.defaultExpression.serializeToJSONiq(sb, 0);
+            sb.append(")\n");
         }
     }
 

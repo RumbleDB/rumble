@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:3:COLUMN:9:" :)
+(:JIQS: ShouldRun; Output="(0123456789ABCDEF, AABB, AABB)" :)
 for $j as hexBinary in parallelize((hexBinary("0123456789abcdef"), hexBinary("AaBb"), hexBinary("aAbB"), hexBinary(())))
 order by $j
 return $j

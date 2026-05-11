@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -55,13 +54,15 @@ public class FlworExpression extends Expression {
         return this.returnClause;
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.returnClause.getHighestExecutionMode(visitorConfig);
-    }
-
     public List<Node> getChildren() {
         return Collections.singletonList(this.returnClause);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.returnClause.serializeToJSONiq(sb, 0);
+        sb.append("\n");
     }
 
     @Override

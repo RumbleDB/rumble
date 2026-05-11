@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(12-4-2004, test4, no component test, test1\12test, 1, test12004-a-b-12-test4test, 2004-04-12, 12 Apr 2004, April 12, 2004, 12 April, 2004, Monday 12 April 2004, [2004-04-12])" :)
+(:JIQS: ShouldRun; Output="(12-4-2004, test4, no component test, testMon\12test, 1, test12004-a-b-12-test4test, 2004-04-12, 12 Apr 2004, April 12, 2004, 12 April, 2004, Monday 12 April 2004, [2004-04-12])" :)
 format-date(date("2004-04-12"), "[D]-[M]-[Y]"),
 format-date(date("2004-04-12-05:00"), "test[M]"),
 format-date(date("2004-04-12Z"), "no component test"),

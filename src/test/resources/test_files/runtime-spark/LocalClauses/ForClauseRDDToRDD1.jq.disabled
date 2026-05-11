@@ -1,11 +1,11 @@
 (:JIQS: ShouldRun; Output="(25, Latvian, Russian, Czech, Greek, Serbian, Latvian, Russian, Czech, Greek, Serbian, Latvian, Russian, Czech, Greek, Serbian, Latvian, Russian, Czech, Greek, Serbian, Latvian, Russian, Czech, Greek, Serbian)" :)
 count( let $name := "./src/main/resources/queries/conf-ex.json"
-for $line1 in json-file($name)
-for $line2 in json-file($name)
+for $line1 in json-lines($name)
+for $line2 in json-lines($name)
 return $line2.guess),
 let $name := "./src/main/resources/queries/conf-ex.json"
-for $line1 in json-file($name)
-for $line2 in json-file($name)
+for $line1 in json-lines($name)
+for $line2 in json-lines($name)
 return $line2.guess
 
 (: spark doesn't support RDD jobs within closure yet :)

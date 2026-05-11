@@ -20,47 +20,43 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class NormalizeSpaceFunctionIterator extends LocalFunctionCallIterator {
+public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
     public NormalizeSpaceFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (stringItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
-            }
-
-            return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " normalize-space function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 0) {
+            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return ItemFactory.getInstance()
+                .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
         }
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+
+        if (stringItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
+
+        return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
     }
+
 }

@@ -20,26 +20,33 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
@@ -50,10 +57,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     public ArrayUnboxingIterator(
             RuntimeIterator arrayIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
+        super(Arrays.asList(arrayIterator), staticContext);
         this.iterator = arrayIterator;
     }
 
@@ -97,9 +103,14 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isArray()) {
-                // if array is not empty, set the first item as the result
                 if (0 < item.getSize()) {
-                    this.nextResults.addAll(item.getItems());
+                    if (item.isArrayOfItems()) {
+                        this.nextResults.addAll(item.getItems());
+                    } else {
+                        for (java.util.List<Item> member : item.getSequenceMembers()) {
+                            this.nextResults.addAll(member);
+                        }
+                    }
                     break;
                 }
             }
@@ -107,7 +118,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -126,41 +136,210 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return true;
     }
 
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        childDataFrame.createOrReplaceTempView("array");
-        StructType schema = childDataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (
-            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
-        ) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof ArrayType) {
-                ArrayType arrayType = (ArrayType) type;
-                DataType elementType = arrayType.elementType();
-                if (elementType instanceof StructType) {
-                    return childDataFrame.sparkSession()
-                        .sql(
-                            String.format(
-                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName
-                            )
-                        );
-                }
-                return childDataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT explode(`%s`) AS `%s` FROM array",
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            SparkSessionManager.atomicJSONiqItemColumnName
-                        )
-                    );
-            }
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR) {
+            // unboxing only available for the FOR clause
+            return NativeClauseContext.NoNativeQuery;
         }
-        return childDataFrame.sparkSession().emptyDataFrame();
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (newContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        ItemType newContextType = newContext.getResultingType().getItemType();
+        if (!newContextType.isArrayItemType()) {
+            // let control to UDF when what we are unboxing is not an array
+            if (getConfiguration().doStaticAnalysis()) {
+                throw new UnexpectedStaticTypeException(
+                        "This is not a sequence of arrays,"
+                            + " so that the lookup will always result in the empty sequence no matter what. "
+                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        getMetadata()
+                );
+            }
+            LogManager.getLogger("ArrayUnboxingIterator")
+                .warn(
+                    "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+                );
+            return NativeClauseContext.NoNativeQuery;
+        }
+        newContext.setResultingType(
+            new SequenceType(
+                    newContextType.getArrayContentFacet(),
+                    SequenceType.Arity.ZeroOrMore
+            )
+        );
+
+        List<String> lateralViewPart = newContext.getLateralViewPart();
+        if (lateralViewPart.size() == 0) {
+            lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+        } else {
+            // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+            // previous
+            lateralViewPart.add(
+                "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+            );
+        }
+        newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
+        newContext.setResultingQuery(""); // dealt by for clause
+        return newContext;
+    }
+
+    public NativeClauseContext generateArrayReferenceQuery(NativeClauseContext nativeClauseContext) {
+        return this.iterator.generateNativeQuery(nativeClauseContext);
+    }
+
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        boolean isObject = childDataFrame.getItemType().isObjectItemType();
+        boolean hasNonObjectJSONiqItem = isObject
+            && childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
+
+        // Check if metadata columns exist
+        String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
+        boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
+        boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
+        boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
+        boolean hasTableLocationColumn = Arrays.asList(fieldNames)
+            .contains(
+                SparkSessionManager.tableLocationColumnName
+            );
+
+        if (childDataFrame.getItemType().isArrayItemType()) {
+            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
+            if (elementType.isObjectItemType()) {
+                // element is an object, preserve metadata columns if they exist
+                if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                    return childDataFrame.evaluateSQL(
+                        String.format(
+                            "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            SparkSessionManager.rowIdColumnName,
+                            SparkSessionManager.mutabilityLevelColumnName,
+                            SparkSessionManager.pathInColumnName,
+                            SparkSessionManager.tableLocationColumnName,
+                            array
+                        ),
+                        elementType
+                    );
+                }
+                // Otherwise just return the object
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        array
+                    ),
+                    elementType
+                );
+            }
+            // Preserve metadata columns if they exist
+            if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                String sql = String.format(
+                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                return new JSoundDataFrame(df, elementType);
+            }
+            return childDataFrame.evaluateSQL(
+                String.format(
+                    "SELECT explode(`%s`) AS `%s` FROM %s",
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    array
+                ),
+                elementType
+            );
+        } else if (
+            hasNonObjectJSONiqItem
+                && childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getType()
+                    .isArrayItemType()
+                && childDataFrame.getItemType()
+                    .getObjectContentFacet()
+                    .containsKey(SparkSessionManager.tableLocationColumnName)
+        ) {
+            ItemType elementType = childDataFrame.getItemType()
+                .getObjectContentFacet()
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getType()
+                .getArrayContentFacet();
+            String sql;
+            JSoundDataFrame res;
+            // TODO: SORT OUT INDEXING DURING UNBOXING
+            if (elementType.isObjectItemType()) {
+                sql = String.format(
+                    "SELECT col.*, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array
+                );
+                res = childDataFrame.evaluateSQL(sql, elementType);
+            } else {
+                sql = String.format(
+                    "SELECT col, `%s`, `%s`, CONCAT(CONCAT(CONCAT(`%s`, '['), pos), ']') AS `%s`, `%s` FROM (SELECT posexplode(`%s`), `%s`, `%s`, `%s`, `%s` FROM %s)",
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                    SparkSessionManager.rowIdColumnName,
+                    SparkSessionManager.mutabilityLevelColumnName,
+                    SparkSessionManager.pathInColumnName,
+                    SparkSessionManager.tableLocationColumnName,
+                    array
+                );
+                Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
+                res = new JSoundDataFrame(df, elementType);
+            }
+            return res;
+        }
+        if (getConfiguration().doStaticAnalysis()) {
+            throw new UnexpectedStaticTypeException(
+                    "This is not a sequence of arrays,"
+                        + " so that the lookup will always result in the empty sequence no matter what. "
+                        + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    getMetadata()
+            );
+        }
+        LogManager.getLogger("ArrayUnboxingIterator")
+            .warn(
+                "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
+            );
+        return JSoundDataFrame.emptyDataFrame();
     }
 }

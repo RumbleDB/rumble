@@ -23,10 +23,10 @@ package org.rumbledb.runtime.functions.sequences.cardinality;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -40,10 +40,9 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
 
     public OneOrMoreIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.iterator = this.children.get(0);
     }
 
@@ -57,6 +56,23 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
                 "fn:one-or-more() called with a sequence containing less than 1 item",
                 getMetadata()
         );
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        if (childDataFrame.isEmptySequence()) {
+            throw new SequenceExceptionOneOrMore(
+                    "fn:one-or-more() called with a sequence containing less than 1 item",
+                    getMetadata()
+            );
+        }
+        return childDataFrame;
     }
 
     @Override
@@ -115,7 +131,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }

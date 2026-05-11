@@ -25,14 +25,15 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.RowToItemMapper;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -45,7 +46,8 @@ public class FlworTuple implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<Name, List<Item>> localVariables;
     private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<Name, Dataset<Row>> dataFrameVariables;
+    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private RumbleRuntimeConfiguration configuration;
 
     public FlworTuple() {
         this.localVariables = new LinkedHashMap<>(1, 1);
@@ -53,10 +55,18 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.dataFrameVariables = new LinkedHashMap<>(1, 1);
     }
 
-    public FlworTuple(int nb) {
+    public FlworTuple(RumbleRuntimeConfiguration configuration) {
+        this.localVariables = new LinkedHashMap<>(1, 1);
+        this.rddVariables = new LinkedHashMap<>(1, 1);
+        this.dataFrameVariables = new LinkedHashMap<>(1, 1);
+        this.configuration = configuration;
+    }
+
+    public FlworTuple(RumbleRuntimeConfiguration configuration, int nb) {
         this.localVariables = new LinkedHashMap<>(nb, 1);
         this.rddVariables = new LinkedHashMap<>(nb, 1);
         this.dataFrameVariables = new LinkedHashMap<>(nb, 1);
+        this.configuration = configuration;
     }
 
     /**
@@ -75,6 +85,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         for (Name key : toCopy.dataFrameVariables.keySet()) {
             this.putValue(key, toCopy.dataFrameVariables.get(key));
         }
+        this.configuration = toCopy.configuration;
     }
 
     public Set<Name> getLocalKeys() {
@@ -116,7 +127,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         }
         if (this.rddVariables.containsKey(key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
+            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
         }
 
         throw new OurBadException("Undeclared FLOWR variable", metadata);
@@ -127,14 +138,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
             return this.rddVariables.get(key);
         }
         if (this.dataFrameVariables.containsKey(key)) {
-            Dataset<Row> df = this.dataFrameVariables.get(key);
+            JSoundDataFrame df = this.dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata));
+            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDataFrameValue(Name key, ExceptionMetadata metadata) {
+    public JSoundDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
         if (this.dataFrameVariables.containsKey(key)) {
             return this.dataFrameVariables.get(key);
         }
@@ -161,7 +172,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return this;
     }
 
-    public FlworTuple putValue(Name key, Dataset<Row> value) {
+    public FlworTuple putValue(Name key, JSoundDataFrame value) {
         this.localVariables.remove(key);
         this.rddVariables.remove(key);
         this.dataFrameVariables.put(key, value);
@@ -173,6 +184,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         kryo.writeObject(output, this.localVariables);
         kryo.writeObject(output, this.rddVariables);
         kryo.writeObject(output, this.dataFrameVariables);
+        kryo.writeObject(output, this.configuration);
     }
 
     @SuppressWarnings("unchecked")
@@ -181,6 +193,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.localVariables = kryo.readObject(input, LinkedHashMap.class);
         this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
         this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
     }
 
     @Override

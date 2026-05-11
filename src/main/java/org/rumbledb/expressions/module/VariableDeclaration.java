@@ -29,17 +29,24 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.types.SequenceType;
 
+import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class VariableDeclaration extends Node {
+import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
+public class VariableDeclaration extends Node {
+    // Default is false for variable declaration.
+    private final boolean DEFAULT_ASSIGNABLE = false;
     private final Name variableName;
     private final boolean external;
     protected SequenceType sequenceType;
     protected Expression expression;
+    private final List<Annotation> annotations;
+    private final boolean isAssignable;
 
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
@@ -48,6 +55,7 @@ public class VariableDeclaration extends Node {
             boolean external,
             SequenceType sequenceType,
             Expression expression,
+            List<Annotation> annotations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -55,8 +63,14 @@ public class VariableDeclaration extends Node {
         this.external = external;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.annotations = annotations;
         if (!this.external && this.expression == null) {
             throw new OurBadException("If a variable is not external, an expression must be provided.");
+        }
+        if (this.annotations != null) {
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata);
+        } else {
+            this.isAssignable = this.DEFAULT_ASSIGNABLE;
         }
     }
 
@@ -70,7 +84,13 @@ public class VariableDeclaration extends Node {
 
     // return item* if sequenceType is [null]
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+        if (this.sequenceType != null) {
+            return this.sequenceType;
+        }
+        if (this.expression != null && this.expression.getStaticSequenceType() != null) {
+            return this.expression.getStaticSequenceType();
+        }
+        return SequenceType.createSequenceType("item*");
     }
 
     // as above but does NOT default to item*
@@ -95,12 +115,6 @@ public class VariableDeclaration extends Node {
         return visitor.visitVariableDeclaration(this, argument);
     }
 
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
@@ -109,6 +123,10 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+
+    public void setVariableHighestStorageMode(ExecutionMode mode) {
+        this.variableHighestStorageMode = mode;
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -129,6 +147,31 @@ public class VariableDeclaration extends Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("declare variable $" + this.variableName);
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.external)
+            sb.append(" external\n");
+        else {
+            sb.append(" ");
+            this.expression.serializeToJSONiq(sb, 0);
+            sb.append("\n");
+        }
+    }
+
+    @Nullable
+    public List<Annotation> getAnnotations() {
+        return this.annotations;
+    }
+
+
+    public boolean isAssignable() {
+        return this.isAssignable;
     }
 }
 

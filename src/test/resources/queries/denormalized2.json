@@ -1,0 +1,28 @@
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 1 } , { "foobar" : 1 } ], "foobar" : 2 }, { "bar" : [ { "foobar" : 3 } , { "foobar" : 3 } ], "foobar" : 4 } ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 5 } , { "foobar" : 5 } ], "foobar" : 6 } ] }
+{ "foo" : [ ] }
+{ "foo" : [ { "bar" : [ { "foobar" : 7 } , { "foobar" : 7 } ], "foobar" : 8 }, { "bar" : [ { "foobar" : 9 } , { "foobar" : 9 } ], "foobar" : 10 } ] }

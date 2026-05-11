@@ -20,26 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionsNonSerializableException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -49,6 +29,32 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.CannotAtomizeException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemStringValueException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
+import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -62,7 +68,12 @@ public class FunctionItem implements Item {
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<Name, Dataset<Row>> dataFrameVariablesInClosure;
+    private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
+
+    /**
+     * When true, this item was created for a builtin named function reference ({@code name#arity}).
+     */
+    private boolean isBuiltin;
 
     protected FunctionItem() {
         super();
@@ -75,6 +86,17 @@ public class FunctionItem implements Item {
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
+        this(identifier, parameterNames, signature, dynamicModuleContext, bodyIterator, false);
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean isBuiltin
+    ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
@@ -83,6 +105,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -93,7 +116,31 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, Dataset<Row>> DFVariablesInClosure
+            Map<Name, JSoundDataFrame> DFVariablesInClosure
+    ) {
+        this(
+            identifier,
+            parameterNames,
+            signature,
+            dynamicModuleContext,
+            bodyIterator,
+            localVariablesInClosure,
+            RDDVariablesInClosure,
+            DFVariablesInClosure,
+            false
+        );
+    }
+
+    public FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            Map<Name, List<Item>> localVariablesInClosure,
+            Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<Name, JSoundDataFrame> DFVariablesInClosure,
+            boolean isBuiltin
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -103,6 +150,7 @@ public class FunctionItem implements Item {
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
         this.dataFrameVariablesInClosure = DFVariablesInClosure;
+        this.isBuiltin = isBuiltin;
     }
 
     public FunctionItem(
@@ -110,7 +158,20 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            boolean isUpdating
+    ) {
+        this(name, paramNameToSequenceTypes, returnType, dynamicModuleContext, bodyIterator, isUpdating, false);
+    }
+
+    public FunctionItem(
+            Name name,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            DynamicContext dynamicModuleContext,
+            RuntimeIterator bodyIterator,
+            boolean isUpdating,
+            boolean isBuiltin
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -121,12 +182,13 @@ public class FunctionItem implements Item {
 
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
-        this.signature = new FunctionSignature(parameters, returnType);
+        this.signature = new FunctionSignature(parameters, returnType, isUpdating);
         this.bodyIterator = bodyIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
+        this.isBuiltin = isBuiltin;
     }
 
     @Override
@@ -144,7 +206,7 @@ public class FunctionItem implements Item {
         return this.signature;
     }
 
-    public DynamicContext getDynamicModuleContext() {
+    public DynamicContext getModuleDynamicContext() {
         return this.dynamicModuleContext;
     }
 
@@ -160,7 +222,7 @@ public class FunctionItem implements Item {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
@@ -186,8 +248,8 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        throw new FunctionsNonSerializableException();
+    public boolean isBuiltinFunction() {
+        return this.isBuiltin;
     }
 
     @Override
@@ -253,6 +315,7 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
             );
         }
+        output.writeBoolean(this.isBuiltin);
     }
 
     @SuppressWarnings("unchecked")
@@ -280,11 +343,12 @@ public class FunctionItem implements Item {
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
             );
         }
+        this.isBuiltin = input.readBoolean();
     }
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.functionItem;
+        return BuiltinTypesCatalogue.anyFunctionItem;
     }
 
     public FunctionItem deepCopy() {
@@ -325,5 +389,49 @@ public class FunctionItem implements Item {
                 dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
+    }
+
+    @Override
+    public boolean isEstimator() {
+        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
+    }
+
+    @Override
+    public Estimator<?> getEstimator() {
+        if (!isEstimator()) {
+            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+    }
+
+    @Override
+    public boolean isTransformer() {
+        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+    }
+
+    @Override
+    public Transformer getTransformer() {
+        if (!isTransformer()) {
+            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+    }
+
+
+    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
+        this.dynamicModuleContext = dynamicModuleContext;
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public String getStringValue() {
+        throw new FunctionItemStringValueException(
+                FunctionItemStringValueException.DEFAULT_MESSAGE,
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 }

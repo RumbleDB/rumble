@@ -35,8 +35,16 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     private static final long serialVersionUID = 1L;
 
     private RumbleException exception;
+    // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
+    // than any other number for this purpose.
+    private boolean compareMin = false;
 
     public ItemComparator(RumbleException exception) {
+        this.exception = exception;
+    }
+
+    public ItemComparator(boolean compareMin, RumbleException exception) {
+        this.compareMin = compareMin;
         this.exception = exception;
     }
 
@@ -48,6 +56,24 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     public int compare(Item v1, Item v2) {
+        if (this.compareMin) {
+            if (
+                v2.isNumeric()
+                    &&
+                    ((v1.isDouble() && Double.isNaN(v1.getDoubleValue()))
+                        || (v1.isFloat() && Float.isNaN(v1.getFloatValue())))
+            ) {
+                return -1;
+            }
+            if (
+                v1.isNumeric()
+                    &&
+                    ((v2.isDouble() && Double.isNaN(v2.getDoubleValue()))
+                        || (v2.isFloat() && Float.isNaN(v2.getFloatValue())))
+            ) {
+                return 1;
+            }
+        }
         try {
             long comparison = ComparisonIterator.compareItems(
                 v1,

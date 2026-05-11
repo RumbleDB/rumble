@@ -20,84 +20,179 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import scala.Tuple2;
+
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
+import org.rumbledb.types.SequenceType;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SequenceLookupIterator extends LocalRuntimeIterator {
+import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
+
+public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item nextResult;
     private int position;
+    private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
             RuntimeIterator sequence,
             int position,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(sequence), executionMode, iteratorMetadata);
+        super(Arrays.asList(sequence), staticContext);
         this.iterator = sequence;
         this.position = position;
     }
 
-    public RuntimeIterator sequenceIterator() {
-        return this.iterator;
-    }
-
     @Override
-    public Item next() {
-        if (this.hasNext == true) {
-            this.hasNext = false;
-            Item result = this.nextResult; // save the result to be returned
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (this.position <= 0) {
+            return null;
+        }
+
+        if (this.position < this.optimizationThreshold) {
+            return lookupSmallPosition(dynamicContext);
+        }
+
+        if (this.iterator.isDataFrame()) {
+            return lookupDF(dynamicContext);
+        }
+
+        if (this.iterator.isRDD()) {
+            return lookupRDD(dynamicContext);
+        }
+
+        if (this.position <= 0) {
+            return null;
+        }
+        this.iterator.open(dynamicContext);
+        int currentPosition = 0;
+        Item result = null;
+        while (this.iterator.hasNext() && currentPosition < this.position) {
+            result = this.iterator.next();
+            ++currentPosition;
+        }
+        this.iterator.close();
+        if (currentPosition == this.position) {
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
+        return null;
     }
 
-    @Override
-    public boolean hasNext() {
-        return this.hasNext;
-    }
-
-    @Override
-    public void reset(DynamicContext dynamicContext) {
-        super.reset(dynamicContext);
-        init();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-    }
-
-    @Override
-    public void open(DynamicContext dynamicContext) {
-        super.open(dynamicContext);
-        init();
-    }
-
-    private void init() {
+    public Item lookupSmallPosition(DynamicContext dynamicContext) {
         List<Item> materializedItems = new ArrayList<>();
         this.iterator.materializeNFirstItems(
-            this.currentDynamicContextForLocalExecution,
+            dynamicContext,
             materializedItems,
             this.position
         );
         if (materializedItems.size() >= this.position) {
-            this.nextResult = materializedItems.get(this.position - 1);
-            this.hasNext = true;
+            return materializedItems.get(this.position - 1);
         } else {
-            this.hasNext = false;
+            return null;
         }
     }
 
+    public Item lookupDF(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        df = df.evaluateSQL(
+            String.format(
+                "SELECT * FROM %s LIMIT 1 OFFSET %s",
+                input,
+                Integer.toString(this.position - 1)
+            ),
+            df.getItemType()
+        );
+        JavaRDD<Item> rdd = dataFrameToRDDOfItems(
+            df,
+            this.getMetadata()
+        );
+
+        List<Item> results = rdd.take(1);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.get(0);
+    }
+
+    public Item lookupRDD(DynamicContext dynamicContext) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
+
+        if (childRDD.isEmpty()) {
+            return null;
+        }
+        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+        JavaPairRDD<Item, Long> filteredRDD;
+        filteredRDD = zippedRDD.filter(
+            (input) -> input._2() == this.position - 1
+        );
+        List<Tuple2<Item, Long>> results = filteredRDD.take(1);
+        if (results.isEmpty()) {
+            return null;
+        }
+        return results.get(0)._1();
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (
+            nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
+                && this.iterator instanceof CommaExpressionIterator
+        ) {
+            CommaExpressionIterator childIterator = (CommaExpressionIterator) this.iterator;
+            if (
+                childIterator.getChildren().size() == 2
+                    && childIterator.getChildren().get(0) instanceof ComparisonIterator
+                    && childIterator.getChildren().get(1) instanceof BooleanRuntimeIterator
+                    && this.position == 1
+            ) {
+                NativeClauseContext childContext = childIterator.getChildren()
+                    .get(0)
+                    .generateNativeQuery(nativeClauseContext);
+                if (childContext == NativeClauseContext.NoNativeQuery) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+                return new NativeClauseContext(
+                        childContext,
+                        childContext.getResultingQuery(),
+                        new SequenceType(childContext.getResultingType().getItemType(), SequenceType.Arity.One)
+                );
+            }
+        }
+        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            String resultString = String.format(
+                "%s[%d]",
+                childContext.getResultingQuery(),
+                (this.position - 1)
+            );
+            return new NativeClauseContext(
+                    childContext,
+                    resultString,
+                    new SequenceType(childContext.getResultingType().getItemType(), SequenceType.Arity.OneOrZero)
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

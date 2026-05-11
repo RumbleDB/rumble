@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.postfix;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -53,17 +52,21 @@ public class ArrayLookupExpression extends Expression {
         return result;
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.mainExpression.serializeToJSONiq(sb, 0);
+        sb.append("[[");
+        this.lookupExpression.serializeToJSONiq(sb, 0);
+        sb.append("]]\n");
+    }
+
     public Expression getLookupExpression() {
         return this.lookupExpression;
     }
 
     public Expression getMainExpression() {
         return this.mainExpression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
     }
 
     @Override

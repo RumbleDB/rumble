@@ -22,52 +22,57 @@ package org.rumbledb.runtime.functions.numerics.trigonometric;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 import java.util.List;
 
-public class ACosFunctionIterator extends LocalFunctionCallIterator {
+public class ACosFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private RuntimeIterator iterator;
-
     public ACosFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.acos(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
-                    )
-                );
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " acos function", getMetadata());
+        double dvalue = value.getDoubleValue();
+        if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        }
+        return ItemFactory.getInstance().createDoubleItem(Math.acos(dvalue));
     }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "ACOS( "
+            + childQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(
+                childQuery,
+                resultingQuery,
+                new SequenceType(BuiltinTypesCatalogue.doubleItem, childQuery.getResultingType().getArity())
+        );
+    }
 
 }

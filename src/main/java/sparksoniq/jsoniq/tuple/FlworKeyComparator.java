@@ -20,6 +20,7 @@
 
 package sparksoniq.jsoniq.tuple;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
@@ -30,14 +31,19 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressions;
+    private ExceptionMetadata metadata;
 
-    public FlworKeyComparator(List<OrderByClauseAnnotatedChildIterator> expressions) {
+    public FlworKeyComparator(
+            List<OrderByClauseAnnotatedChildIterator> expressions,
+            ExceptionMetadata exceptionMetadata
+    ) {
         this.expressions = expressions;
+        this.metadata = exceptionMetadata;
     }
 
     @Override
     public int compare(FlworKey key1, FlworKey key2) {
-        int result = key1.compareWithFlworKey(key2, this.expressions);
+        int result = key1.compareWithFlworKey(key2, this.expressions, this.metadata);
 
         if (result == 0) {
             return 0;

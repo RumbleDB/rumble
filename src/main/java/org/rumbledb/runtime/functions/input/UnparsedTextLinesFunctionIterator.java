@@ -23,9 +23,8 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -47,10 +46,9 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
     public UnparsedTextLinesFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -105,14 +103,14 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
             if (this.children.size() == 1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .textFile(uri.toString(), MIN_PARTITIONS);
+                    .textFile(FileSystemUtil.convertURIToStringForSpark(uri), MIN_PARTITIONS);
             } else {
                 RuntimeIterator partitionsIterator = this.children.get(1);
-                partitionsIterator.open(this.currentDynamicContextForLocalExecution);
+                partitionsIterator.open(context);
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .textFile(
-                        uri.toString(),
+                        FileSystemUtil.convertURIToStringForSpark(uri),
                         partitionsIterator.next().getIntValue()
                     );
                 partitionsIterator.close();

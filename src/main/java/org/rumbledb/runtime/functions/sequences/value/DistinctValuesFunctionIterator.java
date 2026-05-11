@@ -21,15 +21,15 @@
 package org.rumbledb.runtime.functions.sequences.value;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 
 import java.util.ArrayList;
@@ -44,11 +44,21 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     public DistinctValuesFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
+    }
+
+    private void checkCollation(DynamicContext context) {
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1)
+                .materializeFirstItemOrNull(context)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
     }
 
     public Item nextLocal() {
@@ -67,6 +77,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -80,6 +91,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.prevResults = new ArrayList<>();
+        checkCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -106,6 +118,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        checkCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
         return childRDD.distinct();
     }
@@ -116,8 +129,21 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        checkCollation(dynamicContext);
+        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         return df.distinct();
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext sequenceQuery = this.sequenceIterator.generateNativeQuery(nativeClauseContext);
+        if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "DISTINCT( "
+            + sequenceQuery.getResultingQuery()
+            + " )";
+        return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
     }
 }

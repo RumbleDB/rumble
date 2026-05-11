@@ -9,7 +9,6 @@ import org.rumbledb.cli.Main;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-@SuppressWarnings("restriction")
 public class MainPageHandler implements HttpHandler {
 
     public MainPageHandler() {

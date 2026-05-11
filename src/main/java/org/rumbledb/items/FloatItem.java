@@ -24,13 +24,17 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -66,8 +70,55 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getFloatValue();
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.value != 0;
+    }
+
+    @Override
+    public String getStringValue() {
+        if (Float.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Float.compare(this.value, -0f) == 0) {
+            return "-0";
+        }
+        if (Float.compare(this.value, 0f) == 0) {
+            return "0";
+        }
+        double abs = Math.abs(this.value);
+        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero at the end of the
+        // string)
+        if (abs >= 0.00000001 && abs < 1000000) {
+            String c = new BigDecimal(Float.toString(this.value)).toString();
+            if (c.charAt(c.length() - 1) == '0') {
+                c = StringUtils.chop(c);
+                if (c.charAt(c.length() - 1) == '.') {
+                    c = StringUtils.chop(c);
+                }
+            }
+            return c;
+        }
+        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by multiplying by an order
+        // of magnitude
+        // and manually decreasing the exponent with a string builder
+        if (abs >= 1000000 && abs < 100000000) {
+            String str = Float.toString(this.value * 10);
+            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
+            return sb.toString();
+        }
+        return Float.toString(this.value);
     }
 
     @Override
@@ -101,30 +152,6 @@ public class FloatItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        if (Float.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Float.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Float.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Float.compare(this.value, 0f) == 0) {
-            return "0";
-        }
-        if (Float.compare(this.value, -0f) == 0) {
-            return "-0";
-        }
-        double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
-        }
-        return Float.toString(this.value);
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeFloat(this.value);
     }
@@ -140,7 +167,7 @@ public class FloatItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.floatItem;
+        return BuiltinTypesCatalogue.floatItem;
     }
 
     @Override
@@ -151,5 +178,53 @@ public class FloatItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public boolean isNaN() {
+        return Float.isNaN(this.value);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        if (Float.isInfinite(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (Float.isNaN(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(
+                context,
+                "CAST (" + this.value + "D AS FLOAT)",
+                SequenceType.createSequenceType("float")
+        );
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "Infinity";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-Infinity";
+        }
+        return this.getStringValue();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "FLOAT";
     }
 }

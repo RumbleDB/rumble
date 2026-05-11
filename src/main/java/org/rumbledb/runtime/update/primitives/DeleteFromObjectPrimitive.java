@@ -1,0 +1,96 @@
+package org.rumbledb.runtime.update.primitives;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import sparksoniq.spark.SparkSessionManager;
+
+import static org.apache.spark.sql.functions.col;
+
+import java.util.*;
+
+public class DeleteFromObjectPrimitive implements UpdatePrimitive {
+    private Item target;
+    private List<Item> content;
+    private Collection collection;
+
+    public DeleteFromObjectPrimitive(Item targetObject, List<Item> namesToRemove, ExceptionMetadata metadata) {
+
+        for (Item item : namesToRemove) {
+            if (targetObject.getItemByKey(item.getStringValue()) == null) {
+                throw new CannotResolveUpdateSelectorException(
+                        "Cannot delete key that does not exist in target object",
+                        metadata
+                );
+            }
+        }
+
+        this.target = targetObject;
+        this.content = namesToRemove;
+        this.collection = targetObject.getCollection();
+    }
+
+    @Override
+    public void apply() {
+        if (this.collection == null) {
+            this.applyItem();
+        } else {
+            this.applyDelta();
+        }
+    }
+
+    @Override
+    public void applyItem() {
+        for (Item item : this.content) {
+            this.target.removeItemByKey(item.getStringValue());
+        }
+    }
+
+    @Override
+    public void applyDelta() {
+        String tempPathIn = this.target.getPathIn() + ".";
+        String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
+        String location = this.collection.getPhysicalName();
+        long rowID = this.target.getTopLevelID();
+        int startOfArrayIndexing = pathIn.indexOf("[");
+
+        if (startOfArrayIndexing == -1) {
+            for (Item item : this.content) {
+                String key = item.getStringValue();
+                String fullPath = pathIn + key;
+                String type = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                    .filter(col("col_name").equalTo(key))
+                    .select("data_type")
+                    .collectAsList()
+                    .get(0)
+                    .getString(0);
+                this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
+            }
+        } else {
+            this.arrayIndexingApplyDelta();
+        }
+    }
+
+    @Override
+    public boolean hasSelector() {
+        return false;
+    }
+
+    @Override
+    public Item getTarget() {
+        return this.target;
+    }
+
+    @Override
+    public List<Item> getContentList() {
+        return this.content;
+    }
+
+    @Override
+    public boolean isDeleteObject() {
+        return true;
+    }
+
+}

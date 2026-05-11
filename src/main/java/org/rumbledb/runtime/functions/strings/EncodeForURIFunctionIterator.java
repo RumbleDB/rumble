@@ -21,10 +21,9 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -49,10 +48,9 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
     public EncodeForURIFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -70,6 +68,7 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
             try {
                 encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
                     .replace("+", "%20")
+                    .replace("*", "%2A")
                     .replace("%7E", "~");
             } catch (UnsupportedEncodingException e) {
                 throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or

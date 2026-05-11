@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Elwin Stephan
  *
  */
 
@@ -27,7 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
@@ -63,7 +62,7 @@ public class FlworKey implements KryoSerializable {
     @Override
     public boolean equals(Object otherKey) {
         if (otherKey instanceof FlworKey) {
-            return this.compareWithFlworKey((FlworKey) otherKey, null) == 0;
+            return this.equalFlworKey((FlworKey) otherKey);
         } else {
             return false;
         }
@@ -73,11 +72,58 @@ public class FlworKey implements KryoSerializable {
      * Invariant - two Flworkeys have the same length
      *
      * @param flworKey "other" FlworKey to be compared against
-     * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
+     * @return true if both items are equal, false otherwise (also when types are different)
      */
-    public int compareWithFlworKey(FlworKey flworKey, List<OrderByClauseAnnotatedChildIterator> expressions) {
+
+    public boolean equalFlworKey(FlworKey flworKey) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
             throw new OurBadException("Invalid sort key: Key sizes can't be different.");
+        }
+
+        // iterate over every ordering expression of this flworkey
+        int index = 0;
+        while (index < this.keyItems.size()) {
+            Item item1 = this.keyItems.get(index);
+            Item item2 = flworKey.keyItems.get(index);
+
+            // check for incorrect ordering inputs
+            if (
+                (item1 != null && !item1.isAtomic())
+                    ||
+                    (item2 != null && !item2.isAtomic())
+            ) {
+                throw new OurBadException("Non atomic key not allowed");
+            }
+
+            long comparison = ComparisonIterator.compareItems(
+                item1,
+                item2,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            if (comparison != 0) {
+                return false;
+            }
+
+            index++;
+        }
+        return true;
+    }
+
+    /**
+     * Invariant - two Flworkeys have the same length
+     *
+     * @param flworKey "other" FlworKey to be compared against
+     * @param metadata
+     * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
+     */
+    public int compareWithFlworKey(
+            FlworKey flworKey,
+            List<OrderByClauseAnnotatedChildIterator> expressions,
+            ExceptionMetadata metadata
+    ) {
+        if (this.keyItems.size() != flworKey.keyItems.size()) {
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.", metadata);
         }
 
         int result = 0;
@@ -95,7 +141,7 @@ public class FlworKey implements KryoSerializable {
                     ||
                     (item2 != null && !item2.isAtomic())
             ) {
-                throw new RumbleException("Non atomic key not allowed");
+                throw new OurBadException("Non atomic key not allowed", metadata);
             }
 
             EMPTY_ORDER emptyOrder = EMPTY_ORDER.LEAST;
@@ -137,7 +183,7 @@ public class FlworKey implements KryoSerializable {
                         item1,
                         item2,
                         ComparisonOperator.VC_EQ,
-                        ExceptionMetadata.EMPTY_METADATA
+                        metadata
                     );
                     if (comparison == Long.MIN_VALUE) {
                         throw new UnexpectedTypeException(
@@ -148,7 +194,7 @@ public class FlworKey implements KryoSerializable {
                                     + "\" and \""
                                     + item2.getDynamicType().toString()
                                     + "\"",
-                                ExceptionMetadata.EMPTY_METADATA
+                                metadata
                         );
                     }
                     result = (int) comparison;
@@ -198,7 +244,7 @@ public class FlworKey implements KryoSerializable {
                                     + "\" and \""
                                     + item2.getDynamicType().toString()
                                     + "\"",
-                                ExceptionMetadata.EMPTY_METADATA
+                                metadata
                         );
                     }
                     result = (int) comparison;
@@ -206,7 +252,7 @@ public class FlworKey implements KryoSerializable {
                 case NONE:
                     throw new OurBadException(
                             "Behavior of empty sequence ordering was not resolved",
-                            ExceptionMetadata.EMPTY_METADATA
+                            metadata
                     );
             }
 

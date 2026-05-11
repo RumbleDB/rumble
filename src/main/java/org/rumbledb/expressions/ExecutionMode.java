@@ -18,6 +18,14 @@ public enum ExecutionMode {
         return this == ExecutionMode.RDD;
     }
 
+    public boolean isLocal() {
+        return this == ExecutionMode.LOCAL;
+    }
+
+    public boolean isUnset() {
+        return this == ExecutionMode.UNSET;
+    }
+
     public String toString() {
         switch (this) {
             case UNSET:

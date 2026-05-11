@@ -20,23 +20,29 @@
 
 package org.rumbledb.context;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.SequenceType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.SerializationParameterBuilder;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.io.Serializable;
 import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class StaticContext implements Serializable, KryoSerializable {
@@ -46,15 +52,28 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient Map<Name, InScopeVariable> inScopeVariables;
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    private transient InScopeSchemaTypes inScopeSchemaTypes;
+    private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private SerializationParameters serializationParameters;
+
+    /**
+     * XQuery {@code declare default function namespace}; when null, unprefixed function names use
+     * {@link Name#JSONIQ_DEFAULT_FUNCTION_NS} (Rumble's usual fn/jn/... resolution path).
+     */
+    private transient String defaultFunctionNamespaceUri;
 
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
-
     private static final Map<String, String> defaultBindings;
+
+    private DecimalFormatDefinition defaultDecimalFormat;
+    private Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    private int currentMutabilityLevel;
 
     static {
         defaultBindings = new HashMap<>();
@@ -64,8 +83,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("map", Name.MAP_NS);
         defaultBindings.put("array", Name.ARRAY_NS);
         defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("xml", Name.XML_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
+        // defaultBindings.put("an", Name.AN_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
@@ -73,45 +94,79 @@ public class StaticContext implements Serializable, KryoSerializable {
     public StaticContext() {
         this.parent = null;
         this.staticBaseURI = null;
+        this.queryLanguage = null;
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
         this.configuration = null;
+        this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = 0;
+        this.serializationParameters = null;
+        this.defaultDecimalFormat = null;
+        this.decimalFormats = new HashMap<>();
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
+        this.queryLanguage = configuration.getQueryLanguage() != null
+            ? configuration.getQueryLanguage()
+            : queryLanguage;
         this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentMutabilityLevel = 0;
+        this.serializationParameters = configuration.getSerializationParameters();
+        this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
+        this.decimalFormats = new HashMap<>();
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
+        this.queryLanguage = null;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
+        this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.serializationParameters = null;
+        this.defaultDecimalFormat = null;
+        this.decimalFormats = null;
     }
 
     public StaticContext getParent() {
         return this.parent;
     }
 
-    public RumbleRuntimeConfiguration getRumbleCOnfiguration() {
+    public RumbleRuntimeConfiguration getRumbleConfiguration() {
         if (this.configuration != null) {
             return this.configuration;
         }
         if (this.parent != null) {
-            return this.parent.getRumbleCOnfiguration();
+            return this.parent.getRumbleConfiguration();
         }
         throw new OurBadException("Configuration not set.");
+    }
+
+    public void setQueryLanguage(String queryLanguage) {
+        this.queryLanguage = queryLanguage;
+    }
+
+    public String getQueryLanguage() {
+        if (this.queryLanguage != null) {
+            return this.queryLanguage;
+        }
+        if (this.parent != null) {
+            return this.parent.getQueryLanguage();
+        }
+        throw new OurBadException("Query language not set.");
     }
 
     public URI getStaticBaseURI() {
@@ -121,7 +176,11 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             return this.parent.getStaticBaseURI();
         }
-        throw new OurBadException("Static context not set.");
+        throw new OurBadException("Static base URI not set.");
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI) {
+        this.staticBaseURI = staticBaseURI;
     }
 
     public boolean isInScope(Name varName) {
@@ -149,7 +208,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("Variable " + varName + " not in scope", null);
+            throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -164,7 +223,11 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("function " + identifier + " not in scope", null);
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 
@@ -173,7 +236,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         InScopeVariable variable = getInScopeVariable(varName);
         this.inScopeVariables.replace(
             varName,
-            new InScopeVariable(varName, newSequenceType, variable.getMetadata(), variable.getStorageMode())
+            new InScopeVariable(
+                    varName,
+                    newSequenceType,
+                    variable.getMetadata(),
+                    variable.getStorageMode(),
+                    variable.isAssignable()
+            )
         );
     }
 
@@ -189,29 +258,77 @@ public class StaticContext implements Serializable, KryoSerializable {
         return getInScopeVariable(varName).getStorageMode();
     }
 
+    public void setVariableStorageMode(Name varName, ExecutionMode mode) {
+        getInScopeVariable(varName).setStorageMode(mode);
+    }
+
+    public void addVariable(
+            Name varName,
+            SequenceType type,
+            ExceptionMetadata metadata
+    ) {
+        this.inScopeVariables.put(
+            varName,
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET)
+        );
+    }
+
     public void addVariable(
             Name varName,
             SequenceType type,
             ExceptionMetadata metadata,
-            ExecutionMode storageMode
+            boolean isAssignable
     ) {
-        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+        this.inScopeVariables.put(
+            varName,
+            new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable)
+        );
     }
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
-    protected Map<Name, InScopeVariable> getInScopeVariables() {
+    public Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
+    }
+
+    public void show() {
+        System.err.println(this);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Static context with variables: ");
-        this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
-        stringBuilder.append("\n");
+        stringBuilder.append("Static context with variables:\n");
+        for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue().getSequenceType());
+            stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
+            stringBuilder.append(" | " + entry.getValue().getStorageMode());
+            if (entry.getValue().isAssignable()) {
+                stringBuilder.append(" | assignable");
+            } else {
+                stringBuilder.append(" | not assignable");
+            }
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Static context with user-defined functions:\n");
+        for (Entry<FunctionIdentifier, FunctionSignature> entry : this.staticallyKnownFunctionSignatures.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue());
+            stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
+            stringBuilder.append("\n");
+        }
+        if (this.inScopeSchemaTypes != null) {
+            stringBuilder.append("Static context with user-defined types:\n");
+            for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+                stringBuilder.append(itemType.getName());
+                stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
+                stringBuilder.append("\n");
+            }
+            stringBuilder.append("\n");
+        }
         if (this.userDefinedFunctionExecutionModes != null) {
             stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
         }
@@ -232,6 +349,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         return false;
     }
 
+    public boolean hasVariableInScopeOnly(Name variableName) {
+        return this.inScopeVariables.containsKey(variableName);
+    }
+
     public boolean bindNamespace(String prefix, String namespace) {
         if (this.staticallyKnownNamespaces == null) {
             this.staticallyKnownNamespaces = new HashMap<>();
@@ -250,12 +371,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.staticallyKnownNamespaces != null) {
-            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
-                return this.staticallyKnownNamespaces.get(prefix);
-            } else {
-                return null;
-            }
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
         }
         if (this.parent != null) {
             return this.parent.resolveNamespace(prefix);
@@ -263,11 +380,23 @@ public class StaticContext implements Serializable, KryoSerializable {
         return null;
     }
 
+    public Map<String, String> getInScopeNamespaceBindings() {
+        Map<String, String> bindings = new HashMap<>();
+        if (this.parent != null) {
+            bindings.putAll(this.parent.getInScopeNamespaceBindings());
+        }
+        if (this.staticallyKnownNamespaces != null) {
+            bindings.putAll(this.staticallyKnownNamespaces);
+        }
+        return bindings;
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
     @Override
@@ -275,14 +404,68 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        // Backward compatibility: older serialized artifacts may not contain this field, so it is null
+        this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
+        // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
+        if (this.serializationParameters == null && this.parent == null) {
+            this.serializationParameters = SerializationParameters.defaults();
+        }
     }
 
-    public void importModuleContext(StaticContext moduleContext, String targetNamespace) {
+    /**
+     * Returns the default serialization parameters stored in the static context.
+     *
+     * Spec references:
+     * - XQuery 3.1 Static Context Components (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
+     * - Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     */
+    public SerializationParameters getSerializationParameters() {
+        if (this.serializationParameters != null) {
+            return this.serializationParameters;
+        }
+        // Backward compatibility: if absent locally (e.g., contexts deserialized from older versions),
+        // delegate to parent to preserve inheritance instead of creating a shadow copy here.
+        if (this.parent != null) {
+            return this.parent.getSerializationParameters();
+        }
+        // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
+        this.serializationParameters = SerializationParameters.defaults();
+        return this.serializationParameters;
+    }
+
+    /**
+     * Sets the default serialization parameters at this static context level.
+     */
+    public void setSerializationParameters(SerializationParameters serializationParameters) {
+        this.serializationParameters = serializationParameters;
+    }
+
+    /**
+     * Override the serialization parameters with the provided parameter name and value.
+     * Throws InvalidSerializationParameterValueException for invalid inputs.
+     *
+     * @param name the name of the parameter to update
+     * @param value the value of the parameter to update
+     * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
+     */
+    public void overrideSerializationParameter(String name, String value) {
+        // ensure we have a local copy of the serialization parameters
+        if (this.serializationParameters == null) {
+            this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
+        }
+        // update the local copy of theserialization parameters with the provided parameter name and value
+        SerializationParameterBuilder.update(this.serializationParameters, name, value);
+    }
+
+    public void importModuleContext(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
-            if (name.getNamespace().contentEquals(targetNamespace)) {
-                InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-                this.inScopeVariables.put(name, variable);
-            }
+            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
+            this.inScopeVariables.put(name, variable);
+        }
+        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
+            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
+            this.staticallyKnownFunctionSignatures.put(fi, signature);
         }
     }
 
@@ -312,6 +495,26 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = emptySequenceOrderLeast;
     }
 
+    /**
+     * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
+     */
+    public void setDefaultFunctionNamespaceUri(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default function namespace can only be set in the root static context.");
+        }
+        this.defaultFunctionNamespaceUri = uri;
+    }
+
+    /**
+     * @return the declared default function namespace URI, or null if not set (use JSONiq default function NS)
+     */
+    public String getDefaultFunctionNamespaceUri() {
+        if (this.parent != null) {
+            return this.parent.getDefaultFunctionNamespaceUri();
+        }
+        return this.defaultFunctionNamespaceUri;
+    }
+
     public boolean isEmptySequenceOrderLeast() {
         if (this.parent != null) {
             return this.parent.isEmptySequenceOrderLeast();
@@ -336,7 +539,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
     // with same variable with sequence type arity changed from 1 to + and form ? to *
-    // used by groupBy cluse
+    // used by groupBy clause
     public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
         this.inScopeVariables.replaceAll(
             (key, value) -> varToExclude.contains(key)
@@ -354,9 +557,11 @@ public class StaticContext implements Serializable, KryoSerializable {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
                         entry.getKey(),
-                        entry.getValue().getSequenceType().incrementArity(),
+                        varToExclude.contains(entry.getKey())
+                            ? entry.getValue().getSequenceType()
+                            : entry.getValue().getSequenceType().incrementArity(),
                         entry.getValue().getMetadata(),
-                        entry.getValue().getStorageMode()
+                        entry.getValue().isAssignable()
                     );
                 }
             }
@@ -368,5 +573,73 @@ public class StaticContext implements Serializable, KryoSerializable {
         for (String prefix : defaultBindings.keySet()) {
             bindNamespace(prefix, defaultBindings.get(prefix));
         }
+    }
+
+    /**
+     * Built-in namespace bindings (fn, xs, map, ...) used when resolving QNames without a full static context.
+     */
+    public static String getBuiltinNamespaceBinding(String prefix) {
+        return defaultBindings.get(prefix);
+    }
+
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public int getCurrentMutabilityLevel() {
+        return this.currentMutabilityLevel;
+    }
+
+    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
+        this.currentMutabilityLevel = currentMutabilityLevel;
+    }
+
+    public boolean getIsAssignable(Name name) {
+        return this.getInScopeVariable(name).isAssignable();
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        if (this.parent != null) {
+            this.parent.setDefaultDecimalFormat(decimalFormat);
+            return;
+        }
+        this.defaultDecimalFormat = decimalFormat;
+    }
+
+    public void addDecimalFormat(Name name, DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
+        if (this.parent != null) {
+            this.parent.addDecimalFormat(name, decimalFormat, metadata);
+            return;
+        }
+        if (this.decimalFormats.containsKey(name)) {
+            throw new SemanticException(
+                    "Decimal format already declared: " + name,
+                    metadata
+            );
+        }
+        this.decimalFormats.put(name, decimalFormat);
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        if (this.parent != null) {
+            return this.parent.getDefaultDecimalFormat();
+        }
+        return this.defaultDecimalFormat;
+    }
+
+    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
+        if (this.parent != null) {
+            return this.parent.getDecimalFormats();
+        }
+        if (this.decimalFormats == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(this.decimalFormats);
     }
 }

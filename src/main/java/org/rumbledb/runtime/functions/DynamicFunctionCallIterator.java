@@ -20,20 +20,31 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
 import java.util.List;
 
-public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.BuiltinFunctionExecutionModes;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExitStatementException;
+import org.rumbledb.exceptions.InvalidRumbleMLParamException;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
+import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.types.SequenceType;
+
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
@@ -45,18 +56,30 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     // calculated fields
     private Item functionItem;
     private RuntimeIterator functionCallIterator;
+    private boolean isPartialApplication;
     private Item nextResult;
+
+    // Exit statement fields
+    private boolean encounteredExitStatement;
+    // private PendingUpdateList pendingUpdateList;
+    private List<Item> exitStatementLocalResult;
+    // private JavaRDD<Item> rddResult;
+    // private JSoundDataFrame dataFrameResult;
+    private int nextExitStatementResult;
 
     public DynamicFunctionCallIterator(
             RuntimeIterator functionItemIterator,
             List<RuntimeIterator> functionArguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(null, executionMode, iteratorMetadata);
+        super(null, staticContext);
+        this.isPartialApplication = false;
+        this.nextExitStatementResult = 0;
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
                 this.children.add(arg);
+            } else {
+                this.isPartialApplication = true;
             }
         }
         if (!this.children.contains(functionItemIterator)) {
@@ -67,84 +90,223 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setFunctionItemAndIteratorWithCurrentContext();
-        this.functionCallIterator.open(this.currentDynamicContextForLocalExecution);
+    public void openLocal() {
+        setFunctionItemAndIteratorWithCurrentContext(this.currentDynamicContextForLocalExecution);
+        try {
+            this.functionCallIterator.open(this.currentDynamicContextForLocalExecution);
+        } catch (InvalidRumbleMLParamException e) {
+            String m = e.getMLMessage();
+            throw new InvalidRumbleMLParamException(m, getMetadata());
+        } catch (ExitStatementException exitStatementException) {
+            this.encounteredExitStatement = true;
+            this.exitStatementLocalResult = exitStatementException.getLocalResult();
+        }
         setNextResult();
     }
 
     @Override
-    public Item next() {
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult;
             setNextResult();
             return result;
         }
+        String label = "dynamic function call";
+        if (this.functionItem != null && this.functionItem.isFunction()) {
+            label = this.functionItem.getIdentifier().getName().toString();
+        }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + " in "
-                    + this.functionItem.getIdentifier().getName()
-                    + "  function",
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in " + label + "  function",
                 getMetadata()
         );
     }
 
     public void setNextResult() {
         this.nextResult = null;
-        if (this.functionCallIterator.hasNext()) {
-            this.nextResult = this.functionCallIterator.next();
+        if (!this.encounteredExitStatement && this.functionCallIterator.hasNext()) {
+            try {
+                this.nextResult = this.functionCallIterator.next();
+            } catch (InvalidRumbleMLParamException e) {
+                String m = e.getMLMessage();
+                throw new InvalidRumbleMLParamException(m, getMetadata());
+            } catch (ExitStatementException exitStatementException) {
+                this.encounteredExitStatement = true;
+                this.exitStatementLocalResult = exitStatementException.getLocalResult();
+            }
         }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.functionCallIterator.close();
+        if (this.encounteredExitStatement) {
+            if (this.nextExitStatementResult < this.exitStatementLocalResult.size()) {
+                this.nextResult = this.exitStatementLocalResult.get(this.nextExitStatementResult++);
+                this.hasNext = true;
+            } else {
+                this.hasNext = false;
+            }
         } else {
-            this.hasNext = true;
+            this.hasNext = this.nextResult != null;
         }
     }
 
-    private void setFunctionItemAndIteratorWithCurrentContext() {
+    private void setFunctionItemAndIteratorWithCurrentContext(DynamicContext context) {
         try {
-            this.functionItemIterator.open(this.currentDynamicContextForLocalExecution);
-            if (this.functionItemIterator.hasNext()) {
-                this.functionItem = (FunctionItem) this.functionItemIterator.next();
-            }
-            if (this.functionItemIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "Dynamic function call can not be performed on a sequence.",
-                        getMetadata()
-                );
-            }
-            this.functionItemIterator.close();
-        } catch (ClassCastException e) {
+            this.functionItem = this.functionItemIterator.materializeAtMostOneItemOrNull(context);
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "Dynamic function call can only be performed on functions.",
+                    "A dynamic function call can not be performed on a sequence of more than one item.",
                     getMetadata()
             );
         }
-        this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
+        if (this.functionItem == null) {
+            throw new UnexpectedTypeException(
+                    "Dynamic function calls can only be performed on functions, arrays, or maps.",
+                    getMetadata()
+            );
+        }
+        if (this.functionItem.isArray()) {
+            if (this.isPartialApplication) {
+                throw new UnexpectedTypeException(
+                        "Partial application is not supported when calling arrays as functions.",
+                        getMetadata()
+                );
+            }
+            if (this.functionArguments.size() != 1 || this.functionArguments.get(0) == null) {
+                throw new UnexpectedTypeException(
+                        "Array function calls must have exactly one argument.",
+                        getMetadata()
+                );
+            }
+            RuntimeIterator keyIterator = this.functionArguments.get(0);
+            RuntimeStaticContext staticContext = new RuntimeStaticContext(
+                    getConfiguration(),
+                    SequenceType.createSequenceType("item*"),
+                    ExecutionMode.LOCAL,
+                    getMetadata()
+            );
+            this.functionCallIterator = new ArrayFunctionCallIterator(
+                    this.functionItem,
+                    keyIterator,
+                    staticContext
+            );
+            return;
+        }
+        if (this.functionItem.isMap()) {
+            if (this.isPartialApplication) {
+                throw new UnexpectedTypeException(
+                        "Partial application is not supported when calling maps as functions.",
+                        getMetadata()
+                );
+            }
+            if (this.functionArguments.size() != 1 || this.functionArguments.get(0) == null) {
+                throw new UnexpectedTypeException(
+                        "Map function calls must have exactly one argument.",
+                        getMetadata()
+                );
+            }
+            RuntimeIterator keyIterator = this.functionArguments.get(0);
+            RuntimeStaticContext staticContext = new RuntimeStaticContext(
+                    getConfiguration(),
+                    SequenceType.createSequenceType("item*"),
+                    ExecutionMode.LOCAL,
+                    getMetadata()
+            );
+            this.functionCallIterator = new MapFunctionCallIterator(
+                    this.functionItem,
+                    keyIterator,
+                    staticContext
+            );
+            return;
+        }
+        if (!this.functionItem.isFunction()) {
+            throw new UnexpectedTypeException(
+                    "Dynamic function calls can only be performed on functions, arrays, or maps.",
+                    getMetadata()
+            );
+        }
+        ExecutionMode calleeExecutionMode = getCalleeExecutionModeForFunctionItemCall();
+        if (
+            calleeExecutionMode.equals(ExecutionMode.LOCAL)
+                && this.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+        ) {
+            throw new OurBadException(
+                    "Execution mode mismatch in dynamic function call. At this point, Rumble only supports higher-order functions "
+                        + "that are either machine learning models or estimators (which process validated and structured sequences of objects at any scale), or that take and return just one item at a time.",
+                    getMetadata()
+            );
+        }
+        this.functionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
             this.functionItem,
-            this.functionItem.getBodyIterator().getHighestExecutionMode(),
-            getMetadata(),
-            this.functionArguments
+            this.staticContext,
+            this.isPartialApplication ? ExecutionMode.LOCAL : calleeExecutionMode,
+            this.functionArguments,
+            false
         );
     }
 
+    private ExecutionMode getCalleeExecutionModeForFunctionItemCall() {
+        if (this.isPartialApplication) {
+            return ExecutionMode.LOCAL;
+        }
+        if (this.functionItem.isBuiltinFunction()) {
+            BuiltinFunction builtin =
+                BuiltinFunctionCatalogue.getBuiltinFunction(this.functionItem.getIdentifier());
+            // assume that the passed builtin function is valid
+            ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
+            for (RuntimeIterator arg : this.functionArguments) {
+                if (arg != null) {
+                    firstArgumentMode = arg.getHighestExecutionMode();
+                    break;
+                }
+            }
+            return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, getConfiguration());
+        }
+        return this.functionItem.getBodyIterator().getHighestExecutionMode();
+    }
+
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
+    public void resetLocal() {
         this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
-    public void close() {
+    public void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this.isOpen) {
             this.functionCallIterator.close();
         }
-        super.close();
+        this.nextExitStatementResult = 0;
+        this.encounteredExitStatement = false;
+    }
+
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        try {
+            setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
+            return this.functionCallIterator.getRDD(dynamicContext);
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getRddResult();
+        }
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
+        try {
+            return this.functionCallIterator.getDataFrame(dynamicContext);
+        } catch (InvalidRumbleMLParamException e) {
+            String m = e.getMLMessage();
+            throw new InvalidRumbleMLParamException(m, getMetadata());
+        } catch (ExitStatementException exitStatementException) {
+            return exitStatementException.getDataFrameResult();
+        }
     }
 }

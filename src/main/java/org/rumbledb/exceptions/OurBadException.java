@@ -31,6 +31,6 @@ public class OurBadException extends RumbleException {
     }
 
     public OurBadException(String message) {
-        super(message, ErrorCode.OurBadErrorCode);
+        super(message, ErrorCode.OurBadErrorCode, ExceptionMetadata.EMPTY_METADATA);
     }
 }

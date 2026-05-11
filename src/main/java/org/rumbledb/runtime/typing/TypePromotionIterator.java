@@ -2,19 +2,19 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -39,10 +39,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             RuntimeIterator iterator,
             SequenceType sequenceType,
             String exceptionMessage,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
+        super(Collections.singletonList(iterator), staticContext);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;
@@ -98,9 +97,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.nextResult = null;
         if (this.iterator.hasNext()) {
             this.nextResult = this.iterator.next();
+            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
+                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+            }
             this.childIndex++;
         } else {
-            this.iterator.close();
             checkEmptySequence(this.childIndex);
         }
 
@@ -161,26 +162,31 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-        int count = df.takeAsList(1).size();
-        checkEmptySequence(count);
-        if (count == 0) {
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
+        if (df.isEmptySequence()) {
             return df;
         }
-        ItemType dataItemType = TreatIterator.getItemType(df);
-        if (dataItemType.isSubtypeOf(AtomicItemType.decimalItem) && this.itemType.equals(AtomicItemType.doubleItem)) {
-            df.createOrReplaceTempView("input");
-            df = df.sparkSession()
-                .sql(
+        ItemType dataItemType = df.getItemType();
+        if (
+            dataItemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+        ) {
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+            df = df.evaluateSQL(
+                String.format(
                     "SELECT CAST (`"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + SparkSessionManager.nonObjectJSONiqItemColumnName
                         + "` AS double) AS `"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
-                        + "` FROM input"
-                );
+                        + SparkSessionManager.nonObjectJSONiqItemColumnName
+                        + "` FROM %s",
+                    input
+                ),
+                this.itemType
+            );
         }
-        dataItemType = TreatIterator.getItemType(df);
+        dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.itemType)) {
             return df;
         }
@@ -192,6 +198,31 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     + ".",
                 getMetadata()
         );
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(childContext.getResultingType().getArity())) {
+            return childContext;
+        }
+        if (childContext.getResultingType().getItemType().isSubtypeOf(this.itemType)) {
+            return childContext;
+        }
+        if (
+            childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
+                && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
+        ) {
+            return new NativeClauseContext(
+                    childContext,
+                    "CAST (" + childContext.getResultingQuery() + " AS DOUBLE)",
+                    new SequenceType(BuiltinTypesCatalogue.doubleItem, childContext.getResultingType().getArity())
+            );
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 
     private void checkTypePromotion() {
@@ -208,7 +239,12 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.nextResult = CastIterator.castItemToType(this.nextResult, this.sequenceType.getItemType(), getMetadata());
+        this.nextResult = CastIterator.castItemToType(
+            this.nextResult,
+            this.sequenceType.getItemType(),
+            getMetadata(),
+            this.staticContext
+        );
         if (this.nextResult == null) {
             throw new OurBadException(
                     "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()

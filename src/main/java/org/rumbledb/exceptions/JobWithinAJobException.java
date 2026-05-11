@@ -29,4 +29,12 @@ public class JobWithinAJobException extends RumbleException {
     public JobWithinAJobException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.JobWithinAJobErrorCode, metadata);
     }
+
+    public JobWithinAJobException(ExceptionMetadata metadata) {
+        super(
+            "RumbleDB did not manage to execute your query in parallel, because an expression executed in parallel attempts to manipulate a big sequence. Please try to rewrite it, or open an issue on GitHub if you would like us to investigate and improve RumbleDB to support it, or need advice.",
+            ErrorCode.JobWithinAJobErrorCode,
+            metadata
+        );
+    }
 }

@@ -34,6 +34,7 @@ public class ObjectConstructorExpression extends Expression {
     private boolean isMergedConstructor = false;
     private List<Expression> values;
     private List<Expression> keys;
+    private List<Boolean> isReferenced;
     private Expression childExpression;
 
     public ObjectConstructorExpression(
@@ -44,6 +45,10 @@ public class ObjectConstructorExpression extends Expression {
         super(metadata);
         this.keys = keys;
         this.values = values;
+        this.isReferenced = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            this.isReferenced.add(true);
+        }
     }
 
     public ObjectConstructorExpression(Expression expression, ExceptionMetadata metadata) {
@@ -74,6 +79,40 @@ public class ObjectConstructorExpression extends Expression {
             result.add(this.childExpression);
         }
         return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        if (this.isMergedConstructor) {
+            indentIt(sb, indent);
+            sb.append("{| ");
+            this.childExpression.serializeToJSONiq(sb, 0);
+            sb.append(" |}\n");
+        } else {
+            indentIt(sb, indent);
+            sb.append("{\n");
+            if (this.keys != null) {
+                for (int i = 0; i < this.keys.size(); i++) {
+                    // TODO ending always with \n might cause issues here
+                    this.keys.get(i).serializeToJSONiq(sb, indent + 1);
+                    sb.append(" : ");
+                    this.values.get(i).serializeToJSONiq(sb, 0);
+                    if (i == this.keys.size() - 1) {
+                        sb.append("\n");
+                    } else {
+                        sb.append(",\n");
+                    }
+                }
+            }
+        }
+    }
+
+    public void setReferenced(int i, boolean isReferenced) {
+        this.isReferenced.set(i, false);
+    }
+
+    public boolean getReferenced(int i) {
+        return this.isReferenced.get(i);
     }
 
     @Override

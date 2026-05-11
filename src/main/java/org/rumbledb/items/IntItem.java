@@ -27,9 +27,12 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -68,6 +71,11 @@ public class IntItem implements Item {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getIntValue();
+    }
+
+    @Override
     public BigInteger getIntegerValue() {
         return BigInteger.valueOf(this.value);
     }
@@ -82,12 +90,17 @@ public class IntItem implements Item {
         return this.value != 0;
     }
 
+    @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
     public double castToDoubleValue() {
-        return new Integer(this.value).doubleValue();
+        return Integer.valueOf(this.value).doubleValue();
     }
 
     public float castToFloatValue() {
-        return new Integer(this.value).floatValue();
+        return Integer.valueOf(this.value).floatValue();
     }
 
     public BigDecimal castToDecimalValue() {
@@ -123,11 +136,6 @@ public class IntItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return String.valueOf(this.value);
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeInt(this.value);
     }
@@ -143,10 +151,14 @@ public class IntItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.integerItem;
+        return BuiltinTypesCatalogue.intItem;
     }
 
     @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("int"));
+    }
+
     public boolean isNumeric() {
         return true;
     }
@@ -154,5 +166,21 @@ public class IntItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "INT";
     }
 }

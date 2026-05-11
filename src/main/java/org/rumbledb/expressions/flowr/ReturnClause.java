@@ -20,10 +20,8 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -45,29 +43,20 @@ public class ReturnClause extends Clause {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isRDD()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isDataFrame()) {
-            this.highestExecutionMode = ExecutionMode.DATAFRAME;
-            return;
-        }
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-    }
-
-    @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this.returnExpr != null) {
             result.add(this.returnExpr);
         }
+        result.add(this.getPreviousClause());
         return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("return ");
+        this.returnExpr.serializeToJSONiq(sb, 0);
     }
 
     @Override

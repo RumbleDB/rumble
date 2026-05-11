@@ -20,14 +20,16 @@
 
 package iq;
 
-import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
+
 
 @RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {
@@ -37,6 +39,23 @@ public class SparkRuntimeTests extends RuntimeTests {
                 +
                 "/src/test/resources/test_files/runtime-spark"
     );
+
+    public RumbleRuntimeConfiguration getConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--escape-backticks",
+                    "yes",
+                    "--dates-with-timezone",
+                    "yes",
+                    "--materialization-cap",
+                    "100000",
+                    "--result-size",
+                    "200"
+                }
+        );
+    }
 
     public SparkRuntimeTests(File testFile) {
         super(testFile);
@@ -49,18 +68,5 @@ public class SparkRuntimeTests extends RuntimeTests {
         readFileList(sparkRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
-    }
-
-    @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = runIterators(sequence);
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 }

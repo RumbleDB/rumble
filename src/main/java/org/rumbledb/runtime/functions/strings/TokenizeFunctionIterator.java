@@ -22,10 +22,9 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -42,10 +41,9 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     public TokenizeFunctionIterator(
             List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            RuntimeStaticContext staticContext
     ) {
-        super(arguments, executionMode, iteratorMetadata);
+        super(arguments, staticContext);
     }
 
     @Override
@@ -70,37 +68,14 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         if (this.results == null) {
             // Getting first parameter
             RuntimeIterator stringIterator = this.children.get(0);
-            stringIterator.open(this.currentDynamicContextForLocalExecution);
-            if (!stringIterator.hasNext()) {
-                this.hasNext = false;
-                stringIterator.close();
-                return;
-            }
             String input = null;
             String separator = null;
-            Item stringItem = stringIterator.next();
-            if (stringIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
+            Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            if (stringItem == null) {
+                this.hasNext = false;
+                return;
             }
-            stringIterator.close();
-            if (!stringItem.isString()) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            }
-            try {
-                input = stringItem.getStringValue();
-                stringIterator.close();
-            } catch (Exception e) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            }
+            input = stringItem.getStringValue();
 
             // Getting second parameter
             if (this.children.size() == 1) {
