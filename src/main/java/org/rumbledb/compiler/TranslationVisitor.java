@@ -219,9 +219,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        System.err.println(ctx.vers);
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            System.err.println(ctx.vers.getText().trim());
             if (ctx.vers.getText().trim().equals("\"1.0\"")) {
                 this.version = "1.0";
                 this.moduleContext.setQueryLanguage("jsoniq10");
