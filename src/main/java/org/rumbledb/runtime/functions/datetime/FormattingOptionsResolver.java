@@ -1,13 +1,13 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
+
 import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 
 final class FormattingOptionsResolver {
 
@@ -21,7 +21,6 @@ final class FormattingOptionsResolver {
             Item languageItem,
             Item calendarItem,
             Item placeItem,
-            String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
         if (arity <= 2) {
@@ -35,7 +34,7 @@ final class FormattingOptionsResolver {
         String place = normalizePlace(rawPlace);
         ZoneId placeZoneId = resolvePlaceZoneId(place);
 
-        String calendarMode = resolveCalendarMode(calendar, pictureStringForErrors, metadata);
+        String calendarMode = resolveCalendarMode(calendar, metadata);
 
         return FormattingOptions.extended(language, calendarMode, place, placeZoneId);
     }
@@ -55,6 +54,8 @@ final class FormattingOptionsResolver {
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+
+    // TODO refactor
     private static ZoneId resolvePlaceZoneId(String place) {
         if (place == null) {
             return null;
@@ -72,11 +73,10 @@ final class FormattingOptionsResolver {
 
     static String resolveCalendarMode(
             String calendar,
-            String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
         if (calendar == null || calendar.trim().isEmpty()) {
-            return CalendarMode.DEFAULT;
+            return CalendarMode.DEFAULT; // TODO we should default to the dynamic context
         }
 
         String normalized = calendar.trim();
@@ -94,17 +94,17 @@ final class FormattingOptionsResolver {
             String localName = matcher.group(2);
 
             if (!isValidCalendarLocalName(localName)) {
-                throw invalidCalendar(pictureStringForErrors, metadata);
+                throw invalidCalendar(calendar, metadata);
             }
 
             if (!namespace.isEmpty()) {
                 return CalendarMode.DEFAULT;
             }
 
-            throw invalidCalendar(pictureStringForErrors, metadata);
+            throw invalidCalendar(calendar, metadata);
         }
 
-        throw invalidCalendar(pictureStringForErrors, metadata);
+        throw invalidCalendar(calendar, metadata);
     }
 
     static boolean isValidCalendarLocalName(String localName) {
@@ -115,11 +115,11 @@ final class FormattingOptionsResolver {
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidCalendar(
-            String pictureStringForErrors,
+            String calendar,
             ExceptionMetadata metadata
     ) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureStringForErrors + "\": invalid picture string",
+                "\"" + calendar + "\": invalid calendar",
                 metadata
         );
     }

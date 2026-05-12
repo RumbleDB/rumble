@@ -12,11 +12,7 @@ final class TemporalTimezoneSupport {
             boolean hasExplicitTimezone,
             FormattingOptions options
     ) {
-        if (!hasExplicitTimezone) {
-            return value;
-        }
-
-        if (options == null || options.placeZoneId == null) {
+        if (!hasExplicitTimezone || options == null || options.placeZoneId == null) {
             return value;
         }
 

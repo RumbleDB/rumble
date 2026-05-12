@@ -1,14 +1,14 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -38,14 +38,12 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         if (valueItem.isNull()) {
             return valueItem;
         }
-        String pictureString = pictureItem.getStringValue();
 
         FormattingOptions formattingOptions = FormattingOptionsResolver.resolve(
             this.children.size(),
             languageItem,
             calendarItem,
             placeItem,
-            pictureString,
             getMetadata()
         );
 
@@ -81,7 +79,6 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         String result = TemporalPictureFormatter.format(
             renderingValue,
             pictureItem.getStringValue(),
-            pictureItem.serialize(),
             hasExplicitTimezone,
             formattingOptions,
             this::supportsComponent,

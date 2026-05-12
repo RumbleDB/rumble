@@ -7,15 +7,16 @@ import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
 
 final class TemporalPictureParser {
 
+    // TODO integrate format-integer primary format token logic into presentation width modifier?
     static ParsedVariableMarker parse(
             String rawVariableMarker,
-            String pictureStringForErrors,
+            String pictureString,
             ExceptionMetadata metadata
     ) {
         String variableMarker = normalizeVariableMarker(rawVariableMarker);
         if (variableMarker.isEmpty()) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": incorrect syntax",
+                    "\"" + pictureString + "\": incorrect syntax",
                     metadata
             );
         }
@@ -23,13 +24,15 @@ final class TemporalPictureParser {
         char component = variableMarker.charAt(0);
         if (!isRecognizedComponent(component)) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": invalid picture string",
+                    "\"" + pictureString + "\": invalid picture string",
                     metadata
             );
         }
 
         String rest = variableMarker.substring(1);
 
+        // The width modifier can only be at the end: Component Specifier [Presentation Modifier] [Presentation
+        // Modifier] [Width modifier]
         int widthComma = findWidthSeparatorComma(rest);
         String presentationWithModifiers = widthComma >= 0 ? rest.substring(0, widthComma) : rest;
         String widthPart = widthComma >= 0 ? rest.substring(widthComma + 1) : "";
@@ -37,16 +40,16 @@ final class TemporalPictureParser {
         ParsedPresentation presentation = parsePresentationModifiers(
             component,
             presentationWithModifiers,
-            pictureStringForErrors,
+            pictureString,
             metadata
         );
-        ParsedWidth width = parseWidth(widthPart, pictureStringForErrors, metadata);
+        ParsedWidth width = parseWidth(widthPart, pictureString, metadata);
 
         if (component == 'Z' || component == 'z') {
             ParsedTimezonePicture tz = TimezonePictureParser.parse(
                 component,
                 presentation.basePresentation,
-                pictureStringForErrors,
+                pictureString,
                 metadata
             );
             return ParsedVariableMarker.forTimezone(
@@ -164,7 +167,7 @@ final class TemporalPictureParser {
         }
 
         if (component == 'f') {
-            validateFractionalPresentation(presentation.basePresentation, pictureStringForErrors, metadata);
+            validateFractionalPresentation(presentation.basePresentation, pictureString, metadata);
             return ParsedVariableMarker.forNumeric(
                 component,
                 presentation.basePresentation,
@@ -178,7 +181,7 @@ final class TemporalPictureParser {
 
         NumericPicture np = NumericPictureParser.parseForDate(
             presentation.basePresentation,
-            pictureStringForErrors,
+            pictureString,
             metadata
         );
         return ParsedVariableMarker.forNumeric(
@@ -283,10 +286,11 @@ final class TemporalPictureParser {
         }
     }
 
+    // TODO maybe merge with primary format token of format-integer
     private static ParsedPresentation parsePresentationModifiers(
             char component,
             String presentation,
-            String pictureStringForErrors,
+            String pictureString,
             ExceptionMetadata metadata
     ) {
         boolean ordinal = false;
@@ -299,14 +303,14 @@ final class TemporalPictureParser {
 
         if (component != 'Z' && component != 'z' && base.endsWith("t")) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": invalid picture string",
+                    "\"" + pictureString + "\": invalid picture string",
                     metadata
             );
         }
 
         if (base.endsWith("c")) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": invalid picture string",
+                    "\"" + pictureString + "\": invalid picture string",
                     metadata
             );
         }
@@ -326,7 +330,7 @@ final class TemporalPictureParser {
         return -1;
     }
 
-    private static ParsedWidth parseWidth(String widthPart, String pictureStringForErrors, ExceptionMetadata metadata) {
+    private static ParsedWidth parseWidth(String widthPart, String pictureString, ExceptionMetadata metadata) {
         if (widthPart.isEmpty()) {
             return new ParsedWidth(1, -1);
         }
@@ -334,23 +338,23 @@ final class TemporalPictureParser {
         String[] parts = widthPart.split("-", -1);
         if (parts.length > 2 || parts[0].isEmpty()) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": incorrect syntax",
+                    "\"" + pictureString + "\": incorrect syntax",
                     metadata
             );
         }
 
-        int min = parseWidthPart(parts[0], pictureStringForErrors, metadata);
-        int max = parts.length == 2 ? parseWidthPart(parts[1], pictureStringForErrors, metadata) : -1;
+        int min = parseWidthPart(parts[0], pictureString, metadata);
+        int max = parts.length == 2 ? parseWidthPart(parts[1], pictureString, metadata) : -1;
 
         if (min == 0 || max == 0) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": invalid picture string",
+                    "\"" + pictureString + "\": invalid picture string",
                     metadata
             );
         }
         if (max != -1 && min != -1 && min > max) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": invalid picture string",
+                    "\"" + pictureString + "\": invalid picture string",
                     metadata
             );
         }
@@ -358,7 +362,7 @@ final class TemporalPictureParser {
         return new ParsedWidth(min, max);
     }
 
-    private static int parseWidthPart(String s, String pictureStringForErrors, ExceptionMetadata metadata) {
+    private static int parseWidthPart(String s, String pictureString, ExceptionMetadata metadata) {
         if ("*".equals(s)) {
             return -1;
         }
@@ -366,7 +370,7 @@ final class TemporalPictureParser {
             return Integer.parseInt(s);
         } catch (NumberFormatException e) {
             throw new IncorrectSyntaxFormatDateTimeException(
-                    "\"" + pictureStringForErrors + "\": incorrect syntax",
+                    "\"" + pictureString + "\": incorrect syntax",
                     metadata
             );
         }
@@ -374,7 +378,7 @@ final class TemporalPictureParser {
 
     private static void validateFractionalPresentation(
             String picture,
-            String pictureStringForErrors,
+            String pictureString,
             ExceptionMetadata metadata
     ) {
         if ("I".equals(picture) || "i".equals(picture)) {
@@ -393,7 +397,7 @@ final class TemporalPictureParser {
         for (int cp : cps) {
             if (cp == '#') {
                 if (!sawMandatory) {
-                    throw invalidPicture(pictureStringForErrors, metadata);
+                    throw invalidPicture(pictureString, metadata);
                 }
                 sawOptional = true;
                 sawActive = true;
@@ -403,7 +407,7 @@ final class TemporalPictureParser {
 
             if (Character.getType(cp) == Character.DECIMAL_DIGIT_NUMBER) {
                 if (sawOptional) {
-                    throw invalidPicture(pictureStringForErrors, metadata);
+                    throw invalidPicture(pictureString, metadata);
                 }
                 sawMandatory = true;
                 sawActive = true;
@@ -412,22 +416,22 @@ final class TemporalPictureParser {
             }
 
             if (!sawActive || !lastWasActive) {
-                throw invalidPicture(pictureStringForErrors, metadata);
+                throw invalidPicture(pictureString, metadata);
             }
             lastWasActive = false;
         }
 
         if (!sawMandatory || !lastWasActive) {
-            throw invalidPicture(pictureStringForErrors, metadata);
+            throw invalidPicture(pictureString, metadata);
         }
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidPicture(
-            String pictureStringForErrors,
+            String pictureString,
             ExceptionMetadata metadata
     ) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureStringForErrors + "\": invalid picture string",
+                "\"" + pictureString + "\": invalid picture string",
                 metadata
         );
     }

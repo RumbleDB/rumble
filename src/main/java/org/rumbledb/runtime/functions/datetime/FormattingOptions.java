@@ -3,10 +3,6 @@ package org.rumbledb.runtime.functions.datetime;
 import java.time.ZoneId;
 import java.util.Locale;
 
-
-import java.time.ZoneId;
-import java.util.Locale;
-
 final class FormattingOptions {
 
     final String language;
@@ -66,10 +62,7 @@ final class FormattingOptions {
         );
     }
 
-    boolean hasPlaceZoneId() {
-        return this.placeZoneId != null;
-    }
-
+    // TODO refactor, default should be defined in dynamic context, maybe chain to context through languagesupport api?
     private static Locale resolveLocale(String language) {
         if (language == null || language.trim().isEmpty()) {
             return Locale.US;

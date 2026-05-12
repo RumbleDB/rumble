@@ -1,12 +1,12 @@
 package org.rumbledb.runtime.functions.base.formatting;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
 import org.rumbledb.exceptions.RumbleException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public final class NumericPictureParser {
 
@@ -16,7 +16,6 @@ public final class NumericPictureParser {
 
         public static String DATE = "DATE";
         public static String INTEGER = "INTEGER";
-        public static String NUMBER = "NUMBER";
     }
 
     private NumericPictureParser() {
@@ -259,9 +258,7 @@ public final class NumericPictureParser {
             return new IncorrectSyntaxFormatDateTimeException(message, metadata);
         }
 
-        return new IncorrectSyntaxFormatNumberException(message, metadata); // fn:format-number && fn:format-integer
-                                                                            // require the same exception to be thrown
-                                                                            // for an invalid picture string
+        return new IncorrectSyntaxFormatNumberException(message, metadata);
     }
 
     private static final class RepeatingGroupingInfo {
