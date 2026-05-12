@@ -2701,7 +2701,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 && children.size() == 1
                 && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
-            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(name);
+            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
             // In XQuery, no constructor function exists for xs:NOTATION or xs:anyAtomicType.
             // Keep these as unresolved function calls to raise XPST0017 as required.
             if (
