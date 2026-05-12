@@ -44,7 +44,7 @@ final class TemporalComponentRenderer {
 
             case ParsedVariableMarker.Kind.NUMERIC:
                 if (variableMarker.component == 'f') {
-                    return formatFractionalSeconds(value, variableMarker, formattingOptions, pictureString, metadata);
+                    return formatFractionalSeconds(value, variableMarker, formattingOptions);
                 }
                 return formatNumericComponent(value, variableMarker, formattingOptions, pictureString, metadata);
 
@@ -65,7 +65,7 @@ final class TemporalComponentRenderer {
             case ParsedVariableMarker.Kind.DEFAULT:
             default:
                 if (variableMarker.component == 'f') {
-                    return formatFractionalSeconds(value, variableMarker, formattingOptions, pictureString, metadata);
+                    return formatFractionalSeconds(value, variableMarker, formattingOptions);
                 }
                 return formatDefaultComponent(
                     value,
@@ -98,7 +98,7 @@ final class TemporalComponentRenderer {
             );
         }
 
-        numericValue = adjustValueForWidthBeforePresentation(numericValue, variableMarker);
+        numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String roman = NumericFormattingSupport.integerToRoman(numericValue);
         if (variableMarker.ordinal) {
@@ -123,7 +123,7 @@ final class TemporalComponentRenderer {
             metadata
         );
 
-        numericValue = adjustValueForWidthBeforePresentation(numericValue, variableMarker);
+        numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String alpha = NumericFormattingSupport.integerToAlphabetic(numericValue, variableMarker.lowerCaseAlphabetic);
         if (variableMarker.ordinal) {
@@ -196,7 +196,7 @@ final class TemporalComponentRenderer {
             metadata
         );
 
-        numericValue = adjustValueForWidthBeforePresentation(numericValue, variableMarker);
+        numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String words;
         if (variableMarker.ordinal) {
@@ -218,7 +218,12 @@ final class TemporalComponentRenderer {
     ) {
         switch (variableMarker.component) {
             case 'Y':
-                return maybeAppendOrdinal(Integer.toString(dt.getYear()), dt.getYear(), variableMarker, formattingOptions);
+                return maybeAppendOrdinal(
+                    Integer.toString(dt.getYear()),
+                    dt.getYear(),
+                    variableMarker,
+                    formattingOptions
+                );
 
             case 'M':
                 return maybeAppendOrdinal(
@@ -455,9 +460,7 @@ final class TemporalComponentRenderer {
     private static String formatFractionalSeconds(
             OffsetDateTime dt,
             ParsedVariableMarker variableMarker,
-            FormattingOptions formattingOptions,
-            String pictureString,
-            ExceptionMetadata metadata
+            FormattingOptions formattingOptions
     ) {
         if ("I".equals(variableMarker.presentation) || "i".equals(variableMarker.presentation)) {
             int value = fractionAsInteger(dt);
@@ -567,7 +570,7 @@ final class TemporalComponentRenderer {
         return digits.substring(0, end);
     }
 
-    private static int adjustValueForWidthBeforePresentation(int value, ParsedVariableMarker variableMarker) {
+    private static int applyYearMaximumWidthRule(int value, ParsedVariableMarker variableMarker) {
         if (variableMarker.component == 'Y' && variableMarker.maxWidth > 0) {
             String digits = Integer.toString(Math.abs(value));
 

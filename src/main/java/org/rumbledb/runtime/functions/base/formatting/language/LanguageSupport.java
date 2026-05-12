@@ -4,6 +4,7 @@ import java.util.Locale;
 
 public final class LanguageSupport {
 
+    // TODO instantiate once from dynamic context? adding more languages should throw an error even?
     public static final String DEFAULT_LANGUAGE = "en";
 
     private LanguageSupport() {

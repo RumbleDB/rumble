@@ -5,6 +5,7 @@ import java.util.Locale;
 
 final class FormattingOptions {
 
+    // TODO pick either locale or language
     final String language;
     final String calendarMode;
     final Locale locale;
