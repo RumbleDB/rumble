@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -40,6 +41,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -73,6 +75,19 @@ import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
@@ -132,16 +147,22 @@ import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
 import org.rumbledb.expressions.xml.node_test.DocumentTest;
 import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
@@ -163,8 +184,8 @@ import org.rumbledb.types.SequenceType;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -188,30 +209,30 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private boolean isMainModule;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
-    private String version;
+    private final CommonTokenStream xQueryTokenStream;
 
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
             RumbleRuntimeConfiguration configuration,
-            String code
+            String code,
+            CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
         this.isMainModule = isMainModule;
         this.code = code;
+        this.dirElemNamespaceFrames = new ArrayDeque<>();
+        this.xQueryTokenStream = xQueryTokenStream;
+
         if (configuration.getQueryLanguage().equals("jsoniq10")) {
-            this.version = "1.0";
             this.moduleContext.setQueryLanguage("jsoniq10");
         } else if (configuration.getQueryLanguage().equals("jsoniq31")) {
-            this.version = "3.1";
             this.moduleContext.setQueryLanguage("jsoniq31");
         } else if (configuration.getQueryLanguage().equals("jsoniq40")) {
-            this.version = "4.0";
             this.moduleContext.setQueryLanguage("jsoniq40");
         }
-        this.dirElemNamespaceFrames = new ArrayDeque<>();
     }
 
     // endregion expr
@@ -221,13 +242,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             if (ctx.vers.getText().trim().equals("\"1.0\"")) {
-                this.version = "1.0";
                 this.moduleContext.setQueryLanguage("jsoniq10");
             } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
-                this.version = "3.1";
                 this.moduleContext.setQueryLanguage("jsoniq31");
             } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
-                this.version = "4.0";
                 this.moduleContext.setQueryLanguage("jsoniq40");
             } else {
                 throw new JsoniqVersionException(createMetadataFromContext(ctx));
@@ -1456,7 +1474,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.validate_expr != null) {
             return this.visitValidateExpr(ctx.validate_expr);
         }
-        throw new ParsingException("Parser error: extensionExpr not implemented yet.", createMetadataFromContext(ctx));
+        // TODO: extension expression still unsupported
+        throw new UnsupportedFeatureException("Extension expression still unsupported", createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1479,7 +1498,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.version.equals("1.0")) {
+                    if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1887,7 +1906,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.version.equals("1.0")) {
+                    if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1916,6 +1935,425 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         );
     }
 
+
+    @Override
+    public Node visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
+        }
+        if (child instanceof JsoniqParser.ComputedConstructorContext) {
+            return this.visitComputedConstructor((JsoniqParser.ComputedConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Node constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (ctx.COMMENT() != null) {
+            String commentText = ctx.COMMENT().getText();
+            String commentContent = commentText.substring(4, commentText.length() - 3);
+            return new DirectCommentConstructorExpression(
+                    commentContent,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (child instanceof JsoniqParser.DirElemConstructorOpenCloseContext) {
+            return this.visitDirElemConstructorOpenClose((JsoniqParser.DirElemConstructorOpenCloseContext) child);
+        } else if (child instanceof JsoniqParser.DirElemConstructorSingleTagContext) {
+            return this.visitDirElemConstructorSingleTag((JsoniqParser.DirElemConstructorSingleTagContext) child);
+        } else if (ctx.PI() != null) {
+            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
+        } else if (ctx.COMMENT() != null) {
+            throw new UnsupportedFeatureException(
+                    "Direct comment constructor not yet implemented",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new UnsupportedFeatureException(
+                "Direct constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private Node visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+        String tokenText = piToken.getText();
+        String inner = tokenText.substring(2, tokenText.length() - 2);
+        int whitespaceIndex = indexOfWhitespace(inner);
+        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
+        Expression contentExpression = null;
+        if (whitespaceIndex != -1) {
+            int contentStart = whitespaceIndex;
+            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
+                contentStart++;
+            }
+            String content = inner.substring(contentStart);
+            contentExpression = new StringLiteralExpression(content, metadata);
+        }
+        return new DirPIConstructorExpression(target, contentExpression, metadata);
+    }
+
+    private int indexOfWhitespace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Whitespace in direct element content is lexed on the HIDDEN channel. Recover hidden tokens that appear
+     * between two adjacent {@code dirElemContent} parse nodes (each node’s own text uses
+     * {@link CommonTokenStream#getText(Interval)} in {@link #visitDirElemContent}).
+     */
+    private static void appendHiddenTokensAfter(
+            CommonTokenStream tokenStream,
+            int previousTokenIndex,
+            StringBuilder destination
+    ) {
+        List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
+        if (hidden == null) {
+            return;
+        }
+        for (Token t : hidden) {
+            destination.append(t.getText());
+        }
+    }
+
+    @Override
+    public Node visitDirElemConstructorOpenClose(JsoniqParser.DirElemConstructorOpenCloseContext ctx) {
+        // check that the start and end tags are the same
+        if (ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+            throw new DirectElementConstructorTagMismatchException(
+                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
+            }
+
+            // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as
+            // adjacent siblings.
+            // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+            // here, we merge adjacent text nodes into a single text node.
+            List<Expression> content = new ArrayList<>();
+            StringBuilder textAccumulator = null;
+            ExceptionMetadata firstTextMetadata = null;
+            Token previousToken = ctx.endOpen;
+
+            for (JsoniqParser.DirElemContentContext child : ctx.dirElemContent()) {
+                Expression childExpression = (Expression) this.visitDirElemContent(child);
+
+                if (childExpression instanceof TextNodeExpression) {
+                    TextNodeExpression textNode = (TextNodeExpression) childExpression;
+
+                    // If the parent of a text node is not empty, the Text Node must not contain the zero-length
+                    // string as its content.
+                    // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+                    // skip empty text nodes
+                    if (textNode.getContent().isEmpty()) {
+                        previousToken = child.getStop();
+                        continue;
+                    }
+
+                    if (textAccumulator == null) {
+                        textAccumulator = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                    }
+                    appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                    textAccumulator.append(textNode.getContent());
+                } else {
+                    // non-text node encountered
+                    if (textAccumulator != null) {
+                        appendHiddenTokensAfter(
+                            this.xQueryTokenStream,
+                            previousToken.getTokenIndex(),
+                            textAccumulator
+                        );
+                        // finalize any accumulated text nodes
+                        content.add(
+                            new TextNodeExpression(
+                                    textAccumulator.toString(),
+                                    firstTextMetadata
+                            )
+                        );
+                        textAccumulator = null;
+                        firstTextMetadata = null;
+                    }
+
+                    // add the non-text node
+                    content.add(childExpression);
+                }
+                previousToken = child.getStop();
+            }
+
+            // handle any remaining accumulated text at the end
+            if (textAccumulator != null) {
+                appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                content.add(
+                    new TextNodeExpression(
+                            textAccumulator.toString(),
+                            firstTextMetadata
+                    )
+                );
+            }
+
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    content,
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
+            );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
+        }
+
+    }
+
+    @Override
+    public Node visitDirElemConstructorSingleTag(JsoniqParser.DirElemConstructorSingleTagContext ctx) {
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
+            }
+
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    new ArrayList<>(),
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
+            );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
+        }
+    }
+
+    @Override
+    public Node visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CommonContentContext) {
+            return this.visitCommonContent((JsoniqParser.CommonContentContext) child);
+        } else {
+            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
+            String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+            if (ctx.CDATA() != null) {
+                // filter out the <![CDATA[ and ]]>, and return the text
+                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
+            }
+            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+        }
+    }
+
+    /**
+     * Helper method to process text content that may contain entity/character references or escaped braces.
+     * According to Jsoniq 3.1 spec, PredefinedEntityRef and CharRef must be expanded.
+     * 
+     * @param content The raw text content to process
+     * @return The processed (unescaped) content
+     */
+    private String processTextContentWithEscaping(String content) {
+        if (content.startsWith("&") && content.endsWith(";")) {
+            // This is a PredefinedEntityRef or CharRef token - expand it
+            return StringEscapeUtils.unescapeXml(content);
+        }
+        // Handle escaped braces: {{ or }}
+        if (content.equals("{{")) {
+            return "{";
+        }
+        if (content.equals("}}")) {
+            return "}";
+        }
+        // Return content as-is if no escaping needed
+        return content;
+    }
+
+    @Override
+    public Node visitCommonContent(JsoniqParser.CommonContentContext ctx) {
+        if (ctx.expr() != null) {
+            return (Expression) this.visitExpr(ctx.expr());
+        }
+        // According to XQuery 3.1 spec, CommonContent can contain PredefinedEntityRef or CharRef
+        // which must be expanded. Check if the content is an entity/character reference.
+        String content = ctx.getText();
+        String processedContent = processTextContentWithEscaping(content);
+        return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitComputedConstructor(JsoniqParser.ComputedConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.CompDocConstructorContext) {
+            return this.visitCompDocConstructor((JsoniqParser.CompDocConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompElemConstructorContext) {
+            return this.visitCompElemConstructor((JsoniqParser.CompElemConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompPIConstructorContext) {
+            return this.visitCompPIConstructor((JsoniqParser.CompPIConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompTextConstructorContext) {
+            return this.visitCompTextConstructor((JsoniqParser.CompTextConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompCommentConstructorContext) {
+            return this.visitCompCommentConstructor((JsoniqParser.CompCommentConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompAttrConstructorContext) {
+            return this.visitCompAttrConstructor((JsoniqParser.CompAttrConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompNamespaceConstructorContext) {
+            return this.visitCompNamespaceConstructor((JsoniqParser.CompNamespaceConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCompDocConstructor(JsoniqParser.CompDocConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedExpression(ctx.enclosedExpression());
+        return new DocumentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompTextConstructor(JsoniqParser.CompTextConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new TextNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompCommentConstructor(JsoniqParser.CompCommentConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new CommentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Node visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+        if (ctx.ncName() != null) {
+            return new ComputedPIConstructorExpression(
+                    ctx.ncName().getText(),
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.expr() != null) {
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedPIConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompAttrConstructor(JsoniqParser.CompAttrConstructorContext ctx) {
+        Expression valueExpression = (Expression) visit(ctx.enclosedExpression());
+
+        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.name != null) {
+            // Static attribute name: attribute attributeName { value }
+            Name attributeName = this.parseEqName(ctx.name, false, false, false, false);
+            return new ComputedAttributeConstructorExpression(
+                    attributeName,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.name_expr != null) {
+            // Dynamic attribute name: attribute { nameExpression } { value }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.name_expr);
+            return new ComputedAttributeConstructorExpression(
+                    nameExpression,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed attribute constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitCompElemConstructor(JsoniqParser.CompElemConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
+
+        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.eqName() != null) {
+            // Static element name: element elementName { content }
+            Name elementName = parseEqName(ctx.eqName(), false, false, false, true);
+            return new ComputedElementConstructorExpression(
+                    elementName,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.expr() != null) {
+            // Dynamic element name: element { nameExpression } { content }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedElementConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed element constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitCompNamespaceConstructor(JsoniqParser.CompNamespaceConstructorContext ctx) {
+        Expression uriExpression = (Expression) this.visitEnclosedExpression(
+            ctx.enclosedURIExpr().enclosedExpression()
+        );
+        if (ctx.ncName() != null) {
+            return new ComputedNamespaceConstructorExpression(
+                    ctx.ncName().getText(),
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.enclosedPrefixExpr() != null) {
+            Expression prefixExpression = (Expression) this.visitEnclosedExpression(
+                ctx.enclosedPrefixExpr().enclosedExpression()
+            );
+            return new ComputedNamespaceConstructorExpression(
+                    prefixExpression,
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
+                createMetadataFromContext(ctx)
+        );
+    }
+
     @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
@@ -1930,7 +2368,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 );
             }
             List<Expression> memberExpressions = new ArrayList<>();
-            if (this.version.equals("1.0")) {
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                 // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
                 // Thus, we concatenate all expressions into a single comma expression.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
@@ -3115,6 +3553,260 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             }
         }
         return this.moduleContext.resolveNamespace(prefix);
+    }
+
+    private void bindDirConstructorNamespaceDeclaration(String prefix, String uri) {
+        if (this.dirElemNamespaceFrames.isEmpty()) {
+            return;
+        }
+        this.dirElemNamespaceFrames.peek().put(prefix, uri);
+    }
+
+    private static class DirAttributeProcessingResult {
+        private final List<Expression> attributes;
+        private final List<NamespaceDeclaration> namespaceDeclarations;
+
+        private DirAttributeProcessingResult() {
+            this.attributes = new ArrayList<>();
+            this.namespaceDeclarations = new ArrayList<>();
+        }
+    }
+
+
+    private DirAttributeProcessingResult getAttributesExpressionsList(JsoniqParser.DirAttributeListContext ctx) {
+        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
+
+        // Process each attribute name-value pair
+        List<JsoniqParser.QnameContext> attributeNames = ctx.attribute_qname;
+        List<JsoniqParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
+
+        for (int i = 0; i < attributeNames.size(); i++) {
+            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
+                String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
+                String uri = getNamespaceDeclarationUri(attributeValues.get(i));
+                result.namespaceDeclarations.add(
+                    new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx))
+                );
+                bindDirConstructorNamespaceDeclaration(declaredPrefix, uri);
+                continue;
+            }
+
+            Name attributeName = parseName(qnameCtx, false, false, false, false);
+
+            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
+            AttributeNodeExpression attributeNode = new AttributeNodeExpression(
+                    attributeName,
+                    value,
+                    createMetadataFromContext(ctx)
+            );
+            result.attributes.add(attributeNode);
+        }
+
+        return result;
+    }
+
+    private List<Expression> getAttributeValuesExpressionsList(
+            JsoniqParser.DirAttributeValueContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                (JsoniqParser.DirAttributeValueAposContext) child,
+                allowEnclosedExpressions
+            );
+        } else if (child instanceof JsoniqParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions(
+                (JsoniqParser.DirAttributeValueQuotContext) child,
+                allowEnclosedExpressions
+            );
+        }
+        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+    }
+
+    private String getNamespaceDeclarationUri(JsoniqParser.DirAttributeValueContext ctx) {
+        List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
+        StringBuilder uriBuilder = new StringBuilder();
+        for (Expression expression : uriExpressions) {
+            if (!(expression instanceof AttributeNodeContentExpression)) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+        }
+        return uriBuilder.toString();
+    }
+
+
+    /**
+     * Helper method to process quoted attribute values (both single and double quoted).
+     * This method handles the common logic for merging adjacent text content and building expressions.
+     * Returns a list of expressions where adjacent string literals are merged.
+     */
+    private List<Expression> processQuotedAttributeValue(
+            ParserRuleContext ctx,
+            String escapeSequence,
+            String escapedChar,
+            boolean allowEnclosedExpressions
+    ) {
+
+        // Similar to element content, we need to merge adjacent text content
+        StringBuilder textAccumulator = null;
+        List<Expression> contentExpressions = new ArrayList<>();
+
+        // Process each child between the quotes (skip the first and last quote tokens)
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
+            ParseTree child = ctx.getChild(i);
+            List<Expression> childExpressions = new ArrayList<>();
+
+            // Try to process as entity or character reference first
+            // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
+            String childText = child.getText();
+            if (childText.startsWith("&") && childText.endsWith(";")) {
+                // This is a PredefinedEntityRef or CharRef token - expand it
+                String unescapedValue = StringEscapeUtils.unescapeXml(childText);
+                childExpressions.add(
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx))
+                );
+            } else if (child.getText().equals(escapeSequence)) {
+                // Escaped quote
+                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
+            } else {
+                // Try the content visitor for nested content or text
+                List<Expression> contentResult = processAttributeContent(
+                    (ParserRuleContext) child,
+                    allowEnclosedExpressions
+                );
+                if (contentResult != null && !contentResult.isEmpty()) {
+                    childExpressions.addAll(contentResult);
+                } else {
+                    throw new UnsupportedOperationException("Unsupported attribute content: " + child.getText());
+                }
+            }
+
+            // Process each expression returned from the child
+            for (Expression childExpression : childExpressions) {
+                if (childExpression instanceof AttributeNodeContentExpression) {
+                    // Text content - accumulate it
+                    String content = ((AttributeNodeContentExpression) childExpression).getContent();
+
+                    if (textAccumulator == null) {
+                        // Start accumulating text content
+                        textAccumulator = new StringBuilder();
+                    }
+
+                    // Accumulate the text content
+                    textAccumulator.append(content);
+                } else {
+                    // Non-text expression encountered (e.g., enclosed expression)
+                    if (textAccumulator != null) {
+                        // Finalize any accumulated text
+                        contentExpressions.add(
+                            new AttributeNodeContentExpression(
+                                    textAccumulator.toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                        textAccumulator = null;
+                    }
+
+                    // Add the non-text expression
+                    contentExpressions.add(childExpression);
+                }
+            }
+        }
+
+        // Handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            contentExpressions.add(
+                new AttributeNodeContentExpression(
+                        textAccumulator.toString(),
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+
+        return contentExpressions;
+    }
+
+    /**
+     * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
+     */
+    private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
+        ParseTree child = ctx.children.get(0);
+        List<Expression> expressions = new ArrayList<>();
+
+        if (ctx instanceof JsoniqParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                (JsoniqParser.DirAttributeValueAposContext) ctx,
+                allowEnclosedExpressions
+            );
+        } else if (ctx instanceof JsoniqParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions(
+                (JsoniqParser.DirAttributeValueQuotContext) ctx,
+                allowEnclosedExpressions
+            );
+        } else if (
+            ctx instanceof JsoniqParser.DirAttributeContentQuotContext
+                &&
+                ((JsoniqParser.DirAttributeContentQuotContext) ctx).expr() != null
+        ) {
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentQuotContext) ctx).expr()));
+        } else if (
+            ctx instanceof JsoniqParser.DirAttributeContentAposContext
+                &&
+                ((JsoniqParser.DirAttributeContentAposContext) ctx).expr() != null
+        ) {
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentAposContext) ctx).expr()));
+        } else {
+            // handle other cases
+            String childText = child.getText();
+            String processedContent = processTextContentWithEscaping(childText);
+            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromContext(ctx)));
+        }
+        return expressions;
+    }
+
+
+
+    /**
+     * Process dirAttributeValueApos and return a list of expressions.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueAposExpressions(
+            JsoniqParser.DirAttributeValueAposContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "\"\"", "\"", allowEnclosedExpressions);
+    }
+
+    /**
+     * Process dirAttributeValueQuot and return a list of expressions.
+     * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
+     * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueQuotExpressions(
+            JsoniqParser.DirAttributeValueQuotContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "''", "'", allowEnclosedExpressions);
     }
 
     private void processDecimalFormatDeclaration(
