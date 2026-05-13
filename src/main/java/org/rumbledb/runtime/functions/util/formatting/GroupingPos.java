@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.base.formatting;
+package org.rumbledb.runtime.functions.util.formatting;
 
 public final class GroupingPos {
     // TODO refactor to remove String separator and completely replace by integer codepoints then remove overloaded

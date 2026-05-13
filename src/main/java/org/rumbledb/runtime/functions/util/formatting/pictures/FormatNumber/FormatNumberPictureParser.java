@@ -1,10 +1,10 @@
-package org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber;
+package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.functions.base.formatting.GroupingPos;
+import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
 
 import java.util.List;
 

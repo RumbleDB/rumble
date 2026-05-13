@@ -1,4 +1,6 @@
-package org.rumbledb.runtime.functions.base.formatting.language;
+package org.rumbledb.runtime.functions.util.formatting.language;
+
+import org.rumbledb.config.FormattingLanguageSupport;
 
 import java.math.BigInteger;
 import java.time.DayOfWeek;
@@ -8,7 +10,7 @@ public class EnglishFormatter implements LanguageFormatter {
 
     @Override
     public String getLanguage() {
-        return "en";
+        return FormattingLanguageSupport.ENGLISH;
     }
 
     @Override

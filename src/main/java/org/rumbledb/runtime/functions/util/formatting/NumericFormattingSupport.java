@@ -1,7 +1,7 @@
-package org.rumbledb.runtime.functions.base.formatting;
+package org.rumbledb.runtime.functions.util.formatting;
 
-import org.rumbledb.runtime.functions.base.formatting.language.LanguageFormatter;
-import org.rumbledb.runtime.functions.base.formatting.language.LanguageRegistry;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageFormatter;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry;
 
 import java.math.BigInteger;
 import java.util.*;
@@ -82,12 +82,12 @@ public final class NumericFormattingSupport {
     }
 
     public static String toCardinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.resolve(language);
+        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
         return formatter.toCardinal(value);
     }
 
     public static String toOrdinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.resolve(language);
+        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
         return formatter.toOrdinal(value);
     }
 
@@ -96,7 +96,7 @@ public final class NumericFormattingSupport {
     }
 
     public static String ordinalSuffix(BigInteger value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.resolve(language);
+        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
         if (!formatter.supportsOrdinalSuffix()) {
             return "";
         }

@@ -1,11 +1,11 @@
-package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
+package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.functions.base.formatting.NumericFormattingSupport;
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 import java.math.BigInteger;
 

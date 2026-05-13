@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.base.formatting;
+package org.rumbledb.runtime.functions.util.formatting;
 
 import java.util.List;
 

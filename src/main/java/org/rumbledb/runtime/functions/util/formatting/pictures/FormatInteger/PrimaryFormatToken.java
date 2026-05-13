@@ -1,6 +1,6 @@
-package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
+package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 
 public class PrimaryFormatToken {
 

@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.base.formatting.language;
+package org.rumbledb.runtime.functions.util.formatting.language;
 
 import java.math.BigInteger;
 import java.time.DayOfWeek;

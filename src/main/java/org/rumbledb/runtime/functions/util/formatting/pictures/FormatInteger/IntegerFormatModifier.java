@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.base.formatting.pictures.FormatInteger;
+package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 public class IntegerFormatModifier {
 

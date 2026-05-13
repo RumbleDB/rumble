@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber;
+package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
 import java.math.BigDecimal;
 
