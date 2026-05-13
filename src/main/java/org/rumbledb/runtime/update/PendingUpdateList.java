@@ -312,7 +312,7 @@ public class PendingUpdateList {
                 } else {
                     if (srcResMapHasSel && tempSrcRes != null) {
                         throw new TooManyReplacesOnSameTargetSelectorException(
-                                target.getDynamicType().getName().toString(),
+                                target.getDynamicType().getName(),
                                 selector.getStringValue(),
                                 metadata
                         );
@@ -370,7 +370,7 @@ public class PendingUpdateList {
                         continue;
                     } else {
                         throw new TooManyReplacesOnSameTargetSelectorException(
-                                target.getDynamicType().getName().toString(),
+                                target.getDynamicType().getName(),
                                 Integer.toString(selector.getIntValue()),
                                 metadata
                         );
