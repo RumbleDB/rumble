@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
 module namespace jsoniq_utils = "jsoniq_utils.jq";
 
 declare function jsoniq_utils:cast-as($value, $type as string) {

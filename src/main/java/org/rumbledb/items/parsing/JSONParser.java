@@ -153,7 +153,7 @@ public final class JSONParser {
                 return ItemFactory.getInstance().createBooleanItem(false);
             case 'n':
                 parseLiteral("null");
-                if (isJSONiq10)
+                if (this.isJSONiq10)
                     return ItemFactory.getInstance().createNullItem();
                 return null;
             default:

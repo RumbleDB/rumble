@@ -293,7 +293,9 @@ unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
 intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
+
+isStaticallyExpr        : main_expr=treatExpr ( KW_IS KW_STATICALLY seq=sequenceType)? ;
 
 treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
@@ -697,9 +699,6 @@ keywordNotOKForFunction:
        | KW_ALLOWING
        | KW_ARRAY
        | DFPropertyName
-// eXist-db update keywords
-       | KW_UPDATE
-       | KW_NEXT
        ;
 
 keywordOKForFunction: KW_ANCESTOR
@@ -805,6 +804,7 @@ keywordOKForFunction: KW_ANCESTOR
        | KW_UPDATING
        | KW_LAST
        // JSONiq specific
+                        | KW_STATICALLY
                         | KW_INSERT
                         | KW_DELETE
                         | KW_RENAME
@@ -822,6 +822,8 @@ keywordOKForFunction: KW_ANCESTOR
                         | KW_TABLE
                         | KW_DELTA_FILE
                         | KW_ICEBERG_TABLE
+                        | KW_NEXT
+                        | KW_PREVIOUS
        ;
 
 // STRING LITERALS /////////////////////////////////////////////////////////////
@@ -875,8 +877,6 @@ noQuotesNoBracesNoAmpNoLAng:
                      | TILDE
                      | COMMA
                      | ARROW
-                     | KW_NEXT
-                     | KW_PREVIOUS
                      | MOD
                      | DOT
                      | GRAVE

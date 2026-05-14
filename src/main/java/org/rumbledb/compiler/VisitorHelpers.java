@@ -174,18 +174,19 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
-            setXQueryLanguageFromProlog(query, configuration);
+        if (query.contains("xquery version")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        } else if (query.contains("jsoniq version")) {
+            return parseJSONiqMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryMainModule(query, uri, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseJSONiqMainModule(query, uri, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryMainModule(query, uri, configuration);
         } else {
-            // overwrite default version if query specifies jsoniq version
-            if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setQueryLanguage("jsoniq31");
-            } else if (query.startsWith("jsoniq version \"4.0\"")) {
-                configuration.setQueryLanguage("jsoniq40");
-            } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setQueryLanguage("jsoniq10");
-            }
             return parseJSONiqMainModule(query, uri, configuration);
         }
 
@@ -198,16 +199,16 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
-            if (main == null) {
+            JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
+            if (modulectx == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
             if (configuration.debug()) {
@@ -215,7 +216,7 @@ public class VisitorHelpers {
                 System.err.println("Parsing program");
                 System.err.println("***************");
             }
-            MainModule mainModule = (MainModule) visitor.visit(main);
+            MainModule mainModule = (MainModule) visitor.visit(modulectx);
             if (configuration.debug()) {
                 System.err.println("***************");
                 System.err.println("Pruning modules");
@@ -322,8 +323,7 @@ public class VisitorHelpers {
         );
         try {
             // TODO Handle module extras
-            XQueryParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            XQueryParser.MainModuleContext main = module.module().main;
+            XQueryParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -361,18 +361,19 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        if (query.startsWith("xquery") || configuration.getQueryLanguage().equals("xquery31")) {
-            setXQueryLanguageFromProlog(query, configuration);
+        if (query.contains("xquery version")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (query.contains("jsoniq version")) {
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
+        }
+        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        } else if (configuration.getQueryLanguage().startsWith("xquery")) {
             return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
-            // overwrite default version if query specifies jsoniq version
-            if (query.startsWith("jsoniq version \"3.1\"")) {
-                configuration.setQueryLanguage("jsoniq31");
-            } else if (query.startsWith("jsoniq version \"4.0\"")) {
-                configuration.setQueryLanguage("jsoniq40");
-            } else if (query.startsWith("jsoniq version \"1.0\"")) {
-                configuration.setQueryLanguage("jsoniq10");
-            }
             return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
 
@@ -386,17 +387,17 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
+            JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -440,7 +441,7 @@ public class VisitorHelpers {
         );
         try {
             // TODO Handle module extras
-            XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
+            XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
@@ -613,20 +614,5 @@ public class VisitorHelpers {
                     "Unexpected program state reached while setting local execution for unset user defined functions."
             );
         }
-    }
-
-    private static void setXQueryLanguageFromProlog(String query, RumbleRuntimeConfiguration configuration) {
-        if (query.startsWith("xquery version \"3.0\"")) {
-            configuration.setQueryLanguage("xquery30");
-            return;
-        }
-        if (query.startsWith("xquery version \"3.1\"")) {
-            configuration.setQueryLanguage("xquery31");
-            return;
-        }
-        if (configuration.getQueryLanguage().equals("xquery30")) {
-            return;
-        }
-        configuration.setQueryLanguage("xquery31");
     }
 }

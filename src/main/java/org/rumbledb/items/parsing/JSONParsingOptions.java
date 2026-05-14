@@ -97,13 +97,13 @@ public final class JSONParsingOptions implements Serializable {
     @Override
     public String toString() {
         return "[ liberal: "
-            + liberal
+            + this.liberal
             + ", duplicates: "
-            + duplicates
+            + this.duplicates
             + ", escape: "
-            + escape
+            + this.escape
             + ", fallback: "
-            + fallback
+            + this.fallback
             + "]";
     }
 
