@@ -94,7 +94,7 @@ class ResolvedNumber {
             + this.floatValue
             +
             ", isNegative="
-            + isNegative
+            + this.isNegative
             +
             '}';
     }

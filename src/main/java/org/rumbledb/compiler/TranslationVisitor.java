@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
@@ -73,6 +74,19 @@ import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
@@ -132,16 +146,22 @@ import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
 import org.rumbledb.expressions.xml.node_test.DocumentTest;
 import org.rumbledb.expressions.xml.node_test.ElementTest;
 import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
@@ -154,6 +174,7 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -163,8 +184,8 @@ import org.rumbledb.types.SequenceType;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -188,12 +209,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private boolean isMainModule;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private final CommonTokenStream xQueryTokenStream;
 
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
             RumbleRuntimeConfiguration configuration,
-            String code
+            String code,
+            CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
@@ -201,6 +224,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
+        this.xQueryTokenStream = xQueryTokenStream;
+
+        if (configuration.getQueryLanguage().equals("jsoniq10")) {
+            this.moduleContext.setQueryLanguage("jsoniq10");
+        } else if (configuration.getQueryLanguage().equals("jsoniq31")) {
+            this.moduleContext.setQueryLanguage("jsoniq31");
+        } else if (configuration.getQueryLanguage().equals("jsoniq40")) {
+            this.moduleContext.setQueryLanguage("jsoniq40");
+        }
     }
 
     // endregion expr
@@ -208,12 +240,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
-        if (
-            !(ctx.vers == null)
-                && !ctx.vers.isEmpty()
-                && (!ctx.vers.getText().trim().equals("1.0") || !ctx.vers.getText().trim().equals("3.1"))
-        ) {
-            throw new JsoniqVersionException(createMetadataFromContext(ctx));
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
+            if (ctx.vers.getText().trim().equals("\"1.0\"")) {
+                this.moduleContext.setQueryLanguage("jsoniq10");
+            } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
+                this.moduleContext.setQueryLanguage("jsoniq31");
+            } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
+                this.moduleContext.setQueryLanguage("jsoniq40");
+            } else {
+                throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            }
         }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
@@ -1438,7 +1474,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.validate_expr != null) {
             return this.visitValidateExpr(ctx.validate_expr);
         }
-        throw new ParsingException("Parser error: extensionExpr not implemented yet.", createMetadataFromContext(ctx));
+        // TODO: extension expression still unsupported
+        throw new UnsupportedFeatureException("Extension expression still unsupported", createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1461,7 +1498,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                    if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1687,6 +1724,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         expr,
                         createMetadataFromContext(ctx)
                 );
+            } else if (child instanceof JsoniqParser.LookupContext) {
+                Expression expr = (Expression) this.visitLookup((JsoniqParser.LookupContext) child);
+                mainExpression = new PostfixLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
             } else if (child instanceof JsoniqParser.ObjectLookupContext) {
                 Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
                 mainExpression = new ObjectLookupExpression(
@@ -1723,6 +1767,47 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitPredicate(JsoniqParser.PredicateContext ctx) {
         return this.visitExpr(ctx.expr());
+    }
+
+    @Override
+    public Node visitLookup(JsoniqParser.LookupContext ctx) {
+        return this.visitKeySpecifier(ctx.keySpecifier());
+    }
+
+    @Override
+    public Node visitUnaryLookup(JsoniqParser.UnaryLookupContext ctx) {
+        return this.visitKeySpecifier(ctx.keySpecifier());
+    }
+
+    public Node visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
+        if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
+            return new StringLiteralExpression(
+                    unescapeStringLiteral(rawValue),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.in != null) {
+            return new IntegerLiteralExpression(
+                    ctx.in.getText(),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.nc != null) {
+            return new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.pe != null) {
+            return this.visitParenthesizedExpr(ctx.pe);
+        }
+        if (ctx.wc != null) {
+            // wildcard isn't an expression, return null and let lookupiterator handle it
+            return null;
+        }
+        if (ctx.vr != null) {
+            return this.visitVarRef(ctx.vr);
+        }
+
+        throw new OurBadException("Unrecognized lookup.");
     }
 
     @Override
@@ -1781,12 +1866,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (child instanceof JsoniqParser.LiteralContext) {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
         }
-        if (child instanceof JsoniqParser.NumericLiteralContext) {
-            return this.visitLiteral((JsoniqParser.LiteralContext) child);
-        }
-        if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
         if (child instanceof JsoniqParser.ContextItemExprContext) {
             return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
         }
@@ -1798,6 +1877,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         if (child instanceof JsoniqParser.BlockExprContext) {
             return this.visitBlockExpr((JsoniqParser.BlockExprContext) child);
+        }
+        if (child instanceof JsoniqParser.UnaryLookupContext) {
+            return new UnaryLookupExpression(
+                    (Expression) this.visitUnaryLookup((JsoniqParser.UnaryLookupContext) child),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (child instanceof JsoniqParser.NodeConstructorContext) {
+            return this.visitNodeConstructor((JsoniqParser.NodeConstructorContext) child);
+        }
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
+            return this.visitLiteral((JsoniqParser.LiteralContext) child);
+        }
+        if (child instanceof TerminalNode) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",
@@ -1816,10 +1910,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
-        if (child instanceof JsoniqParser.LiteralContext) {
+        if (child instanceof JsoniqParser.NumericLiteralContext) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
-        if (child instanceof JsoniqParser.NumericLiteralContext) {
+        if (child instanceof JsoniqParser.LiteralContext) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         if (child instanceof TerminalNode) {
@@ -1869,7 +1963,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr) {
-                    if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
+                    if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
@@ -1898,12 +1992,472 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         );
     }
 
+
+    @Override
+    public Node visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
+        }
+        if (child instanceof JsoniqParser.ComputedConstructorContext) {
+            return this.visitComputedConstructor((JsoniqParser.ComputedConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Node constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (ctx.COMMENT() != null) {
+            String commentText = ctx.COMMENT().getText();
+            String commentContent = commentText.substring(4, commentText.length() - 3);
+            return new DirectCommentConstructorExpression(
+                    commentContent,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (child instanceof JsoniqParser.DirElemConstructorOpenCloseContext) {
+            return this.visitDirElemConstructorOpenClose((JsoniqParser.DirElemConstructorOpenCloseContext) child);
+        } else if (child instanceof JsoniqParser.DirElemConstructorSingleTagContext) {
+            return this.visitDirElemConstructorSingleTag((JsoniqParser.DirElemConstructorSingleTagContext) child);
+        } else if (ctx.PI() != null) {
+            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
+        } else if (ctx.COMMENT() != null) {
+            throw new UnsupportedFeatureException(
+                    "Direct comment constructor not yet implemented",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new UnsupportedFeatureException(
+                "Direct constructor not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private Node visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+        String tokenText = piToken.getText();
+        String inner = tokenText.substring(2, tokenText.length() - 2);
+        int whitespaceIndex = indexOfWhitespace(inner);
+        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
+        Expression contentExpression = null;
+        if (whitespaceIndex != -1) {
+            int contentStart = whitespaceIndex;
+            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
+                contentStart++;
+            }
+            String content = inner.substring(contentStart);
+            contentExpression = new StringLiteralExpression(content, metadata);
+        }
+        return new DirPIConstructorExpression(target, contentExpression, metadata);
+    }
+
+    private int indexOfWhitespace(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * Whitespace in direct element content is lexed on the HIDDEN channel. Recover hidden tokens that appear
+     * between two adjacent {@code dirElemContent} parse nodes (each node’s own text uses
+     * {@link CommonTokenStream#getText(Interval)} in {@link #visitDirElemContent}).
+     */
+    private static void appendHiddenTokensAfter(
+            CommonTokenStream tokenStream,
+            int previousTokenIndex,
+            StringBuilder destination
+    ) {
+        List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
+        if (hidden == null) {
+            return;
+        }
+        for (Token t : hidden) {
+            destination.append(t.getText());
+        }
+    }
+
+    @Override
+    public Node visitDirElemConstructorOpenClose(JsoniqParser.DirElemConstructorOpenCloseContext ctx) {
+        // check that the start and end tags are the same
+        if (ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+            throw new DirectElementConstructorTagMismatchException(
+                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
+            }
+
+            // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as
+            // adjacent siblings.
+            // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+            // here, we merge adjacent text nodes into a single text node.
+            List<Expression> content = new ArrayList<>();
+            StringBuilder textAccumulator = null;
+            ExceptionMetadata firstTextMetadata = null;
+            Token previousToken = ctx.endOpen;
+
+            for (JsoniqParser.DirElemContentContext child : ctx.dirElemContent()) {
+                Expression childExpression = (Expression) this.visitDirElemContent(child);
+
+                if (childExpression instanceof TextNodeExpression) {
+                    TextNodeExpression textNode = (TextNodeExpression) childExpression;
+
+                    // If the parent of a text node is not empty, the Text Node must not contain the zero-length
+                    // string as its content.
+                    // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
+                    // skip empty text nodes
+                    if (textNode.getContent().isEmpty()) {
+                        previousToken = child.getStop();
+                        continue;
+                    }
+
+                    if (textAccumulator == null) {
+                        textAccumulator = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                    }
+                    appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                    textAccumulator.append(textNode.getContent());
+                } else {
+                    // non-text node encountered
+                    if (textAccumulator != null) {
+                        appendHiddenTokensAfter(
+                            this.xQueryTokenStream,
+                            previousToken.getTokenIndex(),
+                            textAccumulator
+                        );
+                        // finalize any accumulated text nodes
+                        content.add(
+                            new TextNodeExpression(
+                                    textAccumulator.toString(),
+                                    firstTextMetadata
+                            )
+                        );
+                        textAccumulator = null;
+                        firstTextMetadata = null;
+                    }
+
+                    // add the non-text node
+                    content.add(childExpression);
+                }
+                previousToken = child.getStop();
+            }
+
+            // handle any remaining accumulated text at the end
+            if (textAccumulator != null) {
+                appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
+                content.add(
+                    new TextNodeExpression(
+                            textAccumulator.toString(),
+                            firstTextMetadata
+                    )
+                );
+            }
+
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    content,
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
+            );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
+        }
+
+    }
+
+    @Override
+    public Node visitDirElemConstructorSingleTag(JsoniqParser.DirElemConstructorSingleTagContext ctx) {
+        this.dirElemNamespaceFrames.push(new HashMap<>());
+        try {
+            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
+            if (ctx.attributes != null) {
+                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
+            }
+
+            return new DirElemConstructorExpression(
+                    parseName(ctx.open_tag_name, false, false, false, true),
+                    new ArrayList<>(),
+                    attributeResult.attributes,
+                    attributeResult.namespaceDeclarations,
+                    createMetadataFromContext(ctx)
+            );
+        } finally {
+            this.dirElemNamespaceFrames.pop();
+        }
+    }
+
+    @Override
+    public Node visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirectConstructorContext) {
+            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CommonContentContext) {
+            return this.visitCommonContent((JsoniqParser.CommonContentContext) child);
+        } else {
+            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
+            String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+            if (ctx.CDATA() != null) {
+                // filter out the <![CDATA[ and ]]>, and return the text
+                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
+            }
+            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+        }
+    }
+
+    /**
+     * Helper method to process text content that may contain entity/character references or escaped braces.
+     * According to XQuery 3.1 spec, PredefinedEntityRef and CharRef must be expanded.
+     * 
+     * @param content The raw text content to process
+     * @return The processed (unescaped) content
+     */
+    private String processTextContentWithEscaping(String content) {
+        if (content.startsWith("&") && content.endsWith(";")) {
+            // This is a PredefinedEntityRef or CharRef token - expand it
+            return StringEscapeUtils.unescapeXml(content);
+        }
+        // Handle escaped braces: {{ or }}
+        if (content.equals("{{")) {
+            return "{";
+        }
+        if (content.equals("}}")) {
+            return "}";
+        }
+        // Return content as-is if no escaping needed
+        return content;
+    }
+
+    @Override
+    public Node visitCommonContent(JsoniqParser.CommonContentContext ctx) {
+        if (ctx.expr() != null) {
+            return (Expression) this.visitExpr(ctx.expr());
+        }
+        // According to XQuery 3.1 spec, CommonContent can contain PredefinedEntityRef or CharRef
+        // which must be expanded. Check if the content is an entity/character reference.
+        String content = ctx.getText();
+        String processedContent = processTextContentWithEscaping(content);
+        return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitComputedConstructor(JsoniqParser.ComputedConstructorContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.CompDocConstructorContext) {
+            return this.visitCompDocConstructor((JsoniqParser.CompDocConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompElemConstructorContext) {
+            return this.visitCompElemConstructor((JsoniqParser.CompElemConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompPIConstructorContext) {
+            return this.visitCompPIConstructor((JsoniqParser.CompPIConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompTextConstructorContext) {
+            return this.visitCompTextConstructor((JsoniqParser.CompTextConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompCommentConstructorContext) {
+            return this.visitCompCommentConstructor((JsoniqParser.CompCommentConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompAttrConstructorContext) {
+            return this.visitCompAttrConstructor((JsoniqParser.CompAttrConstructorContext) child);
+        } else if (child instanceof JsoniqParser.CompNamespaceConstructorContext) {
+            return this.visitCompNamespaceConstructor((JsoniqParser.CompNamespaceConstructorContext) child);
+        }
+        throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitCompDocConstructor(JsoniqParser.CompDocConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedExpression(ctx.enclosedExpression());
+        return new DocumentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompTextConstructor(JsoniqParser.CompTextConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new TextNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompCommentConstructor(JsoniqParser.CompCommentConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+
+        return new CommentNodeConstructorExpression(
+                contentExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Node visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
+        Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
+        if (ctx.ncName() != null) {
+            return new ComputedPIConstructorExpression(
+                    ctx.ncName().getText(),
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.expr() != null) {
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedPIConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCompAttrConstructor(JsoniqParser.CompAttrConstructorContext ctx) {
+        Expression valueExpression = (Expression) visit(ctx.enclosedExpression());
+
+        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.name != null) {
+            // Static attribute name: attribute attributeName { value }
+            Name attributeName = this.parseEqName(ctx.name, false, false, false, false);
+            return new ComputedAttributeConstructorExpression(
+                    attributeName,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.name_expr != null) {
+            // Dynamic attribute name: attribute { nameExpression } { value }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.name_expr);
+            return new ComputedAttributeConstructorExpression(
+                    nameExpression,
+                    valueExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed attribute constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitCompElemConstructor(JsoniqParser.CompElemConstructorContext ctx) {
+        Expression contentExpression = (Expression) this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
+
+        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
+        if (ctx.eqName() != null) {
+            // Static element name: element elementName { content }
+            Name elementName = parseEqName(ctx.eqName(), false, false, false, true);
+            return new ComputedElementConstructorExpression(
+                    elementName,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else if (ctx.expr() != null) {
+            // Dynamic element name: element { nameExpression } { content }
+            Expression nameExpression = (Expression) this.visitExpr(ctx.expr());
+            return new ComputedElementConstructorExpression(
+                    nameExpression,
+                    contentExpression,
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            throw new ParsingException(
+                    "Computed element constructor must have either a static name or dynamic name expression",
+                    createMetadataFromContext(ctx)
+            );
+        }
+    }
+
+    @Override
+    public Node visitCompNamespaceConstructor(JsoniqParser.CompNamespaceConstructorContext ctx) {
+        Expression uriExpression = (Expression) this.visitEnclosedExpression(
+            ctx.enclosedURIExpr().enclosedExpression()
+        );
+        if (ctx.ncName() != null) {
+            return new ComputedNamespaceConstructorExpression(
+                    ctx.ncName().getText(),
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.enclosedPrefixExpr() != null) {
+            Expression prefixExpression = (Expression) this.visitEnclosedExpression(
+                ctx.enclosedPrefixExpr().enclosedExpression()
+            );
+            return new ComputedNamespaceConstructorExpression(
+                    prefixExpression,
+                    uriExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        throw new ParsingException(
+                "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
+                createMetadataFromContext(ctx)
+        );
+    }
+
     @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        if (ctx.expr() == null) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.SquareArrayConstructorContext) {
+            JsoniqParser.SquareArrayConstructorContext sqCtx = (JsoniqParser.SquareArrayConstructorContext) child;
+            List<JsoniqParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
+            if (memberCtxs == null || memberCtxs.isEmpty()) {
+                return new ArrayConstructorExpression(
+                        new ArrayList<>(),
+                        true,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            List<Expression> memberExpressions = new ArrayList<>();
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
+                // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
+                // Thus, we concatenate all expressions into a single comma expression.
+                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                }
+                Expression commaExpression = new CommaExpression(
+                        memberExpressions,
+                        createMetadataFromContext(ctx)
+                );
+                return new ArrayConstructorExpression(
+                        commaExpression,
+                        createMetadataFromContext(sqCtx)
+                );
+            } else {
+                System.err.println("Not concatenating to comma.");
+                // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
+                for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
+                    memberExpressions.add((Expression) this.visitExprSingle(memberCtx));
+                }
+                return new ArrayConstructorExpression(
+                        memberExpressions,
+                        true,
+                        createMetadataFromContext(ctx)
+                );
+            }
+        }
+        // else curlyArrayConstructor
+        JsoniqParser.CurlyArrayConstructorContext childCtx = (JsoniqParser.CurlyArrayConstructorContext) child;
+        if (childCtx.enclosedExpression() == null) {
             return new ArrayConstructorExpression(createMetadataFromContext(ctx));
         }
-        Expression content = (Expression) this.visitExpr(ctx.expr());
+        Expression content = (Expression) this.visitEnclosedExpression(childCtx.enclosedExpression());
         return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
     }
 
@@ -1968,6 +2522,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.parenthesizedItemTest() != null) {
+            return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
+        }
+        if (itemTypeContext.KW_ITEM() != null) {
+            return BuiltinTypesCatalogue.item;
+        }
         if (itemTypeContext.KW_NULL() != null) {
             return BuiltinTypesCatalogue.nullItem;
         }
@@ -1988,12 +2548,146 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-        name = ItemTypeReference.renameAtomic(this.configuration, name);
-        if (!BuiltinTypesCatalogue.typeExists(name)) {
-            return new ItemTypeReference(name);
+        if (itemTypeContext.mapTest() != null) {
+            JsoniqParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
+            if (mapTestContext.anyMapTest() != null) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            JsoniqParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
+            if (typedMapTestContext != null) {
+                Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
+                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                ItemType keyType;
+                if (!BuiltinTypesCatalogue.typeExists(keyName)) {
+                    keyType = new ItemTypeReference(keyName);
+                } else {
+                    keyType = BuiltinTypesCatalogue.getItemTypeByName(keyName);
+                }
+                SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
+                return ItemTypeFactory.mapOf(keyType, valueSequenceType);
+            }
         }
-        return BuiltinTypesCatalogue.getItemTypeByName(name);
+        if (itemTypeContext.arrayTest() != null) {
+            JsoniqParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
+            if (arrayTestContext.anyArrayTest() != null) {
+                // XQuery 3.1 array(*) is the XDM array type (members are sequences), not js:array().
+                return BuiltinTypesCatalogue.xqueryArrayItem;
+            }
+            JsoniqParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
+            if (typedArrayTestContext != null) {
+                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
+                return ItemTypeFactory.xqueryArrayOf(contentSequenceType);
+            }
+        }
+        if (itemTypeContext.eqName() != null) {
+            Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
+            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            if (!BuiltinTypesCatalogue.typeExists(name)) {
+                return new ItemTypeReference(name);
+            }
+            return BuiltinTypesCatalogue.getItemTypeByName(name);
+        }
+        if (itemTypeContext.kindTest() != null) {
+            return processKindTestAsItemType(itemTypeContext.kindTest());
+        }
+        throw new UnsupportedFeatureException(
+                "Unsupported itemtype encountered",
+                ExceptionMetadata.EMPTY_METADATA
+        );
+    }
+
+    private ItemType processKindTestAsItemType(JsoniqParser.KindTestContext kindTestContext) {
+        if (kindTestContext.anyKindTest() != null) {
+            return BuiltinTypesCatalogue.nodeItem;
+        }
+        if (kindTestContext.documentTest() != null) {
+            JsoniqParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
+            if (documentTestContext.schemaElementTest() != null) {
+                throw new UnsupportedFeatureException(
+                        "Schema element tests (schema-element(...)) are not supported",
+                        createMetadataFromContext(documentTestContext)
+                );
+            }
+            if (documentTestContext.elementTest() != null) {
+                ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
+                return ItemTypeFactory.documentNodeItemType(elementTestType);
+            }
+            return BuiltinTypesCatalogue.documentNode;
+        }
+        if (kindTestContext.elementTest() != null) {
+            return getElementTestAsItemType(kindTestContext.elementTest());
+        }
+        if (kindTestContext.attributeTest() != null) {
+            JsoniqParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
+            if (attributeTestContext.typeName() != null) {
+                throw new UnsupportedFeatureException(
+                        "Typed attribute item tests are not supported yet",
+                        createMetadataFromContext(attributeTestContext)
+                );
+            }
+            if (attributeTestContext.attributeNameOrWildcard() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
+                return BuiltinTypesCatalogue.attributeNode;
+            }
+            Name attributeName = parseEqName(
+                attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
+                false,
+                false,
+                false,
+                false
+            );
+            return ItemTypeFactory.attributeNodeItemType(attributeName);
+        }
+        if (kindTestContext.commentTest() != null) {
+            return BuiltinTypesCatalogue.commentNode;
+        }
+        if (kindTestContext.textTest() != null) {
+            return BuiltinTypesCatalogue.textNode;
+        }
+        if (kindTestContext.namespaceNodeTest() != null) {
+            return BuiltinTypesCatalogue.namespaceNode;
+        }
+        if (kindTestContext.piTest() != null) {
+            JsoniqParser.PiTestContext piTestContext = kindTestContext.piTest();
+            if (piTestContext.ncName() != null) {
+                return ItemTypeFactory.processingInstructionNodeItemType(piTestContext.ncName().getText());
+            }
+            if (piTestContext.stringLiteral() != null) {
+                String rawValue = piTestContext.stringLiteral().getText();
+                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                return ItemTypeFactory.processingInstructionNodeItemType(targetName);
+            }
+            return BuiltinTypesCatalogue.processingInstructionNode;
+        }
+        throw new UnsupportedFeatureException(
+                "Unsupported kind test in item type: " + kindTestContext.getText(),
+                createMetadataFromContext(kindTestContext)
+        );
+    }
+
+    private ElementNodeItemType getElementTestAsItemType(JsoniqParser.ElementTestContext elementTestContext) {
+        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
+            throw new UnsupportedFeatureException(
+                    "Typed or nillable element item tests are not supported yet",
+                    createMetadataFromContext(elementTestContext)
+            );
+        }
+        if (elementTestContext.elementNameOrWildcard() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        if (elementTestContext.elementNameOrWildcard().elementName() == null) {
+            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+        }
+        Name elementName = parseEqName(
+            elementTestContext.elementNameOrWildcard().elementName().eqName(),
+            false,
+            false,
+            false,
+            false
+        );
+        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
@@ -2007,11 +2701,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 && children.size() == 1
                 && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
-            return new CastExpression(
-                    children.get(0),
-                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
-                    metadata
-            );
+            ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
+            // In XQuery, no constructor function exists for xs:NOTATION or xs:anyAtomicType.
+            // Keep these as unresolved function calls to raise XPST0017 as required.
+            if (
+                !targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+                    && !targetType.equals(BuiltinTypesCatalogue.atomicItem)
+            ) {
+                return new CastExpression(
+                        children.get(0),
+                        new SequenceType(targetType, SequenceType.Arity.OneOrZero),
+                        metadata
+                );
+            }
         }
         return new FunctionCallExpression(
                 name,
@@ -2272,8 +2974,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Expression catchAllExpression = null;
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (JsoniqParser.EqNameContext qnameCtx : catchCtx.errors) {
-                Name name = parseEqName(qnameCtx, false, false, false, false);
+            for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
@@ -2569,8 +3271,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         BlockStatement catchAllBlockStatement = null;
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
-            for (JsoniqParser.EqNameContext qnameCtx : catchCtx.errors) {
-                Name name = parseEqName(qnameCtx, false, false, false, false);
+            for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
+                Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchBlockStatements.containsKey(name.getLocalName())) {
                     catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
                 }
@@ -2846,12 +3548,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
     }
 
+    // XQuery 3.1 Section 2.5.5 - SequenceType Matching
+    // KindTest ::= DocumentTest | ElementTest | AttributeTest | SchemaElementTest
+    // | SchemaAttributeTest | PITest | CommentTest | TextTest
+    // | NamespaceNodeTest | AnyKindTest
     private NodeTest getKindTest(ParseTree kindTest) {
         if (kindTest instanceof JsoniqParser.DocumentTestContext) {
+            // XQuery 3.1 Section 2.5.5.3 - Element Test (used within DocumentTest)
+            // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
+            // document-node() matches any document node.
+            // document-node(element(...)) matches a document node containing an element matching the ElementTest.
             JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
             if (docContext.schemaElementTest() != null) {
                 throw new UnsupportedFeatureException(
-                        "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                        "Schema element tests within document-node() are not supported",
                         createMetadataFromContext((ParserRuleContext) kindTest)
                 );
             }
@@ -2860,7 +3570,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             }
             return new DocumentTest(getKindTest(docContext.elementTest()));
         } else if (kindTest instanceof JsoniqParser.ElementTestContext) {
+            // XQuery 3.1 Section 2.5.5.3 - Element Test
+            // ElementTest ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
+            // element() and element(*) match any single element node.
+            // element(N) matches any element node whose name is N.
+            // element(N, T) matches an element node whose name is N and whose type annotation is T.
+            // element(*, T) matches any element node whose type annotation is T.
+            // element(N, T?) also matches nillable elements (validation-related, unsupported).
             JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTest;
+            // Reject the nillable marker "?" (validation-related feature)
+            if (elementContext.optional != null) {
+                throw new UnsupportedFeatureException(
+                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
+                        createMetadataFromContext((ParserRuleContext) kindTest)
+                );
+            }
             Name elementName;
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
@@ -2870,12 +3594,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         false,
                         false,
                         false,
-                        false
+                        true
                     );
                     if (elementContext.typeName() == null) {
                         return new ElementTest(elementName, null);
                     }
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, false, false, false);
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
                     return new ElementTest(elementName, typeName);
                 }
                 return new ElementTest(true);
@@ -2884,11 +3608,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
             JsoniqParser.AttributeTestContext attributeTestContext =
                 (JsoniqParser.AttributeTestContext) kindTest;
-            Name elementName;
+            Name attributeName;
             if (attributeTestContext.attributeNameOrWildcard() != null) {
                 boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
                 if (!hasWildcard) {
-                    elementName = parseEqName(
+                    attributeName = parseEqName(
                         attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
                         false,
                         false,
@@ -2899,26 +3623,82 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         Name typeName = parseEqName(
                             attributeTestContext.typeName().eqName(),
                             false,
-                            false,
+                            true,
                             false,
                             false
                         );
-                        return new AttributeTest(elementName, typeName);
+                        return new AttributeTest(attributeName, typeName);
                     } else {
-                        return new AttributeTest(elementName, null);
+                        return new AttributeTest(attributeName, null);
                     }
                 } else {
+                    // Wildcard case: attribute(*) or attribute(*, type)
+                    if (attributeTestContext.typeName() != null) {
+                        Name typeName = parseEqName(
+                            attributeTestContext.typeName().eqName(),
+                            false,
+                            true,
+                            false,
+                            false
+                        );
+                        return new AttributeTest(typeName);
+                    }
                     return new AttributeTest(true);
                 }
             }
             return new AttributeTest();
         } else if (kindTest instanceof JsoniqParser.TextTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // TextTest ::= "text" "(" ")"
+            // A TextTest matches any text node.
             return new TextTest();
+        } else if (kindTest instanceof JsoniqParser.CommentTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // CommentTest ::= "comment" "(" ")"
+            // A CommentTest matches any comment node.
+            return new CommentTest();
+        } else if (kindTest instanceof JsoniqParser.PiTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
+            // processing-instruction() matches any processing-instruction node.
+            // processing-instruction(N) matches any processing-instruction node whose target
+            // name equals fn:normalize-space(N).
+            JsoniqParser.PiTestContext piContext = (JsoniqParser.PiTestContext) kindTest;
+            if (piContext.ncName() != null) {
+                return new PITest(piContext.ncName().getText());
+            }
+            if (piContext.stringLiteral() != null) {
+                String rawValue = piContext.stringLiteral().getText();
+                // Strip surrounding quotes from the string literal
+                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                return new PITest(targetName);
+            }
+            return new PITest();
+        } else if (kindTest instanceof JsoniqParser.NamespaceNodeTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // NamespaceNodeTest ::= "namespace-node" "(" ")"
+            // A NamespaceNodeTest matches any namespace node.
+            return new NamespaceNodeTest();
         } else if (kindTest instanceof JsoniqParser.AnyKindTestContext) {
+            // XQuery 3.1 Section 2.5.5
+            // AnyKindTest ::= "node" "(" ")"
+            // node() matches any node.
             return new AnyKindTest();
+        } else if (kindTest instanceof JsoniqParser.SchemaElementTestContext) {
+            // XQuery 3.1 Section 2.5.5.4 - Schema Element Test (unsupported, requires schema import)
+            throw new UnsupportedFeatureException(
+                    "Schema element tests (schema-element(...)) are not supported",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
+        } else if (kindTest instanceof JsoniqParser.SchemaAttributeTestContext) {
+            // XQuery 3.1 Section 2.5.5.6 - Schema Attribute Test (unsupported, requires schema import)
+            throw new UnsupportedFeatureException(
+                    "Schema attribute tests (schema-attribute(...)) are not supported",
+                    createMetadataFromContext((ParserRuleContext) kindTest)
+            );
         } else {
             throw new UnsupportedFeatureException(
-                    "Kind tests of type document, element, attribute, text and any are supported at the moment",
+                    "Unsupported kind test: " + kindTest.getText(),
                     createMetadataFromContext((ParserRuleContext) kindTest)
             );
         }
@@ -2949,6 +3729,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String processURILiteral(UriLiteralContext ctx) {
+        // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
+        // predefined entity references and character references
         return ctx.getText().substring(1, ctx.getText().length() - 1);
     }
 
@@ -3038,10 +3820,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 parsedAnnotations.add(new Annotation(name, null));
                 continue;
             }
-            JsoniqParser.EqNameContext qnameContext = annotationContext.eqName();
-            Name name = parseEqName(qnameContext, false, false, true, false);
+            JsoniqParser.EqNameContext eqNameContext = annotationContext.eqName();
+            Name name = parseEqName(eqNameContext, false, false, true, false);
             if (!annotationContext.literal().isEmpty()) {
-                throw new OurBadException("Literals are currently not supported in annotations!");
+                throw new UnsupportedFeatureException(
+                        "Literals are currently not supported in annotations!",
+                        createMetadataFromContext(annotationContext)
+                );
             }
             parsedAnnotations.add(new Annotation(name, null));
         }
@@ -3056,6 +3841,266 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             }
         }
         return this.moduleContext.resolveNamespace(prefix);
+    }
+
+    private void bindDirConstructorNamespaceDeclaration(String prefix, String uri) {
+        if (this.dirElemNamespaceFrames.isEmpty()) {
+            return;
+        }
+        this.dirElemNamespaceFrames.peek().put(prefix, uri);
+    }
+
+    private static class DirAttributeProcessingResult {
+        private final List<Expression> attributes;
+        private final List<NamespaceDeclaration> namespaceDeclarations;
+
+        private DirAttributeProcessingResult() {
+            this.attributes = new ArrayList<>();
+            this.namespaceDeclarations = new ArrayList<>();
+        }
+    }
+
+
+    private DirAttributeProcessingResult getAttributesExpressionsList(JsoniqParser.DirAttributeListContext ctx) {
+        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
+
+        // Process each attribute name-value pair
+        List<JsoniqParser.QnameContext> attributeNames = ctx.attribute_qname;
+        List<JsoniqParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
+
+        for (int i = 0; i < attributeNames.size(); i++) {
+            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
+                String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
+                String uri = getNamespaceDeclarationUri(attributeValues.get(i));
+                result.namespaceDeclarations.add(
+                    new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx))
+                );
+                bindDirConstructorNamespaceDeclaration(declaredPrefix, uri);
+                continue;
+            }
+
+            Name attributeName = parseName(qnameCtx, false, false, false, false);
+
+            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
+            AttributeNodeExpression attributeNode = new AttributeNodeExpression(
+                    attributeName,
+                    value,
+                    createMetadataFromContext(ctx)
+            );
+            result.attributes.add(attributeNode);
+        }
+
+        return result;
+    }
+
+    private List<Expression> getAttributeValuesExpressionsList(
+            JsoniqParser.DirAttributeValueContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof JsoniqParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                (JsoniqParser.DirAttributeValueAposContext) child,
+                allowEnclosedExpressions
+            );
+        } else if (child instanceof JsoniqParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions(
+                (JsoniqParser.DirAttributeValueQuotContext) child,
+                allowEnclosedExpressions
+            );
+        }
+        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+    }
+
+    private String getNamespaceDeclarationUri(JsoniqParser.DirAttributeValueContext ctx) {
+        List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
+        StringBuilder uriBuilder = new StringBuilder();
+        for (Expression expression : uriExpressions) {
+            if (!(expression instanceof AttributeNodeContentExpression)) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+        }
+        return uriBuilder.toString();
+    }
+
+
+    /**
+     * Helper method to process quoted attribute values (both single and double quoted).
+     * This method handles the common logic for merging adjacent text content and building expressions.
+     * Returns a list of expressions where adjacent string literals are merged.
+     */
+    private List<Expression> processQuotedAttributeValue(
+            ParserRuleContext ctx,
+            String escapeSequence,
+            String escapedChar,
+            boolean allowEnclosedExpressions
+    ) {
+
+        // Similar to element content, we need to merge adjacent text content
+        StringBuilder textAccumulator = null;
+        List<Expression> contentExpressions = new ArrayList<>();
+
+        // Process each child between the quotes (skip the first and last quote tokens)
+        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
+            ParseTree child = ctx.getChild(i);
+            List<Expression> childExpressions = new ArrayList<>();
+
+            // Try to process as entity or character reference first
+            // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
+            String childText = child.getText();
+            if (childText.startsWith("&") && childText.endsWith(";")) {
+                // This is a PredefinedEntityRef or CharRef token - expand it
+                String unescapedValue = StringEscapeUtils.unescapeXml(childText);
+                childExpressions.add(
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx))
+                );
+            } else if (child.getText().equals(escapeSequence)) {
+                // Escaped quote
+                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
+            } else {
+                // Try the content visitor for nested content or text
+                List<Expression> contentResult = processAttributeContent(
+                    (ParserRuleContext) child,
+                    allowEnclosedExpressions
+                );
+                if (contentResult != null && !contentResult.isEmpty()) {
+                    childExpressions.addAll(contentResult);
+                } else {
+                    throw new UnsupportedOperationException("Unsupported attribute content: " + child.getText());
+                }
+            }
+
+            // Process each expression returned from the child
+            for (Expression childExpression : childExpressions) {
+                if (childExpression instanceof AttributeNodeContentExpression) {
+                    // Text content - accumulate it
+                    String content = ((AttributeNodeContentExpression) childExpression).getContent();
+
+                    if (textAccumulator == null) {
+                        // Start accumulating text content
+                        textAccumulator = new StringBuilder();
+                    }
+
+                    // Accumulate the text content
+                    textAccumulator.append(content);
+                } else {
+                    // Non-text expression encountered (e.g., enclosed expression)
+                    if (textAccumulator != null) {
+                        // Finalize any accumulated text
+                        contentExpressions.add(
+                            new AttributeNodeContentExpression(
+                                    textAccumulator.toString(),
+                                    createMetadataFromContext(ctx)
+                            )
+                        );
+                        textAccumulator = null;
+                    }
+
+                    // Add the non-text expression
+                    contentExpressions.add(childExpression);
+                }
+            }
+        }
+
+        // Handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            contentExpressions.add(
+                new AttributeNodeContentExpression(
+                        textAccumulator.toString(),
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+
+        return contentExpressions;
+    }
+
+    /**
+     * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
+     */
+    private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
+        ParseTree child = ctx.children.get(0);
+        List<Expression> expressions = new ArrayList<>();
+
+        if (ctx instanceof JsoniqParser.DirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                (JsoniqParser.DirAttributeValueAposContext) ctx,
+                allowEnclosedExpressions
+            );
+        } else if (ctx instanceof JsoniqParser.DirAttributeValueQuotContext) {
+            return this.getDirAttributeValueQuotExpressions(
+                (JsoniqParser.DirAttributeValueQuotContext) ctx,
+                allowEnclosedExpressions
+            );
+        } else if (
+            ctx instanceof JsoniqParser.DirAttributeContentQuotContext
+                &&
+                ((JsoniqParser.DirAttributeContentQuotContext) ctx).expr() != null
+        ) {
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentQuotContext) ctx).expr()));
+        } else if (
+            ctx instanceof JsoniqParser.DirAttributeContentAposContext
+                &&
+                ((JsoniqParser.DirAttributeContentAposContext) ctx).expr() != null
+        ) {
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentAposContext) ctx).expr()));
+        } else {
+            // handle other cases
+            String childText = child.getText();
+            String processedContent = processTextContentWithEscaping(childText);
+            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromContext(ctx)));
+        }
+        return expressions;
+    }
+
+
+
+    /**
+     * Process dirAttributeValueApos and return a list of expressions.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueAposExpressions(
+            JsoniqParser.DirAttributeValueAposContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "\"\"", "\"", allowEnclosedExpressions);
+    }
+
+    /**
+     * Process dirAttributeValueQuot and return a list of expressions.
+     * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
+     * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
+     * This method deviates from the strict visitor pattern to return multiple expressions.
+     */
+    private List<Expression> getDirAttributeValueQuotExpressions(
+            JsoniqParser.DirAttributeValueQuotContext ctx,
+            boolean allowEnclosedExpressions
+    ) {
+        return processQuotedAttributeValue(ctx, "''", "'", allowEnclosedExpressions);
+    }
+
+
+    @Override
+    public Node visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
+        return visitChildren(ctx);
     }
 
     private void processDecimalFormatDeclaration(

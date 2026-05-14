@@ -25,6 +25,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -122,6 +124,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -204,6 +207,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
+
+        if (configuration.getQueryLanguage().equals("xquery10")) {
+            this.moduleContext.setQueryLanguage("xquery10");
+        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+            this.moduleContext.setQueryLanguage("xquery30");
+        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+            this.moduleContext.setQueryLanguage("xquery31");
+        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+            this.moduleContext.setQueryLanguage("xquery40");
+        }
     }
 
     // endregion expr
@@ -211,6 +224,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Node visitModule(XQueryParser.ModuleContext ctx) {
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
+            if (ctx.vers.getText().trim().equals("\"1.0\"")) {
+                this.moduleContext.setQueryLanguage("xquery10");
+            } else if (ctx.vers.getText().trim().equals("\"3.0\"")) {
+                this.moduleContext.setQueryLanguage("xquery31");
+            } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
+                this.moduleContext.setQueryLanguage("xquery31");
+            } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
+                this.moduleContext.setQueryLanguage("xquery40");
+            } else {
+                throw new JsoniqVersionException(createMetadataFromContext(ctx));
+            }
+        }
         if (this.isMainModule) {
             if (ctx.mainModule() != null) {
                 return this.visitMainModule(ctx.mainModule().get(0));
@@ -252,6 +278,55 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     )
                 );
             }
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.createSequenceType("item*"),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
@@ -1223,13 +1298,28 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitIsStaticallyExpr(ctx.main_expr);
         if (ctx.seq == null || ctx.seq.isEmpty()) {
             return mainExpression;
         }
         XQueryParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
         return new InstanceOfExpression(
+                mainExpression,
+                sequenceType,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitIsStaticallyExpr(XQueryParser.IsStaticallyExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new IsStaticallyExpression(
                 mainExpression,
                 sequenceType,
                 createMetadataFromContext(ctx)

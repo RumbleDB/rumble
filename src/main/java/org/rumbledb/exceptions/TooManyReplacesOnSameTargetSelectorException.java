@@ -1,5 +1,6 @@
 package org.rumbledb.exceptions;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
 public class TooManyReplacesOnSameTargetSelectorException extends RumbleException {
@@ -7,7 +8,7 @@ public class TooManyReplacesOnSameTargetSelectorException extends RumbleExceptio
     private static final long serialVersionUID = 1L;
 
     public TooManyReplacesOnSameTargetSelectorException(
-            String targetInfo,
+            Name targetInfo,
             String selectorInfo,
             ExceptionMetadata metadata
     ) {

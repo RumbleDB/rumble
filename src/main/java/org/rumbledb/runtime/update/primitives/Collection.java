@@ -34,6 +34,10 @@ public class Collection implements Serializable {
                 this.logicalName = collectionPath;
                 this.physicalName = collectionPath;
                 break;
+            case HUDI:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
         }
     }
 

@@ -21,7 +21,7 @@ public final class GroupingPos {
     }
 
     public int getDistanceFromRight() {
-        return distanceFromRight;
+        return this.distanceFromRight;
     }
 
     @Override

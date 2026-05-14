@@ -12,6 +12,7 @@ import java.util.List;
 
 public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    private static final long serialVersionUID = 1L;
 
     public FormatIntegerFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
