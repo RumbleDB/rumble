@@ -1,12 +1,15 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
+
 import java.time.ZoneId;
 import java.util.Locale;
 
-final class FormattingOptions {
+public final class FormattingOptions {
 
-    // TODO pick either locale or language
-    final String language;
     final String calendarMode;
     final Locale locale;
     final boolean useFiveArgumentSemantics;
@@ -15,14 +18,12 @@ final class FormattingOptions {
     final ZoneId placeZoneId;
 
     private FormattingOptions(
-            String language,
             String calendarMode,
             Locale locale,
             boolean useFiveArgumentSemantics,
             String place,
             ZoneId placeZoneId
     ) {
-        this.language = language;
         this.calendarMode = calendarMode;
         this.locale = locale;
         this.useFiveArgumentSemantics = useFiveArgumentSemantics;
@@ -30,10 +31,9 @@ final class FormattingOptions {
         this.placeZoneId = placeZoneId;
     }
 
-    static FormattingOptions legacy() {
+    private static FormattingOptions twoArgumentDefaults() {
         return new FormattingOptions(
-                null,
-                CalendarMode.DEFAULT,
+                FormattingCalendarModeSupport.DEFAULT,
                 Locale.US,
                 false,
                 null,
@@ -41,20 +41,15 @@ final class FormattingOptions {
         );
     }
 
-    static FormattingOptions extended(String language, String calendarMode) {
-        return extended(language, calendarMode, null, null);
-    }
-
-    static FormattingOptions extended(
+    private static FormattingOptions extended(
             String language,
             String calendarMode,
             String place,
             ZoneId placeZoneId
     ) {
-        Locale locale = resolveLocale(language);
+        Locale locale = LanguageSupport.resolveLocale(language);
 
         return new FormattingOptions(
-                language,
                 calendarMode,
                 locale,
                 true,
@@ -63,12 +58,23 @@ final class FormattingOptions {
         );
     }
 
-    // TODO refactor, default should be defined in dynamic context, maybe chain to context through languagesupport api?
-    private static Locale resolveLocale(String language) {
-        if (language == null || language.trim().isEmpty()) {
-            return Locale.US;
+    static FormattingOptions fromArguments(
+            int arity,
+            String language,
+            String calendar,
+            String place,
+            ZoneId placeZoneId,
+            ExceptionMetadata metadata
+    ) {
+        if (arity <= 2) {
+            return twoArgumentDefaults();
         }
 
-        return Locale.forLanguageTag(language);
+        return extended(
+            language,
+            CalendarSupport.resolveCalendarMode(calendar, metadata),
+            place,
+            placeZoneId
+        );
     }
 }

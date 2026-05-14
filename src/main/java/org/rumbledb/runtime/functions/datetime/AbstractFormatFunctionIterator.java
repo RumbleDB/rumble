@@ -7,7 +7,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.time.DateTimeException;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -39,36 +41,47 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
             return valueItem;
         }
 
-        FormattingOptions formattingOptions = FormattingOptionsResolver.resolve(
+        String language = getOptionalString(languageItem);
+        String calendar = getOptionalString(calendarItem);
+
+        if (language == null) {
+            language = getConfiguration().getDefaultFormattingLanguage();
+        }
+
+        if (calendar == null) {
+            calendar = getConfiguration().getDefaultFormattingCalendar();
+        }
+
+        // RumbleDB recognizes place values that are valid Java ZoneIds. Other place
+        // representations allowed by the spec, such as ISO country codes, are currently
+        // treated as unrecognized and therefore fall back to the dynamic-context default.
+        String place = normalizePlace(getOptionalString(placeItem));
+        ZoneId placeZoneId;
+
+        if (place == null) {
+            placeZoneId = getConfiguration().getDefaultFormattingPlace();
+            place = placeZoneId.getId();
+        } else {
+            try {
+                placeZoneId = ZoneId.of(place);
+            } catch (DateTimeException e) {
+                placeZoneId = getConfiguration().getDefaultFormattingPlace();
+                place = placeZoneId.getId();
+            }
+        }
+
+        FormattingOptions formattingOptions = FormattingOptions.fromArguments(
             this.children.size(),
-            languageItem,
-            calendarItem,
-            placeItem,
+            language,
+            calendar,
+            place,
+            placeZoneId,
             getMetadata()
         );
 
 
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
-
-        /*
-         * System.err.println(
-         * "[[Debug]] temporal_value: "
-         * + temporalValue
-         * +
-         * "\npictureString:"
-         * + pictureString
-         * +
-         * "\nlanguage: "
-         * + formattingOptions.language
-         * +
-         * "\ncalendar_mode: "
-         * + formattingOptions.calendarMode
-         * +
-         * "\nlocale: "
-         * + formattingOptions.locale
-         * );
-         */
 
         OffsetDateTime renderingValue = TemporalTimezoneSupport.valueForRendering(
             temporalValue,
@@ -86,6 +99,21 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         );
 
         return ItemFactory.getInstance().createStringItem(result);
+    }
+
+    private static String getOptionalString(Item item) {
+        return item != null && !item.isNull()
+            ? item.getStringValue()
+            : null;
+    }
+
+    private static String normalizePlace(String place) {
+        if (place == null) {
+            return null;
+        }
+
+        String trimmed = place.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);

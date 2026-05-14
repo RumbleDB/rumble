@@ -2,8 +2,8 @@ package org.rumbledb.runtime.functions.datetime;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 final class TemporalPictureParser {
 

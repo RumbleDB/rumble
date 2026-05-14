@@ -3,14 +3,16 @@ package org.rumbledb.runtime.functions.datetime;
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.runtime.functions.base.formatting.NumericFormattingSupport;
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
-import org.rumbledb.runtime.functions.base.formatting.language.LanguageRegistry;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarRegistry;
+import org.rumbledb.runtime.functions.util.formatting.calendar.formatter.CalendarFormatter;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry;
+import org.rumbledb.runtime.functions.util.formatting.language.formatter.LanguageFormatter;
 
+import java.math.BigInteger;
 import java.time.OffsetDateTime;
-import java.time.temporal.IsoFields;
-import java.time.temporal.WeekFields;
 
 final class TemporalComponentRenderer {
 
@@ -44,7 +46,7 @@ final class TemporalComponentRenderer {
 
             case ParsedVariableMarker.Kind.NUMERIC:
                 if (variableMarker.component == 'f') {
-                    return formatFractionalSeconds(value, variableMarker, formattingOptions);
+                    return FractionalSecondsFormatter.format(value, variableMarker, formattingOptions);
                 }
                 return formatNumericComponent(value, variableMarker, formattingOptions, pictureString, metadata);
 
@@ -65,7 +67,7 @@ final class TemporalComponentRenderer {
             case ParsedVariableMarker.Kind.DEFAULT:
             default:
                 if (variableMarker.component == 'f') {
-                    return formatFractionalSeconds(value, variableMarker, formattingOptions);
+                    return FractionalSecondsFormatter.format(value, variableMarker, formattingOptions);
                 }
                 return formatDefaultComponent(
                     value,
@@ -87,7 +89,7 @@ final class TemporalComponentRenderer {
     ) {
         int numericValue;
         if (variableMarker.component == 'f') {
-            numericValue = fractionAsInteger(dt);
+            numericValue = FractionalSecondsFormatter.fractionAsInteger(dt);
         } else {
             numericValue = getNumericComponentValue(
                 dt,
@@ -101,10 +103,9 @@ final class TemporalComponentRenderer {
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String roman = NumericFormattingSupport.integerToRoman(numericValue);
-        if (variableMarker.ordinal) {
-            roman = roman + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
-        }
+        roman = maybeAppendOrdinal(roman, numericValue, variableMarker, formattingOptions);
         roman = variableMarker.lowerCaseRoman ? roman.toLowerCase(formattingOptions.locale) : roman;
+
         return padRightWithSpaces(roman, variableMarker.minWidth);
     }
 
@@ -126,9 +127,8 @@ final class TemporalComponentRenderer {
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String alpha = NumericFormattingSupport.integerToAlphabetic(numericValue, variableMarker.lowerCaseAlphabetic);
-        if (variableMarker.ordinal) {
-            alpha = alpha + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
-        }
+        alpha = maybeAppendOrdinal(alpha, numericValue, variableMarker, formattingOptions);
+
         return padRightWithSpaces(alpha, variableMarker.minWidth);
     }
 
@@ -139,20 +139,29 @@ final class TemporalComponentRenderer {
             String pictureString,
             ExceptionMetadata metadata
     ) {
+        CalendarFormatter calendar = calendar(formattingOptions);
+        LanguageFormatter language = language(formattingOptions);
+
         String value;
         switch (variableMarker.component) {
             case 'F':
-                value = LanguageRegistry.resolve(formattingOptions.language)
-                    .dayName(dt.getDayOfWeek(), variableMarker.minWidth, variableMarker.maxWidth);
+                value = language.dayName(
+                    calendar.dayForName(dt),
+                    variableMarker.minWidth,
+                    variableMarker.maxWidth
+                );
                 break;
 
             case 'M':
-                value = LanguageRegistry.resolve(formattingOptions.language)
-                    .monthName(dt.getMonth(), variableMarker.minWidth, variableMarker.maxWidth);
+                value = language.monthName(
+                    calendar.monthForName(dt),
+                    variableMarker.minWidth,
+                    variableMarker.maxWidth
+                );
                 break;
 
             case 'P':
-                value = getAmPmName(dt, variableMarker);
+                value = language.amPmName(dt.getHour() < 12, amPmNameForm(variableMarker));
                 break;
 
             default:
@@ -160,25 +169,6 @@ final class TemporalComponentRenderer {
         }
 
         return TemporalFormattingSupport.applyNameCase(value, variableMarker, formattingOptions.locale);
-    }
-
-    private static String getAmPmName(
-            OffsetDateTime dt,
-            ParsedVariableMarker variableMarker
-    ) {
-        boolean am = dt.getHour() < 12;
-
-        switch (variableMarker.nameForm) {
-            case ParsedVariableMarker.NameForm.LOWER:
-                return am ? "am" : "pm";
-
-            case ParsedVariableMarker.NameForm.UPPER:
-                return am ? "AM" : "PM";
-
-            case ParsedVariableMarker.NameForm.TITLE:
-            default:
-                return am ? "Am" : "Pm";
-        }
     }
 
     private static String formatWordsComponent(
@@ -198,12 +188,9 @@ final class TemporalComponentRenderer {
 
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
-        String words;
-        if (variableMarker.ordinal) {
-            words = NumericFormattingSupport.toOrdinal(numericValue, formattingOptions.language);
-        } else {
-            words = NumericFormattingSupport.toCardinal(numericValue, formattingOptions.language);
-        }
+        String words = variableMarker.ordinal
+            ? language(formattingOptions).toOrdinal(numericValue)
+            : language(formattingOptions).toCardinal(numericValue);
 
         return TemporalFormattingSupport.applyWordCase(words, variableMarker.wordCase, formattingOptions.locale);
     }
@@ -218,52 +205,22 @@ final class TemporalComponentRenderer {
     ) {
         switch (variableMarker.component) {
             case 'Y':
-                return maybeAppendOrdinal(
-                    Integer.toString(dt.getYear()),
-                    dt.getYear(),
-                    variableMarker,
-                    formattingOptions
-                );
-
             case 'M':
-                return maybeAppendOrdinal(
-                    Integer.toString(dt.getMonthValue()),
-                    dt.getMonthValue(),
-                    variableMarker,
-                    formattingOptions
-                );
-
             case 'D':
-                return maybeAppendOrdinal(
-                    Integer.toString(dt.getDayOfMonth()),
-                    dt.getDayOfMonth(),
-                    variableMarker,
-                    formattingOptions
-                );
-
             case 'd':
-                return maybeAppendOrdinal(
-                    Integer.toString(dt.getDayOfYear()),
-                    dt.getDayOfYear(),
+            case 'W':
+            case 'w':
+                return formatDefaultNumericCalendarComponent(
+                    dt,
                     variableMarker,
-                    formattingOptions
+                    formattingOptions,
+                    pictureString,
+                    metadata
                 );
 
             case 'F':
-                return LanguageRegistry.resolve(formattingOptions.language)
-                    .dayAbbreviation(dt.getDayOfWeek(), 3);
-
-            case 'W':
-                return maybeAppendOrdinal(
-                    Integer.toString(dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR)),
-                    dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR),
-                    variableMarker,
-                    formattingOptions
-                );
-
-            case 'w':
-                int wom = weekOfMonth(dt, formattingOptions);
-                return maybeAppendOrdinal(Integer.toString(wom), wom, variableMarker, formattingOptions);
+                return language(formattingOptions)
+                    .dayAbbreviation(calendar(formattingOptions).dayForName(dt), 3);
 
             case 'H':
                 return Integer.toString(dt.getHour());
@@ -301,21 +258,27 @@ final class TemporalComponentRenderer {
         }
     }
 
-    private static int weekOfMonth(OffsetDateTime dt, FormattingOptions formattingOptions) {
-        int wom = dt.get(WeekFields.ISO.weekOfMonth());
+    private static String formatDefaultNumericCalendarComponent(
+            OffsetDateTime dt,
+            ParsedVariableMarker variableMarker,
+            FormattingOptions formattingOptions,
+            String pictureString,
+            ExceptionMetadata metadata
+    ) {
+        int numericValue = getNumericComponentValue(
+            dt,
+            variableMarker.component,
+            formattingOptions,
+            pictureString,
+            metadata
+        );
 
-        if (
-            formattingOptions != null
-                && formattingOptions.useFiveArgumentSemantics
-                && formattingOptions.calendarMode == CalendarMode.ISO
-                && wom == 0
-        ) {
-            OffsetDateTime previousMonth = dt.minusMonths(1);
-            return previousMonth.withDayOfMonth(previousMonth.toLocalDate().lengthOfMonth())
-                .get(WeekFields.ISO.weekOfMonth());
-        }
-
-        return wom;
+        return maybeAppendOrdinal(
+            Integer.toString(numericValue),
+            numericValue,
+            variableMarker,
+            formattingOptions
+        );
     }
 
     private static String maybeAppendOrdinal(
@@ -324,11 +287,11 @@ final class TemporalComponentRenderer {
             ParsedVariableMarker variableMarker,
             FormattingOptions formattingOptions
     ) {
-        if (variableMarker.ordinal) {
-            return base + NumericFormattingSupport.ordinalSuffix(numericValue, formattingOptions.language);
+        if (!variableMarker.ordinal) {
+            return base;
         }
 
-        return base;
+        return base + language(formattingOptions).ordinalSuffix(BigInteger.valueOf(numericValue));
     }
 
     private static int getNumericComponentValue(
@@ -338,27 +301,29 @@ final class TemporalComponentRenderer {
             String pictureString,
             ExceptionMetadata metadata
     ) {
+        CalendarFormatter calendar = calendar(formattingOptions);
+
         switch (component) {
             case 'Y':
-                return dt.getYear();
+                return calendar.year(dt);
 
             case 'M':
-                return dt.getMonthValue();
+                return calendar.monthInYear(dt);
 
             case 'D':
-                return dt.getDayOfMonth();
+                return calendar.dayInMonth(dt);
 
             case 'd':
-                return dt.getDayOfYear();
+                return calendar.dayInYear(dt);
 
             case 'W':
-                return dt.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+                return calendar.weekInYear(dt);
 
             case 'w':
-                return weekOfMonth(dt, formattingOptions);
+                return calendar.weekInMonth(dt);
 
             case 'F':
-                return dt.getDayOfWeek().getValue();
+                return calendar.dayOfWeek(dt);
 
             case 'H':
                 return dt.getHour();
@@ -407,11 +372,7 @@ final class TemporalComponentRenderer {
                 digits = digits.substring(digits.length() - variableMarker.maxWidth);
             }
 
-            if (variableMarker.ordinal) {
-                digits = digits + NumericFormattingSupport.ordinalSuffix(value, formattingOptions.language);
-            }
-
-            return digits;
+            return maybeAppendOrdinal(digits, value, variableMarker, formattingOptions);
         }
 
         String digits = Integer.toString(value);
@@ -439,11 +400,27 @@ final class TemporalComponentRenderer {
         digits = NumericFormattingSupport.applyGrouping(digits, pic);
         digits = NumericPictureParser.mapAsciiDigits(digits, pic.getZeroDigit());
 
-        if (variableMarker.ordinal) {
-            digits = digits + NumericFormattingSupport.ordinalSuffix(value, formattingOptions.language);
-        }
+        return maybeAppendOrdinal(digits, value, variableMarker, formattingOptions);
+    }
 
-        return digits;
+    private static CalendarFormatter calendar(FormattingOptions formattingOptions) {
+        return CalendarRegistry.forCalendar(formattingOptions.calendarMode);
+    }
+
+    private static LanguageFormatter language(FormattingOptions formattingOptions) {
+        return LanguageRegistry.forLanguage(formattingOptions.locale.getLanguage());
+    }
+
+    private static String amPmNameForm(ParsedVariableMarker variableMarker) {
+        switch (variableMarker.nameForm) {
+            case ParsedVariableMarker.NameForm.LOWER:
+                return "lower";
+            case ParsedVariableMarker.NameForm.UPPER:
+                return "upper";
+            case ParsedVariableMarker.NameForm.TITLE:
+            default:
+                return "title";
+        }
     }
 
     private static int defaultNumericMinWidth(char component) {
@@ -455,119 +432,6 @@ final class TemporalComponentRenderer {
             default:
                 return 1;
         }
-    }
-
-    private static String formatFractionalSeconds(
-            OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
-            FormattingOptions formattingOptions
-    ) {
-        if ("I".equals(variableMarker.presentation) || "i".equals(variableMarker.presentation)) {
-            int value = fractionAsInteger(dt);
-            String roman = NumericFormattingSupport.integerToRoman(value);
-            return "i".equals(variableMarker.presentation) ? roman.toLowerCase(formattingOptions.locale) : roman;
-        }
-
-        FractionalPattern pattern = FractionalPattern.parse(variableMarker.presentation);
-        String fractionDigits = canonicalFractionDigits(dt);
-
-        int minDigits;
-        int maxDigits;
-
-        if (pattern.isDefaultLike()) {
-            minDigits = variableMarker.minWidth == -1 ? 0 : variableMarker.minWidth;
-            maxDigits = variableMarker.maxWidth > 0 ? variableMarker.maxWidth : Integer.MAX_VALUE;
-        } else {
-            minDigits = Math.max(pattern.mandatoryDigits, variableMarker.minWidth == -1 ? 0 : variableMarker.minWidth);
-
-            int pictureMaxDigits = pattern.activeDigits;
-            int widthMaxDigits = variableMarker.maxWidth > 0 ? variableMarker.maxWidth : -1;
-
-            if (widthMaxDigits > 0) {
-                maxDigits = Math.max(pictureMaxDigits, widthMaxDigits);
-            } else {
-                maxDigits = pictureMaxDigits;
-            }
-        }
-
-        if (maxDigits < Integer.MAX_VALUE && fractionDigits.length() > maxDigits) {
-            fractionDigits = fractionDigits.substring(0, maxDigits);
-        }
-
-        fractionDigits = suppressTrailingZeros(fractionDigits, minDigits);
-
-        if (fractionDigits.length() < minDigits) {
-            fractionDigits = rightPad(fractionDigits, minDigits);
-        }
-
-        if (fractionDigits.isEmpty()) {
-            fractionDigits = "0";
-        }
-
-        return mapDigitsAndInsertSeparators(
-            fractionDigits,
-            pattern.zeroDigit,
-            pattern
-        );
-    }
-
-    private static String suppressTrailingZeros(String digits, int minDigits) {
-        int end = digits.length();
-
-        while (end > minDigits && end > 0 && digits.charAt(end - 1) == '0') {
-            end--;
-        }
-
-        return digits.substring(0, end);
-    }
-
-    private static String mapDigitsAndInsertSeparators(
-            String digits,
-            int zeroDigit,
-            FractionalPattern pattern
-    ) {
-        StringBuilder sb = new StringBuilder();
-        int usedDigits = Math.min(digits.length(), pattern.activeDigits);
-
-        for (int i = 0; i < usedDigits; i++) {
-            char d = digits.charAt(i);
-            sb.appendCodePoint(zeroDigit + (d - '0'));
-
-            String sep = pattern.separatorAfterIndex(i);
-            if (sep != null) {
-                sb.append(sep);
-            }
-        }
-
-        if (digits.length() > usedDigits) {
-            for (int i = usedDigits; i < digits.length(); i++) {
-                char d = digits.charAt(i);
-                sb.appendCodePoint(zeroDigit + (d - '0'));
-            }
-        }
-
-        return sb.toString();
-    }
-
-    private static int fractionAsInteger(OffsetDateTime dt) {
-        return Integer.parseInt(canonicalFractionDigits(dt));
-    }
-
-    private static String canonicalFractionDigits(OffsetDateTime dt) {
-        int nanos = dt.getNano();
-
-        if (nanos == 0) {
-            return "0";
-        }
-
-        String digits = String.format("%09d", nanos);
-        int end = digits.length();
-
-        while (end > 1 && digits.charAt(end - 1) == '0') {
-            end--;
-        }
-
-        return digits.substring(0, end);
     }
 
     private static int applyYearMaximumWidthRule(int value, ParsedVariableMarker variableMarker) {
@@ -600,14 +464,6 @@ final class TemporalComponentRenderer {
         return "0".repeat(width - value.length()) + value;
     }
 
-    private static String rightPad(String value, int width) {
-        if (value.length() >= width) {
-            return value;
-        }
-
-        return value + "0".repeat(width - value.length());
-    }
-
     private static String padRightWithSpaces(String value, int width) {
         if (width <= 0 || value.length() >= width) {
             return value;
@@ -628,128 +484,5 @@ final class TemporalComponentRenderer {
         );
 
         return new UnsupportedFeatureException(message, metadata);
-    }
-
-    private static final class FractionalPattern {
-        final String raw;
-        final int mandatoryDigits;
-        final int activeDigits;
-        final int zeroDigit;
-        final String[] separatorsAfterSlot;
-
-        private FractionalPattern(
-                String raw,
-                int mandatoryDigits,
-                int activeDigits,
-                int zeroDigit,
-                String[] separatorsAfterSlot
-        ) {
-            this.raw = raw;
-            this.mandatoryDigits = mandatoryDigits;
-            this.activeDigits = activeDigits;
-            this.zeroDigit = zeroDigit;
-            this.separatorsAfterSlot = separatorsAfterSlot;
-        }
-
-        static FractionalPattern parse(String raw) {
-            if (raw == null || raw.isEmpty()) {
-                return new FractionalPattern("", 1, Integer.MAX_VALUE, '0', new String[0]);
-            }
-
-            int[] cps = raw.codePoints().toArray();
-            int mandatory = 0;
-            int active = 0;
-            int zeroDigit = -1;
-            boolean sawOptional = false;
-            boolean lastWasActive = false;
-            String[] tmpSeparators = new String[cps.length];
-            StringBuilder pendingSeparator = new StringBuilder();
-
-            for (int cp : cps) {
-                if (cp == '#') {
-                    if (mandatory == 0) {
-                        throw new IllegalArgumentException("Invalid fractional pattern");
-                    }
-
-                    sawOptional = true;
-                    active++;
-
-                    if (pendingSeparator.length() > 0 && active > 1) {
-                        tmpSeparators[active - 2] = pendingSeparator.toString();
-                        pendingSeparator.setLength(0);
-                    }
-
-                    lastWasActive = true;
-                    continue;
-                }
-
-                if (Character.getType(cp) == Character.DECIMAL_DIGIT_NUMBER) {
-                    int z = NumericPictureParser.zeroDigitOf(cp);
-
-                    if (zeroDigit < 0) {
-                        zeroDigit = z;
-                    } else if (zeroDigit != z) {
-                        throw new IllegalArgumentException("Mixed digit families");
-                    }
-
-                    if (sawOptional) {
-                        throw new IllegalArgumentException("Mandatory digit after optional digit");
-                    }
-
-                    mandatory++;
-                    active++;
-
-                    if (pendingSeparator.length() > 0 && active > 1) {
-                        tmpSeparators[active - 2] = pendingSeparator.toString();
-                        pendingSeparator.setLength(0);
-                    }
-
-                    lastWasActive = true;
-                    continue;
-                }
-
-                if (!lastWasActive) {
-                    throw new IllegalArgumentException("Invalid fractional separator placement");
-                }
-
-                pendingSeparator.appendCodePoint(cp);
-                lastWasActive = false;
-            }
-
-            if (mandatory == 0) {
-                throw new IllegalArgumentException("No mandatory digit");
-            }
-
-            if (pendingSeparator.length() > 0) {
-                throw new IllegalArgumentException("Trailing separator");
-            }
-
-            if (zeroDigit < 0) {
-                zeroDigit = '0';
-            }
-
-            String[] separators = new String[Math.max(0, active - 1)];
-            System.arraycopy(tmpSeparators, 0, separators, 0, separators.length);
-
-            return new FractionalPattern(raw, mandatory, active, zeroDigit, separators);
-        }
-
-        boolean isDefaultLike() {
-            if (this.raw == null || this.raw.isEmpty()) {
-                return true;
-            }
-
-            if (this.separatorsAfterSlot.length != 0) {
-                return false;
-            }
-            return this.activeDigits == 1 && this.mandatoryDigits == 1;
-        }
-
-        String separatorAfterIndex(int index) {
-            if (index < 0 || index >= this.separatorsAfterSlot.length) {
-                return null;
-            }
-            return this.separatorsAfterSlot[index];
-        }
     }
 }
