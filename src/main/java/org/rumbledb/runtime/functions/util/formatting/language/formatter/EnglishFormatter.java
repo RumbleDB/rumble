@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.util.formatting.language;
+package org.rumbledb.runtime.functions.util.formatting.language.formatter;
 
 import org.rumbledb.config.FormattingLanguageSupport;
 
@@ -526,6 +526,21 @@ public class EnglishFormatter implements LanguageFormatter {
                 return "ninety";
             default:
                 throw new IllegalArgumentException("Unsupported tens: " + tens);
+        }
+    }
+
+    @Override
+    public String amPmName(boolean am, String nameForm) {
+        switch (nameForm) {
+            case "lower":
+                return am ? "am" : "pm";
+
+            case "upper":
+                return am ? "AM" : "PM";
+
+            case "title":
+            default:
+                return am ? "Am" : "Pm";
         }
     }
 }

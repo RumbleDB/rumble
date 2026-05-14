@@ -6,17 +6,17 @@ import java.util.Locale;
 
 public final class LanguageSupport {
 
-    // TODO instantiate once from dynamic context? adding more languages should throw an error even? Default values
-    // TODO should eventually be sourced from dynamic context, they should not be configurable by the
-    // TODO each function should get the default language from the config if its empty
     public static final String DEFAULT_LANGUAGE = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
 
     private LanguageSupport() {
     }
 
     public static String normalizeLanguage(String language) {
-        String normalized = language.trim();
-        return normalized.toLowerCase(Locale.ROOT);
+        if (language == null || language.trim().isEmpty()) {
+            return DEFAULT_LANGUAGE;
+        }
+
+        return language.trim().replace('_', '-').toLowerCase(Locale.ROOT);
     }
 
 
@@ -25,5 +25,14 @@ public final class LanguageSupport {
             return Locale.getDefault();
         }
         return Locale.forLanguageTag(language.trim().replace('_', '-'));
+    }
+
+    public static String getPrimaryLanguageSubtag(String language) {
+        String normalized = normalizeLanguage(language);
+        int dash = normalized.indexOf('-');
+        if (dash > 0) {
+            return normalized.substring(0, dash);
+        }
+        return normalized;
     }
 }

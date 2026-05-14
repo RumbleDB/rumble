@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.util.formatting.language;
+package org.rumbledb.runtime.functions.util.formatting.language.formatter;
 
 import java.math.BigInteger;
 import java.time.DayOfWeek;
@@ -139,4 +139,14 @@ public interface LanguageFormatter {
      * </p>
      */
     String monthName(Month month, int minWidth, int maxWidth);
+
+    /**
+     * Returns the AM/PM marker in a language-specific form.
+     *
+     * <p>
+     * The {@code nameForm} argument should be one of "lower", "upper", or "title".
+     * Implementations may default to title case for unknown values.
+     * </p>
+     */
+    String amPmName(boolean am, String nameForm);
 }

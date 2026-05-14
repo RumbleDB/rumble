@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageFormatter;
+import org.rumbledb.runtime.functions.util.formatting.language.formatter.LanguageFormatter;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry;
 
 import java.math.BigInteger;
