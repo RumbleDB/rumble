@@ -88,6 +88,29 @@ public class ComparisonVisitor extends CloneVisitor {
             SequenceType.Arity.OneOrMore.isSubtypeOf(leftChild.getStaticSequenceType().getArity())
                 || SequenceType.Arity.OneOrMore.isSubtypeOf(rightChild.getStaticSequenceType().getArity())
         ) {
+
+            if (
+                !leftChild.getStaticSequenceType().getItemType().isAtomicItemType()
+            ) {
+                leftChild = new FunctionCallExpression(
+                        Name.createVariableInDefaultXQueryFunctionNamespace("data"),
+                        Collections.singletonList(leftChild),
+                        leftChild.getMetadata()
+                );
+            }
+
+            if (
+                !rightChild.getStaticSequenceType().getItemType().isAtomicItemType()
+            ) {
+                rightChild = new FunctionCallExpression(
+                        Name.createVariableInDefaultXQueryFunctionNamespace("data"),
+                        Collections.singletonList(rightChild),
+                        rightChild.getMetadata()
+                );
+            }
+
+
+
             Name variableNameLeft = Name.TEMP_VAR1;
             Name variableNameRight = Name.TEMP_VAR2;
 
