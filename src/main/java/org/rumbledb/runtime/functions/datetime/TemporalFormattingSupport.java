@@ -71,14 +71,6 @@ final class TemporalFormattingSupport {
     static String formatTimezone(
             OffsetDateTime value,
             ParsedTimezonePicture tz,
-            boolean hasExplicitTimezone
-    ) {
-        return formatTimezone(value, tz, hasExplicitTimezone, null);
-    }
-
-    static String formatTimezone(
-            OffsetDateTime value,
-            ParsedTimezonePicture tz,
             boolean hasExplicitTimezone,
             FormattingOptions options
     ) {
@@ -97,34 +89,6 @@ final class TemporalFormattingSupport {
         return formatNumericTimezone(value.getOffset(), tz);
     }
 
-    static String formatTimezone(
-            ZoneOffset offset,
-            ParsedTimezonePicture tz,
-            boolean hasExplicitTimezone
-    ) {
-        return formatTimezone(offset, tz, hasExplicitTimezone, null);
-    }
-
-    static String formatTimezone(
-            ZoneOffset offset,
-            ParsedTimezonePicture tz,
-            boolean hasExplicitTimezone,
-            FormattingOptions options
-    ) {
-        if (!hasExplicitTimezone) {
-            return tz.military ? "J" : "";
-        }
-
-        if (tz.named) {
-            return formatNamedTimezoneFromOffset(offset, tz, options);
-        }
-
-        if (tz.military) {
-            return formatMilitaryTimezone(offset, true);
-        }
-
-        return formatNumericTimezone(offset, tz);
-    }
 
     private static String formatNamedTimezone(
             OffsetDateTime value,
@@ -146,25 +110,6 @@ final class TemporalFormattingSupport {
         return applyTimezoneNamePresentation(result, tz.namePresentation, options);
     }
 
-    private static String formatNamedTimezoneFromOffset(
-            ZoneOffset offset,
-            ParsedTimezonePicture tz,
-            FormattingOptions options
-    ) {
-        String result = TimezoneNameRegistry.resolve(
-            offset,
-            timezoneNameContext(options)
-        );
-
-        if (result == null) {
-            result = formatNumericTimezone(
-                offset,
-                ParsedTimezonePicture.defaultNumeric()
-            );
-        }
-
-        return applyTimezoneNamePresentation(result, tz.namePresentation, options);
-    }
 
     private static TimezoneNameContext timezoneNameContext(FormattingOptions options) {
         if (options == null) {
