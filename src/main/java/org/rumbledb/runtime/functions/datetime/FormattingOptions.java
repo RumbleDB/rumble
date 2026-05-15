@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.datetime;
 
 import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
@@ -35,7 +36,7 @@ public final class FormattingOptions {
     private static FormattingOptions twoArgumentDefaults() {
         return new FormattingOptions(
                 FormattingCalendarModeSupport.DEFAULT,
-                Locale.US,
+                Locale.forLanguageTag(FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE),
                 false,
                 null,
                 null

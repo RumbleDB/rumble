@@ -21,10 +21,7 @@ public final class LanguageSupport {
 
 
     public static Locale resolveLocale(String language) {
-        if (language == null || language.trim().isEmpty()) {
-            return Locale.getDefault();
-        }
-        return Locale.forLanguageTag(language.trim().replace('_', '-'));
+        return Locale.forLanguageTag(normalizeLanguage(language));
     }
 
     public static String getPrimaryLanguageSubtag(String language) {
