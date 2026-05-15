@@ -6,7 +6,7 @@ import java.util.Locale;
 
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.timezone.TimezoneNameContext;
-import org.rumbledb.runtime.functions.util.formatting.timezone.TimezoneNameRegistry;
+import org.rumbledb.runtime.functions.util.formatting.timezone.TimezoneNameSupport;
 
 final class TemporalFormattingSupport {
 
@@ -95,57 +95,32 @@ final class TemporalFormattingSupport {
             ParsedTimezonePicture tz,
             FormattingOptions options
     ) {
-        String result = TimezoneNameRegistry.resolve(
+        String result = TimezoneNameSupport.formatNamedTimezone(
             value,
-            timezoneNameContext(options)
+            timezoneNameContext(options),
+            tz.namePresentation
         );
 
-        if (result == null) {
-            result = formatNumericTimezone(
-                value.getOffset(),
-                ParsedTimezonePicture.defaultNumeric()
-            );
+        if (result != null) {
+            return result;
         }
 
-        return applyTimezoneNamePresentation(result, tz.namePresentation, options);
+        return formatNumericTimezone(
+            value.getOffset(),
+            ParsedTimezonePicture.defaultNumeric()
+        );
     }
 
 
     private static TimezoneNameContext timezoneNameContext(FormattingOptions options) {
         if (options == null) {
-            return new TimezoneNameContext(null, null, Locale.ROOT);
+            return new TimezoneNameContext(null, Locale.ROOT);
         }
 
         return new TimezoneNameContext(
-                options.place,
                 options.placeZoneId,
                 options.locale
         );
-    }
-
-    private static String applyTimezoneNamePresentation(
-            String value,
-            String presentation,
-            FormattingOptions options
-    ) {
-        Locale locale = options == null || options.locale == null
-            ? Locale.ROOT
-            : options.locale;
-
-        if ("n".equals(presentation)) {
-            return value.toLowerCase(locale);
-        }
-
-        if ("Nn".equals(presentation)) {
-            if (value.isEmpty()) {
-                return value;
-            }
-
-            return value.substring(0, 1).toUpperCase(locale)
-                + value.substring(1).toLowerCase(locale);
-        }
-
-        return value;
     }
 
     private static String formatNumericTimezone(

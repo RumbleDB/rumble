@@ -5,29 +5,19 @@ import java.util.Locale;
 
 public final class TimezoneNameContext {
 
-    public final String place;
-    public final ZoneId placeZoneId;
-    public final Locale locale;
+    private final ZoneId placeZoneId;
+    private final Locale locale;
 
-    public TimezoneNameContext(String place, ZoneId placeZoneId, Locale locale) {
-        this.place = normalizePlaceValue(place);
+    public TimezoneNameContext(ZoneId placeZoneId, Locale locale) {
         this.placeZoneId = placeZoneId;
         this.locale = locale == null ? Locale.ROOT : locale;
     }
 
-    public String normalizedPlace() {
-        if (this.place == null) {
-            return "";
-        }
-        return this.place.trim().toLowerCase(Locale.ROOT);
+    public ZoneId getPlaceZoneId() {
+        return this.placeZoneId;
     }
 
-    private static String normalizePlaceValue(String place) {
-        if (place == null) {
-            return null;
-        }
-
-        String trimmed = place.trim();
-        return trimmed.isEmpty() ? null : trimmed;
+    public Locale getLocale() {
+        return this.locale;
     }
 }
