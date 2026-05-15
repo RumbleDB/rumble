@@ -6,6 +6,10 @@ import java.time.OffsetDateTime;
 import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
 
+// Java returns 0 for days at the start of a month that belong to the
+// last ISO week of the previous month. XQuery's ISO [w] rendering expects
+// the week number within the month owning the ISO week, so we use the
+// previous month's last day in that case.
 public final class IsoCalendarFormatter extends AbstractGregorianCalendarFormatter {
 
     @Override
