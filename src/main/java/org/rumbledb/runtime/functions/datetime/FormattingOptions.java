@@ -7,6 +7,7 @@ import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.time.ZoneId;
 import java.util.Locale;
+import java.util.Map;
 
 public final class FormattingOptions {
 
@@ -64,6 +65,7 @@ public final class FormattingOptions {
             String calendar,
             String place,
             ZoneId placeZoneId,
+            Map<String, String> staticallyKnownNamespaces,
             ExceptionMetadata metadata
     ) {
         if (arity <= 2) {
@@ -72,7 +74,7 @@ public final class FormattingOptions {
 
         return extended(
             language,
-            CalendarSupport.resolveCalendarMode(calendar, metadata),
+            CalendarSupport.resolveCalendarMode(calendar, staticallyKnownNamespaces, metadata),
             place,
             placeZoneId
         );

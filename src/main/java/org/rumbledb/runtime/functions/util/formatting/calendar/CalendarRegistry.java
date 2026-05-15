@@ -24,7 +24,7 @@ public final class CalendarRegistry {
     public static void register(CalendarFormatter formatter) {
         String calendar = formatter.getCalendar();
 
-        if (!FormattingCalendarModeSupport.calendarModes.contains(calendar)) {
+        if (!FormattingCalendarModeSupport.supportedCalendarModes.contains(calendar)) {
             throw new OurBadException(
                     "Registered formatter is not supported by the RumbleRuntimeConfiguration: " + calendar
             );

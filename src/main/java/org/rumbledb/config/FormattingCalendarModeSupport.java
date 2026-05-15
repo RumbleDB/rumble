@@ -12,14 +12,14 @@ public final class FormattingCalendarModeSupport {
     public static final String AD = "AD";
     public static final String DEFAULT = ISO;
 
-    public static final List<String> calendarModes = new ArrayList<>();
+    public static final List<String> supportedCalendarModes = new ArrayList<>();
 
     public static boolean isValidFormattingCalendar(String calendar) {
-        return calendar != null && calendarModes.contains(calendar);
+        return calendar != null && supportedCalendarModes.contains(calendar);
     }
 
     static {
-        calendarModes.add(AD);
-        calendarModes.add(ISO);
+        supportedCalendarModes.add(AD);
+        supportedCalendarModes.add(ISO);
     }
 }

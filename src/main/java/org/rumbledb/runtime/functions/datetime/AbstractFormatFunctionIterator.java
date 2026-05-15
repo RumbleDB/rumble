@@ -76,6 +76,7 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
             calendar,
             place,
             placeZoneId,
+            getRuntimeStaticContext().getStaticallyKnownNamespaces(),
             getMetadata()
         );
 
