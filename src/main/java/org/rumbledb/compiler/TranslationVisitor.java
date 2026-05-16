@@ -2969,7 +2969,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
+        Expression tryExpression = ctx.try_expression == null
+            ? new CommaExpression(createMetadataFromContext(ctx))
+            : (Expression) this.visitExpr(ctx.try_expression);
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
@@ -4119,4 +4121,3 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
 }
-

@@ -2704,7 +2704,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
+        Expression tryExpression = ctx.try_expression == null
+            ? new CommaExpression(createMetadataFromContext(ctx))
+            : (Expression) this.visitExpr(ctx.try_expression);
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
