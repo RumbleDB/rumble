@@ -2975,7 +2975,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
+            Expression catchExpression = catchCtx.catch_expression == null
+                ? new CommaExpression(createMetadataFromContext(catchCtx))
+                : (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
                 Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
