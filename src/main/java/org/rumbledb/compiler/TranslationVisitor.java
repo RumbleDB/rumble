@@ -42,6 +42,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -2972,27 +2973,27 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Expression tryExpression = ctx.try_expression == null
             ? new CommaExpression(createMetadataFromContext(ctx))
             : (Expression) this.visitExpr(ctx.try_expression);
-        Map<String, Expression> catchExpressions = new HashMap<>();
-        Expression catchAllExpression = null;
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = catchCtx.catch_expression == null
                 ? new CommaExpression(createMetadataFromContext(catchCtx))
                 : (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false, false);
-                if (!catchExpressions.containsKey(name.getLocalName())) {
-                    catchExpressions.put(name.getLocalName(), catchExpression);
+                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
+                if (!catchExpressions.containsKey(pattern)) {
+                    catchExpressions.put(pattern, catchExpression);
                 }
             }
-            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
-            if (doesCatchAll && catchAllExpression == null) {
-                catchAllExpression = catchExpression;
+            for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
+                CatchPattern pattern = this.parseCatchPattern(wildcardCtx);
+                if (!catchExpressions.containsKey(pattern)) {
+                    catchExpressions.put(pattern, catchExpression);
+                }
             }
         }
         return new TryCatchExpression(
                 tryExpression,
                 catchExpressions,
-                catchAllExpression,
                 createMetadataFromContext(ctx)
         );
     }
@@ -3271,27 +3272,53 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitTryCatchStatement(JsoniqParser.TryCatchStatementContext ctx) {
         BlockStatement tryBlock = (BlockStatement) this.visitBlockStatement(ctx.try_block);
-        Map<String, BlockStatement> catchBlockStatements = new HashMap<>();
-        BlockStatement catchAllBlockStatement = null;
+        Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false, false);
-                if (!catchBlockStatements.containsKey(name.getLocalName())) {
-                    catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
+                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
+                if (!catchBlockStatements.containsKey(pattern)) {
+                    catchBlockStatements.put(pattern, catchBlockStatement);
                 }
             }
-            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
-            if (doesCatchAll && catchAllBlockStatement == null) {
-                catchAllBlockStatement = catchBlockStatement;
+            for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
+                CatchPattern pattern = this.parseCatchPattern(wildcardCtx);
+                if (!catchBlockStatements.containsKey(pattern)) {
+                    catchBlockStatements.put(pattern, catchBlockStatement);
+                }
             }
         }
         return new TryCatchStatement(
                 tryBlock,
                 catchBlockStatements,
-                catchAllBlockStatement,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    private CatchPattern parseCatchPattern(JsoniqParser.WildcardContext wildcardContext) {
+        String wildcardText = wildcardContext.getText();
+        if (wildcardText.equals("*")) {
+            return CatchPattern.catchAll();
+        }
+        if (wildcardText.startsWith("*:")) {
+            return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
+        }
+        if (wildcardText.endsWith(":*")) {
+            String prefix = wildcardText.substring(0, wildcardText.length() - 2);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace == null) {
+                throw new PrefixCannotBeExpandedException(
+                        "Cannot expand prefix " + prefix,
+                        generateMetadata(wildcardContext.getStop())
+                );
+            }
+            return CatchPattern.localNameWildcard(namespace, wildcardText);
+        }
+        int closingBrace = wildcardText.indexOf('}');
+        if (wildcardText.startsWith("Q{") && wildcardText.endsWith("*") && closingBrace != -1) {
+            return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
+        }
+        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardText);
     }
 
     @Override
