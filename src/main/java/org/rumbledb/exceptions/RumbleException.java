@@ -54,7 +54,7 @@ public class RumbleException extends RuntimeException {
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
-    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(formatMessage(errorCode, metadata, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.metadata = metadata;
@@ -62,7 +62,7 @@ public class RumbleException extends RuntimeException {
         this.errorValue = Collections.emptyList();
     }
 
-    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata, List<Item> errorValue) {
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata, List<Item> errorValue) {
         super(formatMessage(errorCode, metadata, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.metadata = metadata;
