@@ -94,6 +94,10 @@ public class RumbleException extends RuntimeException {
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
+    public ErrorCode getErrorCode() {
+        return this.errorCode;
+    }
+
     public String getErrorCodeString() {
         return this.errorCode.toString();
     }
