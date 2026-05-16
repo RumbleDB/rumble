@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -682,37 +683,37 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static void addCatchVariablesToContext(StaticContext context, ExceptionMetadata metadata) {
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "code"),
+            ErrorVariables.ERROR_CODE,
             SequenceType.createSequenceType("QName"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "description"),
+            ErrorVariables.ERROR_DESCRIPTION,
             SequenceType.createSequenceType("string?"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "value"),
+            ErrorVariables.ERROR_VALUE,
             SequenceType.createSequenceType("item*"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "module"),
+            ErrorVariables.ERROR_MODULE,
             SequenceType.createSequenceType("string?"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "line-number"),
+            ErrorVariables.ERROR_LINE_NUMBER,
             SequenceType.createSequenceType("integer?"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "column-number"),
+            ErrorVariables.ERROR_COLUMN_NUMBER,
             SequenceType.createSequenceType("integer?"),
             metadata
         );
         context.addVariable(
-            new Name(Name.ERROR_NS, "err", "additional"),
+            ErrorVariables.ERROR_ADITIONAL,
             SequenceType.createSequenceType("item*"),
             metadata
         );
