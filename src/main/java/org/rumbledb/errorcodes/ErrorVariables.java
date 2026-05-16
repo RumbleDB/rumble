@@ -69,7 +69,7 @@ public final class ErrorVariables {
         );
         variableValues.addVariableValue(
             ErrorVariables.ERROR_DESCRIPTION,
-            Collections.singletonList(itemFactory.createStringItem(exception.getMessage()))
+            Collections.singletonList(itemFactory.createStringItem(exception.getJSONiqErrorMessage()))
         );
         variableValues.addVariableValue(
             ErrorVariables.ERROR_VALUE,
