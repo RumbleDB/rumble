@@ -23,7 +23,6 @@ package org.rumbledb.compiler;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -684,7 +683,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
         StaticContext tryContext = new StaticContext(argument);
-        this.visit(statement.getTryStatement(), tryContext);    
+        this.visit(statement.getTryStatement(), tryContext);
 
         for (BlockStatement catchBlock : statement.getCatchStatements().values()) {
             StaticContext catchContext = new StaticContext(argument);
@@ -706,7 +705,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext tryContext = new StaticContext(argument);
         this.visit(expression.getTryExpression(), tryContext);
 
-        for (Expression catchExpr: expression.getCatchExpressions().values()) {
+        for (Expression catchExpr : expression.getCatchExpressions().values()) {
             StaticContext catchContext = new StaticContext(argument);
             ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
             this.visit(catchExpr, catchContext);

@@ -25,7 +25,8 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
                     ErrorCode.UnidentifiedErrorExceptionCode,
-                    this.getMetadata());
+                    this.getMetadata()
+            );
         }
 
         Name errorCode = this.children.get(0).materializeFirstItemOrNull(context).getQNameValue();
@@ -35,7 +36,8 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new RumbleException(
                     "An error has been raised without an error description.",
                     new ErrorCode(errorCode),
-                    this.getMetadata());
+                    this.getMetadata()
+            );
         } else if (this.children.size() == 2) {
             // Error code and description arguments case.
             String description = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
