@@ -50,4 +50,36 @@ public final class ErrorVariables {
                 SequenceType.createSequenceType("item*"),
                 metadata);
     }
+
+    public static void injectDynamicContext(DynamicContext context, RumbleException exception) {
+        VariableValues variableValues = context.getVariableValues();
+        ItemFactory itemFactory = ItemFactory.getInstance();
+
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_CODE,
+                Collections
+                        .singletonList(itemFactory.createQNameItem(exception.getErrorCode().getName())));
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_DESCRIPTION,
+                Collections.singletonList(itemFactory.createStringItem(exception.getMessage())));
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_VALUE,
+                exception.getErrorValue());
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_MODULE,
+                Collections.singletonList(itemFactory.createStringItem(exception.getMetadata().getLocation())));
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_LINE_NUMBER,
+                Collections.singletonList(itemFactory.createIntItem(exception.getMetadata().getTokenLineNumber())));
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_COLUMN_NUMBER,
+                Collections.singletonList(itemFactory.createIntItem(exception.getMetadata().getTokenColumnNumber())));
+
+        /// Value of err:additional is implementation-defined. For now, we set it to an
+        /// empty sequence, but in the future, it could be used to provide additional
+        /// information about the error.
+        variableValues.addVariableValue(
+                ErrorVariables.ERROR_ADITIONAL,
+                Collections.emptyList());
+    }
 }
