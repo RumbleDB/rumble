@@ -681,44 +681,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private static void addCatchVariablesToContext(StaticContext context, ExceptionMetadata metadata) {
-        context.addVariable(
-            ErrorVariables.ERROR_CODE,
-            SequenceType.createSequenceType("QName"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_DESCRIPTION,
-            SequenceType.createSequenceType("string?"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_VALUE,
-            SequenceType.createSequenceType("item*"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_MODULE,
-            SequenceType.createSequenceType("string?"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_LINE_NUMBER,
-            SequenceType.createSequenceType("integer?"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_COLUMN_NUMBER,
-            SequenceType.createSequenceType("integer?"),
-            metadata
-        );
-        context.addVariable(
-            ErrorVariables.ERROR_ADITIONAL,
-            SequenceType.createSequenceType("item*"),
-            metadata
-        );
-    }
-
     @Override
     public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
         StaticContext tryContext = new StaticContext(argument);
@@ -726,13 +688,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
         for (BlockStatement catchBlock : statement.getCatchStatements().values()) {
             StaticContext catchContext = new StaticContext(argument);
-            addCatchVariablesToContext(catchContext, catchBlock.getMetadata());
+            ErrorVariables.injectStaticContext(catchContext, catchBlock.getMetadata());
             this.visit(catchBlock, catchContext);
         }
 
         if (statement.getCatchAllStatement() != null) {
             StaticContext catchAllContext = new StaticContext(argument);
-            addCatchVariablesToContext(catchAllContext, statement.getCatchAllStatement().getMetadata());
+            ErrorVariables.injectStaticContext(catchAllContext, statement.getCatchAllStatement().getMetadata());
             this.visit(statement.getCatchAllStatement(), catchAllContext);
         }
 
@@ -746,13 +708,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
         for (Expression catchExpr: expression.getCatchExpressions().values()) {
             StaticContext catchContext = new StaticContext(argument);
-            addCatchVariablesToContext(catchContext, catchExpr.getMetadata());
+            ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
             this.visit(catchExpr, catchContext);
         }
 
         if (expression.getExpressionCatchingAll() != null) {
             StaticContext catchAllContext = new StaticContext(argument);
-            addCatchVariablesToContext(catchAllContext, expression.getExpressionCatchingAll().getMetadata());
+            ErrorVariables.injectStaticContext(catchAllContext, expression.getExpressionCatchingAll().getMetadata());
             this.visit(expression.getExpressionCatchingAll(), catchAllContext);
         }
 
