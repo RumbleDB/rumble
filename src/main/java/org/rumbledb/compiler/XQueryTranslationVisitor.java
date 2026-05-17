@@ -3128,7 +3128,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
@@ -3144,7 +3144,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitDoubleSlash(XQueryParser.RelativePathExprContext doubleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(doubleSlashContext)
         );
@@ -3163,7 +3163,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlash(XQueryParser.RelativePathExprContext singleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );
