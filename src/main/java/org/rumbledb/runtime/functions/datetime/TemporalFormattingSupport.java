@@ -114,10 +114,11 @@ final class TemporalFormattingSupport {
 
     private static TimezoneNameContext timezoneNameContext(FormattingOptions options) {
         if (options == null) {
-            return new TimezoneNameContext(null, Locale.ROOT);
+            return new TimezoneNameContext(null, null, Locale.ROOT);
         }
 
         return new TimezoneNameContext(
+                options.place,
                 options.placeZoneId,
                 options.locale
         );

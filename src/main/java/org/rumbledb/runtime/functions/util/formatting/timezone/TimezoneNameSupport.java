@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.util.formatting.timezone;
 
+import org.rumbledb.runtime.functions.util.formatting.timezone.formatter.TimezonePlaceFormatter;
+
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -16,11 +18,17 @@ public final class TimezoneNameSupport {
             String presentation
     ) {
         Locale locale = context == null ? Locale.ROOT : context.getLocale();
+        String place = context == null ? null : context.getPlace();
         ZoneId zoneId = context == null ? null : context.getPlaceZoneId();
 
         String name = null;
 
-        if (zoneId != null) {
+        TimezonePlaceFormatter placeFormatter = TimezonePlaceRegistry.forPlace(place);
+        if (placeFormatter != null) {
+            name = placeFormatter.timezoneName(value, presentation, locale);
+        }
+
+        if ((name == null || name.isEmpty()) && zoneId != null) {
             name = formatUsingZoneId(value, zoneId, locale, presentation);
         }
 
