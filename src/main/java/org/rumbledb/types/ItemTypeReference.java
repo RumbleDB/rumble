@@ -58,7 +58,7 @@ public class ItemTypeReference implements ItemType {
 
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
 
-        Name renamed = renameAtomic(context.getRumbleConfiguration(), this.name);
+        Name renamed = renameAtomic(context, this.name);
 
         if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(renamed)) {
             throw new UndefinedTypeException("Type undefined: " + renamed, metadata);
@@ -76,8 +76,8 @@ public class ItemTypeReference implements ItemType {
      * in jsoniq 1.0 anyAtomicType was called atomic. This function gives backwards compatibility by replacing atomic
      * with anyAtomicType depending on the jsoniq version.
      */
-    public static Name renameAtomic(RumbleRuntimeConfiguration config, Name oldName) { // TODO KEEP
-        if (config.getQueryLanguage().equals("jsoniq10")) {
+    public static Name renameAtomic(StaticContext context, Name oldName) {
+        if (context.getQueryLanguage().equals("jsoniq10")) {
             if (oldName.getNamespace() != null && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (oldAtomicName.getLocalName().equals(oldName.getLocalName())) {
                     return newAtomicName;
