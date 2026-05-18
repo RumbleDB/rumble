@@ -1,14 +1,16 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import java.time.DateTimeException;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.List;
 
 abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -39,22 +41,62 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
             return valueItem;
         }
 
-        FormattingOptions formattingOptions = FormattingOptionsResolver.resolve(
+        String language = getOptionalString(languageItem);
+        String calendar = getOptionalString(calendarItem);
+
+        if (language == null) {
+            language = getConfiguration().getDefaultFormattingLanguage();
+        }
+
+        if (calendar == null) {
+            calendar = getConfiguration().getDefaultFormattingCalendar();
+        }
+
+        // RumbleDB recognizes place values that are valid Java ZoneIds. Other place
+        // representations allowed by the spec, such as ISO country codes, are currently
+        // treated as unrecognized and therefore fall back to the dynamic-context default.
+        String place = normalizePlace(getOptionalString(placeItem));
+        ZoneId placeZoneId = null;
+
+        if (place == null) {
+            placeZoneId = getConfiguration().getDefaultFormattingPlace();
+            place = placeZoneId.getId();
+        } else {
+            // Keep the original place string even if it is not a valid Java ZoneId.
+            // The XQuery/XPath formatting spec also allows place values such as country codes
+            // (for example "us"), which Java's ZoneId does not resolve. Such values may still
+            // be useful later for timezone-name selection. Full country-code based place
+            // resolution is not implemented here.
+            try {
+                placeZoneId = ZoneId.of(place);
+            } catch (DateTimeException e) {
+                placeZoneId = null;
+            }
+        }
+
+        FormattingOptions formattingOptions = FormattingOptions.fromArguments(
             this.children.size(),
-            languageItem,
-            calendarItem,
-            placeItem,
-            pictureItem.serialize(),
+            language,
+            calendar,
+            place,
+            placeZoneId,
+            getRuntimeStaticContext().getStaticallyKnownNamespaces(),
             getMetadata()
         );
+
 
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
-        String result = TemporalPictureFormatter.format(
+        OffsetDateTime renderingValue = applyConfiguredZone(
             temporalValue,
+            hasExplicitTimezone,
+            formattingOptions
+        );
+
+        String result = TemporalPictureFormatter.format(
+            renderingValue,
             pictureItem.getStringValue(),
-            pictureItem.serialize(),
             hasExplicitTimezone,
             formattingOptions,
             this::supportsComponent,
@@ -64,7 +106,37 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         return ItemFactory.getInstance().createStringItem(result);
     }
 
+    private static String getOptionalString(Item item) {
+        return item != null && !item.isNull()
+            ? item.getStringValue()
+            : null;
+    }
+
+    private static String normalizePlace(String place) {
+        if (place == null) {
+            return null;
+        }
+
+        String trimmed = place.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    static OffsetDateTime applyConfiguredZone(
+            OffsetDateTime value,
+            boolean hasExplicitTimezone,
+            FormattingOptions options
+    ) {
+        if (!hasExplicitTimezone || options == null || options.placeZoneId == null) {
+            return value;
+        }
+
+        return value.toInstant()
+                .atZone(options.placeZoneId)
+                .toOffsetDateTime();
+    }
+
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);
 
     protected abstract boolean supportsComponent(char component);
+
 }

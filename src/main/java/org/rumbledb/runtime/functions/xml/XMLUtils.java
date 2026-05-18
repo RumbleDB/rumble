@@ -36,8 +36,4 @@ public final class XMLUtils {
 
         return codepoint != 0x00;
     }
-
-    public static String defaultXMLVersion() {
-        return "1.0";
-    }
 }
