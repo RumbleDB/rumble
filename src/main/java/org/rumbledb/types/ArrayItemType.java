@@ -206,9 +206,6 @@ public class ArrayItemType implements ItemType {
             mergedMinLength = null;
             mergedMaxLength = null;
         }
-        System.err.println(this);
-        System.err.println(other);
-        System.err.println(
             new ArrayItemType(
                     null,
                     BuiltinTypesCatalogue.arrayItem,
