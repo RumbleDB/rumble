@@ -171,8 +171,7 @@ public class ItemTypeFactory {
     /**
      * Create an empty array type.
      * 
-     * @param content an item type with length 0.
-     * @return an anonymous array type based on the provided content type
+     * @return an empty array type.
      */
     public static ItemType createEmptyArrayType() {
         return new ArrayItemType(
