@@ -131,8 +131,8 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
 
         return value.toInstant()
-                .atZone(options.placeZoneId)
-                .toOffsetDateTime();
+            .atZone(options.placeZoneId)
+            .toOffsetDateTime();
     }
 
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);
