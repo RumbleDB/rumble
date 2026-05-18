@@ -168,6 +168,23 @@ public class ItemTypeFactory {
         );
     }
 
+    /**
+     * Create an empty array type.
+     * 
+     * @param content an item type with length 0.
+     * @return an anonymous array type based on the provided content type
+     */
+    public static ItemType createEmptyArrayType() {
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                BuiltinTypesCatalogue.item,
+                0,
+                0,
+                null
+        );
+    }
+
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(

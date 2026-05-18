@@ -192,13 +192,32 @@ public class ArrayItemType implements ItemType {
         if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ItemType mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        ItemType mergedContent;
+        if (this.maxLength != null && this.maxLength == 0) {
+            mergedContent = otherArray.content;
+        } else if (otherArray.maxLength != null && otherArray.maxLength == 0) {
+            mergedContent = this.content;
+        } else {
+            mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        }
         Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
         Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
         if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
             mergedMinLength = null;
             mergedMaxLength = null;
         }
+        System.err.println(this);
+        System.err.println(other);
+        System.err.println(
+            new ArrayItemType(
+                    null,
+                    BuiltinTypesCatalogue.arrayItem,
+                    mergedContent,
+                    mergedMinLength,
+                    mergedMaxLength,
+                    null
+            )
+        );
         return new ArrayItemType(
                 null,
                 BuiltinTypesCatalogue.arrayItem,
@@ -258,6 +277,17 @@ public class ArrayItemType implements ItemType {
             sb.append("\"treeDepth\": ");
             sb.append(this.typeTreeDepth);
             sb.append(", ");
+
+            if (this.minLength != null) {
+                sb.append("\"minLength\": ");
+                sb.append(this.minLength);
+                sb.append(", ");
+            }
+            if (this.maxLength != null) {
+                sb.append("\"maxLength\": ");
+                sb.append(this.maxLength);
+                sb.append(", ");
+            }
 
             if (isResolved()) {
                 sb.append("\"content\": ");
@@ -417,21 +447,21 @@ public class ArrayItemType implements ItemType {
 
     private Integer mergeMinLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return second;
+            return null;
         }
         if (second == null) {
-            return first;
+            return null;
         }
-        return Math.max(first, second);
+        return Math.min(first, second);
     }
 
     private Integer mergeMaxLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return second;
+            return null;
         }
         if (second == null) {
-            return first;
+            return null;
         }
-        return Math.min(first, second);
+        return Math.max(first, second);
     }
 }
