@@ -1,6 +1,5 @@
 package org.rumbledb.config;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public final class FormattingLanguageSupport {
@@ -12,13 +11,9 @@ public final class FormattingLanguageSupport {
 
     public static final String DEFAULT_FORMATTING_LANGUAGE = ENGLISH;
 
-    public static final List<String> supportedLanguages = new ArrayList<>();
+    public static final List<String> supportedLanguages = List.of(ENGLISH);
 
     public static boolean isValidFormattingLanguage(String language) {
         return language != null && supportedLanguages.contains(language);
-    }
-
-    static {
-        supportedLanguages.add(ENGLISH);
     }
 }
