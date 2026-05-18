@@ -206,15 +206,6 @@ public class ArrayItemType implements ItemType {
             mergedMinLength = null;
             mergedMaxLength = null;
         }
-            new ArrayItemType(
-                    null,
-                    BuiltinTypesCatalogue.arrayItem,
-                    mergedContent,
-                    mergedMinLength,
-                    mergedMaxLength,
-                    null
-            )
-        );
         return new ArrayItemType(
                 null,
                 BuiltinTypesCatalogue.arrayItem,
