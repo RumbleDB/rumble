@@ -1,7 +1,7 @@
-package org.rumbledb.runtime.functions.util.formatting.timezone;
+package org.rumbledb.runtime.functions.util.formatting.namedtimezones;
 
-import org.rumbledb.runtime.functions.util.formatting.timezone.formatter.TimezonePlaceFormatter;
-import org.rumbledb.runtime.functions.util.formatting.timezone.formatter.UnitedStatesTimezoneFormatter;
+import org.rumbledb.runtime.functions.util.formatting.namedtimezones.formatter.TimezonePlaceFormatter;
+import org.rumbledb.runtime.functions.util.formatting.namedtimezones.formatter.UnitedStatesTimezoneFormatter;
 
 import java.util.HashMap;
 import java.util.Locale;

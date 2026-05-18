@@ -1,6 +1,6 @@
-package org.rumbledb.runtime.functions.util.formatting.timezone.formatter;
+package org.rumbledb.runtime.functions.util.formatting.namedtimezones.formatter;
 
-import org.rumbledb.runtime.functions.util.formatting.timezone.TimezonePlaceRegistry;
+import org.rumbledb.runtime.functions.util.formatting.namedtimezones.TimezonePlaceRegistry;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;

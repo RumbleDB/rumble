@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.util.formatting.timezone;
+package org.rumbledb.runtime.functions.util.formatting.namedtimezones;
 
 import java.time.ZoneId;
 import java.util.Locale;
