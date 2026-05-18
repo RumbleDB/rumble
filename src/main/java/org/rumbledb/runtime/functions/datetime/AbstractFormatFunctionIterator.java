@@ -88,7 +88,7 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
-        OffsetDateTime renderingValue = TemporalTimezoneSupport.valueForRendering(
+        OffsetDateTime renderingValue = applyConfiguredZone(
             temporalValue,
             hasExplicitTimezone,
             formattingOptions
@@ -121,9 +121,22 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         return trimmed.isEmpty() ? null : trimmed;
     }
 
+    static OffsetDateTime applyConfiguredZone(
+            OffsetDateTime value,
+            boolean hasExplicitTimezone,
+            FormattingOptions options
+    ) {
+        if (!hasExplicitTimezone || options == null || options.placeZoneId == null) {
+            return value;
+        }
+
+        return value.toInstant()
+                .atZone(options.placeZoneId)
+                .toOffsetDateTime();
+    }
+
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);
 
     protected abstract boolean supportsComponent(char component);
-
 
 }
