@@ -200,7 +200,7 @@ public class VisitorHelpers {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
@@ -388,7 +388,7 @@ public class VisitorHelpers {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
