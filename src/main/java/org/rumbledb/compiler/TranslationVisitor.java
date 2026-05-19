@@ -99,6 +99,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -912,6 +913,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
+    // endregion
+
+    // region EnclosedExpression
+    @Override
+    public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
+        return this.visitExpr(ctx.expr());
+    }
     // endregion
 
     // region Flowr
@@ -1981,7 +1993,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
-            return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
+                return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            } else {
+                return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            }
+
         }
 
         Expression childExpr;
@@ -2409,6 +2426,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
                 createMetadataFromContext(ctx)
         );
+    }
+
+    @Override
+    public Node visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
