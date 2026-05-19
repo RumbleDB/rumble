@@ -915,6 +915,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     // endregion
 
+    // region EnclosedExpression
+    @Override
+    public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
+        return this.visitExpr(ctx.expr());
+    }
+    // endregion
+
     // region Flowr
     @Override
     public Node visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
@@ -2415,6 +2426,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
                 createMetadataFromContext(ctx)
         );
+    }
+
+    @Override
+    public Node visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
