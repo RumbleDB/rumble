@@ -138,11 +138,11 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return new Name(AN_NS, "", localName);
     }
 
-    public static Name createVariableInDefaultXQueryTypeNamespace(String localName) {
+    public static Name createVariableInDefaultBuiltinFunctionNamespace(String localName) {
         return new Name(FN_NS, "", localName);
     }
 
-    public static Name createVariableInDefaultXQueryFunctionNamespace(String localName) {
+    public static Name createVariableInDefaultXMLSchemaTypeNamespace(String localName) {
         return new Name(XS_NS, "", localName);
     }
 
