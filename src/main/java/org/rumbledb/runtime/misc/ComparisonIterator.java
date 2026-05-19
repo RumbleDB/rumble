@@ -86,48 +86,35 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // value comparison may return an empty sequence
-        if (this.comparisonOperator.isValueComparison()) {
-            // if EMPTY SEQUENCE - eg. () or ((),())
-            // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            try {
-                this.left = this.leftIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.left == null) {
-                return null;
-            }
-
-            try {
-                this.right = this.rightIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.right == null) {
-                return null;
-            }
+        // if EMPTY SEQUENCE - eg. () or ((),())
+        // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
+        }
+        if (this.left == null) {
+            return null;
         }
 
-        // use stored values for value comparison
-        if (this.comparisonOperator.isValueComparison()) {
-            return valueComparison(this.left, this.right);
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
         }
-
-        throw new OurBadException("General comparison should normally be translated to FLWOR at runtime.");
-    }
-
-    private Item valueComparison(Item left, Item right) {
+        if (this.right == null) {
+            return null;
+        }
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException(
@@ -146,12 +133,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        if (left.isUntypedAtomic()) {
-            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+        if (this.comparisonOperator.isValueComparison()) {
+            if (left.isUntypedAtomic()) {
+                left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+            }
+            if (right.isUntypedAtomic()) {
+                right = ItemFactory.getInstance().createStringItem(right.getStringValue());
+            }
         }
-        if (right.isUntypedAtomic()) {
-            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
-        }
+        // otherwise they will be cast to match each other in compareItems, and that method will throw if they are not
+        // atomic.
 
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
