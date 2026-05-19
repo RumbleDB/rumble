@@ -78,7 +78,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public boolean isValueEquality() {
-        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
+        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
+            || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
     }
 
     public RuntimeIterator getLeftIterator() {
