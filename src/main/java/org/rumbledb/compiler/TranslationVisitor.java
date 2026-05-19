@@ -99,6 +99,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -1981,7 +1982,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
-            return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
+                return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            } else {
+                return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            }
+
         }
 
         Expression childExpr;
