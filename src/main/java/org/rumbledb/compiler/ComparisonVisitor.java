@@ -60,10 +60,6 @@ public class ComparisonVisitor extends CloneVisitor {
             result.setStaticContext(expression.getStaticContext());
             return result;
         }
-        ComparisonExpression.ComparisonOperator comparisonOperator = ComparisonExpression.ComparisonOperator
-            .getValueComparisonFromComparison(
-                expression.getComparisonOperator()
-            );
         // if left and right have arity one, use value comparison
         if (
             leftChild.getStaticSequenceType().getArity() == SequenceType.Arity.One
@@ -72,14 +68,13 @@ public class ComparisonVisitor extends CloneVisitor {
             ComparisonExpression result = new ComparisonExpression(
                     leftChild,
                     rightChild,
-                    comparisonOperator,
+                    expression.getComparisonOperator(),
                     expression.getMetadata()
             );
             // Preserve whether this comparison originated as a general comparison (=, !=, <, ...)
             // or a value comparison (eq, ne, lt, ...). This is used at runtime to distinguish
             // value vs general comparison semantics (e.g., for xs:untypedAtomic handling)
             // while still mapping to the same underlying value comparison operator.
-            result.setOriginalComparisonOperator(expression.getComparisonOperator());
             result.setStaticSequenceType(expression.getStaticSequenceType());
             result.setStaticContext(expression.getStaticContext());
             return result;
@@ -133,11 +128,9 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression valueComparison = new ComparisonExpression(
                     leftReference,
                     rightReference,
-                    comparisonOperator,
+                    expression.getComparisonOperator(),
                     expression.getMetadata()
             );
-            ((ComparisonExpression) valueComparison)
-                .setOriginalComparisonOperator(expression.getComparisonOperator());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                 new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
@@ -176,10 +169,9 @@ public class ComparisonVisitor extends CloneVisitor {
         ComparisonExpression comparisonExpression = new ComparisonExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
-                comparisonOperator,
+                expression.getComparisonOperator(),
                 expression.getMetadata()
         );
-        comparisonExpression.setOriginalComparisonOperator(expression.getComparisonOperator());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
