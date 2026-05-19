@@ -44,7 +44,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-
+/**
+ * This class performs value or general comparison of two items.
+ * The difference lies in the way untyped values are cast.
+ * The existential quantification logic for general comparison is not handled in this iterator, but in the
+ * ComparisonVisitor.
+ */
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
