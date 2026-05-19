@@ -1,9 +1,9 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.OffsetDateTime;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
+
+import java.time.OffsetDateTime;
 
 final class TemporalPictureFormatter {
 
@@ -18,7 +18,6 @@ final class TemporalPictureFormatter {
     static String format(
             OffsetDateTime value,
             String pictureString,
-            String pictureStringForErrors,
             boolean hasExplicitTimezone,
             FormattingOptions formattingOptions,
             ComponentSupport componentSupport,
@@ -35,20 +34,20 @@ final class TemporalPictureFormatter {
                 if (c == ']') {
                     String rawVariableMarker = pictureString.substring(startOfSequence, i);
 
-                    ParsedVariableMarker parsed = TemporalPictureParser.parse(
+                    ParsedVariableMarker parsedVariableMarker = TemporalPictureParser.parse(
                         rawVariableMarker,
-                        pictureStringForErrors,
+                        pictureString,
                         metadata
                     );
 
                     result.append(
                         TemporalComponentRenderer.render(
                             value,
-                            parsed,
+                            parsedVariableMarker,
                             hasExplicitTimezone,
                             formattingOptions,
                             componentSupport,
-                            pictureStringForErrors,
+                            pictureString,
                             metadata
                         )
                     );
@@ -59,7 +58,7 @@ final class TemporalPictureFormatter {
             } else {
                 if (c == ']') {
                     if (i == pictureString.length() - 1 || pictureString.charAt(i + 1) != ']') {
-                        throw syntaxError(pictureStringForErrors, metadata);
+                        throw syntaxError(pictureString, metadata);
                     } else {
                         result.append(pictureString, startOfSequence, i + 1);
                         startOfSequence = i + 2;
@@ -67,7 +66,7 @@ final class TemporalPictureFormatter {
                     }
                 } else if (c == '[') {
                     if (i == pictureString.length() - 1) {
-                        throw syntaxError(pictureStringForErrors, metadata);
+                        throw syntaxError(pictureString, metadata);
                     }
 
                     if (pictureString.charAt(i + 1) == '[') {
@@ -85,7 +84,7 @@ final class TemporalPictureFormatter {
 
         if (startOfSequence != pictureString.length()) {
             if (variableMarkerSequence) {
-                throw syntaxError(pictureStringForErrors, metadata);
+                throw syntaxError(pictureString, metadata);
             }
             result.append(pictureString.substring(startOfSequence));
         }
@@ -94,10 +93,10 @@ final class TemporalPictureFormatter {
     }
 
     private static IncorrectSyntaxFormatDateTimeException syntaxError(
-            String pictureStringForErrors,
+            String pictureString,
             ExceptionMetadata metadata
     ) {
-        String message = String.format("\"%s\": incorrect syntax", pictureStringForErrors);
+        String message = String.format("\"%s\": incorrect syntax", pictureString);
         return new IncorrectSyntaxFormatDateTimeException(message, metadata);
     }
 }
