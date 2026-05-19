@@ -121,7 +121,6 @@ import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
 import org.rumbledb.runtime.functions.sequences.general.*;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
@@ -159,6 +158,21 @@ public class BuiltinFunctionCatalogue {
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(fn)) {
+                if (name.getLocalName().equals("concat")) {
+                    // Special case for fn:concat, which is variadic.
+                    return new BuiltinFunction(
+                            new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
+                            new FunctionSignature(
+                                    Collections.nCopies(
+                                        identifier.getArity(),
+                                        SequenceType.createSequenceType("anyAtomicType?")
+                                    ),
+                                    SequenceType.createSequenceType("string")
+                            ),
+                            ConcatFunctionIterator.class,
+                            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+                    );
+                }
                 return builtinFunctions.get(fn);
             }
             FunctionIdentifier jn = new FunctionIdentifier(
