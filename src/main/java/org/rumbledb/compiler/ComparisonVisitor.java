@@ -7,6 +7,7 @@ import java.util.List;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -88,6 +89,11 @@ public class ComparisonVisitor extends CloneVisitor {
             SequenceType.Arity.OneOrMore.isSubtypeOf(leftChild.getStaticSequenceType().getArity())
                 || SequenceType.Arity.OneOrMore.isSubtypeOf(rightChild.getStaticSequenceType().getArity())
         ) {
+
+            leftChild = atomizeIfNeeded(leftChild);
+            rightChild = atomizeIfNeeded(rightChild);
+
+
             Name variableNameLeft = Name.TEMP_VAR1;
             Name variableNameRight = Name.TEMP_VAR2;
 
@@ -202,6 +208,28 @@ public class ComparisonVisitor extends CloneVisitor {
         result.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         result.setStaticContext(expression.getStaticContext());
         return result;
+    }
+
+    private static Expression atomizeIfNeeded(Expression child) {
+        if (
+            !child.getStaticSequenceType().getItemType().isAtomicItemType()
+        ) {
+            SequenceType type = new SequenceType(
+                    BuiltinTypesCatalogue.atomicItem,
+                    child.getStaticSequenceType().getArity()
+            );
+            ExecutionMode mode = child.getHighestExecutionMode();
+            StaticContext staticContext = child.getStaticContext();
+            child = new FunctionCallExpression(
+                    Name.createVariableInDefaultBuiltinFunctionNamespace("data"),
+                    Collections.singletonList(child),
+                    child.getMetadata()
+            );
+            child.setStaticSequenceType(type);
+            child.setHighestExecutionMode(mode);
+            child.setStaticContext(staticContext);
+        }
+        return child;
     }
 
     /**

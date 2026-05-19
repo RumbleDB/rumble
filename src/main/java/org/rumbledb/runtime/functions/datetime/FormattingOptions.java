@@ -1,35 +1,83 @@
 package org.rumbledb.runtime.functions.datetime;
 
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.config.FormattingLanguageSupport;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
+
+import java.time.ZoneId;
 import java.util.Locale;
+import java.util.Map;
 
-import org.rumbledb.runtime.functions.base.formatting.language.LanguageSupport;
+public final class FormattingOptions {
 
-final class FormattingOptions {
-    final String language;
-    final Locale locale;
     final String calendarMode;
+    final Locale locale;
     final boolean useFiveArgumentSemantics;
 
+    final String place;
+    final ZoneId placeZoneId;
+
     private FormattingOptions(
-            String language,
-            Locale locale,
             String calendarMode,
-            boolean useFiveArgumentSemantics
+            Locale locale,
+            boolean useFiveArgumentSemantics,
+            String place,
+            ZoneId placeZoneId
     ) {
-        this.language = language;
-        this.locale = locale;
         this.calendarMode = calendarMode;
+        this.locale = locale;
         this.useFiveArgumentSemantics = useFiveArgumentSemantics;
+        this.place = place;
+        this.placeZoneId = placeZoneId;
     }
 
-    static FormattingOptions legacy() {
-        String language = null;
-        Locale locale = LanguageSupport.resolveLocale(language);
-        return new FormattingOptions(language, locale, CalendarMode.DEFAULT, false);
+    private static FormattingOptions twoArgumentDefaults() {
+        return new FormattingOptions(
+                FormattingCalendarModeSupport.DEFAULT,
+                Locale.forLanguageTag(FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE),
+                false,
+                null,
+                null
+        );
     }
 
-    static FormattingOptions extended(String language, String calendarMode) {
+    private static FormattingOptions extended(
+            String language,
+            String calendarMode,
+            String place,
+            ZoneId placeZoneId
+    ) {
         Locale locale = LanguageSupport.resolveLocale(language);
-        return new FormattingOptions(language, locale, calendarMode, true);
+
+        return new FormattingOptions(
+                calendarMode,
+                locale,
+                true,
+                place,
+                placeZoneId
+        );
+    }
+
+    static FormattingOptions fromArguments(
+            int arity,
+            String language,
+            String calendar,
+            String place,
+            ZoneId placeZoneId,
+            Map<String, String> staticallyKnownNamespaces,
+            ExceptionMetadata metadata
+    ) {
+        if (arity <= 2) {
+            return twoArgumentDefaults();
+        }
+
+        return extended(
+            language,
+            CalendarSupport.resolveCalendarMode(calendar, staticallyKnownNamespaces, metadata),
+            place,
+            placeZoneId
+        );
     }
 }

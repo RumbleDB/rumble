@@ -99,6 +99,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -912,6 +913,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
+    // endregion
+
+    // region EnclosedExpression
+    @Override
+    public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
+        return this.visitExpr(ctx.expr());
+    }
     // endregion
 
     // region Flowr
@@ -1981,7 +1993,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
-            return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
+                return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            } else {
+                return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            }
+
         }
 
         Expression childExpr;
@@ -2412,6 +2429,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
+    }
+
+    @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.SquareArrayConstructorContext) {
@@ -2556,7 +2578,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
                 Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
-                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                keyName = ItemTypeReference.renameAtomic(moduleContext, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
                     keyType = new ItemTypeReference(keyName);
@@ -2581,7 +2603,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         if (itemTypeContext.eqName() != null) {
             Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            name = ItemTypeReference.renameAtomic(moduleContext, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
             }
@@ -3393,7 +3415,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
@@ -3409,7 +3431,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(doubleSlashContext)
         );
@@ -3428,7 +3450,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );
