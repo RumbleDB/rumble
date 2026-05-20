@@ -43,9 +43,7 @@ public class MapEntryItem implements Item {
     private static final long serialVersionUID = 1L;
 
     /**
-     * Insertion-ordered map keyed by {@link Item} (uses each key's {@code equals}/{@code hashCode}, typically value
-     * comparison for atomics). When built via {@link #MapItem(Map, ExceptionMetadata)}, the live map may be aliased
-     * if the argument is already a {@link LinkedHashMap}.
+     * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private Item key;
     private List<Item> value;
