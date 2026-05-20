@@ -99,6 +99,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -550,6 +551,101 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return prolog;
     }
 
+    private static final class PrologPhase1Flags {
+        boolean emptyOrderSet;
+        boolean defaultCollationSet;
+        boolean baseURISet;
+        boolean defaultFunctionNamespaceDeclared;
+    }
+
+    private void processDefaultNamespaceDecl(
+            JsoniqParser.DefaultNamespaceDeclContext ctx,
+            PrologPhase1Flags flags
+    ) {
+        String uri = processStringLiteral(ctx.stringLiteral());
+        int declType = ctx.type.getType();
+        if (declType == JsoniqParser.KW_ELEMENT) {
+            bindNamespace("", uri, generateMetadata(ctx.getStop()));
+        } else if (declType == JsoniqParser.KW_FUNCTION) {
+            if (flags.defaultFunctionNamespaceDeclared) {
+                throw new SemanticException(
+                        "The default function namespace has already been declared.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            this.moduleContext.setDefaultFunctionNamespaceUri(uri);
+            flags.defaultFunctionNamespaceDeclared = true;
+        } else {
+            throw new OurBadException("Unexpected default namespace declaration kind.");
+        }
+    }
+
+    private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
+    }
+
+    private Name nameForUnprefixedFunction(String localName) {
+        String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
+        if (uri != null) {
+            return new Name(uri, "", localName);
+        }
+        return Name.createVariableInDefaultFunctionNamespace(localName);
+    }
+
+    public Name parseFunctionName(JsoniqParser.FunctionNameContext ctx) {
+        if (ctx.URIQualifiedName() != null) {
+            return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                createMetadataFromContext(ctx)
+            );
+        } else if (ctx.FullQName() != null) {
+            // Handle FullQName by parsing its text content
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException(
+                        "Invalid FullQName format: " + fullQNameText,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            String prefix = fullQNameText.substring(0, colonIndex);
+            String localName = fullQNameText.substring(colonIndex + 1);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
+            }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    generateMetadata(ctx.getStop())
+            );
+        } else if (ctx.keywordOKForFunction() != null) {
+            // if the rule matches a keyword, the prefix is not defined
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
+        } else {
+            // Handle NCName case
+            String localName = ctx.NCName().getText();
+            return nameForUnprefixedFunction(localName);
+        }
+    }
+
+    /**
+     * Parse an EQName. Delegates to {@link #parseName} for the {@code qname} branch; URI-qualified names use
+     * {@link URIQualifiedNameParser}.
+     */
+    public Name parseEqName(
+            JsoniqParser.EqNameContext ctx,
+            boolean isFunction,
+            boolean isType,
+            boolean isAnnotation,
+            boolean isElementConstructor
+    ) {
+        if (ctx.qname() != null) {
+            return parseName(ctx.qname(), isFunction, isType, isAnnotation, isElementConstructor);
+        }
+        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
+    }
+
     /**
      * Resolves a QName while parsing an XQuery construct.
      * <p>
@@ -698,67 +794,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 isExternal,
                 createMetadataFromContext(ctx)
         );
-    }
-
-    private Name nameForUnprefixedFunction(String localName) {
-        String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
-        if (uri != null) {
-            return new Name(uri, "", localName);
-        }
-        return Name.createVariableInDefaultFunctionNamespace(localName);
-    }
-
-    public Name parseFunctionName(JsoniqParser.FunctionNameContext ctx) {
-        if (ctx.URIQualifiedName() != null) {
-            return URIQualifiedNameParser.parse(
-                ctx.URIQualifiedName().getText(),
-                createMetadataFromContext(ctx)
-            );
-        } else if (ctx.FullQName() != null) {
-            // Handle FullQName by parsing its text content
-            String fullQNameText = ctx.FullQName().getText();
-            int colonIndex = fullQNameText.indexOf(':');
-            if (colonIndex == -1) {
-                throw new ParsingException(
-                        "Invalid FullQName format: " + fullQNameText,
-                        createMetadataFromContext(ctx)
-                );
-            }
-            String prefix = fullQNameText.substring(0, colonIndex);
-            String localName = fullQNameText.substring(colonIndex + 1);
-            String namespace = resolvePrefixForDirConstructor(prefix);
-            if (namespace != null) {
-                return new Name(namespace, prefix, localName);
-            }
-            throw new PrefixCannotBeExpandedException(
-                    "Cannot expand prefix " + prefix,
-                    generateMetadata(ctx.getStop())
-            );
-        } else if (ctx.keywordOKForFunction() != null) {
-            // if the rule matches a keyword, the prefix is not defined
-            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
-        } else {
-            // Handle NCName case
-            String localName = ctx.NCName().getText();
-            return nameForUnprefixedFunction(localName);
-        }
-    }
-
-    /**
-     * Parse an EQName. Delegates to {@link #parseName} for the {@code qname} branch; URI-qualified names use
-     * {@link URIQualifiedNameParser}.
-     */
-    public Name parseEqName(
-            JsoniqParser.EqNameContext ctx,
-            boolean isFunction,
-            boolean isType,
-            boolean isAnnotation,
-            boolean isElementConstructor
-    ) {
-        if (ctx.qname() != null) {
-            return parseName(ctx.qname(), isFunction, isType, isAnnotation, isElementConstructor);
-        }
-        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
     }
 
     @Override
@@ -912,6 +947,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
 
+    // endregion
+
+    // region EnclosedExpression
+    @Override
+    public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
+        // empty expression
+        if (ctx.expr() == null) {
+            return null;
+        }
+        return this.visitExpr(ctx.expr());
+    }
     // endregion
 
     // region Flowr
@@ -1981,7 +2027,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
-            return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
+                return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            } else {
+                return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
+            }
+
         }
 
         Expression childExpr;
@@ -2412,6 +2463,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     @Override
+    public Node visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
+        return this.visitEnclosedExpression(ctx.enclosedExpression());
+    }
+
+    @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.SquareArrayConstructorContext) {
@@ -2556,7 +2612,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
                 Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
-                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                keyName = ItemTypeReference.renameAtomic(moduleContext, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
                     keyType = new ItemTypeReference(keyName);
@@ -2581,7 +2637,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         if (itemTypeContext.eqName() != null) {
             Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            name = ItemTypeReference.renameAtomic(moduleContext, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
             }
@@ -3397,7 +3453,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
@@ -3413,7 +3469,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(doubleSlashContext)
         );
@@ -3432,7 +3488,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );
@@ -3510,7 +3566,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         ForwardAxis forwardAxis;
         NodeTest nodeTest;
         if (ctx.nodeTest() == null) {
-            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest());
+            // Abbreviated step: unprefixed names use default element namespace on child axis, not on @attr.
+            boolean unprefixedUsesDefaultElementNs = ctx.abbrevForwardStep().AT() == null;
+            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest(), unprefixedUsesDefaultElementNs);
             if (ctx.abbrevForwardStep().AT() != null) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
@@ -3522,7 +3580,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
         }
         forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
-        nodeTest = getNodeTest(ctx.nodeTest());
+        boolean unprefixedUsesDefaultElementNs = forwardAxis != ForwardAxis.ATTRIBUTE;
+        nodeTest = getNodeTest(ctx.nodeTest(), unprefixedUsesDefaultElementNs);
         return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
@@ -3534,17 +3593,32 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
         }
         ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
-        NodeTest nodeTest = getNodeTest(ctx.nodeTest());
+        // Reverse axes only match element (and similar) nodes; unprefixed QNames use default element namespace.
+        NodeTest nodeTest = getNodeTest(ctx.nodeTest(), true);
         return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
     }
 
-    private NodeTest getNodeTest(JsoniqParser.NodeTestContext nodeTestContext) {
+    /**
+     * @param unprefixedUsesDefaultElementNamespace when true, unprefixed QNames in a {@link NameTest} use the
+     *        in-scope default element namespace (child/descendant axes, etc.); when false (e.g. {@code attribute::}),
+     *        unprefixed names have no namespace.
+     */
+    private NodeTest getNodeTest(
+            JsoniqParser.NodeTestContext nodeTestContext,
+            boolean unprefixedUsesDefaultElementNamespace
+    ) {
         if (nodeTestContext.nameTest() == null) {
             // kind test
             return getKindTest(nodeTestContext.kindTest().children.get(0));
         }
         if (nodeTestContext.nameTest().wildcard() == null) {
-            Name name = parseEqName(nodeTestContext.nameTest().eqName(), false, false, false, false);
+            Name name = parseEqName(
+                nodeTestContext.nameTest().eqName(),
+                false,
+                false,
+                false,
+                unprefixedUsesDefaultElementNamespace
+            );
             return new NameTest(name);
         } else {
             String wildcard = nodeTestContext.nameTest().wildcard().getText();
@@ -3606,10 +3680,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
                     return new ElementTest(elementName, typeName);
                 }
+                // Wildcard case: element(*) or element(*, type)
+                if (elementContext.typeName() != null) {
+                    Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
+                    return new ElementTest(typeName);
+                }
                 return new ElementTest(true);
             }
             return new ElementTest();
         } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
+            // XQuery 3.1 Section 2.5.5.5 - Attribute Test
+            // AttributeTest ::= "attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
+            // attribute() and attribute(*) match any single attribute node.
+            // attribute(N) matches any attribute node whose name is N.
+            // attribute(N, T) matches an attribute node whose name is N and whose type annotation is T.
+            // attribute(*, T) matches any attribute node whose type annotation is T.
             JsoniqParser.AttributeTestContext attributeTestContext =
                 (JsoniqParser.AttributeTestContext) kindTest;
             Name attributeName;
@@ -3735,7 +3820,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        return ctx.getText().substring(1, ctx.getText().length() - 1);
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {

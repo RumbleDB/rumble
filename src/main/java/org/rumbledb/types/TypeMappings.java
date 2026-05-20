@@ -62,6 +62,9 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            return DataTypes.StringType;
+        }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
             itemType.getObjectContentFacet()

@@ -7,6 +7,7 @@ import java.util.List;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -59,10 +60,6 @@ public class ComparisonVisitor extends CloneVisitor {
             result.setStaticContext(expression.getStaticContext());
             return result;
         }
-        ComparisonExpression.ComparisonOperator comparisonOperator = ComparisonExpression.ComparisonOperator
-            .getValueComparisonFromComparison(
-                expression.getComparisonOperator()
-            );
         // if left and right have arity one, use value comparison
         if (
             leftChild.getStaticSequenceType().getArity() == SequenceType.Arity.One
@@ -71,14 +68,13 @@ public class ComparisonVisitor extends CloneVisitor {
             ComparisonExpression result = new ComparisonExpression(
                     leftChild,
                     rightChild,
-                    comparisonOperator,
+                    expression.getComparisonOperator(),
                     expression.getMetadata()
             );
             // Preserve whether this comparison originated as a general comparison (=, !=, <, ...)
             // or a value comparison (eq, ne, lt, ...). This is used at runtime to distinguish
             // value vs general comparison semantics (e.g., for xs:untypedAtomic handling)
             // while still mapping to the same underlying value comparison operator.
-            result.setOriginalComparisonOperator(expression.getComparisonOperator());
             result.setStaticSequenceType(expression.getStaticSequenceType());
             result.setStaticContext(expression.getStaticContext());
             return result;
@@ -88,6 +84,11 @@ public class ComparisonVisitor extends CloneVisitor {
             SequenceType.Arity.OneOrMore.isSubtypeOf(leftChild.getStaticSequenceType().getArity())
                 || SequenceType.Arity.OneOrMore.isSubtypeOf(rightChild.getStaticSequenceType().getArity())
         ) {
+
+            leftChild = atomizeIfNeeded(leftChild);
+            rightChild = atomizeIfNeeded(rightChild);
+
+
             Name variableNameLeft = Name.TEMP_VAR1;
             Name variableNameRight = Name.TEMP_VAR2;
 
@@ -127,11 +128,9 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression valueComparison = new ComparisonExpression(
                     leftReference,
                     rightReference,
-                    comparisonOperator,
+                    expression.getComparisonOperator(),
                     expression.getMetadata()
             );
-            ((ComparisonExpression) valueComparison)
-                .setOriginalComparisonOperator(expression.getComparisonOperator());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                 new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One)
@@ -170,10 +169,9 @@ public class ComparisonVisitor extends CloneVisitor {
         ComparisonExpression comparisonExpression = new ComparisonExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
-                comparisonOperator,
+                expression.getComparisonOperator(),
                 expression.getMetadata()
         );
-        comparisonExpression.setOriginalComparisonOperator(expression.getComparisonOperator());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
@@ -202,6 +200,28 @@ public class ComparisonVisitor extends CloneVisitor {
         result.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         result.setStaticContext(expression.getStaticContext());
         return result;
+    }
+
+    private static Expression atomizeIfNeeded(Expression child) {
+        if (
+            !child.getStaticSequenceType().getItemType().isAtomicItemType()
+        ) {
+            SequenceType type = new SequenceType(
+                    BuiltinTypesCatalogue.atomicItem,
+                    child.getStaticSequenceType().getArity()
+            );
+            ExecutionMode mode = child.getHighestExecutionMode();
+            StaticContext staticContext = child.getStaticContext();
+            child = new FunctionCallExpression(
+                    Name.createVariableInDefaultBuiltinFunctionNamespace("data"),
+                    Collections.singletonList(child),
+                    child.getMetadata()
+            );
+            child.setStaticSequenceType(type);
+            child.setHighestExecutionMode(mode);
+            child.setStaticContext(staticContext);
+        }
+        return child;
     }
 
     /**

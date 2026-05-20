@@ -25,6 +25,7 @@ import java.time.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -43,7 +44,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-
+/**
+ * This class performs value or general comparison of two items.
+ * The difference lies in the way untyped values are cast.
+ * The existential quantification logic for general comparison is not handled in this iterator, but in the
+ * ComparisonVisitor.
+ */
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
@@ -72,7 +78,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public boolean isValueEquality() {
-        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
+        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
+            || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
     }
 
     public RuntimeIterator getLeftIterator() {
@@ -85,92 +92,83 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // value comparison may return an empty sequence
-        if (this.comparisonOperator.isValueComparison()) {
-            // if EMPTY SEQUENCE - eg. () or ((),())
-            // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            try {
-                this.left = this.leftIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.left == null) {
-                return null;
-            }
-
-            try {
-                this.right = this.rightIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.right == null) {
-                return null;
-            }
+        // if EMPTY SEQUENCE - eg. () or ((),())
+        // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
+        }
+        if (this.left == null) {
+            return null;
         }
 
-        // use stored values for value comparison
-        if (this.comparisonOperator.isValueComparison()) {
-            return valueComparison(this.left, this.right);
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
+        }
+        if (this.right == null) {
+            return null;
         }
 
-        throw new OurBadException("General comparison should normally be translated to FLWOR at runtime.");
-    }
-
-    private Item valueComparison(Item left, Item right) {
-
-        if (left.isArray() || right.isArray()) {
+        if (this.left.isArray() || this.right.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on array type",
                     getMetadata()
             );
-        } else if (left.isObject() || right.isObject()) {
+        } else if (this.left.isObject() || this.right.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on object type",
                     getMetadata()
             );
-        } else if (left.isFunction() || right.isFunction()) {
+        } else if (this.left.isFunction() || this.right.isFunction()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on function type",
                     getMetadata()
             );
         }
 
-        if (left.isUntypedAtomic()) {
-            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+        if (this.comparisonOperator.isValueComparison()) {
+            if (this.left.isUntypedAtomic()) {
+                this.left = ItemFactory.getInstance().createStringItem(this.left.getStringValue());
+            }
+            if (this.right.isUntypedAtomic()) {
+                this.right = ItemFactory.getInstance().createStringItem(this.right.getStringValue());
+            }
         }
-        if (right.isUntypedAtomic()) {
-            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
-        }
+        // otherwise they will be cast to match each other in compareItems, and that method will throw if they are not
+        // atomic.
 
-        if (!left.isAtomic()) {
+        if (!this.left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
 
-        long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
+        long comparison = compareItems(this.left, this.right, this.comparisonOperator, getMetadata());
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
                         + this.comparisonOperator
                         + "\": operation not possible with parameters of type \""
-                        + left.getDynamicType().toString()
+                        + this.left.getDynamicType().toString()
                         + "\" and \""
-                        + right.getDynamicType().toString()
+                        + this.right.getDynamicType().toString()
                         + "\"",
                     getMetadata()
             );
         }
         // NaN never compares successfully.
-        if ((left.isFloat() || left.isDouble()) && left.isNaN()) {
+        if ((this.left.isFloat() || this.left.isDouble()) && this.left.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(
@@ -178,7 +176,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                         .equals(ComparisonOperator.VC_NE)
                 );
         }
-        if ((right.isFloat() || right.isDouble()) && right.isNaN()) {
+        if ((this.right.isFloat() || this.right.isDouble()) && this.right.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(
@@ -199,6 +197,15 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             ComparisonOperator comparisonOperator,
             ExceptionMetadata ignoredMetadata
     ) {
+        if (left.isUntypedAtomic() && right.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
+        } else if (left.isUntypedAtomic()) {
+            left = castUntypedAtomicToMatch(left, right, ignoredMetadata);
+        } else if (right.isUntypedAtomic()) {
+            right = castUntypedAtomicToMatch(right, left, ignoredMetadata);
+        }
+
         if (left.isNull() && right.isNull()) {
             return 0;
         }
@@ -379,6 +386,88 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         // NaN is greater than all other doubles.
         // Each consumer should make sure to override if necessary.
         return Double.compare(l, r);
+    }
+
+    private static Item castUntypedAtomicToMatch(Item untyped, Item other, ExceptionMetadata metadata) {
+        if (!other.isAtomic()) {
+            throw new OurBadException(
+                    "Expected atomic item when casting xs:untypedAtomic in comparison.",
+                    metadata
+            );
+        }
+        if (other.isUntypedAtomic() || other.isString()) {
+            return ItemFactory.getInstance().createStringItem(untyped.getStringValue());
+        }
+        if (other.isNumeric()) {
+            return ItemFactory.getInstance().createDoubleItem(untyped.castToDoubleValue());
+        }
+        if (other.isBoolean()) {
+            return castUntypedAtomicToBoolean(untyped, metadata);
+        }
+        if (other.isDayTimeDuration()) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(untyped.getStringValue());
+        }
+        if (other.isYearMonthDuration()) {
+            return ItemFactory.getInstance().createYearMonthDurationItem(untyped.getStringValue());
+        }
+        if (other.isDateTime()) {
+            return ItemFactory.getInstance().createDateTimeItem(untyped.getStringValue());
+        }
+        if (other.isDate()) {
+            return ItemFactory.getInstance().createDateItem(untyped.getStringValue());
+        }
+        if (other.isTime()) {
+            return ItemFactory.getInstance().createTimeItem(untyped.getStringValue());
+        }
+        if (other.isAnyURI()) {
+            return ItemFactory.getInstance().createAnyURIItem(untyped.getStringValue());
+        }
+        if (other.isGDay()) {
+            return ItemFactory.getInstance().createGDayItem(untyped.getStringValue());
+        }
+        if (other.isGMonth()) {
+            return ItemFactory.getInstance().createGMonthItem(untyped.getStringValue());
+        }
+        if (other.isGYear()) {
+            return ItemFactory.getInstance().createGYearItem(untyped.getStringValue());
+        }
+        if (other.isGMonthDay()) {
+            return ItemFactory.getInstance().createGMonthDayItem(untyped.getStringValue());
+        }
+        if (other.isGYearMonth()) {
+            return ItemFactory.getInstance().createGYearMonthItem(untyped.getStringValue());
+        }
+        if (other.isHexBinary()) {
+            return ItemFactory.getInstance().createHexBinaryItem(untyped.getStringValue());
+        }
+        if (other.isBase64Binary()) {
+            return ItemFactory.getInstance().createBase64BinaryItem(untyped.getStringValue());
+        }
+
+        throw new CastException(
+                "Cannot cast xs:untypedAtomic value \""
+                    + untyped.getStringValue()
+                    + "\" to match type "
+                    + other.getDynamicType(),
+                metadata
+        );
+    }
+
+    private static Item castUntypedAtomicToBoolean(Item item, ExceptionMetadata metadata) {
+        String value = item.getStringValue().trim();
+
+        if (value.equals("true") || value.equals("1")) {
+            return ItemFactory.getInstance().createBooleanItem(true);
+        }
+
+        if (value.equals("false") || value.equals("0")) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        throw new CastException(
+                "Cannot cast \"" + item.getStringValue() + "\" to xs:boolean",
+                metadata
+        );
     }
 
     private static int processFloat(
