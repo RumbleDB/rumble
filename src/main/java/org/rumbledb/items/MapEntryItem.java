@@ -55,7 +55,7 @@ public class MapEntryItem implements Item {
         this.value = Collections.emptyList();
     }
 
-    public MapEntryItem(Item key, List<Item> value, ExceptionMetadata metadata) {
+    public MapEntryItem(Item key, List<Item> value) {
         this.key = key;
         this.value = value;
     }

@@ -8,7 +8,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,9 +43,8 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         return ItemFactory.getInstance()
             .createMapItem(
-                Collections.singletonMap(key, valueSequence),
-                getMetadata(),
-                false
+                key,
+                valueSequence
             );
     }
 }
