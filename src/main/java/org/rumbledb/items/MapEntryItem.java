@@ -238,7 +238,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public String getSparkSQLValue() {
-        if(this.value.size() != 1) {
+        if (this.value.size() != 1) {
             throw new OurBadException("Maps with more than one value do not have a Spark SQL value.");
         }
         StringBuilder sb = new StringBuilder();
@@ -254,7 +254,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public String getSparkSQLValue(ItemType itemType) {
-        if(this.value.size() != 1) {
+        if (this.value.size() != 1) {
             throw new OurBadException("Maps with more than one value do not have a Spark SQL value.");
         }
         StringBuilder sb = new StringBuilder();
@@ -278,7 +278,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public String getSparkSQLType() {
-        if(this.value.size() != 1) {
+        if (this.value.size() != 1) {
             throw new OurBadException("Maps with more than one value do not have a Spark SQL type.");
         }
         StringBuilder sb = new StringBuilder();
@@ -305,7 +305,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public Object getVariantValue() {
-        if(this.value.size() != 1) {
+        if (this.value.size() != 1) {
             throw new OurBadException("Maps with more than one value do not have a Spark SQL variant value.");
         }
         Map<String, Object> resultMap = new HashMap<>();

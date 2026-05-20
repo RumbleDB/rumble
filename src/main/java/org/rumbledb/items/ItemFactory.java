@@ -328,7 +328,7 @@ public class ItemFactory {
             ExceptionMetadata itemMetadata,
             boolean mutable
     ) {
-        if(!mutable && keys.size() == 1) {
+        if (!mutable && keys.size() == 1) {
             Item key = keys.get(0);
             return new MapEntryItem(key, values.get(0), itemMetadata);
         }
@@ -342,7 +342,7 @@ public class ItemFactory {
     }
 
     public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
-        if(!mutable && keyValuePairs.size() == 1) {
+        if (!mutable && keyValuePairs.size() == 1) {
             Item key = keyValuePairs.keySet().iterator().next();
             List<Item> values = keyValuePairs.get(key);
             return new MapEntryItem(key, values, itemMetadata);

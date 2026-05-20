@@ -3,9 +3,6 @@ package org.rumbledb.runtime.functions.maps;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -34,58 +31,16 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        if (arguments.size() != 2) {
-            throw new OurBadException("map:entry must have exactly two arguments.");
-        }
         this.keyIterator = arguments.get(0);
         this.valueIterator = arguments.get(1);
     }
 
-    private static Item atomizeSingleMapKey(
-            RuntimeIterator keyIterator,
-            DynamicContext dynamicContext,
-            ExceptionMetadata metadata
-    ) {
-        List<Item> keySequence = new ArrayList<>();
-        keyIterator.materialize(dynamicContext, keySequence);
-
-        List<Item> atomized = new ArrayList<>();
-        for (Item item : keySequence) {
-            atomized.addAll(item.atomizedValue());
-        }
-
-        if (atomized.size() != 1) {
-            throw new UnexpectedTypeException(
-                    "Map entry key must atomize to a single atomic value [err:XPTY0004].",
-                    metadata
-            );
-        }
-
-        Item k = atomized.get(0);
-        if (!k.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Map entry key must atomize to a single atomic value [err:XPTY0004].",
-                    metadata
-            );
-        }
-
-        return k;
-    }
-
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item key = atomizeSingleMapKey(this.keyIterator, dynamicContext, getMetadata());
+        Item key = this.keyIterator.materializeFirstItemOrNull(dynamicContext);
 
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(dynamicContext, valueSequence);
-
-        if (valueSequence.size() == 1 && key.isString()) {
-            return ItemFactory.getInstance()
-                .createObjectItem(
-                    Collections.singletonMap(key.getStringValue(), valueSequence),
-                    false
-                );
-        }
 
         return ItemFactory.getInstance()
             .createMapItem(
