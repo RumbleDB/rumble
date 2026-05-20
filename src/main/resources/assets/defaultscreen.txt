@@ -1,15 +1,16 @@
 RumbleDB is a JSONiq engine that can be used both on your laptop or on a
 cluster (e.g. with Amazon EMR or Azure HDInsight).
 
-It runs on top of Apache Spark and must be invoked with spark-submit, both for
-local use and for cluster use. Spark must be installed either on your laptop,
-or on the cluster.
+This is the standalone jar that does not require the installation of Spark.
+
+If you need more control over Spark or use it on a cluster, we recommend using
+the leaner jars instead, which you can download from www.rumbledb.org.
 
 If you do not want to install Spark, then you need to use the standalone jar
 instead from www.rumbledb.org.
 
 Usage:
-spark-submit <Spark arguments> <path to RumbleDB's jar> <mode> <parameters>
+java -jar <path to RumbleDB's jar> <mode> <parameters>
 
 The examples below assume the jar name is rumbledb.jar. You need to use
 the actual name of the jar file you downloaded.
@@ -21,16 +22,16 @@ for directly running a query from an input file or (with -q) provided directly o
 
 It is the default mode.
 
-spark-submit rumbledb.jar run my-query.jq
-spark-submit rumbledb.jar run -q '1+1'
+java -jar rumbledb.jar run my-query.jq
+java -jar rumbledb.jar run -q '1+1'
 
 You can specify an output path with -o like so:
-spark-submit rumbledb.jar run -q '1+1' -o my-output.txt
+java -jar rumbledb.jar run -q '1+1' -o my-output.txt
 
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
 
-spark-submit rumbledb.jar serve -p 9090
+java -jar rumbledb.jar serve -p 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
 even more convenient if you are using a cluster.
@@ -38,29 +39,14 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb.jar repl
+java -jar rumbledb.jar repl
 
 
 **** resource use configuration ****
 
 For a local use, you can control the number of cores, as well as allocated
 memory, with:
-spark-submit --master local[*] rumbledb.jar repl
-spark-submit --master local[*] rumbledb.jar repl
-spark-submit --master local[2] rumbledb.jar repl
-spark-submit --master local[*] --driver-memory 10G rumbledb.jar repl
 
-You can use RumbleDB remotely with:
-spark-submit --master yarn rumbledb.jar repl
-
-(Although for clusters provided as a service, --master yarn is often implicit
-and unnecessary).
-
-For remote use (e.g., logged in on the Spark cluster with ssh), you can set the
-number of executors, cores and memory, you can use:
-spark-submit --executor-cores 3 --executor-memory 5G rumbledb.jar repl
-
-For remote use, you can also use other file system paths such as S3, HDFS, etc:
-spark-submit rumbledb.jar run hdfs://server:port/my-query.jq -o hdfs://server:port/my-output.json
+java -jar -Xmx10g rumbledb.jar repl
 
 More documentation on available CLI parameters is available on https://www.rumbledb.org/
