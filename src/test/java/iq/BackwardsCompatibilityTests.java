@@ -20,13 +20,14 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
+
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
@@ -36,7 +37,7 @@ import java.io.File;
 import java.util.*;
 
 @RunWith(Parameterized.class)
-public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
+public class BackwardsCompatibilityTests {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -110,13 +111,11 @@ public class BackwardsCompatibilityTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        AnnotationsTestsBase.testAnnotations(
+        // System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
+            true
         );
     }
 }
