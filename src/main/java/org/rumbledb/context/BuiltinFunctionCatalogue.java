@@ -4515,7 +4515,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction default_language = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "default-language"),
-        "string",
+        "language",
         DefaultLanguageFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
