@@ -3873,6 +3873,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
+            false,
             metadata
         );
     }
