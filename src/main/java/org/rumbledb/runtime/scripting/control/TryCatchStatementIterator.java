@@ -51,7 +51,7 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
                 throw throwable;
             }
             RumbleException unnestedException = RumbleException.unnestException(throwable);
-            String errorCode = unnestedException.getErrorCodeString();
+            String errorCode = unnestedException.getErrorCode().toString();
             if (this.catchStatements.containsKey(errorCode)) {
                 RuntimeIterator catchingStatementIterator = this.catchStatements.get(errorCode);
                 DynamicContext childContext = new DynamicContext(context);

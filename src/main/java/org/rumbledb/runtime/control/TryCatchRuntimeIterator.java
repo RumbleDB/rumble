@@ -109,7 +109,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
             } catch (Throwable throwable) {
                 RumbleException exception = RumbleException.unnestException(throwable);
-                String code = exception.getErrorCodeString();
+                String code = exception.getErrorCode().toString();
                 this.results.clear();
                 if (this.catchExpressions.containsKey(code)) {
                     DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
