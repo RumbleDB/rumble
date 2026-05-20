@@ -3352,14 +3352,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private CatchPattern parseCatchPattern(JsoniqParser.WildcardContext wildcardContext) {
-        String wildcardText = wildcardContext.getText();
-        if (wildcardText.equals("*")) {
+        if (wildcardContext instanceof JsoniqParser.AllNamesContext) {
+            /// Only * is provided
             return CatchPattern.catchAll();
         }
-        if (wildcardText.startsWith("*:")) {
+        if (wildcardContext instanceof JsoniqParser.AllWithLocalContext) {
+            /// Namespace is the wildcard
+            String wildcardText = wildcardContext.getText();
+            /// First two characters *: are stripped to keep only the local name
             return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
         }
-        if (wildcardText.endsWith(":*")) {
+        if (wildcardContext instanceof JsoniqParser.AllWithNSContext) {
+            /// Local name is the wildcard
+            String wildcardText = wildcardContext.getText();
+
+            /// Strip the last two characters :*
             String prefix = wildcardText.substring(0, wildcardText.length() - 2);
             String namespace = resolvePrefixForDirConstructor(prefix);
             if (namespace == null) {
@@ -3370,11 +3377,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             }
             return CatchPattern.localNameWildcard(namespace, wildcardText);
         }
-        int closingBrace = wildcardText.indexOf('}');
-        if (wildcardText.startsWith("Q{") && wildcardText.endsWith("*") && closingBrace != -1) {
+        if (wildcardContext instanceof JsoniqParser.BracedURILiteralContext) {
+            /// Declare namespace in place, and match any local name
+            /// For example, Q{http://example.com}:*
+            String wildcardText = wildcardContext.getText();
+            int closingBrace = wildcardText.indexOf('}');
             return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
         }
-        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardText);
+        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override

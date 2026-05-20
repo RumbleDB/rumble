@@ -3031,14 +3031,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private CatchPattern parseCatchPattern(XQueryParser.WildcardContext wildcardContext) {
-        String wildcardText = wildcardContext.getText();
-        if (wildcardText.equals("*")) {
+        if (wildcardContext instanceof XQueryParser.AllNamesContext) {
             return CatchPattern.catchAll();
         }
-        if (wildcardText.startsWith("*:")) {
+        if (wildcardContext instanceof XQueryParser.AllWithLocalContext) {
+            String wildcardText = wildcardContext.getText();
             return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
         }
-        if (wildcardText.endsWith(":*")) {
+        if (wildcardContext instanceof XQueryParser.AllWithNSContext) {
+            String wildcardText = wildcardContext.getText();
             String prefix = wildcardText.substring(0, wildcardText.length() - 2);
             String namespace = resolvePrefixForDirConstructor(prefix);
             if (namespace == null) {
@@ -3049,11 +3050,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             return CatchPattern.localNameWildcard(namespace, wildcardText);
         }
-        int closingBrace = wildcardText.indexOf('}');
-        if (wildcardText.startsWith("Q{") && wildcardText.endsWith("*") && closingBrace != -1) {
+        if (wildcardContext instanceof XQueryParser.BracedURILiteralContext) {
+            String wildcardText = wildcardContext.getText();
+            int closingBrace = wildcardText.indexOf('}');
             return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
         }
-        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardText);
+        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override
