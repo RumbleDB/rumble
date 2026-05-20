@@ -3,7 +3,7 @@ package org.rumbledb.runtime.functions.context;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -21,6 +21,7 @@ public class DefaultLanguageFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:default-language", getMetadata());
+        String defaultLanguage = getConfiguration().getDefaultFormattingLanguage();
+        return ItemFactory.getInstance().createLanguageItem(defaultLanguage);
     }
 }
