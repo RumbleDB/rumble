@@ -3041,7 +3041,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
             }
             for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseCatchPattern(wildcardCtx);
+                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
                 if (!catchExpressions.containsKey(pattern)) {
                     catchExpressions.put(pattern, catchExpression);
                 }
@@ -3338,7 +3338,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
             }
             for (JsoniqParser.WildcardContext wildcardCtx : catchCtx.jokers) {
-                CatchPattern pattern = this.parseCatchPattern(wildcardCtx);
+                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }
@@ -3351,7 +3351,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         );
     }
 
-    private CatchPattern parseCatchPattern(JsoniqParser.WildcardContext wildcardContext) {
+    private CatchPattern parseWildcardPattern(JsoniqParser.WildcardContext wildcardContext) {
         if (wildcardContext instanceof JsoniqParser.AllNamesContext) {
             /// Only * is provided
             return CatchPattern.catchAll();
