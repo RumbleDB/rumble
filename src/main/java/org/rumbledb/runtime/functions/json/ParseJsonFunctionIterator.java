@@ -19,7 +19,7 @@
  */
 
 
-package org.rumbledb.runtime.functions.io;
+package org.rumbledb.runtime.functions.json;
 
 import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
