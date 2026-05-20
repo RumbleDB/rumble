@@ -114,10 +114,6 @@ public class RumbleException extends RuntimeException {
         return this.errorCode;
     }
 
-    public String getErrorCodeString() {
-        return this.errorCode.toString();
-    }
-
     public ExceptionMetadata getMetadata() {
         return this.metadata;
     }

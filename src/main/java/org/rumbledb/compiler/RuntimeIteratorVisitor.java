@@ -970,6 +970,30 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             .stream()
             .map(arg -> this.visit(arg, argument))
             .collect(Collectors.toList());
+        List<SequenceType> keyTypes = expression.getKeys()
+            .stream()
+            .map(arg -> arg.getStaticSequenceType())
+            .filter(
+                arg -> !arg.getArity().equals(SequenceType.Arity.One)
+                    || !arg.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+            )
+            .collect(Collectors.toList());
+        List<SequenceType> valueTypes = expression.getValues()
+            .stream()
+            .map(arg -> arg.getStaticSequenceType())
+            .filter(
+                arg -> !arg.getArity().equals(SequenceType.Arity.One)
+            )
+            .collect(Collectors.toList());
+        if (keyTypes.isEmpty() && valueTypes.isEmpty()) {
+            RuntimeIterator runtimeIterator = new ObjectConstructorRuntimeIterator(
+                    keys,
+                    values,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            runtimeIterator.setStaticContext(expression.getStaticContext());
+            return runtimeIterator;
+        }
         RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
                 keys,
                 values,

@@ -2297,7 +2297,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
                 Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
-                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                keyName = ItemTypeReference.renameAtomic(moduleContext, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
                     keyType = new ItemTypeReference(keyName);
@@ -2322,7 +2322,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (itemTypeContext.eqName() != null) {
             Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            name = ItemTypeReference.renameAtomic(moduleContext, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
             }
@@ -3159,7 +3159,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
@@ -3175,7 +3175,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitDoubleSlash(XQueryParser.RelativePathExprContext doubleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(doubleSlashContext)
         );
@@ -3194,7 +3194,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlash(XQueryParser.RelativePathExprContext singleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );

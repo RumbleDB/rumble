@@ -31,6 +31,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
 
+
 import static org.apache.spark.sql.functions.expr;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -407,7 +408,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
         } catch (OurBadException ex) {
             // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
-            throw new InvalidInstanceException(ex.getJSONiqErrorMessage());
+            throw new InvalidInstanceException(
+                    "RumbleDB was not able to infer a Schema. Please select another output method such as json. "
+                        + ex.getJSONiqErrorMessage()
+            );
         }
 
         throw new OurBadException(

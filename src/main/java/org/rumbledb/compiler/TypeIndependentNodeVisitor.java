@@ -445,7 +445,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setOriginalComparisonOperator(expression.getOriginalComparisonOperator());
         return result;
     }
 

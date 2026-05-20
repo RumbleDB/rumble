@@ -940,7 +940,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getComparisonOperator(),
                 expression.getMetadata()
         );
-        result.setOriginalComparisonOperator(expression.getOriginalComparisonOperator());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         return result;

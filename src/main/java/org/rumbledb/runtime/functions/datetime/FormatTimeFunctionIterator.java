@@ -25,7 +25,9 @@ public class FormatTimeFunctionIterator extends AbstractFormatFunctionIterator {
             return timeValue.atDate(LocalDate.of(1972, 12, 31));
         } catch (UnsupportedOperationException e) {
             String message = String.format("\"%s\": not castable to type %s", valueItem.serialize(), "time");
-            throw new CastException(message, getMetadata());
+            CastException ex = new CastException(message, getMetadata());
+            ex.initCause(e);
+            throw ex;
         }
     }
 

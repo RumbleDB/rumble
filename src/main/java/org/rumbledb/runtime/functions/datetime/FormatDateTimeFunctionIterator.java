@@ -22,7 +22,9 @@ public class FormatDateTimeFunctionIterator extends AbstractFormatFunctionIterat
             return valueItem.getDateTimeValue();
         } catch (UnsupportedOperationException e) {
             String message = String.format("\"%s\": not castable to type %s", valueItem.serialize(), "dateTime");
-            throw new CastException(message, getMetadata());
+            CastException ex = new CastException(message, getMetadata());
+            ex.initCause(e);
+            throw ex;
         }
     }
 
