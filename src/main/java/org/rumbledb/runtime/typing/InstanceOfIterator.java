@@ -134,16 +134,14 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
         if (itemToMatch.isMap()) {
-            List<Item> keys = itemToMatch.getItemKeys();
-            if (keys.isEmpty()) {
+            if (itemToMatch.getSize() == 0) {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
                 if (
                     itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
                         && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
-                )
-                {
+                ) {
                     return true;
                 }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
@@ -153,6 +151,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // expensive structural check
                 return true;
             }
+            List<Item> keys = itemToMatch.getItemKeys();
             ItemType keyType = getLeastCommonSuperItemType(keys, BuiltinTypesCatalogue.atomicItem);
             SequenceType valueSequenceType = getLeastCommonSuperSequenceType(
                 itemToMatch.getSequenceValues()

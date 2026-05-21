@@ -202,6 +202,11 @@ public class ObjectItem implements Item {
     }
 
     @Override
+    public int getSize() {
+        return this.keys.size();
+    }
+
+    @Override
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>(this.keys.size());
         for (String key : this.keys) {
