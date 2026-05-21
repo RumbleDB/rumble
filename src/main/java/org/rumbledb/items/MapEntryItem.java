@@ -66,7 +66,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public boolean isObject() {
-        return !this.key.isString() && this.value.size() == 1;
+        return this.key.isString() && this.value.size() == 1;
     }
 
     @Override
