@@ -115,7 +115,9 @@ public class SequenceType implements Serializable {
 
     public boolean isSubtypeOf(SequenceType superType) {
         if (isEmptySequence()) {
-            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+            return superType.isEmptySequence()
+                || superType.arity == Arity.OneOrZero
+                || superType.arity == Arity.ZeroOrMore;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
