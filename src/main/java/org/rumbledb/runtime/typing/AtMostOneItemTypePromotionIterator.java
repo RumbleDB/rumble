@@ -63,26 +63,24 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (item != null && !item.getDynamicType().isResolved()) {
             item.getDynamicType().resolve(context, getMetadata());
         }
-        /*
-         * if (
-         * item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
-         * ) {
-         * throw new UnexpectedTypeException(
-         * this.exceptionMessage
-         * + "Expecting one item, but the value provided is the empty sequence.",
-         * getMetadata()
-         * );
-         * }
-         */
+
+        if (
+            item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
+        ) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + "Expecting one item, but the value provided is the empty sequence.",
+                    getMetadata()
+            );
+        }
+
         if (item == null) {
             return null;
         }
 
-        /*
-         * if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
-         * item = checkTypePromotion(item);
-         * }
-         */
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
+            item = checkTypePromotion(item);
+        }
         return item;
     }
 
