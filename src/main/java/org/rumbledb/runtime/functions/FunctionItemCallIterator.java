@@ -154,7 +154,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
                         );
-                        this.functionArguments.set(i, typePromotionIterator);
+                        this.functionArguments.set(i, this.functionArguments.get(i));
                     } else {
                         RuntimeIterator typePromotionIterator = new TypePromotionIterator(
                                 this.functionArguments.get(i),

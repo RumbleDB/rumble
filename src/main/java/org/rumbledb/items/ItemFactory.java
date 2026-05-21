@@ -336,6 +336,14 @@ public class ItemFactory {
         return new MapWithRemovedEntryItem(original, keysToRemove.get(0));
     }
 
+    public Item createMapItemAddingKey(
+            Item original,
+            Item keyToAdd,
+            List<Item> valueToAdd
+    ) {
+        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
     public Item createMapItem(
             List<Item> keys,
             List<List<Item>> values,

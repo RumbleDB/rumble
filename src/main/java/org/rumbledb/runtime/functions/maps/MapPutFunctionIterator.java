@@ -87,6 +87,10 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(context, valueSequence);
 
+        if(mapItem.getMutabilityLevel() == -1) {
+            // fast path: update the mutable map in place
+            return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
+        }
         // 4) Build a new map: keep entries whose key is not op:same-key to $key. Walk keys and value
         // sequences by index (one pass); reuse value lists for unchanged entries like map:remove.
         if (mapItem.isObject() && key.isString() && valueSequence.size() == 1) {
