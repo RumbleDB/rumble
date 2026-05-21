@@ -61,9 +61,6 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
         Item item = null;
             item = this.iterator.materializeFirstItemOrNull(context);
-                System.err.println(
-                        "Dynamic type: " + item.getDynamicType().toString()
-                );
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(context, getMetadata());
             }

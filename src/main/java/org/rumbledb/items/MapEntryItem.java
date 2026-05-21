@@ -85,6 +85,11 @@ public class MapEntryItem implements Item {
     }
 
     @Override
+    public int getSize() {
+        return 1;
+    }
+
+    @Override
     public List<Item> getValues() {
         return this.getItemValues();
     }

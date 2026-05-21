@@ -97,6 +97,11 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
+    public int getSize() {
+        return this.original.getSize() + 1;
+    }
+
+    @Override
     public List<Item> getValues() {
         return getItemValues();
     }
