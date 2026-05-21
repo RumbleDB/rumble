@@ -649,6 +649,18 @@ public class SequenceType implements Serializable {
             case "gYearMonth+":
                 st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "language":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.One);
+                break;
+            case "language?":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "language*":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "language+":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrMore);
+                break;
             case "anyURI":
                 st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.One);
                 break;
