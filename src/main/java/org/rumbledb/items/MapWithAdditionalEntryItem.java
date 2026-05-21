@@ -71,12 +71,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public List<String> getKeys() {
-        List<String> result = new ArrayList<>(this.original.getStringKeys());
-        if (this.additionalKey.isString()) {
-            result.add(this.additionalKey.getStringValue());
-            return result;
-        }
-        throw new OurBadException("Map is not an object.");
+        return getStringKeys();
     }
 
     @Override
@@ -98,7 +93,24 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public int getSize() {
+        if(this.original.hasKey(this.additionalKey)) {
+            return this.original.getSize();
+        }
         return this.original.getSize() + 1;
+    }
+
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        if (this.additionalKey.isString() && this.additionalKey.getStringValue().equals(key)) {
+            return true;
+        }
+        return this.original.hasKey(key);
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (this.additionalKey.equals(key)) {
+            return true;
+        }
+        return this.original.hasKey(key);
     }
 
     @Override

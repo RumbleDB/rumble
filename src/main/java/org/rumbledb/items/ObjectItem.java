@@ -206,6 +206,17 @@ public class ObjectItem implements Item {
         return this.keys.size();
     }
 
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return this.keyStringToIndex.containsKey(key);
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (!key.isString()) {
+            return false;
+        }
+        return hasKey(key.getStringValue());
+    }
+
     @Override
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>(this.keys.size());

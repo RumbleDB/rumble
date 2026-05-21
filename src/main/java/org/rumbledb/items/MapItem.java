@@ -168,6 +168,14 @@ public class MapItem implements Item {
         return this.storage.size();
     }
 
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return hasKey(ItemFactory.getInstance().createStringItem(key));
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        return this.storage.containsKey(key);
+    }
+
     @Override
     public List<Item> getValues() {
         return this.getItemValues();

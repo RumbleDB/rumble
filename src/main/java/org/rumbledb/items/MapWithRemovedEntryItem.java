@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.apache.commons.collections4.CollectionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,16 +43,30 @@ public class MapWithRemovedEntryItem implements Item {
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private Item original;
-    private Item removedKey;
+    private List<Item> removedKeys;
 
     public MapWithRemovedEntryItem() {
         this.original = null;
-        this.removedKey = null;
+        this.removedKeys = null;
     }
 
-    public MapWithRemovedEntryItem(Item original, Item removedKey) {
+    public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
-        this.removedKey = removedKey;
+        this.removedKeys = new ArrayList<>();
+        for(Item key : removedKeys) {
+            if(this.original.isObject()) {
+                if(!key.isString()) {
+                    continue;
+                }
+                if(this.original.hasKey(key.getStringValue())) {
+                    this.removedKeys.add(key);
+                }
+            } else {
+                if(this.original.hasKey(key)) {
+                    this.removedKeys.add(key);
+                }
+            }
+        }
     }
 
     // region maps
@@ -68,28 +83,42 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<String> getKeys() {
-        return this.original.getKeys().stream().filter(key -> !key.equals(this.removedKey.getStringValue())).toList();
+        return getStringKeys();
     }
 
     @Override
     public List<String> getStringKeys() {
-        if (this.removedKey.isString()) {
-            return this.original.getStringKeys()
-                .stream()
-                .filter(key -> !key.equals(this.removedKey.getStringValue()))
-                .toList();
-        }
-        return this.original.getStringKeys();
+        List<String> result = new ArrayList<>(
+            CollectionUtils.subtract(this.original.getStringKeys(), this.removedKeys.stream().map(Item::getStringValue).toList())
+        );
+        return result;
     }
 
     @Override
     public List<Item> getItemKeys() {
-        return this.original.getItemKeys().stream().filter(key -> !key.equals(this.removedKey)).toList();
+        List<Item> result = new ArrayList<>(
+            CollectionUtils.subtract(this.original.getItemKeys(), this.removedKeys)
+        );
+        return result;
     }
 
     @Override
     public int getSize() {
-        return this.original.getSize() - 1;
+        return this.original.getSize() - this.removedKeys.size();
+    }
+
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+            return false;
+        }
+        return this.original.hasKey(key);
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (this.removedKeys.contains(key)) {
+            return false;
+        }
+        return this.original.hasKey(key);
     }
 
     @Override
@@ -101,7 +130,7 @@ public class MapWithRemovedEntryItem implements Item {
     public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (key.equals(this.removedKey)) {
+            if (this.removedKeys.contains(key)) {
                 continue;
             }
             result.add(this.original.getItemByKey(key));
@@ -113,7 +142,7 @@ public class MapWithRemovedEntryItem implements Item {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (key.equals(this.removedKey)) {
+            if (this.removedKeys.contains(key)) {
                 continue;
             }
             result.add(this.original.getSequenceByKey(key));
@@ -123,7 +152,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public Item getItemByKey(String key) {
-        if (this.removedKey.isString() && this.removedKey.getStringValue().equals(key)) {
+        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
             return null;
         }
         return this.original.getItemByKey(key);
@@ -131,7 +160,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (this.removedKey.equals(key)) {
+        if (this.removedKeys.contains(key)) {
             return null;
         }
         return this.original.getItemByKey(key);
@@ -139,7 +168,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(String key) {
-        if (this.removedKey.isString() && this.removedKey.getStringValue().equals(key)) {
+        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
             return null;
         }
         return this.original.getSequenceByKey(key);
@@ -147,7 +176,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (this.removedKey.equals(key)) {
+        if (this.removedKeys.contains(key)) {
             return null;
         }
         return this.original.getSequenceByKey(key);
@@ -188,13 +217,13 @@ public class MapWithRemovedEntryItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.original);
-        kryo.writeClassAndObject(output, this.removedKey);
+        kryo.writeClassAndObject(output, this.removedKeys);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKey = (Item) kryo.readClassAndObject(input);
+        this.removedKeys = (List<Item>) kryo.readClassAndObject(input);
     }
 
     @Override
@@ -311,7 +340,7 @@ public class MapWithRemovedEntryItem implements Item {
             return false;
         }
         for (Item key : this.original.getItemKeys()) {
-            if (key.equals(this.removedKey)) {
+            if (this.removedKeys.contains(key)) {
                 continue;
             }
             List<Item> thisSequence = this.original.getSequenceByKey(key);
@@ -326,7 +355,7 @@ public class MapWithRemovedEntryItem implements Item {
             }
         }
         for (Item key : other.getItemKeys()) {
-            if (key.equals(this.removedKey)) {
+            if (this.removedKeys.contains(key)) {
                 return false;
             }
             if (getSequenceByKey(key) == null) {

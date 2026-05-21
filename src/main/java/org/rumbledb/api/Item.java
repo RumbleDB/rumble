@@ -755,6 +755,26 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(String key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(Item key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the members of the item if it is an array.
      *
      * @return the list of the array members.
