@@ -71,8 +71,8 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
                         + "Expecting at most one item, but the value provided has at least two items.",
                     getMetadata()
             );
-        }
 
+        }
         if (
             item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
         ) {
@@ -82,7 +82,6 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
                     getMetadata()
             );
         }
-
         if (item == null) {
             return null;
         }
