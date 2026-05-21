@@ -32,8 +32,8 @@ import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 
 import java.util.*;
@@ -400,11 +400,7 @@ public class ObjectItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        List<ItemType> itemTypes = new ArrayList<>();
-        for (String key : this.keys) {
-            itemTypes.add(getItemByKey(key).getDynamicType());
-        }
-        return ItemTypeFactory.createAnonymousObjectType(this.keys, itemTypes);
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
