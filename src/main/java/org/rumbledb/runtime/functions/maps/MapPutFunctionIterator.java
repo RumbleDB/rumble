@@ -87,7 +87,7 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         List<Item> valueSequence = new ArrayList<>();
         this.valueIterator.materialize(context, valueSequence);
 
-        if(mapItem.getMutabilityLevel() == -1) {
+        if (mapItem.getMutabilityLevel() == -1) {
             // fast path: update the mutable map in place
             return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
         }

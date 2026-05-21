@@ -53,16 +53,16 @@ public class MapWithRemovedEntryItem implements Item {
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
         this.removedKeys = new ArrayList<>();
-        for(Item key : removedKeys) {
-            if(this.original.isObject()) {
-                if(!key.isString()) {
+        for (Item key : removedKeys) {
+            if (this.original.isObject()) {
+                if (!key.isString()) {
                     continue;
                 }
-                if(this.original.hasKey(key.getStringValue())) {
+                if (this.original.hasKey(key.getStringValue())) {
                     this.removedKeys.add(key);
                 }
             } else {
-                if(this.original.hasKey(key)) {
+                if (this.original.hasKey(key)) {
                     this.removedKeys.add(key);
                 }
             }
@@ -89,7 +89,10 @@ public class MapWithRemovedEntryItem implements Item {
     @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>(
-            CollectionUtils.subtract(this.original.getStringKeys(), this.removedKeys.stream().map(Item::getStringValue).toList())
+                CollectionUtils.subtract(
+                    this.original.getStringKeys(),
+                    this.removedKeys.stream().map(Item::getStringValue).toList()
+                )
         );
         return result;
     }
@@ -97,7 +100,7 @@ public class MapWithRemovedEntryItem implements Item {
     @Override
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>(
-            CollectionUtils.subtract(this.original.getItemKeys(), this.removedKeys)
+                CollectionUtils.subtract(this.original.getItemKeys(), this.removedKeys)
         );
         return result;
     }

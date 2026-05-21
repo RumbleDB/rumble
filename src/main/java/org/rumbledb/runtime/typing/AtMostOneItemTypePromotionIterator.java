@@ -3,7 +3,6 @@ package org.rumbledb.runtime.typing;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -60,26 +59,30 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             this.sequenceType.resolve(context, getMetadata());
         }
         Item item = null;
-            item = this.iterator.materializeFirstItemOrNull(context);
-            if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(context, getMetadata());
-            }
-        /*if (
-            item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
-        ) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + "Expecting one item, but the value provided is the empty sequence.",
-                    getMetadata()
-            );
-        }*/
+        item = this.iterator.materializeFirstItemOrNull(context);
+        if (item != null && !item.getDynamicType().isResolved()) {
+            item.getDynamicType().resolve(context, getMetadata());
+        }
+        /*
+         * if (
+         * item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
+         * ) {
+         * throw new UnexpectedTypeException(
+         * this.exceptionMessage
+         * + "Expecting one item, but the value provided is the empty sequence.",
+         * getMetadata()
+         * );
+         * }
+         */
         if (item == null) {
             return null;
         }
 
-        /*if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
-            item = checkTypePromotion(item);
-        }*/
+        /*
+         * if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
+         * item = checkTypePromotion(item);
+         * }
+         */
         return item;
     }
 

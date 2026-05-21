@@ -93,7 +93,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public int getSize() {
-        if(this.original.hasKey(this.additionalKey)) {
+        if (this.original.hasKey(this.additionalKey)) {
             return this.original.getSize();
         }
         return this.original.getSize() + 1;
@@ -124,7 +124,7 @@ public class MapWithAdditionalEntryItem implements Item {
         for (Item key : this.original.getItemKeys()) {
             result.add(this.original.getItemByKey(key));
         }
-        if(this.additionalValue.size() != 1) {
+        if (this.additionalValue.size() != 1) {
             throw new OurBadException("Map is not an object.");
         }
         result.add(this.additionalValue.get(0));
@@ -144,7 +144,7 @@ public class MapWithAdditionalEntryItem implements Item {
     @Override
     public Item getItemByKey(String key) {
         if (this.additionalKey.isString() && this.additionalKey.getStringValue().equals(key)) {
-            if(this.additionalValue.size() != 1) {
+            if (this.additionalValue.size() != 1) {
                 throw new OurBadException("Map is not an object.");
             }
             return this.additionalValue.get(0);
@@ -155,7 +155,7 @@ public class MapWithAdditionalEntryItem implements Item {
     @Override
     public Item getItemByKey(Item key) {
         if (this.additionalKey.equals(key)) {
-            if(this.additionalValue.size() != 1) {
+            if (this.additionalValue.size() != 1) {
                 throw new OurBadException("Map is not an object.");
             }
             return this.additionalValue.get(0);
@@ -355,15 +355,15 @@ public class MapWithAdditionalEntryItem implements Item {
         }
         for (Item key : other.getItemKeys()) {
             if (key.equals(this.additionalKey)) {
-            List<Item> otherSequence = other.getSequenceByKey(key);
-            if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
-                return false;
-            }
-            for (int i = 0; i < this.additionalValue.size(); i++) {
-                if (!additionalValue.get(i).equals(otherSequence.get(i))) {
+                List<Item> otherSequence = other.getSequenceByKey(key);
+                if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
                     return false;
                 }
-            }
+                for (int i = 0; i < this.additionalValue.size(); i++) {
+                    if (!additionalValue.get(i).equals(otherSequence.get(i))) {
+                        return false;
+                    }
+                }
             }
             if (getSequenceByKey(key) == null) {
                 return false;
