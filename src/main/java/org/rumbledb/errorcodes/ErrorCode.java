@@ -30,8 +30,7 @@ import java.util.Objects;
 public final class ErrorCode implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
-    public static final String ERROR_PREFIX = "err";
+
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();
 
     private final Name name;
@@ -41,7 +40,7 @@ public final class ErrorCode implements Serializable {
     }
 
     private static ErrorCode registerBuiltIn(String identifier) {
-        ErrorCode errorCode = new ErrorCode(new Name(ERROR_NS, ERROR_PREFIX, identifier));
+        ErrorCode errorCode = new ErrorCode(new Name(Name.ERROR_NS, "err", identifier));
         BUILTIN_BY_IDENTIFIER.put(identifier, errorCode);
         return errorCode;
     }

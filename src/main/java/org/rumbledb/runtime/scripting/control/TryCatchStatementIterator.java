@@ -3,6 +3,7 @@ package org.rumbledb.runtime.scripting.control;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExitStatementException;
@@ -50,13 +51,15 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
                 throw throwable;
             }
             RumbleException unnestedException = RumbleException.unnestException(throwable);
-            String errorCode = unnestedException.getErrorCode();
+            String errorCode = unnestedException.getErrorCode().toString();
             if (this.catchStatements.containsKey(errorCode)) {
                 RuntimeIterator catchingStatementIterator = this.catchStatements.get(errorCode);
                 DynamicContext childContext = new DynamicContext(context);
+                ErrorVariables.injectDynamicContext(childContext, unnestedException);
                 catchingStatementIterator.materializeFirstItemOrNull(childContext);
             } else if (this.catchAllStatements != null) {
                 DynamicContext childContext = new DynamicContext(context);
+                ErrorVariables.injectDynamicContext(childContext, unnestedException);
                 this.catchAllStatements.materializeFirstItemOrNull(childContext);
             } else {
                 throw throwable;

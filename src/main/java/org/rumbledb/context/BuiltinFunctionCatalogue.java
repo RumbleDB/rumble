@@ -261,6 +261,21 @@ public class BuiltinFunctionCatalogue {
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(fn)) {
+                if (name.getLocalName().equals("concat")) {
+                    // Special case for fn:concat, which is variadic.
+                    return new BuiltinFunction(
+                            new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
+                            new FunctionSignature(
+                                    Collections.nCopies(
+                                        identifier.getArity(),
+                                        SequenceType.createSequenceType("anyAtomicType?")
+                                    ),
+                                    SequenceType.createSequenceType("string")
+                            ),
+                            ConcatFunctionIterator.class,
+                            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+                    );
+                }
                 return builtinFunctions.get(fn);
             }
             FunctionIdentifier jn = new FunctionIdentifier(

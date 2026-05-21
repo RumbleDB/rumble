@@ -44,7 +44,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-
+/**
+ * This class performs value or general comparison of two items.
+ * The difference lies in the way untyped values are cast.
+ * The existential quantification logic for general comparison is not handled in this iterator, but in the
+ * ComparisonVisitor.
+ */
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
@@ -73,7 +78,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public boolean isValueEquality() {
-        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
+        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ)
+            || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
     }
 
     public RuntimeIterator getLeftIterator() {
@@ -86,92 +92,83 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // value comparison may return an empty sequence
-        if (this.comparisonOperator.isValueComparison()) {
-            // if EMPTY SEQUENCE - eg. () or ((),())
-            // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            try {
-                this.left = this.leftIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.left == null) {
-                return null;
-            }
-
-            try {
-                this.right = this.rightIterator.materializeAtMostOneItemOrNull(
-                    dynamicContext
-                );
-            } catch (MoreThanOneItemException e) {
-                throw new UnexpectedTypeException(
-                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        getMetadata()
-                );
-            }
-            if (this.right == null) {
-                return null;
-            }
+        // if EMPTY SEQUENCE - eg. () or ((),())
+        // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
+        }
+        if (this.left == null) {
+            return null;
         }
 
-        // use stored values for value comparison
-        if (this.comparisonOperator.isValueComparison()) {
-            return valueComparison(this.left, this.right);
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(
+                dynamicContext
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    getMetadata()
+            );
+        }
+        if (this.right == null) {
+            return null;
         }
 
-        throw new OurBadException("General comparison should normally be translated to FLWOR at runtime.");
-    }
-
-    private Item valueComparison(Item left, Item right) {
-
-        if (left.isArray() || right.isArray()) {
+        if (this.left.isArray() || this.right.isArray()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on array type",
                     getMetadata()
             );
-        } else if (left.isObject() || right.isObject()) {
+        } else if (this.left.isObject() || this.right.isObject()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on object type",
                     getMetadata()
             );
-        } else if (left.isFunction() || right.isFunction()) {
+        } else if (this.left.isFunction() || this.right.isFunction()) {
             throw new NonAtomicKeyException(
                     "Invalid args. Comparison can't be performed on function type",
                     getMetadata()
             );
         }
 
-        if (left.isUntypedAtomic()) {
-            left = ItemFactory.getInstance().createStringItem(left.getStringValue());
+        if (this.comparisonOperator.isValueComparison()) {
+            if (this.left.isUntypedAtomic()) {
+                this.left = ItemFactory.getInstance().createStringItem(this.left.getStringValue());
+            }
+            if (this.right.isUntypedAtomic()) {
+                this.right = ItemFactory.getInstance().createStringItem(this.right.getStringValue());
+            }
         }
-        if (right.isUntypedAtomic()) {
-            right = ItemFactory.getInstance().createStringItem(right.getStringValue());
-        }
+        // otherwise they will be cast to match each other in compareItems, and that method will throw if they are not
+        // atomic.
 
-        if (!left.isAtomic()) {
+        if (!this.left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
 
-        long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
+        long comparison = compareItems(this.left, this.right, this.comparisonOperator, getMetadata());
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
                         + this.comparisonOperator
                         + "\": operation not possible with parameters of type \""
-                        + left.getDynamicType().toString()
+                        + this.left.getDynamicType().toString()
                         + "\" and \""
-                        + right.getDynamicType().toString()
+                        + this.right.getDynamicType().toString()
                         + "\"",
                     getMetadata()
             );
         }
         // NaN never compares successfully.
-        if ((left.isFloat() || left.isDouble()) && left.isNaN()) {
+        if ((this.left.isFloat() || this.left.isDouble()) && this.left.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(
@@ -179,7 +176,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                         .equals(ComparisonOperator.VC_NE)
                 );
         }
-        if ((right.isFloat() || right.isDouble()) && right.isNaN()) {
+        if ((this.right.isFloat() || this.right.isDouble()) && this.right.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(

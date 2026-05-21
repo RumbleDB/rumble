@@ -32,6 +32,7 @@ import java.util.Map;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorVariables;
 
 
 public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
@@ -108,17 +109,23 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
             } catch (Throwable throwable) {
                 RumbleException exception = RumbleException.unnestException(throwable);
-                String code = exception.getErrorCode();
+                String code = exception.getErrorCode().toString();
                 this.results.clear();
                 if (this.catchExpressions.containsKey(code)) {
+                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
+                    ErrorVariables.injectDynamicContext(context, exception);
+
                     RuntimeIterator catchingExpression = this.catchExpressions.get(code);
-                    catchingExpression.open(this.currentDynamicContextForLocalExecution);
+                    catchingExpression.open(context);
                     while (catchingExpression.hasNext()) {
                         this.results.add(catchingExpression.next());
                     }
                     catchingExpression.close();
                 } else if (this.catchAllExpression != null) {
-                    this.catchAllExpression.open(this.currentDynamicContextForLocalExecution);
+                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
+                    ErrorVariables.injectDynamicContext(context, exception);
+
+                    this.catchAllExpression.open(context);
                     while (this.catchAllExpression.hasNext()) {
                         this.results.add(this.catchAllExpression.next());
                     }
