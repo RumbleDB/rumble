@@ -4204,6 +4204,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
+            true,
             metadata
         );
     }
