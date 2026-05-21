@@ -90,6 +90,16 @@ public class MapEntryItem implements Item {
     }
 
     @Override
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return this.key.isString() && this.key.getStringValue().equals(key);
+    }
+
+    @Override
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        return this.key.equals(key);
+    }
+
+    @Override
     public List<Item> getValues() {
         return this.getItemValues();
     }
