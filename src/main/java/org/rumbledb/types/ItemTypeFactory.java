@@ -739,6 +739,33 @@ public class ItemTypeFactory {
         return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
     }
 
+    /**
+     * Create an object item type from an item by detecting a schema.
+     * 
+     * @param item the item to analyze
+     * @return an object item type representing the type in Rumble
+     */
+    public static ItemType createItemTypeFromItem(Item item) {
+        if (item.isObject()) {
+            List<ItemType> itemTypes = new ArrayList<>();
+            for (String key : item.getStringKeys()) {
+                itemTypes.add(createItemTypeFromItem(item.getItemByKey(key)));
+            }
+            return ItemTypeFactory.createAnonymousObjectType(item.getStringKeys(), itemTypes);
+        } else if (item.isArrayOfItems()) {
+            if (item.getSize() == 0) {
+                return ItemTypeFactory.createEmptyArrayType();
+            }
+            ItemType result = item.getItemAt(0).getDynamicType();
+            for (int i = 1; i < item.getSize(); i++) {
+                result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
+            }
+            return ItemTypeFactory.createAnonymousArrayType(result);
+        } else {
+            return item.getDynamicType();
+        }
+    }
+
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
         return new ArrayItemType(
                 null,
