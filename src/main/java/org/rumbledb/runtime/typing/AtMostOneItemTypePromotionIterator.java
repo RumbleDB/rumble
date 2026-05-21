@@ -60,20 +60,14 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             this.sequenceType.resolve(context, getMetadata());
         }
         Item item = null;
-        try {
-            item = this.iterator.materializeAtMostOneItemOrNull(context);
+            item = this.iterator.materializeFirstItemOrNull(context);
+                System.err.println(
+                        "Dynamic type: " + item.getDynamicType().toString()
+                );
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(context, getMetadata());
             }
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + "Expecting at most one item, but the value provided has at least two items.",
-                    getMetadata()
-            );
-
-        }
-        if (
+        /*if (
             item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
         ) {
             throw new UnexpectedTypeException(
@@ -81,14 +75,14 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
                         + "Expecting one item, but the value provided is the empty sequence.",
                     getMetadata()
             );
-        }
+        }*/
         if (item == null) {
             return null;
         }
 
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
+        /*if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
             item = checkTypePromotion(item);
-        }
+        }*/
         return item;
     }
 

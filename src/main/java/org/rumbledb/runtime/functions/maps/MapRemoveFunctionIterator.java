@@ -15,7 +15,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -104,43 +103,8 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             this.resultItem = mapItem;
             return;
         }
-        List<Item> mapKeys = mapItem.getItemKeys();
-        List<List<Item>> mapValueSequences = mapItem.getSequenceValues();
-        boolean allKeysString = true;
-        boolean allValuesSingletons = true;
-        HashMap<Item, List<Item>> newKeyValuePairs = new HashMap<>();
-        HashMap<String, Item> newStringKeyValuePairs = new HashMap<>();
-        for (int i = 0; i < mapKeys.size(); i++) {
-            Item mapKey = mapKeys.get(i);
-            if (keysToRemove.contains(mapKey)) {
-                continue;
-            }
-            List<Item> seq = mapValueSequences.get(i);
-            if (allKeysString && !mapKey.isString()) {
-                allKeysString = false;
-                // optimization: free up memory by removing pointer to the string hash map
-                newStringKeyValuePairs = null;
-            }
-            if (allValuesSingletons && seq.size() != 1) {
-                allValuesSingletons = false;
-                // optimization: free up memory by removing pointer to the string hash map
-                newStringKeyValuePairs = null;
-            }
-            if (allKeysString && allValuesSingletons) {
-                if (newStringKeyValuePairs == null) {
-                    newStringKeyValuePairs = new HashMap<>();
-                }
-                newStringKeyValuePairs.put(mapKey.getStringValue(), seq.get(0));
-            }
-            newKeyValuePairs.put(mapKey, seq);
-        }
-        if (allKeysString && allValuesSingletons) {
-            this.resultItem = ItemFactory.getInstance()
-                .createObjectItemOptimized(newStringKeyValuePairs, false);
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createMapItem(newKeyValuePairs, getMetadata(), false);
-        }
+        this.resultItem = ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
+        return;
     }
 
     @Override
