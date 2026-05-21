@@ -143,7 +143,10 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
                         && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
                 )
+                {
                     return true;
+                }
+                return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
             if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
                 // if the item already has a dynamic type that is a subtype of the required type, we can skip the more
