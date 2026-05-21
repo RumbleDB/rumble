@@ -191,6 +191,7 @@ import org.rumbledb.runtime.navigation.ObjectLookupIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.runtime.primary.AtMostOneItemVariableReferenceIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
@@ -256,6 +257,7 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
@@ -347,8 +349,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
-        if (clause instanceof ForClause) {
-            ForClause forClause = (ForClause) clause;
+        if (clause instanceof ForClause forClause) {
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
             return new ForClauseSparkIterator(
                     previousIterator,
@@ -358,8 +359,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof LetClause) {
-            LetClause letClause = (LetClause) clause;
+        } else if (clause instanceof LetClause letClause) {
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
             return new LetClauseSparkIterator(
                     previousIterator,
@@ -368,9 +368,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof GroupByClause) {
+        } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -392,9 +392,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     groupingExpressions,
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof OrderByClause) {
+        } else if (clause instanceof OrderByClause orderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
+            for (OrderByClauseSortingKey orderExpr : orderByClause.getSortingKeys()) {
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
                 if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
                     if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
@@ -418,16 +418,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     ((OrderByClause) clause).isStable(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof WhereClause) {
+        } else if (clause instanceof WhereClause whereClause) {
             return new WhereClauseSparkIterator(
                     previousIterator,
-                    this.visit(((WhereClause) clause).getWhereExpression(), argument),
+                    this.visit(whereClause.getWhereExpression(), argument),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof CountClause) {
+        } else if (clause instanceof CountClause countClause) {
             return new CountClauseSparkIterator(
                     previousIterator,
-                    ((CountClause) clause).getCountVariableName(),
+                    countClause.getCountVariableName(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
@@ -436,10 +436,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitVariableReference(VariableReferenceExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new VariableReferenceIterator(
-                expression.getVariableName(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeIterator runtimeIterator = null;
+        if (
+            expression.getType().isEmptySequence()
+                || expression.getType().getArity().equals(Arity.One)
+                || expression.getType().getArity().equals(Arity.OneOrZero)
+        ) {
+            runtimeIterator = new AtMostOneItemVariableReferenceIterator(
+                    expression.getVariableName(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new VariableReferenceIterator(
+                    expression.getVariableName(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
