@@ -60,6 +60,7 @@ jobs:
       matrix:
         test_class: [
           "FrontendTests",
+          "BackwardsCompatibilityTests",
           "RuntimeTests",
           "RuntimeTestsNoParallelism",
           "RuntimeTestsNoInlining",

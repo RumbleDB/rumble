@@ -2,11 +2,14 @@ package org.rumbledb.compiler;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.DecimalFormatPropertyInvalidValueException;
+import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidDecimalFormatPropertyConflict;
+import org.rumbledb.exceptions.DecimalFormatPropertyConflictException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 
@@ -26,6 +29,7 @@ public final class DecimalFormatDeclarationHelper {
             List<? extends ParseTree> propertyNames,
             List<? extends ParseTree> stringLiterals,
             StaticContext moduleContext,
+            boolean isJSONiq,
             ExceptionMetadata metadata
     ) {
         Name name = null;
@@ -51,11 +55,11 @@ public final class DecimalFormatDeclarationHelper {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral(stringLiterals.get(i).getText());
+            String value = parseStringLiteral(stringLiterals.get(i).getText(), isJSONiq);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
-                throw new SemanticException(
+                throw new DuplicateDecimalFormatPropertyException(
                         "Decimal format property defined more than once: " + propertyName,
                         metadata
                 );
@@ -125,7 +129,7 @@ public final class DecimalFormatDeclarationHelper {
         }
     }
 
-    public static String parseStringLiteral(String text) {
+    public static String parseStringLiteral(String text, boolean isJSONiq) {
         if (text == null || text.length() < 2) {
             throw new OurBadException("Invalid string literal: " + text);
         }
@@ -139,15 +143,16 @@ public final class DecimalFormatDeclarationHelper {
 
         String content = text.substring(1, text.length() - 1);
 
-        if (quote == '"') {
-            return content.replace("\"\"", "\"");
+        if (isJSONiq) {
+            return StringEscapeUtils.unescapeJson(content);
         }
-        return content.replace("''", "'");
+
+        return StringEscapeUtils.unescapeXml(content);
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
         if (value == null || value.codePointCount(0, value.length()) != 1) {
-            throw new SemanticException(
+            throw new DecimalFormatPropertyInvalidValueException(
                     "Decimal format property '" + propertyName + "' must be exactly one character.",
                     metadata
             );
@@ -162,7 +167,7 @@ public final class DecimalFormatDeclarationHelper {
             ExceptionMetadata metadata
     ) {
         if (!characters.add(codePoint)) {
-            throw new InvalidDecimalFormatPropertyConflict(
+            throw new DecimalFormatPropertyConflictException(
                     "Decimal format contains duplicate picture-string character at property: " + propertyName,
                     metadata
             );

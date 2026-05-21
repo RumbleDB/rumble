@@ -30,8 +30,7 @@ import java.util.Objects;
 public final class ErrorCode implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
-    public static final String ERROR_PREFIX = "err";
+
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();
 
     private final Name name;
@@ -41,7 +40,7 @@ public final class ErrorCode implements Serializable {
     }
 
     private static ErrorCode registerBuiltIn(String identifier) {
-        ErrorCode errorCode = new ErrorCode(new Name(ERROR_NS, ERROR_PREFIX, identifier));
+        ErrorCode errorCode = new ErrorCode(new Name(Name.ERROR_NS, "err", identifier));
         BUILTIN_BY_IDENTIFIER.put(identifier, errorCode);
         return errorCode;
     }
@@ -119,6 +118,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidSelectorErrorCode = registerBuiltIn("JNTY0018");
 
     public static final ErrorCode CannotMaterializeErrorCode = registerBuiltIn("RBDY0005");
+    public static final ErrorCode UnimplementedFunctionErrorCode = registerBuiltIn("RBDY2708");
 
     public static final ErrorCode UnrecognizedRumbleMLClassReferenceErrorCode = registerBuiltIn("RBML0001");
     public static final ErrorCode UnrecognizedRumbleMLParamReferenceErrorCode = registerBuiltIn("RBML0002");
@@ -186,7 +186,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");
     public static final ErrorCode DirectElementConstructorTagMismatchErrorCode = registerBuiltIn("XQST0118");
-    public static final ErrorCode InvalidDecimalFormatPropertyConflict = registerBuiltIn("XQST0098");
+    public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
+    public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
+    public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
 
     public static final ErrorCode AtomizationError = registerBuiltIn("FOTY0012");
     public static final ErrorCode UnexpectedFunctionItem = registerBuiltIn("FOTY0015");

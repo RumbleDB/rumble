@@ -1,14 +1,14 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import java.time.OffsetDateTime;
+import java.util.List;
 
 abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -39,22 +39,39 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
             return valueItem;
         }
 
-        FormattingOptions formattingOptions = FormattingOptionsResolver.resolve(
-            this.children.size(),
-            languageItem,
-            calendarItem,
-            placeItem,
-            pictureItem.serialize(),
+        String language = getOptionalString(languageItem);
+        String calendar = getOptionalString(calendarItem);
+        String place = getOptionalString(placeItem);
+
+        if (language == null) {
+            language = getConfiguration().getDefaultFormattingLanguage();
+        }
+
+        if (calendar == null) {
+            calendar = getConfiguration().getDefaultFormattingCalendar();
+        }
+
+        FormattingOptions formattingOptions = FormattingOptions.fromArguments(
+            language,
+            calendar,
+            place,
+            getRuntimeStaticContext().getStaticallyKnownNamespaces(),
             getMetadata()
         );
+
 
         OffsetDateTime temporalValue = getTemporalValue(valueItem);
         boolean hasExplicitTimezone = valueItem.hasTimeZone();
 
-        String result = TemporalPictureFormatter.format(
+        OffsetDateTime renderingValue = applyConfiguredZone(
             temporalValue,
+            hasExplicitTimezone,
+            formattingOptions
+        );
+
+        String result = TemporalPictureFormatter.format(
+            renderingValue,
             pictureItem.getStringValue(),
-            pictureItem.serialize(),
             hasExplicitTimezone,
             formattingOptions,
             this::supportsComponent,
@@ -64,7 +81,32 @@ abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeI
         return ItemFactory.getInstance().createStringItem(result);
     }
 
+    private static String getOptionalString(Item item) {
+        return item != null && !item.isNull()
+            ? item.getStringValue()
+            : null;
+    }
+
+    static OffsetDateTime applyConfiguredZone(
+            OffsetDateTime value,
+            boolean hasExplicitTimezone,
+            FormattingOptions options
+    ) {
+        if (
+            !hasExplicitTimezone
+                || options == null
+                || !options.shouldAdjustToPlaceTimezone()
+        ) {
+            return value;
+        }
+
+        return value.toInstant()
+            .atZone(options.placeZoneId)
+            .toOffsetDateTime();
+    }
+
     protected abstract OffsetDateTime getTemporalValue(Item valueItem);
 
     protected abstract boolean supportsComponent(char component);
+
 }

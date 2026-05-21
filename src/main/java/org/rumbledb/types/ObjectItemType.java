@@ -9,8 +9,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.collections4.ListUtils;
+import java.util.TreeSet;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -331,16 +331,23 @@ public class ObjectItemType implements ItemType {
      */
     private Map<String, FieldDescriptor> mergeObjectContent(ObjectItemType other) {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
-        for (Map.Entry<String, FieldDescriptor> entry : this.getObjectContentFacet().entrySet()) {
-            merged.put(entry.getKey(), FieldDescriptor.copy(entry.getValue()));
-        }
-        for (Map.Entry<String, FieldDescriptor> entry : other.getObjectContentFacet().entrySet()) {
-            FieldDescriptor existing = merged.get(entry.getKey());
-            if (existing == null) {
-                merged.put(entry.getKey(), FieldDescriptor.copy(entry.getValue()));
-                continue;
+        Set<String> fields = new TreeSet<>();
+        fields.addAll(this.getObjectContentFacet().keySet());
+        fields.addAll(other.getObjectContentFacet().keySet());
+        for (String field : fields) {
+            FieldDescriptor fd1 = this.getObjectContentFacet().get(field);
+            FieldDescriptor fd2 = other.getObjectContentFacet().get(field);
+            if (fd1 != null && fd2 != null) {
+                merged.put(field, mergeDescriptors(fd1, fd2));
+            } else if (fd1 != null) {
+                FieldDescriptor fieldDescriptor = FieldDescriptor.copy(fd1);
+                fieldDescriptor.setRequired(false);
+                merged.put(field, fieldDescriptor);
+            } else {
+                FieldDescriptor fieldDescriptor = FieldDescriptor.copy(fd2);
+                fieldDescriptor.setRequired(false);
+                merged.put(field, fieldDescriptor);
             }
-            merged.put(entry.getKey(), mergeDescriptors(existing, entry.getValue()));
         }
         return merged;
     }

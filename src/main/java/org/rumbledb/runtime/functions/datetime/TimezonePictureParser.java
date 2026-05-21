@@ -2,8 +2,8 @@ package org.rumbledb.runtime.functions.datetime;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.base.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 final class TimezonePictureParser {
 
@@ -35,6 +35,10 @@ final class TimezonePictureParser {
 
         if (core.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata);
+        }
+
+        if ("N".equals(core) || "n".equals(core) || "Nn".equals(core)) {
+            return ParsedTimezonePicture.named(core);
         }
 
         if (component == 'z') {

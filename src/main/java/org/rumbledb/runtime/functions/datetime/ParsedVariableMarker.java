@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.rumbledb.runtime.functions.base.formatting.NumericPicture;
+import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 
 final class ParsedVariableMarker {
 

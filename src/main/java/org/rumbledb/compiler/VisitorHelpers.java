@@ -199,11 +199,12 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
@@ -329,6 +330,7 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
@@ -386,13 +388,14 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();

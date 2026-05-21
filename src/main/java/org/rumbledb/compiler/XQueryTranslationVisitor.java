@@ -25,6 +25,8 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -224,13 +226,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitModule(XQueryParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             if (ctx.vers.getText().trim().equals("\"1.0\"")) {
-                this.moduleContext.setQueryLanguage("jsoniq10");
+                this.moduleContext.setQueryLanguage("xquery10");
             } else if (ctx.vers.getText().trim().equals("\"3.0\"")) {
-                this.moduleContext.setQueryLanguage("jsoniq31");
+                this.moduleContext.setQueryLanguage("xquery31");
             } else if (ctx.vers.getText().trim().equals("\"3.1\"")) {
-                this.moduleContext.setQueryLanguage("jsoniq31");
+                this.moduleContext.setQueryLanguage("xquery31");
             } else if (ctx.vers.getText().trim().equals("\"4.0\"")) {
-                this.moduleContext.setQueryLanguage("jsoniq40");
+                this.moduleContext.setQueryLanguage("xquery40");
             } else {
                 throw new JsoniqVersionException(createMetadataFromContext(ctx));
             }
@@ -276,6 +278,55 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     )
                 );
             }
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        new SequenceType(
+                                itemType,
+                                SequenceType.Arity.ZeroOrMore
+                        ),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
+            boolean isAlreadyDeclared = false;
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(externalVariable)) {
+                    isAlreadyDeclared = true;
+                    continue;
+                }
+            }
+            if (isAlreadyDeclared) {
+                continue;
+            }
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        externalVariable,
+                        true,
+                        SequenceType.createSequenceType("item*"),
+                        null,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
 
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
@@ -2245,7 +2296,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
                 Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
-                keyName = ItemTypeReference.renameAtomic(this.configuration, keyName);
+                keyName = ItemTypeReference.renameAtomic(moduleContext, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
                     keyType = new ItemTypeReference(keyName);
@@ -2270,7 +2321,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (itemTypeContext.eqName() != null) {
             Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-            name = ItemTypeReference.renameAtomic(this.configuration, name);
+            name = ItemTypeReference.renameAtomic(moduleContext, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
             }
@@ -2653,11 +2704,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
+        Expression tryExpression = ctx.try_expression == null
+            ? new CommaExpression(createMetadataFromContext(ctx))
+            : (Expression) this.visitExpr(ctx.try_expression);
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
+            Expression catchExpression = catchCtx.catch_expression == null
+                ? new CommaExpression(createMetadataFromContext(catchCtx))
+                : (Expression) this.visitExpr(catchCtx.catch_expression);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
                 Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
@@ -3077,7 +3132,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
         return new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(ctx)
         );
@@ -3093,7 +3148,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitDoubleSlash(XQueryParser.RelativePathExprContext doubleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(doubleSlashContext)
         );
@@ -3112,7 +3167,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlash(XQueryParser.RelativePathExprContext singleSlashContext) {
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultXQueryTypeNamespace("root"),
+                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
                 createMetadataFromContext(singleSlashContext)
         );
@@ -3822,6 +3877,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
+            false,
             metadata
         );
     }

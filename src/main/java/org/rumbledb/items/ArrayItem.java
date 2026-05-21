@@ -31,8 +31,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -238,7 +239,16 @@ public class ArrayItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.arrayItem;
+        if (this.arrayItems.isEmpty()) {
+            return ItemTypeFactory.createEmptyArrayType();
+        }
+
+        ItemType result = this.arrayItems.get(0).getDynamicType();
+        for (int i = 1; i < this.arrayItems.size(); i++) {
+            result = result.findLeastCommonSuperTypeLax(this.arrayItems.get(i).getDynamicType());
+        }
+
+        return ItemTypeFactory.createAnonymousArrayType(result);
     }
 
     @Override
