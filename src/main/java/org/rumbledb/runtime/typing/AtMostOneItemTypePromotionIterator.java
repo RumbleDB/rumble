@@ -3,6 +3,7 @@ package org.rumbledb.runtime.typing;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -59,9 +60,17 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             this.sequenceType.resolve(context, getMetadata());
         }
         Item item = null;
-        item = this.iterator.materializeFirstItemOrNull(context);
-        if (item != null && !item.getDynamicType().isResolved()) {
-            item.getDynamicType().resolve(context, getMetadata());
+        try {
+            item = this.iterator.materializeAtMostOneItemOrNull(context);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(context, getMetadata());
+            }
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + "Expecting at most one item, but the value provided has at least two items.",
+                    getMetadata()
+            );
         }
 
         if (
