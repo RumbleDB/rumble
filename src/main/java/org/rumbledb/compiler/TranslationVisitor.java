@@ -3025,11 +3025,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
+        Expression tryExpression = ctx.try_expression == null
+            ? new CommaExpression(createMetadataFromContext(ctx))
+            : (Expression) this.visitExpr(ctx.try_expression);
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
+            Expression catchExpression = catchCtx.catch_expression == null
+                ? new CommaExpression(createMetadataFromContext(catchCtx))
+                : (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.EqNameContext eqNameCtx : catchCtx.errors) {
                 Name name = parseEqName(eqNameCtx, false, false, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
@@ -4200,9 +4204,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
+            true,
             metadata
         );
     }
 
 }
-

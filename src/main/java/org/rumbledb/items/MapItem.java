@@ -164,6 +164,11 @@ public class MapItem implements Item {
     }
 
     @Override
+    public int getSize() {
+        return this.storage.size();
+    }
+
+    @Override
     public List<Item> getValues() {
         return this.getItemValues();
     }

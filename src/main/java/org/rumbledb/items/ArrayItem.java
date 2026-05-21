@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -242,13 +243,7 @@ public class ArrayItem implements Item {
         if (this.arrayItems.isEmpty()) {
             return ItemTypeFactory.createEmptyArrayType();
         }
-
-        ItemType result = this.arrayItems.get(0).getDynamicType();
-        for (int i = 1; i < this.arrayItems.size(); i++) {
-            result = result.findLeastCommonSuperTypeLax(this.arrayItems.get(i).getDynamicType());
-        }
-
-        return ItemTypeFactory.createAnonymousArrayType(result);
+        return BuiltinTypesCatalogue.arrayItem;
     }
 
     @Override
