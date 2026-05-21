@@ -2,6 +2,7 @@ package org.rumbledb.compiler;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -143,83 +144,10 @@ public final class DecimalFormatDeclarationHelper {
         String content = text.substring(1, text.length() - 1);
 
         if (isJSONiq) {
-            return decodeJSONiqStringLiteralContent(content);
+            return StringEscapeUtils.unescapeJson(content);
         }
 
-        return decodeXQueryStringLiteralContent(content, quote);
-    }
-
-    private static String decodeXQueryStringLiteralContent(String content, char quote) {
-        if (quote == '"') {
-            return content.replace("\"\"", "\"");
-        }
-        return content.replace("''", "'");
-    }
-
-    // TODO clarify whether raw control characters need to be escaped for JSONiq string literals
-    private static String decodeJSONiqStringLiteralContent(String content) {
-        StringBuilder result = new StringBuilder(content.length());
-
-        for (int i = 0; i < content.length(); i++) {
-            char c = content.charAt(i);
-
-            if (c != '\\') {
-                result.append(c);
-                continue;
-            }
-
-            if (i + 1 >= content.length()) {
-                throw new OurBadException("Invalid JSONiq string literal escape.");
-            }
-
-            char escaped = content.charAt(++i);
-
-            switch (escaped) {
-                case '"':
-                    result.append('"');
-                    break;
-                case '\\':
-                    result.append('\\');
-                    break;
-                case '/':
-                    result.append('/');
-                    break;
-                case 'b':
-                    result.append('\b');
-                    break;
-                case 'f':
-                    result.append('\f');
-                    break;
-                case 'n':
-                    result.append('\n');
-                    break;
-                case 'r':
-                    result.append('\r');
-                    break;
-                case 't':
-                    result.append('\t');
-                    break;
-                case 'u':
-                    if (i + 4 >= content.length()) {
-                        throw new OurBadException("Invalid JSONiq unicode escape.");
-                    }
-
-                    String hex = content.substring(i + 1, i + 5);
-                    try {
-                        int codeUnit = Integer.parseInt(hex, 16);
-                        result.append((char) codeUnit);
-                    } catch (NumberFormatException e) {
-                        throw new OurBadException("Invalid JSONiq unicode escape: \\u" + hex);
-                    }
-
-                    i += 4;
-                    break;
-                default:
-                    throw new OurBadException("Invalid JSONiq string literal escape: \\" + escaped);
-            }
-        }
-
-        return result.toString();
+        return StringEscapeUtils.unescapeXml(content);
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
