@@ -94,12 +94,26 @@ jobs:
         with:
           name: collected-artifacts-xquery
           path: artifacts/xquery
+      - name: Download JSONiq regression report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: regressions-jsoniq
+          path: artifacts/regressions/jsoniq
+      - name: Download XQuery regression report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: regressions-xquery
+          path: artifacts/regressions/xquery
       - name: Generate and post comment
         uses: actions/github-script@v9
         with:
           script: |
             const { execSync } = require('child_process');
-            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
+            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --jsoniq-regressions artifacts/regressions/jsoniq --xquery-regressions artifacts/regressions/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
             
             if (context.eventName === 'pull_request') {
               // Post comment to PR
