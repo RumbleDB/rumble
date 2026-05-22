@@ -2,54 +2,9 @@
 import argparse
 import json
 import os
-from typing import Dict, List, Literal, Optional, Tuple, TypedDict, cast
+from typing import Dict, List, Optional, Tuple
 
-
-RegressionStatus = Literal['PASS', 'SKIP', 'FAIL', 'ERROR', 'MISSING']
-RegressionReason = Literal[
-    'missing-in-candidate',
-    'new-in-candidate',
-    'status-changed',
-    'status-worsened',
-    'error-code-changed',
-]
-
-
-class RegressionCase(TypedDict):
-    key: str
-    className: str
-    rawName: str
-    name: str
-    status: RegressionStatus
-    errorCode: Optional[str]
-    message: Optional[str]
-
-
-class RegressionChange(TypedDict):
-    key: str
-    className: str
-    rawName: str
-    name: str
-    baseline: RegressionCase
-    candidate: RegressionCase
-    reasons: List[RegressionReason]
-    isRegression: bool
-
-
-class RegressionSummary(TypedDict):
-    changedCount: int
-    regressionCount: int
-    statusChanged: int
-    statusWorsened: int
-    errorCodeChanged: int
-    missingInCandidate: int
-    newInCandidate: int
-
-
-class RegressionReport(TypedDict):
-    summary: RegressionSummary
-    regressions: List[RegressionChange]
-    changes: List[RegressionChange]
+from generate_qt3_regression_comment import render_regression_details
 
 
 def load_count_rows(dir_path: str) -> List[Dict]:
@@ -59,18 +14,6 @@ def load_count_rows(dir_path: str) -> List[Dict]:
     if not isinstance(data, list):
         raise ValueError(f"Unexpected format in {count_path}")
     return data
-
-
-def load_regression_summary(dir_path: Optional[str]) -> Optional[RegressionSummary]:
-    if not dir_path:
-        return None
-    regression_path = os.path.join(dir_path, 'regressions.json')
-    if not os.path.exists(regression_path):
-        return None
-    with open(regression_path, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    report = cast(RegressionReport, data)
-    return report['summary']
 
 
 def process_rows(rows: List[Dict]) -> Tuple[List[Tuple[str, int, int, int, int]], Tuple[int, int, int, int]]:
@@ -112,22 +55,6 @@ def render_table(rows: List[Tuple[str, int, int, int, int]], totals: Tuple[int, 
     return '\n'.join(lines)
 
 
-def render_regression_summary(summary: Optional[RegressionSummary]) -> Optional[str]:
-    if summary is None:
-        return None
-    changed_count = summary['changedCount']
-    regression_count = summary['regressionCount']
-    status_worsened = summary['statusWorsened']
-    error_code_changed = summary['errorCodeChanged']
-    missing_in_candidate = summary['missingInCandidate']
-    new_in_candidate = summary['newInCandidate']
-    return (
-        f"Regression summary: {regression_count} regressions out of {changed_count} changed tests "
-        f"({status_worsened} worsened, {error_code_changed} error-code changes, "
-        f"{missing_in_candidate} missing, {new_in_candidate} new)."
-    )
-
-
 def build_comment(
     jsoniq_dir: str,
     xquery_dir: str,
@@ -136,20 +63,19 @@ def build_comment(
     repo_owner: str,
     repo_name: str,
     jsoniq_regressions_dir: Optional[str],
-    xquery_regressions_dir: Optional[str]
+    xquery_regressions_dir: Optional[str],
 ) -> str:
     jsoniq_rows = load_count_rows(jsoniq_dir)
     xquery_rows = load_count_rows(xquery_dir)
-    jsoniq_regressions = load_regression_summary(jsoniq_regressions_dir)
-    xquery_regressions = load_regression_summary(xquery_regressions_dir)
 
     jsoniq_table_rows, jsoniq_totals = process_rows(jsoniq_rows)
     xquery_table_rows, xquery_totals = process_rows(xquery_rows)
 
     jsoniq_table_md = render_table(jsoniq_table_rows, jsoniq_totals)
     xquery_table_md = render_table(xquery_table_rows, xquery_totals)
-    jsoniq_regressions_md = render_regression_summary(jsoniq_regressions)
-    xquery_regressions_md = render_regression_summary(xquery_regressions)
+    jsoniq_regression_md = render_regression_details(jsoniq_regressions_dir, "jsoniq")
+    xquery_regression_md = render_regression_details(xquery_regressions_dir, "xquery")
+    artifacts_url = f'https://github.com/{repo_owner}/{repo_name}/actions/runs/{run_id}#artifacts'
 
     parts = []
     parts.append('## Test Results (qt3tests)')
@@ -162,8 +88,10 @@ def build_comment(
     parts.append('<details>')
     parts.append('<summary>RumbleDB, XQuery parser</summary>')
     parts.append('')
-    if xquery_regressions_md:
-        parts.append(xquery_regressions_md)
+    if xquery_regression_md:
+        parts.append(xquery_regression_md)
+        parts.append('')
+        parts.append(f'Full regression report: see `regressions-xquery` in [artifacts]({artifacts_url}).')
         parts.append('')
     parts.append(xquery_table_md)
     parts.append('')
@@ -172,14 +100,16 @@ def build_comment(
     parts.append('<details>')
     parts.append('<summary>RumbleDB, JSONiq parser</summary>')
     parts.append('')
-    if jsoniq_regressions_md:
-        parts.append(jsoniq_regressions_md)
+    if jsoniq_regression_md:
+        parts.append(jsoniq_regression_md)
+        parts.append('')
+        parts.append(f'Full regression report: see `regressions-jsoniq` in [artifacts]({artifacts_url}).')
         parts.append('')
     parts.append(jsoniq_table_md)
     parts.append('')
     parts.append('</details>')
     parts.append('')
-    parts.append(f'[Download detailed test results](https://github.com/{repo_owner}/{repo_name}/actions/runs/{run_id}#artifacts)')
+    parts.append(f'[Download detailed test results]({artifacts_url})')
     return '\n'.join(parts)
 
 
@@ -203,7 +133,7 @@ def main() -> None:
         args.repo_owner,
         args.repo_name,
         args.jsoniq_regressions,
-        args.xquery_regressions
+        args.xquery_regressions,
     )
     print(body)
 
