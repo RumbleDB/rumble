@@ -4413,7 +4413,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction local_name_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name-from-QName"),
         "QName?",
-        "string?",
+        "NCName?",
         LocalNameFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
