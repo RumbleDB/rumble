@@ -4,7 +4,7 @@ import json
 import os
 from typing import Dict, List, Optional, Tuple
 
-from generate_qt3_regression_comment import render_regression_details
+from parse_regression import render_regression_details
 
 
 def load_count_rows(dir_path: str) -> List[Dict]:
