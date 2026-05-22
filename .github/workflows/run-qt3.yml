@@ -71,7 +71,7 @@ jobs:
       run_analytics: true
   post-results:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    needs: [qt3-jsoniq, qt3-xquery]
+    needs: [resolve-baseline, qt3-jsoniq, qt3-xquery]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -113,7 +113,7 @@ jobs:
         with:
           script: |
             const { execSync } = require('child_process');
-            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --jsoniq-regressions artifacts/regressions/jsoniq --xquery-regressions artifacts/regressions/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
+            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --jsoniq-regressions artifacts/regressions/jsoniq --xquery-regressions artifacts/regressions/xquery --baseline-run-id ${{ needs.resolve-baseline.outputs.baseline_run_id }} --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
             
             if (context.eventName === 'pull_request') {
               // Post comment to PR

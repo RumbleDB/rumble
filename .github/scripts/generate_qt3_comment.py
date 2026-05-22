@@ -132,6 +132,7 @@ def build_comment(
     jsoniq_dir: str,
     xquery_dir: str,
     run_id: str,
+    baseline_run_id: Optional[str],
     repo_owner: str,
     repo_name: str,
     jsoniq_regressions_dir: Optional[str],
@@ -152,6 +153,12 @@ def build_comment(
 
     parts = []
     parts.append('## Test Results (qt3tests)')
+    if baseline_run_id:
+        parts.append(
+            f'Regression baseline: [run {baseline_run_id}]'
+            f'(https://github.com/{repo_owner}/{repo_name}/actions/runs/{baseline_run_id})'
+        )
+        parts.append('')
     parts.append('<details>')
     parts.append('<summary>RumbleDB, XQuery parser</summary>')
     parts.append('')
@@ -183,6 +190,7 @@ def main() -> None:
     parser.add_argument('--jsoniq-regressions', help='Path to JSONiq regression artifact directory')
     parser.add_argument('--xquery-regressions', help='Path to XQuery regression artifact directory')
     parser.add_argument('--run-id', required=True, help='GitHub Actions run ID')
+    parser.add_argument('--baseline-run-id', help='GitHub Actions baseline run ID')
     parser.add_argument('--repo-owner', required=True, help='Repository owner')
     parser.add_argument('--repo-name', required=True, help='Repository name')
     args = parser.parse_args()
@@ -191,6 +199,7 @@ def main() -> None:
         args.jsoniq,
         args.xquery,
         args.run_id,
+        args.baseline_run_id,
         args.repo_owner,
         args.repo_name,
         args.jsoniq_regressions,
