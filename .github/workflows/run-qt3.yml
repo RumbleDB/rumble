@@ -7,16 +7,66 @@ on:
   pull_request:
 
 jobs:
+  resolve-baseline:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      baseline_run_id: ${{ steps.find-baseline.outputs.baseline_run_id }}
+    steps:
+      - name: Find baseline run
+        id: find-baseline
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const workflowId = 'run-qt3.yml';
+            const branch = context.eventName === 'pull_request'
+              ? context.payload.pull_request.base.ref
+              : context.ref.replace('refs/heads/', '');
+            const event = 'push';
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflowId,
+              branch,
+              event,
+              status: 'completed',
+              per_page: 100
+            });
+
+            const baselineRun = runs.find((run) => {
+              if (run.conclusion !== 'success') {
+                return false;
+              }
+              if (run.id === context.runId) {
+                return false;
+              }
+              return true;
+            });
+
+            const baselineRunId = baselineRun ? String(baselineRun.id) : '';
+            core.info(
+              baselineRunId
+                ? `Using baseline run ${baselineRunId} from branch ${branch}.`
+                : `No successful baseline run found for branch ${branch}.`
+            );
+            core.setOutput('baseline_run_id', baselineRunId);
+
   qt3-jsoniq:
+    needs: resolve-baseline
     uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: jsoniq
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
       mvn_args: ''
       run_analytics: true
   qt3-xquery:
+    needs: resolve-baseline
     uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: xquery
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
       mvn_args: ''
       run_analytics: true
   post-results:
