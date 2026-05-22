@@ -4405,7 +4405,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction prefix_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "prefix-from-QName"),
         "QName?",
-        "string?",
+        "NCName?",
         PrefixFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
