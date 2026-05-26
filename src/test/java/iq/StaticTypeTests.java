@@ -1,8 +1,8 @@
 package iq;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.tests.commons.RumbleDBTestCommons;
 
-import iq.base.AnnotationsTestsBase;
 import scala.Function0;
 import scala.util.Properties;
 
@@ -20,7 +20,7 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class StaticTypeTests extends AnnotationsTestsBase {
+public class StaticTypeTests {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
             new String[] { "--print-iterator-tree", "yes", "--static-typing", "yes" }
@@ -85,13 +85,10 @@ public class StaticTypeTests extends AnnotationsTestsBase {
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
+        RumbleDBTestCommons.testAnnotations(
             this.testFile.getAbsolutePath(),
             StaticTypeTests.configuration,
-            false,
-            StaticTypeTests.configuration.applyUpdates(),
-            StaticTypeTests.configuration.getResultSizeCap()
+            false
         );
     }
 }
