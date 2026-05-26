@@ -12,6 +12,7 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
@@ -58,6 +59,13 @@ public class ItemFactory {
             return this.emptyStringItem;
         }
         return new StringItem(s);
+    }
+
+    public Item createLanguageItem(String s) {
+        return this.createAnnotatedItem(
+            this.createStringItem(s),
+            BuiltinTypesCatalogue.languageItem
+        );
     }
 
     public Item createUntypedAtomicItem(String s) {
