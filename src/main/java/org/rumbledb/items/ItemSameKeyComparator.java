@@ -26,6 +26,10 @@ import java.util.Comparator;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
+/**
+ * This class implements the same key comparison as defined in XQuery & XPath Functions 3.1, section 17.1.1.
+ * It is used for map lookups.
+ */
 public class ItemSameKeyComparator implements Comparator<Item> {
 
     @Override
