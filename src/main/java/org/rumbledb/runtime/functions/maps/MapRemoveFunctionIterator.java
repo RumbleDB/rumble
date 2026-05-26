@@ -105,7 +105,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             return;
         }
         if (mapItem.getMutabilityLevel() == -1) {
-            // fast path: update the mutable map in place
             this.resultItem = ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
             return;
         }
