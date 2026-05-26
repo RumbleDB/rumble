@@ -76,9 +76,9 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                 case GYEARMONTH_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getYear() * 12 + o1.getMonth(), o2.getYear() * 12 + o2.getMonth());
                 case GMONTHDAY_WITH_TIMEZONE:
-                    return Integer.compare(o1.getMonth() * 30 + o1.getDay(), o2.getMonth() * 30 + o2.getDay());
+                    return Integer.compare(o1.getMonth() * 31 + o1.getDay(), o2.getMonth() * 31 + o2.getDay());
                 case GMONTHDAY_WITHOUT_TIMEZONE:
-                    return Integer.compare(o1.getMonth() * 30 + o1.getDay(), o2.getMonth() * 30 + o2.getDay());
+                    return Integer.compare(o1.getMonth() * 31 + o1.getDay(), o2.getMonth() * 31 + o2.getDay());
                 case BOOLEAN:
                     return Boolean.compare(o1.getBooleanValue(), o2.getBooleanValue());
                 case BINARY:
