@@ -2,7 +2,9 @@
 import argparse
 import json
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
+
+from parse_regression import render_regression_details
 
 
 def load_count_rows(dir_path: str) -> List[Dict]:
@@ -53,7 +55,16 @@ def render_table(rows: List[Tuple[str, int, int, int, int]], totals: Tuple[int, 
     return '\n'.join(lines)
 
 
-def build_comment(jsoniq_dir: str, xquery_dir: str, run_id: str, repo_owner: str, repo_name: str) -> str:
+def build_comment(
+    jsoniq_dir: str,
+    xquery_dir: str,
+    run_id: str,
+    baseline_run_id: Optional[str],
+    repo_owner: str,
+    repo_name: str,
+    jsoniq_regressions_dir: Optional[str],
+    xquery_regressions_dir: Optional[str],
+) -> str:
     jsoniq_rows = load_count_rows(jsoniq_dir)
     xquery_rows = load_count_rows(xquery_dir)
 
@@ -62,12 +73,26 @@ def build_comment(jsoniq_dir: str, xquery_dir: str, run_id: str, repo_owner: str
 
     jsoniq_table_md = render_table(jsoniq_table_rows, jsoniq_totals)
     xquery_table_md = render_table(xquery_table_rows, xquery_totals)
+    jsoniq_regression_md = render_regression_details(jsoniq_regressions_dir, "jsoniq")
+    xquery_regression_md = render_regression_details(xquery_regressions_dir, "xquery")
+    artifacts_url = f'https://github.com/{repo_owner}/{repo_name}/actions/runs/{run_id}#artifacts'
 
     parts = []
     parts.append('## Test Results (qt3tests)')
+    if baseline_run_id:
+        parts.append(
+            f'Regression baseline: [run {baseline_run_id}]'
+            f'(https://github.com/{repo_owner}/{repo_name}/actions/runs/{baseline_run_id})'
+        )
+        parts.append('')
     parts.append('<details>')
     parts.append('<summary>RumbleDB, XQuery parser</summary>')
     parts.append('')
+    if xquery_regression_md:
+        parts.append(xquery_regression_md)
+        parts.append('')
+        parts.append(f'Full regression report: see `regressions-xquery` in [artifacts]({artifacts_url}).')
+        parts.append('')
     parts.append(xquery_table_md)
     parts.append('')
     parts.append('</details>')
@@ -75,11 +100,16 @@ def build_comment(jsoniq_dir: str, xquery_dir: str, run_id: str, repo_owner: str
     parts.append('<details>')
     parts.append('<summary>RumbleDB, JSONiq parser</summary>')
     parts.append('')
+    if jsoniq_regression_md:
+        parts.append(jsoniq_regression_md)
+        parts.append('')
+        parts.append(f'Full regression report: see `regressions-jsoniq` in [artifacts]({artifacts_url}).')
+        parts.append('')
     parts.append(jsoniq_table_md)
     parts.append('')
     parts.append('</details>')
     parts.append('')
-    parts.append(f'[Download detailed test results](https://github.com/{repo_owner}/{repo_name}/actions/runs/{run_id}#artifacts)')
+    parts.append(f'[Download detailed test results]({artifacts_url})')
     return '\n'.join(parts)
 
 
@@ -87,16 +117,26 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument('--jsoniq', required=True, help='Path to JSONiq artifact directory')
     parser.add_argument('--xquery', required=True, help='Path to XQuery artifact directory')
+    parser.add_argument('--jsoniq-regressions', help='Path to JSONiq regression artifact directory')
+    parser.add_argument('--xquery-regressions', help='Path to XQuery regression artifact directory')
     parser.add_argument('--run-id', required=True, help='GitHub Actions run ID')
+    parser.add_argument('--baseline-run-id', help='GitHub Actions baseline run ID')
     parser.add_argument('--repo-owner', required=True, help='Repository owner')
     parser.add_argument('--repo-name', required=True, help='Repository name')
     args = parser.parse_args()
 
-    body = build_comment(args.jsoniq, args.xquery, args.run_id, args.repo_owner, args.repo_name)
+    body = build_comment(
+        args.jsoniq,
+        args.xquery,
+        args.run_id,
+        args.baseline_run_id,
+        args.repo_owner,
+        args.repo_name,
+        args.jsoniq_regressions,
+        args.xquery_regressions,
+    )
     print(body)
 
 
 if __name__ == '__main__':
     main()
-
-
