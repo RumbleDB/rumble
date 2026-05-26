@@ -25,6 +25,7 @@ import java.util.Comparator;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 /**
  * This class implements the same key comparison as defined in XQuery & XPath Functions 3.1, section 17.1.1.
@@ -37,7 +38,7 @@ public class ItemSameKeyComparator implements Comparator<Item> {
         CATEGORY category1 = getCategory(o1);
         CATEGORY category2 = getCategory(o2);
         if (category1 == category2) {
-            switch(category1) {
+            switch (category1) {
                 case STRING:
                     return o1.getStringValue().compareTo(o2.getStringValue());
                 case NAN:
@@ -82,29 +83,61 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                     return Boolean.compare(o1.getBooleanValue(), o2.getBooleanValue());
                 case BINARY:
                     return Arrays.compare(o1.getBinaryValue(), o2.getBinaryValue());
+                case DURATION:
+                    return o1.getDurationValue().compareTo(o2.getDurationValue());
                 case QNAME:
                     return o1.getQNameValue().compareTo(o2.getQNameValue());
-                /*case NOTATION:
-                    return o1.getNotationValue().compareTo(o2.getNotationValue());*/
-                default:
-                    throw new OurBadException("Unexpected category for same key comparison: " + category1.toString());
+                case NOTATION:
+                    return o1.getStringValue().compareTo(o2.getStringValue());
             }
         }
         return category1.ordinal() < category2.ordinal() ? -1 : 1;
     }
 
     enum CATEGORY {
-        STRING, NAN, POSITIVE_INFINITY, NEGATIVE_INFINITY, DECIMAL_DOUBLE_FLOAT, DATE_WITH_TIMEZONE, DATE_WITHOUT_TIMEZONE, TIME_WITH_TIMEZONE, DATETIME_WITH_TIMEZONE, DATETIME_WITHOUT_TIMEZONE, GYEAR_WITH_TIMEZONE, GYEAR_WITHOUT_TIMEZONE, GMONTH_WITH_TIMEZONE, GMONTH_WITHOUT_TIMEZONE, GDAY_WITH_TIMEZONE, GDAY_WITHOUT_TIMEZONE, GYEARMONTH_WITH_TIMEZONE, GYEARMONTH_WITHOUT_TIMEZONE, GMONTHDAY_WITH_TIMEZONE, GMONTHDAY_WITHOUT_TIMEZONE, BOOLEAN, BINARY, QNAME, NOTATION
+        STRING,
+        NAN,
+        POSITIVE_INFINITY,
+        NEGATIVE_INFINITY,
+        DECIMAL_DOUBLE_FLOAT,
+        DATE_WITH_TIMEZONE,
+        DATE_WITHOUT_TIMEZONE,
+        TIME_WITH_TIMEZONE,
+        DATETIME_WITH_TIMEZONE,
+        DATETIME_WITHOUT_TIMEZONE,
+        GYEAR_WITH_TIMEZONE,
+        GYEAR_WITHOUT_TIMEZONE,
+        GMONTH_WITH_TIMEZONE,
+        GMONTH_WITHOUT_TIMEZONE,
+        GDAY_WITH_TIMEZONE,
+        GDAY_WITHOUT_TIMEZONE,
+        GYEARMONTH_WITH_TIMEZONE,
+        GYEARMONTH_WITHOUT_TIMEZONE,
+        GMONTHDAY_WITH_TIMEZONE,
+        GMONTHDAY_WITHOUT_TIMEZONE,
+        BOOLEAN,
+        BINARY,
+        DURATION,
+        QNAME,
+        NOTATION
     }
 
     public static CATEGORY getCategory(Item o1) {
-        if(o1.isString() || o1.isAnyURI() || o1.isUntypedAtomic()) {
+        if (o1.isString() || o1.isAnyURI() || o1.isUntypedAtomic()) {
             return CATEGORY.STRING;
-        } else if ((o1.isDouble() && Double.isNaN(o1.getDoubleValue())) || (o1.isFloat() && Float.isNaN(o1.getFloatValue()))) {
+        } else if (
+            (o1.isDouble() && Double.isNaN(o1.getDoubleValue())) || (o1.isFloat() && Float.isNaN(o1.getFloatValue()))
+        ) {
             return CATEGORY.NAN;
-        } else if ((o1.isDouble() && o1.getDoubleValue() == Double.POSITIVE_INFINITY) || (o1.isFloat() && o1.getFloatValue() == Float.POSITIVE_INFINITY)) {
+        } else if (
+            (o1.isDouble() && o1.getDoubleValue() == Double.POSITIVE_INFINITY)
+                || (o1.isFloat() && o1.getFloatValue() == Float.POSITIVE_INFINITY)
+        ) {
             return CATEGORY.POSITIVE_INFINITY;
-        } else if ((o1.isDouble() && o1.getDoubleValue() == Double.NEGATIVE_INFINITY) || (o1.isFloat() && o1.getFloatValue() == Float.NEGATIVE_INFINITY)) {
+        } else if (
+            (o1.isDouble() && o1.getDoubleValue() == Double.NEGATIVE_INFINITY)
+                || (o1.isFloat() && o1.getFloatValue() == Float.NEGATIVE_INFINITY)
+        ) {
             return CATEGORY.NEGATIVE_INFINITY;
         } else if (o1.isDecimal() || o1.isDouble() || o1.isFloat()) {
             return CATEGORY.DECIMAL_DOUBLE_FLOAT;
@@ -114,16 +147,16 @@ public class ItemSameKeyComparator implements Comparator<Item> {
             return CATEGORY.DATE_WITHOUT_TIMEZONE;
         } else if (o1.isTime() && o1.hasTimeZone()) {
             return CATEGORY.TIME_WITH_TIMEZONE;
-        } else if (o1.isDateTime()&& o1.hasTimeZone()) {
+        } else if (o1.isDateTime() && o1.hasTimeZone()) {
             return CATEGORY.DATETIME_WITH_TIMEZONE;
         } else if (o1.isDateTime()) {
             return CATEGORY.DATETIME_WITHOUT_TIMEZONE;
         } else if (o1.isGYear() && o1.hasTimeZone()) {
             return CATEGORY.GYEAR_WITH_TIMEZONE;
         } else if (o1.isGYear()) {
-            return CATEGORY.GYEAR_WITHOUT_TIMEZONE; 
+            return CATEGORY.GYEAR_WITHOUT_TIMEZONE;
         } else if (o1.isGMonth() && o1.hasTimeZone()) {
-            return CATEGORY.GMONTH_WITH_TIMEZONE;   
+            return CATEGORY.GMONTH_WITH_TIMEZONE;
         } else if (o1.isGMonth()) {
             return CATEGORY.GMONTH_WITHOUT_TIMEZONE;
         } else if (o1.isGDay() && o1.hasTimeZone()) {
@@ -143,13 +176,15 @@ public class ItemSameKeyComparator implements Comparator<Item> {
         } else if (o1.isBinary()) {
             return CATEGORY.BINARY;
         } else if (o1.isDuration()) {
-            return CATEGORY.BINARY;
+            return CATEGORY.DURATION;
         } else if (o1.isQName()) {
             return CATEGORY.QNAME;
-        } /*else if (o1.isNotation()) {
-            return CATEGORY.BINARY;
-        } */else {
-            throw new OurBadException("Unexpected item type for same key comparison: " + o1.getDynamicType().toString());
+        } else if (o1.getDynamicType().getPrimitiveType().equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+            return CATEGORY.NOTATION;
+        } else {
+            throw new OurBadException(
+                    "Unexpected item type for same key comparison: " + o1.getDynamicType().toString()
+            );
         }
     }
 }
