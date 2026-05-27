@@ -87,7 +87,12 @@ public class MapItem implements Item {
         this.values = new ArrayList<>();
         this.keys = new ArrayList<>();
         this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
-        rebuildKeyStringIndex();
+        for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+            Item key = entry.getKey();
+            List<Item> valueSequence = entry.getValue();
+            validateDuplicateKey(key, metadata);
+            internalPutSequenceByKey(key, valueSequence, metadata);
+        }
     }
 
     private void rebuildKeyStringIndex() {
@@ -117,7 +122,7 @@ public class MapItem implements Item {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
-        if(this.keys.contains(key)) {
+        if (this.keys.contains(key)) {
             int index = this.keyToIndex.get(key);
             this.keys.set(index, key);
             this.values.set(index, valueSequence);
@@ -220,7 +225,7 @@ public class MapItem implements Item {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
-        if(!this.keys.contains(key)) {
+        if (!this.keys.contains(key)) {
             return null;
         }
         Integer index = this.keyToIndex.get(key);
@@ -238,7 +243,7 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if(!this.keys.contains(key)) {
+        if (!this.keys.contains(key)) {
             return null;
         }
         Integer index = this.keyToIndex.get(key);
@@ -385,12 +390,12 @@ public class MapItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
-        for(Item key : this.keys) {
+        for (Item key : this.keys) {
             int index = this.keyToIndex.get(key);
             String keyFragment = key.serialize();
             List<Item> sequence = this.values.get(index);
             for (Item item : sequence) {
-                item.setPathIn(pathIn + "." + keyFragment); 
+                item.setPathIn(pathIn + "." + keyFragment);
             }
         }
     }
@@ -525,7 +530,7 @@ public class MapItem implements Item {
         if (!other.isObject()) {
             return false;
         }
-        for(Item key : this.keys) {
+        for (Item key : this.keys) {
             List<Item> thisSequence = getSequenceByKey(key);
             List<Item> otherSequence = other.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
@@ -548,7 +553,7 @@ public class MapItem implements Item {
     @Override
     public int hashCode() {
         int result = this.keys.size();
-        for(Item key : this.keys) {
+        for (Item key : this.keys) {
             List<Item> valueSequence = getSequenceByKey(key);
             result += key.hashCode();
             for (Item item : valueSequence) {
