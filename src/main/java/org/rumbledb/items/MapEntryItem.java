@@ -19,23 +19,24 @@
  */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Collections;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class MapEntryItem implements Item {
 
@@ -96,7 +97,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        return this.key.equals(key);
+        return new ItemSameKeyComparator().compare(this.key, key) == 0;
     }
 
     @Override
@@ -121,7 +122,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (key.equals(this.key)) {
+        if (new ItemSameKeyComparator().compare(key, this.key) == 0) {
             if (this.value.size() != 1) {
                 throw new OurBadException("Map contains non-singleton values.");
             }
@@ -137,7 +138,7 @@ public class MapEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (key.equals(this.key)) {
+        if (new ItemSameKeyComparator().compare(key, this.key) == 0) {
             return this.value;
         }
         return null;
