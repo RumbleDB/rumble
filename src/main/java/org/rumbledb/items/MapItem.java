@@ -113,7 +113,7 @@ public class MapItem implements Item {
     }
 
     private void validateDuplicateKey(Item key, ExceptionMetadata metadata) {
-        if (this.keys.contains(key)) {
+        if (this.keyToIndex.containsKey(key)) {
             throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
     }
@@ -122,7 +122,7 @@ public class MapItem implements Item {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
-        if (this.keys.contains(key)) {
+        if (this.keyToIndex.containsKey(key)) {
             int index = this.keyToIndex.get(key);
             this.keys.set(index, key);
             this.values.set(index, valueSequence);
@@ -238,7 +238,7 @@ public class MapItem implements Item {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
-        if (!this.keys.contains(key)) {
+        if (!this.keyToIndex.containsKey(key)) {
             return null;
         }
         Integer index = this.keyToIndex.get(key);
@@ -259,7 +259,7 @@ public class MapItem implements Item {
         if (this.keyToIndex == null) {
             rebuildKeyStringIndex();
         }
-        if (!this.keys.contains(key)) {
+        if (!this.keyToIndex.containsKey(key)) {
             return null;
         }
         Integer index = this.keyToIndex.get(key);

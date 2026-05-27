@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -48,23 +49,23 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                 case NEGATIVE_INFINITY:
                     return 0;
                 case DECIMAL_DOUBLE_FLOAT:
-                    double d1;
+                    BigDecimal d1;
                     if (o1.isDecimal()) {
-                        d1 = o1.getDecimalValue().doubleValue();
+                        d1 = o1.getDecimalValue();
                     } else if (o1.isDouble()) {
-                        d1 = o1.getDoubleValue();
+                        d1 = BigDecimal.valueOf(o1.getDoubleValue());
                     } else {
-                        d1 = o1.getFloatValue();
+                        d1 = BigDecimal.valueOf(o1.getFloatValue());
                     }
-                    double d2;
+                    BigDecimal d2;
                     if (o2.isDecimal()) {
-                        d2 = o2.getDecimalValue().doubleValue();
+                        d2 = o2.getDecimalValue();
                     } else if (o2.isDouble()) {
-                        d2 = o2.getDoubleValue();
+                        d2 = BigDecimal.valueOf(o2.getDoubleValue());
                     } else {
-                        d2 = o2.getFloatValue();
+                        d2 = BigDecimal.valueOf(o2.getFloatValue());
                     }
-                    return Double.compare(d1, d2);
+                    return d1.compareTo(d2);
                 case DATE_WITH_TIMEZONE:
                 case DATE_WITHOUT_TIMEZONE:
                 case TIME_WITH_TIMEZONE:
