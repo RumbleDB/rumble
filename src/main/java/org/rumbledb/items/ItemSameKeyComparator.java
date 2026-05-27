@@ -48,35 +48,42 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                 case NEGATIVE_INFINITY:
                     return 0;
                 case DECIMAL_DOUBLE_FLOAT:
-                    return Double.compare(o1.getDoubleValue(), o2.getDoubleValue());
+                    double d1;
+                    if (o1.isDecimal()) {
+                        d1 = o1.getDecimalValue().doubleValue();
+                    } else if (o1.isDouble()) {
+                        d1 = o1.getDoubleValue();
+                    } else {
+                        d1 = o1.getFloatValue();
+                    }
+                    double d2;
+                    if (o2.isDecimal()) {
+                        d2 = o2.getDecimalValue().doubleValue();
+                    } else if (o2.isDouble()) {
+                        d2 = o2.getDoubleValue();
+                    } else {
+                        d2 = o2.getFloatValue();
+                    }
+                    return Double.compare(d1, d2);
                 case DATE_WITH_TIMEZONE:
-                    return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
                 case DATE_WITHOUT_TIMEZONE:
-                    return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
                 case TIME_WITH_TIMEZONE:
-                    return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
                 case DATETIME_WITH_TIMEZONE:
-                    return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
                 case DATETIME_WITHOUT_TIMEZONE:
                     return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
                 case GYEAR_WITH_TIMEZONE:
-                    return Integer.compare(o1.getYear(), o2.getYear());
                 case GYEAR_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getYear(), o2.getYear());
                 case GMONTH_WITH_TIMEZONE:
-                    return Integer.compare(o1.getMonth(), o2.getMonth());
                 case GMONTH_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getMonth(), o2.getMonth());
                 case GDAY_WITH_TIMEZONE:
-                    return Integer.compare(o1.getDay(), o2.getDay());
                 case GDAY_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getDay(), o2.getDay());
                 case GYEARMONTH_WITH_TIMEZONE:
-                    return Integer.compare(o1.getYear() * 12 + o1.getMonth(), o2.getYear() * 12 + o2.getMonth());
                 case GYEARMONTH_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getYear() * 12 + o1.getMonth(), o2.getYear() * 12 + o2.getMonth());
                 case GMONTHDAY_WITH_TIMEZONE:
-                    return Integer.compare(o1.getMonth() * 31 + o1.getDay(), o2.getMonth() * 31 + o2.getDay());
                 case GMONTHDAY_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getMonth() * 31 + o1.getDay(), o2.getMonth() * 31 + o2.getDay());
                 case BOOLEAN:

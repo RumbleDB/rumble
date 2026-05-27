@@ -243,6 +243,9 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
+        if (this.keyToIndex == null) {
+            rebuildKeyStringIndex();
+        }
         if (!this.keys.contains(key)) {
             return null;
         }
