@@ -53,17 +53,17 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                     if (o1.isDecimal()) {
                         d1 = o1.getDecimalValue();
                     } else if (o1.isDouble()) {
-                        d1 = BigDecimal.valueOf(o1.getDoubleValue());
+                        d1 = new BigDecimal(o1.getDoubleValue());
                     } else {
-                        d1 = BigDecimal.valueOf(o1.getFloatValue());
+                        d1 = new BigDecimal(o1.getFloatValue());
                     }
                     BigDecimal d2;
                     if (o2.isDecimal()) {
                         d2 = o2.getDecimalValue();
                     } else if (o2.isDouble()) {
-                        d2 = BigDecimal.valueOf(o2.getDoubleValue());
+                        d2 = new BigDecimal(o2.getDoubleValue());
                     } else {
-                        d2 = BigDecimal.valueOf(o2.getFloatValue());
+                        d2 = new BigDecimal(o2.getFloatValue());
                     }
                     return d1.compareTo(d2);
                 case DATE_WITH_TIMEZONE:
