@@ -63,41 +63,41 @@ try {
   validate type local:x {
     { "foo" : 2, "nested" : { "foobar" : "AABBCC" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     { "foo" : 2, "nested" : { "bar" : "2021-01-01", "foobar" : "AABBCCJK" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     { "foo" : 2, "nested" : { "bar" : "123", "foobar" : "AABBCC" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x* {
     { "foo" : 2, "nested" : { "foobar" : "AABBCC" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x* {
     { "foo" : 2, "nested" : { "bar" : "2021-01-01", "foobar" : "AABBCCJK" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x* {
     { "foo" : 2, "nested" : { "bar" : "123", "foobar" : "AABBCC" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 }
