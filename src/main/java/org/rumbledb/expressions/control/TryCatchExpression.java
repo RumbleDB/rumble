@@ -22,6 +22,7 @@ package org.rumbledb.expressions.control;
 
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,47 +35,50 @@ public class TryCatchExpression extends Expression {
 
     private final Expression tryExpression;
 
-    private final Map<String, Expression> catchExpressions;
-    private final Expression catchAllExpression;
+    private final Map<CatchPattern, Expression> catchExpressions;
 
     public TryCatchExpression(
             Expression tryExpression,
-            Map<String, Expression> catchExpressions,
-            Expression catchAllExpression,
+            Map<CatchPattern, Expression> catchExpressions,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
         this.tryExpression = tryExpression;
-        this.catchExpressions = catchExpressions;
-        this.catchAllExpression = catchAllExpression;
+        this.catchExpressions = new LinkedHashMap<>(catchExpressions);
     }
 
     public Expression getTryExpression() {
         return this.tryExpression;
     }
 
-    public List<String> getErrorsCaught() {
+    public List<CatchPattern> getCatchPatterns() {
         return new ArrayList<>(this.catchExpressions.keySet());
     }
 
-    public Map<String, Expression> getCatchExpressions() {
+    public Map<CatchPattern, Expression> getCatchExpressions() {
         return this.catchExpressions;
     }
 
-    public boolean catches(String error) {
-        return this.catchExpressions.containsKey(error);
-    }
-
     public boolean catchesAll() {
-        return this.catchAllExpression != null;
+        for (CatchPattern pattern : this.catchExpressions.keySet()) {
+            if (pattern.isCatchAll()) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    public Expression getExpressionCatching(String error) {
-        return this.catchExpressions.get(error);
+    public Expression getExpressionCatching(CatchPattern pattern) {
+        return this.catchExpressions.get(pattern);
     }
 
     public Expression getExpressionCatchingAll() {
-        return this.catchAllExpression;
+        for (Map.Entry<CatchPattern, Expression> entry : this.catchExpressions.entrySet()) {
+            if (entry.getKey().isCatchAll()) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 
     @Override
@@ -82,9 +86,6 @@ public class TryCatchExpression extends Expression {
         List<Node> result = new ArrayList<>();
         result.add(this.tryExpression);
         result.addAll(this.catchExpressions.values());
-        if (this.catchAllExpression != null) {
-            result.add(this.catchAllExpression);
-        }
         return result;
     }
 
@@ -98,21 +99,13 @@ public class TryCatchExpression extends Expression {
         sb.append("}\n");
 
         if (this.catchExpressions != null) {
-            for (Map.Entry<String, Expression> entry : this.catchExpressions.entrySet()) {
+            for (Map.Entry<CatchPattern, Expression> entry : this.catchExpressions.entrySet()) {
                 indentIt(sb, indent);
                 sb.append("catch " + entry.getKey() + " {\n");
                 entry.getValue().serializeToJSONiq(sb, indent + 1);
                 indentIt(sb, indent);
                 sb.append("}\n");
             }
-        }
-
-        if (this.catchAllExpression != null) {
-            indentIt(sb, indent);
-            sb.append("catch * {\n");
-            this.catchAllExpression.serializeToJSONiq(sb, indent + 1);
-            indentIt(sb, indent);
-            sb.append("}\n");
         }
     }
 

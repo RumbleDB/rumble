@@ -19,9 +19,12 @@
  */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
@@ -29,26 +32,21 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class MapItem implements Item {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Insertion-ordered map keyed by {@link Item} (uses each key's {@code equals}/{@code hashCode}, typically value
-     * comparison for atomics). When built via {@link #MapItem(Map, ExceptionMetadata)}, the live map may be aliased
-     * if the argument is already a {@link LinkedHashMap}.
-     */
-    private Map<Item, List<Item>> storage;
+    private List<List<Item>> values;
+    private List<Item> keys;
+    private Map<Item, Integer> keyToIndex;
     private boolean allKeysString;
     private boolean allValuesSingletons;
     private boolean recomputeObjectShapeCache;
@@ -60,7 +58,9 @@ public class MapItem implements Item {
     private Collection collection;
 
     public MapItem() {
-        this.storage = new LinkedHashMap<>();
+        this.values = new ArrayList<>();
+        this.keys = new ArrayList<>();
+        this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
         this.allKeysString = true;
         this.allValuesSingletons = true;
         this.mutabilityLevel = -1;
@@ -84,7 +84,26 @@ public class MapItem implements Item {
         this();
         // thin constructor
         // assume atomicity of keys is checked by the caller, or at the typesystem level
-        this.storage = keyValuePairs;
+        this.values = new ArrayList<>();
+        this.keys = new ArrayList<>();
+        this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
+        for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
+            Item key = entry.getKey();
+            List<Item> valueSequence = entry.getValue();
+            validateDuplicateKey(key, metadata);
+            internalPutSequenceByKey(key, valueSequence, metadata);
+        }
+    }
+
+    private void rebuildKeyStringIndex() {
+        if (this.keyToIndex == null) {
+            this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
+        } else {
+            this.keyToIndex.clear();
+        }
+        for (int i = 0; i < this.keys.size(); i++) {
+            this.keyToIndex.put(this.keys.get(i), i);
+        }
     }
 
     private void validateAtomicKey(Item key, ExceptionMetadata metadata) {
@@ -94,13 +113,24 @@ public class MapItem implements Item {
     }
 
     private void validateDuplicateKey(Item key, ExceptionMetadata metadata) {
-        if (this.storage.containsKey(key)) {
+        if (this.keys.contains(key)) {
             throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
     }
 
     private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
-        this.storage.put(key, valueSequence);
+        if (this.keyToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        if (this.keys.contains(key)) {
+            int index = this.keyToIndex.get(key);
+            this.keys.set(index, key);
+            this.values.set(index, valueSequence);
+        } else {
+            this.values.add(valueSequence);
+            this.keys.add(key);
+            this.keyToIndex.put(key, this.values.size() - 1);
+        }
         if (this.allKeysString && !key.isString()) {
             this.allKeysString = false;
         }
@@ -121,13 +151,13 @@ public class MapItem implements Item {
         if (this.recomputeObjectShapeCache) {
             this.allKeysString = true;
             this.allValuesSingletons = true;
-            for (Item k : this.storage.keySet()) {
+            for (Item k : this.keys) {
                 if (!k.isString()) {
                     this.allKeysString = false;
                     break;
                 }
             }
-            for (List<Item> valueSequence : this.storage.values()) {
+            for (List<Item> valueSequence : this.values) {
                 if (valueSequence.size() != 1) {
                     this.allValuesSingletons = false;
                     break;
@@ -145,8 +175,8 @@ public class MapItem implements Item {
 
     @Override
     public List<String> getStringKeys() {
-        List<String> result = new ArrayList<>(this.storage.size());
-        for (Item key : this.storage.keySet()) {
+        List<String> result = new ArrayList<>(this.keys.size());
+        for (Item key : this.keys) {
             if (!key.isString()) {
                 throw new OurBadException("Map contains non-string keys.");
             }
@@ -157,10 +187,10 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> getItemKeys() {
-        int n = this.storage.size();
-        List<Item> keys = new ArrayList<>(n);
-        keys.addAll(this.storage.keySet());
-        return keys;
+        int n = this.keys.size();
+        List<Item> result = new ArrayList<>(n);
+        result.addAll(this.keys);
+        return result;
     }
 
     @Override
@@ -183,8 +213,8 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> getItemValues() {
-        List<Item> result = new ArrayList<>(this.storage.size());
-        for (List<Item> valueSequence : this.storage.values()) {
+        List<Item> result = new ArrayList<>(this.values.size());
+        for (List<Item> valueSequence : this.values) {
             if (valueSequence.size() != 1) {
                 throw new OurBadException("Map contains non-singleton values.");
             }
@@ -195,7 +225,7 @@ public class MapItem implements Item {
 
     @Override
     public List<List<Item>> getSequenceValues() {
-        return new ArrayList<>(this.storage.values());
+        return new ArrayList<>(this.values);
     }
 
     @Override
@@ -205,10 +235,14 @@ public class MapItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        List<Item> valueSequence = this.storage.get(key);
-        if (valueSequence == null) {
+        if (this.keyToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        if (!this.keys.contains(key)) {
             return null;
         }
+        Integer index = this.keyToIndex.get(key);
+        List<Item> valueSequence = this.values.get(index);
         if (valueSequence.size() != 1) {
             throw new OurBadException("Map contains non-singleton values.");
         }
@@ -222,7 +256,15 @@ public class MapItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        return this.storage.get(key);
+        if (this.keyToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        if (!this.keys.contains(key)) {
+            return null;
+        }
+        Integer index = this.keyToIndex.get(key);
+        List<Item> valueSequence = this.values.get(index);
+        return valueSequence;
     }
 
     @Override
@@ -254,24 +296,25 @@ public class MapItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        List<Item> valueSequence = this.storage.remove(key);
-        if (valueSequence == null) {
+        if (this.keyToIndex == null) {
+            rebuildKeyStringIndex();
+        }
+        Integer idx = this.keyToIndex.remove(key);
+        if (idx == null) {
             return;
         }
-        if (!key.isString() || valueSequence.size() != 1) {
-            this.recomputeObjectShapeCache = true;
-        }
+        int index = idx;
+        this.values.remove(index);
+        this.keys.remove(index);
+        rebuildKeyStringIndex();
     }
 
     // endregion maps
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeInt(this.storage.size());
-        for (Map.Entry<Item, List<Item>> e : this.storage.entrySet()) {
-            kryo.writeClassAndObject(output, e.getKey());
-            kryo.writeClassAndObject(output, e.getValue());
-        }
+        kryo.writeObject(output, this.keys);
+        kryo.writeObject(output, this.values);
         output.writeInt(this.mutabilityLevel);
         output.writeLong(this.topLevelID);
         kryo.writeObject(output, this.pathIn);
@@ -285,14 +328,8 @@ public class MapItem implements Item {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        int n = input.readInt();
-        this.storage = new LinkedHashMap<>();
-        for (int i = 0; i < n; i++) {
-            Item key = (Item) kryo.readClassAndObject(input);
-            @SuppressWarnings("unchecked")
-            List<Item> valueSequence = (List<Item>) kryo.readClassAndObject(input);
-            this.storage.put(key, valueSequence);
-        }
+        this.keys = kryo.readObject(input, ArrayList.class);
+        this.values = kryo.readObject(input, ArrayList.class);
         this.mutabilityLevel = input.readInt();
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
@@ -302,6 +339,7 @@ public class MapItem implements Item {
         this.allValuesSingletons = input.readBoolean();
         this.recomputeObjectShapeCache = input.readBoolean();
         this.collection = kryo.readObjectOrNull(input, Collection.class);
+        rebuildKeyStringIndex();
     }
 
     @Override
@@ -323,7 +361,7 @@ public class MapItem implements Item {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
-        for (List<Item> sequence : this.storage.values()) {
+        for (List<Item> sequence : this.values) {
             for (Item item : sequence) {
                 item.setMutabilityLevel(mutabilityLevel);
             }
@@ -338,7 +376,7 @@ public class MapItem implements Item {
     @Override
     public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
-        for (List<Item> sequence : this.storage.values()) {
+        for (List<Item> sequence : this.values) {
             for (Item item : sequence) {
                 item.setTopLevelID(topLevelID);
             }
@@ -353,7 +391,7 @@ public class MapItem implements Item {
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
         this.topLevelOrder = topLevelOrder;
-        for (List<Item> sequence : this.storage.values()) {
+        for (List<Item> sequence : this.values) {
             for (Item item : sequence) {
                 item.setTopLevelOrder(topLevelOrder);
             }
@@ -368,9 +406,10 @@ public class MapItem implements Item {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
-        for (Map.Entry<Item, List<Item>> e : this.storage.entrySet()) {
-            String keyFragment = e.getKey().serialize();
-            List<Item> sequence = e.getValue();
+        for (Item key : this.keys) {
+            int index = this.keyToIndex.get(key);
+            String keyFragment = key.serialize();
+            List<Item> sequence = this.values.get(index);
             for (Item item : sequence) {
                 item.setPathIn(pathIn + "." + keyFragment);
             }
@@ -385,7 +424,7 @@ public class MapItem implements Item {
     @Override
     public void setTableLocation(String location) {
         this.location = location;
-        for (List<Item> sequence : this.storage.values()) {
+        for (List<Item> sequence : this.values) {
             for (Item item : sequence) {
                 item.setTableLocation(location);
             }
@@ -491,7 +530,7 @@ public class MapItem implements Item {
     @Override
     public void setCollection(Collection collection) {
         this.collection = collection;
-        for (List<Item> sequence : this.storage.values()) {
+        for (List<Item> sequence : this.values) {
             for (Item item : sequence) {
                 item.setCollection(collection);
             }
@@ -507,9 +546,8 @@ public class MapItem implements Item {
         if (!other.isObject()) {
             return false;
         }
-        for (Map.Entry<Item, List<Item>> e : this.storage.entrySet()) {
-            Item key = e.getKey();
-            List<Item> thisSequence = e.getValue();
+        for (Item key : this.keys) {
+            List<Item> thisSequence = getSequenceByKey(key);
             List<Item> otherSequence = other.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
@@ -530,11 +568,12 @@ public class MapItem implements Item {
 
     @Override
     public int hashCode() {
-        int result = this.storage.size();
-        for (Map.Entry<Item, List<Item>> e : this.storage.entrySet()) {
-            result += e.getKey().hashCode();
-            for (Item value : e.getValue()) {
-                result += value.hashCode();
+        int result = this.keys.size();
+        for (Item key : this.keys) {
+            List<Item> valueSequence = getSequenceByKey(key);
+            result += key.hashCode();
+            for (Item item : valueSequence) {
+                result += item.hashCode();
             }
         }
         return result;
