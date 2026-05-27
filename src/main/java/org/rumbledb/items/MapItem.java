@@ -195,7 +195,7 @@ public class MapItem implements Item {
 
     @Override
     public int getSize() {
-        return this.storage.size();
+        return this.keys.size();
     }
 
     public boolean hasKey(String key) throws UnsupportedOperationException {
@@ -203,7 +203,7 @@ public class MapItem implements Item {
     }
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        return this.storage.containsKey(key);
+        return this.keys.contains(key);
     }
 
     @Override

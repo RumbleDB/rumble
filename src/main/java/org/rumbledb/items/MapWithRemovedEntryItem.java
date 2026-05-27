@@ -19,21 +19,24 @@
  */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+
+import org.apache.commons.collections4.CollectionUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.apache.commons.collections4.CollectionUtils;
+import org.rumbledb.types.ItemType;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithRemovedEntryItem implements Item {
 
@@ -43,7 +46,7 @@ public class MapWithRemovedEntryItem implements Item {
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
     private Item original;
-    private List<Item> removedKeys;
+    private Set<Item> removedKeys;
 
     public MapWithRemovedEntryItem() {
         this.original = null;
@@ -52,7 +55,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
-        this.removedKeys = new ArrayList<>();
+        this.removedKeys = new TreeSet<>(new ItemSameKeyComparator());
         for (Item key : removedKeys) {
             if (this.original.isObject()) {
                 if (!key.isString()) {
@@ -99,9 +102,13 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<Item> getItemKeys() {
-        List<Item> result = new ArrayList<>(
-                CollectionUtils.subtract(this.original.getItemKeys(), this.removedKeys)
-        );
+        List<Item> result = new ArrayList<>();
+        for (Item key : this.original.getItemKeys()) {
+            if (this.removedKeys.contains(key)) {
+                continue;
+            }
+            result.add(key);
+        }
         return result;
     }
 
@@ -110,6 +117,7 @@ public class MapWithRemovedEntryItem implements Item {
         return this.original.getSize() - this.removedKeys.size();
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
             return false;
@@ -117,6 +125,7 @@ public class MapWithRemovedEntryItem implements Item {
         return this.original.hasKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (this.removedKeys.contains(key)) {
             return false;
@@ -220,13 +229,13 @@ public class MapWithRemovedEntryItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.original);
-        kryo.writeClassAndObject(output, this.removedKeys);
+        kryo.writeObject(output, this.removedKeys);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = (List<Item>) kryo.readClassAndObject(input);
+        this.removedKeys = kryo.readObject(input, TreeSet.class);
     }
 
     @Override
