@@ -8,7 +8,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.runtime.RuntimeIterator;
 
-public class FormatDateFunctionIterator extends AbstractFormatFunctionIterator {
+public class FormatDateFunctionIterator extends TemporalFormatFunctionIterator {
 
     private static final long serialVersionUID = 1L;
 

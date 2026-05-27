@@ -10,11 +10,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.time.OffsetDateTime;
 import java.util.List;
 
-abstract class AbstractFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+abstract class TemporalFormatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public AbstractFormatFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public TemporalFormatFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
