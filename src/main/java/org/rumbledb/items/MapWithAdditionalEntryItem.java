@@ -19,20 +19,21 @@
  */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithAdditionalEntryItem implements Item {
 
@@ -243,7 +244,9 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
-        throw new OurBadException("Cannot change mutability of a MapEntryItem, which is not mutable.");
+        if(mutabilityLevel != -1) {
+            throw new OurBadException("Cannot change mutability level.");
+        }
     }
 
     @Override

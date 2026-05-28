@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,16 +34,13 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-import sparksoniq.spark.SparkSessionManager;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
+import sparksoniq.spark.SparkSessionManager;
 
 public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -98,7 +99,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 valueIterator.close();
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
-                    values.add(ItemFactory.getInstance().createArrayItem(currentResults, true));
+                    values.add(ItemFactory.getInstance().createArrayItem(currentResults, false));
                 } else if (currentResults.size() == 1) {
                     values.add(currentResults.get(0));
                 } else {

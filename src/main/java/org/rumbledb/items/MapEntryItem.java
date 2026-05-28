@@ -206,7 +206,9 @@ public class MapEntryItem implements Item {
 
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
-        throw new OurBadException("Cannot change mutability of a MapEntryItem, which is not mutable.");
+        if(mutabilityLevel != -1) {
+            throw new OurBadException("Cannot change mutability level.");
+        }
     }
 
     @Override

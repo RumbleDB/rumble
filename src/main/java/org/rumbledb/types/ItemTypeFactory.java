@@ -1,5 +1,12 @@
 package org.rumbledb.types;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
@@ -20,8 +27,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
 import sparksoniq.spark.SparkSessionManager;
-
-import java.util.*;
 
 public class ItemTypeFactory {
 

@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -31,9 +34,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -87,16 +87,16 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 for (List<Item> member : memberSequences) {
                     items.add(member.get(0));
                 }
-                return ItemFactory.getInstance().createArrayItem(items, true);
+                return ItemFactory.getInstance().createArrayItem(items, false);
             } else {
-                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, false);
             }
         }
         List<Item> result = new ArrayList<>();
         for (RuntimeIterator child : this.children) {
             result.addAll(child.materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, true);
+        return ItemFactory.getInstance().createArrayItem(result, false);
     }
 
     @Override
