@@ -255,22 +255,36 @@ public class UnionItemType implements ItemType {
         } else {
             otherTypes = List.of(other);
         }
-        List<ItemType> resultTypes = new ArrayList<>(this.types);
-        for (ItemType member : otherTypes) {
-            boolean alreadyPresent = false;
-            for (ItemType alreadyPresentType : this.types) {
-                if (alreadyPresentType.equals(member)) {
-                    alreadyPresent = true;
-                    break;
-                }
+        boolean hasNumeric = false;
+        boolean hasNonNumeric = false;
+        boolean hasNull = false;
+        Set<ItemType> resultTypes = new HashSet<>(this.types);
+        resultTypes.addAll(otherTypes);
+        for (ItemType member : resultTypes) {
+            if (member.equals(BuiltinTypesCatalogue.nullItem)) {
+                hasNull = true;
+                continue;
             }
-            if (!alreadyPresent) {
-                resultTypes.add(member);
+            if (member.equals(BuiltinTypesCatalogue.atomicItem)) {
+                hasNumeric = true;
+                hasNonNumeric = true;
+                continue;
             }
+            if (member.isNumeric()) {
+                hasNumeric = true;
+                continue;
+            }
+            hasNonNumeric = true;
+        }
+        if (hasNumeric && hasNonNumeric) {
+            return BuiltinTypesCatalogue.atomicItem;
+        }
+        if (hasNumeric && !hasNull) {
+            return BuiltinTypesCatalogue.numericItem;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, resultTypes);
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
         }
-        return new UnionItemType(null, BuiltinTypesCatalogue.item, resultTypes);
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
     }
 }
