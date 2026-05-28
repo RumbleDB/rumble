@@ -78,6 +78,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ArrayInvalidSubarrayLengthErrorCode = registerBuiltIn("FOAY0002");
 
     public static final ErrorCode InvalidLexicalValueErrorCode = registerBuiltIn("FOCA0002");
+    public static final ErrorCode NoNamespaceFoundForPrefixErrorCode = registerBuiltIn("FONS0004");
+    public static final ErrorCode CannotConvertToQNameErrorCode = registerBuiltIn("XPTY0117");
     public static final ErrorCode InvalidNaNOperation = registerBuiltIn("FOCA0005");
     public static final ErrorCode CodepointNotValidErrorCode = registerBuiltIn("FOCH0001");
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
