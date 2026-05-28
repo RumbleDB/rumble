@@ -8,7 +8,6 @@ on:
 
 env:
   JAVA_VERSION: "17"
-  RUMBLE_ARTIFACT_NAME: "rumble-build"
 
 jobs:
   resolve-baseline:
@@ -76,7 +75,7 @@ jobs:
       - name: Upload RumbleDB target
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ env.RUMBLE_ARTIFACT_NAME }}
+          name: rumble-build
           path: target
           retention-days: 1
 
@@ -85,7 +84,7 @@ jobs:
     uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: jsoniq
-      rumble_artifact_name: ${{ env.RUMBLE_ARTIFACT_NAME }}
+      rumble_artifact_name: rumble-build
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   qt3-xquery:
@@ -93,7 +92,7 @@ jobs:
     uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: xquery
-      rumble_artifact_name: ${{ env.RUMBLE_ARTIFACT_NAME }}
+      rumble_artifact_name: rumble-build
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   post-results:
