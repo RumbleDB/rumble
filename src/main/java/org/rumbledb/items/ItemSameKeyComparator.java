@@ -66,9 +66,11 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                         d2 = new BigDecimal(o2.getFloatValue());
                     }
                     return d1.compareTo(d2);
+                case TIME_WITH_TIMEZONE:
+                case TIME_WITHOUT_TIMEZONE:
+                    return o1.getTimeValue().compareTo(o2.getTimeValue());
                 case DATE_WITH_TIMEZONE:
                 case DATE_WITHOUT_TIMEZONE:
-                case TIME_WITH_TIMEZONE:
                 case DATETIME_WITH_TIMEZONE:
                 case DATETIME_WITHOUT_TIMEZONE:
                     return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
@@ -89,7 +91,9 @@ public class ItemSameKeyComparator implements Comparator<Item> {
                     return Integer.compare(o1.getMonth() * 31 + o1.getDay(), o2.getMonth() * 31 + o2.getDay());
                 case BOOLEAN:
                     return Boolean.compare(o1.getBooleanValue(), o2.getBooleanValue());
-                case BINARY:
+                case HEX_BINARY:
+                    return Arrays.compare(o1.getBinaryValue(), o2.getBinaryValue());
+                case BASE64_BINARY:
                     return Arrays.compare(o1.getBinaryValue(), o2.getBinaryValue());
                 case DURATION:
                     return o1.getDurationValue().compareTo(o2.getDurationValue());
@@ -111,6 +115,7 @@ public class ItemSameKeyComparator implements Comparator<Item> {
         DATE_WITH_TIMEZONE,
         DATE_WITHOUT_TIMEZONE,
         TIME_WITH_TIMEZONE,
+        TIME_WITHOUT_TIMEZONE,
         DATETIME_WITH_TIMEZONE,
         DATETIME_WITHOUT_TIMEZONE,
         GYEAR_WITH_TIMEZONE,
@@ -124,7 +129,8 @@ public class ItemSameKeyComparator implements Comparator<Item> {
         GMONTHDAY_WITH_TIMEZONE,
         GMONTHDAY_WITHOUT_TIMEZONE,
         BOOLEAN,
-        BINARY,
+        HEX_BINARY,
+        BASE64_BINARY,
         DURATION,
         QNAME,
         NOTATION
@@ -155,6 +161,8 @@ public class ItemSameKeyComparator implements Comparator<Item> {
             return CATEGORY.DATE_WITHOUT_TIMEZONE;
         } else if (o1.isTime() && o1.hasTimeZone()) {
             return CATEGORY.TIME_WITH_TIMEZONE;
+        } else if (o1.isTime()) {
+            return CATEGORY.TIME_WITHOUT_TIMEZONE;
         } else if (o1.isDateTime() && o1.hasTimeZone()) {
             return CATEGORY.DATETIME_WITH_TIMEZONE;
         } else if (o1.isDateTime()) {
@@ -181,8 +189,10 @@ public class ItemSameKeyComparator implements Comparator<Item> {
             return CATEGORY.GMONTHDAY_WITHOUT_TIMEZONE;
         } else if (o1.isBoolean()) {
             return CATEGORY.BOOLEAN;
-        } else if (o1.isBinary()) {
-            return CATEGORY.BINARY;
+        } else if (o1.isHexBinary()) {
+            return CATEGORY.HEX_BINARY;
+        } else if (o1.isBase64Binary()) {
+            return CATEGORY.BASE64_BINARY;
         } else if (o1.isDuration()) {
             return CATEGORY.DURATION;
         } else if (o1.isQName()) {
