@@ -992,6 +992,18 @@ public class SequenceType implements Serializable {
             case "NCName+":
                 st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "node()":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.One);
+                break;
+            case "node()?":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "node()*":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "node()+":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore);
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }
