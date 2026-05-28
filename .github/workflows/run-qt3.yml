@@ -55,14 +55,14 @@ jobs:
 
   qt3-jsoniq:
     needs: resolve-baseline
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: jsoniq
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   qt3-xquery:
     needs: resolve-baseline
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: xquery
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
