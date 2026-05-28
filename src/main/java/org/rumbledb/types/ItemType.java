@@ -21,6 +21,12 @@
 package org.rumbledb.types;
 
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -29,11 +35,6 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import com.esotericsoftware.kryo.KryoSerializable;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public interface ItemType extends Serializable, KryoSerializable {
 
@@ -213,6 +214,23 @@ public interface ItemType extends Serializable, KryoSerializable {
      *         and [other] (does not take into account union types as common ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (other.isUnionType()) {
+            return other.findLeastCommonSuperTypeWith(this);
+        }
+        if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            return new UnionItemType(
+                    null,
+                    BuiltinTypesCatalogue.item,
+                    Arrays.asList(this, BuiltinTypesCatalogue.nullItem)
+            );
+        }
+        if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
+            return new UnionItemType(
+                    null,
+                    BuiltinTypesCatalogue.item,
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem)
+            );
+        }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
             other = other.getBaseType();

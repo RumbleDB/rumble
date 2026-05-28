@@ -1,11 +1,16 @@
 package org.rumbledb.types;
 
-import org.apache.spark.ml.linalg.VectorUDT;
-import org.apache.spark.sql.types.*;
-import org.rumbledb.exceptions.OurBadException;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
+import org.rumbledb.exceptions.OurBadException;
 
 public class TypeMappings {
 
@@ -88,9 +93,26 @@ public class TypeMappings {
         if (itemType.isTopmostItemType()) {
             return DataTypes.VariantType;
         }
+        if (itemType.isUnionType()) {
+            List<ItemType> memberTypes = itemType.getTypes();
+            if (memberTypes.size() == 2) {
+                ItemType firstType = memberTypes.get(0);
+                ItemType secondType = memberTypes.get(1);
+                if (firstType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                    return getDataFrameDataTypeFromItemType(secondType);
+                }
+                if (secondType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                    return getDataFrameDataTypeFromItemType(firstType);
+                }
+            }
+        }
         Thread.dumpStack();
         throw new IllegalArgumentException(
-                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
+                "Unexpected item type found: '"
+                    + itemType
+                    + "' in namespace "
+                    + (itemType.getName() != null ? itemType.getName().getNamespace() : "null")
+                    + "."
         );
     }
 

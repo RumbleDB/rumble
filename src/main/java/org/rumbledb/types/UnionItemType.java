@@ -1,15 +1,16 @@
 package org.rumbledb.types;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class UnionItemType implements ItemType {
 
@@ -243,5 +244,29 @@ public class UnionItemType implements ItemType {
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        List<ItemType> otherTypes;
+        if (other.isUnionType()) {
+            otherTypes = other.getTypes();
+        } else {
+            otherTypes = List.of(other);
+        }
+        List<ItemType> resultTypes = new ArrayList<>(this.types);
+        for (ItemType member : otherTypes) {
+            boolean alreadyPresent = false;
+            for (ItemType alreadyPresentType : this.types) {
+                if (alreadyPresentType.equals(member)) {
+                    alreadyPresent = true;
+                    break;
+                }
+            }
+            if (!alreadyPresent) {
+                resultTypes.add(member);
+            }
+        }
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, resultTypes);
     }
 }
