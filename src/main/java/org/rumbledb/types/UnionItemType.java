@@ -1,15 +1,16 @@
 package org.rumbledb.types;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 public class UnionItemType implements ItemType {
 
@@ -19,11 +20,11 @@ public class UnionItemType implements ItemType {
             Arrays.asList(ConstrainingFacetTypes.CONTENT)
     );
 
-    private final Name name;
-    private final ItemType baseType;
-    private final int typeTreeDepth;
-    private final List<ItemType> types;
-    private final boolean userDefined;
+    private Name name;
+    private ItemType baseType;
+    private int typeTreeDepth;
+    private List<ItemType> types;
+    private boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this(name, baseType, types, true);
@@ -51,14 +52,21 @@ public class UnionItemType implements ItemType {
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Implement serialization logic here if needed
-        throw new UnsupportedOperationException("Serialization not implemented yet.");
+        kryo.writeClassAndObject(output, this.name);
+        kryo.writeClassAndObject(output, this.baseType);
+        output.writeInt(this.typeTreeDepth);
+        kryo.writeClassAndObject(output, this.types);
+        output.writeBoolean(this.userDefined);
+
     }
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Implement deserialization logic here if needed
-        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+        this.name = (Name) kryo.readClassAndObject(input);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.typeTreeDepth = input.readInt();
+        this.types = (List<ItemType>) kryo.readClassAndObject(input);
+        this.userDefined = input.readBoolean();
     }
 
     @Override
@@ -242,6 +250,66 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+        if (this.types.size() != 2)
+            return false;
+        ItemType first = this.types.get(0);
+        ItemType second = this.types.get(1);
+        if (
+            first.equals(BuiltinTypesCatalogue.nullItem)
+                && second.isAtomicItemType()
+                && second.isCompatibleWithDataFrames(configuration)
+        ) {
+            return true;
+        }
+        if (
+            second.equals(BuiltinTypesCatalogue.nullItem)
+                && first.isAtomicItemType()
+                && first.isCompatibleWithDataFrames(configuration)
+        ) {
+            return true;
+        }
         return false;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        ItemType otherBaseType = other.getBaseType();
+        List<ItemType> otherTypes;
+        if (other.isUnionType()) {
+            otherTypes = other.getTypes();
+        } else {
+            otherTypes = List.of(other);
+        }
+        boolean hasNumeric = false;
+        boolean hasNonNumeric = false;
+        boolean hasNull = false;
+        Set<ItemType> resultTypes = new HashSet<>(this.types);
+        resultTypes.addAll(otherTypes);
+        for (ItemType member : resultTypes) {
+            if (member.equals(BuiltinTypesCatalogue.nullItem)) {
+                hasNull = true;
+                continue;
+            }
+            if (member.equals(BuiltinTypesCatalogue.atomicItem)) {
+                hasNumeric = true;
+                hasNonNumeric = true;
+                continue;
+            }
+            if (member.isNumeric()) {
+                hasNumeric = true;
+                continue;
+            }
+            hasNonNumeric = true;
+        }
+        if (hasNumeric && hasNonNumeric) {
+            return BuiltinTypesCatalogue.atomicItem;
+        }
+        if (hasNumeric && !hasNull) {
+            return BuiltinTypesCatalogue.numericItem;
+        }
+        if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
+        }
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
     }
 }
