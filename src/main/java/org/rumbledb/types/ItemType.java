@@ -217,6 +217,9 @@ public interface ItemType extends Serializable, KryoSerializable {
         if (other.isUnionType()) {
             return other.findLeastCommonSuperTypeWith(this);
         }
+        if (this.equals(BuiltinTypesCatalogue.nullItem) && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
         if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
             return new UnionItemType(
                     null,
