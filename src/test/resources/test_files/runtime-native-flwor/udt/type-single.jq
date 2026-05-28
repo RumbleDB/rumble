@@ -16,7 +16,7 @@ try {
     { "foo" : [ "foo" ] },
     { "foo" : [ "foo" ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
@@ -24,7 +24,7 @@ try {
     { "foo" : [ "foo" ] },
     { "foo" : [ "foo" ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:x {
@@ -67,42 +67,42 @@ try {
   validate type local:x {
     { "foo" : 2, "bar" : 3 }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     { "foo" : "foo" }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     { "foo" : [ 1 ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     { "foo" : { "bar" : 2 } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     2, 3
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     [ "foo" ]
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:y {
@@ -118,21 +118,21 @@ try {
   validate type local:y {
     { "foo" : 2 }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:y {
     { "foo" : { "bar" : "foo" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:y {
     { "foo" : [ "foo" ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:z {
@@ -142,27 +142,27 @@ try {
   validate type local:z {
     { "foo" : 2 }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:z {
     { "foo" : { "bar" : "foo" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:z {
     { "foo" : [ "foo" ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:z {
     { }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 }

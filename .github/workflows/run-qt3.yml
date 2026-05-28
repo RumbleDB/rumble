@@ -7,21 +7,71 @@ on:
   pull_request:
 
 jobs:
+  resolve-baseline:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    outputs:
+      baseline_run_id: ${{ steps.find-baseline.outputs.baseline_run_id }}
+    steps:
+      - name: Find baseline run
+        id: find-baseline
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const workflowId = 'run-qt3.yml';
+            const branch = context.eventName === 'pull_request'
+              ? context.payload.pull_request.base.ref
+              : context.ref.replace('refs/heads/', '');
+            const event = 'push';
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflowId,
+              branch,
+              event,
+              status: 'completed',
+              per_page: 100
+            });
+
+            const baselineRun = runs.find((run) => {
+              if (run.conclusion !== 'success') {
+                return false;
+              }
+              if (run.id === context.runId) {
+                return false;
+              }
+              return true;
+            });
+
+            const baselineRunId = baselineRun ? String(baselineRun.id) : '';
+            core.info(
+              baselineRunId
+                ? `Using baseline run ${baselineRunId} from branch ${branch}.`
+                : `No successful baseline run found for branch ${branch}.`
+            );
+            core.setOutput('baseline_run_id', baselineRunId);
+
   qt3-jsoniq:
+    needs: resolve-baseline
     uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: jsoniq
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
       mvn_args: ''
       run_analytics: true
   qt3-xquery:
+    needs: resolve-baseline
     uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
     with:
       tested_parser: xquery
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
       mvn_args: ''
       run_analytics: true
   post-results:
     if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    needs: [qt3-jsoniq, qt3-xquery]
+    needs: [resolve-baseline, qt3-jsoniq, qt3-xquery]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -44,12 +94,26 @@ jobs:
         with:
           name: collected-artifacts-xquery
           path: artifacts/xquery
+      - name: Download JSONiq regression report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: regressions-jsoniq
+          path: artifacts/regressions/jsoniq
+      - name: Download XQuery regression report
+        if: always()
+        continue-on-error: true
+        uses: actions/download-artifact@v8
+        with:
+          name: regressions-xquery
+          path: artifacts/regressions/xquery
       - name: Generate and post comment
         uses: actions/github-script@v9
         with:
           script: |
             const { execSync } = require('child_process');
-            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
+            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --jsoniq-regressions artifacts/regressions/jsoniq --xquery-regressions artifacts/regressions/xquery --baseline-run-id ${{ needs.resolve-baseline.outputs.baseline_run_id }} --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
             
             if (context.eventName === 'pull_request') {
               // Post comment to PR
