@@ -4234,7 +4234,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction local_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name"),
-        "item?",
+        "node()?",
         "string",
         LocalNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
