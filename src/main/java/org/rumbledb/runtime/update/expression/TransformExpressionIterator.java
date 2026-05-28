@@ -1,7 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import org.apache.spark.api.java.JavaRDD;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.commons.lang3.SerializationUtils;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -9,10 +13,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 

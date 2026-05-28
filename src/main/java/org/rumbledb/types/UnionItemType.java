@@ -20,11 +20,11 @@ public class UnionItemType implements ItemType {
             Arrays.asList(ConstrainingFacetTypes.CONTENT)
     );
 
-    private final Name name;
-    private final ItemType baseType;
-    private final int typeTreeDepth;
-    private final List<ItemType> types;
-    private final boolean userDefined;
+    private Name name;
+    private ItemType baseType;
+    private int typeTreeDepth;
+    private List<ItemType> types;
+    private boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this(name, baseType, types, true);
@@ -52,14 +52,21 @@ public class UnionItemType implements ItemType {
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Implement serialization logic here if needed
-        throw new UnsupportedOperationException("Serialization not implemented yet.");
+        kryo.writeClassAndObject(output, this.name);
+        kryo.writeClassAndObject(output, this.baseType);
+        output.writeInt(this.typeTreeDepth);
+        kryo.writeClassAndObject(output, this.types);
+        output.writeBoolean(this.userDefined);
+
     }
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Implement deserialization logic here if needed
-        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+        this.name = (Name) kryo.readClassAndObject(input);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.typeTreeDepth = input.readInt();
+        this.types = (List<ItemType>) kryo.readClassAndObject(input);
+        this.userDefined = input.readBoolean();
     }
 
     @Override
@@ -243,6 +250,24 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+        if (this.types.size() != 2)
+            return false;
+        ItemType first = this.types.get(0);
+        ItemType second = this.types.get(1);
+        if (
+            first.equals(BuiltinTypesCatalogue.nullItem)
+                && second.isAtomicItemType()
+                && second.isCompatibleWithDataFrames(configuration)
+        ) {
+            return true;
+        }
+        if (
+            second.equals(BuiltinTypesCatalogue.nullItem)
+                && first.isAtomicItemType()
+                && first.isCompatibleWithDataFrames(configuration)
+        ) {
+            return true;
+        }
         return false;
     }
 
