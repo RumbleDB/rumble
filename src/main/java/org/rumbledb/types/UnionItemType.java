@@ -250,8 +250,9 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
-        if (this.types.size() != 2)
+        if (this.types.size() != 2) {
             return false;
+        }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
         if (
