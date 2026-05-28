@@ -223,14 +223,14 @@ public interface ItemType extends Serializable, KryoSerializable {
         if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
             return new UnionItemType(
                     null,
-                    BuiltinTypesCatalogue.item,
+                    BuiltinTypesCatalogue.atomicItem,
                     Arrays.asList(this, BuiltinTypesCatalogue.nullItem)
             );
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
             return new UnionItemType(
                     null,
-                    BuiltinTypesCatalogue.item,
+                    BuiltinTypesCatalogue.atomicItem,
                     Arrays.asList(other, BuiltinTypesCatalogue.nullItem)
             );
         }

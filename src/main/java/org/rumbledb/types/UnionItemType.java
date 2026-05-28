@@ -248,6 +248,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        ItemType otherBaseType = other.getBaseType();
         List<ItemType> otherTypes;
         if (other.isUnionType()) {
             otherTypes = other.getTypes();
@@ -266,6 +267,9 @@ public class UnionItemType implements ItemType {
             if (!alreadyPresent) {
                 resultTypes.add(member);
             }
+        }
+        if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, resultTypes);
         }
         return new UnionItemType(null, BuiltinTypesCatalogue.item, resultTypes);
     }
