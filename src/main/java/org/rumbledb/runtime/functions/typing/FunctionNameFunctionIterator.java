@@ -27,12 +27,17 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator functionIterator = this.children.get(0);
-        if (!functionIterator.getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) { // TODO remove at some point... Currently used for debugging, this guard fails when given an if statement
+        /*
+         * TODO remove...
+         * Currently used for debugging, this guard fails when given an if statement
+         */
+        if (!functionIterator.getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
             throw new UnexpectedTypeException(
                     "fn:function-name expects a function item, found " + functionIterator.getStaticType(),
                     getMetadata()
             );
         }
+        System.err.println("Item is of type function");
         Item functionItem = functionIterator.materializeFirstItemOrNull(context);
         if (functionItem == null || !(functionItem instanceof FunctionItem)) {
             throw new OurBadException("Expected argument to be of type function and not be null");
