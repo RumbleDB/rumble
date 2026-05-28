@@ -6,6 +6,10 @@ on:
       - master
   pull_request:
 
+env:
+  JAVA_VERSION: "17"
+  RUMBLE_ARTIFACT_NAME: "rumble-build"
+
 jobs:
   resolve-baseline:
     runs-on: ubuntu-latest
@@ -53,18 +57,43 @@ jobs:
             );
             core.setOutput('baseline_run_id', baselineRunId);
 
+  build:
+    name: Build RumbleDB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller (RumbleDB)
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Build RumbleDB
+        run: mvn -B -q clean compile assembly:single
+
+      - name: Upload RumbleDB target
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ env.RUMBLE_ARTIFACT_NAME }}
+          path: target
+          retention-days: 1
+
   qt3-jsoniq:
-    needs: resolve-baseline
+    needs: [resolve-baseline, build]
     uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: jsoniq
+      rumble_artifact_name: ${{ env.RUMBLE_ARTIFACT_NAME }}
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   qt3-xquery:
-    needs: resolve-baseline
+    needs: [resolve-baseline, build]
     uses: CaiJimmy/rumble-test-suite/.github/workflows/qt3-suite.yml@refactor-analysis
     with:
       tested_parser: xquery
+      rumble_artifact_name: ${{ env.RUMBLE_ARTIFACT_NAME }}
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   post-results:
