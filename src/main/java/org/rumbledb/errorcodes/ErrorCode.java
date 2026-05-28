@@ -120,7 +120,6 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidSelectorErrorCode = registerBuiltIn("JNTY0018");
 
     public static final ErrorCode CannotMaterializeErrorCode = registerBuiltIn("RBDY0005");
-    public static final ErrorCode UnimplementedFunctionErrorCode = registerBuiltIn("RBDY2708");
 
     public static final ErrorCode UnrecognizedRumbleMLClassReferenceErrorCode = registerBuiltIn("RBML0001");
     public static final ErrorCode UnrecognizedRumbleMLParamReferenceErrorCode = registerBuiltIn("RBML0002");
