@@ -244,7 +244,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
-        if(mutabilityLevel != -1) {
+        if (mutabilityLevel != -1) {
             throw new OurBadException("Cannot change mutability level.");
         }
     }
