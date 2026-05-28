@@ -691,12 +691,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(catchBlock, catchContext);
         }
 
-        if (statement.getCatchAllStatement() != null) {
-            StaticContext catchAllContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchAllContext, statement.getCatchAllStatement().getMetadata());
-            this.visit(statement.getCatchAllStatement(), catchAllContext);
-        }
-
         return argument;
     }
 
@@ -709,12 +703,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext catchContext = new StaticContext(argument);
             ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
             this.visit(catchExpr, catchContext);
-        }
-
-        if (expression.getExpressionCatchingAll() != null) {
-            StaticContext catchAllContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchAllContext, expression.getExpressionCatchingAll().getMetadata());
-            this.visit(expression.getExpressionCatchingAll(), catchAllContext);
         }
 
         return argument;
