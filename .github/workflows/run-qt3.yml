@@ -97,6 +97,7 @@ jobs:
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
   post-results:
+    name: Post Results
     needs: [qt3-jsoniq, qt3-xquery]
     runs-on: ubuntu-latest
     permissions:
