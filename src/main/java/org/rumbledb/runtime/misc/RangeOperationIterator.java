@@ -162,7 +162,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
                     BuiltinTypesCatalogue.item
             );
         }
-        return createLongInterval(this.left, this.right);
+        return createLongInterval(this.left, this.right, this.getRuntimeStaticContext());
     }
 
     /**
@@ -172,7 +172,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
      * @param right the right bound (inclusive).
      * @return
      */
-    public static JSoundDataFrame createLongInterval(long left, long right) {
+    public static JSoundDataFrame createLongInterval(long left, long right, RuntimeStaticContext staticContext) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);
@@ -183,7 +183,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         rdd = rdd.flatMap(
             i -> LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator()
         );
-        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem);
+        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
     @Override

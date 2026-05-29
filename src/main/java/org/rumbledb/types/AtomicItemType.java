@@ -1202,4 +1202,9 @@ public class AtomicItemType implements ItemType {
         }
         throw new UnsupportedOperationException("getSparkSQLType is unsupported for " + this.getPrimitiveType());
     }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
+    }
 }

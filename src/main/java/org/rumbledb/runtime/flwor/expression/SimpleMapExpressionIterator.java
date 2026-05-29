@@ -204,7 +204,10 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             JavaRDD<Item> rdd = getRDDAux(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
-            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(getStaticType().getItemType());
+            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(
+                getStaticType().getItemType(),
+                this.staticContext
+            );
             schema.printTreeString();
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
