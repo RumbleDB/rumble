@@ -10,9 +10,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.exceptions.OurBadException;
-
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
 
 public class TypeMappings {
 
@@ -92,7 +91,7 @@ public class TypeMappings {
             );
         }
         if (itemType.isTopmostItemType()) {
-            return DataTypes.VariantType;
+            return DataTypes.StringType;
         }
         if (itemType.isUnionType()) {
             List<ItemType> memberTypes = itemType.getTypes();

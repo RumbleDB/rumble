@@ -237,6 +237,9 @@ public interface ItemType extends Serializable, KryoSerializable {
             return BuiltinTypesCatalogue.nullItem;
         }
         if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (this.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,
@@ -244,6 +247,9 @@ public interface ItemType extends Serializable, KryoSerializable {
             );
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,
