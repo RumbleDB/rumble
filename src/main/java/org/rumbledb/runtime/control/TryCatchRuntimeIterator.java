@@ -108,7 +108,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
                 RuntimeIterator catchingExpression = findMatchingCatch(exception);
                 if (catchingExpression != null) {
                     DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                    ErrorVariables.injectDynamicContext(context, exception);
+                    // ErrorVariables.injectDynamicContext(context, exception);
                     catchingExpression.open(context);
                     while (catchingExpression.hasNext()) {
                         this.results.add(catchingExpression.next());
