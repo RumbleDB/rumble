@@ -362,6 +362,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (item.isNull()) {
             if (context.getRumbleRuntimeConfiguration().getLaxJSONNullValidation()) {
                 return null;
+            } else if (dataType.equals(DataTypes.NullType)) {
+                return null;
             } else if (dataType.equals(DataTypes.StringType)) {
                 return "null";
             } else {
