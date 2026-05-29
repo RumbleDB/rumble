@@ -1,10 +1,20 @@
 package org.rumbledb.runtime.typing;
 
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
+import static org.apache.spark.sql.functions.expr;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
@@ -31,19 +41,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
 
-
-import static org.apache.spark.sql.functions.expr;
-
 import sparksoniq.spark.SparkSessionManager;
-
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class ValidateTypeIterator extends HybridRuntimeIterator {
 
@@ -124,7 +122,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
             );
         }
-        StructType schema = convertToDataFrameSchema(itemType);
+        StructType schema = convertToDataFrameSchema(itemType, staticContext);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
                 private static final long serialVersionUID = 1L;
@@ -177,14 +175,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    public static StructType convertToDataFrameSchema(ItemType itemType) {
+    public static StructType convertToDataFrameSchema(ItemType itemType, RuntimeStaticContext staticContext) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
                 columnName,
                 itemType,
-                false
+                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext
             );
             fields.add(field);
             return DataTypes.createStructType(fields);
@@ -192,10 +192,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isArrayItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
                 columnName,
                 itemType,
-                false
+                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext
             );
             fields.add(field);
             return DataTypes.createStructType(fields);
@@ -210,10 +212,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : itemType.getObjectContentFacet().keySet()) {
+                ItemType columnType = itemType.getObjectContentFacet().get(columnName).getType();
+                boolean required = itemType.getObjectContentFacet().get(columnName).isRequired();
+                boolean nullable = columnType.canBeNull();
                 StructField field = createStructField(
                     columnName,
-                    itemType.getObjectContentFacet().get(columnName).getType(),
-                    !itemType.getObjectContentFacet().get(columnName).isRequired()
+                    columnType,
+                    !required || (staticContext.getConfiguration().getLaxJSONNullValidation() && nullable),
+                    staticContext
                 );
                 fields.add(field);
             }
@@ -227,22 +233,27 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField createStructField(String columnName, ItemType item, boolean nullable) {
-        DataType type = convertToDataType(item);
+    private static StructField createStructField(
+            String columnName,
+            ItemType item,
+            boolean nullable,
+            RuntimeStaticContext staticContext
+    ) {
+        DataType type = convertToDataType(item, staticContext);
         return DataTypes.createStructField(columnName, type, nullable);
     }
 
-    private static DataType convertToDataType(ItemType itemType) {
+    private static DataType convertToDataType(ItemType itemType, RuntimeStaticContext staticContext) {
         if (itemType.isArrayItemType()) {
             ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet();
-            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType);
+            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType, staticContext);
             return DataTypes.createArrayType(arrayContentsType);
         }
 
         if (itemType.isObjectItemType()) {
-            return convertToDataFrameSchema(itemType);
+            return convertToDataFrameSchema(itemType, staticContext);
         }
-        return TypeMappings.getDataFrameDataTypeFromItemType(itemType);
+        return TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext);
     }
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
@@ -258,7 +269,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     itemType
             );
         }
-        StructType schema = convertToDataFrameSchema(itemType);
+        StructType schema = convertToDataFrameSchema(itemType, staticContext);
+        if (staticContext.getConfiguration().printInferredTypes()) {
+            System.err.println("Inferred DataFrame type:\n");
+            schema.printTreeString();
+        }
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
@@ -339,8 +354,21 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             DataType dataType,
             DynamicContext context
     ) {
+        // Handling of missing value
         if (item == null) {
             return null;
+        }
+        // Handling of null
+        if (item.isNull()) {
+            if (context.getRumbleRuntimeConfiguration().getLaxJSONNullValidation()) {
+                return null;
+            } else if (dataType.equals(DataTypes.StringType)) {
+                return "null";
+            } else {
+                throw new OurBadException(
+                        "Null value found where a non-null value of type " + dataType + " was expected."
+                );
+            }
         }
         try {
             if (dataType instanceof ArrayType) {

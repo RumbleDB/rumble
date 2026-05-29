@@ -144,6 +144,22 @@ public interface ItemType extends Serializable, KryoSerializable {
         return false;
     }
 
+    /**
+     *
+     * @return [true] if the null value is in the value space.
+     */
+    default boolean canBeNull() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if this is just one type unioned with null, returns that type.
+     */
+    default ItemType getSingleNullableType() {
+        return null;
+    }
+
     // endregion
 
     // region concrete-specific-function

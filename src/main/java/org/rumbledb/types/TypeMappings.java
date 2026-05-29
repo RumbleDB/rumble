@@ -12,13 +12,15 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.exceptions.OurBadException;
 
+import org.rumbledb.context.RuntimeStaticContext;
+
 public class TypeMappings {
 
     public static final DataType vectorType = new VectorUDT();
     public static final DataType integerType = new DecimalType(38, 0);
     public static final DataType decimalType = new DecimalType(38, 19);
 
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
+    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType, RuntimeStaticContext staticContext) {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             return DataTypes.BooleanType;
         }
@@ -47,7 +49,7 @@ public class TypeMappings {
             return decimalType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
-            return decimalType;
+            return DataTypes.DoubleType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
@@ -67,9 +69,6 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            return DataTypes.StringType;
-        }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
             itemType.getObjectContentFacet()
@@ -77,7 +76,7 @@ public class TypeMappings {
                     (key, value) -> fields.add(
                         DataTypes.createStructField(
                             key,
-                            getDataFrameDataTypeFromItemType(value.getType()),
+                            getDataFrameDataTypeFromItemType(value.getType(), staticContext),
                             !value.isRequired()
                         )
                     )
@@ -88,23 +87,48 @@ public class TypeMappings {
             return DataTypes.BinaryType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
-            return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
+            return DataTypes.createArrayType(
+                getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet(), staticContext)
+            );
         }
         if (itemType.isTopmostItemType()) {
             return DataTypes.VariantType;
         }
         if (itemType.isUnionType()) {
             List<ItemType> memberTypes = itemType.getTypes();
-            if (memberTypes.size() == 2) {
-                ItemType firstType = memberTypes.get(0);
-                ItemType secondType = memberTypes.get(1);
-                if (firstType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                    return getDataFrameDataTypeFromItemType(secondType);
+            ItemType singleNullableType = itemType.getSingleNullableType();
+            if (singleNullableType != null) {
+                if (staticContext.getConfiguration().getLaxJSONNullValidation()) {
+                    return getDataFrameDataTypeFromItemType(singleNullableType, staticContext);
                 }
-                if (secondType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                    return getDataFrameDataTypeFromItemType(firstType);
+                return DataTypes.StringType;
+            }
+            boolean hasNumeric = false;
+            boolean hasNonNumeric = false;
+            boolean hasNull = false;
+            boolean hasStructuredType = false;
+            for (ItemType memberType : memberTypes) {
+                if (memberType.isNumeric()) {
+                    hasNumeric = true;
+                } else if (memberType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                    hasNull = true;
+                } else if (memberType.isAtomicItemType()) {
+                    hasNonNumeric = true;
+                } else {
+                    hasStructuredType = true;
                 }
             }
+            if (
+                hasNumeric
+                    && !hasStructuredType
+                    && !(!staticContext.getConfiguration().getLaxJSONNullValidation() && hasNull)
+            ) {
+                return DataTypes.DoubleType;
+            }
+            return DataTypes.StringType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            return DataTypes.StringType;
         }
         Thread.dumpStack();
         throw new IllegalArgumentException(
