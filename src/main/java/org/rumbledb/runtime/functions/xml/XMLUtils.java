@@ -4,7 +4,7 @@ public final class XMLUtils {
     private XMLUtils() {
     }
 
-    public static boolean isValidCodePoint(int codepoint, String xmlVersion) {
+    public static boolean isValidXmlCharacter(int codepoint, String xmlVersion) {
         if (codepoint < 0 || codepoint > 0x10FFFF) {
             return false;
         }

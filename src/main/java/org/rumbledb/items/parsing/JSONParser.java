@@ -953,7 +953,7 @@ public final class JSONParser {
     }
 
     private boolean isValidXMLCodePoint(int codepoint) {
-        return XMLUtils.isValidCodePoint(codepoint, this.xmlVersion);
+        return XMLUtils.isValidXmlCharacter(codepoint, this.xmlVersion);
     }
 
     private String printable(char c) {
