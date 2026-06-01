@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
+import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.util.List;
 

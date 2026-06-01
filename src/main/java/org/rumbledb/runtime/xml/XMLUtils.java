@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.xml;
+package org.rumbledb.runtime.xml;
 
 public final class XMLUtils {
     private XMLUtils() {
