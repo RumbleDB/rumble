@@ -1309,7 +1309,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.arguments = kryo.readObject(input, HashMap.class);
     }
 
-    public static final String DEFAULT_XML_VERSION = "1.0";
+    public static final String DEFAULT_XML_VERSION = "1.1";
 
     private String xmlVersion = DEFAULT_XML_VERSION;
 
@@ -1317,7 +1317,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * Returns the configured XML version.
      *
      * <p>
-     * The default XML version is {@code "1.0"}.
+     * The default XML version is {@code "1.1"}.
      * </p>
      *
      * @return the XML version, for example {@code "1.0"} or {@code "1.1"}
