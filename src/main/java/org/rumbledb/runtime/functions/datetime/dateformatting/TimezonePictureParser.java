@@ -1,9 +1,12 @@
-package org.rumbledb.runtime.functions.datetime;
+package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.FormatIntegerPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.PrimaryFormatToken;
 
 final class TimezonePictureParser {
 
@@ -13,6 +16,7 @@ final class TimezonePictureParser {
     static ParsedTimezonePicture parse(
             char component,
             String presentation,
+            char secondPresentationModifier,
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
@@ -27,11 +31,7 @@ final class TimezonePictureParser {
         }
 
         String core = presentation;
-        boolean useZForZero = false;
-        if (core.endsWith("t")) {
-            useZForZero = true;
-            core = core.substring(0, core.length() - 1);
-        }
+        boolean useZForZero = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
 
         if (core.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata);
@@ -41,10 +41,40 @@ final class TimezonePictureParser {
             return ParsedTimezonePicture.named(core);
         }
 
+        PrimaryFormatToken primaryFormatToken = parsePrimaryFormatToken(core, pictureStringForErrors, metadata);
+        if (!PrimaryFormatToken.DECIMAL.equals(primaryFormatToken.getType())) {
+            return defaultTimezonePicture(component, useZForZero, pictureStringForErrors, metadata);
+        }
+
         if (component == 'z') {
             return parseNumericTimezone(core, true, useZForZero, pictureStringForErrors, metadata);
         }
         return parseNumericTimezone(core, false, useZForZero, pictureStringForErrors, metadata);
+    }
+
+    private static ParsedTimezonePicture defaultTimezonePicture(
+            char component,
+            boolean useZForZero,
+            String pictureStringForErrors,
+            ExceptionMetadata metadata
+    ) {
+        return parseNumericTimezone("01:01", component == 'z', useZForZero, pictureStringForErrors, metadata);
+    }
+
+    private static PrimaryFormatToken parsePrimaryFormatToken(
+            String presentation,
+            String pictureStringForErrors,
+            ExceptionMetadata metadata
+    ) {
+        try {
+            return FormatIntegerPictureParser.parsePrimaryFormatToken(
+                presentation,
+                pictureStringForErrors,
+                metadata
+            );
+        } catch (IncorrectSyntaxFormatNumberException e) {
+            throw invalidPicture(pictureStringForErrors, metadata);
+        }
     }
 
     private static ParsedTimezonePicture parseNumericTimezone(

@@ -1,11 +1,11 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import org.rumbledb.runtime.functions.util.formatting.language.formatter.LanguageFormatter;
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry;
-
-import java.math.BigInteger;
 import java.util.*;
 
+/**
+ * Locale-independent digit formatting: grouping, Roman and alphabetic. Locale-sensitive words live in
+ * {@link NumberWords}.
+ */
 public final class NumericFormattingSupport {
 
     private NumericFormattingSupport() {
@@ -79,27 +79,5 @@ public final class NumericFormattingSupport {
             value /= 26;
         }
         return sb.toString();
-    }
-
-    public static String toCardinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        return formatter.toCardinal(value);
-    }
-
-    public static String toOrdinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        return formatter.toOrdinal(value);
-    }
-
-    public static String ordinalSuffix(int value, String language) {
-        return NumericFormattingSupport.ordinalSuffix(BigInteger.valueOf(value), language);
-    }
-
-    public static String ordinalSuffix(BigInteger value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        if (!formatter.supportsOrdinalSuffix()) {
-            return "";
-        }
-        return formatter.ordinalSuffix(value);
     }
 }

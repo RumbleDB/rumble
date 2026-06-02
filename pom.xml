@@ -439,6 +439,11 @@
             <artifactId>mongo-spark-connector_2.13</artifactId>
             <version>10.5.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>78.3</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

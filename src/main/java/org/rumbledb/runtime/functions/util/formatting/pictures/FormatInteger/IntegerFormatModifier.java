@@ -9,7 +9,7 @@ public class IntegerFormatModifier {
     public static final String TRADITIONAL = "TRADITIONAL";
 
     private final String numberType;
-    private final String formatSpecifier; // not supported yet
+    private final String formatSpecifier;
     private final String numberingVariant; // not supported yet
 
     public IntegerFormatModifier(

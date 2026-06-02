@@ -1,12 +1,12 @@
-package org.rumbledb.runtime.functions.datetime;
+package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Locale;
 
+import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
-import org.rumbledb.runtime.functions.util.formatting.namedtimezones.TimezoneNameContext;
-import org.rumbledb.runtime.functions.util.formatting.namedtimezones.TimezoneNameSupport;
+import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 
 final class TemporalFormattingSupport {
 
@@ -25,7 +25,7 @@ final class TemporalFormattingSupport {
                 return value.toLowerCase(locale);
             case ParsedVariableMarker.NameForm.TITLE:
             default:
-                return value;
+                return toTitleCaseWords(value, locale);
         }
     }
 
@@ -56,6 +56,8 @@ final class TemporalFormattingSupport {
             if (Character.isLetter(ch) && start) {
                 sb.append(String.valueOf(ch).toUpperCase(locale));
                 start = false;
+            } else if (Character.isLetter(ch)) {
+                sb.append(String.valueOf(ch).toLowerCase(locale));
             } else {
                 sb.append(ch);
 
@@ -72,18 +74,18 @@ final class TemporalFormattingSupport {
             OffsetDateTime value,
             ParsedTimezonePicture tz,
             boolean hasExplicitTimezone,
-            FormattingOptions options
+            FormattingContext formattingContext
     ) {
         if (!hasExplicitTimezone) {
             return tz.military ? "J" : "";
         }
 
         if (tz.named) {
-            return formatNamedTimezone(value, tz, options);
+            return formatNamedTimezone(value, tz, formattingContext);
         }
 
         if (tz.military) {
-            return formatMilitaryTimezone(value.getOffset(), true);
+            return formatMilitaryTimezone(value.getOffset());
         }
 
         return formatNumericTimezone(value.getOffset(), tz);
@@ -93,16 +95,13 @@ final class TemporalFormattingSupport {
     private static String formatNamedTimezone(
             OffsetDateTime value,
             ParsedTimezonePicture tz,
-            FormattingOptions options
+            FormattingContext formattingContext
     ) {
-        String result = TimezoneNameSupport.formatNamedTimezone(
-            value,
-            timezoneNameContext(options),
-            tz.namePresentation
-        );
+        // TODO Figure out where we could configure the name size
+        String result = TimezoneNames.name(value, formattingContext, false);
 
         if (result != null) {
-            return result;
+            return applyTimezoneNamePresentation(result, tz.namePresentation, formattingContext.locale);
         }
 
         return formatNumericTimezone(
@@ -111,17 +110,16 @@ final class TemporalFormattingSupport {
         );
     }
 
-
-    private static TimezoneNameContext timezoneNameContext(FormattingOptions options) {
-        if (options == null) {
-            return new TimezoneNameContext(null, null, Locale.ROOT);
+    private static String applyTimezoneNamePresentation(String value, String presentation, Locale locale) {
+        if ("n".equals(presentation)) {
+            return value.toLowerCase(locale);
         }
 
-        return new TimezoneNameContext(
-                options.place,
-                options.placeZoneId,
-                options.locale
-        );
+        if ("Nn".equals(presentation)) {
+            return toTitleCaseWords(value, locale);
+        }
+
+        return value;
     }
 
     private static String formatNumericTimezone(
@@ -170,11 +168,7 @@ final class TemporalFormattingSupport {
         return tz.gmtPrefix ? "GMT" + body : body;
     }
 
-    static String formatMilitaryTimezone(ZoneOffset offset, boolean hasExplicitTimezone) {
-        if (!hasExplicitTimezone) {
-            return "J";
-        }
-
+    static String formatMilitaryTimezone(ZoneOffset offset) {
         int totalSeconds = offset.getTotalSeconds();
 
         if (totalSeconds % 3600 != 0) {
