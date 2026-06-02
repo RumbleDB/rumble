@@ -50,6 +50,11 @@ public class YearMonthDurationItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new YearMonthDurationItem(this.value);
+    }
+
+    @Override
     public boolean isYearMonthDuration() {
         return true;
     }

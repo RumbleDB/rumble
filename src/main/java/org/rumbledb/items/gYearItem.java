@@ -48,6 +48,11 @@ public class gYearItem implements Item {
         getgYearFromString(gYearString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gYearItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgYearFromString(String gYearString) {
         Matcher matcher = this.gYearRegex.matcher(gYearString);
         if (!matcher.matches()) {

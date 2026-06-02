@@ -46,6 +46,14 @@ import java.util.Map;
 public interface Item extends Serializable, KryoSerializable {
 
     /**
+     * Makes a copy.
+     * 
+     * @param mutable whether the copy should be mutable (if supported by the item).
+     * @return a copy
+     */
+    Item copy(boolean mutable);
+
+    /**
      * Tests whether the item is a function.
      *
      * @return true if it is a function, false otherwise

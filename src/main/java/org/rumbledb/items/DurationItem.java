@@ -1,9 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -18,17 +14,19 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
-    boolean isDuration = false;
-    boolean isPeriod = false;
     Pattern durationRegex = Pattern.compile(
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
@@ -43,11 +41,27 @@ public class DurationItem implements Item {
         this.durationValue = value;
     }
 
+    public DurationItem(Period value) {
+        super();
+        this.periodValue = value;
+    }
+
     public DurationItem(String value) {
         if (!this.durationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid duration: " + value);
         }
         getDurationFromString(value);
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        if(!Objects.isNull(this.durationValue)) {
+            return new DurationItem(this.durationValue);
+        }
+        if(!Objects.isNull(this.periodValue)) {
+            return new DurationItem(this.periodValue);
+        }
+        throw new IllegalStateException("Invalid DurationItem state");
     }
 
     @Override
@@ -120,7 +134,6 @@ public class DurationItem implements Item {
             if (!durationPeriodString.contains("PT")) {
                 String periodString = durationPeriodString.split("T")[0];
                 this.periodValue = normalizeMonthsToYears(Period.parse(periodString));
-                this.isPeriod = true;
             }
             if (durationPeriodString.contains("T")) {
                 String durationString = "PT" + durationPeriodString.split("T")[1];
@@ -128,7 +141,6 @@ public class DurationItem implements Item {
                     durationString = "-" + durationString;
                 }
                 this.durationValue = Duration.parse(durationString);
-                this.isDuration = true;
             }
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(

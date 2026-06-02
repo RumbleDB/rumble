@@ -58,6 +58,21 @@ public class MapEntryItem implements Item {
         this.value = value;
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        if(mutable) {
+            List<String> keys = this.getStringKeys();
+            List<Item> values = this.getItemValues();
+            for(String key : keys) {
+                values.add(getItemByKey(key).copy(true));
+            }
+            Item result = new ObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+            result.setMutabilityLevel(0);
+            return result;
+        }
+        return new MapEntryItem(this.key.copy(mutable), this.value.stream().map(item -> item.copy(mutable)).toList());
+    }
+
     // region maps
 
     @Override

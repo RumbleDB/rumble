@@ -20,9 +20,9 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
@@ -31,13 +31,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class ArrayItem implements Item {
 
@@ -68,6 +68,19 @@ public class ArrayItem implements Item {
         this.pathIn = "null";
         this.location = "null";
         this.collection = null;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedItems = new ArrayList<>(this.arrayItems.size());
+        for (Item item : this.arrayItems) {
+            copiedItems.add(item.copy(mutable));
+        }
+        ArrayItem copy = new ArrayItem(copiedItems);
+        if(mutable) {
+            copy.setMutabilityLevel(0);
+        }
+        return copy;
     }
 
     public boolean equals(Object otherItem) {

@@ -84,6 +84,20 @@ public class ObjectItem implements Item {
         this.topLevelOrder = 0.0;
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        List<String> newKeys = new ArrayList<>(this.keys);
+        List<Item> newValues = new ArrayList<>();
+        for (Item value : this.values) {
+            newValues.add(value.copy(mutable));
+        }
+        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
+        if(mutable) {
+            result.setMutabilityLevel(this.mutabilityLevel);
+        }
+        return result;
+    }
+
     public boolean equals(Object otherItem) {
         if (!(otherItem instanceof Item)) {
             return false;

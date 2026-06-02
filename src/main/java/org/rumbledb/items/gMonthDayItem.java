@@ -51,6 +51,11 @@ public class gMonthDayItem implements Item {
         getgMonthDayFromString(gMonthDayString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gMonthDayItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgMonthDayFromString(String gMonthDayString) {
         Matcher matcher = this.gMonthDayRegex.matcher(gMonthDayString);
         if (!matcher.matches()) {
