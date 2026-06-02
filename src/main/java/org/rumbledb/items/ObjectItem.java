@@ -92,7 +92,7 @@ public class ObjectItem implements Item {
             newValues.add(value.copy(mutable));
         }
         Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
-        if(mutable) {
+        if (mutable) {
             result.setMutabilityLevel(this.mutabilityLevel);
         }
         return result;

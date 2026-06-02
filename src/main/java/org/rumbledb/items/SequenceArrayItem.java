@@ -51,8 +51,7 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public Item copy(boolean mutable) {
-        if(mutable)
-        {
+        if (mutable) {
             List<Item> copiedItems = new ArrayList<>(this.getItemMembers().size());
             for (Item item : this.getItemMembers()) {
                 copiedItems.add(item.copy(mutable));

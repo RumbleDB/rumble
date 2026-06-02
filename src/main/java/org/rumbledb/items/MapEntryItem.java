@@ -60,10 +60,10 @@ public class MapEntryItem implements Item {
 
     @Override
     public Item copy(boolean mutable) {
-        if(mutable) {
+        if (mutable) {
             List<String> keys = this.getStringKeys();
             List<Item> values = this.getItemValues();
-            for(String key : keys) {
+            for (String key : keys) {
                 values.add(getItemByKey(key).copy(true));
             }
             Item result = new ObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);

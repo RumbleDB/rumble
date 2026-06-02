@@ -77,7 +77,7 @@ public class ArrayItem implements Item {
             copiedItems.add(item.copy(mutable));
         }
         ArrayItem copy = new ArrayItem(copiedItems);
-        if(mutable) {
+        if (mutable) {
             copy.setMutabilityLevel(0);
         }
         return copy;

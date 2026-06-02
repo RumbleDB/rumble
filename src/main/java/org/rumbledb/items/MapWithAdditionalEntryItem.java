@@ -60,17 +60,24 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public Item copy(boolean mutable) {
-        if(mutable) {
+        if (mutable) {
             List<String> keys = this.getStringKeys();
             List<Item> values = this.getItemValues();
-            for(String key : keys) {
+            for (String key : keys) {
                 values.add(getItemByKey(key).copy(true));
             }
             Item result = new ObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
             result.setMutabilityLevel(0);
             return result;
         }
-        return new MapItem(this.getItemKeys().stream().map(item -> item.copy(mutable)).toList(), this.getSequenceValues().stream().map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList()).toList(), ExceptionMetadata.EMPTY_METADATA);
+        return new MapItem(
+                this.getItemKeys().stream().map(item -> item.copy(mutable)).toList(),
+                this.getSequenceValues()
+                    .stream()
+                    .map(item -> item.stream().map(subitem -> subitem.copy(mutable)).toList())
+                    .toList(),
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     // region maps

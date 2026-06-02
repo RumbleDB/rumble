@@ -55,10 +55,10 @@ public class DurationItem implements Item {
 
     @Override
     public Item copy(boolean mutable) {
-        if(!Objects.isNull(this.durationValue)) {
+        if (!Objects.isNull(this.durationValue)) {
             return new DurationItem(this.durationValue);
         }
-        if(!Objects.isNull(this.periodValue)) {
+        if (!Objects.isNull(this.periodValue)) {
             return new DurationItem(this.periodValue);
         }
         throw new IllegalStateException("Invalid DurationItem state");
