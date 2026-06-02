@@ -32,8 +32,7 @@ public class Rumble {
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-        SparkSessionManager.getInstance().getOrCreateSession();
+        this(SparkSessionManager.getInstance().getOrCreateSession(), configuration);
     }
 
     /**
@@ -41,7 +40,17 @@ public class Rumble {
      *
      */
     public Rumble(SparkSession session) {
-        this.configuration = new RumbleRuntimeConfiguration();
+        this(session, new RumbleRuntimeConfiguration());
+    }
+
+    /**
+     * Creates a new Rumble instance. It uses the supplied spark session and configuration.
+     *
+     * @param session an existing spark session to reuse.
+     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
+     */
+    public Rumble(SparkSession session, RumbleRuntimeConfiguration configuration) {
+        this.configuration = configuration;
         SparkSessionManager.getInstance(session);
     }
 
