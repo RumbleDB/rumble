@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.items.ItemSameKeyComparator;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -45,6 +46,7 @@ public class MapWithAdditionalEntryItem implements Item {
     private Item original;
     private Item additionalKey;
     private List<Item> additionalValue;
+    private ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
 
     public MapWithAdditionalEntryItem() {
         this.original = null;
@@ -99,7 +101,12 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public List<String> getStringKeys() {
-        List<String> result = new ArrayList<>(this.original.getStringKeys());
+        List<String> result = new ArrayList<>();
+        for(String key : this.original.getStringKeys()) {
+            if (key.equals(this.additionalKey.getStringValue())) {
+                result.add(key);
+            }
+        }
         if (this.additionalKey.isString()) {
             result.add(this.additionalKey.getStringValue());
             return result;
@@ -109,7 +116,12 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public List<Item> getItemKeys() {
-        List<Item> result = new ArrayList<>(this.original.getItemKeys());
+        List<Item> result = new ArrayList<>();
+        for(Item key : this.original.getItemKeys()) {
+            if (itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
+                result.add(key);
+            }
+        }
         result.add(this.additionalKey);
         return result;
     }
@@ -145,6 +157,9 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
+            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+                continue;
+            }
             result.add(this.original.getItemByKey(key));
         }
         if (this.additionalValue.size() != 1) {
@@ -158,6 +173,9 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
+            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+                continue;
+            }
             result.add(this.original.getSequenceByKey(key));
         }
         result.add(this.additionalValue);

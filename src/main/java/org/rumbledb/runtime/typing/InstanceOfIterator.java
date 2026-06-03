@@ -157,6 +157,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 itemToMatch.getSequenceValues()
             );
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
+            
             // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
             return runtimeMapType.isSubtypeOf(itemType);
@@ -183,8 +184,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return runtimeArrayType.isSubtypeOf(itemType)
                 || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
-        System.err.println("Dynamic type: " + itemToMatch.getDynamicType());
-        System.err.println("Required type: " + itemType);
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 
