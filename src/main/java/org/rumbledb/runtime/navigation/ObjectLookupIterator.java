@@ -258,7 +258,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 && (this.iterator instanceof ContextExpressionIterator)
         ) {
             leftSchema = (nativeClauseContext.getResultingType() != null)
-                ? TypeMappings.getDataFrameDataTypeFromItemType(nativeClauseContext.getResultingType().getItemType())
+                ? TypeMappings.getDataFrameDataTypeFromItemType(
+                    nativeClauseContext.getResultingType().getItemType(),
+                    this.staticContext
+                )
                 : outerContextSchema;
             if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
@@ -279,7 +282,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(newContext.getResultingType().getItemType());
+                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
+                    newContext.getResultingType().getItemType(),
+                    this.staticContext
+                );
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }

@@ -124,6 +124,14 @@ public class DoubleItem implements Item {
     }
 
     @Override
+    public BigDecimal getDecimalValue() {
+        if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
+            throw new IteratorFlowException("NaN and INF cannot be cast to decimal");
+        }
+        return new BigDecimal(getDoubleValue());
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.value != 0;
     }

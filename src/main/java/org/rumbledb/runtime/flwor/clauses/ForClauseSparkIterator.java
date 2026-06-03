@@ -1488,7 +1488,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
                     selectionContext.getResultingType().getItemType().isArrayItemType()
                         ? selectionContext.getResultingType().getItemType().getArrayContentFacet()
-                        : selectionContext.getResultingType().getItemType()
+                        : selectionContext.getResultingType().getItemType(),
+                    this.getStaticContext()
                 );
                 selectionContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
@@ -1532,7 +1533,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     selectionContext.getResultingQuery()
                 );
                 DataType resultingType = TypeMappings.getDataFrameDataTypeFromItemType(
-                    selectionContext.getResultingType().getItemType()
+                    selectionContext.getResultingType().getItemType(),
+                    this.getStaticContext()
                 );
                 selectionContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
@@ -1579,7 +1581,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 letClauseContext.setSchema(
                     ((StructType) nativeClauseContext.getSchema()).add(
                         variableName.toString(),
-                        TypeMappings.getDataFrameDataTypeFromItemType(selectionContext.getResultingType().getItemType())
+                        TypeMappings.getDataFrameDataTypeFromItemType(
+                            selectionContext.getResultingType().getItemType(),
+                            this.getStaticContext()
+                        )
                     )
                 );
                 letClauseContext.setSchema(
