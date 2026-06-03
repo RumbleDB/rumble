@@ -50,4 +50,8 @@ public class Program extends Node {
     public boolean isSequential() {
         return this.statementsAndOptionalExpr.isSequential();
     }
+
+    public boolean isUpdating() {
+        return this.statementsAndOptionalExpr.isUpdating();
+    }
 }
