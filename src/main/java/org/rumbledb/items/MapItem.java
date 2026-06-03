@@ -222,7 +222,7 @@ public class MapItem implements Item {
     }
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        return this.keys.contains(key);
+        return this.keyToIndex.containsKey(key);
     }
 
     @Override
