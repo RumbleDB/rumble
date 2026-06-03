@@ -122,7 +122,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
             );
         }
-        StructType schema = convertToDataFrameSchema(itemType);
+        StructType schema = convertToDataFrameSchema(itemType, staticContext);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
                 private static final long serialVersionUID = 1L;
@@ -175,14 +175,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    public static StructType convertToDataFrameSchema(ItemType itemType) {
+    public static StructType convertToDataFrameSchema(ItemType itemType, RuntimeStaticContext staticContext) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
                 columnName,
                 itemType,
-                false
+                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext
             );
             fields.add(field);
             return DataTypes.createStructType(fields);
@@ -190,10 +192,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isArrayItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
+            boolean nullable = itemType.canBeNull();
             StructField field = createStructField(
                 columnName,
                 itemType,
-                false
+                staticContext.getConfiguration().getLaxJSONNullValidation() && nullable,
+                staticContext
             );
             fields.add(field);
             return DataTypes.createStructType(fields);
@@ -208,10 +212,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : itemType.getObjectContentFacet().keySet()) {
+                ItemType columnType = itemType.getObjectContentFacet().get(columnName).getType();
+                boolean required = itemType.getObjectContentFacet().get(columnName).isRequired();
+                boolean nullable = columnType.canBeNull();
                 StructField field = createStructField(
                     columnName,
-                    itemType.getObjectContentFacet().get(columnName).getType(),
-                    !itemType.getObjectContentFacet().get(columnName).isRequired()
+                    columnType,
+                    !required || (staticContext.getConfiguration().getLaxJSONNullValidation() && nullable),
+                    staticContext
                 );
                 fields.add(field);
             }
@@ -225,22 +233,27 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField createStructField(String columnName, ItemType item, boolean nullable) {
-        DataType type = convertToDataType(item);
+    private static StructField createStructField(
+            String columnName,
+            ItemType item,
+            boolean nullable,
+            RuntimeStaticContext staticContext
+    ) {
+        DataType type = convertToDataType(item, staticContext);
         return DataTypes.createStructField(columnName, type, nullable);
     }
 
-    private static DataType convertToDataType(ItemType itemType) {
+    private static DataType convertToDataType(ItemType itemType, RuntimeStaticContext staticContext) {
         if (itemType.isArrayItemType()) {
             ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet();
-            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType);
+            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType, staticContext);
             return DataTypes.createArrayType(arrayContentsType);
         }
 
         if (itemType.isObjectItemType()) {
-            return convertToDataFrameSchema(itemType);
+            return convertToDataFrameSchema(itemType, staticContext);
         }
-        return TypeMappings.getDataFrameDataTypeFromItemType(itemType);
+        return TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext);
     }
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
@@ -256,7 +269,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     itemType
             );
         }
-        StructType schema = convertToDataFrameSchema(itemType);
+        StructType schema = convertToDataFrameSchema(itemType, staticContext);
+        if (staticContext.getConfiguration().printInferredTypes()) {
+            System.err.println("Inferred DataFrame type:\n");
+            schema.printTreeString();
+        }
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA, isValidate, staticContext);
@@ -337,8 +354,23 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             DataType dataType,
             DynamicContext context
     ) {
+        // Handling of missing value
         if (item == null) {
             return null;
+        }
+        // Handling of null
+        if (item.isNull()) {
+            if (context.getRumbleRuntimeConfiguration().getLaxJSONNullValidation()) {
+                return null;
+            } else if (dataType.equals(DataTypes.NullType)) {
+                return null;
+            } else if (dataType.equals(DataTypes.StringType)) {
+                return "null";
+            } else {
+                throw new OurBadException(
+                        "Null value found where a non-null value of type " + dataType + " was expected."
+                );
+            }
         }
         try {
             if (dataType instanceof ArrayType) {
@@ -385,7 +417,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
-                return item.getStringValue();
+                if (item.isAtomic()) {
+                    return item.getStringValue();
+                }
+                return item.serialize();
             }
             if (dataType.equals(DataTypes.NullType)) {
                 return null;
@@ -561,25 +596,25 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     ItemType expectedType = fieldDescriptor.getType();
                     Item value = item.getItemByKey(key);
                     if (value.isNull()) {
-                        if (expectedType.equals(BuiltinTypesCatalogue.nullItem) || expectedType.isUnionType()) {
+                        if (expectedType.canBeNull()) {
                             keys.add(key);
-                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                            values.add(validate(value, expectedType, metadata, true, staticContext));
                         } else if (fieldDescriptor.isRequired()) {
                             throw new InvalidInstanceException(
-                                    "Null associated with required key in object type "
+                                    "Null associated with required, non-nullable key in object type "
                                         + itemType.getIdentifierString()
                                         + " : "
                                         + key
                             );
                         } else if (!staticContext.getConfiguration().getLaxJSONNullValidation()) {
                             keys.add(key);
-                            values.add(validate(item.getItemByKey(key), expectedType, metadata, true, staticContext));
+                            values.add(validate(value, expectedType, metadata, true, staticContext));
                         } else {
                             // In lax mode, prefer a successful cast when possible (e.g., null -> "null" for strings),
                             // and only treat null as absent if the cast fails.
                             try {
                                 Item validatedNullValue = validate(
-                                    item.getItemByKey(key),
+                                    value,
                                     expectedType,
                                     metadata,
                                     true,

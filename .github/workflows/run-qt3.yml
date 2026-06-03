@@ -102,6 +102,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
+      contents: write
     steps:
       - name: Post JSONiq QT3 comment
         uses: mshick/add-pr-comment@v3

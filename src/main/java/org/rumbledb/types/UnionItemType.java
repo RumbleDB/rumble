@@ -313,4 +313,30 @@ public class UnionItemType implements ItemType {
         }
         return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
     }
+
+    @Override
+    public boolean canBeNull() {
+        for (ItemType member : this.types) {
+            if (member.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public ItemType getSingleNullableType() {
+        if (this.types.size() == 2) {
+            ItemType firstType = this.types.get(0);
+            ItemType secondType = this.types.get(1);
+            if (firstType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return secondType;
+            }
+            if (secondType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return firstType;
+            }
+        }
+        return null;
+    }
+
 }
