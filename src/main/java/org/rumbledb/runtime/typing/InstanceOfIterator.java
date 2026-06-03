@@ -183,6 +183,8 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return runtimeArrayType.isSubtypeOf(itemType)
                 || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
+        System.err.println("Dynamic type: " + itemToMatch.getDynamicType());
+        System.err.println("Required type: " + itemType);
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 
