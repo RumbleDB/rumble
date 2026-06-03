@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.items.ItemSameKeyComparator;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -102,7 +101,7 @@ public class MapWithAdditionalEntryItem implements Item {
     @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>();
-        for(String key : this.original.getStringKeys()) {
+        for (String key : this.original.getStringKeys()) {
             if (key.equals(this.additionalKey.getStringValue())) {
                 result.add(key);
             }
@@ -117,7 +116,7 @@ public class MapWithAdditionalEntryItem implements Item {
     @Override
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>();
-        for(Item key : this.original.getItemKeys()) {
+        for (Item key : this.original.getItemKeys()) {
             if (itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
                 result.add(key);
             }
