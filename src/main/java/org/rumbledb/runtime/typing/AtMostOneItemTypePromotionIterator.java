@@ -93,8 +93,8 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private Item checkTypePromotion(Item item) {
-        if(item.isFunction() && !this.itemType.isMapItemType()&& !this.itemType.isArrayItemType()) {
-            //TODO we need to implement function coercion.
+        if (item.isFunction() && !this.itemType.isMapItemType() && !this.itemType.isArrayItemType()) {
+            // TODO we need to implement function coercion.
             return item;
         }
         if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
