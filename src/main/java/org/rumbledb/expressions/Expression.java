@@ -195,12 +195,23 @@ public abstract class Expression extends Node {
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
+        if (this.isSequential) {
+            buffer.append(" | " + "sequential");
+        } else {
+            buffer.append(" | " + "non-sequential");
+        }
         buffer.append(
             " | "
                 + (this.staticSequenceType == null
                     ? "not set"
                     : this.staticSequenceType
                         + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
+        buffer.append(
+            " | "
+                + (this.getStaticContext() != null && !this.getStaticContext().isQuerySideEffecting()
+                    ? "query side effecting"
+                    : "query without side effects")
         );
         buffer.append("\n");
         for (Node iterator : getChildren()) {

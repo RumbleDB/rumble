@@ -182,7 +182,7 @@ public class RumbleHttpHandler implements HttpHandler {
             "error-code",
             ItemFactory.getInstance().createStringItem(code)
         );
-        Item stackTrace = ItemFactory.getInstance().createArrayItem();
+        Item stackTrace = ItemFactory.getInstance().createArrayItem(false);
         if (stackTrace == null) {
             return output;
         }

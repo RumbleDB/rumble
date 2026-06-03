@@ -20,21 +20,23 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import org.apache.spark.api.java.function.Function;
-import org.rumbledb.api.Item;
-import org.rumbledb.items.ItemFactory;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
+import org.apache.spark.api.java.function.Function;
+import org.rumbledb.api.Item;
+import org.rumbledb.items.ItemFactory;
+
 public class ObjectIntersectMapClosure implements Function<Item, Item> {
 
 
     private static final long serialVersionUID = 1L;
+    private boolean mutable;
 
-    public ObjectIntersectMapClosure() {
+    public ObjectIntersectMapClosure(boolean mutable) {
+        this.mutable = mutable;
     }
 
     public Item call(Item arg0) throws Exception {
@@ -45,10 +47,10 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
         for (String key : arg0.getKeys()) {
             Item value = arg0.getItemByKey(key);
             Item arrayValue = ItemFactory.getInstance()
-                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), false);
+                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), this.mutable);
             keyValuePairs.put(key, new ArrayList<Item>(Collections.singletonList(arrayValue)));
         }
 
-        return ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
+        return ItemFactory.getInstance().createObjectItem(keyValuePairs, this.mutable);
     }
 };

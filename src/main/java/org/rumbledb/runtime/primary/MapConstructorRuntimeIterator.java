@@ -17,6 +17,10 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -25,10 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
@@ -108,7 +108,12 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 );
         } else {
             return ItemFactory.getInstance()
-                .createMapItem(mapKeys, valueSequences, getMetadata(), false);
+                .createMapItem(
+                    mapKeys,
+                    valueSequences,
+                    getMetadata(),
+                    this.getRuntimeStaticContext().isQuerySideEffecting()
+                );
         }
     }
 

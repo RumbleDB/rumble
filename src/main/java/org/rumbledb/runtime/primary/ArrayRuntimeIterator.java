@@ -87,16 +87,18 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 for (List<Item> member : memberSequences) {
                     items.add(member.get(0));
                 }
-                return ItemFactory.getInstance().createArrayItem(items, false);
+                return ItemFactory.getInstance()
+                    .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
             } else {
-                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, false);
+                return ItemFactory.getInstance()
+                    .createSequenceArrayItem(memberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
             }
         }
         List<Item> result = new ArrayList<>();
         for (RuntimeIterator child : this.children) {
             result.addAll(child.materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, false);
+        return ItemFactory.getInstance().createArrayItem(result, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     @Override

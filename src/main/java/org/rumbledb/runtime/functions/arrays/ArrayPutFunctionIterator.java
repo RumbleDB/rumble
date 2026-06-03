@@ -149,7 +149,8 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
                     newItems.add(arrayItem.getItemAt(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(size);
             for (int i = 0; i < size; i++) {
@@ -159,7 +160,8 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
                     newMemberSequences.add(arrayItem.getSequenceAt(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(newMemberSequences, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

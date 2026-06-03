@@ -1,12 +1,12 @@
 package org.rumbledb.expressions.scripting;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * A program is the first-class citizen in JSONiq scripting syntax. A program
@@ -45,5 +45,9 @@ public class Program extends Node {
 
     public StatementsAndOptionalExpr getStatementsAndOptionalExpr() {
         return this.statementsAndOptionalExpr;
+    }
+
+    public boolean isSequential() {
+        return this.statementsAndOptionalExpr.isSequential();
     }
 }

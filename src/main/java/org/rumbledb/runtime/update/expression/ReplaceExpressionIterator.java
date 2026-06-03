@@ -93,7 +93,8 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             for (Item item : tempContent) {
                 copyContent.add((Item) SerializationUtils.clone(item));
             }
-            content = ItemFactory.getInstance().createArrayItem(copyContent, true);
+            content = ItemFactory.getInstance()
+                .createArrayItem(copyContent, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();

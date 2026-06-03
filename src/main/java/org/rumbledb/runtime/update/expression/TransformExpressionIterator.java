@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -96,7 +95,8 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
-                temp = SerializationUtils.clone(item);
+                System.err.println("Copy of " + item.serialize());
+                temp = item.copy(true);
                 temp.setMutabilityLevel(this.mutabilityLevel);
                 // Ensure transform updates apply to the copied item, not the backing collection.
                 temp.setCollection(null);

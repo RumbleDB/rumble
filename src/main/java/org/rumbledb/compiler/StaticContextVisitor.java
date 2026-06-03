@@ -20,6 +20,11 @@
 
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
@@ -83,11 +88,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -560,6 +560,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProgram(Program program, StaticContext argument) {
         StaticContext currentContext = new StaticContext(argument);
         visitDescendants(program, currentContext);
+        if (program.isSequential()) {
+            program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
+        }
         return currentContext;
     }
 

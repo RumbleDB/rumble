@@ -264,8 +264,14 @@ public class ItemFactory {
         return new LazyObjectItem();
     }
 
-    public Item createArrayItem() {
-        return new ArrayItem();
+    public Item createArrayItem(boolean mutable) {
+        Item result = new ArrayItem();
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
     public Item createArrayItem(List<Item> items, boolean mutable) {
@@ -334,9 +340,15 @@ public class ItemFactory {
 
     public Item createMapItem(
             Item onlyKey,
-            List<Item> onlyValue
+            List<Item> onlyValue,
+            boolean mutable
     ) {
-        return new MapEntryItem(onlyKey, onlyValue);
+        if (!mutable) {
+            return new MapEntryItem(onlyKey, onlyValue);
+        }
+        List<Item> keys = List.of(onlyKey);
+        List<List<Item>> values = List.of(onlyValue);
+        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
     }
 
     public Item createMapItemRemovingKeys(

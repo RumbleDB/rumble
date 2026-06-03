@@ -244,10 +244,10 @@ public class ItemTypeFactory {
                         .warn(
                             "The content facet of an object type is missing. By default, no fields are defined or overriden."
                         );
-                    contentItem = ItemFactory.getInstance().createArrayItem();
+                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 } else {
                     if (contentItem == null) {
-                        contentItem = ItemFactory.getInstance().createArrayItem();
+                        contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                     }
                     if (!contentItem.isArray()) {
                         throw new InvalidSchemaException(
@@ -383,7 +383,7 @@ public class ItemTypeFactory {
                 }
                 contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
-                    contentItem = ItemFactory.getInstance().createArrayItem();
+                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 }
                 ItemType memberType = null;
                 if (contentItem.isString()) {

@@ -81,7 +81,9 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
 
         JavaRDD<Item> childRDD = iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure();
+        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
+                this.getRuntimeStaticContext().isQuerySideEffecting()
+        );
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         Function2<Item, Item, Item> reductionTransformation = new ObjectIntersectReduceClosure();

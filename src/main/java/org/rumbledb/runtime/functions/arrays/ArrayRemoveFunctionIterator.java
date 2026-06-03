@@ -17,6 +17,12 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,12 +37,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
@@ -133,7 +133,8 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance().createArrayItem(keptMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> keptMembers = new ArrayList<>(Math.max(0, size - positionsToRemove.size()));
@@ -143,7 +144,8 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(keptMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

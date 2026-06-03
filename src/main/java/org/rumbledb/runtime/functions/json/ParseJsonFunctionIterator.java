@@ -56,7 +56,13 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (optionsItem == null) {
             try {
                 JsonReader object = new JsonReader(new StringReader(stringItem.getStringValue()));
-                return ItemParser.getItemFromObject(object, isJSONiq10, options.getNumberFormat(), getMetadata());
+                return ItemParser.getItemFromObject(
+                    object,
+                    isJSONiq10,
+                    options.getNumberFormat(),
+                    getMetadata(),
+                    false
+                );
             } catch (Exception e) {
                 return ItemParser.getItemFromJSONString(
                     stringItem.getStringValue(),

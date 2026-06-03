@@ -18,6 +18,11 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -40,11 +45,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:sort}:
@@ -146,9 +146,11 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : sortedMembers) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(sortedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

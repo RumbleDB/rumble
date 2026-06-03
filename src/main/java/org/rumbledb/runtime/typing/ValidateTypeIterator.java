@@ -501,7 +501,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             // Test of length facets
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, false);
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, staticContext.isQuerySideEffecting());
             if (minLength != null && members.size() < minLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at least " + minLength
