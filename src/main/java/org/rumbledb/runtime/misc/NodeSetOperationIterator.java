@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -132,7 +131,9 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         for (Item item : iterator.materialize(context)) {
             if (!item.isNode()) {
                 throw new UnexpectedTypeException(
-                        "The " + side + " operand of a node set operation must contain only nodes, got: "
+                        "The "
+                            + side
+                            + " operand of a node set operation must contain only nodes, got: "
                             + item.getDynamicType(),
                         getMetadata()
                 );
