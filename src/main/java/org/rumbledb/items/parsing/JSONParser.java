@@ -5,7 +5,7 @@ import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
+import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -953,7 +953,7 @@ public final class JSONParser {
     }
 
     private boolean isValidXMLCodePoint(int codepoint) {
-        return XMLUtils.isValidCodePoint(codepoint, this.xmlVersion);
+        return XMLUtils.isValidXmlCharacter(codepoint, this.xmlVersion);
     }
 
     private String printable(char c) {

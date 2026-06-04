@@ -246,6 +246,13 @@ public class ItemFactory {
         return new QNameItem(name);
     }
 
+    public Item createNCNameItem(String s) {
+        return this.createAnnotatedItem(
+            this.createStringItem(s),
+            BuiltinTypesCatalogue.NCNameItem
+        );
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
