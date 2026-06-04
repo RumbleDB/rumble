@@ -42,6 +42,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -368,6 +369,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitRangeExpr(RangeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitNodeSetExpr(NodeSetExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
