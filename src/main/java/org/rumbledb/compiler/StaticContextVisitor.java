@@ -560,7 +560,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProgram(Program program, StaticContext argument) {
         StaticContext currentContext = new StaticContext(argument);
         visitDescendants(program, currentContext);
-        if (program.isSequential() && program.isUpdating()) {
+        if (program.isSequential() || program.isUpdating()) {
             program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
         }
         return currentContext;

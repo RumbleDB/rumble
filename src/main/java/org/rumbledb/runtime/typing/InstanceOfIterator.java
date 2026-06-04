@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.typing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -33,10 +37,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -178,7 +178,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
                 members
             );
-            System.err.println("Member sequence type: " + memberSequenceType);
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
