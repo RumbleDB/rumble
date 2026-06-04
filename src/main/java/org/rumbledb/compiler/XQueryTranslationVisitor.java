@@ -64,6 +64,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -1266,16 +1267,32 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnionExpr(XQueryParser.UnionExprContext ctx) {
-        // TODO: implement this
-        // at the moment, just visit the first child
-        return (Expression) this.visitIntersectExceptExpr(ctx.intersectExceptExpr(0));
+        Expression result = (Expression) this.visitIntersectExceptExpr(ctx.main_expr);
+        for (XQueryParser.IntersectExceptExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitIntersectExceptExpr(child);
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.UNION,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
     }
 
     @Override
     public Node visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
-        // TODO: implement this
-        // at the moment, just visit the first child
-        return (Expression) this.visitInstanceOfExpr(ctx.instanceOfExpr(0));
+        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            Expression rightExpression = (Expression) this.visitInstanceOfExpr(ctx.rhs.get(i));
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.fromSymbol(ctx.op.get(i).getText()),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
     }
 
     @Override
