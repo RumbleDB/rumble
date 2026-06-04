@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.misc;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,8 +28,6 @@ import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -83,16 +80,16 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaPairRDD<XMLDocumentPosition, Item> leftNodes = buildNodePositionPairRDD(
+        JavaRDD<Item> leftNodes = buildNodeRDD(
             this.leftIterator.getRDD(context),
             "left"
         );
-        JavaPairRDD<XMLDocumentPosition, Item> rightNodes = buildNodePositionPairRDD(
+        JavaRDD<Item> rightNodes = buildNodeRDD(
             this.rightIterator.getRDD(context),
             "right"
         );
 
-        JavaPairRDD<XMLDocumentPosition, Item> result;
+        JavaRDD<Item> result;
         switch (this.operator) {
             case UNION:
                 result = leftNodes.union(rightNodes).distinct();
@@ -101,12 +98,12 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
                 result = leftNodes.intersection(rightNodes);
                 break;
             case EXCEPT:
-                result = leftNodes.subtractByKey(rightNodes);
+                result = leftNodes.subtract(rightNodes);
                 break;
             default:
                 throw new IteratorFlowException("Unrecognized node set operator: " + this.operator, getMetadata());
         }
-        return result.values().sortBy(Item::getXmlDocumentPosition, true, 1);
+        return result.sortBy(Item::getXmlDocumentPosition, true, 1);
     }
 
     @Override
@@ -159,12 +156,12 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         return new ArrayList<>(nodes);
     }
 
-    private JavaPairRDD<XMLDocumentPosition, Item> buildNodePositionPairRDD(JavaRDD<Item> items, String side) {
+    private JavaRDD<Item> buildNodeRDD(JavaRDD<Item> items, String side) {
         ExceptionMetadata metadata = getMetadata();
-        return items.mapToPair(item -> {
-            XMLDocumentPosition position = validateAndGetNodePosition(item, side, metadata);
-            return new Tuple2<>(position, item);
-        }).reduceByKey((left, right) -> left);
+        return items.map(item -> {
+            validateAndGetNodePosition(item, side, metadata);
+            return item;
+        });
     }
 
     private static XMLDocumentPosition validateAndGetNodePosition(
