@@ -38,16 +38,19 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private static final long serialVersionUID = 1L;
     private final List<RuntimeIterator> keys;
     private final List<RuntimeIterator> values;
+    private boolean mutable;
 
     public MapConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(keys, staticContext);
         this.children.addAll(values);
         this.keys = keys;
         this.values = values;
+        this.mutable = mutable;
     }
 
     private static Item atomizeSingleMapKey(
@@ -112,7 +115,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                     mapKeys,
                     valueSequences,
                     getMetadata(),
-                    this.getRuntimeStaticContext().isQuerySideEffecting()
+                    mutable
                 );
         }
     }

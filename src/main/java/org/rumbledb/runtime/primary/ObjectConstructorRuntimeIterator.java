@@ -49,25 +49,30 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     private List<RuntimeIterator> keys;
     private List<RuntimeIterator> values;
     private boolean isMergedObject = false;
+    private boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(keys, staticContext);
         this.children.addAll(values);
         this.keys = keys;
         this.values = values;
+        this.mutable = mutable;
     }
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(null, staticContext);
         this.children.addAll(childExpressions);
         this.isMergedObject = true;
+        this.mutable = mutable;
     }
 
     @Override
@@ -86,7 +91,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createObjectItem(keys, values, getMetadata(), this.mutable);
 
         } else {
 
@@ -101,7 +106,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 if (currentResults.size() > 1) {
                     values.add(
                         ItemFactory.getInstance()
-                            .createArrayItem(currentResults, this.getRuntimeStaticContext().isQuerySideEffecting())
+                            .createArrayItem(currentResults, this.mutable)
                     );
                 } else if (currentResults.size() == 1) {
                     values.add(currentResults.get(0));
@@ -133,7 +138,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
+                .createObjectItem(keys, values, getMetadata(), this.mutable);
         }
     }
 

@@ -40,8 +40,6 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private boolean isFixedSlotsArrayConstructor;
     private boolean mutable;
-    static int counter = 0;
-    private int id;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
@@ -52,13 +50,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             boolean mutable
     ) {
         super(null, staticContext);
-        counter++;
-        this.id = counter;
         this.isFixedSlotsArrayConstructor = false;
         this.mutable = mutable;
-        if(this.id == 1) {
-            Thread.dumpStack();
-        }
         if (arrayItems != null) {
             this.children.add(arrayItems);
         }
@@ -74,13 +67,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             boolean mutable
     ) {
         super(null, staticContext);
-        counter++;
-        this.id = counter;
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
         this.mutable = mutable;
-        if(this.id == 1) {
-            Thread.dumpStack();
-        }
         if (memberIterators != null) {
             this.children.addAll(memberIterators);
         }
@@ -105,17 +93,17 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     items.add(member.get(0));
                 }
                 return ItemFactory.getInstance()
-                    .createArrayItem(items, mutable);
+                    .createArrayItem(items, this.mutable);
             } else {
                 return ItemFactory.getInstance()
-                    .createSequenceArrayItem(memberSequences, mutable);
+                    .createSequenceArrayItem(memberSequences, this.mutable);
             }
         }
         List<Item> result = new ArrayList<>();
         for (RuntimeIterator child : this.children) {
             result.addAll(child.materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, mutable);
+        return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }
 
     @Override
