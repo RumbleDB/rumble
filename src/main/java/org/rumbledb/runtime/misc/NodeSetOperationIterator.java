@@ -33,10 +33,10 @@ import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
+import java.util.TreeSet;
 
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
@@ -121,42 +121,42 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> computeNodeSet(DynamicContext context) {
-        TreeMap<XMLDocumentPosition, Item> leftNodes = buildNodePositionMap(this.leftIterator, context, "left");
-        TreeMap<XMLDocumentPosition, Item> rightNodes = buildNodePositionMap(this.rightIterator, context, "right");
+        Set<Item> leftNodes = buildNodeSet(this.leftIterator, context, "left");
+        Set<Item> rightNodes = buildNodeSet(this.rightIterator, context, "right");
 
         switch (this.operator) {
             case UNION:
-                leftNodes.putAll(rightNodes);
-                return new ArrayList<>(leftNodes.values());
+                leftNodes.addAll(rightNodes);
+                return sortNodes(leftNodes);
             case INTERSECT:
-                leftNodes.keySet().retainAll(rightNodes.keySet());
-                return new ArrayList<>(leftNodes.values());
+                leftNodes.retainAll(rightNodes);
+                return sortNodes(leftNodes);
             case EXCEPT:
-                Set<XMLDocumentPosition> excludedPositions = new HashSet<>(rightNodes.keySet());
-                leftNodes.keySet().removeIf(excludedPositions::contains);
-                return new ArrayList<>(leftNodes.values());
+                leftNodes.removeAll(rightNodes);
+                return sortNodes(leftNodes);
             default:
                 throw new IteratorFlowException("Unrecognized node set operator: " + this.operator, getMetadata());
         }
     }
 
     /**
-     * Builds a map of XML document positions to items.
-     * 
-     * Because the result of a node set operation must be ordered according to document order
-     * We use a TreeMap to store the nodes, which will automatically sort them by their document position.
+     * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
      */
-    private TreeMap<XMLDocumentPosition, Item> buildNodePositionMap(
+    private Set<Item> buildNodeSet(
             RuntimeIterator iterator,
             DynamicContext context,
             String side
     ) {
-        TreeMap<XMLDocumentPosition, Item> nodesByPosition = new TreeMap<>();
+        Set<Item> nodes = new TreeSet<>(Comparator.comparing(Item::getXmlDocumentPosition));
         for (Item item : iterator.materialize(context)) {
-            XMLDocumentPosition position = validateAndGetNodePosition(item, side, getMetadata());
-            nodesByPosition.put(position, item);
+            validateAndGetNodePosition(item, side, getMetadata());
+            nodes.add(item);
         }
-        return nodesByPosition;
+        return nodes;
+    }
+
+    private List<Item> sortNodes(Set<Item> nodes) {
+        return new ArrayList<>(nodes);
     }
 
     private JavaPairRDD<XMLDocumentPosition, Item> buildNodePositionPairRDD(JavaRDD<Item> items, String side) {
