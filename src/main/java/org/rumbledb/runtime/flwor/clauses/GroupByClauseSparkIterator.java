@@ -752,7 +752,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     ((StructType) childContext.getSchema()).add(
                         name.toString(),
                         TypeMappings.getDataFrameDataTypeFromItemType(
-                            expressionContext.getResultingType().getItemType()
+                            expressionContext.getResultingType().getItemType(),
+                            this.getStaticContext()
                         )
                     )
                 );

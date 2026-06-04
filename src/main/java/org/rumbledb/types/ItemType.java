@@ -144,6 +144,22 @@ public interface ItemType extends Serializable, KryoSerializable {
         return false;
     }
 
+    /**
+     *
+     * @return [true] if the null value is in the value space.
+     */
+    default boolean canBeNull() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if this is just one type unioned with null, returns that type.
+     */
+    default ItemType getSingleNullableType() {
+        return null;
+    }
+
     // endregion
 
     // region concrete-specific-function
@@ -221,6 +237,9 @@ public interface ItemType extends Serializable, KryoSerializable {
             return BuiltinTypesCatalogue.nullItem;
         }
         if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (this.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,
@@ -228,6 +247,9 @@ public interface ItemType extends Serializable, KryoSerializable {
             );
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
             return new UnionItemType(
                     null,
                     BuiltinTypesCatalogue.atomicItem,

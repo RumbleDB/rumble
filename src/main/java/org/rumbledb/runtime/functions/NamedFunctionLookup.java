@@ -53,7 +53,7 @@ public final class NamedFunctionLookup {
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
         if (builtin != null) {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
-                identifier,
+                builtin.getIdentifier(),
                 dynamicContext.getModuleContext(),
                 configuration,
                 metadata,

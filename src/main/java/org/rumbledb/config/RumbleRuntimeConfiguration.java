@@ -538,12 +538,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         if (this.arguments.containsKey("xml-version")) {
             String xmlVersion = this.arguments.get("xml-version").trim();
-            if (!(xmlVersion.equals("1.0") || xmlVersion.equals("1.1"))) {
-                throw new CliException(
+            try {
+                setXmlVersion(xmlVersion);
+            } catch (Exception e) {
+                CliException ex = new CliException(
                         "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
                 );
+                ex.initCause(e);
+                throw ex;
             }
-            setXmlVersion(xmlVersion);
         }
         if (this.arguments.containsKey("default-formatting-place")) {
             String defaultPlace = this.arguments.get("default-formatting-place").trim();
@@ -1309,7 +1312,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.arguments = kryo.readObject(input, HashMap.class);
     }
 
-    public static final String DEFAULT_XML_VERSION = "1.0";
+    public static final String DEFAULT_XML_VERSION = "1.1";
 
     private String xmlVersion = DEFAULT_XML_VERSION;
 
@@ -1317,7 +1320,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * Returns the configured XML version.
      *
      * <p>
-     * The default XML version is {@code "1.0"}.
+     * The default XML version is {@code "1.1"}.
      * </p>
      *
      * @return the XML version, for example {@code "1.0"} or {@code "1.1"}
@@ -1329,10 +1332,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     /**
      * Sets the XML version to use.
      *
-     * @param v the XML version (e.g., "1.0" or "1.1")
+     * @param version the XML version (e.g., "1.0" or "1.1")
      */
-    public void setXmlVersion(String v) {
-        this.xmlVersion = v;
+    public void setXmlVersion(String version) {
+        if (version == null || !(version.equals("1.0") || version.equals("1.1"))) {
+            throw new IllegalArgumentException("Invalid xml-version");
+        }
+        this.xmlVersion = version;
     }
 
     private ZoneId defaultFormattingPlace = ZoneId.of("UTC");
@@ -1404,7 +1410,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @throws NullPointerException if {@code calendar} is {@code null}
      * @throws IllegalArgumentException if {@code calendar} is not supported
      */
-    public void setDefaultFormattingCalendar(String calendar) {
+    private void setDefaultFormattingCalendar(String calendar) {
         Objects.requireNonNull(calendar, "calendar");
 
         String normalized = org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport
@@ -1451,7 +1457,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @throws NullPointerException if {@code language} is {@code null}
      * @throws IllegalArgumentException if {@code language} is not supported
      */
-    public void setDefaultFormattingLanguage(String language) {
+    private void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
 
         String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
