@@ -54,6 +54,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -1632,6 +1633,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         // Node comparisons always return a boolean
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitNodeSetExpr(NodeSetExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType leftType = expression.getLeftExpression().getStaticSequenceType();
+        SequenceType rightType = expression.getRightExpression().getStaticSequenceType();
+        basicChecks(
+            Arrays.asList(leftType, rightType),
+            expression.getClass().getSimpleName(),
+            false,
+            false,
+            expression.getMetadata()
+        );
+        if (!leftType.isEmptySequence() && !leftType.getItemType().isNodeItemType()) {
+            throwStaticTypeException(
+                "Left operand of a node set expression must be a sequence of nodes, got " + leftType,
+                expression.getMetadata()
+            );
+        }
+        if (!rightType.isEmptySequence() && !rightType.getItemType().isNodeItemType()) {
+            throwStaticTypeException(
+                "Right operand of a node set expression must be a sequence of nodes, got " + rightType,
+                expression.getMetadata()
+            );
+        }
+
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
         return argument;
     }
 
