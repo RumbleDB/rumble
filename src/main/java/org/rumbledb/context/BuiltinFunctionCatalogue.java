@@ -4234,7 +4234,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction local_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name"),
-        "item?",
+        "node()?",
         "string",
         LocalNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4405,7 +4405,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction prefix_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "prefix-from-QName"),
         "QName?",
-        "string?",
+        "NCName?",
         PrefixFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -4413,7 +4413,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction local_name_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name-from-QName"),
         "QName?",
-        "string?",
+        "NCName?",
         LocalNameFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
