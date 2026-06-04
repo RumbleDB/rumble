@@ -70,6 +70,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -185,6 +186,7 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.misc.NodeSetOperationIterator;
 import org.rumbledb.runtime.misc.StringConcatIterator;
 import org.rumbledb.runtime.navigation.ArrayLookupIterator;
 import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
@@ -1562,6 +1564,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new RangeOperationIterator(
                 left,
                 right,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitNodeSetExpr(NodeSetExpression expression, RuntimeIterator argument) {
+        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator runtimeIterator = new NodeSetOperationIterator(
+                left,
+                right,
+                expression.getOperator(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
