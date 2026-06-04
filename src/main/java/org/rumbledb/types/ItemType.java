@@ -21,6 +21,12 @@
 package org.rumbledb.types;
 
 
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -29,11 +35,6 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import com.esotericsoftware.kryo.KryoSerializable;
-
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public interface ItemType extends Serializable, KryoSerializable {
 
@@ -143,6 +144,22 @@ public interface ItemType extends Serializable, KryoSerializable {
         return false;
     }
 
+    /**
+     *
+     * @return [true] if the null value is in the value space.
+     */
+    default boolean canBeNull() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if this is just one type unioned with null, returns that type.
+     */
+    default ItemType getSingleNullableType() {
+        return null;
+    }
+
     // endregion
 
     // region concrete-specific-function
@@ -213,6 +230,32 @@ public interface ItemType extends Serializable, KryoSerializable {
      *         and [other] (does not take into account union types as common ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (other.isUnionType()) {
+            return other.findLeastCommonSuperTypeWith(this);
+        }
+        if (this.equals(BuiltinTypesCatalogue.nullItem) && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
+        if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (this.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
+            return new UnionItemType(
+                    null,
+                    BuiltinTypesCatalogue.atomicItem,
+                    Arrays.asList(this, BuiltinTypesCatalogue.nullItem)
+            );
+        }
+        if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
+            return new UnionItemType(
+                    null,
+                    BuiltinTypesCatalogue.atomicItem,
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem)
+            );
+        }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
             other = other.getBaseType();

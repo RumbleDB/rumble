@@ -574,7 +574,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         nativeClauseContext.setSchema(
             ((StructType) nativeClauseContext.getSchema()).add(
                 resultColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
+                TypeMappings.getDataFrameDataTypeFromItemType(
+                    expressionContext.getResultingType().getItemType(),
+                    this.getRuntimeStaticContext()
+                )
             )
         );
         nativeClauseContext.setView(resultingQuery);

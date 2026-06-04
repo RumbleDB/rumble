@@ -928,7 +928,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         letClauseContext.setSchema(
             ((StructType) letClauseContext.getSchema()).add(
                 variableName,
-                TypeMappings.getDataFrameDataTypeFromItemType(expressionContext.getResultingType().getItemType())
+                TypeMappings.getDataFrameDataTypeFromItemType(
+                    expressionContext.getResultingType().getItemType(),
+                    this.getStaticContext()
+                )
             )
         );
         letClauseContext.setView(resultString);

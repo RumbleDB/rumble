@@ -501,22 +501,16 @@ public class ObjectItemType implements ItemType {
                         if (type.startsWith("{")) {
                             sb.append("\"type\": ");
                             sb.append(type);
-                            sb.append(" }");
+                            sb.append(", ");
                         } else {
                             sb.append("\"type\": \"");
                             sb.append(type);
                             sb.append("\", ");
                         }
                         boolean isUnique = field.isUnique();
-                        if (type.startsWith("{")) {
-                            sb.append("\"unique\": ");
-                            sb.append(isUnique);
-                            sb.append(" }");
-                        } else {
-                            sb.append("\"unique\": \"");
-                            sb.append(isUnique);
-                            sb.append("\" }");
-                        }
+                        sb.append("\"unique\": ");
+                        sb.append(isUnique);
+                        sb.append(" }");
                     }
                     sb.append(" ]");
                 }
