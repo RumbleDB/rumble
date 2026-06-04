@@ -39,16 +39,26 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private boolean isFixedSlotsArrayConstructor;
+    private boolean mutable;
+    static int counter = 0;
+    private int id;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
      */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(null, staticContext);
+        counter++;
+        this.id = counter;
         this.isFixedSlotsArrayConstructor = false;
+        this.mutable = mutable;
+        if(this.id == 1) {
+            Thread.dumpStack();
+        }
         if (arrayItems != null) {
             this.children.add(arrayItems);
         }
@@ -60,10 +70,17 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public ArrayRuntimeIterator(
             List<RuntimeIterator> memberIterators,
             boolean isFixedSlotsArrayConstructor,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(null, staticContext);
+        counter++;
+        this.id = counter;
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
+        this.mutable = mutable;
+        if(this.id == 1) {
+            Thread.dumpStack();
+        }
         if (memberIterators != null) {
             this.children.addAll(memberIterators);
         }
@@ -88,17 +105,17 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     items.add(member.get(0));
                 }
                 return ItemFactory.getInstance()
-                    .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createArrayItem(items, mutable);
             } else {
                 return ItemFactory.getInstance()
-                    .createSequenceArrayItem(memberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createSequenceArrayItem(memberSequences, mutable);
             }
         }
         List<Item> result = new ArrayList<>();
         for (RuntimeIterator child : this.children) {
             result.addAll(child.materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, this.getRuntimeStaticContext().isQuerySideEffecting());
+        return ItemFactory.getInstance().createArrayItem(result, mutable);
     }
 
     @Override

@@ -912,7 +912,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ArrayRuntimeIterator(
                     memberIterators,
                     true,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock()
             );
         } else {
             RuntimeIterator result = null;
@@ -921,7 +922,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
             runtimeIterator = new ArrayRuntimeIterator(
                     result,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());

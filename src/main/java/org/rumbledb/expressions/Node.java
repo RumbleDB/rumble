@@ -20,13 +20,13 @@
 
 package org.rumbledb.expressions;
 
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
+
+import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 
 /**
  * This is the top-level class for nodes in the intermediate representation of a
@@ -35,8 +35,8 @@ import java.util.function.Predicate;
 public abstract class Node {
 
     private ExceptionMetadata metadata;
-
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
+    protected boolean isInSequentialBlock;
 
     protected Node() {
     }
@@ -173,6 +173,11 @@ public abstract class Node {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        if (this.isInSequentialBlock) {
+            buffer.append(" | " + "in sequential block");
+        } else {
+            buffer.append(" | " + "not in sequential block");
+        }
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -206,5 +211,13 @@ public abstract class Node {
             }
         }
         return false;
+    }
+
+    public boolean isInSequentialBlock() {
+        return this.isInSequentialBlock;
+    }
+
+    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
+        this.isInSequentialBlock = isInSequentialBlock;
     }
 }

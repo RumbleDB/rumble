@@ -171,10 +171,21 @@ public abstract class Expression extends Node {
      */
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
+        if(isSequential) {
+            setIsInSequentialBlock(true);
+        }
     }
 
     public boolean isSequential() {
         return this.isSequential;
+    }
+
+    @Override
+    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
+        this.isInSequentialBlock = isInSequentialBlock;
+        for(Node child : getChildren()) {
+            child.setIsInSequentialBlock(isInSequentialBlock);
+        }
     }
 
     /**
@@ -199,6 +210,11 @@ public abstract class Expression extends Node {
             buffer.append(" | " + "sequential");
         } else {
             buffer.append(" | " + "non-sequential");
+        }
+        if (this.isInSequentialBlock) {
+            buffer.append(" | " + "in sequential block");
+        } else {
+            buffer.append(" | " + "not in sequential block");
         }
         buffer.append(
             " | "

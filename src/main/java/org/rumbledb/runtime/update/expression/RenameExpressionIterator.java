@@ -1,17 +1,23 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.util.Arrays;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
+import org.rumbledb.exceptions.InvalidUpdateTargetException;
+import org.rumbledb.exceptions.ModifiesImmutableValueException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
+import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-
-import java.util.Arrays;
 
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
@@ -90,7 +96,7 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (target.getMutabilityLevel() == -1) {
+            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

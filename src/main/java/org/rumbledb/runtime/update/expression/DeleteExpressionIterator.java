@@ -88,14 +88,14 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
-            }
-            if (main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup), this.getMetadata());
         } else if (main.isArray()) {
@@ -105,14 +105,14 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
+            if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
-            }
-            if (main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             up = factory.createDeleteFromArrayPrimitive(main, lookup, this.getMetadata());
         } else {
