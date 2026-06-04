@@ -1662,7 +1662,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
+        expression.setStaticSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore)
+        );
         return argument;
     }
 
