@@ -1,18 +1,23 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
+import org.rumbledb.exceptions.InvalidUpdateTargetException;
+import org.rumbledb.exceptions.ModifiesImmutableValueException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
@@ -83,14 +88,14 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
-            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
+            }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             up = factory.createDeleteFromObjectPrimitive(main, Collections.singletonList(lookup), this.getMetadata());
         } else if (main.isArray()) {
@@ -100,14 +105,14 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
-            }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
                         "Attempt to modify currently immutable target",
                         this.getMetadata()
                 );
+            }
+            if (main.getMutabilityLevel() == -1) {
+                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             up = factory.createDeleteFromArrayPrimitive(main, lookup, this.getMetadata());
         } else {
