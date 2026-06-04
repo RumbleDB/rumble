@@ -178,6 +178,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
                 members
             );
+            System.err.println("Member sequence type: " + memberSequenceType);
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
@@ -188,9 +189,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static ItemType getLeastCommonSuperItemType(List<Item> items, ItemType defaultType) {
-        ItemType result = items.get(0).getDynamicType();
+        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
         for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+            result = result.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
         }
         return result;
     }
@@ -213,9 +214,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return SequenceType.createSequenceType("()");
         }
         Item item = items.get(0);
-        ItemType itemType = item.getDynamicType();
+        ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
         for (int i = 1; i < items.size(); i++) {
-            itemType = itemType.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+            itemType = itemType.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
         }
         if (items.size() == 1) {
             return new SequenceType(itemType, SequenceType.Arity.One);

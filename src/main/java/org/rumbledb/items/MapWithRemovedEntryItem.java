@@ -58,7 +58,7 @@ public class MapWithRemovedEntryItem implements Item {
         this.removedKeys = new TreeSet<>(new ItemSameKeyComparator());
         for (Item key : removedKeys) {
             if (this.original.isObject()) {
-                if (!key.isString()) {
+                if (!key.isString() && !key.isUntypedAtomic() && !key.isAnyURI()) {
                     continue;
                 }
                 if (this.original.hasKey(key.getStringValue())) {
