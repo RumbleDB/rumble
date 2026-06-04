@@ -33,6 +33,7 @@
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <antlr4.version>4.13.2</antlr4.version>
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
     </properties>
 
@@ -212,24 +213,39 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.2.0</version>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${antlr4.version}</version>
                 <executions>
                     <execution>
-                        <id>build-jsoniq-antlr-parser</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <target>
-                                <ant antfile="build_antlr_parser.xml" target="generate-lexer"/>
-                                <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
-                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-lexer"/>
-                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
-                            </target>
-                        </configuration>
+                        <id>generate-jsoniq-antlr-sources</id>
                         <goals>
-                            <goal>run</goal>
+                            <goal>antlr4</goal>
                         </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/jsoniq</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-xquery-antlr-sources</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/xquery</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -313,7 +329,7 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.13.2</version>
+            <version>${antlr4.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
