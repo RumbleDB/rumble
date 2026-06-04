@@ -17,17 +17,19 @@
 
 package org.rumbledb.runtime.misc;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
+import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,8 +83,30 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        /// TODO: Make this really distributed by implementing the node set operations in a distributed manner, instead of materializing the entire result on the driver.
-        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(computeNodeSet(context));
+        JavaPairRDD<XMLDocumentPosition, Item> leftNodes = buildNodePositionPairRDD(
+            this.leftIterator.getRDD(context),
+            "left"
+        );
+        JavaPairRDD<XMLDocumentPosition, Item> rightNodes = buildNodePositionPairRDD(
+            this.rightIterator.getRDD(context),
+            "right"
+        );
+
+        JavaPairRDD<XMLDocumentPosition, Item> result;
+        switch (this.operator) {
+            case UNION:
+                result = leftNodes.union(rightNodes).distinct();
+                break;
+            case INTERSECT:
+                result = leftNodes.intersection(rightNodes);
+                break;
+            case EXCEPT:
+                result = leftNodes.subtractByKey(rightNodes);
+                break;
+            default:
+                throw new IteratorFlowException("Unrecognized node set operator: " + this.operator, getMetadata());
+        }
+        return result.values().sortBy(Item::getXmlDocumentPosition, true, 1);
     }
 
     @Override
@@ -129,24 +153,41 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     ) {
         TreeMap<XMLDocumentPosition, Item> nodesByPosition = new TreeMap<>();
         for (Item item : iterator.materialize(context)) {
-            if (!item.isNode()) {
-                throw new UnexpectedTypeException(
-                        "The "
-                            + side
-                            + " operand of a node set operation must contain only nodes, got: "
-                            + item.getDynamicType(),
-                        getMetadata()
-                );
-            }
-            XMLDocumentPosition position = item.getXmlDocumentPosition();
-            if (position == null) {
-                throw new UnexpectedTypeException(
-                        "The " + side + " operand of a node set operation contains a node without document position.",
-                        getMetadata()
-                );
-            }
+            XMLDocumentPosition position = validateAndGetNodePosition(item, side, getMetadata());
             nodesByPosition.put(position, item);
         }
         return nodesByPosition;
+    }
+
+    private JavaPairRDD<XMLDocumentPosition, Item> buildNodePositionPairRDD(JavaRDD<Item> items, String side) {
+        ExceptionMetadata metadata = getMetadata();
+        return items.mapToPair(item -> {
+            XMLDocumentPosition position = validateAndGetNodePosition(item, side, metadata);
+            return new Tuple2<>(position, item);
+        }).reduceByKey((left, right) -> left);
+    }
+
+    private static XMLDocumentPosition validateAndGetNodePosition(
+            Item item,
+            String side,
+            ExceptionMetadata metadata
+    ) {
+        if (!item.isNode()) {
+            throw new UnexpectedTypeException(
+                    "The "
+                        + side
+                        + " operand of a node set operation must contain only nodes, got: "
+                        + item.getDynamicType(),
+                    metadata
+            );
+        }
+        XMLDocumentPosition position = item.getXmlDocumentPosition();
+        if (position == null) {
+            throw new UnexpectedTypeException(
+                    "The " + side + " operand of a node set operation contains a node without document position.",
+                    metadata
+            );
+        }
+        return position;
     }
 }
