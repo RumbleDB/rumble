@@ -14,6 +14,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
@@ -419,6 +420,18 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         RangeExpression result = new RangeExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
+    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
+        NodeSetExpression result = new NodeSetExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

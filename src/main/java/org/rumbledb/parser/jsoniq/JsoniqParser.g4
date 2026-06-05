@@ -296,9 +296,9 @@ additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicat
 
 multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
-unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
+unionExpr: main_expr=intersectExceptExpr ( op+=(KW_UNION | VBAR) rhs+=intersectExceptExpr)* ;
 
-intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
+intersectExceptExpr: main_expr=instanceOfExpr ( op+=(KW_INTERSECT | KW_EXCEPT) rhs+=instanceOfExpr)* ;
 
 instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
