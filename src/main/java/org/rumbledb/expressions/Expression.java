@@ -225,7 +225,7 @@ public abstract class Expression extends Node {
         );
         buffer.append(
             " | "
-                + (this.getStaticContext() != null && !this.getStaticContext().isQuerySideEffecting()
+                + (this.getStaticContext() != null && this.getStaticContext().isQuerySideEffecting()
                     ? "query side effecting"
                     : "query without side effects")
         );

@@ -2004,6 +2004,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitProgram(Program program, RuntimeIterator argument) {
+        if (program.isSequential() || program.isUpdating()) {
+            program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
+        }
         return new ProgramIterator(
                 this.visit(program.getStatementsAndOptionalExpr(), argument),
                 program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)

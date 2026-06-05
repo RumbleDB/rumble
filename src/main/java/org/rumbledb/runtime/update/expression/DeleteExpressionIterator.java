@@ -89,7 +89,13 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                 );
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target. Target mutability level: "
+                            + main.getMutabilityLevel()
+                            + ". Context mutability level: "
+                            + context.getCurrentMutabilityLevel(),
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
@@ -106,7 +112,13 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
                 );
             }
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
-                throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
+                throw new ModifiesImmutableValueException(
+                        "Attempt to modify immutable target. Target mutability level: "
+                            + main.getMutabilityLevel()
+                            + ". Context mutability level: "
+                            + context.getCurrentMutabilityLevel(),
+                        this.getMetadata()
+                );
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
                 throw new TransformModifiesNonCopiedValueException(
