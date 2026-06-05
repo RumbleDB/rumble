@@ -22,7 +22,6 @@ import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -766,13 +765,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
-            if (expression.isPartialApplication()) {
-                /// This should never be reached because partial application on built-in functions should have been rewritten before
-                throw new UnsupportedFeatureException(
-                        "Partial application on built-in functions are not supported.",
-                        expression.getMetadata()
-                );
-            }
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
                 expression.getFunctionIdentifier()
             );

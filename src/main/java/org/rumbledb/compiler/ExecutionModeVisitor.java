@@ -267,7 +267,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
         }
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+        if (expression.isPartialApplication()) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        } else if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
                 expression.getFunctionIdentifier()
             );
