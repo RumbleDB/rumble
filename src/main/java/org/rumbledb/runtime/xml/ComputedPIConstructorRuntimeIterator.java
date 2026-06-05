@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionTargetCastException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -143,11 +144,16 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         content = removeLeadingWhitespace(content);
 
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        Item processingInstructionItem = ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 target,
                 content
             );
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return processingInstructionItem;
     }
 
     private boolean isValidNCName(String value) {
@@ -162,4 +168,3 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         return value.substring(index);
     }
 }
-
