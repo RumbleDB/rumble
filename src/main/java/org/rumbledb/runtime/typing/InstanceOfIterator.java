@@ -175,6 +175,31 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
+            if (itemType.isXQueryArrayItemType()) {
+                // If the expected type is an array, we can check the members against the expected member type.
+                SequenceType expectedMemberType = itemType.getMemberSequenceType();
+                SequenceType.Arity expectedArity = expectedMemberType.getArity();
+                for (List<Item> memberSequence : members) {
+                    if (expectedArity.equals(SequenceType.Arity.One) && memberSequence.size() != 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.Zero) && !memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrZero) && memberSequence.size() > 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrMore) && memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    for (Item member : memberSequence) {
+                        if (!doesItemTypeMatchItem(expectedMemberType.getItemType(), member)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
             SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
                 members
             );
