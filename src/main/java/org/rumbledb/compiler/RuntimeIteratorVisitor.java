@@ -552,7 +552,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                expression.getMutabilityLevel()
+                expression.getMutabilityLevel(),
+                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
 

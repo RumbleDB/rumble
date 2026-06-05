@@ -40,7 +40,7 @@ public abstract class Statement extends Node {
 
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
-        if(isSequential) {
+        if (isSequential) {
             setIsInSequentialBlock(true);
         }
     }
@@ -48,7 +48,7 @@ public abstract class Statement extends Node {
     @Override
     public void setIsInSequentialBlock(boolean isInSequentialBlock) {
         this.isInSequentialBlock = isInSequentialBlock;
-        for(Node child : getChildren()) {
+        for (Node child : getChildren()) {
             child.setIsInSequentialBlock(isInSequentialBlock);
         }
     }

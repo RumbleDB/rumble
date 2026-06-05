@@ -19,6 +19,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     private Map<Name, RuntimeIterator> copyDeclMap;
     private RuntimeIterator modifyIterator;
     private RuntimeIterator returnIterator;
+    private boolean mutable;
 
     private int mutabilityLevel;
 
@@ -27,7 +28,8 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator modifyIterator,
             RuntimeIterator returnIterator,
             RuntimeStaticContext staticContext,
-            int mutabilityLevel
+            int mutabilityLevel,
+            boolean resultMutable
     ) {
         super(null, staticContext);
         this.children.addAll(copyDeclMap.values());
@@ -39,6 +41,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
         this.isUpdating = false;
+        this.mutable = resultMutable;
     }
 
     @Override
@@ -77,7 +80,11 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return this.returnIterator.next();
+        Item result = this.returnIterator.next();
+        if (this.mutable) {
+            result.setMutabilityLevel(this.currentDynamicContextForLocalExecution.getCurrentMutabilityLevel());
+        }
+        return result;
     }
 
     @Override
@@ -95,7 +102,6 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
-                System.err.println("Copy of " + item.serialize());
                 temp = item.copy(true);
                 temp.setMutabilityLevel(this.mutabilityLevel);
                 // Ensure transform updates apply to the copied item, not the backing collection.
