@@ -1323,7 +1323,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
+        if (expression.isPartialApplication()) {
+            runtimeIterator = new DynamicFunctionCallIterator(
+                    new NamedFunctionRefRuntimeIterator(
+                            identifier,
+                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    ),
+                    arguments,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+
+        else if (BuiltinFunctionCatalogue.exists(identifier)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
