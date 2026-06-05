@@ -31,9 +31,9 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         }
 
         List<Expression> arguments = expression.getArguments()
-                .stream()
-                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-                .collect(Collectors.toList());
+            .stream()
+            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+            .collect(Collectors.toList());
 
         List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
         Map<Name, SequenceType> params = new LinkedHashMap<>();
@@ -50,7 +50,7 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
             }
 
             Name parameterName = Name.createVariableInNoNamespace(
-                    String.format("param%s", i)
+                String.format("param%s", i)
             );
             params.put(parameterName, parameterTypes.get(i));
             VariableReferenceExpression variableReference = new VariableReferenceExpression(

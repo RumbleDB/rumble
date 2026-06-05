@@ -65,7 +65,7 @@ public class VisitorHelpers {
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
-        if (conf.debug()){
+        if (conf.debug()) {
             System.err.println("***************************************");
             System.err.println("Builtin Partial Application Rewrite Visitor");
             System.err.println("***************************************");
