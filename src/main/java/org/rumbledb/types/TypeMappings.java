@@ -93,6 +93,9 @@ public class TypeMappings {
         if (itemType.isTopmostItemType()) {
             return DataTypes.StringType;
         }
+        if (itemType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            return DataTypes.StringType;
+        }
         if (itemType.isUnionType()) {
             List<ItemType> memberTypes = itemType.getTypes();
             ItemType singleNullableType = itemType.getSingleNullableType();
