@@ -425,9 +425,13 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
+        List<Expression> arguments = expression.getArguments()
+            .stream()
+            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+            .collect(Collectors.toList());
         DynamicFunctionCallExpression result = new DynamicFunctionCallExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
-                expression.getArguments(),
+                arguments,
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
