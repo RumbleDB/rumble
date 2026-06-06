@@ -55,6 +55,11 @@ public class NullItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return this;
+    }
+
+    @Override
     public boolean isNull() {
         return true;
     }

@@ -554,7 +554,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                expression.getMutabilityLevel()
+                expression.getMutabilityLevel(),
+                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
 
@@ -914,7 +915,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ArrayRuntimeIterator(
                     memberIterators,
                     true,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         } else {
             RuntimeIterator result = null;
@@ -923,7 +925,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
             runtimeIterator = new ArrayRuntimeIterator(
                     result,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -939,7 +942,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         .stream()
                         .map(arg -> this.visit(arg, argument))
                         .collect(Collectors.toList()),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
@@ -955,7 +959,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
@@ -991,7 +996,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator runtimeIterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
@@ -999,7 +1005,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
                 keys,
                 values,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -2013,6 +2020,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitProgram(Program program, RuntimeIterator argument) {
+        if (program.isSequential() || program.isUpdating()) {
+            program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
+        }
         return new ProgramIterator(
                 this.visit(program.getStatementsAndOptionalExpr(), argument),
                 program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)

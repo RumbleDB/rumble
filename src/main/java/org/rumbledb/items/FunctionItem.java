@@ -192,6 +192,11 @@ public class FunctionItem implements Item {
     }
 
     @Override
+    public FunctionItem copy(boolean mutable) {
+        return this.deepCopy();
+    }
+
+    @Override
     public FunctionIdentifier getIdentifier() {
         return this.identifier;
     }

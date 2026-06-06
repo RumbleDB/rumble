@@ -132,7 +132,6 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return DataTypes.StringType;
         }
-        Thread.dumpStack();
         throw new IllegalArgumentException(
                 "Unexpected item type found: '"
                     + itemType

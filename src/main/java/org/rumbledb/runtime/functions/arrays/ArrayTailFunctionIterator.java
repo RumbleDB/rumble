@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -34,10 +38,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
 
@@ -106,11 +106,13 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance().createArrayItem(tailMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(tailMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

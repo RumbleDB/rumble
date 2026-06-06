@@ -44,6 +44,11 @@ public class TimeItem implements Item {
         getTimeFromString(timeString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new TimeItem(this.value, this.hasTimeZone);
+    }
+
     private void getTimeFromString(String timeString) {
         try {
             if (timeString.contains("24:00:00")) {

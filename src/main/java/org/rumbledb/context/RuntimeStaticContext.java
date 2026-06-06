@@ -23,6 +23,7 @@ public class RuntimeStaticContext implements Serializable {
     private final SerializationParameters serializationParameters;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
+    private boolean isQuerySideEffecting;
 
     @Override
     public String toString() {
@@ -37,6 +38,7 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
+        sb.append("  isQuerySideEffecting: ").append(this.isQuerySideEffecting).append("\n");
         sb.append("}");
         return sb.toString();
     }
@@ -53,6 +55,7 @@ public class RuntimeStaticContext implements Serializable {
         this.decimalFormats = oldContext.decimalFormats;
         this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
         this.serializationParameters = oldContext.serializationParameters;
+        this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
     }
 
     /*
@@ -86,6 +89,7 @@ public class RuntimeStaticContext implements Serializable {
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
         this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
         this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
+        this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
     }
 
     /**
@@ -261,6 +265,16 @@ public class RuntimeStaticContext implements Serializable {
         RuntimeStaticContext result = new RuntimeStaticContext(this);
         result.metadata = newMetadata;
         return result;
+    }
+
+    /**
+     * Returns whether this context is associated with a query that has side effects. This is used to determine whether
+     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
+     * 
+     * @return whether this context is associated with a query that has side effects.
+     */
+    public boolean isQuerySideEffecting() {
+        return this.isQuerySideEffecting;
     }
 
 }

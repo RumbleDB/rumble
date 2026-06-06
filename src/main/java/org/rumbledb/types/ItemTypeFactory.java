@@ -1,5 +1,12 @@
 package org.rumbledb.types;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
@@ -20,8 +27,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
 import sparksoniq.spark.SparkSessionManager;
-
-import java.util.*;
 
 public class ItemTypeFactory {
 
@@ -239,10 +244,10 @@ public class ItemTypeFactory {
                         .warn(
                             "The content facet of an object type is missing. By default, no fields are defined or overriden."
                         );
-                    contentItem = ItemFactory.getInstance().createArrayItem();
+                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 } else {
                     if (contentItem == null) {
-                        contentItem = ItemFactory.getInstance().createArrayItem();
+                        contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                     }
                     if (!contentItem.isArray()) {
                         throw new InvalidSchemaException(
@@ -378,7 +383,7 @@ public class ItemTypeFactory {
                 }
                 contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
-                    contentItem = ItemFactory.getInstance().createArrayItem();
+                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 }
                 ItemType memberType = null;
                 if (contentItem.isString()) {
@@ -737,6 +742,33 @@ public class ItemTypeFactory {
         }
 
         return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
+    }
+
+    /**
+     * Create an object item type from an item by detecting a schema.
+     * 
+     * @param item the item to analyze
+     * @return an object item type representing the type in Rumble
+     */
+    public static ItemType createItemTypeFromItem(Item item) {
+        if (item.isObject()) {
+            List<ItemType> itemTypes = new ArrayList<>();
+            for (String key : item.getStringKeys()) {
+                itemTypes.add(createItemTypeFromItem(item.getItemByKey(key)));
+            }
+            return ItemTypeFactory.createAnonymousObjectType(item.getStringKeys(), itemTypes);
+        } else if (item.isArrayOfItems()) {
+            if (item.getSize() == 0) {
+                return ItemTypeFactory.createEmptyArrayType();
+            }
+            ItemType result = item.getItemAt(0).getDynamicType();
+            for (int i = 1; i < item.getSize(); i++) {
+                result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
+            }
+            return ItemTypeFactory.createAnonymousArrayType(result);
+        } else {
+            return item.getDynamicType();
+        }
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {

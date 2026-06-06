@@ -213,7 +213,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     staticContext
                         .withStaticType(SequenceType.createSequenceType("item*"))
                         .withExecutionMode(ExecutionMode.LOCAL)
-                        .withMetadata(metadata)
+                        .withMetadata(metadata),
+                    false
             );
         }
         if (leftTupleSideEqualityCriteria.size() == 1) {
@@ -230,7 +231,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                             staticContext.withStaticType(SequenceType.createSequenceType("item*"))
                                 .withExecutionMode(ExecutionMode.LOCAL)
                                 .withMetadata(metadata)
-                    )
+                    ),
+                    false
             );
         }
 

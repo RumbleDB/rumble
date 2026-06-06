@@ -47,6 +47,15 @@ public class DocumentItem implements Item {
         this.documentElement = getDocumentElement();
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        return new DocumentItem(copiedChildren);
+    }
+
     /**
      * Recursively computes the string value by concatenating text node descendants in document order.
      */

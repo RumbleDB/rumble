@@ -1,9 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
@@ -18,6 +14,10 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DayTimeDurationItem implements Item {
 
@@ -52,6 +52,11 @@ public class DayTimeDurationItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DayTimeDurationItem(this.value);
     }
 
     @Override

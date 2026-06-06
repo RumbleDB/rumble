@@ -536,7 +536,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             // Test of length facets
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, true);
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members, staticContext.isQuerySideEffecting());
             if (minLength != null && members.size() < minLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at least " + minLength
@@ -759,7 +759,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         ItemType result = itemRDD.aggregate(
             neutralElement,
             (ItemType acc, Item item) -> {
-                ItemType itemType = item.getDynamicType();
+                ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
                 return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeLax(itemType);
             },
             (ItemType a, ItemType b) -> {
@@ -782,9 +782,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return BuiltinTypesCatalogue.item;
         }
 
-        ItemType result = items.get(0).getDynamicType();
+        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
         for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeLax(items.get(i).getDynamicType());
+            result = result.findLeastCommonSuperTypeLax(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
         }
 
         return result;
