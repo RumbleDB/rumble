@@ -53,6 +53,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -1054,6 +1055,15 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
         visitDescendants(slashExpr, argument);
         slashExpr.setHighestExecutionMode(slashExpr.getLeftExpression().getHighestExecutionMode());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitNodeSetExpr(NodeSetExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        ExecutionMode leftMode = expression.getLeftExpression().getHighestExecutionMode(this.visitorConfig);
+        ExecutionMode rightMode = expression.getRightExpression().getHighestExecutionMode(this.visitorConfig);
+        expression.setHighestExecutionMode(getHighestExecutionMode(leftMode, rightMode));
         return argument;
     }
 

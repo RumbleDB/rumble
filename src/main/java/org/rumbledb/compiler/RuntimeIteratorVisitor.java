@@ -47,6 +47,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -69,6 +70,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -184,6 +186,7 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.misc.NodeSetOperationIterator;
 import org.rumbledb.runtime.misc.StringConcatIterator;
 import org.rumbledb.runtime.navigation.ArrayLookupIterator;
 import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
@@ -1568,6 +1571,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitNodeSetExpr(NodeSetExpression expression, RuntimeIterator argument) {
+        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator runtimeIterator = new NodeSetOperationIterator(
+                left,
+                right,
+                expression.getOperator(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
@@ -1769,28 +1786,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
-        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
-        for (String code : expression.getErrorsCaught()) {
+        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (CatchPattern pattern : expression.getCatchPatterns()) {
             cases.put(
-                code,
-                this.visit(expression.getExpressionCatching(code), argument)
+                pattern,
+                this.visit(expression.getExpressionCatching(pattern), argument)
             );
         }
-        if (expression.getExpressionCatchingAll() == null) {
-            return new TryCatchRuntimeIterator(
-                    this.visit(expression.getTryExpression(), argument),
-                    cases,
-                    null,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        } else {
-            return new TryCatchRuntimeIterator(
-                    this.visit(expression.getTryExpression(), argument),
-                    cases,
-                    this.visit(expression.getExpressionCatchingAll(), argument),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        }
+        return new TryCatchRuntimeIterator(
+                this.visit(expression.getTryExpression(), argument),
+                cases,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
     }
 
     @Override
@@ -1874,28 +1881,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTryCatchStatement(TryCatchStatement statement, RuntimeIterator argument) {
-        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
-        for (String code : statement.getErrorsCaught()) {
+        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (CatchPattern pattern : statement.getCatchPatterns()) {
             cases.put(
-                code,
-                this.visit(statement.getBlockStatementCatching(code), argument)
+                pattern,
+                this.visit(statement.getBlockStatementCatching(pattern), argument)
             );
         }
-        if (statement.getCatchAllStatement() == null) {
-            return new TryCatchStatementIterator(
-                    this.visit(statement.getTryStatement(), argument),
-                    cases,
-                    null,
-                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        } else {
-            return new TryCatchStatementIterator(
-                    this.visit(statement.getTryStatement(), argument),
-                    cases,
-                    this.visit(statement.getCatchAllStatement(), argument),
-                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        }
+        return new TryCatchStatementIterator(
+                this.visit(statement.getTryStatement(), argument),
+                cases,
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
     }
 
     @Override

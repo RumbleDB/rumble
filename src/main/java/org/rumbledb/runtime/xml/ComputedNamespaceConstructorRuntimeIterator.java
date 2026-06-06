@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.InvalidElementNameExpressionException;
 import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -108,7 +109,12 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
 
         this.hasNext = false;
 
-        return ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
+        Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            namespaceItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return namespaceItem;
     }
 
     private String resolvePrefix(DynamicContext dynamicContext) {
@@ -230,4 +236,3 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return value != null && NCNAME_PATTERN.matcher(value).matches();
     }
 }
-

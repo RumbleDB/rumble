@@ -15,7 +15,7 @@ try {
   validate type local:myPosInt {
       5
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:myPosInt {
@@ -25,7 +25,7 @@ try {
   validate type local:shortString {
     "mytoolongstring"
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
    "Success"
 },
 validate type local:shortString {

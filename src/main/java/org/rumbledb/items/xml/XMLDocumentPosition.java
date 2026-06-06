@@ -27,6 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * The `XMLDocumentPosition` class represents the position of an item within an XML document.
@@ -47,6 +48,9 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         this.docPosition = docPosition;
     }
 
+    public static String generateConstructedTreePath() {
+        return "constructed:" + UUID.randomUUID();
+    }
 
     @Override
     public void write(Kryo kryo, Output output) {
@@ -72,7 +76,7 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     public int compareTo(XMLDocumentPosition o) {
         int pathResult = this.path.compareTo(o.getPath());
         if (pathResult == 0) {
-            return this.docPosition - o.getDocPosition();
+            return Integer.compare(this.docPosition, o.getDocPosition());
         }
         return pathResult;
     }

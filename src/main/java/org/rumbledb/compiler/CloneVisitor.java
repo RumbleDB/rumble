@@ -1,7 +1,7 @@
 package org.rumbledb.compiler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -19,6 +19,7 @@ import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -37,6 +38,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -412,9 +414,13 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
+        List<Expression> arguments = expression.getArguments()
+            .stream()
+            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+            .collect(Collectors.toList());
         DynamicFunctionCallExpression result = new DynamicFunctionCallExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
-                expression.getArguments(),
+                arguments,
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -920,6 +926,19 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
+        NodeSetExpression result = new NodeSetExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
     public Node visitStringConcatExpr(StringConcatExpression expression, Node argument) {
         StringConcatExpression result = new StringConcatExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
@@ -939,7 +958,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getComparisonOperator(),
                 expression.getMetadata()
         );
-        result.setOriginalComparisonOperator(expression.getOriginalComparisonOperator());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         return result;
@@ -1101,16 +1119,13 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpression(TryCatchExpression expression, Node argument) {
-        Map<String, Expression> catchExpressions = new HashMap<>();
-        for (String key : expression.getCatchExpressions().keySet()) {
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
+        for (CatchPattern key : expression.getCatchExpressions().keySet()) {
             catchExpressions.put(key, (Expression) visit(expression.getCatchExpressions().get(key), argument));
         }
         TryCatchExpression result = new TryCatchExpression(
                 (Expression) visit(expression.getTryExpression(), argument),
                 catchExpressions,
-                (expression.getExpressionCatchingAll() == null)
-                    ? expression.getExpressionCatchingAll()
-                    : (Expression) visit(expression.getExpressionCatchingAll(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -1233,15 +1248,12 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitTryCatchStatement(TryCatchStatement statement, Node argument) {
-        Map<String, BlockStatement> catchStatements = new HashMap<>();
+        Map<CatchPattern, BlockStatement> catchStatements = new LinkedHashMap<>();
         statement.getCatchStatements()
             .forEach((key, value) -> catchStatements.put(key, (BlockStatement) visit(value, argument)));
         TryCatchStatement result = new TryCatchStatement(
                 (BlockStatement) visit(statement.getTryStatement(), argument),
                 catchStatements,
-                (statement.getCatchAllStatement() == null)
-                    ? statement.getCatchAllStatement()
-                    : (BlockStatement) visit(statement.getCatchAllStatement(), argument),
                 statement.getMetadata()
         );
         result.setStaticContext(statement.getStaticContext());

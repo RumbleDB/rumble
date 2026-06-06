@@ -649,6 +649,18 @@ public class SequenceType implements Serializable {
             case "gYearMonth+":
                 st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "language":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.One);
+                break;
+            case "language?":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "language*":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "language+":
+                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrMore);
+                break;
             case "anyURI":
                 st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.One);
                 break;
@@ -967,6 +979,30 @@ public class SequenceType implements Serializable {
                 break;
             case "QName+":
                 st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrMore);
+                break;
+            case "NCName":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.One);
+                break;
+            case "NCName?":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "NCName*":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "NCName+":
+                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrMore);
+                break;
+            case "node()":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.One);
+                break;
+            case "node()?":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "node()*":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "node()+":
+                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore);
                 break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);

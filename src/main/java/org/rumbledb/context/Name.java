@@ -62,6 +62,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final String AN_NS = "http://www.w3.org/2012/xquery";
     public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+    public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
 
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");

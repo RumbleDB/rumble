@@ -1,11 +1,10 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.rumbledb.config.FormattingCalendarModeSupport;
-import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
+import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
@@ -14,70 +13,65 @@ public final class FormattingOptions {
 
     final String calendarMode;
     final Locale locale;
-    final boolean useFiveArgumentSemantics;
 
+    // Explicit user-supplied place, normalized. Null if omitted or ().
     final String place;
+
+    // Non-null only if place itself is an explicit recognized IANA timezone.
     final ZoneId placeZoneId;
 
     private FormattingOptions(
             String calendarMode,
             Locale locale,
-            boolean useFiveArgumentSemantics,
             String place,
             ZoneId placeZoneId
     ) {
         this.calendarMode = calendarMode;
         this.locale = locale;
-        this.useFiveArgumentSemantics = useFiveArgumentSemantics;
         this.place = place;
         this.placeZoneId = placeZoneId;
     }
 
-    private static FormattingOptions twoArgumentDefaults() {
-        return new FormattingOptions(
-                FormattingCalendarModeSupport.DEFAULT,
-                Locale.forLanguageTag(FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE),
-                false,
-                null,
-                null
-        );
+    boolean shouldAdjustToPlaceTimezone() {
+        return this.placeZoneId != null;
     }
 
-    private static FormattingOptions extended(
+    static FormattingOptions fromArguments(
             String language,
-            String calendarMode,
-            String place,
-            ZoneId placeZoneId
+            String calendar,
+            String rawPlace,
+            Map<String, String> staticallyKnownNamespaces,
+            ExceptionMetadata metadata
     ) {
-        Locale locale = LanguageSupport.resolveLocale(language);
+        String place = normalizePlace(rawPlace);
+        ZoneId placeZoneId = resolveExplicitIanaZoneOrNull(place);
 
         return new FormattingOptions(
-                calendarMode,
-                locale,
-                true,
+                CalendarSupport.resolveCalendarMode(calendar, staticallyKnownNamespaces, metadata),
+                LanguageSupport.resolveLocale(language),
                 place,
                 placeZoneId
         );
     }
 
-    static FormattingOptions fromArguments(
-            int arity,
-            String language,
-            String calendar,
-            String place,
-            ZoneId placeZoneId,
-            Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
-        if (arity <= 2) {
-            return twoArgumentDefaults();
+    private static String normalizePlace(String place) {
+        if (place == null) {
+            return null;
         }
 
-        return extended(
-            language,
-            CalendarSupport.resolveCalendarMode(calendar, staticallyKnownNamespaces, metadata),
-            place,
-            placeZoneId
-        );
+        String trimmed = place.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    private static ZoneId resolveExplicitIanaZoneOrNull(String place) {
+        if (place == null) {
+            return null;
+        }
+
+        try {
+            return ZoneId.of(place);
+        } catch (DateTimeException e) {
+            return null;
+        }
     }
 }

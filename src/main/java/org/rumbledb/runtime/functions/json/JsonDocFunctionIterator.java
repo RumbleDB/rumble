@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.io;
+package org.rumbledb.runtime.functions.json;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;

@@ -42,6 +42,7 @@ import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
@@ -63,6 +64,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -1265,16 +1267,32 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnionExpr(XQueryParser.UnionExprContext ctx) {
-        // TODO: implement this
-        // at the moment, just visit the first child
-        return (Expression) this.visitIntersectExceptExpr(ctx.intersectExceptExpr(0));
+        Expression result = (Expression) this.visitIntersectExceptExpr(ctx.main_expr);
+        for (XQueryParser.IntersectExceptExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitIntersectExceptExpr(child);
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.UNION,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
     }
 
     @Override
     public Node visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
-        // TODO: implement this
-        // at the moment, just visit the first child
-        return (Expression) this.visitInstanceOfExpr(ctx.instanceOfExpr(0));
+        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            Expression rightExpression = (Expression) this.visitInstanceOfExpr(ctx.rhs.get(i));
+            result = new NodeSetExpression(
+                    result,
+                    rightExpression,
+                    NodeSetExpression.NodeSetOperator.fromSymbol(ctx.op.get(i).getText()),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
     }
 
     @Override
@@ -2704,26 +2722,30 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
-        Map<String, Expression> catchExpressions = new HashMap<>();
-        Expression catchAllExpression = null;
+        Expression tryExpression = ctx.try_expression == null
+            ? new CommaExpression(createMetadataFromContext(ctx))
+            : (Expression) this.visitExpr(ctx.try_expression);
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
+            Expression catchExpression = catchCtx.catch_expression == null
+                ? new CommaExpression(createMetadataFromContext(catchCtx))
+                : (Expression) this.visitExpr(catchCtx.catch_expression);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false, false);
-                if (!catchExpressions.containsKey(name.getLocalName())) {
-                    catchExpressions.put(name.getLocalName(), catchExpression);
+                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
+                if (!catchExpressions.containsKey(pattern)) {
+                    catchExpressions.put(pattern, catchExpression);
                 }
             }
-            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
-            if (doesCatchAll && catchAllExpression == null) {
-                catchAllExpression = catchExpression;
+            for (XQueryParser.WildcardContext wildcardCtx : catchCtx.jokers) {
+                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+                if (!catchExpressions.containsKey(pattern)) {
+                    catchExpressions.put(pattern, catchExpression);
+                }
             }
         }
         return new TryCatchExpression(
                 tryExpression,
                 catchExpressions,
-                catchAllExpression,
                 createMetadataFromContext(ctx)
         );
     }
@@ -3002,27 +3024,55 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitTryCatchStatement(XQueryParser.TryCatchStatementContext ctx) {
         BlockStatement tryBlock = (BlockStatement) this.visitBlockStatement(ctx.try_block);
-        Map<String, BlockStatement> catchBlockStatements = new HashMap<>();
-        BlockStatement catchAllBlockStatement = null;
+        Map<CatchPattern, BlockStatement> catchBlockStatements = new LinkedHashMap<>();
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (XQueryParser.EqNameContext eqNameCtx : catchCtx.errors) {
-                Name name = parseEqName(eqNameCtx, false, false, false, false);
-                if (!catchBlockStatements.containsKey(name.getLocalName())) {
-                    catchBlockStatements.put(name.getLocalName(), catchBlockStatement);
+                CatchPattern pattern = CatchPattern.exact(parseEqName(eqNameCtx, false, false, false, false));
+                if (!catchBlockStatements.containsKey(pattern)) {
+                    catchBlockStatements.put(pattern, catchBlockStatement);
                 }
             }
-            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
-            if (doesCatchAll && catchAllBlockStatement == null) {
-                catchAllBlockStatement = catchBlockStatement;
+            for (XQueryParser.WildcardContext wildcardCtx : catchCtx.jokers) {
+                CatchPattern pattern = this.parseWildcardPattern(wildcardCtx);
+                if (!catchBlockStatements.containsKey(pattern)) {
+                    catchBlockStatements.put(pattern, catchBlockStatement);
+                }
             }
         }
         return new TryCatchStatement(
                 tryBlock,
                 catchBlockStatements,
-                catchAllBlockStatement,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    private CatchPattern parseWildcardPattern(XQueryParser.WildcardContext wildcardContext) {
+        if (wildcardContext instanceof XQueryParser.AllNamesContext) {
+            return CatchPattern.catchAll();
+        }
+        if (wildcardContext instanceof XQueryParser.AllWithLocalContext) {
+            String wildcardText = wildcardContext.getText();
+            return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
+        }
+        if (wildcardContext instanceof XQueryParser.AllWithNSContext) {
+            String wildcardText = wildcardContext.getText();
+            String prefix = wildcardText.substring(0, wildcardText.length() - 2);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace == null) {
+                throw new PrefixCannotBeExpandedException(
+                        "Cannot expand prefix " + prefix,
+                        generateMetadata(wildcardContext.getStop())
+                );
+            }
+            return CatchPattern.localNameWildcard(namespace, wildcardText);
+        }
+        if (wildcardContext instanceof XQueryParser.BracedURILiteralContext) {
+            String wildcardText = wildcardContext.getText();
+            int closingBrace = wildcardText.indexOf('}');
+            return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
+        }
+        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override
@@ -3873,6 +3923,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
             this.moduleContext,
+            false,
             metadata
         );
     }

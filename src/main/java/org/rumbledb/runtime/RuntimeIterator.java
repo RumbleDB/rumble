@@ -395,6 +395,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             );
         } else {
             ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
+            if (this.getConfiguration().printInferredTypes()) {
+                System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
+            }
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
                 type,

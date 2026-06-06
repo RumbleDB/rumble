@@ -1,15 +1,38 @@
 package org.rumbledb.types;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.rumbledb.types.BuiltinTypesCatalogue.*;
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
+import static org.rumbledb.types.BuiltinTypesCatalogue.NOTATIONItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.QNameItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.anyURIItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.atomicItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.base64BinaryItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.booleanItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dateItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dateTimeItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dayTimeDurationItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.decimalItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.doubleItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.durationItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.floatItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gDayItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gMonthDayItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gMonthItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gYearItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gYearMonthItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.hexBinaryItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.integerItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.numericItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.stringItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.timeItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.untypedAtomicItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
@@ -110,6 +133,11 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         return isEqualTo((ItemType) other);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.name != null ? this.name.hashCode() : super.hashCode();
     }
 
     @Override
@@ -1173,5 +1201,10 @@ public class AtomicItemType implements ItemType {
             return "DECIMAL";
         }
         throw new UnsupportedOperationException("getSparkSQLType is unsupported for " + this.getPrimitiveType());
+    }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
     }
 }

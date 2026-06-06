@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.maps;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -194,7 +195,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                             }
                             break;
                         case REJECT:
-                            throw new UnexpectedTypeException(
+                            throw new DuplicateJSONKeyException(
                                     "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
                                     metadata
                             );
