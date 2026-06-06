@@ -34,6 +34,10 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -51,6 +55,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.parsing.ItemUserDefinedType;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -64,6 +69,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.SparkSessionManager;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
@@ -338,6 +345,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
         );
+    }
+
+    public Dataset<Row> getItemDataFrame(DynamicContext context) {
+        JavaRDD<Row> rdd = getRDD(context).map(RowFactory::create);;
+        StructType itemSchema = new StructType().add("item", new ItemUserDefinedType(), false);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rdd, itemSchema);
     }
 
     /**

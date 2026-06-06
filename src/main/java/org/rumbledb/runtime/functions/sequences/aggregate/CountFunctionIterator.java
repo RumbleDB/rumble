@@ -120,8 +120,8 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        long count = iterator.getRDD(context).count();
-        if (count > (long) Integer.MAX_VALUE) {
+        long count = iterator.getItemDataFrame(context).count();
+        if (count > Long.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
             return ItemFactory.getInstance().createLongItem(count);
@@ -134,7 +134,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         long count = iterator.getDataFrame(context).count();
-        if (count > (long) Integer.MAX_VALUE) {
+        if (count > Long.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
             return ItemFactory.getInstance().createLongItem(count);

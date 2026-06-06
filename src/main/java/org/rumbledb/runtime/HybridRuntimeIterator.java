@@ -21,6 +21,7 @@
 package org.rumbledb.runtime;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -31,6 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -54,6 +56,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     protected boolean implementsDataFrames() {
+        return false;
+    }
+
+    protected boolean implementsItemDataFrames() {
         return false;
     }
 
@@ -153,7 +159,12 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             return dataFrameToRDDOfItems(df, getMetadata());
         }
         if (isRDDOrDataFrame()) {
-            return getRDDAux(context);
+            if (implementsItemDataFrames()) {
+                Dataset<Row> dataFrame = getItemDataFrame(context);
+                return dataFrame.select("item").toJavaRDD().map(row -> (Item) row.getAs("item"));
+            } else {
+                return getRDDAux(context);
+            }
         }
         List<Item> contents = this.materialize(context);
         return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
@@ -261,7 +272,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         throw new MoreThanOneItemException();
     }
 
-    protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        throw new OurBadException("getRDDAux not implemented for " + this.getClass().getSimpleName());
+    }
 
     protected abstract void openLocal();
 
