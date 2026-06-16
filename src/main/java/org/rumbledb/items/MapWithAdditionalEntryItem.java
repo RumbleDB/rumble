@@ -141,7 +141,7 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        if (this.additionalKey.equals(key)) {
+        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             return true;
         }
         return this.original.hasKey(key);
@@ -194,7 +194,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (this.additionalKey.equals(key)) {
+        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             if (this.additionalValue.size() != 1) {
                 throw new OurBadException("Map is not an object.");
             }
@@ -213,7 +213,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (this.additionalKey.equals(key)) {
+        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             return this.additionalValue;
         }
         return this.original.getSequenceByKey(key);
@@ -382,7 +382,7 @@ public class MapWithAdditionalEntryItem implements Item {
         }
         for (Item key : this.original.getItemKeys()) {
             List<Item> thisSequence = this.original.getSequenceByKey(key);
-            if (key.equals(this.additionalKey)) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 thisSequence = this.additionalValue;
             }
             List<Item> otherSequence = other.getSequenceByKey(key);
@@ -396,7 +396,7 @@ public class MapWithAdditionalEntryItem implements Item {
             }
         }
         for (Item key : other.getItemKeys()) {
-            if (key.equals(this.additionalKey)) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 List<Item> otherSequence = other.getSequenceByKey(key);
                 if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
                     return false;
