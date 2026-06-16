@@ -123,9 +123,7 @@ public class PartialFunctionCallIterator extends AtMostOneItemLocalRuntimeIterat
 
         return new FunctionItem(
                 new FunctionIdentifier(
-                        this.functionNameOverride == null
-                            ? this.functionItem.getIdentifier().getName()
-                            : this.functionNameOverride,
+                        this.functionNameOverride,
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
