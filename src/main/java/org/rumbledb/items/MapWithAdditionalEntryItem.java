@@ -102,7 +102,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>();
         for (String key : this.original.getStringKeys()) {
-            if (key.equals(this.additionalKey.getStringValue())) {
+            if (!key.equals(this.additionalKey.getStringValue())) {
                 result.add(key);
             }
         }
