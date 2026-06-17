@@ -51,14 +51,14 @@ public class ArrayItemTypeTest {
         ArrayItemType left = createArrayType(BuiltinTypesCatalogue.intItem, 1, 5);
         ArrayItemType right = createArrayType(BuiltinTypesCatalogue.intItem, 2, 4);
         ArrayItemType merged = (ArrayItemType) left.findLeastCommonSuperTypeLax(right);
-        Assert.assertEquals(Integer.valueOf(2), merged.getMinLengthFacet());
-        Assert.assertEquals(Integer.valueOf(4), merged.getMaxLengthFacet());
+        Assert.assertEquals(Integer.valueOf(1), merged.getMinLengthFacet());
+        Assert.assertEquals(Integer.valueOf(5), merged.getMaxLengthFacet());
 
         ArrayItemType conflictingLeft = createArrayType(BuiltinTypesCatalogue.intItem, 5, 6);
         ArrayItemType conflictingRight = createArrayType(BuiltinTypesCatalogue.intItem, 1, 2);
         ArrayItemType conflictingMerged = (ArrayItemType) conflictingLeft.findLeastCommonSuperTypeLax(conflictingRight);
-        Assert.assertNull(conflictingMerged.getMinLengthFacet());
-        Assert.assertNull(conflictingMerged.getMaxLengthFacet());
+        Assert.assertEquals(Integer.valueOf(1), conflictingMerged.getMinLengthFacet());
+        Assert.assertEquals(Integer.valueOf(6), conflictingMerged.getMaxLengthFacet());
     }
 
     /**
