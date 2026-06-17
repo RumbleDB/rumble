@@ -79,7 +79,7 @@ public class RumbleException extends RuntimeException {
     }
 
     private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
-        if (metadata.getTokenLineNumber() == 0) {
+        if (metadata.getStart().line() == 0) {
             return "There was an error."
                 + "\nCode: ["
                 + errorCode
@@ -93,7 +93,7 @@ public class RumbleException extends RuntimeException {
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
         }
         return "There was an error on line "
-            + metadata.getTokenLineNumber()
+            + metadata.getStart().line()
             + " in "
             + metadata.getLocation()
             + ":\n\n"

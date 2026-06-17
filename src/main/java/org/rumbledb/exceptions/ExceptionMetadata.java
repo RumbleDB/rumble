@@ -101,24 +101,6 @@ public class ExceptionMetadata implements Serializable {
     }
 
     /**
-     * Returns the line number.
-     *
-     * @return the line number.
-     */
-    public int getTokenLineNumber() {
-        return this.range.start().line();
-    }
-
-    /**
-     * Returns the column number.
-     *
-     * @return the column number.
-     */
-    public int getTokenColumnNumber() {
-        return this.range.start().column();
-    }
-
-    /**
      * Returns the location.
      * 
      * @return the location.
