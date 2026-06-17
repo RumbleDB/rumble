@@ -265,8 +265,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
+                .getObjectKeysFacet()
+                .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
@@ -338,17 +338,15 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             hasNonObjectJSONiqItem
                 &&
                 childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .containsKey(SparkSessionManager.tableLocationColumnName)
+                    .getObjectKeysFacet()
+                    .contains(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;
