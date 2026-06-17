@@ -6,10 +6,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
@@ -35,7 +35,9 @@ public class ObjectItemType implements ItemType {
     );
 
     private Name name;
-    private Map<String, FieldDescriptor> content;
+    private List<String> keys;
+    private List<FieldDescriptor> content;
+    private Map<String, Integer> keyStringToIndex;
     private boolean isClosed;
     private List<String> constraints;
     private List<Item> enumeration;
@@ -49,14 +51,17 @@ public class ObjectItemType implements ItemType {
             Name name,
             ItemType baseType,
             boolean isClosed,
-            Map<String, FieldDescriptor> content,
+            List<String> keys,
+            List<FieldDescriptor> content,
             List<String> constraints,
             List<Item> enumeration
     ) {
         this.name = name;
         this.baseType = baseType;
         this.isClosed = isClosed;
-        this.content = content == null ? Collections.emptyMap() : content;
+        this.keys = keys == null ? Collections.emptyList() : keys;
+        this.content = content == null ? Collections.emptyList() : content;
+        rebuildKeyStringIndex();
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
         if (this.baseType.isResolved()) {
@@ -64,6 +69,19 @@ public class ObjectItemType implements ItemType {
             if (areContentTypesResolved()) {
                 checkSubtypeConsistency();
             }
+        }
+    }
+
+
+
+    private void rebuildKeyStringIndex() {
+        if (this.keyStringToIndex == null) {
+            this.keyStringToIndex = new HashMap<>();
+        } else {
+            this.keyStringToIndex.clear();
+        }
+        for (int i = 0; i < this.keys.size(); i++) {
+            this.keyStringToIndex.put(this.keys.get(i), Integer.valueOf(i));
         }
     }
 
@@ -81,16 +99,8 @@ public class ObjectItemType implements ItemType {
         // Write isClosed
         output.writeBoolean(this.isClosed);
 
-        // Write content map
-        if (this.content != null) {
-            output.writeInt(this.content.size());
-            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-                output.writeString(entry.getKey());
-                kryo.writeObject(output, entry.getValue());
-            }
-        } else {
-            output.writeInt(-1);
-        }
+        kryo.writeObject(output, this.keys);
+        kryo.writeObject(output, this.content);
 
         // Write constraints list
         if (this.constraints != null) {
@@ -132,18 +142,13 @@ public class ObjectItemType implements ItemType {
         // Read isClosed
         this.isClosed = input.readBoolean();
 
-        // Read content map
-        int contentSize = input.readInt();
-        if (contentSize >= 0) {
-            this.content = new HashMap<>();
-            for (int i = 0; i < contentSize; i++) {
-                String key = input.readString();
-                FieldDescriptor value = kryo.readObject(input, FieldDescriptor.class);
-                this.content.put(key, value);
-            }
-        } else {
-            this.content = Collections.emptyMap();
-        }
+        // Read keys list
+        this.keys = kryo.readObject(input, ArrayList.class);
+
+        // Read content list
+        this.content = kryo.readObject(input, ArrayList.class);
+
+        rebuildKeyStringIndex();
 
         // Read constraints list
         int constraintsSize = input.readInt();
@@ -287,8 +292,28 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public Map<String, FieldDescriptor> getObjectContentFacet() {
+    public List<String> getObjectKeysFacet() {
+        return this.keys;
+    }
+
+    @Override
+    public FieldDescriptor getObjectContentFacet(String key) {
+        return this.content.get(this.keyStringToIndex.get(key));
+    }
+
+    @Override
+    public List<FieldDescriptor> getObjectContentFacet() {
         return this.content;
+    }
+
+    @Override
+    public Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
+        Map<String, FieldDescriptor> result = new HashMap<>();
+        for(String key : this.keys)
+        {
+            result.put(key, getObjectContentFacet(key));
+        }
+        return result;
     }
 
     @Override
@@ -308,7 +333,9 @@ public class ObjectItemType implements ItemType {
         if (!this.isResolved() || !otherObject.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
-        Map<String, FieldDescriptor> mergedContent = mergeObjectContent(otherObject);
+        List<String> keyResults = new ArrayList<>();
+        List<FieldDescriptor> keyContent = new ArrayList<>();
+        mergeObjectContent(otherObject, keyResults, keyContent);
         // the supertype is closed only if both of the subtypes are closed
         boolean closed = this.getClosedFacet() && otherObject.getClosedFacet();
         // return an inlin object item type with the merged field descriptors
@@ -316,7 +343,8 @@ public class ObjectItemType implements ItemType {
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 closed,
-                mergedContent,
+                keyResults,
+                keyContent,
                 Collections.emptyList(),
                 Collections.emptyList()
         );
@@ -330,24 +358,26 @@ public class ObjectItemType implements ItemType {
      * @param other the other object item type to merge the content from
      * @return the merged object content
      */
-    private Map<String, FieldDescriptor> mergeObjectContent(ObjectItemType other) {
+    private Map<String, FieldDescriptor> mergeObjectContent(ObjectItemType other, List<String> keyResults, List<FieldDescriptor> contentResults) {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
-        Set<String> fields = new TreeSet<>();
-        fields.addAll(this.getObjectContentFacet().keySet());
-        fields.addAll(other.getObjectContentFacet().keySet());
-        for (String field : fields) {
-            FieldDescriptor fd1 = this.getObjectContentFacet().get(field);
-            FieldDescriptor fd2 = other.getObjectContentFacet().get(field);
+        List<String> myKeys = this.getObjectKeysFacet();
+        keyResults.clear();
+        contentResults.clear()
+        keyResults.addAll(myKeys);
+        keyResults.addAll(other.getObjectKeysFacet()->stream().filter(k -> !myKeys.contains(k)).toList());
+        for (String field : keyResults) {
+            FieldDescriptor fd1 = this.getObjectContentFacet(field);
+            FieldDescriptor fd2 = other.getObjectContentFacet(field);
             if (fd1 != null && fd2 != null) {
-                merged.put(field, mergeDescriptors(fd1, fd2));
+                contentResults.add(mergeDescriptors(fd1, fd2));
             } else if (fd1 != null) {
                 FieldDescriptor fieldDescriptor = FieldDescriptor.copy(fd1);
                 fieldDescriptor.setRequired(false);
-                merged.put(field, fieldDescriptor);
+                contentResults.add(fieldDescriptor);
             } else {
                 FieldDescriptor fieldDescriptor = FieldDescriptor.copy(fd2);
                 fieldDescriptor.setRequired(false);
-                merged.put(field, fieldDescriptor);
+                contentResults.add(fieldDescriptor);
             }
         }
         return merged;

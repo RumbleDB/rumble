@@ -287,25 +287,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             && childExpressionInferredType.getItemType().isObjectItemType()
                     ) {
                         final Map<String, FieldDescriptor> currentItemTypeObject = inferredType.getItemType()
-                            .getObjectContentFacet();
-                        resultingItemType = (currentItemTypeObject.keySet().size() == childExpressionInferredType
+                            .getObjectContentFacetAsUnorderedMap();
+                        Map<String, FieldDescriptor> childTypeObject = childExpressionInferredType
                             .getItemType()
-                            .getObjectContentFacet()
+                            .getObjectContentFacetAsUnorderedMap()
+                        resultingItemType = (currentItemTypeObject.keySet().size() == childTypeObject
                             .keySet()
                             .size()
                             && currentItemTypeObject
                                 .keySet()
                                 .stream()
                                 .allMatch(
-                                    key -> childExpressionInferredType.getItemType()
-                                        .getObjectContentFacet()
+                                    key -> childTypeObject
                                         .containsKey(key)
                                         && currentItemTypeObject
                                             .get(key)
                                             .getType()
                                             .equals(
-                                                childExpressionInferredType.getItemType()
-                                                    .getObjectContentFacet()
+                                                childTypeObject
                                                     .get(key)
                                                     .getType()
                                             )
@@ -2040,9 +2039,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
             boolean isObjectClosed = mainType.getItemType().getClosedFacet();
-            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
-            if (objectSchema.containsKey(key)) {
-                FieldDescriptor field = objectSchema.get(key);
+            List<String> objectKeys = mainType.getItemType().getObjectKeysFacet();
+            if (objectKeys.contains(key)) {
+                FieldDescriptor field = mainType.getItemType().getObjectContentFacet(key);
                 inferredType = field.getType();
                 if (field.isRequired()) {
                     // if the field is required then any object will have it, so no need to include '0' arity if not

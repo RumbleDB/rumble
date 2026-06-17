@@ -371,12 +371,34 @@ public class ItemTypeReference implements ItemType {
         }
         return this.resolvedItemType.getNumericFacet();
     }
+    
+    public List<String> getObjectKeysFacet() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getObjectKeysFacet();
+    }
 
-    public Map<String, FieldDescriptor> getObjectContentFacet() {
+    public FieldDescriptor getObjectContentFacet(String key) {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getObjectContentFacet(key);
+    }
+
+    public List<FieldDescriptor> getObjectContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
         return this.resolvedItemType.getObjectContentFacet();
+    }
+
+    @Override
+    public Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.getObjectContentFacetAsUnorderedMap();
     }
 
     public boolean getClosedFacet() {
