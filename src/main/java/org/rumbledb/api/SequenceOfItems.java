@@ -248,11 +248,9 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         Dataset<Row> res = this.iterator.getOrCreateDataFrame(this.dynamicContext).getDataFrame();
-        res.show();
         if (res.columns().length == 1 && res.columns()[0].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
             res = res.withColumnRenamed(SparkSessionManager.nonObjectJSONiqItemColumnName, "__value");
         }
-        res.show();
         return res;
     }
 
