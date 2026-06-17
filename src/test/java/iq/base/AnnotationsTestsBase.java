@@ -137,7 +137,8 @@ public class AnnotationsTestsBase {
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
-    ) throws IOException {
+    )
+            throws IOException {
         AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
         QueryExecutionResult executionResult = executeQuery(path, configuration);
 
