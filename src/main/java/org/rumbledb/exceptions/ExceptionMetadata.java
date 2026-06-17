@@ -35,19 +35,11 @@ public class ExceptionMetadata implements Serializable {
     private final String location;
     private final SourceRange range;
     private final String code;
-    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 1, 0, "");
-
-    /**
-     * Builds a new metadata object
-     *
-     * @param location the URI of the JSONiq module at which the exception occurred.
-     * @param line the line number at which the error occurred.
-     * @param column the column number at which the error occurred.
-     * @param code the query code around the error.
-     */
-    public ExceptionMetadata(String location, int line, int column, String code) {
-        this(location, SourceRange.point(line, column), code);
-    }
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(
+            "none",
+            SourceRange.point(1, 0),
+            ""
+    );
 
     /**
      * Builds a new metadata object
@@ -85,6 +77,10 @@ public class ExceptionMetadata implements Serializable {
 
     public static ExceptionMetadata fromToken(String location, Token token, String code) {
         return fromTokens(location, token, token, code);
+    }
+
+    public static ExceptionMetadata fromPoint(String location, int line, int column, String code) {
+        return new ExceptionMetadata(location, SourceRange.point(line, column), code);
     }
 
     public static ExceptionMetadata fromTokens(String location, Token start, Token end, String code) {

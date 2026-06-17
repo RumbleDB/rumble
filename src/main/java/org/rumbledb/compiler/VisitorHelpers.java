@@ -299,7 +299,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
+                    ExceptionMetadata.fromPoint(
                             uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine(),
@@ -353,7 +353,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
+                    ExceptionMetadata.fromPoint(
                             uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine(),
@@ -415,7 +415,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
+                    ExceptionMetadata.fromPoint(
                             uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine(),
@@ -459,7 +459,7 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
+                    ExceptionMetadata.fromPoint(
                             uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine(),
