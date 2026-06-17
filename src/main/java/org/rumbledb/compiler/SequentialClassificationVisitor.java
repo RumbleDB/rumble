@@ -84,11 +84,12 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
                 || childResult.hasNonExitSequentialStatement();
             hasInterruptStatement = hasInterruptStatement || childResult.hasInterruptStatement();
         }
-        return new DescendentSequentialProperties(
+        DescendentSequentialProperties result = new DescendentSequentialProperties(
                 hasNonExitStatementDescendant,
                 hasInterruptStatement,
                 hasExitStatementDescendant
         );
+        return result;
     }
 
     @Override

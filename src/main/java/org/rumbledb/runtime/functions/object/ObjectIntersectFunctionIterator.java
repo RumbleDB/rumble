@@ -95,7 +95,9 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
         // Enclose object values into arrays.
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure();
+        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
+                this.getRuntimeStaticContext().isQuerySideEffecting()
+        );
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         // Reduce input objects.

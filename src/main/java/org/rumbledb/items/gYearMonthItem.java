@@ -49,6 +49,11 @@ public class gYearMonthItem implements Item {
         getgYearMonthFromString(gYearMonthString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gYearMonthItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgYearMonthFromString(String gYearMonthString) {
         Matcher matcher = this.gYearMonthRegex.matcher(gYearMonthString);
         if (!matcher.matches()) {

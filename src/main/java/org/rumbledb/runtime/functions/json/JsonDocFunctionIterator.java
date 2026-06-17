@@ -67,7 +67,13 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 )
             ) {
                 JsonReader object = new JsonReader(new InputStreamReader(is));
-                return ItemParser.getItemFromObject(object, isJSONiq10, options.getNumberFormat(), getMetadata());
+                return ItemParser.getItemFromObject(
+                    object,
+                    isJSONiq10,
+                    options.getNumberFormat(),
+                    getMetadata(),
+                    false
+                );
             } catch (CannotRetrieveResourceException e) {
                 UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
                 ex.initCause(e);

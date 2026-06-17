@@ -27,6 +27,11 @@ public class UntypedAtomicItem implements Item {
         this.value = value;
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new UntypedAtomicItem(this.value);
+    }
+
     public String getValue() {
         return this.value;
     }

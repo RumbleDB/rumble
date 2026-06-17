@@ -17,6 +17,10 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,10 +34,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
 
@@ -89,12 +89,14 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance().createArrayItem(reversedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(reversedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
     }

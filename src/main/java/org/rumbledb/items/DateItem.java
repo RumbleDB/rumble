@@ -1,11 +1,9 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.sql.Date;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
@@ -14,9 +12,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DateItem implements Item {
 
@@ -40,6 +42,11 @@ public class DateItem implements Item {
 
     DateItem(String dateTimeString) {
         getDateFromString(dateTimeString);
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DateItem(this.value, this.hasTimeZone);
     }
 
     private void getDateFromString(String dateString) {
