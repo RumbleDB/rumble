@@ -136,7 +136,9 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        JavaRDD<Row> rows = strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())).map(RowFactory::create);
+        JavaRDD<Row> rows = strings.mapPartitions(
+            new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())
+        ).map(RowFactory::create);
         return SparkSessionManager.getInstance()
             .getOrCreateSession()
             .createDataFrame(rows, getItemDataFrameSchema());
