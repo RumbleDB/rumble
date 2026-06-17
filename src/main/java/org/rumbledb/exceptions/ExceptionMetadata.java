@@ -88,6 +88,9 @@ public class ExceptionMetadata implements Serializable {
     }
 
     public static ExceptionMetadata fromTokens(String location, Token start, Token end, String code) {
+        if (end == null) {
+            end = start;
+        }
         String endText = end.getText();
         int endColumn = end.getCharPositionInLine() + (endText == null ? 0 : endText.length());
         return new ExceptionMetadata(
