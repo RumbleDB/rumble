@@ -39,21 +39,43 @@ jobs:
               per_page: 100
             });
 
-            const baselineRun = runs.find((run) => {
+            async function hasBaselineArtifacts(runId) {
+              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: runId,
+                per_page: 100
+              });
+              const available = new Set(
+                artifacts
+                  .filter((artifact) => !artifact.expired)
+                  .map((artifact) => artifact.name)
+              );
+              return (
+                available.has('surefire-all-jsoniq') &&
+                available.has('surefire-all-xquery')
+              );
+            }
+
+            let baselineRun = null;
+            for (const run of runs) {
               if (run.conclusion !== 'success') {
-                return false;
+                continue;
               }
               if (run.id === context.runId) {
-                return false;
+                continue;
               }
-              return true;
-            });
+              if (await hasBaselineArtifacts(run.id)) {
+                baselineRun = run;
+                break;
+              }
+            }
 
             const baselineRunId = baselineRun ? String(baselineRun.id) : '';
             core.info(
               baselineRunId
                 ? `Using baseline run ${baselineRunId} from branch ${branch}.`
-                : `No successful baseline run found for branch ${branch}.`
+                : `No successful baseline run with unexpired QT3 artifacts found for branch ${branch}.`
             );
             core.setOutput('baseline_run_id', baselineRunId);
 
