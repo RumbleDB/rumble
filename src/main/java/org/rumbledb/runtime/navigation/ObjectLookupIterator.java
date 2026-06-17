@@ -341,10 +341,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             newContext.setSchema(field.dataType());
         } else if (
             newContext.getResultingType().getItemType().isObjectItemType()
-                && (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)
-                    || newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey))
+                && (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(key)
+                    || newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey))
         ) {
-            if (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey)) {
+            if (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey)) {
                 key = sequenceKey;
             }
             String leftQuery = newContext.getResultingQuery();
@@ -355,8 +355,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             ItemType resultType = newContext.getResultingType()
                 .getItemType()
-                .getObjectContentFacet()
-                .get(key)
+                .getObjectContentFacet(key)
                 .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
@@ -403,7 +402,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         }
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
-            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
+            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
             ItemType type = BuiltinTypesCatalogue.item;
             if (fieldDescriptor != null) {
                 type = fieldDescriptor.getType();

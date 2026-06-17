@@ -70,13 +70,16 @@ public class TypeMappings {
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
-            itemType.getObjectContentFacet()
+            itemType.getObjectKeysFacet()
                 .forEach(
-                    (key, value) -> fields.add(
+                    key -> fields.add(
                         DataTypes.createStructField(
                             key,
-                            getDataFrameDataTypeFromItemType(value.getType(), staticContext),
-                            !value.isRequired()
+                            getDataFrameDataTypeFromItemType(
+                                itemType.getObjectContentFacet(key).getType(),
+                                staticContext
+                            ),
+                            !itemType.getObjectContentFacet(key).isRequired()
                         )
                     )
                 );

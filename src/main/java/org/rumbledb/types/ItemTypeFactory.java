@@ -114,7 +114,8 @@ public class ItemTypeFactory {
                     name,
                     BuiltinTypesCatalogue.objectItem,
                     true,
-                    fields,
+                    new ArrayList<>(fields.keySet()),
+                    new ArrayList<>(fields.values()),
                     Collections.emptyList(),
                     Collections.emptyList()
             );
@@ -136,7 +137,7 @@ public class ItemTypeFactory {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        List<FieldDescriptor> content = new ArrayList<>();
         for (int i = 0; i < keys.size(); i++) {
             String key = keys.get(i);
             ItemType field = values.get(i);
@@ -144,12 +145,13 @@ public class ItemTypeFactory {
             fieldDescriptor.setName(key);
             fieldDescriptor.setType(field);
             fieldDescriptor.setRequired(true);
-            content.put(key, fieldDescriptor);
+            content.add(fieldDescriptor);
         }
         return new ObjectItemType(
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 true,
+                new ArrayList<>(keys),
                 content,
                 Collections.emptyList(),
                 Collections.emptyList()
@@ -366,7 +368,8 @@ public class ItemTypeFactory {
                         name,
                         baseType,
                         closed,
-                        fields,
+                        new ArrayList<>(fields.keySet()),
+                        new ArrayList<>(fields.values()),
                         Collections.emptyList(),
                         Collections.emptyList()
                 );
@@ -720,7 +723,8 @@ public class ItemTypeFactory {
     private static ItemType createItemTypeFromSparkStructType(StructType structType) {
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
-        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        List<String> keys = new ArrayList<>();
+        List<FieldDescriptor> content = new ArrayList<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
             ItemType mappedItemType = createItemType(filedType);
@@ -738,10 +742,11 @@ public class ItemTypeFactory {
             fieldDescriptor.setType(mappedItemType);
             fieldDescriptor.setRequired(!field.nullable());
             // TODO : how to deal with duplicate keys?
-            content.put(field.name(), fieldDescriptor);
+            keys.add(field.name());
+            content.add(fieldDescriptor);
         }
 
-        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
+        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, keys, content, null, null);
     }
 
     /**

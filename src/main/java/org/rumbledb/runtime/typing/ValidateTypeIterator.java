@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -211,9 +210,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         List<StructField> fields = new ArrayList<>();
         try {
-            for (String columnName : itemType.getObjectContentFacet().keySet()) {
-                ItemType columnType = itemType.getObjectContentFacet().get(columnName).getType();
-                boolean required = itemType.getObjectContentFacet().get(columnName).isRequired();
+            for (String columnName : itemType.getObjectKeysFacet()) {
+                FieldDescriptor fieldDescriptor = itemType.getObjectContentFacet(columnName);
+                ItemType columnType = fieldDescriptor.getType();
+                boolean required = fieldDescriptor.isRequired();
                 boolean nullable = columnType.canBeNull();
                 StructField field = createStructField(
                     columnName,
@@ -550,11 +550,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             // Test of uniqueness
             if (itemType.getArrayContentFacet().isObjectItemType()) {
-                Map<String, FieldDescriptor> contentFacets = itemType.getArrayContentFacet().getObjectContentFacet();
+                ItemType arrayContentFacet = itemType.getArrayContentFacet();
                 List<String> uniqueKeys = new ArrayList<>();
-                for (Map.Entry<String, FieldDescriptor> entry : contentFacets.entrySet()) {
-                    if (entry.getValue().isUnique()) {
-                        uniqueKeys.add(entry.getKey());
+                for (String key : arrayContentFacet.getObjectKeysFacet()) {
+                    if (arrayContentFacet.getObjectContentFacet(key).isUnique()) {
+                        uniqueKeys.add(key);
                     }
                 }
                 if (!uniqueKeys.isEmpty()) {
@@ -589,10 +589,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<String> keys = new ArrayList<>();
             List<Item> values = new ArrayList<>();
-            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
+            List<String> facetKeys = itemType.getObjectKeysFacet();
             for (String key : item.getKeys()) {
-                if (facets.containsKey(key)) {
-                    FieldDescriptor fieldDescriptor = facets.get(key);
+                if (facetKeys.contains(key)) {
+                    FieldDescriptor fieldDescriptor = itemType.getObjectContentFacet(key);
                     ItemType expectedType = fieldDescriptor.getType();
                     Item value = item.getItemByKey(key);
                     if (value.isNull()) {
@@ -643,14 +643,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     values.add(item.getItemByKey(key));
                 }
             }
-            for (String key : facets.keySet()) {
+            for (String key : itemType.getObjectKeysFacet()) {
                 if (!item.getKeys().contains(key)) {
-                    Item defaultValue = facets.get(key).getDefaultValue();
+                    FieldDescriptor fieldDescriptor = itemType.getObjectContentFacet(key);
+                    Item defaultValue = fieldDescriptor.getDefaultValue();
                     if (defaultValue != null) {
                         keys.add(key);
                         values.add(defaultValue);
                     }
-                    if (facets.get(key).isRequired()) {
+                    if (fieldDescriptor.isRequired()) {
                         throw new InvalidInstanceException(
                                 "Missing required key in object type + "
                                     + itemType.getIdentifierString()
@@ -739,7 +740,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         ItemType type = ItemTypeFactory.createItemType(
             DataType.fromDDL(String.format("`%s` %s", SparkSessionManager.nonObjectJSONiqItemColumnName, ddl))
         );
-        type = type.getObjectContentFacet().get(SparkSessionManager.nonObjectJSONiqItemColumnName).getType();
+        type = type.getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName).getType();
         return type;
     }
 
