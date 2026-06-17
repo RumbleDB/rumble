@@ -57,8 +57,8 @@ public class ObjectItemType implements ItemType {
     ) {
         this.name = name;
         this.baseType = baseType;
-        this.keys = keys == null ? Collections.emptyList() : keys;
-        this.content = content == null ? Collections.emptyList() : content;
+        this.keys = keys == null ? new ArrayList<>() : new ArrayList<>(keys);
+        this.content = content == null ? new ArrayList<>() : new ArrayList<>(content);
         if (this.keys == null && this.content != null) {
             throw new OurBadException("Inconsistent state in ObjectItemType.");
         }
@@ -70,8 +70,8 @@ public class ObjectItemType implements ItemType {
             throw new OurBadException("Inconsistent state in ObjectItemType: closed object with no content facet.");
         }
         rebuildKeyStringIndex();
-        this.constraints = constraints == null ? Collections.emptyList() : constraints;
-        this.enumeration = enumeration;
+        this.constraints = constraints == null ? new ArrayList<>() : new ArrayList<>(constraints);
+        this.enumeration = enumeration == null ? null : new ArrayList<>(enumeration);
         if (this.baseType.isResolved()) {
             processBaseType();
             if (areContentTypesResolved()) {
@@ -105,8 +105,8 @@ public class ObjectItemType implements ItemType {
         // Write isClosed
         output.writeBoolean(this.isClosed);
 
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.content);
+        kryo.writeObjectOrNull(output, this.keys, ArrayList.class);
+        kryo.writeObjectOrNull(output, this.content, ArrayList.class);
 
         // Write constraints list
         if (this.constraints != null) {
@@ -149,10 +149,16 @@ public class ObjectItemType implements ItemType {
         this.isClosed = input.readBoolean();
 
         // Read keys list
-        this.keys = kryo.readObject(input, ArrayList.class);
+        this.keys = kryo.readObjectOrNull(input, ArrayList.class);
+        if (this.keys == null) {
+            this.keys = new ArrayList<>();
+        }
 
         // Read content list
-        this.content = kryo.readObject(input, ArrayList.class);
+        this.content = kryo.readObjectOrNull(input, ArrayList.class);
+        if (this.content == null) {
+            this.content = new ArrayList<>();
+        }
 
         rebuildKeyStringIndex();
 
@@ -164,7 +170,7 @@ public class ObjectItemType implements ItemType {
                 this.constraints.add(input.readString());
             }
         } else {
-            this.constraints = Collections.emptyList();
+            this.constraints = new ArrayList<>();
         }
 
         // Read enumeration list
