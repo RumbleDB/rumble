@@ -76,7 +76,7 @@ public class XQueryTests extends AnnotationsTestsBase {
     }
 
     public static void readFileList(File dir) {
-        XQueryTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
+        XQueryTests._testFiles.addAll(FileManager.loadXQueryFiles(dir));
     }
 
     public static Collection<Object[]> testFiles() {
