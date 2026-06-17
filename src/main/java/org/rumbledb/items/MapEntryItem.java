@@ -288,10 +288,8 @@ public class MapEntryItem implements Item {
             throw new OurBadException("Maps with more than one value do not have a Spark SQL value.");
         }
         StringBuilder sb = new StringBuilder();
-        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
-
         sb.append("named_struct(");
-        FieldDescriptor field = content.get(this.key.getStringValue());
+        FieldDescriptor field = itemType.getObjectContentFacet(this.key.getStringValue());
         Item value = getItemByKey(this.key);
 
         sb.append("\"").append(this.key).append("\"").append(", ");
