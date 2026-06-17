@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -286,31 +285,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         inferredType.getItemType().isObjectItemType()
                             && childExpressionInferredType.getItemType().isObjectItemType()
                     ) {
-                        final Map<String, FieldDescriptor> currentItemTypeObject = inferredType.getItemType()
-                            .getObjectContentFacet();
-                        resultingItemType = (currentItemTypeObject.keySet().size() == childExpressionInferredType
-                            .getItemType()
-                            .getObjectContentFacet()
-                            .keySet()
-                            .size()
-                            && currentItemTypeObject
-                                .keySet()
+                        ItemType currentItemType = inferredType.getItemType();
+                        ItemType childItemType = childExpressionInferredType.getItemType();
+                        final List<String> currentKeys = currentItemType
+                            .getObjectKeysFacet();
+                        List<String> childKeys = childItemType
+                            .getObjectKeysFacet();
+                        resultingItemType = (currentKeys.size() == childKeys.size()
+                            && currentKeys
                                 .stream()
                                 .allMatch(
-                                    key -> childExpressionInferredType.getItemType()
-                                        .getObjectContentFacet()
-                                        .containsKey(key)
-                                        && currentItemTypeObject
-                                            .get(key)
+                                    key -> childKeys.contains(key)
+                                        && currentItemType
+                                            .getObjectContentFacet(key)
                                             .getType()
                                             .equals(
-                                                childExpressionInferredType.getItemType()
-                                                    .getObjectContentFacet()
-                                                    .get(key)
+                                                childItemType
+                                                    .getObjectContentFacet(key)
                                                     .getType()
                                             )
                                 ))
-                                    ? inferredType.getItemType()
+                                    ? currentItemType
                                     : BuiltinTypesCatalogue.objectItem;
                     } else {
                         resultingItemType = inferredType.getItemType()
@@ -2040,9 +2035,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
             boolean isObjectClosed = mainType.getItemType().getClosedFacet();
-            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
-            if (objectSchema.containsKey(key)) {
-                FieldDescriptor field = objectSchema.get(key);
+            List<String> objectKeys = mainType.getItemType().getObjectKeysFacet();
+            if (objectKeys.contains(key)) {
+                FieldDescriptor field = mainType.getItemType().getObjectContentFacet(key);
                 inferredType = field.getType();
                 if (field.isRequired()) {
                     // if the field is required then any object will have it, so no need to include '0' arity if not

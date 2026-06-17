@@ -473,13 +473,12 @@ public class MapItem implements Item {
     @Override
     public String getSparkSQLValue(ItemType itemType) {
         StringBuilder sb = new StringBuilder();
-        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
-        String[] keys = content.keySet().toArray(new String[0]);
+        List<String> keys = itemType.getObjectKeysFacet();
 
         sb.append("named_struct(");
-        for (int i = 0; i < keys.length; i++) {
-            String key = keys[i];
-            FieldDescriptor field = content.get(key);
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            FieldDescriptor field = itemType.getObjectContentFacet(key);
             Item value = getItemByKey(key);
 
             sb.append("\"").append(key).append("\"").append(", ");
@@ -491,7 +490,7 @@ public class MapItem implements Item {
                 sb.append(value.getSparkSQLValue(field.getType()));
             }
 
-            if (i + 1 < keys.length) {
+            if (i + 1 < keys.size()) {
                 sb.append(", ");
             }
         }
