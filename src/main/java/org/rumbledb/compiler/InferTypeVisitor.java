@@ -290,7 +290,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             .getObjectContentFacetAsUnorderedMap();
                         Map<String, FieldDescriptor> childTypeObject = childExpressionInferredType
                             .getItemType()
-                            .getObjectContentFacetAsUnorderedMap()
+                            .getObjectContentFacetAsUnorderedMap();
                         resultingItemType = (currentItemTypeObject.keySet().size() == childTypeObject
                             .keySet()
                             .size()

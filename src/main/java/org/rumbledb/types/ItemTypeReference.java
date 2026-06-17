@@ -371,7 +371,7 @@ public class ItemTypeReference implements ItemType {
         }
         return this.resolvedItemType.getNumericFacet();
     }
-    
+
     public List<String> getObjectKeysFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);

@@ -58,9 +58,18 @@ public class ObjectItemType implements ItemType {
     ) {
         this.name = name;
         this.baseType = baseType;
-        this.isClosed = isClosed;
         this.keys = keys == null ? Collections.emptyList() : keys;
         this.content = content == null ? Collections.emptyList() : content;
+        if (this.keys == null && this.content != null) {
+            throw new OurBadException("Inconsistent state in ObjectItemType.");
+        }
+        if (this.keys != null && this.content == null) {
+            throw new OurBadException("Inconsistent state in ObjectItemType.");
+        }
+        this.isClosed = isClosed;
+        if (content == null && this.isClosed) {
+            throw new OurBadException("Inconsistent state in ObjectItemType: closed object with no content facet.");
+        }
         rebuildKeyStringIndex();
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
@@ -309,8 +318,7 @@ public class ObjectItemType implements ItemType {
     @Override
     public Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
         Map<String, FieldDescriptor> result = new HashMap<>();
-        for(String key : this.keys)
-        {
+        for (String key : this.keys) {
             result.put(key, getObjectContentFacet(key));
         }
         return result;

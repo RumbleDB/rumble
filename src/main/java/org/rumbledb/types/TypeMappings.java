@@ -75,7 +75,10 @@ public class TypeMappings {
                     key -> fields.add(
                         DataTypes.createStructField(
                             key,
-                            getDataFrameDataTypeFromItemType(itemType.getObjectContentFacet(key).getType(), staticContext),
+                            getDataFrameDataTypeFromItemType(
+                                itemType.getObjectContentFacet(key).getType(),
+                                staticContext
+                            ),
                             !itemType.getObjectContentFacet(key).isRequired()
                         )
                     )

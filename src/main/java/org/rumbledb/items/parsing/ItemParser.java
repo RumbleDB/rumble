@@ -509,12 +509,10 @@ public class ItemParser implements Serializable {
         }
 
         // Non-atomic case
-        Map<String, FieldDescriptor> content = null;
         if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
-            content = itemType.getObjectContentFacet();
-            if (content == null) {
+            if (itemType.getObjectKeysFacet().size() == 0 && !itemType.getClosedFacet()) {
                 throw new OurBadException(
-                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
+                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null (fully open object)."
                 );
             }
         }
@@ -553,8 +551,8 @@ public class ItemParser implements Serializable {
                 continue;
             }
 
-            if (content != null) {
-                FieldDescriptor descriptor = content.get(fieldName);
+            if (itemType.getObjectContentFacet().size() != 0 || itemType.getClosedFacet()) {
+                FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
                 if (descriptor != null) {
                     fieldItemType = descriptor.getType();
                     if (fieldItemType == null) {
