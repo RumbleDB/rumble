@@ -21,7 +21,7 @@
 package iq.base;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -201,7 +201,7 @@ public class AnnotationsTestsBase {
         );
 
         if (shouldReachStage(annotation, executionResult.failureStage)) {
-            Assert.fail(executionResult.failureStage.unexpectedFailureMessage(executionResult.failureMessage));
+            Assertions.fail(executionResult.failureStage.unexpectedFailureMessage(executionResult.failureMessage));
         }
 
         System.out.println(executionResult.failureMessage);
@@ -225,10 +225,10 @@ public class AnnotationsTestsBase {
 
     private static void assertSuccessfulParseAndCompile(AnnotationProcessor.TestAnnotation annotation) {
         if (!annotation.shouldParse()) {
-            Assert.fail(FailureStage.PARSING.unexpectedSuccessMessage());
+            Assertions.fail(FailureStage.PARSING.unexpectedSuccessMessage());
         }
         if (!annotation.shouldCompile()) {
-            Assert.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
+            Assertions.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
         }
     }
 
@@ -243,7 +243,7 @@ public class AnnotationsTestsBase {
             checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
             String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assert.fail(FailureStage.RUNTIME.unexpectedFailureMessage(errorOutput));
+            Assertions.fail(FailureStage.RUNTIME.unexpectedFailureMessage(errorOutput));
         }
     }
 
@@ -256,7 +256,7 @@ public class AnnotationsTestsBase {
     ) {
         try {
             checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
-            Assert.fail(FailureStage.RUNTIME.unexpectedSuccessMessage());
+            Assertions.fail(FailureStage.RUNTIME.unexpectedSuccessMessage());
         } catch (Exception exception) {
             checkErrorCode(exception.getMessage(), annotation.getErrorCode(), annotation.getErrorMetadata());
         }
@@ -276,20 +276,20 @@ public class AnnotationsTestsBase {
         if (!checkOutput) {
             return;
         }
-        Assert.assertEquals("Unexpected query output.", expectedOutput, actualOutput);
+        Assertions.assertEquals(expectedOutput, actualOutput, "Unexpected query output.");
     }
 
     protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
         if (errorOutput != null && expectedErrorCode != null) {
-            Assert.assertTrue(
-                "Unexpected error code returned; Expected: " + expectedErrorCode + "; Error: " + errorOutput,
-                errorOutput.contains(expectedErrorCode)
+            Assertions.assertTrue(
+                errorOutput.contains(expectedErrorCode),
+                "Unexpected error code returned; Expected: " + expectedErrorCode + "; Error: " + errorOutput
             );
         }
         if (errorOutput != null && errorMetadata != null) {
-            Assert.assertTrue(
-                "Unexpected metadata returned; Expected: " + errorMetadata + "; Error: " + errorOutput,
-                errorOutput.contains(errorMetadata)
+            Assertions.assertTrue(
+                errorOutput.contains(errorMetadata),
+                "Unexpected metadata returned; Expected: " + errorMetadata + "; Error: " + errorOutput
             );
         }
     }

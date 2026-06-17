@@ -20,13 +20,13 @@
 
 package iq;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
@@ -34,12 +34,9 @@ import org.rumbledb.items.ItemFactory;
 
 import iq.base.AnnotationsTestsBase;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class RuntimeTestsNoParallelism extends RuntimeTests {
-
-    public RuntimeTestsNoParallelism(File testFile) {
-        super(testFile);
-    }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -72,7 +69,8 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
             );
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public final void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         testAnnotations(

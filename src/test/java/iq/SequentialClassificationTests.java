@@ -1,7 +1,8 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -31,9 +32,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SequentialClassificationTests extends AnnotationsTestsBase {
 
@@ -49,7 +50,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         );
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testBlockStatementWithSequentialStatement() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -65,7 +67,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertFalse(statement2.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testWhileStatementWithNestedBreak() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -82,7 +85,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(whileStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testAssignStatementSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -96,7 +100,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(conditionalStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testAssignStatementNestedSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -110,7 +115,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(conditionalStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testApplyStatementSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -123,7 +129,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(applyStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testApplyStatementNestedSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -150,7 +157,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(defaultStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testApplyStatementNestedSequential2() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -188,7 +196,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(applyStatement2.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testTypeSwitchWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -213,7 +222,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(exitStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testFunctionWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -232,7 +242,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(exitStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testSequentialPropagation() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -255,7 +266,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
     }
 
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testBlockStatementWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -285,7 +297,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         assertTrue(elseStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(value = 100000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testNonSequential() throws Throwable {
         File nonsequentialTestsDirectory = new File(
                 System.getProperty("user.dir")

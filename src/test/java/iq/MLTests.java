@@ -25,11 +25,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class MLTests extends RuntimeTests {
 
     public static final File sparkRuntimeTestsDirectory = new File(
@@ -37,10 +38,6 @@ public class MLTests extends RuntimeTests {
                 +
                 "/src/test/resources/test_files/RumbleML"
     );
-
-    public MLTests(File testFile) {
-        super(testFile);
-    }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -59,7 +56,6 @@ public class MLTests extends RuntimeTests {
         );
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         _testFiles.clear();

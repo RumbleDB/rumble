@@ -22,10 +22,12 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import scala.Function0;
 import scala.util.Properties;
@@ -37,7 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class XQueryTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -55,11 +58,8 @@ public class XQueryTests extends AnnotationsTestsBase {
             }
         });
     protected static List<File> _testFiles = new ArrayList<>();
-    protected final File testFile;
-
-    public XQueryTests(File testFile) {
-        this.testFile = testFile;
-    }
+    @Parameter(0)
+    protected File testFile;
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -79,7 +79,6 @@ public class XQueryTests extends AnnotationsTestsBase {
         XQueryTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         XQueryTests.readFileList(XQueryTests.runtimeTestsDirectory);
@@ -87,7 +86,7 @@ public class XQueryTests extends AnnotationsTestsBase {
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -108,7 +107,8 @@ public class XQueryTests extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public final void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         testAnnotations(

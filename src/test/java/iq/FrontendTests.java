@@ -22,8 +22,9 @@ package iq;
 
 
 import iq.base.AnnotationsTestsBase;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -62,7 +63,8 @@ public class FrontendTests extends AnnotationsTestsBase {
      *
      * @throws Throwable
      */
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testGrammarAndParser() throws Throwable {
         for (File testFile : loadTestFiles(grammarTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
@@ -82,7 +84,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      * 
      * @throws Throwable
      */
-    // @Test(timeout = 1000000)
+    // @Test
     // public void testASTBuilder() throws Throwable
     // {
     // initializeTests(astTestsDirectory);
@@ -103,7 +105,8 @@ public class FrontendTests extends AnnotationsTestsBase {
      *
      * @throws Throwable
      */
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testSematicChecks() throws Throwable {
         for (File testFile : loadTestFiles(semanticTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
@@ -135,7 +138,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      * JsoniqParser.MainModuleContext context) {
      * 
      * //check serialization of ANTLR parse tree vs expression tree serialization
-     * Assert.assertTrue("AST Serialization mismatch",
+     * Assertions.assertTrue("AST Serialization mismatch",
      * AstSerialization.checkSerialization(visitor, context));
      * 
      * 
@@ -143,40 +146,40 @@ public class FrontendTests extends AnnotationsTestsBase {
      * if (testFile.getName().contains("ManualFlowr.")) {
      * try {
      * FlworExpression node = (FlworExpression) visitor.getQueryExpression().getDescendants().get(0);
-     * Assert.assertTrue(node.getContentClauses().size() == 4);
-     * Assert.assertTrue(node.getStartClause().getClauseType() == FLWOR_CLAUSES.FOR);
+     * Assertions.assertTrue(node.getContentClauses().size() == 4);
+     * Assertions.assertTrue(node.getStartClause().getClauseType() == FLWOR_CLAUSES.FOR);
      * 
      * ForClause startClause = (ForClause) node.getStartClause();
-     * Assert.assertTrue(startClause.getForVariables().get(0)
+     * Assertions.assertTrue(startClause.getForVariables().get(0)
      * .getVariableReference().getVariableName().equals("var"));
-     * Assert.assertTrue(startClause.getForVariables().get(0).getIterator()
+     * Assertions.assertTrue(startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).size() == 1);
      * 
      * RangeExpression range = (RangeExpression) startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).get(0);
      * UnaryExpression unary = (UnaryExpression) range.
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(0);
-     * Assert.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
+     * Assertions.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
      * .getPrimaryExpressionNode()).getValue() == 1);
      * unary = (UnaryExpression) range.
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(1);
-     * Assert.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
+     * Assertions.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
      * .getPrimaryExpressionNode()).getValue() == 10);
      * 
-     * Assert.assertTrue(node.getContentClauses().get(0) instanceof LetClause);
-     * Assert.assertTrue(node.getContentClauses().get(1) instanceof WhereClause);
-     * Assert.assertTrue(node.getContentClauses().get(2) instanceof WhereClause);
-     * Assert.assertTrue(node.getContentClauses().get(3) instanceof GroupByClause);
+     * Assertions.assertTrue(node.getContentClauses().get(0) instanceof LetClause);
+     * Assertions.assertTrue(node.getContentClauses().get(1) instanceof WhereClause);
+     * Assertions.assertTrue(node.getContentClauses().get(2) instanceof WhereClause);
+     * Assertions.assertTrue(node.getContentClauses().get(3) instanceof GroupByClause);
      * 
      * VariableReference var = (VariableReference) node.getDescendantsOfType(d -> d instanceof VariableReference,
      * true).get(0);
-     * Assert.assertTrue(var.getVariableName().equals("var"));
+     * Assertions.assertTrue(var.getVariableName().equals("var"));
      * VariableReference j = (VariableReference) node.getDescendantsOfType(d -> d instanceof VariableReference,
      * true).get(1);
-     * Assert.assertTrue(j.getVariableName().equals("j"));
+     * Assertions.assertTrue(j.getVariableName().equals("j"));
      * 
      * } catch (Exception ex) {
-     * Assert.fail("Unexpected AST expression in file " + testFile.getName());
+     * Assertions.fail("Unexpected AST expression in file " + testFile.getName());
      * }
      * 
      * 
@@ -184,22 +187,22 @@ public class FrontendTests extends AnnotationsTestsBase {
      * 
      * try {
      * OrExpression node = (OrExpression) visitor.getQueryExpression().getDescendants().get(0);
-     * Assert.assertTrue(node.getMainExpression().getDescendants().get(0) instanceof NotExpression);
+     * Assertions.assertTrue(node.getMainExpression().getDescendants().get(0) instanceof NotExpression);
      * PostFixExpression array = (PostFixExpression) node
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
      * .getPrimaryExpressionNode() instanceof ArrayConstructor).findFirst().get();
      * 
-     * Assert.assertTrue(array != null);
+     * Assertions.assertTrue(array != null);
      * 
      * PostFixExpression object = (PostFixExpression) node
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
      * .getPrimaryExpressionNode() instanceof ObjectConstructor).findFirst().get();
-     * Assert.assertTrue(object.getPrimaryExpressionNode() != null);
+     * Assertions.assertTrue(object.getPrimaryExpressionNode() != null);
      * 
      * } catch (Exception ex) {
-     * Assert.fail("Unexpected AST expression in file " + testFile.getName());
+     * Assertions.fail("Unexpected AST expression in file " + testFile.getName());
      * }
      * }
      * 
@@ -215,7 +218,7 @@ public class FrontendTests extends AnnotationsTestsBase {
                         .equals(Name.createVariableInNoNamespace("var"))
             );
         vars.forEach(
-            var -> Assert.assertTrue(
+            var -> Assertions.assertTrue(
                 ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
@@ -227,7 +230,7 @@ public class FrontendTests extends AnnotationsTestsBase {
                         .equals(Name.createVariableInNoNamespace("j"))
             );
         js.forEach(
-            j -> Assert.assertTrue(
+            j -> Assertions.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
                     ||
                     ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
@@ -241,7 +244,7 @@ public class FrontendTests extends AnnotationsTestsBase {
                         .equals(Name.createVariableInNoNamespace("internal"))
             );
         internals.forEach(
-            j -> Assert.assertTrue(
+            j -> Assertions.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
@@ -253,7 +256,7 @@ public class FrontendTests extends AnnotationsTestsBase {
                         .equals(Name.createVariableInNoNamespace("arry"))
             );
         arry.forEach(
-            j -> Assert.assertTrue(
+            j -> Assertions.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)
             )
         );

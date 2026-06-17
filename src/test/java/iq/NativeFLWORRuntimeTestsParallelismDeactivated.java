@@ -20,17 +20,18 @@
 
 package iq;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.io.File;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests {
 
     @Override
@@ -57,11 +58,6 @@ public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests 
                 "/src/test/resources/test_files/runtime-native-flwor"
     );
 
-    public NativeFLWORRuntimeTestsParallelismDeactivated(File testFile) {
-        super(testFile);
-    }
-
-    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         _testFiles.clear();

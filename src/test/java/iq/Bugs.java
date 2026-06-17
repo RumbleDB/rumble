@@ -25,10 +25,12 @@ import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -37,7 +39,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class Bugs extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -55,17 +58,13 @@ public class Bugs extends AnnotationsTestsBase {
             }
         });
     protected static List<File> _testFiles = new ArrayList<>();
-    protected final File testFile;
-
-    public Bugs(File testFile) {
-        this.testFile = testFile;
-    }
+    @Parameter(0)
+    protected File testFile;
 
     public static void readFileList(File dir) {
         FileManager.loadJiqFiles(dir).forEach(file -> Bugs._testFiles.add(file));
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
         Bugs.readFileList(Bugs.runtimeTestsDirectory);
@@ -73,7 +72,7 @@ public class Bugs extends AnnotationsTestsBase {
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -97,7 +96,8 @@ public class Bugs extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         AnnotationsTestsBase.testAnnotations(

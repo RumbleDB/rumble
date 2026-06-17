@@ -25,11 +25,13 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
@@ -40,7 +42,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -109,12 +112,8 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
 
     protected static Map<Integer, Map<Integer, File>> _testFilesMap;
 
-    protected final File testFile;
-
-
-    public IcebergUpdateRuntimeTests(File testFile) {
-        this.testFile = testFile;
-    }
+    @Parameter(0)
+    protected File testFile;
 
     public static void readFileList(File dir) throws IOException, AnnotationParseException {
         Map<Integer, Map<Integer, File>> updateDimToFileMap = new TreeMap<>();
@@ -132,7 +131,6 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         IcebergUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() throws IOException, AnnotationParseException {
         List<Object[]> result = new ArrayList<>();
 
@@ -164,7 +162,7 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -201,7 +199,8 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
         try {
@@ -210,7 +209,7 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
             );
         } catch (AnnotationParseException e) {
             e.printStackTrace();
-            Assert.fail();
+            Assertions.fail();
         }
         testAnnotations(
             this.testFile.getAbsolutePath(),

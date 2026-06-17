@@ -22,7 +22,8 @@ package iq;
 
 
 import iq.base.AnnotationsTestsBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
 import java.io.File;
 
@@ -40,7 +41,8 @@ public class ComposabilityTests extends AnnotationsTestsBase {
      *
      * @throws Throwable
      */
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(value = 1000000, unit = java.util.concurrent.TimeUnit.MILLISECONDS)
     public void testComposabilityContraints() throws Throwable {
         for (File testFile : loadTestFiles(composabilityTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
