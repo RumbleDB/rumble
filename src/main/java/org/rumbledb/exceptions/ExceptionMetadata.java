@@ -22,6 +22,8 @@ package org.rumbledb.exceptions;
 
 import java.io.Serializable;
 
+import org.antlr.v4.runtime.Token;
+
 /**
  * Metadata for error reporting (line and column number)
  *
@@ -79,6 +81,23 @@ public class ExceptionMetadata implements Serializable {
         this.location = location;
         this.range = range;
         this.code = code;
+    }
+
+    public static ExceptionMetadata fromToken(String location, Token token, String code) {
+        return fromTokens(location, token, token, code);
+    }
+
+    public static ExceptionMetadata fromTokens(String location, Token start, Token end, String code) {
+        String endText = end.getText();
+        int endColumn = end.getCharPositionInLine() + (endText == null ? 0 : endText.length());
+        return new ExceptionMetadata(
+                location,
+                start.getLine(),
+                start.getCharPositionInLine(),
+                end.getLine(),
+                endColumn,
+                code
+        );
     }
 
     /**

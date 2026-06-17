@@ -3947,29 +3947,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ExceptionMetadata generateMetadata(Token token) {
-        String text = token.getText();
-        int endColumn = token.getCharPositionInLine() + (text == null ? 0 : text.length());
-        return new ExceptionMetadata(
-                this.moduleContext.getStaticBaseURI().toString(),
-                token.getLine(),
-                token.getCharPositionInLine(),
-                token.getLine(),
-                endColumn,
-                this.code
-        );
+        return ExceptionMetadata.fromToken(this.moduleContext.getStaticBaseURI().toString(), token, this.code);
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {
-        String endText = end.getText();
-        int endColumn = end.getCharPositionInLine() + (endText == null ? 0 : endText.length());
-        return new ExceptionMetadata(
-                this.moduleContext.getStaticBaseURI().toString(),
-                start.getLine(),
-                start.getCharPositionInLine(),
-                end.getLine(),
-                endColumn,
-                this.code
-        );
+        return ExceptionMetadata.fromTokens(this.moduleContext.getStaticBaseURI().toString(), start, end, this.code);
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
