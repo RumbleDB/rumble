@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -365,7 +364,11 @@ public class ObjectItemType implements ItemType {
      * @param other the other object item type to merge the content from
      * @return the merged object content
      */
-    private Map<String, FieldDescriptor> mergeObjectContent(ObjectItemType other, List<String> keyResults, List<FieldDescriptor> contentResults) {
+    private Map<String, FieldDescriptor> mergeObjectContent(
+            ObjectItemType other,
+            List<String> keyResults,
+            List<FieldDescriptor> contentResults
+    ) {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
         List<String> myKeys = this.getObjectKeysFacet();
         keyResults.clear();

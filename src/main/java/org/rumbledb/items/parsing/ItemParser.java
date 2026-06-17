@@ -512,7 +512,9 @@ public class ItemParser implements Serializable {
         if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
             if (itemType.getObjectKeysFacet().size() == 0 && !itemType.getClosedFacet()) {
                 throw new OurBadException(
-                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null (fully open object)."
+                        "Object descriptor content in type "
+                            + itemType.getIdentifierString()
+                            + " is null (fully open object)."
                 );
             }
         }
