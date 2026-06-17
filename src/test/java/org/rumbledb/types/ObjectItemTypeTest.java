@@ -33,8 +33,8 @@ public class ObjectItemTypeTest {
         ObjectItemType mergedObject = (ObjectItemType) mergedType;
         Assert.assertEquals(2, mergedObject.getObjectContentFacet().size());
         Assert.assertFalse(
-                "Fields present on only one side of a lax merge are currently treated as optional.",
-                mergedObject.getObjectContentFacet("first").isRequired()
+            "Fields present on only one side of a lax merge are currently treated as optional.",
+            mergedObject.getObjectContentFacet("first").isRequired()
         );
         Assert.assertFalse(mergedObject.getObjectContentFacet("second").isRequired());
         Assert.assertTrue(mergedObject.getObjectContentFacet("second").isUnique());
