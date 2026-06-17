@@ -300,10 +300,10 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     ExceptionMetadata.fromPoint(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -354,10 +354,10 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     ExceptionMetadata.fromPoint(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -416,10 +416,10 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     ExceptionMetadata.fromPoint(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -460,10 +460,10 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     ExceptionMetadata.fromPoint(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
