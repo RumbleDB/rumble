@@ -21,11 +21,14 @@
 package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.parsing.StringToStringItemMapper;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -52,13 +55,21 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    protected boolean implementsItemDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getItemDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.children.get(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
         if (url == null) {
-            return SparkSessionManager.getInstance()
+            JavaRDD<Row> emptyRows = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .emptyRDD();
+            return SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(emptyRows, getItemDataFrameSchema());
         }
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
         int partitions = -1;
@@ -116,6 +127,9 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 partitionsIterator.close();
             }
         }
-        return strings.mapPartitions(new StringToStringItemMapper());
+        JavaRDD<Row> rows = strings.map(line -> RowFactory.create(ItemFactory.getInstance().createStringItem(line)));
+        return SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .createDataFrame(rows, getItemDataFrameSchema());
     }
 }

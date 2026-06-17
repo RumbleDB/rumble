@@ -75,6 +75,11 @@ import sparksoniq.spark.SparkSessionManager;
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
+    private static final StructType ITEM_DATA_FRAME_SCHEMA = new StructType().add(
+        "item",
+        new ItemUserDefinedType(),
+        false
+    );
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
@@ -349,8 +354,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public Dataset<Row> getItemDataFrame(DynamicContext context) {
         JavaRDD<Row> rdd = getRDD(context).map(RowFactory::create);;
-        StructType itemSchema = new StructType().add("item", new ItemUserDefinedType(), false);
-        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rdd, itemSchema);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rdd, getItemDataFrameSchema());
+    }
+
+    protected static StructType getItemDataFrameSchema() {
+        return ITEM_DATA_FRAME_SCHEMA;
     }
 
     /**
