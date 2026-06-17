@@ -31,8 +31,7 @@ public class ExceptionMetadata implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private final String location;
-    private final int tokenLineNumber;
-    private final int tokenColumnNumber;
+    private final SourceRange range;
     private final String code;
     public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 1, 0, "");
 
@@ -45,9 +44,40 @@ public class ExceptionMetadata implements Serializable {
      * @param code the query code around the error.
      */
     public ExceptionMetadata(String location, int line, int column, String code) {
+        this(location, SourceRange.point(line, column), code);
+    }
+
+    /**
+     * Builds a new metadata object
+     *
+     * @param location the URI of the JSONiq module at which the exception occurred.
+     * @param startLine the starting line number at which the error occurred.
+     * @param startColumn the starting column number at which the error occurred.
+     * @param endLine the ending line number at which the error occurred.
+     * @param endColumn the ending column number at which the error occurred.
+     * @param code the query code around the error.
+     */
+    public ExceptionMetadata(
+            String location,
+            int startLine,
+            int startColumn,
+            int endLine,
+            int endColumn,
+            String code
+    ) {
+        this(
+            location,
+            new SourceRange(
+                    new SourcePosition(startLine, startColumn),
+                    new SourcePosition(endLine, endColumn)
+            ),
+            code
+        );
+    }
+
+    public ExceptionMetadata(String location, SourceRange range, String code) {
         this.location = location;
-        this.tokenLineNumber = line;
-        this.tokenColumnNumber = column;
+        this.range = range;
         this.code = code;
     }
 
@@ -57,7 +87,7 @@ public class ExceptionMetadata implements Serializable {
      * @return the line number.
      */
     public int getTokenLineNumber() {
-        return this.tokenLineNumber;
+        return this.range.start().line();
     }
 
     /**
@@ -66,7 +96,7 @@ public class ExceptionMetadata implements Serializable {
      * @return the column number.
      */
     public int getTokenColumnNumber() {
-        return this.tokenColumnNumber;
+        return this.range.start().column();
     }
 
     /**
@@ -76,6 +106,18 @@ public class ExceptionMetadata implements Serializable {
      */
     public String getLocation() {
         return this.location;
+    }
+
+    public SourceRange getRange() {
+        return this.range;
+    }
+
+    public SourcePosition getStart() {
+        return this.range.start();
+    }
+
+    public SourcePosition getEnd() {
+        return this.range.end();
     }
 
     /**
@@ -95,13 +137,13 @@ public class ExceptionMetadata implements Serializable {
     public String getLineInContext() {
         StringBuffer buffer = new StringBuffer();
         String[] lines = this.code.split("\n");
-        if (lines.length < this.tokenLineNumber) {
+        if (lines.length < this.range.start().line()) {
             return "";
         } else {
-            buffer.append(lines[this.tokenLineNumber - 1]);
+            buffer.append(lines[this.range.start().line() - 1]);
         }
         buffer.append("\n");
-        for (int i = 0; i < this.tokenColumnNumber; ++i) {
+        for (int i = 0; i < this.range.start().column(); ++i) {
             buffer.append(" ");
         }
         buffer.append("^\n");
@@ -111,11 +153,14 @@ public class ExceptionMetadata implements Serializable {
     public String toString() {
         return this.location
             + ":"
-            + "LINE:"
-            + getTokenLineNumber()
-            +
-            ":COLUMN:"
-            + getTokenColumnNumber()
+            + "START-LINE:"
+            + this.range.start().line()
+            + ":START-COLUMN:"
+            + this.range.start().column()
+            + ":END-LINE:"
+            + this.range.end().line()
+            + ":END-COLUMN:"
+            + this.range.end().column()
             + ":";
     }
 }

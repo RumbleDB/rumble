@@ -3074,7 +3074,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // endregion
 
     private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
-        return generateMetadata(ctx.getStart());
+        return generateMetadata(ctx.getStart(), ctx.getStop());
     }
 
     @Override
@@ -3947,10 +3947,27 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public ExceptionMetadata generateMetadata(Token token) {
+        String text = token.getText();
+        int endColumn = token.getCharPositionInLine() + (text == null ? 0 : text.length());
         return new ExceptionMetadata(
                 this.moduleContext.getStaticBaseURI().toString(),
                 token.getLine(),
                 token.getCharPositionInLine(),
+                token.getLine(),
+                endColumn,
+                this.code
+        );
+    }
+
+    public ExceptionMetadata generateMetadata(Token start, Token end) {
+        String endText = end.getText();
+        int endColumn = end.getCharPositionInLine() + (endText == null ? 0 : endText.length());
+        return new ExceptionMetadata(
+                this.moduleContext.getStaticBaseURI().toString(),
+                start.getLine(),
+                start.getCharPositionInLine(),
+                end.getLine(),
+                endColumn,
                 this.code
         );
     }
