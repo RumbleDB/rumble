@@ -36,6 +36,11 @@ public class NamespaceItem implements Item {
         this.uri = uri;
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new NamespaceItem(this.prefix, this.uri);
+    }
+
 
     /**
      * Each Namespace Node represents the binding of a namespace URI to a namespace prefix or to the default

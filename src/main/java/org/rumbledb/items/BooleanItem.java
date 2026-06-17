@@ -20,12 +20,13 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class BooleanItem implements Item {
 
@@ -40,6 +41,11 @@ public class BooleanItem implements Item {
     public BooleanItem(boolean value) {
         super();
         this.value = value;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new BooleanItem(this.value);
     }
 
     public boolean getValue() {

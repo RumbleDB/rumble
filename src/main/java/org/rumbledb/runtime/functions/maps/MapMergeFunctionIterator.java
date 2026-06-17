@@ -1,5 +1,10 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -11,11 +16,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -233,7 +233,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                 finalKeyValuePairs.put(key, values);
             }
             return ItemFactory.getInstance()
-                .createMapItem(finalKeyValuePairs, metadata, false);
+                .createMapItem(finalKeyValuePairs, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
     }

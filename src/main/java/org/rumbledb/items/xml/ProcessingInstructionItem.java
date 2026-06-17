@@ -42,6 +42,11 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new ProcessingInstructionItem(this.target, this.content);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;

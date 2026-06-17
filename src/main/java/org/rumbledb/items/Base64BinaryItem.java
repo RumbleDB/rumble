@@ -1,19 +1,20 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.lang3.StringUtils;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.regex.Pattern;
+
+import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.util.Arrays;
-import java.util.regex.Pattern;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class Base64BinaryItem implements Item {
 
@@ -43,6 +44,11 @@ public class Base64BinaryItem implements Item {
         stringValue = stringValue.replaceAll("\\s", "");
         this.value = parseBase64BinaryString(stringValue);
         this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new Base64BinaryItem(this.stringValue);
     }
 
     @Override

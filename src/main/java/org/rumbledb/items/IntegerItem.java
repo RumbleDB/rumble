@@ -51,6 +51,11 @@ public class IntegerItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new IntegerItem(this.value);
+    }
+
+    @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(

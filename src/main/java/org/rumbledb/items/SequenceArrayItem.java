@@ -50,6 +50,28 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        if (mutable) {
+            List<Item> copiedItems = new ArrayList<>(this.getItemMembers().size());
+            for (Item item : this.getItemMembers()) {
+                copiedItems.add(item.copy(mutable));
+            }
+            ArrayItem copy = new ArrayItem(copiedItems);
+            copy.setMutabilityLevel(0);
+            return copy;
+        }
+        List<List<Item>> copiedMemberSequences = new ArrayList<>(this.memberSequences.size());
+        for (List<Item> member : this.memberSequences) {
+            List<Item> copiedMember = new ArrayList<>(member.size());
+            for (Item item : member) {
+                copiedMember.add(item.copy(mutable));
+            }
+            copiedMemberSequences.add(copiedMember);
+        }
+        return new SequenceArrayItem(copiedMemberSequences);
+    }
+
+    @Override
     public boolean equals(Object otherItem) {
         if (!(otherItem instanceof Item)) {
             return false;

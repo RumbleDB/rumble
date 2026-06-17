@@ -89,6 +89,22 @@ public class LazyObjectItem implements Item {
         this.lazyValues = new HashMap<>();
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        List<String> newKeys = new ArrayList<>(this.keys.size());
+        List<Item> newValues = new ArrayList<>();
+        for (String key : this.getKeys()) {
+            newKeys.add(key);
+            newValues.add(this.getItemByKey(key).copy(mutable));
+        }
+        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
+        return result;
+
+    }
+
     public boolean equals(Object otherItem) {
         if (!(otherItem instanceof Item)) {
             return false;

@@ -20,10 +20,13 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serializable;
+import java.net.URI;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
@@ -37,13 +40,10 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serializable;
-import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class StaticContext implements Serializable, KryoSerializable {
 
@@ -58,6 +58,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
     private SerializationParameters serializationParameters;
+    private boolean isQuerySideEffecting;
 
     /**
      * XQuery {@code declare default function namespace}; when null, unprefixed function names use
@@ -106,6 +107,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
         this.decimalFormats = new HashMap<>();
+        this.isQuerySideEffecting = false;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -125,6 +127,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.serializationParameters = configuration.getSerializationParameters();
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
+        this.isQuerySideEffecting = false;
     }
 
     public StaticContext(StaticContext parent) {
@@ -140,6 +143,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
         this.decimalFormats = null;
+        this.isQuerySideEffecting = false;
     }
 
     public StaticContext getParent() {
@@ -642,5 +646,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return Collections.emptyMap();
         }
         return Collections.unmodifiableMap(this.decimalFormats);
+    }
+
+    public boolean isQuerySideEffecting() {
+        if (this.parent != null) {
+            return this.parent.isQuerySideEffecting();
+        }
+        return this.isQuerySideEffecting;
+    }
+
+    public void setIsQuerySideEffecting(boolean isQuerySideEffecting) {
+        if (this.parent != null) {
+            this.parent.setIsQuerySideEffecting(isQuerySideEffecting);
+            return;
+        }
+        this.isQuerySideEffecting = isQuerySideEffecting;
     }
 }

@@ -197,8 +197,8 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Configurator.setLevel("org", LOG_LEVEL);
-            Configurator.setLevel("akka", LOG_LEVEL);
+            Configurator.setLevel("org.apache.spark", Level.ERROR);
+            Configurator.setLevel("akka", Level.ERROR);
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
             this.session.sparkContext().setLogLevel("WARN");

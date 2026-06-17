@@ -35,6 +35,11 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new HexBinaryItem(this.stringValue);
+    }
+
+    @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(

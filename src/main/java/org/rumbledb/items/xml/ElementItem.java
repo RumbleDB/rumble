@@ -70,6 +70,20 @@ public class ElementItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        List<Item> copiedAttributes = new ArrayList<>();
+        for (Item attribute : this.attributes) {
+            copiedAttributes.add(attribute.copy(mutable));
+        }
+        Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
+        return new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         for (Item attribute : this.attributes) {

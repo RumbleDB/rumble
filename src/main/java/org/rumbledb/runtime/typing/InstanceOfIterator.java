@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime.typing;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -33,10 +37,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -134,28 +134,33 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
         if (itemToMatch.isMap()) {
-            List<Item> keys = itemToMatch.getItemKeys();
-            if (keys.isEmpty()) {
+            if (itemToMatch.getSize() == 0) {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
                 if (
                     itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
                         && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
-                )
+                ) {
                     return true;
-                // default behavior for object types (js:object) WITH a JSound schema attached
+                }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
+            if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
+                // if the item already has a dynamic type that is a subtype of the required type, we can skip the more
+                // expensive structural check
+                return true;
+            }
+            List<Item> keys = itemToMatch.getItemKeys();
             ItemType keyType = getLeastCommonSuperItemType(keys, BuiltinTypesCatalogue.atomicItem);
             SequenceType valueSequenceType = getLeastCommonSuperSequenceType(
                 itemToMatch.getSequenceValues()
             );
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
+
             // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
-            return runtimeMapType.isSubtypeOf(itemType)
-                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
+            return runtimeMapType.isSubtypeOf(itemType);
         } else if (itemToMatch.isArray()) {
             List<List<Item>> members = itemToMatch.getSequenceMembers();
             if (members.isEmpty()) {
@@ -170,6 +175,31 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
+            if (itemType.isXQueryArrayItemType()) {
+                // If the expected type is an array, we can check the members against the expected member type.
+                SequenceType expectedMemberType = itemType.getMemberSequenceType();
+                SequenceType.Arity expectedArity = expectedMemberType.getArity();
+                for (List<Item> memberSequence : members) {
+                    if (expectedArity.equals(SequenceType.Arity.One) && memberSequence.size() != 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.Zero) && !memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrZero) && memberSequence.size() > 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrMore) && memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    for (Item member : memberSequence) {
+                        if (!doesItemTypeMatchItem(expectedMemberType.getItemType(), member)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
             SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
                 members
             );
@@ -183,9 +213,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static ItemType getLeastCommonSuperItemType(List<Item> items, ItemType defaultType) {
-        ItemType result = items.get(0).getDynamicType();
+        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
         for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+            result = result.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
         }
         return result;
     }
@@ -208,9 +238,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return SequenceType.createSequenceType("()");
         }
         Item item = items.get(0);
-        ItemType itemType = item.getDynamicType();
+        ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
         for (int i = 1; i < items.size(); i++) {
-            itemType = itemType.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+            itemType = itemType.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
         }
         if (items.size() == 1) {
             return new SequenceType(itemType, SequenceType.Arity.One);

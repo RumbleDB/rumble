@@ -1,21 +1,27 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
+import org.rumbledb.exceptions.InvalidUpdateTargetException;
+import org.rumbledb.exceptions.ModifiesImmutableValueException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
+import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
@@ -93,7 +99,8 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             for (Item item : tempContent) {
                 copyContent.add((Item) SerializationUtils.clone(item));
             }
-            content = ItemFactory.getInstance().createArrayItem(copyContent, true);
+            content = ItemFactory.getInstance()
+                .createArrayItem(copyContent, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
@@ -105,7 +112,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (target.getMutabilityLevel() == -1) {
+            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
@@ -122,7 +129,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (target.getMutabilityLevel() == -1) {
+            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

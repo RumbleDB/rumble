@@ -1,18 +1,18 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 
 public class DateTimeStampItem implements Item {
@@ -38,6 +38,11 @@ public class DateTimeStampItem implements Item {
         if (!this.value.hasTimeZone()) {
             throw new IllegalArgumentException();
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DateTimeStampItem(this.value.getDateTimeValue(), true);
     }
 
     @Override

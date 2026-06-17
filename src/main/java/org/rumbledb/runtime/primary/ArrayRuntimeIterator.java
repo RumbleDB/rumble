@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -32,23 +35,23 @@ import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private boolean isFixedSlotsArrayConstructor;
+    private boolean mutable;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
      */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(null, staticContext);
         this.isFixedSlotsArrayConstructor = false;
+        this.mutable = mutable;
         if (arrayItems != null) {
             this.children.add(arrayItems);
         }
@@ -60,10 +63,12 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public ArrayRuntimeIterator(
             List<RuntimeIterator> memberIterators,
             boolean isFixedSlotsArrayConstructor,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean mutable
     ) {
         super(null, staticContext);
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
+        this.mutable = mutable;
         if (memberIterators != null) {
             this.children.addAll(memberIterators);
         }
@@ -87,16 +92,18 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 for (List<Item> member : memberSequences) {
                     items.add(member.get(0));
                 }
-                return ItemFactory.getInstance().createArrayItem(items, true);
+                return ItemFactory.getInstance()
+                    .createArrayItem(items, this.mutable);
             } else {
-                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+                return ItemFactory.getInstance()
+                    .createSequenceArrayItem(memberSequences, this.mutable);
             }
         }
         List<Item> result = new ArrayList<>();
         for (RuntimeIterator child : this.children) {
             result.addAll(child.materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, true);
+        return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }
 
     @Override

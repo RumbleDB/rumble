@@ -37,6 +37,11 @@ public class AttributeItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new AttributeItem(this.dmNodeName, this.stringValue);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
