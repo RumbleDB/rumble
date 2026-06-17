@@ -356,12 +356,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         URI resolvedURI = FileSystemUtil.resolveURI(
             this.moduleContext.getStaticBaseURI(),
             namespace,
-            generateMetadata(ctx.getStop())
+            createMetadataFromContext(ctx)
         );
         bindNamespace(
             prefix,
             resolvedURI.toString(),
-            generateMetadata(ctx.getStop())
+            createMetadataFromContext(ctx)
         );
 
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
@@ -425,7 +425,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                                     + variableNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                generateMetadata(annotatedDeclaration.getStop())
+                                createMetadataFromContext(annotatedDeclaration)
                         );
                     }
                 }
@@ -450,7 +450,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                                     + functionNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                generateMetadata(annotatedDeclaration.getStop())
+                                createMetadataFromContext(annotatedDeclaration)
                         );
                     }
                 }
@@ -542,7 +542,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         String uri = processStringLiteral(ctx.stringLiteral());
         int declType = ctx.type.getType();
         if (declType == XQueryParser.KW_ELEMENT) {
-            bindNamespace("", uri, generateMetadata(ctx.getStop()));
+            bindNamespace("", uri, createMetadataFromContext(ctx));
         } else if (declType == XQueryParser.KW_FUNCTION) {
             if (flags.defaultFunctionNamespaceDeclared) {
                 throw new SemanticException(
@@ -594,7 +594,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
             throw new PrefixCannotBeExpandedException(
                     "Cannot expand prefix " + prefix,
-                    generateMetadata(ctx.getStop())
+                    createMetadataFromContext(ctx)
             );
         } else if (ctx.keywordOKForFunction() != null) {
             // if the rule matches a keyword, the prefix is not defined
@@ -721,7 +721,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         throw new PrefixCannotBeExpandedException(
                 "Cannot expand prefix " + prefix,
-                generateMetadata(ctx.getStop())
+                createMetadataFromContext(ctx)
         );
     }
 
@@ -901,7 +901,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
         ReturnClause returnClause = new ReturnClause(
                 returnExpr,
-                generateMetadata(ctx.getStop())
+                returnExpr.getMetadata()
         );
         previousFLWORClause.chainWith(returnClause);
 
@@ -1188,7 +1188,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
                 new StringLiteralExpression("", null),
-                generateMetadata(ctx.start)
+                createMetadataFromContext(ctx)
         );
         whereClause.chainWith(returnClause);
         Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
@@ -2700,8 +2700,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         clause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-                new NullLiteralExpression(generateMetadata(ctx.start)),
-                generateMetadata(ctx.start)
+                new NullLiteralExpression(createMetadataFromContext(ctx)),
+                createMetadataFromContext(ctx)
         );
         whereClause.chainWith(returnClause);
         Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
@@ -2962,7 +2962,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Statement returnStatement = (Statement) this.visitStatement(ctx.returnStmt);
         ReturnStatementClause returnStatementClause = new ReturnStatementClause(
                 returnStatement,
-                generateMetadata(ctx.getStop())
+                returnStatement.getMetadata()
         );
         lastFlowrClause.chainWith(returnStatementClause);
         returnStatementClause = returnStatementClause.detachInitialLetClausesForStatements();
@@ -3062,7 +3062,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             if (namespace == null) {
                 throw new PrefixCannotBeExpandedException(
                         "Cannot expand prefix " + prefix,
-                        generateMetadata(wildcardContext.getStop())
+                        createMetadataFromContext(wildcardContext)
                 );
             }
             return CatchPattern.localNameWildcard(namespace, wildcardText);
@@ -3525,7 +3525,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         bindNamespace(
             ctx.ncName().getText(),
             processURILiteral(ctx.uriLiteral()),
-            generateMetadata(ctx.getStop())
+            createMetadataFromContext(ctx)
         );
     }
 
@@ -3573,7 +3573,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         URI resolvedURI = FileSystemUtil.resolveURI(
             this.moduleContext.getStaticBaseURI(),
             namespace,
-            generateMetadata(ctx.getStop())
+            createMetadataFromContext(ctx)
         );
         LibraryModule libraryModule = null;
         try {
@@ -3581,7 +3581,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 resolvedURI,
                 this.configuration,
                 this.moduleContext,
-                generateMetadata(ctx.getStop())
+                createMetadataFromContext(ctx)
             );
             if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
                 throw new ModuleNotFoundException(
@@ -3589,20 +3589,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             + resolvedURI.toString()
                             + " was not found. The namespace of the module at this location was: "
                             + libraryModule.getNamespace(),
-                        generateMetadata(ctx.getStop())
+                        createMetadataFromContext(ctx)
                 );
             }
         } catch (IOException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    generateMetadata(ctx.getStop())
+                    createMetadataFromContext(ctx)
             );
             exception.initCause(e);
             throw exception;
         } catch (CannotRetrieveResourceException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    generateMetadata(ctx.getStop())
+                    createMetadataFromContext(ctx)
             );
             exception.initCause(e);
             throw exception;
@@ -3611,14 +3611,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             bindNamespace(
                 ctx.ncName().getText(),
                 resolvedURI.toString(),
-                generateMetadata(ctx.getStop())
+                createMetadataFromContext(ctx)
             );
         }
         return libraryModule;
-    }
-
-    public ExceptionMetadata generateMetadata(Token token) {
-        return ExceptionMetadata.fromToken(this.moduleContext.getStaticBaseURI().toString(), token, this.code);
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {
