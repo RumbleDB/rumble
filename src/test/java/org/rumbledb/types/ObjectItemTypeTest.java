@@ -5,9 +5,9 @@ import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 public class ObjectItemTypeTest {
     /**
@@ -31,11 +31,10 @@ public class ObjectItemTypeTest {
         ItemType mergedType = left.findLeastCommonSuperTypeLax(right);
         Assert.assertTrue(mergedType instanceof ObjectItemType);
         ObjectItemType mergedObject = (ObjectItemType) mergedType;
-        Map<String, FieldDescriptor> content = mergedObject.getObjectContentFacet();
-        Assert.assertEquals(2, content.size());
-        Assert.assertTrue(content.get("first").isRequired());
-        Assert.assertFalse(content.get("second").isRequired());
-        Assert.assertTrue(content.get("second").isUnique());
+        Assert.assertEquals(2, mergedObject.getObjectContentFacet().size());
+        Assert.assertTrue(mergedObject.getObjectContentFacet("first").isRequired());
+        Assert.assertFalse(mergedObject.getObjectContentFacet("second").isRequired());
+        Assert.assertTrue(mergedObject.getObjectContentFacet("second").isUnique());
         Assert.assertFalse("Merged object should be open if any operand is open.", mergedObject.getClosedFacet());
     }
 
@@ -68,8 +67,7 @@ public class ObjectItemTypeTest {
         );
 
         FieldDescriptor mergedDescriptor = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
-            .getObjectContentFacet()
-            .get("nested");
+            .getObjectContentFacet("nested");
         Assert.assertFalse(
             "Nested field should be optional if any operand is optional.",
             mergedDescriptor.isRequired()
@@ -77,10 +75,10 @@ public class ObjectItemTypeTest {
         Assert.assertTrue("Nested field should be unique if any operand is unique.", mergedDescriptor.isUnique());
         ItemType mergedNestedType = mergedDescriptor.getType();
         Assert.assertTrue(mergedNestedType instanceof ObjectItemType);
-        Map<String, FieldDescriptor> innerContent = ((ObjectItemType) mergedNestedType).getObjectContentFacet();
-        Assert.assertEquals(2, innerContent.size());
-        Assert.assertTrue(innerContent.containsKey("a"));
-        Assert.assertTrue(innerContent.containsKey("b"));
+        ObjectItemType innerObject = (ObjectItemType) mergedNestedType;
+        Assert.assertEquals(2, innerObject.getObjectContentFacet().size());
+        Assert.assertTrue(innerObject.getObjectKeysFacet().contains("a"));
+        Assert.assertTrue(innerObject.getObjectKeysFacet().contains("b"));
     }
 
     /**
@@ -109,8 +107,8 @@ public class ObjectItemTypeTest {
         ObjectItemType left = createObjectType(true, leftDescriptor);
         ObjectItemType right = createObjectType(true, rightDescriptor);
 
-        FieldDescriptor merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right)).getObjectContentFacet()
-            .get("flag");
+        FieldDescriptor merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
+            .getObjectContentFacet("flag");
         Assert.assertEquals(defaultTrue, merged.getDefaultValue());
 
         FieldDescriptor conflictingRight = field(
@@ -121,8 +119,7 @@ public class ObjectItemTypeTest {
             ItemFactory.getInstance().createBooleanItem(false)
         );
         merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(createObjectType(true, conflictingRight)))
-            .getObjectContentFacet()
-            .get("flag");
+            .getObjectContentFacet("flag");
         Assert.assertNull("Conflicting defaults should be discarded.", merged.getDefaultValue());
     }
 
@@ -134,14 +131,17 @@ public class ObjectItemTypeTest {
      * @return the created object type
      */
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
-        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        List<String> keys = new ArrayList<>();
+        List<FieldDescriptor> content = new ArrayList<>();
         for (FieldDescriptor descriptor : descriptors) {
-            content.put(descriptor.getName(), descriptor);
+            keys.add(descriptor.getName());
+            content.add(descriptor);
         }
         return new ObjectItemType(
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 closed,
+                keys,
                 content,
                 Collections.<String>emptyList(),
                 Collections.<Item>emptyList()
@@ -176,4 +176,3 @@ public class ObjectItemTypeTest {
         return descriptor;
     }
 }
-
