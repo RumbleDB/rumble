@@ -33,6 +33,9 @@ public class ItemUserDefinedType extends UserDefinedType<Item> {
 
     @Override
     public Item deserialize(Object object) {
+        if (dataFrameContext == null) {
+            initialize();
+        }
         if (object instanceof byte[] b) {
             this.dataFrameContext.getInput().setBuffer(b);
             Object result = this.dataFrameContext.getKryo().readClassAndObject(this.dataFrameContext.getInput());

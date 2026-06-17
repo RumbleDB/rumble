@@ -21,6 +21,9 @@
 package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -65,7 +68,17 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    protected boolean implementsItemDataFrames() {
+        return true;
+    }
+
+    @Override
+    protected boolean implementsRDD() {
+        return false;
+    }
+
+    @Override
+    public Dataset<Row> getItemDataFrame(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
@@ -123,7 +136,10 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        return strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata()));
+        JavaRDD<Row> rows = strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata())).map(RowFactory::create);
+        return SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .createDataFrame(rows, getItemDataFrameSchema());
     }
 
     protected void init() {
