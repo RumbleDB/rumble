@@ -72,7 +72,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
-        if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
+        if (
+            executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames() && !this.implementsItemDataFrames()
+        ) {
             this.staticContext = this.staticContext.withExecutionMode(ExecutionMode.RDD);
         }
     }
@@ -112,15 +114,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         if (this.result == null) {
             this.currentResultIndex = 0;
-            JavaRDD<Item> rdd = null;
-            if (!isRDD() && implementsDataFrames()) {
-                rdd = dataFrameToRDDOfItems(
-                    this.getDataFrame(this.currentDynamicContextForLocalExecution),
-                    this.getMetadata()
-                );
-            } else {
-                rdd = this.getRDDAux(this.currentDynamicContextForLocalExecution);
-            }
+            JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
             this.result = collectRDDwithLimit(rdd, this.getConfiguration(), this.getMetadata());
             this.hasNext = !this.result.isEmpty();
         }

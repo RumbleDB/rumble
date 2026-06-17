@@ -29,7 +29,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.runtime.ItemDataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -42,7 +42,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
+public class UnparsedTextLinesFunctionIterator extends ItemDataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     public static final int MIN_PARTITIONS = 10;
@@ -52,11 +52,6 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-    }
-
-    @Override
-    protected boolean implementsItemDataFrames() {
-        return true;
     }
 
     @Override
