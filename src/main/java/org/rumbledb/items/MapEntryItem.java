@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -62,7 +63,7 @@ public class MapEntryItem implements Item {
     public Item copy(boolean mutable) {
         if (mutable) {
             List<String> keys = this.getStringKeys();
-            List<Item> values = this.getItemValues();
+            List<Item> values = new ArrayList<>(keys.size());
             for (String key : keys) {
                 values.add(getItemByKey(key).copy(true));
             }
