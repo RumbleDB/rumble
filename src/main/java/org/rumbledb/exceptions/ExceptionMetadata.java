@@ -140,14 +140,27 @@ public class ExceptionMetadata implements Serializable {
         String[] lines = this.code.split("\n");
         if (lines.length < this.range.start().line()) {
             return "";
-        } else {
-            buffer.append(lines[this.range.start().line() - 1]);
         }
+        String line = lines[this.range.start().line() - 1];
+        buffer.append(line);
         buffer.append("\n");
         for (int i = 0; i < this.range.start().column(); ++i) {
             buffer.append(" ");
         }
-        buffer.append("^\n");
+        if (this.range.start().line() == this.range.end().line()) {
+            int width = this.range.end().column() - this.range.start().column();
+            if (width <= 0) {
+                width = 1;
+            }
+            int maxWidth = Math.max(1, line.length() - this.range.start().column());
+            width = Math.min(width, maxWidth);
+            for (int i = 0; i < width; ++i) {
+                buffer.append("^");
+            }
+        } else {
+            buffer.append("^");
+        }
+        buffer.append("\n");
         return buffer.toString();
     }
 
