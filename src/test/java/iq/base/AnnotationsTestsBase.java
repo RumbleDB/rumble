@@ -36,6 +36,8 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
+import utils.annotations.AnnotationProcessor.AnnotationExpectation;
+import utils.annotations.AnnotationProcessor.PhaseExpectation;
 
 import java.io.File;
 import java.io.FileReader;
@@ -148,7 +150,11 @@ public class AnnotationsTestsBase {
         }
 
         assertSuccessfulParseAndCompile(annotation);
-        if (annotation.shouldRun()) {
+        PhaseExpectation runtimeExpectation = annotation.getExpectation().runtime();
+        if (runtimeExpectation == PhaseExpectation.NOT_APPLICABLE) {
+            return;
+        }
+        if (runtimeExpectation == PhaseExpectation.MUST_SUCCEED) {
             assertOutput(annotation, executionResult.sequence, checkOutput, applyUpdates, resultSizeCap);
             return;
         }
@@ -211,24 +217,36 @@ public class AnnotationsTestsBase {
             AnnotationProcessor.TestAnnotation annotation,
             FailureStage failureStage
     ) {
-        switch (failureStage) {
-            case PARSING:
-                return annotation.shouldParse();
-            case SEMANTIC:
-                return annotation.shouldCompile();
-            case RUNTIME:
-                return annotation.shouldRun();
-            default:
-                throw new IllegalStateException("Unhandled failure stage: " + failureStage);
-        }
+        return expectationForStage(annotation.getExpectation(), failureStage) == PhaseExpectation.MUST_SUCCEED;
     }
 
     private static void assertSuccessfulParseAndCompile(AnnotationProcessor.TestAnnotation annotation) {
-        if (!annotation.shouldParse()) {
+        AnnotationExpectation expectation = annotation.getExpectation();
+        if (expectation.parsing() == PhaseExpectation.MUST_FAIL) {
             Assert.fail(FailureStage.PARSING.unexpectedSuccessMessage());
         }
-        if (!annotation.shouldCompile()) {
+        PhaseExpectation compileExpectation = expectation.compilation();
+        if (compileExpectation == PhaseExpectation.NOT_APPLICABLE) {
+            return;
+        }
+        if (compileExpectation == PhaseExpectation.MUST_FAIL) {
             Assert.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
+        }
+    }
+
+    private static PhaseExpectation expectationForStage(
+            AnnotationExpectation expectation,
+            FailureStage failureStage
+    ) {
+        switch (failureStage) {
+            case PARSING:
+                return expectation.parsing();
+            case SEMANTIC:
+                return expectation.compilation();
+            case RUNTIME:
+                return expectation.runtime();
+            default:
+                throw new IllegalStateException("Unhandled failure stage: " + failureStage);
         }
     }
 

@@ -188,7 +188,46 @@ public class AnnotationProcessor {
         throw new AnnotationParseException(annotationText, "No UpdateDim key found.");
     }
 
+    public enum PhaseExpectation {
+        MUST_SUCCEED,
+        MUST_FAIL,
+        NOT_APPLICABLE
+    }
+
+    public enum AnnotationExpectation {
+        UNPARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),
+        PARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),
+        UNCOMPILABLE(PhaseExpectation.MUST_FAIL, PhaseExpectation.NOT_APPLICABLE),
+        COMPILABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.NOT_APPLICABLE),
+        UNRUNNABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.MUST_FAIL),
+        RUNNABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.MUST_SUCCEED);
+
+        private final PhaseExpectation compilation;
+        private final PhaseExpectation runtime;
+
+        AnnotationExpectation(
+                PhaseExpectation compilation,
+                PhaseExpectation runtime
+        ) {
+            this.compilation = compilation;
+            this.runtime = runtime;
+        }
+
+        public PhaseExpectation parsing() {
+            return this == UNPARSABLE ? PhaseExpectation.MUST_FAIL : PhaseExpectation.MUST_SUCCEED;
+        }
+
+        public PhaseExpectation compilation() {
+            return this.compilation;
+        }
+
+        public PhaseExpectation runtime() {
+            return this.runtime;
+        }
+    }
+
     public static abstract class TestAnnotation {
+        private final AnnotationExpectation expectation;
         protected String expectedOutput = "";
         protected String errorCode = "";
         protected String errorMetadata = "";
@@ -198,7 +237,12 @@ public class AnnotationProcessor {
         protected boolean shouldDeleteTable = false;
         protected boolean shouldCreateTable = false;
 
-        public TestAnnotation() {
+        public TestAnnotation(AnnotationExpectation expectation) {
+            this.expectation = expectation;
+        }
+
+        public AnnotationExpectation getExpectation() {
+            return this.expectation;
         }
 
         public String getOutput() {
@@ -232,17 +276,11 @@ public class AnnotationProcessor {
         public boolean shouldCreateTable() {
             return this.shouldCreateTable;
         }
-
-        public abstract boolean shouldParse();
-
-        public abstract boolean shouldCompile();
-
-        public abstract boolean shouldRun();
     }
 
     public static class RunnableTestAnnotation extends TestAnnotation {
         public RunnableTestAnnotation(String expectedOut) {
-            super();
+            super(AnnotationExpectation.RUNNABLE);
             this.expectedOutput = expectedOut;
             this.errorCode = null;
             this.errorMetadata = null;
@@ -250,21 +288,6 @@ public class AnnotationProcessor {
 
         public String getOutput() {
             return this.expectedOutput;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            return true;
         }
     }
 
@@ -284,138 +307,43 @@ public class AnnotationProcessor {
             this.shouldDeleteTable = shouldDeleteTable;
             this.shouldCreateTable = shouldCreateTable;
         }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            return true;
-        }
     }
 
     public static class UnrunnableTestAnnotation extends TestAnnotation {
-
         public UnrunnableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
+            super(AnnotationExpectation.UNRUNNABLE);
             this.errorCode = errorCode;
             this.errorMetadata = errorMetadata;
         }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            return false;
-        }
-
     }
 
     public static class UncompilableTestAnnotation extends TestAnnotation {
-
         public UncompilableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
+            super(AnnotationExpectation.UNCOMPILABLE);
             this.errorCode = errorCode;
             this.errorMetadata = errorMetadata;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return false;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Compile annotations runLocal request");
         }
     }
 
     public static class CompilableTestAnnotation extends TestAnnotation {
         public CompilableTestAnnotation() {
-            super();
+            super(AnnotationExpectation.COMPILABLE);
             this.errorCode = null;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Compile annotations runLocal request");
         }
     }
 
     public static class ParsableTestAnnotation extends TestAnnotation {
-
         public ParsableTestAnnotation() {
-            super();
+            super(AnnotationExpectation.PARSABLE);
             this.errorCode = null;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            throw new RuntimeException("Parsable annotations compilation request");
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Parsable annotations runLocal request");
         }
     }
 
     public static class UnparsableTestAnnotation extends TestAnnotation {
         public UnparsableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
+            super(AnnotationExpectation.UNPARSABLE);
             this.errorCode = errorCode;
             this.errorMetadata = errorMetadata;
         }
-
-        @Override
-        public boolean shouldParse() {
-            return false;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            throw new RuntimeException("Parsable annotations compilation request");
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Parsable annotations runLocal request");
-        }
-
     }
 }
