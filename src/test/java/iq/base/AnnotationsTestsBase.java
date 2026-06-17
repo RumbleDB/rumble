@@ -29,11 +29,10 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
@@ -41,16 +40,17 @@ import utils.annotations.AnnotationProcessor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AnnotationsTestsBase {
     protected static int counter = 0;
-    protected List<File> testFiles = new ArrayList<>();
+
     protected static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
@@ -76,34 +76,100 @@ public class AnnotationsTestsBase {
             )
         );
 
+    private enum FailureStage {
+        PARSING("parse"),
+        SEMANTIC("compile"),
+        RUNTIME("run");
+
+        private final String verb;
+
+        FailureStage(String verb) {
+            this.verb = verb;
+        }
+
+        private String unexpectedFailureMessage(String errorOutput) {
+            return "Program did not " + this.verb + " when expected to.\nError output: " + errorOutput + "\n";
+        }
+
+        private String unexpectedSuccessMessage() {
+            return "Program did " + this.verb + " when not expected to.\n";
+        }
+    }
+
+    private static final class QueryExecutionResult {
+        private final SequenceOfItems sequence;
+        private final FailureStage failureStage;
+        private final String failureMessage;
+
+        private QueryExecutionResult(SequenceOfItems sequence, FailureStage failureStage, String failureMessage) {
+            this.sequence = sequence;
+            this.failureStage = failureStage;
+            this.failureMessage = failureMessage;
+        }
+
+        private static QueryExecutionResult success(SequenceOfItems sequence) {
+            return new QueryExecutionResult(sequence, null, null);
+        }
+
+        private static QueryExecutionResult failure(FailureStage failureStage, String failureMessage) {
+            return new QueryExecutionResult(null, failureStage, failureMessage);
+        }
+
+        private boolean failed() {
+            return this.failureStage != null;
+        }
+    }
+
     public RumbleRuntimeConfiguration getConfiguration() {
         return defaultConfiguration;
     }
 
-    public void initializeTests(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
-        this.testFiles.sort(Comparator.comparing(File::getName));
+    protected List<File> loadTestFiles(File dir) {
+        return FileManager.loadJiqFiles(dir)
+            .stream()
+            .sorted(Comparator.comparing(File::getName))
+            .collect(Collectors.toList());
     }
 
-    /**
-     * Tests annotations
-     */
     public static void testAnnotations(
             String path,
             RumbleRuntimeConfiguration configuration,
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
-    )
-            throws IOException {
-        AnnotationProcessor.TestAnnotation currentAnnotation = null;
-        try {
-            currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
-        } catch (AnnotationParseException e) {
-            e.printStackTrace();
-            Assert.fail();
+    ) throws IOException {
+        AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
+        QueryExecutionResult executionResult = executeQuery(path, configuration);
+
+        if (executionResult.failed()) {
+            assertExpectedFailure(annotation, executionResult);
+            return;
         }
-        SequenceOfItems sequence = null;
+
+        assertSuccessfulParseAndCompile(annotation);
+        if (annotation.shouldRun()) {
+            assertOutput(annotation, executionResult.sequence, checkOutput, applyUpdates, resultSizeCap);
+            return;
+        }
+
+        assertExpectedRuntimeFailureDuringMaterialization(
+            annotation,
+            executionResult.sequence,
+            checkOutput,
+            applyUpdates,
+            resultSizeCap
+        );
+    }
+
+    private static AnnotationProcessor.TestAnnotation readAnnotation(String path) throws IOException {
+        try (Reader annotationReader = new FileReader(path)) {
+            return AnnotationProcessor.readAnnotation(annotationReader);
+        } catch (AnnotationParseException e) {
+            throw new AssertionError("Could not parse test annotation for " + path, e);
+        }
+    }
+
+    private static QueryExecutionResult executeQuery(String path, RumbleRuntimeConfiguration configuration) {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
@@ -111,118 +177,88 @@ public class AnnotationsTestsBase {
                 ExceptionMetadata.EMPTY_METADATA
             );
             Rumble rumble = new Rumble(configuration);
-            sequence = rumble.runQuery(uri);
+            return QueryExecutionResult.success(rumble.runQuery(uri));
         } catch (ParsingException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(
-                errorOutput,
-                currentAnnotation.getErrorCode(),
-                currentAnnotation.getErrorMetadata()
-            );
-            if (currentAnnotation.shouldParse()) {
-                Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return;
-            } else {
-                System.out.println(errorOutput);
-                return;
-            }
-
-            // SEMANTIC
+            return QueryExecutionResult.failure(FailureStage.PARSING, exception.getMessage());
         } catch (SemanticException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(
-                errorOutput,
-                currentAnnotation.getErrorCode(),
-                currentAnnotation.getErrorMetadata()
-            );
-            try {
-                if (currentAnnotation.shouldCompile()) {
-                    Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return;
-                } else {
-                    System.out.println(errorOutput);
-                    Assert.assertTrue(true);
-                    return;
-                }
-            } catch (Exception ex) {
-            }
-
-            // RUNTIME
+            return QueryExecutionResult.failure(FailureStage.SEMANTIC, exception.getMessage());
         } catch (RumbleException exception) {
-            String errorOutput = exception.getMessage();
-            checkErrorCode(
-                errorOutput,
-                currentAnnotation.getErrorCode(),
-                currentAnnotation.getErrorMetadata()
-            );
-            try {
-                if (currentAnnotation.shouldRun()) {
-                    Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return;
-                } else {
-                    System.out.println(errorOutput);
-                    Assert.assertTrue(true);
-                    return;
-                }
-            } catch (Exception ex) {
-            }
+            return QueryExecutionResult.failure(FailureStage.RUNTIME, exception.getMessage());
+        } catch (IOException exception) {
+            throw new AssertionError("Could not execute test query for " + path, exception);
+        }
+    }
+
+    private static void assertExpectedFailure(
+            AnnotationProcessor.TestAnnotation annotation,
+            QueryExecutionResult executionResult
+    ) {
+        checkErrorCode(
+            executionResult.failureMessage,
+            annotation.getErrorCode(),
+            annotation.getErrorMetadata()
+        );
+
+        if (shouldReachStage(annotation, executionResult.failureStage)) {
+            Assert.fail(executionResult.failureStage.unexpectedFailureMessage(executionResult.failureMessage));
         }
 
+        System.out.println(executionResult.failureMessage);
+    }
+
+    private static boolean shouldReachStage(
+            AnnotationProcessor.TestAnnotation annotation,
+            FailureStage failureStage
+    ) {
+        switch (failureStage) {
+            case PARSING:
+                return annotation.shouldParse();
+            case SEMANTIC:
+                return annotation.shouldCompile();
+            case RUNTIME:
+                return annotation.shouldRun();
+            default:
+                throw new IllegalStateException("Unhandled failure stage: " + failureStage);
+        }
+    }
+
+    private static void assertSuccessfulParseAndCompile(AnnotationProcessor.TestAnnotation annotation) {
+        if (!annotation.shouldParse()) {
+            Assert.fail(FailureStage.PARSING.unexpectedSuccessMessage());
+        }
+        if (!annotation.shouldCompile()) {
+            Assert.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
+        }
+    }
+
+    private static void assertOutput(
+            AnnotationProcessor.TestAnnotation annotation,
+            SequenceOfItems sequence,
+            boolean checkOutput,
+            boolean applyUpdates,
+            int resultSizeCap
+    ) {
         try {
-            if (!currentAnnotation.shouldCompile()) {
-                Assert.fail("Program compiled when not expected to.\n");
-                return;
-            }
-        } catch (Exception ex) {
+            checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
+        } catch (RumbleException exception) {
+            String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
+            Assert.fail(FailureStage.RUNTIME.unexpectedFailureMessage(errorOutput));
         }
+    }
 
-        if (!currentAnnotation.shouldParse()) {
-            Assert.fail("Program parsed when not expected to.\n");
-            return;
+    private static void assertExpectedRuntimeFailureDuringMaterialization(
+            AnnotationProcessor.TestAnnotation annotation,
+            SequenceOfItems sequence,
+            boolean checkOutput,
+            boolean applyUpdates,
+            int resultSizeCap
+    ) {
+        try {
+            checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            Assert.fail(FailureStage.RUNTIME.unexpectedSuccessMessage());
+        } catch (Exception exception) {
+            checkErrorCode(exception.getMessage(), annotation.getErrorCode(), annotation.getErrorMetadata());
         }
-
-        // PROGRAM SHOULD RUN
-        if (
-            currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
-                &&
-                currentAnnotation.shouldRun()
-        ) {
-            try {
-                checkExpectedOutput(currentAnnotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
-            } catch (RumbleException exception) {
-                String errorOutput = exception.getMessage();
-                errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
-                Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-            }
-        } else {
-            // PROGRAM SHOULD CRASH
-            if (
-                currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
-                    &&
-                    !currentAnnotation.shouldRun()
-            ) {
-                try {
-                    checkExpectedOutput(
-                        currentAnnotation.getOutput(),
-                        sequence,
-                        checkOutput,
-                        applyUpdates,
-                        resultSizeCap
-                    );
-                } catch (Exception exception) {
-                    String errorOutput = exception.getMessage();
-                    checkErrorCode(
-                        errorOutput,
-                        currentAnnotation.getErrorCode(),
-                        currentAnnotation.getErrorMetadata()
-                    );
-                    return;
-                }
-
-                Assert.fail("Program executed when not expected to");
-            }
-        }
-        return;
     }
 
     static void checkExpectedOutput(
@@ -239,75 +275,56 @@ public class AnnotationsTestsBase {
         if (!checkOutput) {
             return;
         }
-        Assert.assertTrue(
-            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-            expectedOutput.equals(actualOutput)
-        );
+        Assert.assertEquals("Unexpected query output.", expectedOutput, actualOutput);
     }
 
     protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
-        if (errorOutput != null && expectedErrorCode != null)
+        if (errorOutput != null && expectedErrorCode != null) {
             Assert.assertTrue(
-                "Unexpected error code returned; Expected: "
-                    + expectedErrorCode
-                    +
-                    "; Error: "
-                    + errorOutput,
+                "Unexpected error code returned; Expected: " + expectedErrorCode + "; Error: " + errorOutput,
                 errorOutput.contains(expectedErrorCode)
             );
-        if (errorOutput != null && errorMetadata != null)
+        }
+        if (errorOutput != null && errorMetadata != null) {
             Assert.assertTrue(
-                "Unexpected metadata returned; Expected: "
-                    + errorMetadata
-                    +
-                    "; Error: "
-                    + errorOutput,
+                "Unexpected metadata returned; Expected: " + errorMetadata + "; Error: " + errorOutput,
                 errorOutput.contains(errorMetadata)
             );
+        }
     }
 
     public static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {
         sequence.open();
-        Item result = null;
-        if (sequence.hasNext()) {
-            result = sequence.next();
-        }
-        if (result == null) {
+        if (!sequence.hasNext()) {
             return "";
         }
-        String singleOutput = result.serialize();
+
+        StringBuilder output = new StringBuilder(sequence.next().serialize());
         if (!sequence.hasNext()) {
-            return singleOutput;
-        } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            sb.append(result.serialize());
-            sb.append(", ");
-            while (
-                sequence.hasNext()
-                    &&
-                    ((itemCount < resultSizeCap
-                        && resultSizeCap > 0)
-                        ||
-                        resultSizeCap == 0)
-            ) {
-                sb.append(sequence.next().serialize());
-                sb.append(", ");
-                itemCount++;
-            }
-            if (sequence.hasNext() && itemCount == resultSizeCap) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + resultSizeCap
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            String output = sb.toString();
-            output = output.substring(0, output.length() - 2);
-            output += ")";
-            return output;
+            return output.toString();
         }
+
+        int itemCount = 1;
+        output.insert(0, "(");
+        while (sequence.hasNext() && isWithinResultSizeCap(itemCount, resultSizeCap)) {
+            output.append(", ");
+            output.append(sequence.next().serialize());
+            itemCount++;
+        }
+        output.append(")");
+
+        if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
+            System.err.println(
+                "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be configured with the --result-size parameter at startup"
+            );
+        }
+
+        return output.toString();
+    }
+
+    private static boolean isWithinResultSizeCap(int itemCount, int resultSizeCap) {
+        return resultSizeCap == 0 || itemCount < resultSizeCap;
     }
 }
