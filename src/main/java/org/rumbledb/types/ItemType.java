@@ -579,11 +579,37 @@ public interface ItemType extends Serializable, KryoSerializable {
 
     // endregion fundamental facets
 
-    /**
-     *
-     * @return content facet value for object item types (cumulative facet)
-     */
-    default Map<String, FieldDescriptor> getObjectContentFacet() {
+    default List<String> getObjectKeysFacet() {
+        throw new UnsupportedOperationException(
+                "keys content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    default FieldDescriptor getObjectContentFacet(String key) {
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    default List<FieldDescriptor> getObjectContentFacet() {
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
+    }
+
+    default Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
         throw new UnsupportedOperationException(
                 "object content facet is allowed only for object item types, but "
                     + getIdentifierString()

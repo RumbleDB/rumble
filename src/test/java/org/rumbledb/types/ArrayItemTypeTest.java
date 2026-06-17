@@ -4,9 +4,9 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.api.Item;
 
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.List;
 
 public class ArrayItemTypeTest {
 
@@ -34,11 +34,10 @@ public class ArrayItemTypeTest {
         ArrayItemType mergedArray = (ArrayItemType) mergedType;
         Assert.assertTrue(mergedArray.getArrayContentFacet() instanceof ObjectItemType);
         ObjectItemType mergedContent = (ObjectItemType) mergedArray.getArrayContentFacet();
-        Map<String, FieldDescriptor> fields = mergedContent.getObjectContentFacet();
-        Assert.assertEquals(3, fields.size());
-        Assert.assertTrue(fields.containsKey("a"));
-        Assert.assertTrue(fields.containsKey("b"));
-        FieldDescriptor common = fields.get("common");
+        Assert.assertEquals(3, mergedContent.getObjectContentFacet().size());
+        Assert.assertTrue(mergedContent.getObjectKeysFacet().contains("a"));
+        Assert.assertTrue(mergedContent.getObjectKeysFacet().contains("b"));
+        FieldDescriptor common = mergedContent.getObjectContentFacet("common");
         Assert.assertNotNull(common);
         Assert.assertFalse("Common field should become optional if an operand is optional.", common.isRequired());
         Assert.assertTrue("Common field should be unique if any operand is unique.", common.isUnique());
@@ -52,14 +51,14 @@ public class ArrayItemTypeTest {
         ArrayItemType left = createArrayType(BuiltinTypesCatalogue.intItem, 1, 5);
         ArrayItemType right = createArrayType(BuiltinTypesCatalogue.intItem, 2, 4);
         ArrayItemType merged = (ArrayItemType) left.findLeastCommonSuperTypeLax(right);
-        Assert.assertEquals(Integer.valueOf(2), merged.getMinLengthFacet());
-        Assert.assertEquals(Integer.valueOf(4), merged.getMaxLengthFacet());
+        Assert.assertEquals(Integer.valueOf(1), merged.getMinLengthFacet());
+        Assert.assertEquals(Integer.valueOf(5), merged.getMaxLengthFacet());
 
         ArrayItemType conflictingLeft = createArrayType(BuiltinTypesCatalogue.intItem, 5, 6);
         ArrayItemType conflictingRight = createArrayType(BuiltinTypesCatalogue.intItem, 1, 2);
         ArrayItemType conflictingMerged = (ArrayItemType) conflictingLeft.findLeastCommonSuperTypeLax(conflictingRight);
-        Assert.assertNull(conflictingMerged.getMinLengthFacet());
-        Assert.assertNull(conflictingMerged.getMaxLengthFacet());
+        Assert.assertEquals(Integer.valueOf(1), conflictingMerged.getMinLengthFacet());
+        Assert.assertEquals(Integer.valueOf(6), conflictingMerged.getMaxLengthFacet());
     }
 
     /**
@@ -85,14 +84,17 @@ public class ArrayItemTypeTest {
     }
 
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
-        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
+        List<String> keys = new ArrayList<>();
+        List<FieldDescriptor> content = new ArrayList<>();
         for (FieldDescriptor descriptor : descriptors) {
-            content.put(descriptor.getName(), descriptor);
+            keys.add(descriptor.getName());
+            content.add(descriptor);
         }
         return new ObjectItemType(
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 closed,
+                keys,
                 content,
                 Collections.<String>emptyList(),
                 Collections.<Item>emptyList()
@@ -108,4 +110,3 @@ public class ArrayItemTypeTest {
         return descriptor;
     }
 }
-

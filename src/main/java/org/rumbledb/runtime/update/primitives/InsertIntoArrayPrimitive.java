@@ -80,8 +80,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
             this.applyItem();
