@@ -81,8 +81,6 @@ public class ObjectItemType implements ItemType {
         }
     }
 
-
-
     private void rebuildKeyStringIndex() {
         if (this.keyStringToIndex == null) {
             this.keyStringToIndex = new HashMap<>();
@@ -307,7 +305,8 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public FieldDescriptor getObjectContentFacet(String key) {
-        return this.content.get(this.keyStringToIndex.get(key));
+        Integer index = this.keyStringToIndex.get(key);
+        return index == null ? null : this.content.get(index);
     }
 
     @Override
@@ -370,9 +369,9 @@ public class ObjectItemType implements ItemType {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
         List<String> myKeys = this.getObjectKeysFacet();
         keyResults.clear();
-        contentResults.clear()
+        contentResults.clear();
         keyResults.addAll(myKeys);
-        keyResults.addAll(other.getObjectKeysFacet()->stream().filter(k -> !myKeys.contains(k)).toList());
+        other.getObjectKeysFacet().stream().filter(k -> !myKeys.contains(k)).forEach(keyResults::add);
         for (String field : keyResults) {
             FieldDescriptor fd1 = this.getObjectContentFacet(field);
             FieldDescriptor fd2 = other.getObjectContentFacet(field);
@@ -450,7 +449,7 @@ public class ObjectItemType implements ItemType {
         if (this.content != null) {
             sb.append("-content{");
             String comma = "";
-            for (FieldDescriptor fd : this.content.values()) {
+            for (FieldDescriptor fd : this.content) {
                 sb.append(comma);
                 sb.append(fd.getName());
                 sb.append(fd.isRequired() ? "(r):" : "(nr):");
@@ -520,7 +519,7 @@ public class ObjectItemType implements ItemType {
             sb.append(", ");
 
             if (isResolved()) {
-                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
+                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet());
                 if (fields.size() > 0) {
                     sb.append("\"content\": [ ");
                     String comma = "";
@@ -566,8 +565,8 @@ public class ObjectItemType implements ItemType {
     }
 
     private boolean areContentTypesResolved() {
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isResolved()) {
+        for (FieldDescriptor fieldDescriptor : this.content) {
+            if (!fieldDescriptor.getType().isResolved()) {
                 return false;
             }
         }
@@ -581,8 +580,8 @@ public class ObjectItemType implements ItemType {
             processBaseType();
         }
         if (!areContentTypesResolved()) {
-            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-                entry.getValue().resolve(context, metadata);
+            for (FieldDescriptor fieldDescriptor : this.content) {
+                fieldDescriptor.resolve(context, metadata);
             }
             checkSubtypeConsistency();
         }
@@ -595,8 +594,8 @@ public class ObjectItemType implements ItemType {
             processBaseType();
         }
         if (!areContentTypesResolved()) {
-            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-                entry.getValue().resolve(context, metadata);
+            for (FieldDescriptor fieldDescriptor : this.content) {
+                fieldDescriptor.resolve(context, metadata);
             }
             checkSubtypeConsistency();
         }
@@ -607,8 +606,8 @@ public class ObjectItemType implements ItemType {
         if (!this.isClosed) {
             return false;
         }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isCompatibleWithDataFrames(configuration)) {
+        for (FieldDescriptor fieldDescriptor : this.content) {
+            if (!fieldDescriptor.getType().isCompatibleWithDataFrames(configuration)) {
                 return false;
             }
         }
@@ -619,25 +618,30 @@ public class ObjectItemType implements ItemType {
         this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
         if (this.baseType.isObjectItemType()) {
             if (this.content == null) {
-                this.content = this.baseType.getObjectContentFacet();
+                this.keys = new ArrayList<>(this.baseType.getObjectKeysFacet());
+                this.content = new ArrayList<>(this.baseType.getObjectContentFacet());
+                rebuildKeyStringIndex();
             } else {
-                for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
-                    if (!this.content.containsKey(entry.getKey())) {
-                        FieldDescriptor descriptor = entry.getValue();
+                for (String key : this.baseType.getObjectKeysFacet()) {
+                    FieldDescriptor baseDescriptor = this.baseType.getObjectContentFacet(key);
+                    FieldDescriptor descriptor = this.getObjectContentFacet(key);
+                    if (descriptor == null) {
+                        descriptor = baseDescriptor;
                         if (!descriptor.requiredIsSet()) {
                             descriptor.setRequired(false);
                         }
                         if (!descriptor.uniqueIsSet()) {
                             descriptor.setUnique(false);
                         }
-                        this.content.put(entry.getKey(), descriptor);
+                        this.keys.add(key);
+                        this.content.add(descriptor);
+                        this.keyStringToIndex.put(key, this.content.size() - 1);
                     } else {
-                        FieldDescriptor descriptor = this.content.get(entry.getKey());
                         if (!descriptor.requiredIsSet()) {
-                            descriptor.setRequired(entry.getValue().isRequired());
+                            descriptor.setRequired(baseDescriptor.isRequired());
                         }
                         if (!descriptor.uniqueIsSet()) {
-                            descriptor.setUnique(entry.getValue().isUnique());
+                            descriptor.setUnique(baseDescriptor.isUnique());
                         }
                     }
                 }
@@ -669,8 +673,10 @@ public class ObjectItemType implements ItemType {
             return;
         }
         // TODO Check field types
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!this.getBaseType().getObjectContentFacet().containsKey(entry.getKey())) {
+        for (String key : this.keys) {
+            FieldDescriptor fieldDescriptor = this.getObjectContentFacet(key);
+            FieldDescriptor superTypeDescriptor = this.getBaseType().getObjectContentFacet(key);
+            if (superTypeDescriptor == null) {
                 if (this.baseType.getClosedFacet()) {
                     throw new InvalidSchemaException(
                             "If the base type is closed, it is not possible to add new fields.",
@@ -680,23 +686,22 @@ public class ObjectItemType implements ItemType {
                     continue;
                 }
             }
-            FieldDescriptor superTypeDescriptor = this.getBaseType().getObjectContentFacet().get(entry.getKey());
-            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
+            if (!fieldDescriptor.getType().isSubtypeOf(superTypeDescriptor.getType())) {
                 throw new InvalidSchemaException(
                         "The type of an object field descriptor (here: "
-                            + entry.getValue().getType()
+                            + fieldDescriptor.getType()
                             + ") associated with key "
-                            + entry.getKey()
+                            + key
                             + " must be a subtype of the type declared for this field in its base type (here: "
                             + superTypeDescriptor.getType()
                             + ")",
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
+            if (!fieldDescriptor.isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "
-                            + entry.getKey()
+                            + key
                             + " is required in the base type, it must also be required in the derived type.",
                         ExceptionMetadata.EMPTY_METADATA
                 );
@@ -713,18 +718,16 @@ public class ObjectItemType implements ItemType {
     @Override
     public String getSparkSQLType() {
         StringBuilder sb = new StringBuilder();
-        Map<String, FieldDescriptor> content = this.getObjectContentFacet();
-        String[] keys = content.keySet().toArray(new String[0]);
 
         sb.append("STRUCT<");
-        for (int i = 0; i < keys.length; i++) {
-            String key = keys[i];
-            FieldDescriptor field = content.get(key);
+        for (int i = 0; i < this.keys.size(); i++) {
+            String key = this.keys.get(i);
+            FieldDescriptor field = this.getObjectContentFacet(key);
 
             sb.append(key);
             sb.append(":");
             sb.append(field.getType().getSparkSQLType());
-            if (i < keys.length - 1) {
+            if (i < this.keys.size() - 1) {
                 sb.append(", ");
             }
         }

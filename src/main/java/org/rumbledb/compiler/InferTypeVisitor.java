@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -286,30 +285,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         inferredType.getItemType().isObjectItemType()
                             && childExpressionInferredType.getItemType().isObjectItemType()
                     ) {
-                        final Map<String, FieldDescriptor> currentItemTypeObject = inferredType.getItemType()
-                            .getObjectContentFacetAsUnorderedMap();
-                        Map<String, FieldDescriptor> childTypeObject = childExpressionInferredType
-                            .getItemType()
-                            .getObjectContentFacetAsUnorderedMap();
-                        resultingItemType = (currentItemTypeObject.keySet().size() == childTypeObject
-                            .keySet()
-                            .size()
-                            && currentItemTypeObject
-                                .keySet()
+                        ItemType currentItemType = inferredType.getItemType();
+                        ItemType childItemType = childExpressionInferredType.getItemType();
+                        final List<String> currentKeys = currentItemType
+                            .getObjectKeysFacet();
+                        List<String> childKeys = childItemType
+                            .getObjectKeysFacet();
+                        resultingItemType = (currentKeys.size() == childKeys.size()
+                            && currentKeys
                                 .stream()
                                 .allMatch(
-                                    key -> childTypeObject
-                                        .containsKey(key)
-                                        && currentItemTypeObject
-                                            .get(key)
+                                    key -> childKeys.contains(key)
+                                        && currentItemType
+                                            .getObjectContentFacet(key)
                                             .getType()
                                             .equals(
-                                                childTypeObject
-                                                    .get(key)
+                                                childItemType
+                                                    .getObjectContentFacet(key)
                                                     .getType()
                                             )
                                 ))
-                                    ? inferredType.getItemType()
+                                    ? currentItemType
                                     : BuiltinTypesCatalogue.objectItem;
                     } else {
                         resultingItemType = inferredType.getItemType()

@@ -706,7 +706,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,
             false,
-            Collections.emptyMap(),
+            Collections.emptyList(),
+            Collections.emptyList(),
             Collections.emptyList(),
             null
     );
@@ -827,4 +828,3 @@ public class BuiltinTypesCatalogue {
         throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
     }
 }
-
