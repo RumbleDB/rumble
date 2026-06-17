@@ -20,9 +20,11 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -30,13 +32,14 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.runtime.update.primitives.Collection;
 
-
-import java.util.*;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class ObjectItem implements Item {
 
@@ -79,6 +82,20 @@ public class ObjectItem implements Item {
         this.location = "null";
         this.collection = null;
         this.topLevelOrder = 0.0;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        List<String> newKeys = new ArrayList<>(this.keys);
+        List<Item> newValues = new ArrayList<>();
+        for (Item value : this.values) {
+            newValues.add(value.copy(mutable));
+        }
+        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
+        if (mutable) {
+            result.setMutabilityLevel(this.mutabilityLevel);
+        }
+        return result;
     }
 
     public boolean equals(Object otherItem) {
@@ -199,6 +216,22 @@ public class ObjectItem implements Item {
     @Override
     public List<String> getStringKeys() {
         return this.keys;
+    }
+
+    @Override
+    public int getSize() {
+        return this.keys.size();
+    }
+
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return this.keyStringToIndex.containsKey(key);
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (!key.isString()) {
+            return false;
+        }
+        return hasKey(key.getStringValue());
     }
 
     @Override
@@ -400,11 +433,7 @@ public class ObjectItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        List<ItemType> itemTypes = new ArrayList<>();
-        for (String key : this.keys) {
-            itemTypes.add(getItemByKey(key).getDynamicType());
-        }
-        return ItemTypeFactory.createAnonymousObjectType(this.keys, itemTypes);
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override

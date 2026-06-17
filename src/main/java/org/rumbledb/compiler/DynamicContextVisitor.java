@@ -295,7 +295,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 String inputFormat = this.configuration.getInputFormat(Name.CONTEXT_ITEM);
                 switch (inputFormat) {
                     case "json":
-                        items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                        items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA, false));
                         break;
                     case "text":
                         items.add(ItemFactory.getInstance().createStringItem(value));

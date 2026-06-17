@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -13,10 +17,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -104,6 +104,10 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             this.resultItem = mapItem;
             return;
         }
+        if (mapItem.getMutabilityLevel() == -1) {
+            this.resultItem = ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
+            return;
+        }
         List<Item> mapKeys = mapItem.getItemKeys();
         List<List<Item>> mapValueSequences = mapItem.getSequenceValues();
         boolean allKeysString = true;
@@ -136,10 +140,13 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         }
         if (allKeysString && allValuesSingletons) {
             this.resultItem = ItemFactory.getInstance()
-                .createObjectItemOptimized(newStringKeyValuePairs, false);
+                .createObjectItemOptimized(
+                    newStringKeyValuePairs,
+                    this.getRuntimeStaticContext().isQuerySideEffecting()
+                );
         } else {
             this.resultItem = ItemFactory.getInstance()
-                .createMapItem(newKeyValuePairs, getMetadata(), false);
+                .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

@@ -136,7 +136,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        JavaRDD<Row> rows = strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata())).map(RowFactory::create);
+        JavaRDD<Row> rows = strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())).map(RowFactory::create);
         return SparkSessionManager.getInstance()
             .getOrCreateSession()
             .createDataFrame(rows, getItemDataFrameSchema());
@@ -207,7 +207,11 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = (line != null);
             if (this.hasNext) {
                 JsonReader object = new JsonReader(new StringReader(line));
-                this.nextItem = ItemParser.getItemFromObject(object, getMetadata());
+                this.nextItem = ItemParser.getItemFromObject(
+                    object,
+                    getMetadata(),
+                    this.getRuntimeStaticContext().isQuerySideEffecting()
+                );
             }
         } catch (IOException e) {
             handleException(e);

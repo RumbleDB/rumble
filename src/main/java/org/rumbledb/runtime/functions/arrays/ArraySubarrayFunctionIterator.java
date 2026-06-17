@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -15,10 +19,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
 
@@ -127,14 +127,16 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             }
             // TODO: optimization: if the subarray contains only singleton members, we can create an array of items
             // instead.
-            this.resultItem = ItemFactory.getInstance().createArrayItem(slicedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
             for (int i = fromIndex; i < toIndex; i++) {
                 slicedMembers.add(originalMembers.get(i));
             }
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(slicedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

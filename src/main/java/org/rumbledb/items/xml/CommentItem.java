@@ -32,6 +32,11 @@ public class CommentItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new CommentItem(this.content);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;

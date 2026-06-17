@@ -48,6 +48,11 @@ public class gDayItem implements Item {
         getgDayFromString(gDayString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gDayItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgDayFromString(String gDayString) {
         Matcher matcher = this.gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {

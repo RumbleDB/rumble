@@ -1,15 +1,18 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.Duration;
-import java.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -17,9 +20,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -27,11 +30,9 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class AnnotatedItem implements Item {
 
@@ -50,6 +51,11 @@ public class AnnotatedItem implements Item {
         if (type.getName() == null) {
             throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new AnnotatedItem(this.itemToAnnotate.copy(mutable), this.type);
     }
 
     @Override

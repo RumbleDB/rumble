@@ -46,6 +46,14 @@ import java.util.Map;
 public interface Item extends Serializable, KryoSerializable {
 
     /**
+     * Makes a copy.
+     * 
+     * @param mutable whether the copy should be mutable (if supported by the item).
+     * @return a copy
+     */
+    Item copy(boolean mutable);
+
+    /**
      * Tests whether the item is a function.
      *
      * @return true if it is a function, false otherwise
@@ -745,12 +753,32 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the size of the item, if it is an array.
+     * Returns the size of the item, if it is an array, or the number of keys if it is a map.
      *
      * @return the size as an int.
-     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
      */
     default int getSize() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(String key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(Item key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

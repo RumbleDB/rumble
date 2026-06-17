@@ -20,12 +20,10 @@ package org.rumbledb.runtime.functions.maps;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,30 +42,8 @@ public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> mapArguments = new ArrayList<>();
-        this.children.get(0).materialize(context, mapArguments);
-        if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
-            throw new UnexpectedTypeException(
-                    "The first argument of map:contains must be a single map item [err:XPTY0004].",
-                    getMetadata()
-            );
-        }
-
-        List<Item> rawKey = new ArrayList<>();
-        this.children.get(1).materialize(context, rawKey);
-        List<Item> atomized = new ArrayList<>();
-        for (Item item : rawKey) {
-            atomized.addAll(item.atomizedValue());
-        }
-        if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "The second argument of map:contains must atomize to a single atomic value [err:XPTY0004].",
-                    getMetadata()
-            );
-        }
-
-        Item map = mapArguments.get(0);
-        Item key = atomized.get(0);
+        Item map = this.children.get(0).materializeFirstItemOrNull(context);
+        Item key = this.children.get(1).materializeFirstItemOrNull(context);
         boolean contains = map.getSequenceByKey(key) != null;
         return ItemFactory.getInstance().createBooleanItem(contains);
     }
