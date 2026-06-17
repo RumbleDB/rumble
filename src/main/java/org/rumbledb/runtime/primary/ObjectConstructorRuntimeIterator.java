@@ -165,9 +165,10 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     return NativeClauseContext.NoNativeQuery;
                 }
                 nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
-                objectPartContext.getResultingType().getItemType().getObjectContentFacet().forEach((k, v) -> {
+                ItemType objectPartContextResultingItemType = objectPartContext.getResultingType().getItemType();
+                objectPartContextResultingItemType.getObjectKeysFacet().forEach(k -> {
                     keyNames.add(k);
-                    valueTypes.add(v.getType());
+                    valueTypes.add(objectPartContextResultingItemType.getObjectContentFacet(k).getType());
                 });
                 // special case: if there is only one item, spark treats it as a reference, in that case don't use .*
                 queries.add(

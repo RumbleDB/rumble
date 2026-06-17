@@ -176,16 +176,14 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 .map(childClause -> childClause.getResultingType().getItemType())
                 .reduce(
                     (a, b) -> (a.isObjectItemType()
-                        && a.getObjectContentFacet().keySet().size() == b.getObjectContentFacet().keySet().size()
-                        && a.getObjectContentFacet()
-                            .keySet()
+                        && a.getObjectKeysFacet().size() == b.getObjectKeysFacet().size()
+                        && a.getObjectKeysFacet()
                             .stream()
                             .allMatch(
-                                key -> b.getObjectContentFacet().containsKey(key)
-                                    && a.getObjectContentFacet()
-                                        .get(key)
+                                key -> b.getObjectKeysFacet().contains(key)
+                                    && a.getObjectContentFacet(key)
                                         .getType()
-                                        .equals(b.getObjectContentFacet().get(key).getType())
+                                        .equals(b.getObjectContentFacet(key).getType())
                             ))
                                 ? a
                                 : BuiltinTypesCatalogue.item

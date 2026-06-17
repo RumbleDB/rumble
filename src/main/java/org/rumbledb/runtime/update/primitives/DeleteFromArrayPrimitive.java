@@ -63,8 +63,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
             this.applyItem();
             this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
