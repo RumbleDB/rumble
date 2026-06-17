@@ -168,16 +168,18 @@ public class ExceptionMetadata implements Serializable {
     }
 
     public String toString() {
-        return this.location
-            + ":"
-            + "START-LINE:"
-            + this.range.start().line()
-            + ":START-COLUMN:"
-            + this.range.start().column()
-            + ":END-LINE:"
-            + this.range.end().line()
-            + ":END-COLUMN:"
-            + this.range.end().column()
-            + ":";
+        StringBuffer buffer = new StringBuffer();
+        buffer.append(this.location);
+        buffer.append(":LINE:");
+        buffer.append(this.range.start().line());
+        buffer.append(":COLUMN:");
+        buffer.append(this.range.start().column());
+        buffer.append(":");
+        buffer.append("ENDLINE:");
+        buffer.append(this.range.end().line());
+        buffer.append(":ENDCOLUMN:");
+        buffer.append(this.range.end().column());
+        buffer.append(":");
+        return buffer.toString();
     }
 }
