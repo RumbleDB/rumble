@@ -91,14 +91,16 @@ public class LazyObjectItem implements Item {
 
     @Override
     public Item copy(boolean mutable) {
-        List<String> newKeys = new ArrayList<>(this.keys);
+        List<String> newKeys = new ArrayList<>(this.keys.size());
         List<Item> newValues = new ArrayList<>();
         for (String key : this.getKeys()) {
             newKeys.add(key);
             newValues.add(this.getItemByKey(key).copy(mutable));
         }
         Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
-        result.setMutabilityLevel(0);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
         return result;
 
     }
