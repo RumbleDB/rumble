@@ -223,9 +223,24 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        ExecutionMode calleeExecutionMode = getCalleeExecutionModeForFunctionItemCall();
+        if (this.isPartialApplication) {
+            this.functionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
+                this.functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                this.functionArguments,
+                false
+            );
+            return;
+        }
+
+        NamedFunctions.ResolvedFunctionCall resolvedCall = NamedFunctions.resolveFunctionItemCall(
+            this.functionItem,
+            this.functionArguments,
+            this.staticContext
+        );
         if (
-            calleeExecutionMode.equals(ExecutionMode.LOCAL)
+            resolvedCall.executionMode().equals(ExecutionMode.LOCAL)
                 && this.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
         ) {
             throw new OurBadException(
@@ -234,22 +249,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.functionCallIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.functionItem,
-            this.staticContext,
-            this.isPartialApplication ? ExecutionMode.LOCAL : calleeExecutionMode,
-            this.functionArguments,
-            false
-        );
-    }
-
-    private ExecutionMode getCalleeExecutionModeForFunctionItemCall() {
-        if (this.isPartialApplication) {
-            return ExecutionMode.LOCAL;
-        }
-        return NamedFunctions.resolveFunctionItemExecutionMode(
-            this.functionItem,
-            this.functionArguments,
+        this.functionCallIterator = NamedFunctions.buildResolvedFunctionItemCallIterator(
+            resolvedCall,
             this.staticContext
         );
     }

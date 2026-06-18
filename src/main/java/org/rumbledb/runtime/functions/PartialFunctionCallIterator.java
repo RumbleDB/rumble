@@ -26,7 +26,7 @@ import org.rumbledb.items.PartiallyAppliedFunctionItem.ArgumentBinding;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.DataFrameBinding;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.LocalBinding;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.PlaceholderBinding;
-import org.rumbledb.items.PartiallyAppliedFunctionItem.RDDBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.RddBinding;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -98,7 +98,7 @@ public class PartialFunctionCallIterator extends AtMostOneItemLocalRuntimeIterat
                     new DataFrameBinding(parameterType, argumentIterator.getDataFrame(context))
                 );
             } else if (argumentIterator.isRDDOrDataFrame()) {
-                argumentBindings.add(new RDDBinding(parameterType, argumentIterator.getRDD(context)));
+                argumentBindings.add(new RddBinding(parameterType, argumentIterator.getRDD(context)));
             } else {
                 argumentBindings.add(new LocalBinding(parameterType, argumentIterator.materialize(context)));
             }

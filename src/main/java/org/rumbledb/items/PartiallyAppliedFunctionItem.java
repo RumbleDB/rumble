@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -48,7 +49,7 @@ public class PartiallyAppliedFunctionItem extends FunctionItem {
     private static final long serialVersionUID = 1L;
 
     public sealed interface ArgumentBinding extends Serializable
-            permits PlaceholderBinding, LocalBinding, RDDBinding, DataFrameBinding {
+            permits PlaceholderBinding, LocalBinding, RddBinding, DataFrameBinding {
 
         SequenceType sequenceType();
     }
@@ -61,9 +62,13 @@ public class PartiallyAppliedFunctionItem extends FunctionItem {
     public record LocalBinding(SequenceType sequenceType, List<Item> value) implements ArgumentBinding {
 
         private static final long serialVersionUID = 1L;
+
+        public LocalBinding {
+            value = List.copyOf(value);
+        }
     }
 
-    public record RDDBinding(SequenceType sequenceType, JavaRDD<Item> value) implements ArgumentBinding {
+    public record RddBinding(SequenceType sequenceType, JavaRDD<Item> value) implements ArgumentBinding {
 
         private static final long serialVersionUID = 1L;
     }
@@ -93,14 +98,22 @@ public class PartiallyAppliedFunctionItem extends FunctionItem {
             parameterNames,
             signature,
             dynamicModuleContext,
-            targetFunction.getBodyIterator(),
+            getTargetBody(targetFunction),
             new HashMap<>(),
             new HashMap<>(),
             new HashMap<>(),
             false
         );
+        validateBindings(identifier, targetFunction, argumentBindings);
         this.targetFunction = targetFunction;
-        this.argumentBindings = argumentBindings;
+        this.argumentBindings = List.copyOf(argumentBindings);
+    }
+
+    private static org.rumbledb.runtime.RuntimeIterator getTargetBody(Item targetFunction) {
+        if (targetFunction == null || !targetFunction.isFunction()) {
+            throw new OurBadException("A partially applied function must have a function target.");
+        }
+        return targetFunction.getBodyIterator();
     }
 
     public Item getTargetFunction() {
@@ -109,6 +122,20 @@ public class PartiallyAppliedFunctionItem extends FunctionItem {
 
     public List<ArgumentBinding> getArgumentBindings() {
         return this.argumentBindings;
+    }
+
+    private static void validateBindings(
+            FunctionIdentifier identifier,
+            Item targetFunction,
+            List<ArgumentBinding> argumentBindings
+    ) {
+        if (argumentBindings.size() != targetFunction.getIdentifier().getArity()) {
+            throw new OurBadException("Partial-function bindings do not match the target arity.");
+        }
+        long placeholderCount = argumentBindings.stream().filter(PlaceholderBinding.class::isInstance).count();
+        if (placeholderCount != identifier.getArity()) {
+            throw new OurBadException("Partial-function placeholders do not match the partial signature.");
+        }
     }
 
     @Override
@@ -137,7 +164,8 @@ public class PartiallyAppliedFunctionItem extends FunctionItem {
             byte[] serialized = input.readBytes(length);
             ObjectInputStream objects = new ObjectInputStream(new ByteArrayInputStream(serialized));
             this.targetFunction = (Item) objects.readObject();
-            this.argumentBindings = (List<ArgumentBinding>) objects.readObject();
+            this.argumentBindings = List.copyOf((List<ArgumentBinding>) objects.readObject());
+            validateBindings(getIdentifier(), this.targetFunction, this.argumentBindings);
         } catch (IOException | ClassNotFoundException e) {
             throw new IllegalStateException("Could not deserialize partially applied function metadata.", e);
         }

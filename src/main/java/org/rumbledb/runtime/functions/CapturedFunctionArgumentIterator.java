@@ -21,10 +21,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.ArgumentBinding;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.DataFrameBinding;
 import org.rumbledb.items.PartiallyAppliedFunctionItem.LocalBinding;
-import org.rumbledb.items.PartiallyAppliedFunctionItem.RDDBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.RddBinding;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
@@ -37,18 +38,43 @@ public class CapturedFunctionArgumentIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private final ArgumentBinding binding;
+    private final List<Item> localValue;
+    private final JavaRDD<Item> rddValue;
+    private final JSoundDataFrame dataFrameValue;
     private int index;
 
-    public CapturedFunctionArgumentIterator(ArgumentBinding binding, RuntimeStaticContext staticContext) {
+    private CapturedFunctionArgumentIterator(
+            List<Item> localValue,
+            JavaRDD<Item> rddValue,
+            JSoundDataFrame dataFrameValue,
+            RuntimeStaticContext staticContext
+    ) {
         super(null, staticContext);
-        this.binding = binding;
+        this.localValue = localValue;
+        this.rddValue = rddValue;
+        this.dataFrameValue = dataFrameValue;
+    }
+
+    public static CapturedFunctionArgumentIterator create(
+            ArgumentBinding binding,
+            RuntimeStaticContext staticContext
+    ) {
+        if (binding instanceof LocalBinding local) {
+            return new CapturedFunctionArgumentIterator(local.value(), null, null, staticContext);
+        }
+        if (binding instanceof RddBinding rdd) {
+            return new CapturedFunctionArgumentIterator(null, rdd.value(), null, staticContext);
+        }
+        if (binding instanceof DataFrameBinding dataFrame) {
+            return new CapturedFunctionArgumentIterator(null, null, dataFrame.value(), staticContext);
+        }
+        throw new OurBadException("A placeholder cannot be converted to a captured argument.");
     }
 
     @Override
     protected void openLocal() {
         this.index = 0;
-        this.hasNext = !getLocalValue().isEmpty();
+        this.hasNext = !this.localValue.isEmpty();
     }
 
     @Override
@@ -61,15 +87,14 @@ public class CapturedFunctionArgumentIterator extends HybridRuntimeIterator {
         if (!this.hasNext) {
             throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
-        Item result = getLocalValue().get(this.index++);
-        this.hasNext = this.index < getLocalValue().size();
+        Item result = this.localValue.get(this.index++);
+        this.hasNext = this.index < this.localValue.size();
         return result;
     }
 
     @Override
     protected void resetLocal() {
-        this.index = 0;
-        this.hasNext = !getLocalValue().isEmpty();
+        openLocal();
     }
 
     @Override
@@ -79,20 +104,19 @@ public class CapturedFunctionArgumentIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return ((RDDBinding) this.binding).value();
+        if (this.rddValue != null) {
+            return this.rddValue;
+        }
+        return dataFrameToRDDOfItems(this.dataFrameValue, getMetadata());
     }
 
     @Override
     protected boolean implementsDataFrames() {
-        return true;
+        return this.dataFrameValue != null;
     }
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        return ((DataFrameBinding) this.binding).value();
-    }
-
-    private List<Item> getLocalValue() {
-        return ((LocalBinding) this.binding).value();
+        return this.dataFrameValue;
     }
 }
