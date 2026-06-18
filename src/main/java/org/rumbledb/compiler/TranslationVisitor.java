@@ -583,8 +583,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return getStringLiteralValue(ctx);
+    }
+
+    private String getStringLiteralValue(ParserRuleContext ctx) {
+        String text = getSourceText(ctx);
+        String rawValue = text.substring(1, text.length() - 1);
         return unescapeStringLiteral(rawValue);
+    }
+
+    private String getSourceText(ParserRuleContext ctx) {
+        return this.code.substring(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex() + 1);
     }
 
     private Name nameForUnprefixedFunction(String localName) {
@@ -1845,9 +1854,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
-            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    getStringLiteralValue(ctx.lt),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1878,9 +1886,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
-            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    getStringLiteralValue(ctx.lt),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1968,9 +1975,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
 
         if (child instanceof JsoniqParser.StringLiteralContext) {
-            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    getStringLiteralValue((JsoniqParser.StringLiteralContext) child),
                     createMetadataFromContext(ctx)
             );
         }
@@ -3874,8 +3880,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        return getStringLiteralValue(ctx);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
@@ -4053,6 +4058,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.getDirAttributeValueQuotExpressions(
                 (JsoniqParser.DirAttributeValueQuotContext) child,
                 allowEnclosedExpressions
+            );
+        } else if (
+            child instanceof TerminalNode && ((TerminalNode) child).getSymbol().getType() == JsoniqParser.STRING
+        ) {
+            String text = child.getText();
+            return Collections.singletonList(
+                new AttributeNodeContentExpression(
+                        StringEscapeUtils.unescapeXml(text.substring(1, text.length() - 1)),
+                        createMetadataFromContext(ctx)
+                )
             );
         }
         throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
