@@ -242,7 +242,6 @@ import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -255,10 +254,7 @@ public class BuiltinFunctionCatalogue {
         return Collections.unmodifiableMap(builtinFunctions);
     }
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
-        if (builtinFunctions.containsKey(identifier)) {
-            return builtinFunctions.get(identifier);
-        }
+    private static FunctionIdentifier resolveIdentifierFallback(FunctionIdentifier identifier) {
         Name name = identifier.getName();
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             FunctionIdentifier fn = new FunctionIdentifier(
@@ -266,51 +262,62 @@ public class BuiltinFunctionCatalogue {
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(fn)) {
-                if (name.getLocalName().equals("concat")) {
-                    // Special case for fn:concat, which is variadic.
-                    return new BuiltinFunction(
-                            new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
-                            new FunctionSignature(
-                                    Collections.nCopies(
-                                        identifier.getArity(),
-                                        SequenceType.createSequenceType("anyAtomicType?")
-                                    ),
-                                    SequenceType.createSequenceType("string")
-                            ),
-                            ConcatFunctionIterator.class,
-                            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-                    );
-                }
-                return builtinFunctions.get(fn);
+                return fn;
             }
             FunctionIdentifier jn = new FunctionIdentifier(
                     new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(jn)) {
-                return builtinFunctions.get(jn);
+                return jn;
             }
             FunctionIdentifier math = new FunctionIdentifier(
                     new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(math)) {
-                return builtinFunctions.get(math);
+                return math;
             }
             FunctionIdentifier map = new FunctionIdentifier(
                     new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(map)) {
-                return builtinFunctions.get(map);
+                return map;
             }
             FunctionIdentifier array = new FunctionIdentifier(
                     new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(array)) {
-                return builtinFunctions.get(array);
+                return array;
             }
+        }
+        return null;
+    }
+
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
+        if (builtinFunctions.containsKey(identifier)) {
+            return builtinFunctions.get(identifier);
+        }
+        FunctionIdentifier resolved = resolveIdentifierFallback(identifier);
+        if (resolved != null) {
+            if (resolved.getName().getLocalName().equals("concat")) {
+                // Special case for fn:concat, which is variadic.
+                return new BuiltinFunction(
+                        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
+                        new FunctionSignature(
+                                Collections.nCopies(
+                                    identifier.getArity(),
+                                    SequenceType.createSequenceType("anyAtomicType?")
+                                ),
+                                SequenceType.createSequenceType("string")
+                        ),
+                        ConcatFunctionIterator.class,
+                        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+                );
+            }
+            return builtinFunctions.get(resolved);
         }
         return null;
     }
@@ -319,45 +326,7 @@ public class BuiltinFunctionCatalogue {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
-        Name name = identifier.getName();
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
-            FunctionIdentifier fn = new FunctionIdentifier(
-                    new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(fn)) {
-                return true;
-            }
-            FunctionIdentifier jn = new FunctionIdentifier(
-                    new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(jn)) {
-                return true;
-            }
-            FunctionIdentifier math = new FunctionIdentifier(
-                    new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(math)) {
-                return true;
-            }
-            FunctionIdentifier map = new FunctionIdentifier(
-                    new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(map)) {
-                return true;
-            }
-            FunctionIdentifier array = new FunctionIdentifier(
-                    new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(array)) {
-                return true;
-            }
-        }
-        return false;
+        return resolveIdentifierFallback(identifier) != null;
     }
 
     private static BuiltinFunction createBuiltinFunction(
@@ -372,11 +341,11 @@ public class BuiltinFunctionCatalogue {
             parameterTypes.add(SequenceType.createSequenceType(paramType));
         }
         return createBuiltinFunctionWithSequenceTypes(
-                functionName,
-                parameterTypes,
-                returnType,
-                functionIteratorClass,
-                builtInFunctionExecutionMode
+            functionName,
+            parameterTypes,
+            returnType,
+            functionIteratorClass,
+            builtInFunctionExecutionMode
         );
     }
 
@@ -3613,8 +3582,10 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "annotate"
         ),
-        List.of("object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
-        "object"),
+        List.of(
+            "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "object"
+        ),
         "object*",
         // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         AnnotateFunctionIterator.class,
@@ -3641,8 +3612,10 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "trace"
         ),
-        List.of("item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
-        "string"),
+        List.of(
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "string"
+        ),
         "item*",
         // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         TraceFunctionIterator.class,
@@ -4737,14 +4710,14 @@ public class BuiltinFunctionCatalogue {
         }
 
         return createBuiltinFunctionWithSequenceTypes(
-                functionName,
-                Collections.nCopies(
-                    arity,
-                    SequenceType.createSequenceType(parameterType)
-                ),
-                returnType,
-                functionIteratorClass,
-                builtInFunctionExecutionMode
+            functionName,
+            Collections.nCopies(
+                arity,
+                SequenceType.createSequenceType(parameterType)
+            ),
+            returnType,
+            functionIteratorClass,
+            builtInFunctionExecutionMode
         );
     }
 
