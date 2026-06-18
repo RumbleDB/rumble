@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
@@ -593,7 +594,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String getSourceText(ParserRuleContext ctx) {
-        return this.code.substring(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex() + 1);
+        return ctx.getStart()
+            .getInputStream()
+            .getText(Interval.of(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex()));
     }
 
     private Name nameForUnprefixedFunction(String localName) {
