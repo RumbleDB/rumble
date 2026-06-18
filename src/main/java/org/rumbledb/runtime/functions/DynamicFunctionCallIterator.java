@@ -24,9 +24,6 @@ import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -250,20 +247,11 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (this.isPartialApplication) {
             return ExecutionMode.LOCAL;
         }
-        if (this.functionItem.isBuiltinFunction()) {
-            BuiltinFunction builtin =
-                BuiltinFunctionCatalogue.getBuiltinFunction(this.functionItem.getIdentifier());
-            // assume that the passed builtin function is valid
-            ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (RuntimeIterator arg : this.functionArguments) {
-                if (arg != null) {
-                    firstArgumentMode = arg.getHighestExecutionMode();
-                    break;
-                }
-            }
-            return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, getConfiguration());
-        }
-        return this.functionItem.getBodyIterator().getHighestExecutionMode();
+        return NamedFunctions.resolveFunctionItemExecutionMode(
+            this.functionItem,
+            this.functionArguments,
+            this.staticContext
+        );
     }
 
     @Override

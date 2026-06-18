@@ -32,8 +32,16 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.PartiallyAppliedFunctionItem;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.ArgumentBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.DataFrameBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.LocalBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.PlaceholderBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.RDDBinding;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
+import org.rumbledb.runtime.functions.CapturedFunctionArgumentIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.functions.PartialFunctionCallIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -44,6 +52,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -104,6 +113,32 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             List<RuntimeIterator> arguments,
             boolean isTailOptimization
     ) {
+        if (functionItem instanceof PartiallyAppliedFunctionItem partiallyAppliedFunction) {
+            FunctionCallArgumentCoercion.validateArity(functionItem, arguments, callerRuntimeContext.getMetadata());
+            FunctionCallArgumentCoercion.wrapAccordingToSignature(
+                functionItem,
+                arguments,
+                callerRuntimeContext
+            );
+            List<RuntimeIterator> expandedArguments = expandPartialArguments(
+                partiallyAppliedFunction,
+                arguments,
+                callerRuntimeContext
+            );
+            Item targetFunction = partiallyAppliedFunction.getTargetFunction();
+            ExecutionMode targetExecutionMode = resolveFunctionItemExecutionMode(
+                targetFunction,
+                expandedArguments,
+                callerRuntimeContext
+            );
+            return buildFunctionItemCallIterator(
+                targetFunction,
+                callerRuntimeContext,
+                targetExecutionMode,
+                expandedArguments,
+                false
+            );
+        }
         if (isTailOptimization) {
             return new PartialFunctionCallIterator(
                     functionItem,
@@ -175,6 +210,70 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     outerStaticContext
             );
         }
+    }
+
+    public static ExecutionMode resolveFunctionItemExecutionMode(
+            Item functionItem,
+            List<RuntimeIterator> arguments,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        if (functionItem instanceof PartiallyAppliedFunctionItem partiallyAppliedFunction) {
+            List<RuntimeIterator> expandedArguments = expandPartialArguments(
+                partiallyAppliedFunction,
+                arguments,
+                callerRuntimeContext
+            );
+            return resolveFunctionItemExecutionMode(
+                partiallyAppliedFunction.getTargetFunction(),
+                expandedArguments,
+                callerRuntimeContext
+            );
+        }
+        if (functionItem.isBuiltinFunction()) {
+            BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(functionItem.getIdentifier());
+            ExecutionMode firstArgumentMode = arguments.isEmpty() || arguments.get(0) == null
+                ? ExecutionMode.LOCAL
+                : arguments.get(0).getHighestExecutionMode();
+            return BuiltinFunctionExecutionModes.resolve(
+                builtin,
+                firstArgumentMode,
+                callerRuntimeContext.getConfiguration()
+            );
+        }
+        return functionItem.getBodyIterator().getHighestExecutionMode();
+    }
+
+    private static List<RuntimeIterator> expandPartialArguments(
+            PartiallyAppliedFunctionItem functionItem,
+            List<RuntimeIterator> suppliedArguments,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        int suppliedIndex = 0;
+        for (ArgumentBinding binding : functionItem.getArgumentBindings()) {
+            if (binding instanceof PlaceholderBinding) {
+                result.add(suppliedArguments.get(suppliedIndex++));
+                continue;
+            }
+            ExecutionMode executionMode;
+            if (binding instanceof DataFrameBinding) {
+                executionMode = ExecutionMode.DATAFRAME;
+            } else if (binding instanceof RDDBinding) {
+                executionMode = ExecutionMode.RDD;
+            } else if (binding instanceof LocalBinding) {
+                executionMode = ExecutionMode.LOCAL;
+            } else {
+                throw new OurBadException("Unsupported partial-function argument binding.");
+            }
+            result.add(
+                new CapturedFunctionArgumentIterator(
+                        binding,
+                        callerRuntimeContext.withStaticType(binding.sequenceType())
+                            .withExecutionMode(executionMode)
+                )
+            );
+        }
+        return result;
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {

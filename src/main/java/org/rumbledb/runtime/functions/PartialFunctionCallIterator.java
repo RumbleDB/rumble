@@ -16,25 +16,24 @@
  */
 package org.rumbledb.runtime.functions;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.PartiallyAppliedFunctionItem;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.ArgumentBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.DataFrameBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.LocalBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.PlaceholderBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.RDDBinding;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Creates a partially-applied function item by capturing supplied arguments in the closure and
@@ -43,10 +42,6 @@ import java.util.Map;
 public class PartialFunctionCallIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private static final Name PARTIAL_FUNCTION_TARGET_NAME = Name.createVariableInNoNamespace(
-        "$4deff1a0-0d7f-43d1-bf96-09934cc6a539"
-    );
-
     private final Item functionItem;
     private final List<RuntimeIterator> functionArguments;
     private final Name functionNameOverride;
@@ -85,43 +80,31 @@ public class PartialFunctionCallIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
-                this.functionItem.getLocalVariablesInClosure()
-        );
-        Map<Name, JavaRDD<Item>> rddArgumentValues = new LinkedHashMap<>(
-                this.functionItem.getRDDVariablesInClosure()
-        );
-        Map<Name, JSoundDataFrame> dfArgumentValues = new LinkedHashMap<>(
-                this.functionItem.getDFVariablesInClosure()
-        );
-
         List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
+        List<ArgumentBinding> argumentBindings = new ArrayList<>();
 
         for (int i = 0; i < this.functionArguments.size(); i++) {
             Name parameterName = this.functionItem.getParameterNames().get(i);
             RuntimeIterator argumentIterator = this.functionArguments.get(i);
+            SequenceType parameterType = this.functionItem.getSignature().getParameterTypes().get(i);
 
             if (argumentIterator == null) {
                 partialApplicationParamNames.add(parameterName);
-                partialApplicationParamTypes.add(this.functionItem.getSignature().getParameterTypes().get(i));
+                partialApplicationParamTypes.add(parameterType);
+                argumentBindings.add(new PlaceholderBinding(parameterType));
             } else if (argumentIterator.isDataFrame()) {
-                dfArgumentValues.put(parameterName, argumentIterator.getDataFrame(context));
+                argumentBindings.add(
+                    new DataFrameBinding(parameterType, argumentIterator.getDataFrame(context))
+                );
             } else if (argumentIterator.isRDDOrDataFrame()) {
-                rddArgumentValues.put(parameterName, argumentIterator.getRDD(context));
+                argumentBindings.add(new RDDBinding(parameterType, argumentIterator.getRDD(context)));
             } else {
-                localArgumentValues.put(parameterName, argumentIterator.materialize(context));
+                argumentBindings.add(new LocalBinding(parameterType, argumentIterator.materialize(context)));
             }
         }
 
-        RuntimeIterator functionBodyIterator = this.functionItem.getBodyIterator();
-        boolean isBuiltinFunctionItem = this.functionItem.isBuiltinFunction();
-        if (isBuiltinFunctionItem) {
-            localArgumentValues.put(PARTIAL_FUNCTION_TARGET_NAME, List.of(this.functionItem));
-            functionBodyIterator = createPartialBuiltinBodyIterator();
-        }
-
-        return new FunctionItem(
+        return new PartiallyAppliedFunctionItem(
                 new FunctionIdentifier(
                         this.functionNameOverride,
                         partialApplicationParamNames.size()
@@ -133,48 +116,8 @@ public class PartialFunctionCallIterator extends AtMostOneItemLocalRuntimeIterat
                         this.functionItem.getSignature().isUpdating()
                 ),
                 this.functionItem.getModuleDynamicContext(),
-                functionBodyIterator,
-                localArgumentValues,
-                rddArgumentValues,
-                dfArgumentValues,
-                false
-        );
-    }
-
-    private RuntimeIterator createPartialBuiltinBodyIterator() {
-        RuntimeStaticContext targetStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("function(*)"))
-            .withExecutionMode(ExecutionMode.LOCAL);
-
-        RuntimeIterator targetIterator = new VariableReferenceIterator(
-                PARTIAL_FUNCTION_TARGET_NAME,
-                targetStaticContext
-        );
-
-        List<RuntimeIterator> callArguments = new ArrayList<>();
-        for (int i = 0; i < this.functionArguments.size(); i++) {
-            RuntimeStaticContext argumentStaticContext;
-            if (this.functionArguments.get(i) == null) {
-                argumentStaticContext = getRuntimeStaticContext()
-                    .withStaticType(this.functionItem.getSignature().getParameterTypes().get(i))
-                    .withExecutionMode(ExecutionMode.LOCAL);
-            } else {
-                argumentStaticContext = this.functionArguments.get(i).getRuntimeStaticContext();
-            }
-            callArguments.add(
-                new VariableReferenceIterator(
-                        this.functionItem.getParameterNames().get(i),
-                        argumentStaticContext
-                )
-            );
-        }
-
-        return new DynamicFunctionCallIterator(
-                targetIterator,
-                callArguments,
-                getRuntimeStaticContext()
-                    .withStaticType(this.functionItem.getSignature().getReturnType())
-                    .withExecutionMode(ExecutionMode.LOCAL)
+                this.functionItem,
+                argumentBindings
         );
     }
 }
