@@ -112,7 +112,7 @@ public class CapturedFunctionArgumentIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean implementsDataFrames() {
-        return this.dataFrameValue != null;
+        return true;
     }
 
     @Override
