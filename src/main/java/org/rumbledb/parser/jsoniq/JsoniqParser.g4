@@ -471,6 +471,7 @@ dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAt
 
 dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
+                     | STRING
                      ;
 
 dirAttributeContentQuot : contentChar                     
@@ -851,32 +852,7 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | EscapeQuot | stringContentQuot )* Quot ;
-stringLiteralApos : Apos (PredefinedEntityRef | CharRef | EscapeApos | stringContentApos )* Apos ;
-
-stringLiteral : stringLiteralQuot
-              | stringLiteralApos
-              ;
-
-stringContentQuot : ContentChar+
-                  | JsonEscape
-                  | LBRACE expr? RBRACE?
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng
-                  | stringLiteralApos
-                  ;
-
-stringContentApos : ContentChar+
-                  | JsonEscape
-                  | LBRACE expr? RBRACE?
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng
-                  | stringLiteralQuot
-                  ;
+stringLiteral: STRING;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

@@ -4054,8 +4054,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 (JsoniqParser.DirAttributeValueQuotContext) child,
                 allowEnclosedExpressions
             );
+        } else if (
+            child instanceof TerminalNode
+                &&
+                ((TerminalNode) child).getSymbol().getType() == JsoniqParser.STRING
+        ) {
+            return this.getStringAttributeValueExpressions(((TerminalNode) child).getText(), ctx);
         }
         throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+    }
+
+    private List<Expression> getStringAttributeValueExpressions(String text, ParserRuleContext ctx) {
+        String rawValue = text.substring(1, text.length() - 1);
+        String unescapedValue = unescapeStringLiteral(rawValue);
+        List<Expression> expressions = new ArrayList<>();
+        expressions.add(new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx)));
+        return expressions;
     }
 
     private String getNamespaceDeclarationUri(JsoniqParser.DirAttributeValueContext ctx) {
