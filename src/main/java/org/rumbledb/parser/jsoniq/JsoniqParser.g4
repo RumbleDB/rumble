@@ -851,7 +851,30 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteral: STRING;
+stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | EscapeQuot | stringContentQuot )* Quot ;
+stringLiteralApos : Apos (PredefinedEntityRef | CharRef | EscapeApos | stringContentApos )* Apos ;
+
+stringLiteral : stringLiteralQuot
+              | stringLiteralApos
+              ;
+
+stringContentQuot : ContentChar+
+                  | LBRACE expr? RBRACE?
+                  | RBRACE
+                  | DOUBLE_LBRACE
+                  | DOUBLE_RBRACE
+                  | noQuotesNoBracesNoAmpNoLAng
+                  | stringLiteralApos
+                  ;
+
+stringContentApos : ContentChar+
+                  | LBRACE expr? RBRACE?
+                  | RBRACE
+                  | DOUBLE_LBRACE
+                  | DOUBLE_RBRACE
+                  | noQuotesNoBracesNoAmpNoLAng
+                  | stringLiteralQuot
+                  ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

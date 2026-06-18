@@ -302,12 +302,6 @@ KW_TRUE:               'true';
 KW_FALSE:              'false';
 KW_STATICALLY:         'statically';
 
-STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
-fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
-fragment ESCapos        : '\\' (['\\/bfnrt] | UNICODE);
-fragment UNICODE        : 'u' HEX HEX HEX HEX;
-fragment HEX            : [0-9a-fA-F];
-
 // NAMES
 
 // added the BracedURILiteral rule
