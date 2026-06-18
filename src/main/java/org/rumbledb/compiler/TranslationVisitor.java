@@ -2016,7 +2016,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String unescapeStringLiteral(String raw) {
-        return StringEscapeUtils.unescapeJson(raw);
+        return JsoniqStringLiteralDecoder.decode(raw);
     }
 
     @Override
