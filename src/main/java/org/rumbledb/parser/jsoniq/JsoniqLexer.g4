@@ -20,7 +20,7 @@ package org.rumbledb.parser.jsoniq;
 // handled by the parser and not the lexer.
 
 // Tokens declared but not defined
-tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
+tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE, JsonEscape}
 
 @members {
     ///
@@ -302,6 +302,11 @@ KW_TRUE:               'true';
 KW_FALSE:              'false';
 KW_STATICALLY:         'statically';
 
+fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
+fragment ESCapos        : '\\' (['\\/bfnrt] | UNICODE);
+fragment UNICODE        : 'u' HEX HEX HEX HEX;
+fragment HEX            : [0-9a-fA-F];
+
 // NAMES
 
 // added the BracedURILiteral rule
@@ -407,6 +412,7 @@ LBRACE_QuotString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_QuotString               : '}' -> type(RBRACE);
 PredefinedEntityRef_QuotString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_QuotString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+JsonEscape_QuotString           : ESC -> type(JsonEscape);
 ContentChar_QuotString          : ~["&{}] -> type(ContentChar);
 
 mode APOS_LITERAL_STRING;
@@ -420,6 +426,7 @@ LBRACE_AposString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_AposString               : '}' -> type(RBRACE);
 PredefinedEntityRef_AposString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_AposString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+JsonEscape_AposString           : ESCapos -> type(JsonEscape);
 ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;

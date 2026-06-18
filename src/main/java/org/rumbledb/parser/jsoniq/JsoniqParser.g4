@@ -859,6 +859,7 @@ stringLiteral : stringLiteralQuot
               ;
 
 stringContentQuot : ContentChar+
+                  | JsonEscape
                   | LBRACE expr? RBRACE?
                   | RBRACE
                   | DOUBLE_LBRACE
@@ -868,6 +869,7 @@ stringContentQuot : ContentChar+
                   ;
 
 stringContentApos : ContentChar+
+                  | JsonEscape
                   | LBRACE expr? RBRACE?
                   | RBRACE
                   | DOUBLE_LBRACE
