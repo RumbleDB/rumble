@@ -33,6 +33,7 @@ import java.util.HashMap;
 public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private static final int DELETE_CODEPOINT = -1;
 
     public TranslateFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -62,23 +63,17 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         int[] translationCodepoints = transString.codePoints().toArray();
         HashMap<Integer, Integer> translationMap = new HashMap<>();
         for (int i = 0; i < mapCodepoints.length; i++) {
-            int codepoint = mapCodepoints[i];
-            if (!translationMap.containsKey(codepoint)) {
-                translationMap.put(codepoint, i < translationCodepoints.length ? translationCodepoints[i] : null);
-            }
+            int replacement = i < translationCodepoints.length ? translationCodepoints[i] : DELETE_CODEPOINT;
+            translationMap.putIfAbsent(mapCodepoints[i], replacement);
         }
 
         StringBuilder output = new StringBuilder(input.length());
-        input.codePoints().forEach(codepoint -> {
-            if (!translationMap.containsKey(codepoint)) {
-                output.appendCodePoint(codepoint);
-                return;
-            }
-            Integer replacement = translationMap.get(codepoint);
-            if (replacement != null) {
+        for (int codepoint : input.codePoints().toArray()) {
+            int replacement = translationMap.getOrDefault(codepoint, codepoint);
+            if (replacement != DELETE_CODEPOINT) {
                 output.appendCodePoint(replacement);
             }
-        });
+        }
 
         return ItemFactory.getInstance().createStringItem(output.toString());
     }
