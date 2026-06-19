@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
@@ -564,7 +565,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.DefaultNamespaceDeclContext ctx,
             PrologPhase1Flags flags
     ) {
-        String uri = processStringLiteral(ctx.stringLiteral());
+        String uri = getStringLiteralValue(ctx.stringLiteral());
         int declType = ctx.type.getType();
         if (declType == JsoniqParser.KW_ELEMENT) {
             bindNamespace("", uri, generateMetadata(ctx.getStop()));
@@ -582,12 +583,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
     }
 
-    private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
-        return getStringLiteralValue(ctx);
-    }
-
     private String getStringLiteralValue(ParserRuleContext ctx) {
-        String text = ctx.getText();
+        String text = ctx.getStart()
+            .getInputStream()
+            .getText(Interval.of(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex()));
         String rawValue = text.substring(1, text.length() - 1);
         return unescapeStringLiteral(rawValue);
     }
