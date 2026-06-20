@@ -246,9 +246,14 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
+
+    public static Map<FunctionIdentifier, BuiltinFunction> getBuiltinFunctions() {
+        return Collections.unmodifiableMap(builtinFunctions);
+    }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
         if (builtinFunctions.containsKey(identifier)) {
