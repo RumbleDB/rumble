@@ -242,18 +242,19 @@ import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BuiltinFunctionCatalogue {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtinFunctions;
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
-        if (builtinFunctions.containsKey(identifier)) {
-            return builtinFunctions.get(identifier);
-        }
+    public static Map<FunctionIdentifier, BuiltinFunction> getBuiltinFunctions() {
+        return Collections.unmodifiableMap(builtinFunctions);
+    }
+
+    private static FunctionIdentifier resolveIdentifierFallback(FunctionIdentifier identifier) {
         Name name = identifier.getName();
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             FunctionIdentifier fn = new FunctionIdentifier(
@@ -261,51 +262,62 @@ public class BuiltinFunctionCatalogue {
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(fn)) {
-                if (name.getLocalName().equals("concat")) {
-                    // Special case for fn:concat, which is variadic.
-                    return new BuiltinFunction(
-                            new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
-                            new FunctionSignature(
-                                    Collections.nCopies(
-                                        identifier.getArity(),
-                                        SequenceType.createSequenceType("anyAtomicType?")
-                                    ),
-                                    SequenceType.createSequenceType("string")
-                            ),
-                            ConcatFunctionIterator.class,
-                            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-                    );
-                }
-                return builtinFunctions.get(fn);
+                return fn;
             }
             FunctionIdentifier jn = new FunctionIdentifier(
                     new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(jn)) {
-                return builtinFunctions.get(jn);
+                return jn;
             }
             FunctionIdentifier math = new FunctionIdentifier(
                     new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(math)) {
-                return builtinFunctions.get(math);
+                return math;
             }
             FunctionIdentifier map = new FunctionIdentifier(
                     new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(map)) {
-                return builtinFunctions.get(map);
+                return map;
             }
             FunctionIdentifier array = new FunctionIdentifier(
                     new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
                     identifier.getArity()
             );
             if (builtinFunctions.containsKey(array)) {
-                return builtinFunctions.get(array);
+                return array;
             }
+        }
+        return null;
+    }
+
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
+        if (builtinFunctions.containsKey(identifier)) {
+            return builtinFunctions.get(identifier);
+        }
+        FunctionIdentifier resolved = resolveIdentifierFallback(identifier);
+        if (resolved != null) {
+            if (resolved.getName().getLocalName().equals("concat")) {
+                // Special case for fn:concat, which is variadic.
+                return new BuiltinFunction(
+                        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), identifier.getArity()),
+                        new FunctionSignature(
+                                Collections.nCopies(
+                                    identifier.getArity(),
+                                    SequenceType.createSequenceType("anyAtomicType?")
+                                ),
+                                SequenceType.createSequenceType("string")
+                        ),
+                        ConcatFunctionIterator.class,
+                        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+                );
+            }
+            return builtinFunctions.get(resolved);
         }
         return null;
     }
@@ -314,183 +326,40 @@ public class BuiltinFunctionCatalogue {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
-        Name name = identifier.getName();
-        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
-            FunctionIdentifier fn = new FunctionIdentifier(
-                    new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(fn)) {
-                return true;
-            }
-            FunctionIdentifier jn = new FunctionIdentifier(
-                    new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(jn)) {
-                return true;
-            }
-            FunctionIdentifier math = new FunctionIdentifier(
-                    new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(math)) {
-                return true;
-            }
-            FunctionIdentifier map = new FunctionIdentifier(
-                    new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(map)) {
-                return true;
-            }
-            FunctionIdentifier array = new FunctionIdentifier(
-                    new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
-                    identifier.getArity()
-            );
-            if (builtinFunctions.containsKey(array)) {
-                return true;
-            }
+        return resolveIdentifierFallback(identifier) != null;
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            Name functionName,
+            List<String> paramTypes,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
+    ) {
+        List<SequenceType> parameterTypes = new ArrayList<>();
+        for (String paramType : paramTypes) {
+            parameterTypes.add(SequenceType.createSequenceType(paramType));
         }
-        return false;
-    }
-
-    private static BuiltinFunction createBuiltinFunction(
-            Name functionName,
-            String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 0),
-                new FunctionSignature(
-                        Collections.emptyList(),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
+        return createBuiltinFunctionWithSequenceTypes(
+            functionName,
+            parameterTypes,
+            returnType,
+            functionIteratorClass,
+            builtInFunctionExecutionMode
         );
     }
 
-    private static BuiltinFunction createBuiltinFunction(
+    private static BuiltinFunction createBuiltinFunctionWithSequenceTypes(
             Name functionName,
-            String param1Type,
+            List<SequenceType> parameterTypes,
             String returnType,
             Class<? extends RuntimeIterator> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 1),
+                new FunctionIdentifier(functionName, parameterTypes.size()),
                 new FunctionSignature(
-                        Collections.singletonList(SequenceType.createSequenceType(param1Type)),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
-        );
-    }
-
-    private static BuiltinFunction createBuiltinFunction(
-            Name functionName,
-            String param1Type,
-            String param2Type,
-            String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 2),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(
-                                SequenceType.createSequenceType(param1Type),
-                                SequenceType.createSequenceType(param2Type)
-                            )
-                        ),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
-        );
-    }
-
-    private static BuiltinFunction createBuiltinFunction(
-            Name functionName,
-            String param1Type,
-            String param2Type,
-            String param3Type,
-            String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 3),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(
-                                SequenceType.createSequenceType(param1Type),
-                                SequenceType.createSequenceType(param2Type),
-                                SequenceType.createSequenceType(param3Type)
-                            )
-                        ),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
-        );
-    }
-
-    private static BuiltinFunction createBuiltinFunction(
-            Name functionName,
-            String param1Type,
-            String param2Type,
-            String param3Type,
-            String param4Type,
-            String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 4),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(
-                                SequenceType.createSequenceType(param1Type),
-                                SequenceType.createSequenceType(param2Type),
-                                SequenceType.createSequenceType(param3Type),
-                                SequenceType.createSequenceType(param4Type)
-                            )
-                        ),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
-        );
-    }
-
-    private static BuiltinFunction createBuiltinFunction(
-            Name functionName,
-            String param1Type,
-            String param2Type,
-            String param3Type,
-            String param4Type,
-            String param5Type,
-            String returnType,
-            Class<? extends RuntimeIterator> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
-    ) {
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 5),
-                new FunctionSignature(
-                        Collections.unmodifiableList(
-                            Arrays.asList(
-                                SequenceType.createSequenceType(param1Type),
-                                SequenceType.createSequenceType(param2Type),
-                                SequenceType.createSequenceType(param3Type),
-                                SequenceType.createSequenceType(param4Type),
-                                SequenceType.createSequenceType(param5Type)
-                            )
-                        ),
+                        parameterTypes,
                         SequenceType.createSequenceType(returnType)
                 ),
                 functionIteratorClass,
@@ -503,6 +372,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction position = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "position"),
+        List.of(),
         "integer",
         PositionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -512,6 +382,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction last = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "last"),
+        List.of(),
         "integer",
         LastFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -522,15 +393,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction json_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "json-file"),
-        "string",
+        List.of("string"),
         "item*",
         JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction json_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "json-file"),
-        "string",
-        "integer?",
+        List.of("string", "integer?"),
         "item*",
         JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -540,15 +410,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction json_lines1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "json-lines"),
-        "string",
+        List.of("string"),
         "item*",
         JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction json_lines2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "json-lines"),
-        "string",
-        "integer?",
+        List.of("string", "integer?"),
         "item*",
         JsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -559,7 +428,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction structured_json_file = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "structured-json-file"),
-        "string",
+        List.of("string"),
         "item*",
         StructuredJsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -569,7 +438,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction structured_json_lines = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "structured-json-lines"),
-        "string",
+        List.of("string"),
         "item*",
         StructuredJsonLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -579,7 +448,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction libsvm_file = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "libsvm-file"),
-        "string",
+        List.of("string"),
         "item*",
         LibSVMFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -589,37 +458,35 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction json_doc = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "json-doc"),
-        "string?",
+        List.of("string?"),
         "item?",
         JsonDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction json_doc3 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "json-doc"),
-        "string?",
-        "map",
+        List.of("string?", "map"),
         "item?",
         JsonDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction yaml_doc = createBuiltinFunction(
         new Name(Name.JN_NS, "fn", "yaml-doc"),
-        "string",
+        List.of("string"),
         "item*",
         YamlDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction parse_json = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-json"),
-        "string?",
+        List.of("string?"),
         "item?",
         ParseJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction parse_json2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-json"),
-        "string?",
-        "map",
+        List.of("string?", "map"),
         "item?",
         ParseJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -629,7 +496,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction doc = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "doc"),
-        "string?",
+        List.of("string?"),
         "item*",
         DocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -639,7 +506,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction xml_files = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "xml-files"),
-        "string",
+        List.of("string"),
         "item*",
         XmlFilesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -649,8 +516,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction xml_files2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "xml-files"),
-        "string",
-        "integer?",
+        List.of("string", "integer?"),
         "item*",
         XmlFilesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -658,7 +524,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "root"),
-        "item",
+        List.of("item"),
         "item",
         GetRootFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -666,6 +532,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction root_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "root"),
+        List.of(),
         "item",
         GetRootFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -673,7 +540,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "name"),
-        "item?",
+        List.of("item?"),
         "string",
         NodeNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -681,6 +548,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "name"),
+        List.of(),
         "string",
         NodeNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -699,6 +567,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction nilled_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "nilled"),
+        List.of(),
         "boolean?",
         NilledFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -706,7 +575,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction nilled_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "nilled"),
-        "item?",
+        List.of("item?"),
         "boolean?",
         NilledFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -725,6 +594,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction node_name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
+        List.of(),
         "QName?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -732,7 +602,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction node_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "node-name"),
-        "item?",
+        List.of("item?"),
         "QName?",
         NodeQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -745,8 +615,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction qname = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "QName"),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "QName",
         QNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -759,8 +628,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction function_lookup = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "function-lookup"),
-        "QName",
-        "integer",
+        List.of("QName", "integer"),
         "function(*)?",
         FunctionLookupFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -779,6 +647,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction base_uri_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "base-uri"),
+        List.of(),
         "anyURI?",
         BaseUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -786,7 +655,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction base_uri_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "base-uri"),
-        "item?",
+        List.of("item?"),
         "anyURI?",
         BaseUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -805,6 +674,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction document_uri_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "document-uri"),
+        List.of(),
         "anyURI?",
         DocumentUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -812,7 +682,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction document_uri_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "document-uri"),
-        "item?",
+        List.of("item?"),
         "anyURI?",
         DocumentUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -825,7 +695,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
-        "item",
+        List.of("item"),
         "string*",
         InScopePrefixesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -836,45 +706,42 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction unparsed_text = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text"),
-        "string?",
+        List.of("string?"),
         "string?",
         UnparsedTextFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction unparsed_text2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text"),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "string?",
         UnparsedTextFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction unparsed_text_lines = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text-lines"),
-        "string?",
+        List.of("string?"),
         "string*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction unparsed_text_lines2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text-lines"),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "string*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "text-file"),
-        "string",
+        List.of("string"),
         "item*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "text-file"),
-        "string",
-        "integer?",
+        List.of("string", "integer?"),
         "item*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -884,7 +751,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction local_text_file = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "local-text-file"),
-        "string",
+        List.of("string"),
         "string*",
         LocalTextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -894,15 +761,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction parallelizeFunction1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "parallelize"),
-        "item*",
+        List.of("item*"),
         "item*",
         ParallelizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction parallelizeFunction2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "parallelize"),
-        "item*",
-        "integer",
+        List.of("item*", "integer"),
         "item*",
         ParallelizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
@@ -912,7 +778,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction parquet_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "parquet-file"),
-        "string",
+        List.of("string"),
         "item*",
         ParquetFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -923,8 +789,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction parquet_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "parquet-file"),
-        "string",
-        "integer",
+        List.of("string", "integer"),
         "item*",
         ParquetFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -935,7 +800,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction delta_file = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "delta-file"),
-        "string",
+        List.of("string"),
         "item*",
         DeltaFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -946,7 +811,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction delta_table = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "table"),
-        "string",
+        List.of("string"),
         "item*",
         DeltaTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -957,7 +822,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction iceberg_table = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "iceberg-table"),
-        "string",
+        List.of("string"),
         "item*",
         IcebergTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -968,7 +833,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction csv_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "csv-file"),
-        "string",
+        List.of("string"),
         "item*",
         CSVFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -978,8 +843,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction csv_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "csv-file"),
-        "string",
-        "object",
+        List.of("string", "object"),
         "item*",
         CSVFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -989,7 +853,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avro_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "avro-file"),
-        "string",
+        List.of("string"),
         "item*",
         AvroFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -999,8 +863,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avro_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "avro-file"),
-        "string",
-        "object",
+        List.of("string", "object"),
         "item*",
         AvroFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1011,7 +874,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction root_file1 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "root-file"),
-        "string",
+        List.of("string"),
         "item*",
         RootFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1021,8 +884,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction root_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "root-file"),
-        "string",
-        "string",
+        List.of("string", "string"),
         "item*",
         RootFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1032,8 +894,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction postgresql_table2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "postgresql-table"),
-        "string",
-        "string",
+        List.of("string", "string"),
         "object*",
         PostgreSQLTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1043,9 +904,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction postgresql_table3 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "postgresql-table"),
-        "string",
-        "string",
-        "integer",
+        List.of("string", "string", "integer"),
         "object*",
         PostgreSQLTableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1055,8 +914,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction mongodb_collection2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "mongodb-collection"),
-        "string",
-        "string",
+        List.of("string", "string"),
         "object*",
         MongoDBCollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1066,9 +924,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction mongodb_collection3 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "mongodb-collection"),
-        "string",
-        "string",
-        "integer",
+        List.of("string", "string", "integer"),
         "object*",
         MongoDBCollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -1079,7 +935,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction count = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "count"),
-        "item*",
+        List.of("item*"),
         "integer",
         CountFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1090,7 +946,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction boolean_function = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "boolean"),
-        "item*",
+        List.of("item*"),
         "boolean",
         BooleanFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1102,7 +958,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction not_function = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "not"),
-        "item*",
+        List.of("item*"),
         "boolean",
         NotFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1112,6 +968,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction true_function = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "true"),
+        List.of(),
         "boolean",
         TrueFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1121,6 +978,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction false_function = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "false"),
+        List.of(),
         "boolean",
         FalseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1131,15 +989,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction min1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        "item*",
+        List.of("item*"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction min2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        "item*",
-        "string",
+        List.of("item*", "string"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1149,15 +1006,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction max1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        "item*",
+        List.of("item*"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction max2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        "item*",
-        "string",
+        List.of("item*", "string"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1167,7 +1023,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "avg"),
-        "item*",
+        List.of("item*"),
         "anyAtomicType?",
         AvgFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1177,15 +1033,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sum"),
-        "anyAtomicType*",
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction sum2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sum"),
-        "anyAtomicType*",
-        "anyAtomicType?",
+        List.of("anyAtomicType*", "anyAtomicType?"),
         "anyAtomicType?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1197,7 +1052,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction empty = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "empty"),
-        "item*",
+        List.of("item*"),
         "boolean",
         EmptyFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1207,7 +1062,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction exists = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "exists"),
-        "item*",
+        List.of("item*"),
         "boolean",
         ExistsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1217,7 +1072,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction head = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "head"),
-        "item*",
+        List.of("item*"),
         "item?",
         HeadFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1231,7 +1086,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "tail"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         TailFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1245,7 +1100,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "unordered"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         UnorderedFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1260,9 +1115,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "insert-before"
         ),
-        "item*",
-        "integer",
-        "item*",
+        List.of("item*", "integer", "item*"),
         "item*",
         InsertBeforeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1277,8 +1130,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "remove"
         ),
-        "item*",
-        "integer",
+        List.of("item*", "integer"),
         "item*",
         RemoveFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1293,7 +1145,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "reverse"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ReverseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1308,8 +1160,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "subsequence"
         ),
-        "item*",
-        "double",
+        List.of("item*", "double"),
         "item*",
         SubsequenceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1320,9 +1171,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "subsequence"
         ),
-        "item*",
-        "double",
-        "double",
+        List.of("item*", "double", "double"),
         "item*",
         SubsequenceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1337,7 +1186,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "zero-or-one"
         ),
-        "item*",
+        List.of("item*"),
         "item?",
         ZeroOrOneIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1351,7 +1200,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "one-or-more"
         ),
-        "item*",
+        List.of("item*"),
         "item+",
         OneOrMoreIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1365,7 +1214,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "exactly-one"
         ),
-        "item*",
+        List.of("item*"),
         "item",
         ExactlyOneIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1380,7 +1229,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "distinct-values"
         ),
-        "anyAtomicType*",
+        List.of("anyAtomicType*"),
         "anyAtomicType*",
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1391,8 +1240,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "distinct-values"
         ),
-        "anyAtomicType*",
-        "string",
+        List.of("anyAtomicType*", "string"),
         "anyAtomicType*",
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1407,8 +1255,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "index-of"
         ),
-        "anyAtomicType*",
-        "anyAtomicType",
+        List.of("anyAtomicType*", "anyAtomicType"),
         "integer*",
         IndexOfFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1419,9 +1266,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "index-of"
         ),
-        "anyAtomicType*",
-        "anyAtomicType",
-        "string",
+        List.of("anyAtomicType*", "anyAtomicType", "string"),
         "integer*",
         IndexOfFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1435,8 +1280,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "deep-equal"
         ),
-        "item*",
-        "item*",
+        List.of("item*", "item*"),
         "boolean",
         DeepEqualFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1447,9 +1291,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "deep-equal"
         ),
-        "item*",
-        "item*",
-        "string",
+        List.of("item*", "item*", "string"),
         "boolean",
         DeepEqualFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1463,7 +1305,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "abs"
         ),
-        "numeric?",
+        List.of("numeric?"),
         "numeric?",
         AbsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1477,7 +1319,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "ceiling"
         ),
-        "numeric?",
+        List.of("numeric?"),
         "numeric?",
         CeilingFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1491,7 +1333,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "floor"
         ),
-        "numeric?",
+        List.of("numeric?"),
         "numeric?",
         FloorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1506,7 +1348,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round"
         ),
-        "numeric?",
+        List.of("numeric?"),
         "numeric?",
         RoundFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1517,8 +1359,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round"
         ),
-        "numeric?",
-        "integer",
+        List.of("numeric?", "integer"),
         "numeric?",
         RoundFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1533,7 +1374,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round-half-to-even"
         ),
-        "numeric?",
+        List.of("numeric?"),
         "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1544,8 +1385,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round-half-to-even"
         ),
-        "numeric?",
-        "integer",
+        List.of("numeric?", "integer"),
         "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1560,6 +1400,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "pi"
         ),
+        List.of(),
         "double",
         PiFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1573,7 +1414,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "exp"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         ExpFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1587,7 +1428,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "exp10"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         Exp10FunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1601,7 +1442,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "log"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         LogFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1615,7 +1456,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "log10"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         Log10FunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1629,8 +1470,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "pow"
         ),
-        "double?",
-        "double",
+        List.of("double?", "double"),
         "double?",
         PowFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1644,7 +1484,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "sqrt"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         SqrtFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1658,7 +1498,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "sin"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         SinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1672,7 +1512,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "cos"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         CosFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1686,7 +1526,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "tan"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         TanFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1700,7 +1540,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "asin"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         ASinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1714,7 +1554,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "acos"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         ACosFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1728,7 +1568,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "atan"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         ATanFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1743,8 +1583,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "atan2"
         ),
-        "double",
-        "double",
+        List.of("double", "double"),
         "double",
         ATan2FunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1758,7 +1597,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "cosh"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         CoshFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1772,7 +1611,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "sinh"
         ),
-        "double?",
+        List.of("double?"),
         "double?",
         SinhFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1787,6 +1626,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string"
         ),
+        List.of(),
         "string",
         StringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1798,7 +1638,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string"
         ),
-        "item?",
+        List.of("item?"),
         "string",
         StringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1813,8 +1653,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring"
         ),
-        "string?",
-        "double",
+        List.of("string?", "double"),
         "string",
         SubstringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1825,9 +1664,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring"
         ),
-        "string?",
-        "double",
-        "double",
+        List.of("string?", "double", "double"),
         "string",
         SubstringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1842,8 +1679,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring-before"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "string",
         SubstringBeforeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1854,9 +1690,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring-before"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "string",
         SubstringBeforeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1871,8 +1705,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring-after"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "string",
         SubstringAfterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1883,9 +1716,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "substring-after"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "string",
         SubstringAfterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1912,7 +1743,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "codepoints-to-string"
         ),
-        "integer*",
+        List.of("integer*"),
         "string",
         CodepointsToStringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1926,7 +1757,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string-to-codepoints"
         ),
-        "string?",
+        List.of("string?"),
         "integer*",
         StringToCodepointsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1938,8 +1769,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "analyze-string"
         ),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "item",
         AnalyzeStringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1950,9 +1780,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "analyze-string"
         ),
-        "string?",
-        "string",
-        "string",
+        List.of("string?", "string", "string"),
         "item",
         AnalyzeStringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1966,8 +1794,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "codepoint-equal"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "boolean?",
         CodepointEqualFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1982,7 +1809,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string-join"
         ),
-        "string*",
+        List.of("string*"),
         "string",
         StringJoinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1993,8 +1820,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string-join"
         ),
-        "string*",
-        "string",
+        List.of("string*", "string"),
         "string",
         StringJoinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2008,9 +1834,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "replace"
         ),
-        "string?",
-        "string",
-        "string",
+        List.of("string?", "string", "string"),
         "string",
         ReplaceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2025,10 +1849,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "replace"
         ),
-        "string?",
-        "string",
-        "string",
-        "string",
+        List.of("string?", "string", "string", "string"),
         "string",
         ReplaceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2043,6 +1864,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string-length"
         ),
+        List.of(),
         "integer",
         StringLengthFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2053,7 +1875,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "string-length"
         ),
-        "string?",
+        List.of("string?"),
         "integer",
         StringLengthFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2067,7 +1889,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "tokenize"
         ),
-        "string?",
+        List.of("string?"),
         "string*",
         TokenizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2078,8 +1900,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "tokenize"
         ),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "string*",
         TokenizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2090,9 +1911,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "tokenize"
         ),
-        "string?",
-        "string",
-        "string",
+        List.of("string?", "string", "string"),
         "string*",
         TokenizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2106,7 +1925,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "lower-case"
         ),
-        "string?",
+        List.of("string?"),
         "string",
         LowerCaseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2120,7 +1939,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "upper-case"
         ),
-        "string?",
+        List.of("string?"),
         "string",
         UpperCaseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2134,9 +1953,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "translate"
         ),
-        "string?",
-        "string",
-        "string",
+        List.of("string?", "string", "string"),
         "string",
         TranslateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2150,7 +1967,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "normalize-unicode"
         ),
-        "string?",
+        List.of("string?"),
         "string",
         NormalizeUnicodeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2161,8 +1978,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "normalize-unicode"
         ),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "string",
         NormalizeUnicodeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2176,7 +1992,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "encode-for-uri"
         ),
-        "string?",
+        List.of("string?"),
         "string",
         EncodeForURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2190,7 +2006,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "resolve-uri"
         ),
-        "string?",
+        List.of("string?"),
         "anyURI?",
         ResolveURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2201,8 +2017,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "resolve-uri"
         ),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "anyURI?",
         ResolveURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2216,6 +2031,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "static-base-uri"
         ),
+        List.of(),
         "anyURI?",
         StaticBaseURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2229,8 +2045,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "ends-with"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "boolean",
         EndsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2241,9 +2056,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "ends-with"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "boolean",
         EndsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2257,8 +2070,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "starts-with"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "boolean",
         StartsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2269,9 +2081,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "starts-with"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "boolean",
         StartsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2285,8 +2095,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "contains"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "boolean",
         ContainsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2297,9 +2106,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "contains"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "boolean",
         ContainsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2313,8 +2120,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "compare"
         ),
-        "string?",
-        "string?",
+        List.of("string?", "string?"),
         "integer",
         CompareFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2325,9 +2131,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "compare"
         ),
-        "string?",
-        "string?",
-        "string",
+        List.of("string?", "string?", "string"),
         "integer",
         CompareFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2341,8 +2145,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "matches"
         ),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "boolean",
         MatchesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2357,9 +2160,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "matches"
         ),
-        "string?",
-        "string",
-        "string",
+        List.of("string?", "string", "string"),
         "boolean",
         MatchesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2374,6 +2175,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "normalize-space"
         ),
+        List.of(),
         "string",
         NormalizeSpaceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2384,7 +2186,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "normalize-space"
         ),
-        "string?",
+        List.of("string?"),
         "string",
         NormalizeSpaceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2398,15 +2200,14 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "serialize"
         ),
-        "item*",
+        List.of("item*"),
         "string",
         SerializeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction serialize2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "serialize"),
-        "item*",
-        "item?",
+        List.of("item*", "item?"),
         "string",
         SerializeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2420,6 +2221,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "data"
         ),
+        List.of(),
         "anyAtomicType*",
         DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2431,7 +2233,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "data"
         ),
-        "item*",
+        List.of("item*"),
         "anyAtomicType*",
         DataFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -2445,6 +2247,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "default-collation"
         ),
+        List.of(),
         "string",
         DefaultCollationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2460,6 +2263,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "number"
         ),
+        List.of(),
         "double",
         NumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2470,7 +2274,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "number"
         ),
-        "anyAtomicType?",
+        List.of("anyAtomicType?"),
         "double",
         NumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2485,7 +2289,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "years-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "integer?",
         YearsFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2499,7 +2303,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "months-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "integer?",
         MonthsFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2513,7 +2317,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "days-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "integer?",
         DaysFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2527,7 +2331,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "hours-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "integer?",
         HoursFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2541,7 +2345,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "minutes-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "integer?",
         MinutesFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2555,7 +2359,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "seconds-from-duration"
         ),
-        "duration?",
+        List.of("duration?"),
         "decimal?",
         SecondsFromDurationFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2570,6 +2374,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "current-dateTime"
         ),
+        List.of(),
         "dateTime?",
         CurrentDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2583,8 +2388,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-dateTime"
         ),
-        "dateTime?",
-        "string",
+        List.of("dateTime?", "string"),
         "string?",
         FormatDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2594,11 +2398,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction format_dateTime5 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "format-dateTime"),
-        "dateTime?",
-        "string",
-        "string?",
-        "string?",
-        "string?",
+        List.of("dateTime?", "string", "string?", "string?", "string?"),
         "string?",
         FormatDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2612,8 +2412,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "dateTime"
         ),
-        "date?",
-        "time?",
+        List.of("date?", "time?"),
         "dateTime?",
         DateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2627,7 +2426,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "year-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "integer?",
         YearFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2641,7 +2440,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "month-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "integer?",
         MonthFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2655,7 +2454,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "day-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "integer?",
         DayFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2669,7 +2468,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "hours-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "integer?",
         HoursFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2683,7 +2482,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "minutes-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "integer?",
         MinutesFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2697,7 +2496,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "seconds-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "decimal?",
         SecondsFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2711,7 +2510,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "timezone-from-dateTime"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "dayTimeDuration?",
         TimezoneFromDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2727,7 +2526,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-dateTime-to-timezone"
         ),
-        "dateTime?",
+        List.of("dateTime?"),
         "dateTime?",
         AdjustDateTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2738,8 +2537,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-dateTime-to-timezone"
         ),
-        "dateTime?",
-        "dayTimeDuration?",
+        List.of("dateTime?", "dayTimeDuration?"),
         "dateTime?",
         AdjustDateTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2755,6 +2553,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "current-date"
         ),
+        List.of(),
         "date?",
         CurrentDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2769,8 +2568,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-number"
         ),
-        "numeric?",
-        "string",
+        List.of("numeric?", "string"),
         "string",
         FormatNumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2785,9 +2583,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-number"
         ),
-        "numeric?",
-        "string",
-        "string?",
+        List.of("numeric?", "string", "string?"),
         "string",
         FormatNumberFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2802,8 +2598,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-integer"
         ),
-        "integer?",
-        "string",
+        List.of("integer?", "string"),
         "string",
         FormatIntegerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2817,9 +2612,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-integer"
         ),
-        "integer?",
-        "string",
-        "string?",
+        List.of("integer?", "string", "string?"),
         "string",
         FormatIntegerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2834,8 +2627,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-date"
         ),
-        "date?",
-        "string",
+        List.of("date?", "string"),
         "string?",
         FormatDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2849,11 +2641,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-date"
         ),
-        "date?",
-        "string",
-        "string?",
-        "string?",
-        "string?",
+        List.of("date?", "string", "string?", "string?", "string?"),
         "string?",
         FormatDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2867,7 +2655,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "year-from-date"
         ),
-        "date?",
+        List.of("date?"),
         "integer?",
         YearFromDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2881,7 +2669,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "month-from-date"
         ),
-        "date?",
+        List.of("date?"),
         "integer?",
         MonthFromDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2895,7 +2683,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "day-from-date"
         ),
-        "date?",
+        List.of("date?"),
         "integer?",
         DayFromDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2909,7 +2697,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "timezone-from-date"
         ),
-        "date?",
+        List.of("date?"),
         "dayTimeDuration?",
         TimezoneFromDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2925,7 +2713,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-date-to-timezone"
         ),
-        "date?",
+        List.of("date?"),
         "date?",
         AdjustDateToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2936,8 +2724,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-date-to-timezone"
         ),
-        "date?",
-        "dayTimeDuration?",
+        List.of("date?", "dayTimeDuration?"),
         "date?",
         AdjustDateToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2952,6 +2739,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "current-time"
         ),
+        List.of(),
         "time?",
         CurrentTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2965,8 +2753,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-time"
         ),
-        "time?",
-        "string",
+        List.of("time?", "string"),
         "string?",
         FormatTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2980,11 +2767,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "format-time"
         ),
-        "time?",
-        "string",
-        "string?",
-        "string?",
-        "string?",
+        List.of("time?", "string", "string?", "string?", "string?"),
         "string?",
         FormatTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2998,7 +2781,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "hours-from-time"
         ),
-        "time?",
+        List.of("time?"),
         "integer?",
         HoursFromTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3012,7 +2795,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "minutes-from-time"
         ),
-        "time?",
+        List.of("time?"),
         "integer?",
         MinutesFromTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3026,7 +2809,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "seconds-from-time"
         ),
-        "time?",
+        List.of("time?"),
         "decimal?",
         SecondsFromTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3040,7 +2823,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "timezone-from-time"
         ),
-        "time?",
+        List.of("time?"),
         "dayTimeDuration?",
         TimezoneFromTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3054,7 +2837,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-time-to-timezone"
         ),
-        "time?",
+        List.of("time?"),
         "time?",
         AdjustTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3065,8 +2848,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "adjust-time-to-timezone"
         ),
-        "time?",
-        "dayTimeDuration?",
+        List.of("time?", "dayTimeDuration?"),
         "time?",
         AdjustTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3081,6 +2863,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "implicit-timezone"
         ),
+        List.of(),
         "dayTimeDuration?",
         ImplicitTimezoneIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3095,7 +2878,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "keys"
         ),
-        "item*",
+        List.of("item*"),
         "string*",
         ObjectKeysFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
@@ -3109,7 +2892,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "members"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ArrayMembersFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3124,8 +2907,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "get"
         ),
-        "map",
-        "anyAtomicType",
+        List.of("map", "anyAtomicType"),
         "item*",
         MapGetFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3139,8 +2921,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "contains"
         ),
-        "map",
-        "anyAtomicType",
+        List.of("map", "anyAtomicType"),
         "boolean",
         MapContainsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3154,9 +2935,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "put"
         ),
-        "map",
-        "anyAtomicType",
-        "item*",
+        List.of("map", "anyAtomicType", "item*"),
         "map",
         MapPutFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3170,8 +2949,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "remove"
         ),
-        "map",
-        "anyAtomicType*",
+        List.of("map", "anyAtomicType*"),
         "map",
         MapRemoveFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3185,7 +2963,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "merge"
         ),
-        "map*",
+        List.of("map*"),
         "map",
         MapMergeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3199,8 +2977,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "merge"
         ),
-        "map*",
-        "map",
+        List.of("map*", "map"),
         "map",
         MapMergeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3214,8 +2991,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "entry"
         ),
-        "anyAtomicType",
-        "item*",
+        List.of("anyAtomicType", "item*"),
         "map",
         MapEntryFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3230,7 +3006,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "keys"
         ),
-        "map",
+        List.of("map"),
         "anyAtomicType*",
         MapKeysFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3245,7 +3021,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "size"
         ),
-        "map",
+        List.of("map"),
         "integer",
         MapSizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3260,8 +3036,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "for-each"
         ),
-        "map",
-        "function",
+        List.of("map", "function"),
         "item*",
         MapForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3275,8 +3050,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "find"
         ),
-        "item*",
-        "anyAtomicType",
+        List.of("item*", "anyAtomicType"),
         "array",
         MapFindFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3290,6 +3064,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "null"
         ),
+        List.of(),
         "null?",
         NullFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3303,7 +3078,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "size"
         ),
-        "item-array?",
+        List.of("item-array?"),
         "integer?",
         ArraySizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3317,7 +3092,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "size"
         ),
-        "array*",
+        List.of("array*"),
         "integer",
         ArraySizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3331,7 +3106,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "tail"
         ),
-        "array",
+        List.of("array"),
         "array",
         ArrayTailFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3345,8 +3120,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "get"
         ),
-        "array",
-        "integer",
+        List.of("array", "integer"),
         "item*",
         ArrayGetFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3360,7 +3134,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "head"
         ),
-        "array",
+        List.of("array"),
         "item*",
         ArrayHeadFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3374,7 +3148,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "reverse"
         ),
-        "array",
+        List.of("array"),
         "array",
         ArrayReverseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3388,9 +3162,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "insert-before"
         ),
-        "array",
-        "integer",
-        "item*",
+        List.of("array", "integer", "item*"),
         "array",
         ArrayInsertBeforeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3404,8 +3176,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "append"
         ),
-        "array",
-        "item*",
+        List.of("array", "item*"),
         "array",
         ArrayAppendFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3419,8 +3190,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "remove"
         ),
-        "array",
-        "integer*",
+        List.of("array", "integer*"),
         "array",
         ArrayRemoveFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3434,9 +3204,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "put"
         ),
-        "array",
-        "integer",
-        "item*",
+        List.of("array", "integer", "item*"),
         "array",
         ArrayPutFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3450,8 +3218,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "subarray"
         ),
-        "array",
-        "integer",
+        List.of("array", "integer"),
         "array",
         ArraySubarrayFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3465,9 +3232,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "subarray"
         ),
-        "array",
-        "integer",
-        "integer",
+        List.of("array", "integer", "integer"),
         "array",
         ArraySubarrayFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3481,9 +3246,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "fold-left"
         ),
-        "array",
-        "item*",
-        "function(item*, item*) as item*",
+        List.of("array", "item*", "function(item*, item*) as item*"),
         "item*",
         ArrayFoldLeftFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3497,9 +3260,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "fold-right"
         ),
-        "array",
-        "item*",
-        "function(item*, item*) as item*",
+        List.of("array", "item*", "function(item*, item*) as item*"),
         "item*",
         ArrayFoldRightFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3515,8 +3276,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "for-each"
         ),
-        "array",
-        "function(item*) as item*",
+        List.of("array", "function(item*) as item*"),
         "array",
         ArrayForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3531,9 +3291,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "for-each-pair"
         ),
-        "array",
-        "array",
-        "function(item*, item*) as item*",
+        List.of("array", "array", "function(item*, item*) as item*"),
         "array",
         ArrayForEachPairFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3549,8 +3307,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "filter"
         ),
-        "array",
-        "item",
+        List.of("array", "item"),
         "array",
         ArrayFilterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3564,7 +3321,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "join"
         ),
-        "array*",
+        List.of("array*"),
         "array",
         ArrayJoinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3578,7 +3335,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "flatten"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ArrayFlattenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3592,7 +3349,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "sort"
         ),
-        "array",
+        List.of("array"),
         "array",
         ArraySortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3606,8 +3363,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "sort"
         ),
-        "array",
-        "string?",
+        List.of("array", "string?"),
         "array",
         ArraySortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3624,9 +3380,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "sort"
         ),
-        "array",
-        "string?",
-        "item",
+        List.of("array", "string?", "item"),
         "array",
         ArraySortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3640,7 +3394,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "accumulate"
         ),
-        "item*",
+        List.of("item*"),
         "object",
         ObjectAccumulateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3654,7 +3408,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "descendant-arrays"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ArrayDescendantFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3668,7 +3422,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "descendant-objects"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ObjectDescendantFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3682,7 +3436,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "descendant-pairs"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ObjectDescendantPairsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3696,7 +3450,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "flatten"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ArrayFlattenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3711,7 +3465,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "intersect"
         ),
-        "item*",
+        List.of("item*"),
         "object",
         ObjectIntersectFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3725,8 +3479,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "project"
         ),
-        "item*",
-        "string*",
+        List.of("item*", "string*"),
         "item*",
         ObjectProjectFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3740,8 +3493,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "remove-keys"
         ),
-        "item*",
-        "string*",
+        List.of("item*", "string*"),
         "item*",
         ObjectRemoveKeysFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3755,7 +3507,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "values"
         ),
-        "item*",
+        List.of("item*"),
         "item*",
         ObjectValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3770,7 +3522,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "get-transformer"
         ),
-        "string",
+        List.of("string"),
         "function(object*, object) as object*",
         GetTransformerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3785,8 +3537,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "get-transformer"
         ),
-        "string",
-        "object",
+        List.of("string", "object"),
         "function(object*, object) as object*",
         GetTransformerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3801,7 +3552,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "get-estimator"
         ),
-        "string",
+        List.of("string"),
         "function(object*, object) as function(object*, object) as object*",
         GetEstimatorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3816,8 +3567,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "get-estimator"
         ),
-        "string",
-        "object",
+        List.of("string", "object"),
         "function(object*, object) as function(object*, object) as object*",
         GetEstimatorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3832,9 +3582,12 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "annotate"
         ),
-        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
-        "object",
-        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        List.of(
+            "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "object"
+        ),
+        "object*",
+        // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         AnnotateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
@@ -3845,8 +3598,10 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "trace"
         ),
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        List.of("item*"),
+        // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "item*",
+        // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         TraceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3857,9 +3612,12 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "trace"
         ),
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
-        "string",
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        List.of(
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "string"
+        ),
+        "item*",
+        // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         TraceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3870,8 +3628,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "repartition"
         ),
-        "item*",
-        "integer",
+        List.of("item*", "integer"),
         "item*",
         RepartitionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3883,9 +3640,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "binary-classification-metrics"
         ),
-        "object*",
-        "string",
-        "string",
+        List.of("object*", "string", "string"),
         "item*",
         BinaryClassificationMetricsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3897,10 +3652,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "binary-classification-metrics"
         ),
-        "object*",
-        "string",
-        "string",
-        "integer",
+        List.of("object*", "string", "string", "integer"),
         "item*",
         BinaryClassificationMetricsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3912,7 +3664,7 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "print_vars"
         ),
-        "item*",
+        List.of("item*"),
         "null?",
         DebugFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3927,6 +3679,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "random"
         ),
+        List.of(),
         "double",
         RandomNumberGeneratorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3941,7 +3694,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "random"
         ),
-        "integer",
+        List.of("integer"),
         "item*",
         RandomSequenceGeneratorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3956,8 +3709,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "seeded_random"
         ),
-        "integer",
-        "integer",
+        List.of("integer", "integer"),
         "item*",
         RandomSequenceGeneratorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3973,11 +3725,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "random-between"
         ),
-        "integer",
-        "integer",
-        "integer",
-        "string",
-        "integer",
+        List.of("integer", "integer", "integer", "string", "integer"),
         "item*",
         RandomSequenceWithBoundsIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3989,10 +3737,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "random-between"
         ),
-        "double",
-        "double",
-        "integer",
-        "string",
+        List.of("double", "double", "integer", "string"),
         "item*",
         RandomSequenceWithBoundsIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4004,11 +3749,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "random-between"
         ),
-        "integer",
-        "integer",
-        "integer",
-        "string",
-        "integer",
+        List.of("integer", "integer", "integer", "string", "integer"),
         "item*",
         RandomSequenceWithBoundsAndSeedIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4020,6 +3761,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
+        List.of(),
         "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4031,7 +3773,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
-        "QName?",
+        List.of("QName?"),
         "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4043,8 +3785,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
-        "QName?",
-        "string",
+        List.of("QName?", "string"),
         "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4056,9 +3797,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "error"
         ),
-        "QName?",
-        "string",
-        "item*",
+        List.of("QName?", "string", "item*"),
         "()",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4070,7 +3809,7 @@ public class BuiltinFunctionCatalogue {
                 "",
                 "item-type"
         ),
-        "item*",
+        List.of("item*"),
         "string",
         DynamicItemTypeIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4082,7 +3821,7 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "is-null"
         ),
-        "item*",
+        List.of("item*"),
         "boolean",
         IsNullIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4094,13 +3833,14 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "current-time-milis"
         ),
+        List.of(),
         "integer",
         TimeInMillis.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction collation_key1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "collation-key"),
-        "string",
+        List.of("string"),
         "base64Binary",
         CollationKeyFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4108,8 +3848,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction collation_key2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "collation-key"),
-        "string",
-        "string",
+        List.of("string", "string"),
         "base64Binary",
         CollationKeyFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4117,8 +3856,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction contains_token2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "contains-token"),
-        "string*",
-        "string",
+        List.of("string*", "string"),
         "boolean",
         ContainsTokenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4126,9 +3864,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction contains_token3 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "contains-token"),
-        "string*",
-        "string",
-        "string",
+        List.of("string*", "string", "string"),
         "boolean",
         ContainsTokenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4136,7 +3872,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction iri_to_uri = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "iri-to-uri"),
-        "string?",
+        List.of("string?"),
         "string",
         IRIToURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4144,7 +3880,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction escape_html_uri = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "escape-html-uri"),
-        "string?",
+        List.of("string?"),
         "string",
         EscapeHTMLURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4152,8 +3888,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction filter = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "filter"),
-        "item*",
-        "function",
+        List.of("item*", "function"),
         "item*",
         FilterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4161,9 +3896,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction fold_left = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "fold-left"),
-        "item*",
-        "item*",
-        "function",
+        List.of("item*", "item*", "function"),
         "item*",
         FoldLeftFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4171,9 +3904,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction fold_right = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "fold-right"),
-        "item*",
-        "item*",
-        "function",
+        List.of("item*", "item*", "function"),
         "item*",
         FoldRightFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4181,8 +3912,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction for_each = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "for-each"),
-        "item*",
-        "function",
+        List.of("item*", "function"),
         "item*",
         ForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4190,9 +3920,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction for_each_pair = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "for-each-pair"),
-        "item*",
-        "item*",
-        "function",
+        List.of("item*", "item*", "function"),
         "item*",
         ForEachPairFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4200,7 +3928,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction sort1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sort"),
-        "item*",
+        List.of("item*"),
         "item*",
         SortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4208,8 +3936,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction sort2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sort"),
-        "item*",
-        "string?",
+        List.of("item*", "string?"),
         "item*",
         SortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4217,9 +3944,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction sort3 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sort"),
-        "item*",
-        "string?",
-        "function",
+        List.of("item*", "string?", "function"),
         "item*",
         SortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4227,6 +3952,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction local_name_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name"),
+        List.of(),
         "string",
         LocalNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4234,7 +3960,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction local_name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name"),
-        "node()?",
+        List.of("node()?"),
         "string",
         LocalNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4242,6 +3968,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction namespace_uri_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "namespace-uri"),
+        List.of(),
         "anyURI",
         NamespaceUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4249,7 +3976,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction namespace_uri_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "namespace-uri"),
-        "item?",
+        List.of("item?"),
         "anyURI",
         NamespaceUriFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4257,7 +3984,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction lang1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "lang"),
-        "string?",
+        List.of("string?"),
         "boolean",
         LangFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4265,8 +3992,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction lang2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "lang"),
-        "string?",
-        "item",
+        List.of("string?", "item"),
         "boolean",
         LangFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4274,6 +4000,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction path_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "path"),
+        List.of(),
         "string?",
         PathFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4281,7 +4008,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction path_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "path"),
-        "item?",
+        List.of("item?"),
         "string?",
         PathFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4289,6 +4016,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction has_children_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "has-children"),
+        List.of(),
         "boolean",
         HasChildrenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4296,7 +4024,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction has_children_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "has-children"),
-        "item?",
+        List.of("item?"),
         "boolean",
         HasChildrenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4304,7 +4032,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction innermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "innermost"),
-        "item*",
+        List.of("item*"),
         "item*",
         InnermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4312,7 +4040,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction outermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "outermost"),
-        "item*",
+        List.of("item*"),
         "item*",
         OutermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4320,7 +4048,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction id1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "id"),
-        "string*",
+        List.of("string*"),
         "item*",
         IdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4328,8 +4056,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction id2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "id"),
-        "string*",
-        "item",
+        List.of("string*", "item"),
         "item*",
         IdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4337,7 +4064,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction element_with_id1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "element-with-id"),
-        "string*",
+        List.of("string*"),
         "item*",
         ElementWithIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4345,8 +4072,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction element_with_id2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "element-with-id"),
-        "string*",
-        "item",
+        List.of("string*", "item"),
         "item*",
         ElementWithIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4354,7 +4080,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction idref1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "idref"),
-        "string*",
+        List.of("string*"),
         "item*",
         IdRefFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4362,8 +4088,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction idref2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "idref"),
-        "string*",
-        "item",
+        List.of("string*", "item"),
         "item*",
         IdRefFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4371,6 +4096,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction generate_id_without_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "generate-id"),
+        List.of(),
         "string",
         GenerateIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4378,7 +4104,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction generate_id_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "generate-id"),
-        "item?",
+        List.of("item?"),
         "string",
         GenerateIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4386,8 +4112,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction namespace_uri_for_prefix = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "namespace-uri-for-prefix"),
-        "string?",
-        "item",
+        List.of("string?", "item"),
         "anyURI?",
         NamespaceUriForPrefixFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4395,8 +4120,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction resolve_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "resolve-QName"),
-        "string?",
-        "item",
+        List.of("string?", "item"),
         "QName?",
         ResolveQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4404,7 +4128,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction prefix_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "prefix-from-QName"),
-        "QName?",
+        List.of("QName?"),
         "NCName?",
         PrefixFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4412,7 +4136,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction local_name_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "local-name-from-QName"),
-        "QName?",
+        List.of("QName?"),
         "NCName?",
         LocalNameFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4420,7 +4144,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction namespace_uri_from_QName = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "namespace-uri-from-QName"),
-        "QName?",
+        List.of("QName?"),
         "anyURI?",
         NamespaceURIFromQNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4428,7 +4152,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction function_name = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "function-name"),
-        "function",
+        List.of("function"),
         "QName?",
         FunctionNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4436,7 +4160,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction function_arity = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "function-arity"),
-        "function",
+        List.of("function"),
         "integer",
         FunctionArityFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4444,6 +4168,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction collection0 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "collection"),
+        List.of(),
         "item*",
         CollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4451,7 +4176,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction collection1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "collection"),
-        "string?",
+        List.of("string?"),
         "item*",
         CollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4459,7 +4184,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction doc_available = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "doc-available"),
-        "string?",
+        List.of("string?"),
         "boolean",
         DocAvailableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4467,7 +4192,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction unparsed_text_available1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text-available"),
-        "string?",
+        List.of("string?"),
         "boolean",
         UnparsedTextAvailableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4475,8 +4200,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction unparsed_text_available2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text-available"),
-        "string?",
-        "string",
+        List.of("string?", "string"),
         "boolean",
         UnparsedTextAvailableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4484,6 +4208,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction uri_collection0 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "uri-collection"),
+        List.of(),
         "anyURI*",
         UriCollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4491,7 +4216,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction uri_collection1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "uri-collection"),
-        "string?",
+        List.of("string?"),
         "anyURI*",
         UriCollectionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4499,7 +4224,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction environment_variable = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "environment-variable"),
-        "string",
+        List.of("string"),
         "string?",
         EnvironmentVariableFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4507,6 +4232,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction available_environment_variables = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "available-environment-variables"),
+        List.of(),
         "string*",
         AvailableEnvironmentVariablesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4514,7 +4240,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction parse_xml = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-xml"),
-        "string?",
+        List.of("string?"),
         "item?",
         ParseXMLFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4522,7 +4248,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction parse_xml_fragment = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-xml-fragment"),
-        "string?",
+        List.of("string?"),
         "item?",
         ParseXMLFragmentFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4530,6 +4256,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction default_language = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "default-language"),
+        List.of(),
         "language",
         DefaultLanguageFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4537,8 +4264,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction apply = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "apply"),
-        "function",
-        "array",
+        List.of("function", "array"),
         "item*",
         ApplyFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4546,6 +4272,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction random_number_generator0 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "random-number-generator"),
+        List.of(),
         "map",
         RandomNumberGeneratorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4553,7 +4280,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction random_number_generator1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "random-number-generator"),
-        "anyAtomicType?",
+        List.of("anyAtomicType?"),
         "map",
         RandomNumberGeneratorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4561,7 +4288,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction parse_ietf_date = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-ietf-date"),
-        "string?",
+        List.of("string?"),
         "dateTime?",
         ParseIETFDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4569,7 +4296,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction json_to_xml1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "json-to-xml"),
-        "string?",
+        List.of("string?"),
         "item?",
         JsonToXMLFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4577,8 +4304,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction json_to_xml2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "json-to-xml"),
-        "string?",
-        "map",
+        List.of("string?", "map"),
         "item?",
         JsonToXMLFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4586,7 +4312,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction xml_to_json1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "xml-to-json"),
-        "item?",
+        List.of("item?"),
         "string?",
         XMLToJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4594,8 +4320,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction xml_to_json2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "xml-to-json"),
-        "item?",
-        "map",
+        List.of("item?", "map"),
         "string?",
         XMLToJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4984,17 +4709,15 @@ public class BuiltinFunctionCatalogue {
             throw new IllegalArgumentException("Arity cannot be negative.");
         }
 
-        return new BuiltinFunction(
-                new FunctionIdentifier(functionName, arity),
-                new FunctionSignature(
-                        Collections.nCopies(
-                            arity,
-                            SequenceType.createSequenceType(parameterType)
-                        ),
-                        SequenceType.createSequenceType(returnType)
-                ),
-                functionIteratorClass,
-                builtInFunctionExecutionMode
+        return createBuiltinFunctionWithSequenceTypes(
+            functionName,
+            Collections.nCopies(
+                arity,
+                SequenceType.createSequenceType(parameterType)
+            ),
+            returnType,
+            functionIteratorClass,
+            builtInFunctionExecutionMode
         );
     }
 
