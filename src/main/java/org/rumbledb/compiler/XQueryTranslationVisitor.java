@@ -2249,11 +2249,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.expr() == null) {
             return new CommaExpression(createMetadataFromContext(ctx));
         }
-        Expression expression = (Expression) this.visitExpr(ctx.expr());
-        return new CommaExpression(
-                Collections.singletonList(expression),
-                createMetadataFromContext(ctx)
-        );
+        return this.visitExpr(ctx.expr());
     }
 
     @Override
