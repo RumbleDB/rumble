@@ -426,7 +426,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                                     + variableNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                createMetadataFromContext(annotatedDeclaration)
+                                createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
                 }
@@ -451,12 +451,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                                     + functionNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                createMetadataFromContext(annotatedDeclaration)
+                                createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
                 }
                 functionDeclarations.add(
-                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                    new FunctionDeclaration(
+                            inlineFunctionExpression,
+                            createMetadataFromContext(annotatedDeclaration.functionDecl())
+                    )
                 );
             }
         }
