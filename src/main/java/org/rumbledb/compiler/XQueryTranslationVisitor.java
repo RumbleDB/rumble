@@ -1108,7 +1108,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         for (XQueryParser.AndExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new OrExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1121,7 +1125,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitComparisonExpr(child);
-            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new AndExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1211,7 +1219,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         for (XQueryParser.RangeExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitRangeExpr(child);
-            result = new StringConcatExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new StringConcatExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1244,7 +1256,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     ctx.op.get(i).getText().equals("-"),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1263,7 +1275,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1278,7 +1290,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     NodeSetExpression.NodeSetOperator.UNION,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1293,7 +1305,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     NodeSetExpression.NodeSetOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), ctx.rhs.get(i).getStop())
             );
         }
         return result;
@@ -1311,7 +1323,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1393,12 +1405,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         for (int i = 0; i < ctx.function.size(); ++i) {
             XQueryParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
+            XQueryParser.ArgumentListContext argumentListContext = ctx.arguments.get(i);
+            ExceptionMetadata metadata = createMetadataFromRange(
+                ctx.main_expr.getStart(),
+                argumentListContext.getStop()
+            );
             List<Expression> children = new ArrayList<Expression>();
             children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
+            children.addAll(getArgumentsFromArgumentListContext(argumentListContext));
             if (functionCallContext.eqName() != null) {
                 Name name = parseEqName(functionCallContext.eqName(), true, false, false, false);
-                mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
+                mainExpression = processFunctionCall(name, children, metadata);
                 continue;
             } else if (functionCallContext.varRef() != null) {
                 functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
@@ -1408,7 +1425,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             mainExpression = new DynamicFunctionCallExpression(
                     functionExpression,
                     children,
-                    createMetadataFromContext(functionCallContext)
+                    metadata
             );
         }
         return mainExpression;
@@ -1583,28 +1600,28 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitPostfixExpr(XQueryParser.PostfixExprContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
-            if (child instanceof XQueryParser.PredicateContext) {
-                Expression expr = (Expression) this.visitPredicate((XQueryParser.PredicateContext) child);
+            if (child instanceof XQueryParser.PredicateContext predicateContext) {
+                Expression expr = (Expression) this.visitPredicate(predicateContext);
                 mainExpression = new FilterExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), predicateContext.getStop())
                 );
-            } else if (child instanceof XQueryParser.LookupContext) {
-                Expression expr = (Expression) this.visitLookup((XQueryParser.LookupContext) child);
+            } else if (child instanceof XQueryParser.LookupContext lookupContext) {
+                Expression expr = (Expression) this.visitLookup(lookupContext);
                 mainExpression = new PostfixLookupExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), lookupContext.getStop())
                 );
-            } else if (child instanceof XQueryParser.ArgumentListContext) {
+            } else if (child instanceof XQueryParser.ArgumentListContext argumentListContext) {
                 List<Expression> arguments = getArgumentsFromArgumentListContext(
-                    (XQueryParser.ArgumentListContext) child
+                    argumentListContext
                 );
                 mainExpression = new DynamicFunctionCallExpression(
                         mainExpression,
                         arguments,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop())
                 );
             } else {
                 throw new OurBadException("Unrecognized postfix expression found.");
@@ -2205,7 +2222,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return new ArrayConstructorExpression(
                         new ArrayList<>(),
                         true,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(sqCtx)
                 );
             }
             List<Expression> memberExpressions = new ArrayList<>();
@@ -2215,16 +2232,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return new ArrayConstructorExpression(
                     memberExpressions,
                     true,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromContext(sqCtx)
             );
         }
         // else curlyArrayConstructor
         XQueryParser.CurlyArrayConstructorContext childCtx = (XQueryParser.CurlyArrayConstructorContext) child;
         if (childCtx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+            return new ArrayConstructorExpression(createMetadataFromContext(childCtx));
         }
         Expression content = (Expression) this.visitEnclosedExpression(childCtx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+        return new ArrayConstructorExpression(content, createMetadataFromContext(childCtx));
     }
 
     @Override
@@ -2232,7 +2249,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.expr() == null) {
             return new CommaExpression(createMetadataFromContext(ctx));
         }
-        return this.visitExpr(ctx.expr());
+        Expression expression = (Expression) this.visitExpr(ctx.expr());
+        return new CommaExpression(
+                Collections.singletonList(expression),
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
@@ -2760,6 +2781,38 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return generateMetadata(ctx.getStart(), ctx.getStop());
     }
 
+    private ExceptionMetadata createMetadataFromTree(ParseTree tree) {
+        return createMetadataFromRange(getStartToken(tree), getStopToken(tree));
+    }
+
+    private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
+        return generateMetadata(start, end);
+    }
+
+    private ExceptionMetadata createMetadataFromTrees(ParseTree startTree, ParseTree endTree) {
+        return createMetadataFromRange(getStartToken(startTree), getStopToken(endTree));
+    }
+
+    private Token getStartToken(ParseTree tree) {
+        if (tree instanceof ParserRuleContext parserRuleContext) {
+            return parserRuleContext.getStart();
+        }
+        if (tree instanceof TerminalNode terminalNode) {
+            return terminalNode.getSymbol();
+        }
+        throw new OurBadException("Cannot get start token from parse tree: " + tree.getClass().getName());
+    }
+
+    private Token getStopToken(ParseTree tree) {
+        if (tree instanceof ParserRuleContext parserRuleContext) {
+            return parserRuleContext.getStop();
+        }
+        if (tree instanceof TerminalNode terminalNode) {
+            return terminalNode.getSymbol();
+        }
+        throw new OurBadException("Cannot get stop token from parse tree: " + tree.getClass().getName());
+    }
+
     @Override
     public Node visitVarDecl(XQueryParser.VarDeclContext ctx) {
         // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
@@ -3153,7 +3206,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         var,
                         seq,
                         exprSingle,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(varDecl)
                 )
             );
         }
@@ -3170,9 +3223,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitPathExpr(XQueryParser.PathExprContext ctx) {
         if (ctx.singleslash != null) {
-            return visitSingleSlash(ctx.singleslash);
+            return visitSingleSlash(ctx, ctx.singleslash);
         } else if (ctx.doubleslash != null) {
-            return visitDoubleSlash(ctx.doubleslash);
+            return visitDoubleSlash(ctx, ctx.doubleslash);
         } else if (ctx.relative != null) {
             return visitRelativeWithoutSlash(ctx.relative);
         }
@@ -3196,32 +3249,40 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return getSlashes(relativeContext, null);
     }
 
-    private Node visitDoubleSlash(XQueryParser.RelativePathExprContext doubleSlashContext) {
+    private Node visitDoubleSlash(
+            XQueryParser.PathExprContext pathContext,
+            XQueryParser.RelativePathExprContext doubleSlashContext
+    ) {
+        Token leadingDoubleSlash = pathContext.getStart();
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         StepExpr stepExpr = new ForwardStepExpr(
                 ForwardAxis.DESCENDANT_OR_SELF,
                 new AnyKindTest(),
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         Expression starter = new SlashExpr(
                 functionCallExpression,
                 stepExpr,
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
-        return getSlashes(doubleSlashContext, starter);
+        return getSlashes(doubleSlashContext, starter, leadingDoubleSlash);
     }
 
-    private Node visitSingleSlash(XQueryParser.RelativePathExprContext singleSlashContext) {
+    private Node visitSingleSlash(
+            XQueryParser.PathExprContext pathContext,
+            XQueryParser.RelativePathExprContext singleSlashContext
+    ) {
+        Token leadingSlash = pathContext.getStart();
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
-                createMetadataFromContext(singleSlashContext)
+                createMetadataFromRange(leadingSlash, leadingSlash)
         );
-        return getSlashes(singleSlashContext, functionCallExpression);
+        return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
     }
 
     /**
@@ -3232,6 +3293,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.RelativePathExprContext relativePathExprContext,
             Expression leftMost
     ) {
+        return getSlashes(relativePathExprContext, leftMost, relativePathExprContext.getStart());
+    }
+
+    private Expression getSlashes(
+            XQueryParser.RelativePathExprContext relativePathExprContext,
+            Expression leftMost,
+            Token expressionStart
+    ) {
         Expression currentTop = leftMost; // can be null
         Expression currentStepExpr;
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
@@ -3241,7 +3310,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 StepExpr intermediaryStepExpr = new ForwardStepExpr(
                         ForwardAxis.DESCENDANT_OR_SELF,
                         new AnyKindTest(),
-                        createMetadataFromContext(relativePathExprContext)
+                        createMetadataFromRange(
+                            relativePathExprContext.sep.get(i - 1),
+                            relativePathExprContext.sep.get(i - 1)
+                        )
                 );
                 if (currentTop == null) {
                     currentTop = intermediaryStepExpr;
@@ -3249,7 +3321,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     currentTop = new SlashExpr(
                             currentTop,
                             intermediaryStepExpr,
-                            createMetadataFromContext(relativePathExprContext)
+                            createMetadataFromRange(
+                                expressionStart,
+                                relativePathExprContext.sep.get(i - 1)
+                            )
                     );
 
                 }
@@ -3260,7 +3335,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 currentTop = new SlashExpr(
                         currentTop,
                         currentStepExpr,
-                        createMetadataFromContext(relativePathExprContext)
+                        createMetadataFromRange(
+                            expressionStart,
+                            relativePathExprContext.stepExpr(i).getStop()
+                        )
                 );
             }
         }
@@ -3276,7 +3354,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 stepExpr = new FilterExpression(
                         stepExpr,
                         predicate,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.getStart(), predicateContext.getStop())
                 );
             }
             return stepExpr;
@@ -3695,7 +3773,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
                     attributeName,
                     value,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(qnameCtx.getStart(), attributeValues.get(i).getStop())
             );
             result.attributes.add(attributeNode);
         }
@@ -3752,6 +3830,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         // Similar to element content, we need to merge adjacent text content
         StringBuilder textAccumulator = null;
+        ParseTree firstTextTree = null;
+        ParseTree lastTextTree = null;
         List<Expression> contentExpressions = new ArrayList<>();
 
         // Process each child between the quotes (skip the first and last quote tokens)
@@ -3766,11 +3846,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 // This is a PredefinedEntityRef or CharRef token - expand it
                 String unescapedValue = StringEscapeUtils.unescapeXml(childText);
                 childExpressions.add(
-                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx))
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child))
                 );
             } else if (child.getText().equals(escapeSequence)) {
                 // Escaped quote
-                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
+                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)));
             } else {
                 // Try the content visitor for nested content or text
                 List<Expression> contentResult = processAttributeContent(
@@ -3793,10 +3873,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     if (textAccumulator == null) {
                         // Start accumulating text content
                         textAccumulator = new StringBuilder();
+                        firstTextTree = child;
                     }
 
                     // Accumulate the text content
                     textAccumulator.append(content);
+                    lastTextTree = child;
                 } else {
                     // Non-text expression encountered (e.g., enclosed expression)
                     if (textAccumulator != null) {
@@ -3804,10 +3886,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         contentExpressions.add(
                             new AttributeNodeContentExpression(
                                     textAccumulator.toString(),
-                                    createMetadataFromContext(ctx)
+                                    createMetadataFromTrees(firstTextTree, lastTextTree)
                             )
                         );
                         textAccumulator = null;
+                        firstTextTree = null;
+                        lastTextTree = null;
                     }
 
                     // Add the non-text expression
@@ -3821,7 +3905,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             contentExpressions.add(
                 new AttributeNodeContentExpression(
                         textAccumulator.toString(),
-                        createMetadataFromContext(ctx)
+                        createMetadataFromTrees(firstTextTree, lastTextTree)
                 )
             );
         }
@@ -3874,7 +3958,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // handle other cases
             String childText = child.getText();
             String processedContent = processTextContentWithEscaping(childText);
-            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromContext(ctx)));
+            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
         }
         return expressions;
     }
