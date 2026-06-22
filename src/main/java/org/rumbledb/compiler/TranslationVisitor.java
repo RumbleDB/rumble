@@ -1209,7 +1209,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         for (JsoniqParser.AndExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new OrExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1222,7 +1226,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         for (JsoniqParser.NotExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitNotExpr(child);
-            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new AndExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1309,7 +1317,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         for (JsoniqParser.RangeExprContext child : ctx.rhs) {
             Expression rightExpression = (Expression) this.visitRangeExpr(child);
-            result = new StringConcatExpression(result, rightExpression, createMetadataFromContext(ctx));
+            result = new StringConcatExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
+            );
         }
         return result;
     }
@@ -1342,7 +1354,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     ctx.op.get(i).getText().equals("-"),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1361,7 +1373,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1376,7 +1388,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     NodeSetExpression.NodeSetOperator.UNION,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1391,7 +1403,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     result,
                     rightExpression,
                     NodeSetExpression.NodeSetOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), ctx.rhs.get(i).getStop())
             );
         }
         return result;
@@ -1409,7 +1421,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
@@ -1491,12 +1503,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         for (int i = 0; i < ctx.function.size(); ++i) {
             JsoniqParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
+            JsoniqParser.ArgumentListContext argumentListContext = ctx.arguments.get(i);
+            ExceptionMetadata metadata = createMetadataFromRange(
+                ctx.main_expr.getStart(),
+                argumentListContext.getStop()
+            );
             List<Expression> children = new ArrayList<Expression>();
             children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
+            children.addAll(getArgumentsFromArgumentListContext(argumentListContext));
             if (functionCallContext.eqName() != null) {
                 Name name = parseEqName(functionCallContext.eqName(), true, false, false, false);
-                mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
+                mainExpression = processFunctionCall(name, children, metadata);
                 continue;
             } else if (functionCallContext.varRef() != null) {
                 functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
@@ -1506,7 +1523,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             mainExpression = new DynamicFunctionCallExpression(
                     functionExpression,
                     children,
-                    createMetadataFromContext(functionCallContext)
+                    metadata
             );
         }
         return mainExpression;
@@ -1570,13 +1587,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
-                                    createMetadataFromContext(ctx)
+                                    lhs.getMetadata()
                             )
                         );
                     } else {
                         throw new ParsingException(
                                 "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
-                                createMetadataFromContext(ctx)
+                                lhs.getMetadata()
                         );
                     }
                 } else {
@@ -1785,45 +1802,48 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitPostfixExpr(JsoniqParser.PostfixExprContext ctx) {
         Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
-            if (child instanceof JsoniqParser.PredicateContext) {
-                Expression expr = (Expression) this.visitPredicate((JsoniqParser.PredicateContext) child);
+            if (child instanceof JsoniqParser.PredicateContext predicateContext) {
+                Expression expr = (Expression) this.visitPredicate(predicateContext);
                 mainExpression = new FilterExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), predicateContext.getStop())
                 );
-            } else if (child instanceof JsoniqParser.LookupContext) {
-                Expression expr = (Expression) this.visitLookup((JsoniqParser.LookupContext) child);
+            } else if (child instanceof JsoniqParser.LookupContext lookupContext) {
+                Expression expr = (Expression) this.visitLookup(lookupContext);
                 mainExpression = new PostfixLookupExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), lookupContext.getStop())
                 );
-            } else if (child instanceof JsoniqParser.ObjectLookupContext) {
-                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
+            } else if (child instanceof JsoniqParser.ObjectLookupContext objectLookupContext) {
+                Expression expr = (Expression) this.visitObjectLookup(objectLookupContext);
                 mainExpression = new ObjectLookupExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), objectLookupContext.getStop())
                 );
-            } else if (child instanceof JsoniqParser.ArrayLookupContext) {
-                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
+            } else if (child instanceof JsoniqParser.ArrayLookupContext arrayLookupContext) {
+                Expression expr = (Expression) this.visitArrayLookup(arrayLookupContext);
                 mainExpression = new ArrayLookupExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), arrayLookupContext.getStop())
                 );
-            } else if (child instanceof JsoniqParser.ArrayUnboxingContext) {
-                this.visitArrayUnboxing((JsoniqParser.ArrayUnboxingContext) child);
-                mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
-            } else if (child instanceof JsoniqParser.ArgumentListContext) {
+            } else if (child instanceof JsoniqParser.ArrayUnboxingContext arrayUnboxingContext) {
+                this.visitArrayUnboxing(arrayUnboxingContext);
+                mainExpression = new ArrayUnboxingExpression(
+                        mainExpression,
+                        createMetadataFromRange(ctx.main_expr.getStart(), arrayUnboxingContext.getStop())
+                );
+            } else if (child instanceof JsoniqParser.ArgumentListContext argumentListContext) {
                 List<Expression> arguments = getArgumentsFromArgumentListContext(
-                    (JsoniqParser.ArgumentListContext) child
+                    argumentListContext
                 );
                 mainExpression = new DynamicFunctionCallExpression(
                         mainExpression,
                         arguments,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop())
                 );
             } else {
                 throw new OurBadException("Unrecognized postfix expression found.");
@@ -2035,13 +2055,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         keys.add(
                             new StringLiteralExpression(
                                     ((StepExpr) lhs).getNodeTest().toString(),
-                                    createMetadataFromContext(ctx)
+                                    lhs.getMetadata()
                             )
                         );
                     } else {
                         throw new ParsingException(
                                 "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
-                                createMetadataFromContext(ctx)
+                                lhs.getMetadata()
                         );
                     }
                 } else {
@@ -2492,14 +2512,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.SquareArrayConstructorContext) {
-            JsoniqParser.SquareArrayConstructorContext sqCtx = (JsoniqParser.SquareArrayConstructorContext) child;
+        if (child instanceof JsoniqParser.SquareArrayConstructorContext sqCtx) {
             List<JsoniqParser.ExprSingleContext> memberCtxs = sqCtx.exprSingle();
             if (memberCtxs == null || memberCtxs.isEmpty()) {
                 return new ArrayConstructorExpression(
                         new ArrayList<>(),
                         true,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(sqCtx)
                 );
             }
             List<Expression> memberExpressions = new ArrayList<>();
@@ -2511,7 +2530,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 Expression commaExpression = new CommaExpression(
                         memberExpressions,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(sqCtx)
                 );
                 return new ArrayConstructorExpression(
                         commaExpression,
@@ -2526,17 +2545,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return new ArrayConstructorExpression(
                         memberExpressions,
                         true,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(sqCtx)
                 );
             }
         }
         // else curlyArrayConstructor
         JsoniqParser.CurlyArrayConstructorContext childCtx = (JsoniqParser.CurlyArrayConstructorContext) child;
         if (childCtx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+            return new ArrayConstructorExpression(createMetadataFromContext(childCtx));
         }
         Expression content = (Expression) this.visitEnclosedExpression(childCtx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+        return new ArrayConstructorExpression(content, createMetadataFromContext(childCtx));
     }
 
     @Override
@@ -2544,7 +2563,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.expr() == null) {
             return new CommaExpression(createMetadataFromContext(ctx));
         }
-        return this.visitExpr(ctx.expr());
+        Expression expression = (Expression) this.visitExpr(ctx.expr());
+        return new CommaExpression(
+                Collections.singletonList(expression),
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
@@ -3081,6 +3104,38 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return generateMetadata(ctx.getStart(), ctx.getStop());
     }
 
+    private ExceptionMetadata createMetadataFromTree(ParseTree tree) {
+        return createMetadataFromRange(getStartToken(tree), getStopToken(tree));
+    }
+
+    private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
+        return generateMetadata(start, end);
+    }
+
+    private ExceptionMetadata createMetadataFromTrees(ParseTree startTree, ParseTree endTree) {
+        return createMetadataFromRange(getStartToken(startTree), getStopToken(endTree));
+    }
+
+    private Token getStartToken(ParseTree tree) {
+        if (tree instanceof ParserRuleContext parserRuleContext) {
+            return parserRuleContext.getStart();
+        }
+        if (tree instanceof TerminalNode terminalNode) {
+            return terminalNode.getSymbol();
+        }
+        throw new OurBadException("Cannot get start token from parse tree: " + tree.getClass().getName());
+    }
+
+    private Token getStopToken(ParseTree tree) {
+        if (tree instanceof ParserRuleContext parserRuleContext) {
+            return parserRuleContext.getStop();
+        }
+        if (tree instanceof TerminalNode terminalNode) {
+            return terminalNode.getSymbol();
+        }
+        throw new OurBadException("Cannot get stop token from parse tree: " + tree.getClass().getName());
+    }
+
     @Override
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
         // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
@@ -3482,7 +3537,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         var,
                         seq,
                         exprSingle,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromContext(varDecl)
                 )
             );
         }
@@ -3499,9 +3554,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitPathExpr(JsoniqParser.PathExprContext ctx) {
         if (ctx.singleslash != null) {
-            return visitSingleSlash(ctx.singleslash);
+            return visitSingleSlash(ctx, ctx.singleslash);
         } else if (ctx.doubleslash != null) {
-            return visitDoubleSlash(ctx.doubleslash);
+            return visitDoubleSlash(ctx, ctx.doubleslash);
         } else if (ctx.relative != null) {
             return visitRelativeWithoutSlash(ctx.relative);
         }
@@ -3525,32 +3580,40 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return getSlashes(relativeContext, null);
     }
 
-    private Node visitDoubleSlash(JsoniqParser.RelativePathExprContext doubleSlashContext) {
+    private Node visitDoubleSlash(
+            JsoniqParser.PathExprContext pathContext,
+            JsoniqParser.RelativePathExprContext doubleSlashContext
+    ) {
+        Token leadingDoubleSlash = pathContext.getStart();
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         StepExpr stepExpr = new ForwardStepExpr(
                 ForwardAxis.DESCENDANT_OR_SELF,
                 new AnyKindTest(),
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         Expression starter = new SlashExpr(
                 functionCallExpression,
                 stepExpr,
-                createMetadataFromContext(doubleSlashContext)
+                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
-        return getSlashes(doubleSlashContext, starter);
+        return getSlashes(doubleSlashContext, starter, leadingDoubleSlash);
     }
 
-    private Node visitSingleSlash(JsoniqParser.RelativePathExprContext singleSlashContext) {
+    private Node visitSingleSlash(
+            JsoniqParser.PathExprContext pathContext,
+            JsoniqParser.RelativePathExprContext singleSlashContext
+    ) {
+        Token leadingSlash = pathContext.getStart();
         FunctionCallExpression functionCallExpression = new FunctionCallExpression(
                 Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
                 Collections.emptyList(),
-                createMetadataFromContext(singleSlashContext)
+                createMetadataFromRange(leadingSlash, leadingSlash)
         );
-        return getSlashes(singleSlashContext, functionCallExpression);
+        return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
     }
 
     /**
@@ -3561,6 +3624,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.RelativePathExprContext relativePathExprContext,
             Expression leftMost
     ) {
+        return getSlashes(relativePathExprContext, leftMost, relativePathExprContext.getStart());
+    }
+
+    private Expression getSlashes(
+            JsoniqParser.RelativePathExprContext relativePathExprContext,
+            Expression leftMost,
+            Token expressionStart
+    ) {
         Expression currentTop = leftMost; // can be null
         Expression currentStepExpr;
         for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
@@ -3570,7 +3641,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 StepExpr intermediaryStepExpr = new ForwardStepExpr(
                         ForwardAxis.DESCENDANT_OR_SELF,
                         new AnyKindTest(),
-                        createMetadataFromContext(relativePathExprContext)
+                        createMetadataFromRange(
+                            relativePathExprContext.sep.get(i - 1),
+                            relativePathExprContext.sep.get(i - 1)
+                        )
                 );
                 if (currentTop == null) {
                     currentTop = intermediaryStepExpr;
@@ -3578,7 +3652,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     currentTop = new SlashExpr(
                             currentTop,
                             intermediaryStepExpr,
-                            createMetadataFromContext(relativePathExprContext)
+                            createMetadataFromRange(
+                                expressionStart,
+                                relativePathExprContext.sep.get(i - 1)
+                            )
                     );
 
                 }
@@ -3589,7 +3666,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 currentTop = new SlashExpr(
                         currentTop,
                         currentStepExpr,
-                        createMetadataFromContext(relativePathExprContext)
+                        createMetadataFromRange(
+                            expressionStart,
+                            relativePathExprContext.stepExpr(i).getStop()
+                        )
                 );
             }
         }
@@ -3605,7 +3685,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 stepExpr = new FilterExpression(
                         stepExpr,
                         predicate,
-                        createMetadataFromContext(ctx)
+                        createMetadataFromRange(ctx.getStart(), predicateContext.getStop())
                 );
             }
             return stepExpr;
@@ -4030,7 +4110,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             AttributeNodeExpression attributeNode = new AttributeNodeExpression(
                     attributeName,
                     value,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromRange(qnameCtx.getStart(), attributeValues.get(i).getStop())
             );
             result.attributes.add(attributeNode);
         }
@@ -4087,6 +4167,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         // Similar to element content, we need to merge adjacent text content
         StringBuilder textAccumulator = null;
+        ParseTree firstTextTree = null;
+        ParseTree lastTextTree = null;
         List<Expression> contentExpressions = new ArrayList<>();
 
         // Process each child between the quotes (skip the first and last quote tokens)
@@ -4101,11 +4183,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 // This is a PredefinedEntityRef or CharRef token - expand it
                 String unescapedValue = StringEscapeUtils.unescapeXml(childText);
                 childExpressions.add(
-                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromContext(ctx))
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child))
                 );
             } else if (child.getText().equals(escapeSequence)) {
                 // Escaped quote
-                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromContext(ctx)));
+                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)));
             } else {
                 // Try the content visitor for nested content or text
                 List<Expression> contentResult = processAttributeContent(
@@ -4128,10 +4210,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     if (textAccumulator == null) {
                         // Start accumulating text content
                         textAccumulator = new StringBuilder();
+                        firstTextTree = child;
                     }
 
                     // Accumulate the text content
                     textAccumulator.append(content);
+                    lastTextTree = child;
                 } else {
                     // Non-text expression encountered (e.g., enclosed expression)
                     if (textAccumulator != null) {
@@ -4139,10 +4223,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         contentExpressions.add(
                             new AttributeNodeContentExpression(
                                     textAccumulator.toString(),
-                                    createMetadataFromContext(ctx)
+                                    createMetadataFromTrees(firstTextTree, lastTextTree)
                             )
                         );
                         textAccumulator = null;
+                        firstTextTree = null;
+                        lastTextTree = null;
                     }
 
                     // Add the non-text expression
@@ -4156,7 +4242,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             contentExpressions.add(
                 new AttributeNodeContentExpression(
                         textAccumulator.toString(),
-                        createMetadataFromContext(ctx)
+                        createMetadataFromTrees(firstTextTree, lastTextTree)
                 )
             );
         }
@@ -4209,7 +4295,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             // handle other cases
             String childText = child.getText();
             String processedContent = processTextContentWithEscaping(childText);
-            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromContext(ctx)));
+            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
         }
         return expressions;
     }
