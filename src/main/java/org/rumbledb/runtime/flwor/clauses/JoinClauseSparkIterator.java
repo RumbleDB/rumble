@@ -48,10 +48,13 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -89,6 +92,136 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         super(leftChild, staticContext);
         this.isLeftOuterJoin = isLeftOuterJoin;
         this.dataFrameContext = new DataFrameContext();
+    }
+
+    /**
+     * 
+     */
+    public static FlworDataFrame joinInputTupleWithSequenceOnLetClausePredicate(
+            DynamicContext context,
+            Dataset<Row> leftInputTuple,
+            Dataset<Row> rightInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            List<Name> variablesInLeftInputTuple, // really needed?
+            List<Name> variablesInRightInputTuple, // really needed?
+            RuntimeIterator predicateIterator,
+            boolean isLeftOuterJoin,
+            Name newRightSideVariableName, // really needed?
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext
+    ) {
+        // We group the right-hand-side of the join by hash to prepare the left outer join.
+        String hashedExpressionResults = FlworDataFrameUtils.createTempView(rightInputTuple);
+        FlworDataFrameColumn variableNameAggregatedColumn = new FlworDataFrameColumn(
+                newRightSideVariableName,
+                FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE
+        );
+        boolean isBinary = FlworDataFrameUtils.isVariableAvailableAsSerializedSequence(
+            rightInputTuple.schema(),
+            Name.CONTEXT_ITEM
+        );
+        rightInputTuple = rightInputTuple.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT `%s`, collect_list(`%s`) AS %s FROM %s GROUP BY `%s`",
+                    SparkSessionManager.rightHandSideHashColumnName,
+                    Name.CONTEXT_ITEM.toString(),
+                    variableNameAggregatedColumn,
+                    hashedExpressionResults,
+                    SparkSessionManager.rightHandSideHashColumnName
+                )
+            );
+
+
+        // We serialize back all grouped items as sequences of items.
+        if (isBinary) {
+            String groupedResults = FlworDataFrameUtils.createTempView(rightInputTuple);
+            rightInputTuple.sparkSession()
+                .udf()
+                .register(
+                    "serializeArray",
+                    new GroupClauseSerializeAggregateResultsUDF(),
+                    DataTypes.BinaryType
+                );
+            FlworDataFrameColumn newVariableNameAggregatedColumn = new FlworDataFrameColumn(
+                    newRightSideVariableName,
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+            );
+
+            rightInputTuple = rightInputTuple.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT `%s`, serializeArray(%s) AS %s FROM %s",
+                        SparkSessionManager.rightHandSideHashColumnName,
+                        variableNameAggregatedColumn,
+                        newVariableNameAggregatedColumn,
+                        groupedResults
+                    )
+                );
+            variableNameAggregatedColumn = newVariableNameAggregatedColumn;
+        }
+        String groupedAndSerializedResults = FlworDataFrameUtils.createTempView(rightInputTuple);
+        variableNameAggregatedColumn.setTableName(groupedAndSerializedResults);
+        String inputTuples = FlworDataFrameUtils.createTempView(leftInputTuple);
+
+        // We gather the columns to select.
+        // We need to project away the let clause variable because we re-create it.
+        StructType inputSchema = leftInputTuple.schema();
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(newRightSideVariableName);
+        Map<Name, VariableDependency> prefilterProjection = DynamicContext.copyVariableDependencies(parentProjection);
+        DynamicContext.mergeVariableDependencies(prefilterProjection, predicateDependencies);
+        prefilterProjection.put(newRightSideVariableName, prefilterProjection.get(Name.CONTEXT_ITEM));
+        prefilterProjection.remove(Name.CONTEXT_ITEM);
+        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
+            inputSchema,
+            prefilterProjection,
+            null,
+            variableNamesToExclude
+        );
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, true);
+
+        // Now we proceed with the left outer join.
+        inputDF = inputDF.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT %s %s FROM %s LEFT OUTER JOIN %s ON `%s` = `%s`",
+                    projectionVariables,
+                    variableNameAggregatedColumn,
+                    inputTuples,
+                    groupedAndSerializedResults,
+                    SparkSessionManager.rightHandSideHashColumnName,
+                    SparkSessionManager.leftHandSideHashColumnName
+                )
+            );
+        // We now post-filter on the predicate, by hash group.
+        RuntimeIterator filteringPredicateIterator = new PredicateIterator(
+                new VariableReferenceIterator(
+                        newRightSideVariableName,
+                        staticContext
+                            .withStaticType(SequenceType.createSequenceType("item*"))
+                            .withExecutionMode(ExecutionMode.LOCAL)
+                            .withMetadata(metadata)
+                ),
+                predicateIterator,
+                staticContext
+                    .withStaticType(SequenceType.createSequenceType("item*"))
+                    .withExecutionMode(ExecutionMode.LOCAL)
+                    .withMetadata(metadata)
+        );
+        leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            leftInputTuple,
+            newRightSideVariableName,
+            this.sequenceType,
+            filteringPredicateIterator,
+            context,
+            new ArrayList<Name>(this.getOutputTupleVariableNames()),
+            parentProjection,
+            false,
+            getConfiguration()
+        );
+
+        return new FlworDataFrame(leftInputTuple);
     }
 
     /**
@@ -363,7 +496,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(resultDF);
     }
 
-    private static boolean extractEqualityComparisonsForHashing(
+    public static boolean extractEqualityComparisonsForHashing(
             RuntimeIterator predicateIterator,
             List<RuntimeIterator> leftTupleSideEqualityCriteria,
             List<RuntimeIterator> rightTupleSideEqualityCriteria,

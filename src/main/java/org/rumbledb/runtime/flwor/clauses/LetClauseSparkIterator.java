@@ -48,6 +48,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
+import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
@@ -224,15 +225,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We try to detect an equi-join.
 
         // Is this a predicate expression?
-        if (!(this.assignmentIterator instanceof PredicateIterator)) {
+        if (!(this.assignmentIterator instanceof PredicateIterator pi)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble is able to handle large scale left outer joins, but this requires the let expression to be a predicate expression, the left-hand-side of which is independent from the previous variables of the current FLWOR expression.",
                     getMetadata()
             );
         }
 
-        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
-        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+        RuntimeIterator sequenceIterator = pi.sequenceIterator();
+        RuntimeIterator predicateIterator = pi.predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -243,14 +244,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // Is the predicate a comparison?
-        if (!(predicateIterator instanceof ComparisonIterator)) {
+        if (!(predicateIterator instanceof ComparisonIterator comparisonIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not a comparison.",
                     getMetadata()
             );
 
         }
-        ComparisonIterator comparisonIterator = (ComparisonIterator) predicateIterator;
         // Is the predicate a value equality comparison?
         if (!comparisonIterator.isValueEquality()) {
             throw new JobWithinAJobException(
@@ -304,34 +304,85 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // First, we evaluate all input tuples.
         Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
 
+        String expressionDFTableName = "sequenceExpression";
+
+        // Next we prepare the data frame on the expression side.
+        Dataset<Row> expressionDF;
+        
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
-        if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
-            throw new UnsupportedFeatureException(
-                    "Rumble detected an equi-join, but does not support yet position() in the join predicate.",
-                    getMetadata()
-            );
-        }
-        if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
-            throw new UnsupportedFeatureException(
-                    "Rumble detected an equi-join, but does not support yet last() in the join predicate.",
-                    getMetadata()
-            );
-        }
-
+        
         // Now we execute the left-hand-side of the predicate, which is the right side of the join.
         // We need to manually adjust the context item with the dependency mode the parent projection.
-        Map<Name, VariableDependency> sequenceDependencies = new HashMap<>();
-        sequenceDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
-        Dataset<Row> expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
-            sequenceIterator,
-            Name.CONTEXT_ITEM,
-            null,
-            false,
-            context,
-            sequenceDependencies
-        ).getDataFrame();
+        if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+            startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
+            startingClauseDependencies.put(Name.CONTEXT_POSITION, DynamicContext.VariableDependency.FULL);
+
+            expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                sequenceIterator,
+                Name.CONTEXT_ITEM,
+                Name.CONTEXT_POSITION,
+                false,
+                context,
+                startingClauseDependencies
+            ).getDataFrame();
+        } else {
+            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+            startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
+            expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                sequenceIterator,
+                Name.CONTEXT_ITEM,
+                null,
+                false,
+                context,
+                startingClauseDependencies
+            ).getDataFrame();
+        }
+
+        // We prepare the variables that we accept for an optimized join on both sides.
+        // For the left hand side, any variables in the local FLWOR tuple.
+        List<Name> variablesInLeftInputTuple =
+            (this.child == null || this.evaluationDepthLimit == 0)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames());
+        // For the right hand side, only context item, position, and count.
+        List<Name> variablesInRightInputTuple = new ArrayList<>();
+        variablesInRightInputTuple.add(Name.CONTEXT_ITEM);
+        if (
+            predicateDependencies.containsKey(Name.CONTEXT_POSITION)
+        ) {
+            variablesInRightInputTuple.add(Name.CONTEXT_POSITION);
+        }
+        if (
+            predicateDependencies.containsKey(Name.CONTEXT_COUNT)
+        ) {
+            variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
+        }
+
+        // If the join criterion uses the context count, then we need to add it to the expression side (it is a
+        // constant).
+        if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
+            expressionDF.sparkSession()
+                .udf()
+                .register(
+                    "serializeIntegerIndex",
+                    new IntegerSerializeUDF(),
+                    DataTypes.BinaryType
+                );
+            long size = expressionDF.count();
+            expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT *, serializeIntegerIndex(%s) AS `%s` FROM %s",
+                        Long.toString(size),
+                        Name.CONTEXT_COUNT.getLocalName(),
+                        expressionDFTableName
+                    )
+                );
+        }
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
