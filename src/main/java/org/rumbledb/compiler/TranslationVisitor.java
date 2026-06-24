@@ -483,7 +483,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                     + variableNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                createMetadataFromContext(annotatedDeclaration)
+                                createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
                 }
@@ -508,12 +508,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                     + functionNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                createMetadataFromContext(annotatedDeclaration)
+                                createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
                 }
                 functionDeclarations.add(
-                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                    new FunctionDeclaration(
+                            inlineFunctionExpression,
+                            createMetadataFromContext(annotatedDeclaration.functionDecl())
+                    )
                 );
             } else if (annotatedDeclaration.typeDecl() != null) {
                 TypeDeclaration typeDeclaration = (TypeDeclaration) this.visitTypeDecl(
@@ -531,7 +534,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                                     + typeNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                createMetadataFromContext(annotatedDeclaration)
+                                createMetadataFromContext(annotatedDeclaration.typeDecl())
                         );
                     }
                 }
