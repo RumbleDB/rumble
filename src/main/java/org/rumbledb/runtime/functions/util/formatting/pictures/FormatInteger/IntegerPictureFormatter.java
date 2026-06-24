@@ -2,8 +2,8 @@ package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 import com.ibm.icu.util.ULocale;
 
+import org.apache.hadoop.shaded.org.xbill.DNS.tools.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
@@ -11,6 +11,7 @@ import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.math.BigInteger;
+import java.util.Locale;
 
 public final class IntegerPictureFormatter {
 
@@ -73,31 +74,20 @@ public final class IntegerPictureFormatter {
                 result = handleDecimal(absValue, primary, modifier, locale);
                 break;
             case PrimaryFormatToken.ALPHABETIC_UPPER:
-                result = handleAlphabeticUpper(absValue, modifier, locale);
-                break;
             case PrimaryFormatToken.ALPHABETIC_LOWER:
-                result = handleAlphabeticLower(absValue, modifier, locale);
+                result = handleAlphabetic(absValue, primary, modifier, locale);
                 break;
             case PrimaryFormatToken.ROMAN_UPPER:
-                result = handleRomanUpper(absValue, modifier, locale);
-                break;
             case PrimaryFormatToken.ROMAN_LOWER:
-                result = handleRomanLower(absValue, modifier, locale);
+                result = handleRoman(absValue, primary, modifier, locale);
                 break;
             case PrimaryFormatToken.WORDS_LOWER:
-                result = handleWordsLower(absValue, modifier, locale);
-                break;
             case PrimaryFormatToken.WORDS_UPPER:
-                result = handleWordsUpper(absValue, modifier, locale);
-                break;
             case PrimaryFormatToken.WORDS_TITLE:
-                result = handleWordsTitle(absValue, modifier, locale);
-                break;
-            case PrimaryFormatToken.OTHER:
-                result = handleOther(absValue, modifier, locale);
+                result = handleWords(absValue, primary, modifier, locale);
                 break;
             default:
-                throw new OurBadException("Unknown type: " + primary.getType(), metadata);
+                result = handleOther(absValue, modifier, locale);
         }
 
         return !isNegative ? result : ("-" + result);
@@ -132,8 +122,9 @@ public final class IntegerPictureFormatter {
         return digits;
     }
 
-    private static String handleRomanUpper(
+    private static String handleRoman(
             BigInteger value,
+            PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
             ULocale locale
     ) {
@@ -142,24 +133,12 @@ public final class IntegerPictureFormatter {
         }
 
         // For Roman, unsupported ordinal handling is ignored and cardinal numbering is used.
-        return NumberWords.roman(value.intValueExact(), false);
+        return NumberWords.roman(value.intValueExact(), primary.getType().equals(PrimaryFormatToken.ROMAN_LOWER));
     }
 
-    private static String handleRomanLower(
+    private static String handleAlphabetic(
             BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
-        if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(3999)) > 0) {
-            return handleOther(value, modifier, locale);
-        }
-
-        // For Roman, unsupported ordinal handling is ignored and cardinal numbering is used.
-        return NumberWords.roman(value.intValueExact(), true);
-    }
-
-    private static String handleAlphabeticUpper(
-            BigInteger value,
+            PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
             ULocale locale
     ) {
@@ -167,64 +146,38 @@ public final class IntegerPictureFormatter {
             return handleOther(value, modifier, locale);
         }
 
-        String result = NumericFormattingSupport.integerToAlphabetic(value.intValueExact(), false);
+        String result = NumericFormattingSupport.integerToAlphabetic(
+            value.intValueExact(),
+            primary.getType().equals(PrimaryFormatToken.ALPHABETIC_LOWER)
+        );
 
         // For alphabetic numbering, unsupported ordinal handling may be ignored per spec.
         return result;
     }
 
-    private static String handleAlphabeticLower(
+    private static String handleWords(
             BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
-        if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            return handleOther(value, modifier, locale);
-        }
-
-        // For alphabetic numbering, unsupported ordinal handling may be ignored per spec.
-        return NumericFormattingSupport.integerToAlphabetic(value.intValueExact(), true);
-    }
-
-    private static String handleWordsLower(
-            BigInteger value,
+            PrimaryFormatToken primary,
             IntegerFormatModifier modifier,
             ULocale locale
     ) {
         if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
             return handleOther(value, modifier, locale);
         }
+
+        String result;
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
-            return NumberWords.ordinalWords(value.longValueExact(), locale, modifier.getFormatSpecifier());
+            result = NumberWords.ordinalWords(value.longValueExact(), locale, modifier.getFormatSpecifier());
+        }else{
+            result = NumberWords.cardinal(value.longValueExact(), locale, modifier.getFormatSpecifier());
         }
 
-        return NumberWords.cardinal(value.longValueExact(), locale, modifier.getFormatSpecifier());
-    }
-
-    private static String handleWordsUpper(
-            BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
-        if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            return handleOther(value, modifier, locale);
+        if (primary.getType().equals(PrimaryFormatToken.WORDS_LOWER)) {
+            return result.toLowerCase(Locale.ROOT);
+        } else if (primary.getType().equals(PrimaryFormatToken.WORDS_UPPER)) {
+            return result.toUpperCase(Locale.ROOT);
         }
-
-        String result = handleWordsLower(value, modifier, locale);
-        return result.toUpperCase(java.util.Locale.ROOT);
-    }
-
-    private static String handleWordsTitle(
-            BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
-        if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            return handleOther(value, modifier, locale);
-        }
-
-        String result = handleWordsLower(value, modifier, locale);
         return toTitleCaseWords(result);
     }
 
