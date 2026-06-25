@@ -243,10 +243,9 @@ public class ArrayItem implements Item {
     }
 
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
-            result += getItemAt(i).hashCode();
+            result = 31 * result + getItemAt(i).hashCode();
         }
         return result;
     }
