@@ -69,7 +69,7 @@ public class JavaAPITest {
             Assert.assertTrue(iterator.hasNext());
             Item item = iterator.next();
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
@@ -94,7 +94,7 @@ public class JavaAPITest {
             Assert.assertTrue(iterator.hasNext());
             Item item = iterator.next();
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
@@ -117,7 +117,7 @@ public class JavaAPITest {
         for (int i = 1; i <= 5; ++i) {
             Item item = list.get(i - 1);
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
