@@ -84,10 +84,9 @@ public class Prolog extends Node {
 
     public boolean hasContextItemDeclaration() {
         for (Node d : this.declarations) {
-            if (!(d instanceof VariableDeclaration)) {
+            if (!(d instanceof VariableDeclaration vd)) {
                 continue;
             }
-            VariableDeclaration vd = (VariableDeclaration) d;
             if (vd.getVariableName().equals(Name.CONTEXT_ITEM)) {
                 return true;
             }
@@ -146,4 +145,3 @@ public class Prolog extends Node {
         return null;
     }
 }
-

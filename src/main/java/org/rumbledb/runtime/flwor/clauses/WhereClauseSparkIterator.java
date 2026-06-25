@@ -211,15 +211,13 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
-        if (!(this.child instanceof CountClauseSparkIterator)) {
+        if (!(this.child instanceof CountClauseSparkIterator countClauseIterator)) {
             return null;
         }
-        CountClauseSparkIterator countClauseIterator = (CountClauseSparkIterator) this.child;
         Name countVariable = countClauseIterator.getVariableName();
-        if (!(this.expression instanceof ComparisonIterator)) {
+        if (!(this.expression instanceof ComparisonIterator comparisonIterator)) {
             return null;
         }
-        ComparisonIterator comparisonIterator = (ComparisonIterator) this.expression;
         if (
             !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.VC_LE)
                 &&
@@ -228,10 +226,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         RuntimeIterator left = comparisonIterator.getLeftIterator();
-        if (!(left instanceof VariableReferenceIterator)) {
+        if (!(left instanceof VariableReferenceIterator varRef)) {
             return null;
         }
-        VariableReferenceIterator varRef = (VariableReferenceIterator) left;
         if (!varRef.getVariableName().equals(countVariable)) {
             return null;
         }

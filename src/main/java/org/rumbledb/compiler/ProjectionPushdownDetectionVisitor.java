@@ -205,11 +205,11 @@ public class ProjectionPushdownDetectionVisitor
 
     @Override
     public ReferenceMap visitObjectLookupExpression(ObjectLookupExpression expression, ReferenceMap argument) {
-        if (expression.getLookupExpression() instanceof StringLiteralExpression) {
+        if (expression.getLookupExpression() instanceof StringLiteralExpression stringLiteralExpr) {
             ReferenceMap map = new ReferenceMap();
             map.add(
                 Name.createVariableInNoNamespace(
-                    ((StringLiteralExpression) expression.getLookupExpression()).getValue()
+                    stringLiteralExpr.getValue()
                 ),
                 argument
             );

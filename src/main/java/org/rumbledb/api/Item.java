@@ -1357,10 +1357,9 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean physicalEquals(Object other) {
-        if (!(other instanceof Item)) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item otherItem = (Item) other;
         if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
             return System.identityHashCode(this) == System.identityHashCode(otherItem);
         }
