@@ -28,7 +28,6 @@ public class gYearMonthItem implements Item {
     );
 
 
-    @SuppressWarnings("unused")
     public gYearMonthItem() {
         super();
     }

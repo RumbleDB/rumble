@@ -30,7 +30,6 @@ public class gMonthDayItem implements Item {
     private int day;
     private ZoneOffset offset;
 
-    @SuppressWarnings("unused")
     public gMonthDayItem() {
         super();
     }

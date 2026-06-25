@@ -25,7 +25,6 @@ public class YearMonthDurationItem implements Item {
     private Period value;
     Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
-    @SuppressWarnings("unused")
     public YearMonthDurationItem() {
         super();
     }
