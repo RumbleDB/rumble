@@ -169,8 +169,14 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 i = classResult.endIndex;
                 continue;
             }
-            if (isAsciiLetter(current)) {
-                result.append('[').append(current).append(swapAsciiCase(current)).append(']');
+            if (Character.isHighSurrogate(current) && i + 1 < pattern.length() && Character.isLowSurrogate(pattern.charAt(i + 1))) {
+                int codePoint = Character.toCodePoint(current, pattern.charAt(i + 1));
+                result.append(expandLiteralCodePoint(codePoint));
+                i++;
+                continue;
+            }
+            if (hasCaseVariant(current)) {
+                result.append(expandLiteralCodePoint(current));
                 continue;
             }
             result.append(current);
@@ -245,14 +251,10 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return token.text;
         }
         char current = token.text.charAt(0);
-        if (!isAsciiLetter(current)) {
+        if (!hasCaseVariant(current)) {
             return token.text;
         }
-        char opposite = swapAsciiCase(current);
-        if (opposite == current) {
-            return token.text;
-        }
-        return new StringBuilder(2).append(current).append(opposite).toString();
+        return expandLiteralCodePoint(current);
     }
 
     private static String expandRange(int left, int right) {
@@ -279,7 +281,49 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 .appendCodePoint(toAsciiUpper(right))
                 .toString();
         }
+        int lowerLeft = Character.toLowerCase(left);
+        int lowerRight = Character.toLowerCase(right);
+        if ((lowerLeft != left || lowerRight != right) && lowerLeft <= lowerRight) {
+            return new StringBuilder()
+                .appendCodePoint(left)
+                .append('-')
+                .appendCodePoint(right)
+                .appendCodePoint(lowerLeft)
+                .append('-')
+                .appendCodePoint(lowerRight)
+                .toString();
+        }
+        int upperLeft = Character.toUpperCase(left);
+        int upperRight = Character.toUpperCase(right);
+        if ((upperLeft != left || upperRight != right) && upperLeft <= upperRight) {
+            return new StringBuilder()
+                .appendCodePoint(left)
+                .append('-')
+                .appendCodePoint(right)
+                .appendCodePoint(upperLeft)
+                .append('-')
+                .appendCodePoint(upperRight)
+                .toString();
+        }
         return new StringBuilder().appendCodePoint(left).append('-').appendCodePoint(right).toString();
+    }
+
+    private static String expandLiteralCodePoint(int codePoint) {
+        int lower = Character.toLowerCase(codePoint);
+        int upper = Character.toUpperCase(codePoint);
+        if (lower == upper) {
+            return new StringBuilder().appendCodePoint(codePoint).toString();
+        }
+        return new StringBuilder()
+            .append('[')
+            .appendCodePoint(lower)
+            .appendCodePoint(upper)
+            .append(']')
+            .toString();
+    }
+
+    private static boolean hasCaseVariant(int codePoint) {
+        return Character.toLowerCase(codePoint) != Character.toUpperCase(codePoint);
     }
 
     private static ClassToken readClassToken(String pattern, int startIndex, boolean firstToken) {
@@ -335,16 +379,6 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static boolean isAsciiLowercase(int codePoint) {
         return codePoint >= 'a' && codePoint <= 'z';
-    }
-
-    private static char swapAsciiCase(char current) {
-        if (isAsciiUppercase(current)) {
-            return (char) toAsciiLower(current);
-        }
-        if (isAsciiLowercase(current)) {
-            return (char) toAsciiUpper(current);
-        }
-        return current;
     }
 
     private static int toAsciiLower(int codePoint) {
