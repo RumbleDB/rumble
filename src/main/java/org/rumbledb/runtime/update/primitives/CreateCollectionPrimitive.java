@@ -101,7 +101,7 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
             // Error handling for duplicate create targets across formats.
             if (
                 e instanceof TableAlreadyExistsException
-                    || "DELTA_PATH_EXISTS".equals(e.getErrorClass())
+                    || "DELTA_PATH_EXISTS".equals(e.getCondition())
             ) {
                 throw new TooManyCollectionCreationsOnSameTargetException(
                         this.collection.getLogicalName(),
