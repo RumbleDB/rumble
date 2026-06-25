@@ -90,10 +90,8 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             pattern = Pattern.quote(pattern);
         }
         if ((flags & Pattern.CASE_INSENSITIVE) != 0 && !quote) {
-            if (containsCaseInsensitiveCharacterClassEdgeCase(pattern)) {
-                pattern = normalizeCaseInsensitivePattern(pattern);
-                flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-            }
+            pattern = normalizeCaseInsensitivePattern(pattern);
+            flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
         }
         try {
             Matcher matcher = Pattern.compile(pattern, flags).matcher(stringItem.getStringValue());
@@ -105,52 +103,6 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
-    }
-
-    private static boolean containsCaseInsensitiveCharacterClassEdgeCase(String pattern) {
-        for (int i = 0; i < pattern.length(); i++) {
-            char current = pattern.charAt(i);
-            if (current == '\\' && i + 1 < pattern.length()) {
-                if ((pattern.charAt(i + 1) == 'p' || pattern.charAt(i + 1) == 'P') && i + 2 < pattern.length()) {
-                    i = skipUnicodeEscape(pattern, i);
-                } else {
-                    i++;
-                }
-                continue;
-            }
-            if (current == '[') {
-                int endIndex = findCharacterClassEnd(pattern, i);
-                if (endIndex > i + 1) {
-                    int contentStart = i + 1;
-                    if (pattern.charAt(contentStart) == '^') {
-                        return true;
-                    }
-                    if (pattern.substring(contentStart, endIndex).contains("-[")) {
-                        return true;
-                    }
-                }
-                i = endIndex;
-            }
-        }
-        return false;
-    }
-
-    private static int findCharacterClassEnd(String pattern, int startIndex) {
-        int index = startIndex + 1;
-        boolean firstToken = true;
-        while (index < pattern.length()) {
-            if (pattern.charAt(index) == ']' && !firstToken) {
-                return index;
-            }
-            if (pattern.charAt(index) == '\\' && index + 1 < pattern.length()) {
-                EscapedToken escapedToken = readEscapedToken(pattern, index);
-                index = escapedToken.endIndex + 1;
-            } else {
-                index++;
-            }
-            firstToken = false;
-        }
-        return startIndex;
     }
 
     private static String normalizeCaseInsensitivePattern(String pattern) {
@@ -262,54 +214,71 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static String expandRange(int left, int right) {
+        StringBuilder result = new StringBuilder();
         if (left > right) {
-            return new StringBuilder().appendCodePoint(left).append('-').appendCodePoint(right).toString();
+            result.appendCodePoint(left).append('-').appendCodePoint(right);
+            appendSpecialCaseClosure(result, left, right);
+            return result.toString();
         }
         if (isAsciiUppercase(left) && isAsciiUppercase(right)) {
-            return new StringBuilder()
+            result.append(
+                new StringBuilder()
                 .appendCodePoint(left)
                 .append('-')
                 .appendCodePoint(right)
                 .appendCodePoint(toAsciiLower(left))
                 .append('-')
                 .appendCodePoint(toAsciiLower(right))
-                .toString();
+            );
+            appendSpecialCaseClosure(result, left, right);
+            return result.toString();
         }
         if (isAsciiLowercase(left) && isAsciiLowercase(right)) {
-            return new StringBuilder()
+            result.append(
+                new StringBuilder()
                 .appendCodePoint(left)
                 .append('-')
                 .appendCodePoint(right)
                 .appendCodePoint(toAsciiUpper(left))
                 .append('-')
                 .appendCodePoint(toAsciiUpper(right))
-                .toString();
+            );
+            appendSpecialCaseClosure(result, left, right);
+            return result.toString();
         }
         int lowerLeft = Character.toLowerCase(left);
         int lowerRight = Character.toLowerCase(right);
         if ((lowerLeft != left || lowerRight != right) && lowerLeft <= lowerRight) {
-            return new StringBuilder()
+            result.append(
+                new StringBuilder()
                 .appendCodePoint(left)
                 .append('-')
                 .appendCodePoint(right)
                 .appendCodePoint(lowerLeft)
                 .append('-')
                 .appendCodePoint(lowerRight)
-                .toString();
+            );
+            appendSpecialCaseClosure(result, left, right);
+            return result.toString();
         }
         int upperLeft = Character.toUpperCase(left);
         int upperRight = Character.toUpperCase(right);
         if ((upperLeft != left || upperRight != right) && upperLeft <= upperRight) {
-            return new StringBuilder()
+            result.append(
+                new StringBuilder()
                 .appendCodePoint(left)
                 .append('-')
                 .appendCodePoint(right)
                 .appendCodePoint(upperLeft)
                 .append('-')
                 .appendCodePoint(upperRight)
-                .toString();
+            );
+            appendSpecialCaseClosure(result, left, right);
+            return result.toString();
         }
-        return new StringBuilder().appendCodePoint(left).append('-').appendCodePoint(right).toString();
+        result.appendCodePoint(left).append('-').appendCodePoint(right);
+        appendSpecialCaseClosure(result, left, right);
+        return result.toString();
     }
 
     private static String expandLiteralCodePoint(int codePoint) {
@@ -318,12 +287,12 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (lower == upper) {
             return new StringBuilder().appendCodePoint(codePoint).toString();
         }
-        return new StringBuilder()
+        StringBuilder result = new StringBuilder()
             .append('[')
             .appendCodePoint(lower)
-            .appendCodePoint(upper)
-            .append(']')
-            .toString();
+            .appendCodePoint(upper);
+        appendLiteralSpecialCaseClosure(result, codePoint);
+        return result.append(']').toString();
     }
 
     private static boolean hasCaseVariant(int codePoint) {
@@ -352,6 +321,49 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return new EscapedToken(pattern.substring(startIndex, endIndex + 1), endIndex);
         }
         return new EscapedToken(pattern.substring(startIndex, startIndex + 2), startIndex + 1);
+    }
+
+    private static void appendSpecialCaseClosure(StringBuilder result, int left, int right) {
+        appendSpecialCaseCodePoint(result, left, right, 0x212A, 'K', 'k');
+        appendSpecialCaseCodePoint(result, left, right, 0x017F, 'S', 's');
+    }
+
+    private static void appendLiteralSpecialCaseClosure(StringBuilder result, int codePoint) {
+        appendLiteralSpecialCaseCodePoint(result, codePoint, 0x212A, 'K', 'k');
+        appendLiteralSpecialCaseCodePoint(result, codePoint, 0x017F, 'S', 's');
+    }
+
+    private static void appendSpecialCaseCodePoint(
+            StringBuilder result,
+            int left,
+            int right,
+            int specialCodePoint,
+            int upperEquivalent,
+            int lowerEquivalent
+    ) {
+        if (withinRange(upperEquivalent, left, right) || withinRange(lowerEquivalent, left, right)) {
+            result.appendCodePoint(specialCodePoint);
+        }
+    }
+
+    private static void appendLiteralSpecialCaseCodePoint(
+            StringBuilder result,
+            int codePoint,
+            int specialCodePoint,
+            int upperEquivalent,
+            int lowerEquivalent
+    ) {
+        if (
+            codePoint == upperEquivalent
+                || codePoint == lowerEquivalent
+                || codePoint == specialCodePoint
+        ) {
+            result.appendCodePoint(specialCodePoint);
+        }
+    }
+
+    private static boolean withinRange(int codePoint, int left, int right) {
+        return codePoint >= Math.min(left, right) && codePoint <= Math.max(left, right);
     }
 
     private static String stripCharacterClassBrackets(String characterClass) {
