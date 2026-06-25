@@ -2983,7 +2983,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        Clause clause = null;
+        Clause lastClause = null;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         boolean isUniversal = false;
         if (ctx.ev == null) {
@@ -3010,10 +3010,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     varExpression,
                     createMetadataFromContext(currentVariable)
             );
-            if (clause != null) {
-                clause.chainWith(newClause);
+            if (lastClause != null) {
+                lastClause.chainWith(newClause);
             }
-            clause = newClause;
+            lastClause = newClause;
+        }
+        if (lastClause == null) {
+            throw new OurBadException("A quantified expression must bind at least one variable.");
         }
         WhereClause whereClause = null;
         if (!isUniversal) {
@@ -3024,7 +3027,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx.exprSingle())
             );
         }
-        clause.chainWith(whereClause);
+        lastClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
                 new NullLiteralExpression(createMetadataFromContext(ctx)),
                 createMetadataFromContext(ctx)
