@@ -14,6 +14,10 @@ import java.util.List;
 
 public abstract class AxisIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
+        Item::getXmlDocumentPosition,
+        Comparator.nullsLast(Comparator.naturalOrder())
+    );
     protected List<Item> results;
     protected int resultCounter = 0;
     protected Item nextResult;
@@ -36,7 +40,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
             // Remove duplicates
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
             // Sort values in document order.
-            this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+            this.results.sort(DOCUMENT_ORDER_COMPARATOR);
         }
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);
