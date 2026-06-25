@@ -50,7 +50,13 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
             @Override
             public Item next() {
                 JsonReader object = new JsonReader(new StringReader(stringIterator.next()));
-                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata, mutable);
+                return ItemParser.getItemFromObject(
+                    object,
+                    true,
+                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                    JSONSyntaxToItemMapper.this.metadata,
+                    JSONSyntaxToItemMapper.this.mutable
+                );
             }
 
             @Override

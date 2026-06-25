@@ -62,10 +62,10 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     protected DescendentSequentialProperties defaultAction(Node node, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = this.visitDescendants(node, argument);
-        if (node instanceof Expression) {
-            ((Expression) node).setSequential(result.isSequential());
-        } else if (node instanceof Statement) {
-            ((Statement) node).setSequential(result.isSequential());
+        if (node instanceof Expression expression) {
+            expression.setSequential(result.isSequential());
+        } else if (node instanceof Statement statement) {
+            statement.setSequential(result.isSequential());
         }
         return result;
     }
