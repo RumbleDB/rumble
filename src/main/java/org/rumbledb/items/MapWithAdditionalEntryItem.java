@@ -373,10 +373,9 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        if (!(otherItem instanceof Item other)) {
             return false;
         }
-        Item other = (Item) otherItem;
         if (!other.isObject()) {
             return false;
         }

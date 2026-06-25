@@ -57,10 +57,10 @@ public class IntegerItem implements Item {
 
     @Override
     public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+        if (otherItem instanceof Item other) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                other,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

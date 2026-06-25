@@ -99,10 +99,9 @@ public class ObjectItem implements Item {
     }
 
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        if (!(otherItem instanceof Item o)) {
             return false;
         }
-        Item o = (Item) otherItem;
         if (!o.isObject()) {
             return false;
         }
@@ -160,8 +159,7 @@ public class ObjectItem implements Item {
                     } else {
                         throw new RuntimeException("Unexpected list size found.");
                     }
-                } else if (keyValuePairs.get(key) instanceof Item) {
-                    Item value = (Item) keyValuePairs.get(key);
+                } else if (keyValuePairs.get(key) instanceof Item value) {
                     valueList.add(value);
                 } else {
                     throw new RuntimeException("Unexpected value type found.");

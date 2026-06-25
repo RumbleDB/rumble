@@ -243,12 +243,10 @@ public class JSoundDataFrame implements Serializable {
         if (dataType instanceof VariantType) {
             return true;
         }
-        if (dataType instanceof ArrayType) {
-            ArrayType arrayType = (ArrayType) dataType;
+        if (dataType instanceof ArrayType arrayType) {
             return containsVariantTypeInSchema(arrayType.elementType());
         }
-        if (dataType instanceof StructType) {
-            StructType structType = (StructType) dataType;
+        if (dataType instanceof StructType structType) {
             for (StructField field : structType.fields()) {
                 if (containsVariantTypeInSchema(field.dataType())) {
                     return true;

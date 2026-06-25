@@ -73,10 +73,9 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        if (!(otherItem instanceof Item o)) {
             return false;
         }
-        Item o = (Item) otherItem;
         if (!o.isArray()) {
             return false;
         }

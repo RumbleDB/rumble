@@ -149,10 +149,9 @@ public class NamespaceItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem)) {
+        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
             return false;
         }
-        NamespaceItem otherNamespaceItem = (NamespaceItem) other;
         return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
     }
 
@@ -266,4 +265,3 @@ public class NamespaceItem implements Item {
         return Collections.emptyList();
     }
 }
-

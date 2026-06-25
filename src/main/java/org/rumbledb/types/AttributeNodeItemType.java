@@ -50,10 +50,10 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
+        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
             return false;
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -63,10 +63,9 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof AttributeNodeItemType)) {
+        if (!(otherType instanceof AttributeNodeItemType other)) {
             return false;
         }
-        AttributeNodeItemType other = (AttributeNodeItemType) otherType;
         return Objects.equals(this.catalogueName, other.catalogueName)
             && Objects.equals(this.nodeName, other.nodeName);
     }
@@ -109,10 +108,9 @@ public class AttributeNodeItemType implements ItemType {
         ) {
             return true;
         }
-        if (!(superType instanceof AttributeNodeItemType)) {
+        if (!(superType instanceof AttributeNodeItemType other)) {
             return false;
         }
-        AttributeNodeItemType other = (AttributeNodeItemType) superType;
         if (other.isWildcardAttribute()) {
             return true;
         }

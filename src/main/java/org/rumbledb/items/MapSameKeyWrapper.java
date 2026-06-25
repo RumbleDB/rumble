@@ -82,10 +82,9 @@ public final class MapSameKeyWrapper {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof MapSameKeyWrapper)) {
+        if (!(o instanceof MapSameKeyWrapper other)) {
             return false;
         }
-        MapSameKeyWrapper other = (MapSameKeyWrapper) o;
         return MapAtomicSameKey.sameKey(this.key, other.key);
     }
 

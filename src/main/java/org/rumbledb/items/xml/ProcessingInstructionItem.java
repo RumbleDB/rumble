@@ -99,10 +99,9 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ProcessingInstructionItem)) {
+        if (!(other instanceof ProcessingInstructionItem otherItem)) {
             return false;
         }
-        ProcessingInstructionItem otherItem = (ProcessingInstructionItem) other;
         return this.getXmlDocumentPosition().equals(otherItem.getXmlDocumentPosition());
     }
 
@@ -236,4 +235,3 @@ public class ProcessingInstructionItem implements Item {
         return Collections.emptyList();
     }
 }
-

@@ -111,8 +111,8 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return elementKindTest(node);
         } else if (this.nodeTest instanceof NameTest) {
             return nameKindTest(node);
-        } else if (this.nodeTest instanceof DocumentTest) {
-            return documentKindTest(node);
+        } else if (this.nodeTest instanceof DocumentTest documentTest) {
+            return documentKindTest(node, documentTest);
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported node test: " + this.nodeTest,
@@ -131,8 +131,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         }
     }
 
-    private Item documentKindTest(Item node) {
-        DocumentTest documentTest = (DocumentTest) this.nodeTest;
+    private Item documentKindTest(Item node, DocumentTest documentTest) {
         if (!node.isDocumentNode()) {
             return null;
         }

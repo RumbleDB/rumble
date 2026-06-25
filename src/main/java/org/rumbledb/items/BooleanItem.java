@@ -88,10 +88,9 @@ public class BooleanItem implements Item {
     }
 
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+        if (!(otherItem instanceof Item o)) {
             return false;
         }
-        Item o = (Item) otherItem;
         if (!o.isBoolean()) {
             return false;
         }

@@ -155,10 +155,9 @@ public class AttributeItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof AttributeItem)) {
+        if (!(other instanceof AttributeItem otherAttributeItem)) {
             return false;
         }
-        AttributeItem otherAttributeItem = (AttributeItem) other;
         return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
     }
 
