@@ -444,11 +444,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
         }
+        List<StringLiteralExpression> stringLiteralKeys = new ArrayList<>();
+        if (expression.getKeys() != null) {
+            for (Expression key : expression.getKeys()) {
+                if (!(key instanceof StringLiteralExpression stringLiteralKey)) {
+                    stringLiteralKeys.clear();
+                    break;
+                }
+                stringLiteralKeys.add(stringLiteralKey);
+            }
+        }
         if (
             expression.getKeys() != null
-                && expression.getKeys()
-                    .stream()
-                    .allMatch(key -> key instanceof StringLiteralExpression)
+                && stringLiteralKeys.size() == expression.getKeys().size()
                 && expression.getValues()
                     .stream()
                     .map(Expression::getStaticSequenceType)
@@ -457,9 +465,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(
                 new SequenceType(
                         ItemTypeFactory.createAnonymousObjectType(
-                            expression.getKeys()
+                            stringLiteralKeys
                                 .stream()
-                                .map(key -> ((StringLiteralExpression) key).getValue())
+                                .map(StringLiteralExpression::getValue)
                                 .collect(Collectors.toList()),
                             expression.getValues()
                                 .stream()
