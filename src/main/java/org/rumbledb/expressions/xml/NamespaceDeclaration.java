@@ -52,7 +52,7 @@ public class NamespaceDeclaration {
         return this.metadata;
     }
 
-    public void serializeToJSONiq(StringBuffer sb) {
+    public void serializeToJSONiq(StringBuilder sb) {
         if (this.prefix == null || this.prefix.isEmpty()) {
             sb.append("xmlns=\"");
         } else {

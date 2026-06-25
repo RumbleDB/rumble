@@ -95,7 +95,7 @@ public class ArrayConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         if (this.isFixedSlotsArrayConstructor) {
             sb.append("[");

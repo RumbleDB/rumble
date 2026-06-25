@@ -59,7 +59,7 @@ public class RangeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         // TODO Check if it makes sense
         indentIt(sb, indent);
         sb.append("(\n");

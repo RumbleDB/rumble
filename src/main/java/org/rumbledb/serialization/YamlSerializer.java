@@ -22,13 +22,13 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         YAMLFactory yamlFactory = new YAMLFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {

@@ -78,7 +78,7 @@ public class FieldDescriptor implements Serializable, KryoSerializable {
 
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("Field " + this.name + " of type " + this.type);
         if (this.isRequired()) {
             sb.append(", required");

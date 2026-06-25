@@ -62,7 +62,7 @@ public class DeleteIndexFromCollectionExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("delete ");
         sb.append(this.isFirst ? "first " : "last ");

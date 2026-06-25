@@ -519,12 +519,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public void printToStandardError() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         this.print(sb, 0);
         System.err.println(sb);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
