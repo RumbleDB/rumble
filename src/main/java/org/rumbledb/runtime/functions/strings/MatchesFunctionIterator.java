@@ -307,7 +307,11 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static String stripCharacterClassBrackets(String characterClass) {
-        if (characterClass.length() >= 2 && characterClass.charAt(0) == '[' && characterClass.charAt(characterClass.length() - 1) == ']') {
+        if (
+            characterClass.length() >= 2
+                && characterClass.charAt(0) == '['
+                && characterClass.charAt(characterClass.length() - 1) == ']'
+        ) {
             return characterClass.substring(1, characterClass.length() - 1);
         }
         return characterClass;
