@@ -375,12 +375,11 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
             RuntimeIterator iterator = candidateIterators.pop();
-            if (iterator instanceof AndOperationIterator) {
-                AndOperationIterator andIterator = ((AndOperationIterator) iterator);
+            if (iterator instanceof AndOperationIterator andOperationIterator) {
+                AndOperationIterator andIterator = andOperationIterator;
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
-            } else if (iterator instanceof ComparisonIterator) {
-                ComparisonIterator comparisonIterator = (ComparisonIterator) iterator;
+            } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
                     RuntimeIterator lhs = comparisonIterator.getLeftIterator();
                     RuntimeIterator rhs = comparisonIterator.getRightIterator();

@@ -476,8 +476,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
             RuntimeIterator iterator = candidateIterators.pop();
-            if (iterator instanceof AndOperationIterator) {
-                AndOperationIterator andIterator = (AndOperationIterator) iterator;
+            if (iterator instanceof AndOperationIterator andIterator) {
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
                 continue;

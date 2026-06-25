@@ -875,23 +875,23 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.ExprSimpleContext) {
-            return this.visitExprSimple((JsoniqParser.ExprSimpleContext) content);
+        if (content instanceof JsoniqParser.ExprSimpleContext exprSimpleContext) {
+            return this.visitExprSimple(exprSimpleContext);
         }
-        if (content instanceof JsoniqParser.FlworExprContext) {
-            return this.visitFlworExpr((JsoniqParser.FlworExprContext) content);
+        if (content instanceof JsoniqParser.FlworExprContext flworExprContext) {
+            return this.visitFlworExpr(flworExprContext);
         }
-        if (content instanceof JsoniqParser.IfExprContext) {
-            return this.visitIfExpr((JsoniqParser.IfExprContext) content);
+        if (content instanceof JsoniqParser.IfExprContext ifExprContext) {
+            return this.visitIfExpr(ifExprContext);
         }
-        if (content instanceof JsoniqParser.SwitchExprContext) {
-            return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
+        if (content instanceof JsoniqParser.SwitchExprContext switchExprContext) {
+            return this.visitSwitchExpr(switchExprContext);
         }
-        if (content instanceof JsoniqParser.TypeswitchExprContext) {
-            return this.visitTypeswitchExpr((JsoniqParser.TypeswitchExprContext) content);
+        if (content instanceof JsoniqParser.TypeswitchExprContext typeswitchExprContext) {
+            return this.visitTypeswitchExpr(typeswitchExprContext);
         }
-        if (content instanceof JsoniqParser.TryCatchExprContext) {
-            return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
+        if (content instanceof JsoniqParser.TryCatchExprContext tryCatchExprContext) {
+            return this.visitTryCatchExpr(tryCatchExprContext);
         }
         throw new OurBadException("Unrecognized ExprSingle:" + content.getClass().getName());
     }
@@ -901,54 +901,54 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitExprSimple(JsoniqParser.ExprSimpleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.OrExprContext) {
-            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        if (content instanceof JsoniqParser.OrExprContext orExprContext) {
+            return this.visitOrExpr(orExprContext);
         }
-        if (content instanceof JsoniqParser.QuantifiedExprContext) {
-            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
+        if (content instanceof JsoniqParser.QuantifiedExprContext quantifiedExprContext) {
+            return this.visitQuantifiedExpr(quantifiedExprContext);
         }
-        if (content instanceof JsoniqParser.DeleteExprContext) {
-            return this.visitDeleteExpr((JsoniqParser.DeleteExprContext) content);
+        if (content instanceof JsoniqParser.DeleteExprContext deleteExprContext) {
+            return this.visitDeleteExpr(deleteExprContext);
         }
-        if (content instanceof JsoniqParser.InsertExprContext) {
-            return this.visitInsertExpr((JsoniqParser.InsertExprContext) content);
+        if (content instanceof JsoniqParser.InsertExprContext insertExprContext) {
+            return this.visitInsertExpr(insertExprContext);
         }
-        if (content instanceof JsoniqParser.ReplaceExprContext) {
-            return this.visitReplaceExpr((JsoniqParser.ReplaceExprContext) content);
+        if (content instanceof JsoniqParser.ReplaceExprContext replaceExprContext) {
+            return this.visitReplaceExpr(replaceExprContext);
         }
-        if (content instanceof JsoniqParser.RenameExprContext) {
-            return this.visitRenameExpr((JsoniqParser.RenameExprContext) content);
+        if (content instanceof JsoniqParser.RenameExprContext renameExprContext) {
+            return this.visitRenameExpr(renameExprContext);
         }
-        if (content instanceof JsoniqParser.AppendExprContext) {
-            return this.visitAppendExpr((JsoniqParser.AppendExprContext) content);
+        if (content instanceof JsoniqParser.AppendExprContext appendExprContext) {
+            return this.visitAppendExpr(appendExprContext);
         }
-        if (content instanceof JsoniqParser.TransformExprContext) {
-            return this.visitTransformExpr((JsoniqParser.TransformExprContext) content);
+        if (content instanceof JsoniqParser.TransformExprContext transformExprContext) {
+            return this.visitTransformExpr(transformExprContext);
         }
-        if (content instanceof JsoniqParser.PathExprContext) {
-            return this.visitPathExpr((JsoniqParser.PathExprContext) content);
+        if (content instanceof JsoniqParser.PathExprContext pathExprContext) {
+            return this.visitPathExpr(pathExprContext);
         }
 
-        if (content instanceof JsoniqParser.CreateCollectionExprContext) {
-            return this.visitCreateCollectionExpr((JsoniqParser.CreateCollectionExprContext) content);
+        if (content instanceof JsoniqParser.CreateCollectionExprContext createCollectionExprContext) {
+            return this.visitCreateCollectionExpr(createCollectionExprContext);
         }
-        if (content instanceof JsoniqParser.DeleteIndexExprContext) {
-            return this.visitDeleteIndexExpr((JsoniqParser.DeleteIndexExprContext) content);
+        if (content instanceof JsoniqParser.DeleteIndexExprContext deleteIndexExprContext) {
+            return this.visitDeleteIndexExpr(deleteIndexExprContext);
         }
-        if (content instanceof JsoniqParser.DeleteSearchExprContext) {
-            return this.visitDeleteSearchExpr((JsoniqParser.DeleteSearchExprContext) content);
+        if (content instanceof JsoniqParser.DeleteSearchExprContext deleteSearchExprContext) {
+            return this.visitDeleteSearchExpr(deleteSearchExprContext);
         }
-        if (content instanceof JsoniqParser.EditCollectionExprContext) {
-            return this.visitEditCollectionExpr((JsoniqParser.EditCollectionExprContext) content);
+        if (content instanceof JsoniqParser.EditCollectionExprContext editCollectionExprContext) {
+            return this.visitEditCollectionExpr(editCollectionExprContext);
         }
-        if (content instanceof JsoniqParser.InsertIndexExprContext) {
-            return this.visitInsertIndexExpr((JsoniqParser.InsertIndexExprContext) content);
+        if (content instanceof JsoniqParser.InsertIndexExprContext insertIndexExprContext) {
+            return this.visitInsertIndexExpr(insertIndexExprContext);
         }
-        if (content instanceof JsoniqParser.InsertSearchExprContext) {
-            return this.visitInsertSearchExpr((JsoniqParser.InsertSearchExprContext) content);
+        if (content instanceof JsoniqParser.InsertSearchExprContext insertSearchExprContext) {
+            return this.visitInsertSearchExpr(insertSearchExprContext);
         }
-        if (content instanceof JsoniqParser.TruncateCollectionExprContext) {
-            return this.visitTruncateCollectionExpr((JsoniqParser.TruncateCollectionExprContext) content);
+        if (content instanceof JsoniqParser.TruncateCollectionExprContext truncateCollectionExprContext) {
+            return this.visitTruncateCollectionExpr(truncateCollectionExprContext);
         }
         throw new OurBadException("Translation Visitor: Unrecognized ExprSimple.");
     }
@@ -980,18 +980,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         Clause previousFLWORClause = clause.getLastClause();
 
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            if (child instanceof JsoniqParser.ForClauseContext) {
-                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
-            } else if (child instanceof JsoniqParser.LetClauseContext) {
-                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
-            } else if (child instanceof JsoniqParser.WhereClauseContext) {
-                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
-            } else if (child instanceof JsoniqParser.GroupByClauseContext) {
-                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
-            } else if (child instanceof JsoniqParser.OrderByClauseContext) {
-                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
-            } else if (child instanceof JsoniqParser.CountClauseContext) {
-                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+            if (child instanceof JsoniqParser.ForClauseContext forClauseContext) {
+                clause = (Clause) this.visitForClause(forClauseContext);
+            } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
+                clause = (Clause) this.visitLetClause(letClauseContext);
+            } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
+                clause = (Clause) this.visitWhereClause(whereClauseContext);
+            } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
+                clause = (Clause) this.visitGroupByClause(groupByClauseContext);
+            } else if (child instanceof JsoniqParser.OrderByClauseContext orderByClauseContext) {
+                clause = (Clause) this.visitOrderByClause(orderByClauseContext);
+            } else if (child instanceof JsoniqParser.CountClauseContext countClauseContext) {
+                clause = (Clause) this.visitCountClause(countClauseContext);
             } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
@@ -1582,11 +1582,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
-                if (lhs instanceof StepExpr) {
+                if (lhs instanceof StepExpr stepExpr) {
                     if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
-                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    stepExpr.getNodeTest().toString(),
                                     lhs.getMetadata()
                             )
                         );
@@ -1775,10 +1775,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
         Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression) {
-            return ((ObjectLookupExpression) mainExpression).getMainExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression) {
-            return ((ArrayLookupExpression) mainExpression).getMainExpression();
+        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
+            return objectLookupExpression.getMainExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
+            return arrayLookupExpression.getMainExpression();
         } else {
             throw new OurBadException("Unrecognized main expression found in update expression.");
         }
@@ -1786,10 +1786,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
         Expression mainExpression = (Expression) this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression) {
-            return ((ObjectLookupExpression) mainExpression).getLookupExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression) {
-            return ((ArrayLookupExpression) mainExpression).getLookupExpression();
+        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
+            return objectLookupExpression.getLookupExpression();
+        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
+            return arrayLookupExpression.getLookupExpression();
         } else {
             throw new OurBadException("Unrecognized main expression found in update expression.");
         }
@@ -1939,41 +1939,41 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.VarRefContext) {
-            return this.visitVarRef((JsoniqParser.VarRefContext) child);
+        if (child instanceof JsoniqParser.VarRefContext varRefContext) {
+            return this.visitVarRef(varRefContext);
         }
-        if (child instanceof JsoniqParser.ObjectConstructorContext) {
-            return this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
+        if (child instanceof JsoniqParser.ObjectConstructorContext objectConstructorContext) {
+            return this.visitObjectConstructor(objectConstructorContext);
         }
-        if (child instanceof JsoniqParser.ArrayConstructorContext) {
-            return this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
+        if (child instanceof JsoniqParser.ArrayConstructorContext arrayConstructorContext) {
+            return this.visitArrayConstructor(arrayConstructorContext);
         }
-        if (child instanceof JsoniqParser.ParenthesizedExprContext) {
-            return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
+        if (child instanceof JsoniqParser.ParenthesizedExprContext parenthesizedExprContext) {
+            return this.visitParenthesizedExpr(parenthesizedExprContext);
         }
-        if (child instanceof JsoniqParser.LiteralContext) {
-            return this.visitLiteral((JsoniqParser.LiteralContext) child);
+        if (child instanceof JsoniqParser.LiteralContext literalContext) {
+            return this.visitLiteral(literalContext);
         }
-        if (child instanceof JsoniqParser.ContextItemExprContext) {
-            return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
+        if (child instanceof JsoniqParser.ContextItemExprContext contextItemExprContext) {
+            return this.visitContextItemExpr(contextItemExprContext);
         }
-        if (child instanceof JsoniqParser.FunctionCallContext) {
-            return this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
+        if (child instanceof JsoniqParser.FunctionCallContext functionCallContext) {
+            return this.visitFunctionCall(functionCallContext);
         }
-        if (child instanceof JsoniqParser.FunctionItemExprContext) {
-            return this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
+        if (child instanceof JsoniqParser.FunctionItemExprContext functionItemExprContext) {
+            return this.visitFunctionItemExpr(functionItemExprContext);
         }
-        if (child instanceof JsoniqParser.BlockExprContext) {
-            return this.visitBlockExpr((JsoniqParser.BlockExprContext) child);
+        if (child instanceof JsoniqParser.BlockExprContext blockExprContext) {
+            return this.visitBlockExpr(blockExprContext);
         }
-        if (child instanceof JsoniqParser.UnaryLookupContext) {
+        if (child instanceof JsoniqParser.UnaryLookupContext unaryLookupContext) {
             return new UnaryLookupExpression(
-                    (Expression) this.visitUnaryLookup((JsoniqParser.UnaryLookupContext) child),
+                    (Expression) this.visitUnaryLookup(unaryLookupContext),
                     createMetadataFromContext(ctx)
             );
         }
-        if (child instanceof JsoniqParser.NodeConstructorContext) {
-            return this.visitNodeConstructor((JsoniqParser.NodeConstructorContext) child);
+        if (child instanceof JsoniqParser.NodeConstructorContext nodeConstructorContext) {
+            return this.visitNodeConstructor(nodeConstructorContext);
         }
         if (child instanceof JsoniqParser.NumericLiteralContext) {
             return this.visitLiteral((JsoniqParser.LiteralContext) child);
@@ -2050,11 +2050,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Node lhs = this.visitExprSingle(currentPair.lhs);
-                if (lhs instanceof StepExpr) {
+                if (lhs instanceof StepExpr stepExpr) {
                     if (this.moduleContext.getQueryLanguage().equals("jsoniq10")) {
                         keys.add(
                             new StringLiteralExpression(
-                                    ((StepExpr) lhs).getNodeTest().toString(),
+                                    stepExpr.getNodeTest().toString(),
                                     lhs.getMetadata()
                             )
                         );
@@ -2089,11 +2089,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.DirectConstructorContext) {
-            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
+        if (child instanceof JsoniqParser.DirectConstructorContext directConstructorContext) {
+            return this.visitDirectConstructor(directConstructorContext);
         }
-        if (child instanceof JsoniqParser.ComputedConstructorContext) {
-            return this.visitComputedConstructor((JsoniqParser.ComputedConstructorContext) child);
+        if (child instanceof JsoniqParser.ComputedConstructorContext computedConstructorContext) {
+            return this.visitComputedConstructor(computedConstructorContext);
         }
         throw new UnsupportedFeatureException(
                 "Node constructor not yet implemented",
@@ -2112,10 +2112,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
-        if (child instanceof JsoniqParser.DirElemConstructorOpenCloseContext) {
-            return this.visitDirElemConstructorOpenClose((JsoniqParser.DirElemConstructorOpenCloseContext) child);
-        } else if (child instanceof JsoniqParser.DirElemConstructorSingleTagContext) {
-            return this.visitDirElemConstructorSingleTag((JsoniqParser.DirElemConstructorSingleTagContext) child);
+        if (child instanceof JsoniqParser.DirElemConstructorOpenCloseContext dirElemConstructorOpenCloseContext) {
+            return this.visitDirElemConstructorOpenClose(dirElemConstructorOpenCloseContext);
+        } else if (
+            child instanceof JsoniqParser.DirElemConstructorSingleTagContext dirElemConstructorSingleTagContext
+        ) {
+            return this.visitDirElemConstructorSingleTag(dirElemConstructorSingleTagContext);
         } else if (ctx.PI() != null) {
             return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
         } else if (ctx.COMMENT() != null) {
@@ -2204,8 +2206,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.DirElemContentContext child : ctx.dirElemContent()) {
                 Expression childExpression = (Expression) this.visitDirElemContent(child);
 
-                if (childExpression instanceof TextNodeExpression) {
-                    TextNodeExpression textNode = (TextNodeExpression) childExpression;
+                if (childExpression instanceof TextNodeExpression textNode) {
 
                     // If the parent of a text node is not empty, the Text Node must not contain the zero-length
                     // string as its content.
@@ -2295,10 +2296,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.DirectConstructorContext) {
-            return this.visitDirectConstructor((JsoniqParser.DirectConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CommonContentContext) {
-            return this.visitCommonContent((JsoniqParser.CommonContentContext) child);
+        if (child instanceof JsoniqParser.DirectConstructorContext directConstructorContext) {
+            return this.visitDirectConstructor(directConstructorContext);
+        } else if (child instanceof JsoniqParser.CommonContentContext commonContentContext) {
+            return this.visitCommonContent(commonContentContext);
         } else {
             // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
             String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
@@ -2348,20 +2349,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitComputedConstructor(JsoniqParser.ComputedConstructorContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.CompDocConstructorContext) {
-            return this.visitCompDocConstructor((JsoniqParser.CompDocConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompElemConstructorContext) {
-            return this.visitCompElemConstructor((JsoniqParser.CompElemConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompPIConstructorContext) {
-            return this.visitCompPIConstructor((JsoniqParser.CompPIConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompTextConstructorContext) {
-            return this.visitCompTextConstructor((JsoniqParser.CompTextConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompCommentConstructorContext) {
-            return this.visitCompCommentConstructor((JsoniqParser.CompCommentConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompAttrConstructorContext) {
-            return this.visitCompAttrConstructor((JsoniqParser.CompAttrConstructorContext) child);
-        } else if (child instanceof JsoniqParser.CompNamespaceConstructorContext) {
-            return this.visitCompNamespaceConstructor((JsoniqParser.CompNamespaceConstructorContext) child);
+        if (child instanceof JsoniqParser.CompDocConstructorContext compDocConstructorContext) {
+            return this.visitCompDocConstructor(compDocConstructorContext);
+        } else if (child instanceof JsoniqParser.CompElemConstructorContext compElemConstructorContext) {
+            return this.visitCompElemConstructor(compElemConstructorContext);
+        } else if (child instanceof JsoniqParser.CompPIConstructorContext compPIConstructorContext) {
+            return this.visitCompPIConstructor(compPIConstructorContext);
+        } else if (child instanceof JsoniqParser.CompTextConstructorContext compTextConstructorContext) {
+            return this.visitCompTextConstructor(compTextConstructorContext);
+        } else if (child instanceof JsoniqParser.CompCommentConstructorContext compCommentConstructorContext) {
+            return this.visitCompCommentConstructor(compCommentConstructorContext);
+        } else if (child instanceof JsoniqParser.CompAttrConstructorContext compAttrConstructorContext) {
+            return this.visitCompAttrConstructor(compAttrConstructorContext);
+        } else if (child instanceof JsoniqParser.CompNamespaceConstructorContext compNamespaceConstructorContext) {
+            return this.visitCompNamespaceConstructor(compNamespaceConstructorContext);
         }
         throw new UnsupportedFeatureException("Computed constructor", createMetadataFromContext(ctx));
     }
@@ -2851,11 +2852,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.NamedFunctionRefContext) {
-            return this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
+        if (child instanceof JsoniqParser.NamedFunctionRefContext namedFunctionRefContext) {
+            return this.visitNamedFunctionRef(namedFunctionRefContext);
         }
-        if (child instanceof JsoniqParser.InlineFunctionExprContext) {
-            return this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
+        if (child instanceof JsoniqParser.InlineFunctionExprContext inlineFunctionExprContext) {
+            return this.visitInlineFunctionExpr(inlineFunctionExprContext);
         }
         throw new UnsupportedFeatureException(
                 "Function item expression not yet implemented",
@@ -3212,44 +3213,44 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitStatement(JsoniqParser.StatementContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.ApplyStatementContext) {
-            return this.visitApplyStatement((JsoniqParser.ApplyStatementContext) content);
+        if (content instanceof JsoniqParser.ApplyStatementContext applyStatementContext) {
+            return this.visitApplyStatement(applyStatementContext);
         }
-        if (content instanceof JsoniqParser.AssignStatementContext) {
-            return this.visitAssignStatement((JsoniqParser.AssignStatementContext) content);
+        if (content instanceof JsoniqParser.AssignStatementContext assignStatementContext) {
+            return this.visitAssignStatement(assignStatementContext);
         }
-        if (content instanceof JsoniqParser.BlockStatementContext) {
-            return this.visitBlockStatement((JsoniqParser.BlockStatementContext) content);
+        if (content instanceof JsoniqParser.BlockStatementContext blockStatementContext) {
+            return this.visitBlockStatement(blockStatementContext);
         }
-        if (content instanceof JsoniqParser.BreakStatementContext) {
-            return this.visitBreakStatement((JsoniqParser.BreakStatementContext) content);
+        if (content instanceof JsoniqParser.BreakStatementContext breakStatementContext) {
+            return this.visitBreakStatement(breakStatementContext);
         }
-        if (content instanceof JsoniqParser.ContinueStatementContext) {
-            return this.visitContinueStatement((JsoniqParser.ContinueStatementContext) content);
+        if (content instanceof JsoniqParser.ContinueStatementContext continueStatementContext) {
+            return this.visitContinueStatement(continueStatementContext);
         }
-        if (content instanceof JsoniqParser.ExitStatementContext) {
-            return this.visitExitStatement((JsoniqParser.ExitStatementContext) content);
+        if (content instanceof JsoniqParser.ExitStatementContext exitStatementContext) {
+            return this.visitExitStatement(exitStatementContext);
         }
-        if (content instanceof JsoniqParser.FlworStatementContext) {
-            return this.visitFlworStatement((JsoniqParser.FlworStatementContext) content);
+        if (content instanceof JsoniqParser.FlworStatementContext flworStatementContext) {
+            return this.visitFlworStatement(flworStatementContext);
         }
-        if (content instanceof JsoniqParser.IfStatementContext) {
-            return this.visitIfStatement((JsoniqParser.IfStatementContext) content);
+        if (content instanceof JsoniqParser.IfStatementContext ifStatementContext) {
+            return this.visitIfStatement(ifStatementContext);
         }
-        if (content instanceof JsoniqParser.SwitchStatementContext) {
-            return this.visitSwitchStatement((JsoniqParser.SwitchStatementContext) content);
+        if (content instanceof JsoniqParser.SwitchStatementContext switchStatementContext) {
+            return this.visitSwitchStatement(switchStatementContext);
         }
-        if (content instanceof JsoniqParser.TryCatchStatementContext) {
-            return this.visitTryCatchStatement((JsoniqParser.TryCatchStatementContext) content);
+        if (content instanceof JsoniqParser.TryCatchStatementContext tryCatchStatementContext) {
+            return this.visitTryCatchStatement(tryCatchStatementContext);
         }
-        if (content instanceof JsoniqParser.TypeSwitchStatementContext) {
-            return this.visitTypeSwitchStatement((JsoniqParser.TypeSwitchStatementContext) content);
+        if (content instanceof JsoniqParser.TypeSwitchStatementContext typeSwitchStatementContext) {
+            return this.visitTypeSwitchStatement(typeSwitchStatementContext);
         }
-        if (content instanceof JsoniqParser.VarDeclStatementContext) {
-            return this.visitVarDeclStatement((JsoniqParser.VarDeclStatementContext) content);
+        if (content instanceof JsoniqParser.VarDeclStatementContext varDeclStatementContext) {
+            return this.visitVarDeclStatement(varDeclStatementContext);
         }
-        if (content instanceof JsoniqParser.WhileStatementContext) {
-            return this.visitWhileStatement((JsoniqParser.WhileStatementContext) content);
+        if (content instanceof JsoniqParser.WhileStatementContext whileStatementContext) {
+            return this.visitWhileStatement(whileStatementContext);
         }
         throw new OurBadException("Unrecognized Statement.");
     }
@@ -3314,18 +3315,18 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         Clause lastFlowrClause = clause.getLastClause();
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
-            if (child instanceof JsoniqParser.ForClauseContext) {
-                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
-            } else if (child instanceof JsoniqParser.LetClauseContext) {
-                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
-            } else if (child instanceof JsoniqParser.WhereClauseContext) {
-                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
-            } else if (child instanceof JsoniqParser.GroupByClauseContext) {
-                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
-            } else if (child instanceof JsoniqParser.OrderByClauseContext) {
-                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
-            } else if (child instanceof JsoniqParser.CountClauseContext) {
-                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+            if (child instanceof JsoniqParser.ForClauseContext forClauseContext) {
+                clause = (Clause) this.visitForClause(forClauseContext);
+            } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
+                clause = (Clause) this.visitLetClause(letClauseContext);
+            } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
+                clause = (Clause) this.visitWhereClause(whereClauseContext);
+            } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
+                clause = (Clause) this.visitGroupByClause(groupByClauseContext);
+            } else if (child instanceof JsoniqParser.OrderByClauseContext orderByClauseContext) {
+                clause = (Clause) this.visitOrderByClause(orderByClauseContext);
+            } else if (child instanceof JsoniqParser.CountClauseContext countClauseContext) {
+                clause = (Clause) this.visitCountClause(countClauseContext);
             } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
@@ -3765,12 +3766,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // | SchemaAttributeTest | PITest | CommentTest | TextTest
     // | NamespaceNodeTest | AnyKindTest
     private NodeTest getKindTest(ParseTree kindTest) {
-        if (kindTest instanceof JsoniqParser.DocumentTestContext) {
+        if (kindTest instanceof JsoniqParser.DocumentTestContext docContext) {
             // XQuery 3.1 Section 2.5.5.3 - Element Test (used within DocumentTest)
             // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
             // document-node() matches any document node.
             // document-node(element(...)) matches a document node containing an element matching the ElementTest.
-            JsoniqParser.DocumentTestContext docContext = (JsoniqParser.DocumentTestContext) kindTest;
             if (docContext.schemaElementTest() != null) {
                 throw new UnsupportedFeatureException(
                         "Schema element tests within document-node() are not supported",
@@ -3781,7 +3781,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return new DocumentTest(null);
             }
             return new DocumentTest(getKindTest(docContext.elementTest()));
-        } else if (kindTest instanceof JsoniqParser.ElementTestContext) {
+        } else if (kindTest instanceof JsoniqParser.ElementTestContext elementContext) {
             // XQuery 3.1 Section 2.5.5.3 - Element Test
             // ElementTest ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
             // element() and element(*) match any single element node.
@@ -3789,7 +3789,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             // element(N, T) matches an element node whose name is N and whose type annotation is T.
             // element(*, T) matches any element node whose type annotation is T.
             // element(N, T?) also matches nillable elements (validation-related, unsupported).
-            JsoniqParser.ElementTestContext elementContext = (JsoniqParser.ElementTestContext) kindTest;
             // Reject the nillable marker "?" (validation-related feature)
             if (elementContext.optional != null) {
                 throw new UnsupportedFeatureException(
@@ -3822,15 +3821,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return new ElementTest(true);
             }
             return new ElementTest();
-        } else if (kindTest instanceof JsoniqParser.AttributeTestContext) {
+        } else if (kindTest instanceof JsoniqParser.AttributeTestContext attributeTestContext) {
             // XQuery 3.1 Section 2.5.5.5 - Attribute Test
             // AttributeTest ::= "attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
             // attribute() and attribute(*) match any single attribute node.
             // attribute(N) matches any attribute node whose name is N.
             // attribute(N, T) matches an attribute node whose name is N and whose type annotation is T.
             // attribute(*, T) matches any attribute node whose type annotation is T.
-            JsoniqParser.AttributeTestContext attributeTestContext =
-                (JsoniqParser.AttributeTestContext) kindTest;
             Name attributeName;
             if (attributeTestContext.attributeNameOrWildcard() != null) {
                 boolean hasWildcard = attributeTestContext.attributeNameOrWildcard().attributeName() == null;
@@ -3880,13 +3877,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             // CommentTest ::= "comment" "(" ")"
             // A CommentTest matches any comment node.
             return new CommentTest();
-        } else if (kindTest instanceof JsoniqParser.PiTestContext) {
+        } else if (kindTest instanceof JsoniqParser.PiTestContext piContext) {
             // XQuery 3.1 Section 2.5.5
             // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
             // processing-instruction() matches any processing-instruction node.
             // processing-instruction(N) matches any processing-instruction node whose target
             // name equals fn:normalize-space(N).
-            JsoniqParser.PiTestContext piContext = (JsoniqParser.PiTestContext) kindTest;
             if (piContext.ncName() != null) {
                 return new PITest(piContext.ncName().getText());
             }
@@ -4119,14 +4115,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             boolean allowEnclosedExpressions
     ) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.DirAttributeValueAposContext) {
+        if (child instanceof JsoniqParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
             return this.getDirAttributeValueAposExpressions(
-                (JsoniqParser.DirAttributeValueAposContext) child,
+                dirAttributeValueAposContext,
                 allowEnclosedExpressions
             );
-        } else if (child instanceof JsoniqParser.DirAttributeValueQuotContext) {
+        } else if (child instanceof JsoniqParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
             return this.getDirAttributeValueQuotExpressions(
-                (JsoniqParser.DirAttributeValueQuotContext) child,
+                dirAttributeValueQuotContext,
                 allowEnclosedExpressions
             );
         }
@@ -4199,9 +4195,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
             // Process each expression returned from the child
             for (Expression childExpression : childExpressions) {
-                if (childExpression instanceof AttributeNodeContentExpression) {
+                if (childExpression instanceof AttributeNodeContentExpression attributeNodeContentExpression) {
                     // Text content - accumulate it
-                    String content = ((AttributeNodeContentExpression) childExpression).getContent();
+                    String content = (attributeNodeContentExpression).getContent();
 
                     if (textAccumulator == null) {
                         // Start accumulating text content
@@ -4253,14 +4249,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
         List<Expression> expressions = new ArrayList<>();
 
-        if (ctx instanceof JsoniqParser.DirAttributeValueAposContext) {
+        if (ctx instanceof JsoniqParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
             return this.getDirAttributeValueAposExpressions(
-                (JsoniqParser.DirAttributeValueAposContext) ctx,
+                dirAttributeValueAposContext,
                 allowEnclosedExpressions
             );
-        } else if (ctx instanceof JsoniqParser.DirAttributeValueQuotContext) {
+        } else if (ctx instanceof JsoniqParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
             return this.getDirAttributeValueQuotExpressions(
-                (JsoniqParser.DirAttributeValueQuotContext) ctx,
+                dirAttributeValueQuotContext,
                 allowEnclosedExpressions
             );
         } else if (

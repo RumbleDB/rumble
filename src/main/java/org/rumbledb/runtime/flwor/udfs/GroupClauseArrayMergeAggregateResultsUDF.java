@@ -52,8 +52,7 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
         Iterator<Object> iterator = wrappedParameters.iterator();
         while (iterator.hasNext()) {
             Object o = iterator.next();
-            if (o instanceof Row) {
-                Row row = (Row) o;
+            if (o instanceof Row row) {
                 result.add(row);
             }
             if (o instanceof ArraySeq) {

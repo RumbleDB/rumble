@@ -143,10 +143,9 @@ public class ElementItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ElementItem)) {
+        if (!(other instanceof ElementItem otherElementItem)) {
             return false;
         }
-        ElementItem otherElementItem = (ElementItem) other;
         return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
@@ -346,10 +345,9 @@ public class ElementItem implements Item {
     }
 
     public void addOrReplaceNamespace(Item namespaceItem) {
-        if (!(namespaceItem instanceof NamespaceItem)) {
+        if (!(namespaceItem instanceof NamespaceItem namespace)) {
             return;
         }
-        NamespaceItem namespace = (NamespaceItem) namespaceItem;
         if (this.namespaces == null) {
             this.namespaces = new HashMap<>();
         }
@@ -382,5 +380,4 @@ public class ElementItem implements Item {
         return true;
     }
 }
-
 

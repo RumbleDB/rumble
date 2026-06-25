@@ -158,10 +158,9 @@ public class AttributeItem implements Item {
         if (this == other) {
             return true;
         }
-        if (!(other instanceof AttributeItem)) {
+        if (!(other instanceof AttributeItem otherAttributeItem)) {
             return false;
         }
-        AttributeItem otherAttributeItem = (AttributeItem) other;
         if (this.documentPos == null || otherAttributeItem.documentPos == null) {
             return false;
         }
