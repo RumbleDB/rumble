@@ -169,7 +169,7 @@ public final class IntegerPictureFormatter {
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
             result = NumberWords.ordinalWords(value.longValueExact(), locale, modifier.getFormatSpecifier());
-        }else{
+        } else {
             result = NumberWords.cardinal(value.longValueExact(), locale, modifier.getFormatSpecifier());
         }
 
