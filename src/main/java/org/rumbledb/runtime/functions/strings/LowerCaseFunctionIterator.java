@@ -48,7 +48,7 @@ public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return ItemFactory.getInstance().createStringItem("");
         } else {
             String input = stringItem.getStringValue();
-            return ItemFactory.getInstance().createStringItem(input.toLowerCase());
+            return ItemFactory.getInstance().createStringItem(RegexUnicodeSupport.lower(input));
         }
 
     }

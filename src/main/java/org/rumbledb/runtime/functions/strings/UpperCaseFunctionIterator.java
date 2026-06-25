@@ -48,7 +48,7 @@ public class UpperCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return ItemFactory.getInstance().createStringItem("");
         } else {
             String input = stringItem.getStringValue();
-            return ItemFactory.getInstance().createStringItem(input.toUpperCase());
+            return ItemFactory.getInstance().createStringItem(RegexUnicodeSupport.upper(input));
         }
     }
 }

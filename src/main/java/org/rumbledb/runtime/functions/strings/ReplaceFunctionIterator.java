@@ -57,38 +57,17 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
-        boolean quote = false;
-        int flags = 0;
+        RegexUnicodeSupport.ParsedRegexFlags parsedFlags = RegexUnicodeSupport.ParsedRegexFlags.NONE;
         if (this.children.size() == 4) {
             Item flagsItem = this.children.get(3)
                 .materializeFirstItemOrNull(context);
-            if (flagsItem != null) {
-                for (char flag : flagsItem.getStringValue().toCharArray()) {
-                    switch (flag) {
-                        case 'i':
-                            flags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
-                            break;
-                        case 'm':
-                            flags |= Pattern.MULTILINE;
-                            break;
-                        case 's':
-                            flags |= Pattern.DOTALL;
-                            break;
-                        case 'x':
-                            flags |= Pattern.COMMENTS;
-                            break;
-                        case 'q':
-                            quote = true;
-                            break;
-                        default:
-                            throw new InvalidRegexPatternException(
-                                    "Invalid regular expression flag: " + flag,
-                                    getMetadata()
-                            );
-                    }
-                }
-            }
+            parsedFlags = RegexUnicodeSupport.parseFlags(
+                flagsItem == null ? null : flagsItem.getStringValue(),
+                getMetadata()
+            );
         }
+        boolean quote = parsedFlags.quote;
+        int flags = parsedFlags.javaPatternFlags;
         if (quote) {
             pattern = Pattern.quote(pattern);
         }
