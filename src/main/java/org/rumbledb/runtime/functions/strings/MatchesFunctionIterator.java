@@ -53,8 +53,44 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
+        String pattern = regexpItem.getStringValue();
+        boolean quote = false;
+        int flags = 0;
+        if (this.children.size() == 3) {
+            Item flagsItem = this.children.get(2)
+                .materializeFirstItemOrNull(context);
+            if (flagsItem != null) {
+                for (char flag : flagsItem.getStringValue().toCharArray()) {
+                    switch (flag) {
+                        case 'i':
+                            flags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
+                            break;
+                        case 'm':
+                            flags |= Pattern.MULTILINE;
+                            break;
+                        case 's':
+                            flags |= Pattern.DOTALL;
+                            break;
+                        case 'x':
+                            flags |= Pattern.COMMENTS;
+                            break;
+                        case 'q':
+                            quote = true;
+                            break;
+                        default:
+                            throw new InvalidRegexPatternException(
+                                    "Invalid regular expression flag: " + flag,
+                                    getMetadata()
+                            );
+                    }
+                }
+            }
+        }
+        if (quote) {
+            pattern = Pattern.quote(pattern);
+        }
         try {
-            Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
+            Matcher matcher = Pattern.compile(pattern, flags).matcher(stringItem.getStringValue());
             boolean result = matcher.find();
             return ItemFactory.getInstance().createBooleanItem(result);
         } catch (PatternSyntaxException e) {
