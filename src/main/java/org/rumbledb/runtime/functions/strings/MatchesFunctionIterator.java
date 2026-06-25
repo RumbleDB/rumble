@@ -169,7 +169,11 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 i = classResult.endIndex;
                 continue;
             }
-            if (Character.isHighSurrogate(current) && i + 1 < pattern.length() && Character.isLowSurrogate(pattern.charAt(i + 1))) {
+            if (
+                Character.isHighSurrogate(current)
+                    && i + 1 < pattern.length()
+                    && Character.isLowSurrogate(pattern.charAt(i + 1))
+            ) {
                 int codePoint = Character.toCodePoint(current, pattern.charAt(i + 1));
                 result.append(expandLiteralCodePoint(codePoint));
                 i++;
