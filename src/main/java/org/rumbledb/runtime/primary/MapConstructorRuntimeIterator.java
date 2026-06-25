@@ -115,7 +115,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                     mapKeys,
                     valueSequences,
                     getMetadata(),
-                    mutable
+                    this.mutable
                 );
         }
     }

@@ -74,13 +74,13 @@ public class MapItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isMapItemType()) {
-            return this.structurallyEqual((MapItemType) other);
+        if (itemType instanceof MapItemType mapItemType) {
+            return this.structurallyEqual(mapItemType);
         }
-        if (((ItemType) other).isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
+        if (itemType.isObjectItemType() && other.equals(BuiltinTypesCatalogue.objectItem)) {
             // a js:object = map(xs:string, item)
             ItemType objectAsMap = ItemTypeFactory.mapOf(
                 BuiltinTypesCatalogue.stringItem,
@@ -88,7 +88,7 @@ public class MapItemType implements ItemType {
             );
             return this.equals(objectAsMap);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -124,8 +124,7 @@ public class MapItemType implements ItemType {
             // an object type (js:object) WITHOUT a JSound schema attached is a subtype of a map(*)
             return superType.equals(BuiltinTypesCatalogue.objectItem) && this.isSubtypeOf(objectAsMap);
         }
-        if (superType.isMapItemType()) {
-            MapItemType sup = (MapItemType) superType;
+        if (superType instanceof MapItemType sup) {
             return this.keyType.isSubtypeOf(sup.keyType)
                 && this.valueSequenceType.isSubtypeOf(sup.valueSequenceType);
         }
@@ -183,8 +182,7 @@ public class MapItemType implements ItemType {
             }
             return BuiltinTypesCatalogue.anyFunctionItem;
         }
-        if (other.isMapItemType()) {
-            MapItemType otherMap = (MapItemType) other;
+        if (other instanceof MapItemType otherMap) {
             ItemType keySuperType = this.keyType.findLeastCommonSuperTypeWith(otherMap.keyType);
             SequenceType valueSuperType = this.valueSequenceType.leastCommonSupertypeWith(otherMap.valueSequenceType);
             if (

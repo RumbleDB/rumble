@@ -862,8 +862,8 @@ public class FlworDataFrameUtils {
 
     public static long getCountOfField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
-        if (o instanceof Long) {
-            return ((Long) o).longValue();
+        if (o instanceof Long longValue) {
+            return longValue.longValue();
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
