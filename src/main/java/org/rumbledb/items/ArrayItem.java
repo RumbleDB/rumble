@@ -83,18 +83,18 @@ public class ArrayItem implements Item {
         return copy;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item o)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
+            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
                 return false;
             }
         }

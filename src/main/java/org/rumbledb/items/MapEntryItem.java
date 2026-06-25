@@ -353,14 +353,14 @@ public class MapEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item other)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
-        List<Item> otherSequence = other.getSequenceByKey(this.key);
+        List<Item> otherSequence = otherItem.getSequenceByKey(this.key);
         if (otherSequence == null || this.value.size() != otherSequence.size()) {
             return false;
         }
@@ -369,7 +369,7 @@ public class MapEntryItem implements Item {
                 return false;
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (getSequenceByKey(key) == null) {
                 return false;
             }

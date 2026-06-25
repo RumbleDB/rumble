@@ -72,19 +72,19 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item o)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
             List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = o.getSequenceAt(i);
+            List<Item> otherMember = otherItem.getSequenceAt(i);
             if (thisMember.size() != otherMember.size()) {
                 return false;
             }

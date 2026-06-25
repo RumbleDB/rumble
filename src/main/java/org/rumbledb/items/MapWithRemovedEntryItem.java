@@ -367,11 +367,11 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item other)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (Item key : this.original.getItemKeys()) {
@@ -379,7 +379,7 @@ public class MapWithRemovedEntryItem implements Item {
                 continue;
             }
             List<Item> thisSequence = this.original.getSequenceByKey(key);
-            List<Item> otherSequence = other.getSequenceByKey(key);
+            List<Item> otherSequence = otherItem.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
             }
@@ -389,7 +389,7 @@ public class MapWithRemovedEntryItem implements Item {
                 }
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (this.removedKeys.contains(key)) {
                 return false;
             }

@@ -372,11 +372,11 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item other)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (Item key : this.original.getItemKeys()) {
@@ -384,7 +384,7 @@ public class MapWithAdditionalEntryItem implements Item {
             if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 thisSequence = this.additionalValue;
             }
-            List<Item> otherSequence = other.getSequenceByKey(key);
+            List<Item> otherSequence = otherItem.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
             }
@@ -394,9 +394,9 @@ public class MapWithAdditionalEntryItem implements Item {
                 }
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
-                List<Item> otherSequence = other.getSequenceByKey(key);
+                List<Item> otherSequence = otherItem.getSequenceByKey(key);
                 if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
                     return false;
                 }

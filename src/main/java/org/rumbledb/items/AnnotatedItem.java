@@ -59,12 +59,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item other) {
-            if (other.isAtomic()) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
+            if (otherItem.isAtomic()) {
                 long c = ComparisonIterator.compareItems(
                     this,
-                    other,
+                    otherItem,
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
