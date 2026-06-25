@@ -188,11 +188,6 @@ public class MapItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>(this.keys.size());
         for (Item key : this.keys) {
@@ -223,11 +218,6 @@ public class MapItem implements Item {
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         return this.keyToIndex.containsKey(key);
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override
@@ -455,8 +445,8 @@ public class MapItem implements Item {
     public String getSparkSQLValue() {
         StringBuilder sb = new StringBuilder();
         sb.append("named_struct(");
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             sb.append("\"");
             sb.append(keysAsStrings.get(i));
@@ -503,8 +493,8 @@ public class MapItem implements Item {
     public String getSparkSQLType() {
         StringBuilder sb = new StringBuilder();
         sb.append("STRUCT<");
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             sb.append(keysAsStrings.get(i));
             sb.append(": ");
@@ -533,8 +523,8 @@ public class MapItem implements Item {
     @Override
     public Object getVariantValue() {
         Map<String, Object> resultMap = new HashMap<>();
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             resultMap.put(keysAsStrings.get(i), values.get(i).getVariantValue());
         }

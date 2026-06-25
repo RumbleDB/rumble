@@ -107,11 +107,6 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>(
                 CollectionUtils.subtract(
@@ -153,11 +148,6 @@ public class MapWithRemovedEntryItem implements Item {
             return false;
         }
         return this.original.hasKey(key);
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override
