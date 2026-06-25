@@ -192,14 +192,14 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isMapItemType()) {
+        if (itemType.isMapItemType()) {
             // delegate to the map item type equality check
             return other.equals(this);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -336,13 +336,12 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ObjectItemType)) {
+        if (!(other instanceof ObjectItemType otherObject)) {
             if (other.isObjectItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ObjectItemType otherObject = (ObjectItemType) other;
         if (!this.isResolved() || !otherObject.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }

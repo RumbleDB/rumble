@@ -59,12 +59,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            if (((Item) otherItem).isAtomic()) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
+            if (otherItem.isAtomic()) {
                 long c = ComparisonIterator.compareItems(
                     this,
-                    (Item) otherItem,
+                    otherItem,
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
@@ -709,8 +709,8 @@ public class AnnotatedItem implements Item {
 
     @Override
     public boolean physicalEquals(Object other) {
-        if (other instanceof AnnotatedItem) {
-            return this.itemToAnnotate.physicalEquals(((AnnotatedItem) other).itemToAnnotate);
+        if (other instanceof AnnotatedItem annotatedItem) {
+            return this.itemToAnnotate.physicalEquals(annotatedItem.itemToAnnotate);
         }
         return this.itemToAnnotate.physicalEquals(other);
     }

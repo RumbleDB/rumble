@@ -199,8 +199,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
-            if (schema instanceof StructType) {
-                structSchema = (StructType) schema;
+            if (schema instanceof StructType structType) {
+                structSchema = structType;
                 if (
                     Arrays.stream(structSchema.fieldNames())
                         .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))

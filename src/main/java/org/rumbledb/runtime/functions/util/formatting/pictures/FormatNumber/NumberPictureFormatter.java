@@ -353,4 +353,80 @@ public class NumberPictureFormatter {
         }
     }
 
+    // DEBUGGING METHODS
+    @SuppressWarnings("unused")
+    private static String debugValueItem(Item item) {
+        return "Item value="
+            + FormatNumberTypeResolver.getValue(item)
+            + ", type="
+            + debugNumberType(item);
+    }
+
+    private static String debugNumberType(Item item) {
+        if (item.isInteger()) {
+            return "INTEGER";
+        }
+
+        if (item.isDecimal()) {
+            return "DECIMAL";
+        }
+
+        if (item.isDouble()) {
+            return "DOUBLE";
+        }
+
+        if (item.isFloat()) {
+            return "FLOAT";
+        }
+        return "ERROR";
+    }
+
+    @SuppressWarnings("unused")
+    private static String debugFormatNumberPicture(String rawPictureString, FormatNumberPicture picture) {
+        return "rawPictureString: "
+            + rawPictureString
+            + " - positive["
+            + debugSubpicture(picture.getPositiveSubPicture())
+            + "]"
+            + " negative["
+            + debugSubpicture(picture.getNegativeSubPicture())
+            + "]";
+    }
+
+    private static String debugSubpicture(FormatNumberSubPicture subpicture) {
+        if (subpicture == null) {
+            return "null";
+        }
+
+        return "prefix="
+            + subpicture.getPrefix()
+            + " ,integer="
+            + subpicture.getIntegerPart()
+            + " ,fractional="
+            + subpicture.getFractionalPart()
+            + " ,suffix="
+            + subpicture.getSuffix()
+            + " , hasExponent="
+            + subpicture.hasExponent()
+            + " , exponentPart="
+            + subpicture.getExponentPart()
+            + " , scalingFactor="
+            + subpicture.getScalingFactor()
+            + " ,percent="
+            + subpicture.getHasPercent()
+            + " ,permille="
+            + subpicture.getHasPerMille()
+            + " ,intGroups="
+            + subpicture.getIntegerPartGroupingPositions()
+            + " ,repeat="
+            + subpicture.getRepeatingIntegerGroupingInterval()
+            + " ,fracGroups="
+            + subpicture.getFractionalPartGroupingPositions()
+            + " ,minInt="
+            + subpicture.getMinimumIntegerPartSize()
+            + " ,minFrac="
+            + subpicture.getMinimumFractionalPartSize()
+            + " ,maxFrac="
+            + subpicture.getMaximumFractionalPartSize();
+    }
 }

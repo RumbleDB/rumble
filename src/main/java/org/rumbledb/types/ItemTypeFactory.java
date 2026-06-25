@@ -788,12 +788,12 @@ public class ItemTypeFactory {
     }
 
     public static ItemType createItemType(DataType dt) {
-        if (dt instanceof StructType) {
-            return createItemTypeFromSparkStructType((StructType) dt);
+        if (dt instanceof StructType structType) {
+            return createItemTypeFromSparkStructType(structType);
         }
-        if (dt instanceof ArrayType) {
+        if (dt instanceof ArrayType arrayType) {
             return createArrayTypeWithSparkDataTypeContent(
-                ((ArrayType) dt).elementType()
+                arrayType.elementType()
             );
         }
         if (dt.equals(DataTypes.StringType)) {
@@ -810,7 +810,7 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
             return BuiltinTypesCatalogue.floatItem;
-        } else if (dt instanceof DecimalType && ((DecimalType) dt).scale() == 0) {
+        } else if (dt instanceof DecimalType decimalType && decimalType.scale() == 0) {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt instanceof DecimalType) {
             return BuiltinTypesCatalogue.decimalItem;

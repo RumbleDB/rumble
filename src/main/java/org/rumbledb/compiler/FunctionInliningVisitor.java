@@ -39,13 +39,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
-        if (expression instanceof VariableReferenceExpression) {
-            return ((VariableReferenceExpression) expression).getVariableName().equals(name);
+        if (expression instanceof VariableReferenceExpression variableReference) {
+            return variableReference.getVariableName().equals(name);
         }
-        if (expression instanceof Clause) {
+        if (expression instanceof Clause clause) {
             if (
-                ((Clause) expression).getPreviousClause() != null
-                    && isVariableReferenced(((Clause) expression).getPreviousClause(), name)
+                clause.getPreviousClause() != null
+                    && isVariableReferenced(clause.getPreviousClause(), name)
             ) {
                 return true;
             }
@@ -71,9 +71,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
         boolean allArgumentsMatch = true;
         for (int i = 0; i < expression.getArguments().size(); i++) {
             allArgumentsMatch = allArgumentsMatch
-                && expression.getArguments().get(i) instanceof VariableReferenceExpression
+                && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
                 && paramNames.get(i)
-                    .equals(((VariableReferenceExpression) expression.getArguments().get(i)).getVariableName());
+                    .equals(variableReference.getVariableName());
         }
         return allArgumentsMatch;
     }
@@ -468,8 +468,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
             // only use assignment clause when the variables have different names
             if (
-                argumentExpression instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) argumentExpression).getVariableName().equals(paramName)
+                argumentExpression instanceof VariableReferenceExpression variableReference
+                    && variableReference.getVariableName().equals(paramName)
             ) {
                 continue;
             }

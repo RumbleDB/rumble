@@ -134,8 +134,8 @@ public class RumbleException extends RuntimeException {
         if (ex instanceof SparkException) {
             Throwable sparkExceptionCause = ex.getCause();
             return unnestException(sparkExceptionCause);
-        } else if (ex instanceof RumbleException) {
-            return (RumbleException) ex;
+        } else if (ex instanceof RumbleException rumbleException) {
+            return rumbleException;
         } else {
             RumbleException e2 = new OurBadException("Unanticipated exception!");
             e2.initCause(ex);
