@@ -84,8 +84,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 iterator.open(dynamicContext);
                 while (iterator.hasNext()) {
                     ObjectItem item = (ObjectItem) iterator.next();
-                    keys.addAll(item.getKeys());
-                    values.addAll(item.getValues());
+                    keys.addAll(item.getStringKeys());
+                    values.addAll(item.getItemValues());
                 }
                 iterator.close();
             }

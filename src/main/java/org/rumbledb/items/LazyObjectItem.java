@@ -93,7 +93,7 @@ public class LazyObjectItem implements Item {
     public Item copy(boolean mutable) {
         List<String> newKeys = new ArrayList<>(this.keys.size());
         List<Item> newValues = new ArrayList<>();
-        for (String key : this.getKeys()) {
+        for (String key : this.getStringKeys()) {
             newKeys.add(key);
             newValues.add(this.getItemByKey(key).copy(mutable));
         }
@@ -122,7 +122,7 @@ public class LazyObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : o.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;

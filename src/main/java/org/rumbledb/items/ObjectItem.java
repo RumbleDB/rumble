@@ -115,7 +115,7 @@ public class ObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : o.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
