@@ -159,11 +159,6 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public void append(Item item) {
-        appendItem(item);
-    }
-
-    @Override
     public void appendItem(Item item) {
         this.arrayItems.add(item);
     }
@@ -375,7 +370,7 @@ public class ArrayItem implements Item {
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItems();
+        List<Item> arrayItems = this.getItemMembers();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());
