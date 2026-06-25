@@ -54,7 +54,10 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         try {
             return URI.create(uri);
         } catch (IllegalArgumentException e) {
-            throw new InvalidArgumentValueException("Malformed URI: " + uri + " Cause: " + e.getMessage(), getMetadata());
+            throw new InvalidArgumentValueException(
+                    "Malformed URI: " + uri + " Cause: " + e.getMessage(),
+                    getMetadata()
+            );
         }
     }
 }
