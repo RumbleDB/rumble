@@ -109,7 +109,6 @@ public class TypeMappings {
                 return DataTypes.StringType;
             }
             boolean hasNumeric = false;
-            boolean hasNonNumeric = false;
             boolean hasNull = false;
             boolean hasStructuredType = false;
             for (ItemType memberType : memberTypes) {
@@ -117,9 +116,7 @@ public class TypeMappings {
                     hasNumeric = true;
                 } else if (memberType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
                     hasNull = true;
-                } else if (memberType.isAtomicItemType()) {
-                    hasNonNumeric = true;
-                } else {
+                } else if (!memberType.isAtomicItemType()) {
                     hasStructuredType = true;
                 }
             }
