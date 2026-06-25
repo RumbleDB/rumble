@@ -273,12 +273,12 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
             List<Item> member = this.memberSequences.get(i);
+            result = 31 * result + member.size();
             for (Item item : member) {
-                result += item.hashCode();
+                result = 31 * result + item.hashCode();
             }
         }
         return result;
