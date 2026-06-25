@@ -61,6 +61,7 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.name = (Name) kryo.readClassAndObject(input);
         this.baseType = (ItemType) kryo.readClassAndObject(input);

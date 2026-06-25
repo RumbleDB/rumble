@@ -346,9 +346,10 @@ public class MapItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
+        this.keys = (List<Item>) kryo.readObject(input, ArrayList.class);
+        this.values = (List<List<Item>>) kryo.readObject(input, ArrayList.class);
         this.mutabilityLevel = input.readInt();
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);

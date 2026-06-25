@@ -133,6 +133,7 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         // Read the name
         boolean hasName = input.readBoolean();
@@ -149,13 +150,13 @@ public class ObjectItemType implements ItemType {
         this.isClosed = input.readBoolean();
 
         // Read keys list
-        this.keys = kryo.readObjectOrNull(input, ArrayList.class);
+        this.keys = (List<String>) kryo.readObjectOrNull(input, ArrayList.class);
         if (this.keys == null) {
             this.keys = new ArrayList<>();
         }
 
         // Read content list
-        this.content = kryo.readObjectOrNull(input, ArrayList.class);
+        this.content = (List<FieldDescriptor>) kryo.readObjectOrNull(input, ArrayList.class);
         if (this.content == null) {
             this.content = new ArrayList<>();
         }

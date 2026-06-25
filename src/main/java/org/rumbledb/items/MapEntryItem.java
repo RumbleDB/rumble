@@ -199,6 +199,7 @@ public class MapEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.key = (Item) kryo.readClassAndObject(input);
         this.value = (List<Item>) kryo.readClassAndObject(input);

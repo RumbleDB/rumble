@@ -259,6 +259,7 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
         this.additionalKey = (Item) kryo.readClassAndObject(input);
