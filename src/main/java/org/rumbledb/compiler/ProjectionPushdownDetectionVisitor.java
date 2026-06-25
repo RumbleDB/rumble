@@ -2,6 +2,7 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -12,7 +13,9 @@ import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.*;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -227,12 +230,16 @@ public class ProjectionPushdownDetectionVisitor
         if (expression.isMergedConstructor()) {
             return this.defaultAction(expression, argument);
         }
-        if (!expression.getKeys().stream().allMatch(exp -> exp instanceof StringLiteralExpression)) {
-            return this.defaultAction(expression, argument);
+        List<StringLiteralExpression> keys = new ArrayList<>(expression.getKeys().size());
+        for (Expression keyExpression : expression.getKeys()) {
+            if (!(keyExpression instanceof StringLiteralExpression key)) {
+                return this.defaultAction(expression, argument);
+            }
+            keys.add(key);
         }
         ReferenceMap result = new ReferenceMap();
-        for (int i = 0; i < expression.getKeys().size(); i++) {
-            StringLiteralExpression key = (StringLiteralExpression) expression.getKeys().get(i);
+        for (int i = 0; i < keys.size(); i++) {
+            StringLiteralExpression key = keys.get(i);
             Name name = Name.createVariableInNoNamespace(key.getValue());
             if (!argument.isEmpty() && !argument.containsKey(name)) {
                 // this key is not referenced, so we deactivate it and ignore what it references.
