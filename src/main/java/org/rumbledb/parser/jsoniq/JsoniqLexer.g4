@@ -302,7 +302,10 @@ KW_TRUE:               'true';
 KW_FALSE:              'false';
 KW_STATICALLY:         'statically';
 
-STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
+// Braces are excluded so that strings containing them use the quote modes.
+// The parser context then distinguishes literal JSONiq string content from
+// enclosed expressions in direct XML constructors.
+STRING                  : '"' (ESC | ~ ["\\{}])* '"' | '\'' (ESCapos | ~ ['\\{}])* '\'';
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
 fragment ESCapos        : '\\' (['\\/bfnrt] | UNICODE);
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
@@ -404,6 +407,7 @@ EXIT_STRING         : RBRACKET GRAVE GRAVE -> popMode;
 
 mode QUOT_LITERAL_STRING;
 
+JsonEscape_QuotString          : '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
 EscapeQuot_QuotString           : '""' -> type(EscapeQuot);
 Quot_QuotString                 : '"' -> type(Quot), popMode;
 
@@ -417,6 +421,7 @@ ContentChar_QuotString          : ~["&{}] -> type(ContentChar);
 
 mode APOS_LITERAL_STRING;
 
+JsonEscape_AposString           : '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
 EscapeApos_AposString           : '\'\'' -> type(EscapeApos);
 Apos_AposString                 : '\'' -> type(Apos), popMode;
 
@@ -430,6 +435,7 @@ ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;
 
+INT_QUOT_JsonEscape: '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
 INT_QUOT_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_QUOT_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_QUOT_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
@@ -697,6 +703,7 @@ INT_ContentChar:  ~["'{}<&] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_APOS;
 
+INT_APOS_JsonEscape: '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
 INT_APOS_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_APOS_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_APOS_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);

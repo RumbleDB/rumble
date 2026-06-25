@@ -471,14 +471,17 @@ dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAt
 
 dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
+                     | STRING
                      ;
 
 dirAttributeContentQuot : contentChar                     
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
 dirAttributeContentApos : contentChar                    
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
                         ;
@@ -851,7 +854,38 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteral: STRING;
+stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | stringContentQuot )* Quot ;
+stringLiteralApos : Apos (PredefinedEntityRef | CharRef | stringContentApos )* Apos ;
+
+stringLiteral : STRING
+              | stringLiteralQuot
+              | stringLiteralApos
+              ;
+
+// These rules preserve arbitrary balanced or unbalanced braces as ordinary
+// JSONiq string content. In an XML attribute, the separate dirAttributeValue
+// rules interpret the same quote-mode token stream as enclosed expressions.
+stringContentQuot : ContentChar+
+                  | RBRACE
+                  | DOUBLE_LBRACE
+                  | DOUBLE_RBRACE
+                  | stringBracedContentQuot
+                  ;
+
+stringContentApos : ContentChar+
+                  | RBRACE
+                  | DOUBLE_LBRACE
+                  | DOUBLE_RBRACE
+                  | stringBracedContentApos
+                  ;
+
+stringBracedContentQuot
+    : LBRACE (stringBracedContentQuot | ~(LBRACE | RBRACE | Quot))* RBRACE?
+    ;
+
+stringBracedContentApos
+    : LBRACE (stringBracedContentApos | ~(LBRACE | RBRACE | Apos))* RBRACE?
+    ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

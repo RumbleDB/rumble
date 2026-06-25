@@ -29,11 +29,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 import java.util.HashMap;
-import java.util.stream.Collectors;
 
 public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private static final int DELETE_CODEPOINT = -1;
 
     public TranslateFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -59,28 +59,23 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         String mapString = mapStringItem.getStringValue();
         String transString = transStringItem.getStringValue();
 
-        HashMap<Character, Character> mp = new HashMap<>();
-        for (int i = 0; i < mapString.length(); i++) {
-            char c = mapString.charAt(i);
-            if (!(mp.containsKey(c))) {
-                mp.put(c, i < transString.length() ? transString.charAt(i) : '\0');
+        int[] mapCodepoints = mapString.codePoints().toArray();
+        int[] translationCodepoints = transString.codePoints().toArray();
+        HashMap<Integer, Integer> translationMap = new HashMap<>();
+        for (int i = 0; i < mapCodepoints.length; i++) {
+            int replacement = i < translationCodepoints.length ? translationCodepoints[i] : DELETE_CODEPOINT;
+            translationMap.putIfAbsent(mapCodepoints[i], replacement);
+        }
+
+        StringBuilder output = new StringBuilder(input.length());
+        for (int codepoint : input.codePoints().toArray()) {
+            int replacement = translationMap.getOrDefault(codepoint, codepoint);
+            if (replacement != DELETE_CODEPOINT) {
+                output.appendCodePoint(replacement);
             }
         }
 
-        String output = input
-            .codePoints()
-            .mapToObj(c -> (char) c)
-            .filter(s -> !(mp.containsKey(s) && mp.get(s) == '\0'))
-            .map(s -> {
-                if (mp.containsKey(s)) {
-                    return mp.get(s);
-                }
-                return s;
-            })
-            .map(String::valueOf)
-            .collect(Collectors.joining());
-
-        return ItemFactory.getInstance().createStringItem(output);
+        return ItemFactory.getInstance().createStringItem(output.toString());
     }
 
 }

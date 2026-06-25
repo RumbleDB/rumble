@@ -144,7 +144,7 @@ public final class DecimalFormatDeclarationHelper {
         String content = text.substring(1, text.length() - 1);
 
         if (isJSONiq) {
-            return StringEscapeUtils.unescapeJson(content);
+            return JsoniqStringLiteralDecoder.decode(content);
         }
 
         return StringEscapeUtils.unescapeXml(content);
