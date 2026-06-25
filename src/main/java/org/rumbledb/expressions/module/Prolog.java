@@ -63,22 +63,31 @@ public class Prolog extends Node {
 
     public List<FunctionDeclaration> getFunctionDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof FunctionDeclaration)
-            .map(x -> (FunctionDeclaration) x)
+            .<FunctionDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof FunctionDeclaration functionDeclaration) {
+                    downstream.accept(functionDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
     public List<VariableDeclaration> getVariableDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof VariableDeclaration)
-            .map(x -> (VariableDeclaration) x)
+            .<VariableDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof VariableDeclaration variableDeclaration) {
+                    downstream.accept(variableDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
     public List<TypeDeclaration> getTypeDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof TypeDeclaration)
-            .map(x -> (TypeDeclaration) x)
+            .<TypeDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof TypeDeclaration typeDeclaration) {
+                    downstream.accept(typeDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
