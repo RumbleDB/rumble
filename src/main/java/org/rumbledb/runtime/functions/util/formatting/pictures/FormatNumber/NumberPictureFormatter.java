@@ -354,7 +354,7 @@ public class NumberPictureFormatter {
     }
 
     // DEBUGGING METHODS
-
+    @SuppressWarnings("unused")
     private static String debugValueItem(Item item) {
         return "Item value="
             + FormatNumberTypeResolver.getValue(item)
@@ -381,6 +381,7 @@ public class NumberPictureFormatter {
         return "ERROR";
     }
 
+    @SuppressWarnings("unused")
     private static String debugFormatNumberPicture(String rawPictureString, FormatNumberPicture picture) {
         return "rawPictureString: "
             + rawPictureString
