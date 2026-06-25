@@ -557,35 +557,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return prolog;
     }
 
-    private static final class PrologPhase1Flags {
-        boolean emptyOrderSet;
-        boolean defaultCollationSet;
-        boolean baseURISet;
-        boolean defaultFunctionNamespaceDeclared;
-    }
-
-    private void processDefaultNamespaceDecl(
-            JsoniqParser.DefaultNamespaceDeclContext ctx,
-            PrologPhase1Flags flags
-    ) {
-        String uri = processStringLiteral(ctx.stringLiteral());
-        int declType = ctx.type.getType();
-        if (declType == JsoniqParser.KW_ELEMENT) {
-            bindNamespace("", uri, createMetadataFromContext(ctx));
-        } else if (declType == JsoniqParser.KW_FUNCTION) {
-            if (flags.defaultFunctionNamespaceDeclared) {
-                throw new SemanticException(
-                        "The default function namespace has already been declared.",
-                        createMetadataFromContext(ctx)
-                );
-            }
-            this.moduleContext.setDefaultFunctionNamespaceUri(uri);
-            flags.defaultFunctionNamespaceDeclared = true;
-        } else {
-            throw new OurBadException("Unexpected default namespace declaration kind.");
-        }
-    }
-
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
         String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
         return unescapeStringLiteral(rawValue);
@@ -2653,7 +2624,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
             if (typedMapTestContext != null) {
                 Name keyName = parseEqName(typedMapTestContext.eqName(), false, true, false, false);
-                keyName = ItemTypeReference.renameAtomic(moduleContext, keyName);
+                keyName = ItemTypeReference.renameAtomic(this.moduleContext, keyName);
                 ItemType keyType;
                 if (!BuiltinTypesCatalogue.typeExists(keyName)) {
                     keyType = new ItemTypeReference(keyName);
@@ -2678,7 +2649,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         if (itemTypeContext.eqName() != null) {
             Name name = parseEqName(itemTypeContext.eqName(), false, true, false, false);
-            name = ItemTypeReference.renameAtomic(moduleContext, name);
+            name = ItemTypeReference.renameAtomic(this.moduleContext, name);
             if (!BuiltinTypesCatalogue.typeExists(name)) {
                 return new ItemTypeReference(name);
             }
