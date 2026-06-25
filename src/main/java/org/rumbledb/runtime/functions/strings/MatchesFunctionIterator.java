@@ -223,12 +223,12 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (isAsciiUppercase(left) && isAsciiUppercase(right)) {
             result.append(
                 new StringBuilder()
-                .appendCodePoint(left)
-                .append('-')
-                .appendCodePoint(right)
-                .appendCodePoint(toAsciiLower(left))
-                .append('-')
-                .appendCodePoint(toAsciiLower(right))
+                    .appendCodePoint(left)
+                    .append('-')
+                    .appendCodePoint(right)
+                    .appendCodePoint(toAsciiLower(left))
+                    .append('-')
+                    .appendCodePoint(toAsciiLower(right))
             );
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
@@ -236,12 +236,12 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (isAsciiLowercase(left) && isAsciiLowercase(right)) {
             result.append(
                 new StringBuilder()
-                .appendCodePoint(left)
-                .append('-')
-                .appendCodePoint(right)
-                .appendCodePoint(toAsciiUpper(left))
-                .append('-')
-                .appendCodePoint(toAsciiUpper(right))
+                    .appendCodePoint(left)
+                    .append('-')
+                    .appendCodePoint(right)
+                    .appendCodePoint(toAsciiUpper(left))
+                    .append('-')
+                    .appendCodePoint(toAsciiUpper(right))
             );
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
@@ -251,12 +251,12 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if ((lowerLeft != left || lowerRight != right) && lowerLeft <= lowerRight) {
             result.append(
                 new StringBuilder()
-                .appendCodePoint(left)
-                .append('-')
-                .appendCodePoint(right)
-                .appendCodePoint(lowerLeft)
-                .append('-')
-                .appendCodePoint(lowerRight)
+                    .appendCodePoint(left)
+                    .append('-')
+                    .appendCodePoint(right)
+                    .appendCodePoint(lowerLeft)
+                    .append('-')
+                    .appendCodePoint(lowerRight)
             );
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
@@ -266,12 +266,12 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if ((upperLeft != left || upperRight != right) && upperLeft <= upperRight) {
             result.append(
                 new StringBuilder()
-                .appendCodePoint(left)
-                .append('-')
-                .appendCodePoint(right)
-                .appendCodePoint(upperLeft)
-                .append('-')
-                .appendCodePoint(upperRight)
+                    .appendCodePoint(left)
+                    .append('-')
+                    .appendCodePoint(right)
+                    .appendCodePoint(upperLeft)
+                    .append('-')
+                    .appendCodePoint(upperRight)
             );
             appendSpecialCaseClosure(result, left, right);
             return result.toString();
