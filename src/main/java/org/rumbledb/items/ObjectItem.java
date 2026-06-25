@@ -98,16 +98,15 @@ public class ObjectItem implements Item {
         return result;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
+            Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -115,12 +114,12 @@ public class ObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getStringKeys()) {
+        for (String s : otherItem.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!o.getItemByKey(s).equals(v)) {
+            if (!otherItem.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
@@ -160,8 +159,7 @@ public class ObjectItem implements Item {
                     } else {
                         throw new RuntimeException("Unexpected list size found.");
                     }
-                } else if (keyValuePairs.get(key) instanceof Item) {
-                    Item value = (Item) keyValuePairs.get(key);
+                } else if (keyValuePairs.get(key) instanceof Item value) {
                     valueList.add(value);
                 } else {
                     throw new RuntimeException("Unexpected value type found.");

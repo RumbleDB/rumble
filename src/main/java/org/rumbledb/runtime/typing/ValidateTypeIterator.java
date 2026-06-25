@@ -373,10 +373,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
         }
         try {
-            if (dataType instanceof ArrayType) {
+            if (dataType instanceof ArrayType arrayType) {
                 List<Item> arrayItems = item.getItemMembers();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
-                DataType elementType = ((ArrayType) dataType).elementType();
+                DataType elementType = arrayType.elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
                     Item arrayItem = item.getItemAt(i);
                     arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
@@ -388,8 +388,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return arrayItemsForRow;
             }
 
-            if (dataType instanceof StructType) {
-                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType, context);
+            if (dataType instanceof StructType structType) {
+                return ValidateTypeIterator.convertLocalItemToRow(item, structType, context);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {

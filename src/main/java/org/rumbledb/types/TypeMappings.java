@@ -164,7 +164,7 @@ public class TypeMappings {
         if (DataTypes.FloatType.equals(dataType)) {
             return BuiltinTypesCatalogue.floatItem;
         }
-        if (dataType instanceof DecimalType && ((DecimalType) dataType).scale() == 0) {
+        if (dataType instanceof DecimalType decimalType && decimalType.scale() == 0) {
             return BuiltinTypesCatalogue.integerItem;
         }
         if (dataType instanceof DecimalType) {
