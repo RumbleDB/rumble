@@ -517,17 +517,6 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Returns the string keys of the item, if it is a map.
      *
-     * @return the list of the keys.
-     * @deprecated use {@link #getStringKeys()} instead
-     */
-    @Deprecated
-    default List<String> getKeys() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the string keys of the item, if it is a map.
-     *
      * @return a list of strings, corresponding to the keys of the map.
      * @throws UnsupportedOperationException if the item is not a map.
      * @throws OurBadException if the map contains non-string keys.
@@ -543,17 +532,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item is not a map.
      */
     default List<Item> getItemKeys() throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the values of the item, if it is a map.
-     *
-     * @return the list of the value items.
-     * @deprecated use {@link #getItemValues()} instead
-     */
-    @Deprecated
-    default List<Item> getValues() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -783,17 +761,6 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the members of the item if it is an array.
-     *
-     * @return the list of the array members.
-     * @deprecated use {@link #getItemMembers()} instead
-     */
-    @Deprecated
-    default List<Item> getItems() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
      * Returns the members of the item, if it is an array.
      *
      * @return the list of the members.
@@ -841,17 +808,6 @@ public interface Item extends Serializable, KryoSerializable {
     default List<Item> getSequenceAt(int position)
             throws UnsupportedOperationException,
                 ArrayIndexOutOfBoundsException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Appends an item to the item, if it is an array.
-     *
-     * @param item the item to append.
-     * @throws UnsupportedOperationException if the item is not an array.
-     * @deprecated use {@link #appendItem(Item)} instead
-     */
-    default void append(Item item) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

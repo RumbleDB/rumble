@@ -118,12 +118,6 @@ public class ArrayItem implements Item {
         return this.arrayItems.size();
     }
 
-    @Deprecated
-    @Override
-    public List<Item> getItems() {
-        return this.arrayItems;
-    }
-
     @Override
     public List<Item> getItemMembers() {
         return this.arrayItems;
