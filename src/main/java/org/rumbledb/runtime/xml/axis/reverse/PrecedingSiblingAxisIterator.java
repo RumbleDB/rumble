@@ -34,11 +34,12 @@ public class PrecedingSiblingAxisIterator extends AxisIterator {
     }
 
     private List<Item> getPrecedingSibling(Item node) {
-        if (node.parent().isNull()) {
+        Item parent = node.parent();
+        if (parent == null || parent.isNull()) {
             return Collections.emptyList();
         }
         List<Item> result = new ArrayList<>();
-        List<Item> parentChildren = node.parent().children();
+        List<Item> parentChildren = parent.children();
         int siblingsEndIndex = 0;
         for (int i = 0; i < parentChildren.size(); ++i) {
             if (parentChildren.get(i).equals(node)) {
