@@ -1438,7 +1438,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the default formatting language
      */
     public String getDefaultFormattingLanguage() {
-        return defaultFormattingLanguage;
+        return this.defaultFormattingLanguage;
     }
 
     /**
