@@ -802,7 +802,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         try {
             definitionItem = parseJSONItem(definitionString, createMetadataFromContext(ctx));
-        } catch (ParsingException e) {
+        } catch (InvalidJSONException | ParsingException e) {
             ParsingException pe = new ParsingException(
                     "A type definition must be a JSON literal: no dynamic evaluation is allowed.",
                     createMetadataFromContext(ctx)
