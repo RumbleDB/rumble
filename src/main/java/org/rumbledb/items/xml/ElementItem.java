@@ -30,7 +30,6 @@ public class ElementItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
-    @SuppressWarnings("unused")
     public ElementItem() {
     }
 
@@ -80,7 +79,9 @@ public class ElementItem implements Item {
             copiedAttributes.add(attribute.copy(mutable));
         }
         Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
-        return new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
+        ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
+        copy.namespaces = copiedNamespaces;
+        return copy;
     }
 
     @Override
@@ -382,5 +383,3 @@ public class ElementItem implements Item {
         return true;
     }
 }
-
-

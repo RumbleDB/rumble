@@ -21,7 +21,6 @@ public class NamespaceItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
-    @SuppressWarnings("unused")
     public NamespaceItem() {
     }
 
@@ -266,4 +265,3 @@ public class NamespaceItem implements Item {
         return Collections.emptyList();
     }
 }
-

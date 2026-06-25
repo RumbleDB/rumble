@@ -26,7 +26,6 @@ public class TimeItem implements Item {
         "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    @SuppressWarnings("unused")
     public TimeItem() {
         super();
     }

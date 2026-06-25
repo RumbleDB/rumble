@@ -28,7 +28,6 @@ public class gMonthItem implements Item {
         "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    @SuppressWarnings("unused")
     public gMonthItem() {
         super();
     }
