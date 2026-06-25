@@ -117,7 +117,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
                 result.add(key);
             }
         }
@@ -156,7 +156,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 continue;
             }
             result.add(this.original.getItemByKey(key));
@@ -172,7 +172,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 continue;
             }
             result.add(this.original.getSequenceByKey(key));
@@ -259,6 +259,7 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
         this.additionalKey = (Item) kryo.readClassAndObject(input);
@@ -401,7 +402,7 @@ public class MapWithAdditionalEntryItem implements Item {
                     return false;
                 }
                 for (int i = 0; i < this.additionalValue.size(); i++) {
-                    if (!additionalValue.get(i).equals(otherSequence.get(i))) {
+                    if (!this.additionalValue.get(i).equals(otherSequence.get(i))) {
                         return false;
                     }
                 }

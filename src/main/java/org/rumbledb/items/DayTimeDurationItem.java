@@ -29,7 +29,6 @@ public class DayTimeDurationItem implements Item {
     Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
 
-    @SuppressWarnings("unused")
     public DayTimeDurationItem() {
         super();
     }

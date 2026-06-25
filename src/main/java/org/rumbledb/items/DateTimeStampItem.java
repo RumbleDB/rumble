@@ -20,7 +20,6 @@ public class DateTimeStampItem implements Item {
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
-    @SuppressWarnings("unused")
     public DateTimeStampItem() {
         super();
     }
@@ -164,4 +163,3 @@ public class DateTimeStampItem implements Item {
         return Timestamp.valueOf(this.getDateTimeValue().toLocalDateTime());
     }
 }
-

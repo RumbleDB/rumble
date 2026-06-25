@@ -255,9 +255,10 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = kryo.readObject(input, TreeSet.class);
+        this.removedKeys = (Set<Item>) kryo.readObject(input, TreeSet.class);
     }
 
     @Override
