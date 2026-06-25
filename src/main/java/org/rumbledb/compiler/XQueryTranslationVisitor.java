@@ -3794,13 +3794,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
         StringBuilder uriBuilder = new StringBuilder();
         for (Expression expression : uriExpressions) {
-            if (!(expression instanceof AttributeNodeContentExpression)) {
+            if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx)
                 );
             }
-            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+            uriBuilder.append(attributeContent.getContent());
         }
         return uriBuilder.toString();
     }
@@ -3921,9 +3921,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 allowEnclosedExpressions
             );
         } else if (
-            ctx instanceof XQueryParser.DirAttributeContentQuotContext
+            ctx instanceof XQueryParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
                 &&
-                ((XQueryParser.DirAttributeContentQuotContext) ctx).expr() != null
+                dirAttributeContentQuotContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -3931,11 +3931,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentQuotContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
         } else if (
-            ctx instanceof XQueryParser.DirAttributeContentAposContext
+            ctx instanceof XQueryParser.DirAttributeContentAposContext dirAttributeContentAposContext
                 &&
-                ((XQueryParser.DirAttributeContentAposContext) ctx).expr() != null
+                dirAttributeContentAposContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -3943,7 +3943,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((XQueryParser.DirAttributeContentAposContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         } else {
             // handle other cases
             String childText = child.getText();

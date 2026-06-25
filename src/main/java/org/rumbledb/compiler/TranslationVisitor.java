@@ -4133,13 +4133,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
         StringBuilder uriBuilder = new StringBuilder();
         for (Expression expression : uriExpressions) {
-            if (!(expression instanceof AttributeNodeContentExpression)) {
+            if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx)
                 );
             }
-            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+            uriBuilder.append(attributeContent.getContent());
         }
         return uriBuilder.toString();
     }
@@ -4260,9 +4260,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 allowEnclosedExpressions
             );
         } else if (
-            ctx instanceof JsoniqParser.DirAttributeContentQuotContext
+            ctx instanceof JsoniqParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
                 &&
-                ((JsoniqParser.DirAttributeContentQuotContext) ctx).expr() != null
+                dirAttributeContentQuotContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -4270,11 +4270,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentQuotContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
         } else if (
-            ctx instanceof JsoniqParser.DirAttributeContentAposContext
+            ctx instanceof JsoniqParser.DirAttributeContentAposContext dirAttributeContentAposContext
                 &&
-                ((JsoniqParser.DirAttributeContentAposContext) ctx).expr() != null
+                dirAttributeContentAposContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -4282,7 +4282,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentAposContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         } else {
             // handle other cases
             String childText = child.getText();
