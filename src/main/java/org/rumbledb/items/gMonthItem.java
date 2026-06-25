@@ -69,11 +69,11 @@ public class gMonthItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

@@ -59,8 +59,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
         // key.
-        if (iterator instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
+        if (iterator instanceof VariableReferenceIterator expr) {
             // this.hasNext = false;
             return context.getVariableValues()
                 .getVariableCount(expr.getVariableName(), getMetadata());

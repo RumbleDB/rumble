@@ -39,6 +39,10 @@ import java.util.*;
 public class SlashExprIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
+        Item::getXmlDocumentPosition,
+        Comparator.nullsLast(Comparator.naturalOrder())
+    );
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
     private List<Item> results = null;
@@ -99,7 +103,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                         ArrayList<Item> l = new ArrayList<>();
                         tuple._2().iterator().forEachRemaining(l::add);
                         l = new ArrayList<>(new HashSet<>(l));
-                        l.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+                        l.sort(DOCUMENT_ORDER_COMPARATOR);
                         return l.iterator();
                     }
                 );
@@ -187,7 +191,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                 // take unique
                 this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
                 // Sort values in document order.
-                this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
+                this.results.sort(DOCUMENT_ORDER_COMPARATOR);
             } else if (!allNonNodes) {
                 throw new NodeAndNonNodeException(
                         "A mix of nodes and non-nodes was encountered as a result of a step expression.",

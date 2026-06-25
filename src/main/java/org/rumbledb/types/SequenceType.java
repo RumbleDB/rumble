@@ -240,10 +240,9 @@ public class SequenceType implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof SequenceType)) {
+        if (!(other instanceof SequenceType sequenceType)) {
             return false;
         }
-        SequenceType sequenceType = (SequenceType) other;
         if (isEmptySequence()) {
             return sequenceType.isEmptySequence();
         }

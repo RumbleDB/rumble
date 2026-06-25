@@ -114,14 +114,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (argument == null) {
             throw new OurBadException("No static context provided!");
         }
-        if (node instanceof Expression) {
-            ((Expression) node).setStaticContext(argument);
+        if (node instanceof Expression expression) {
+            expression.setStaticContext(argument);
         }
-        if (node instanceof Statement) {
-            ((Statement) node).setStaticContext(argument);
+        if (node instanceof Statement statement) {
+            statement.setStaticContext(argument);
         }
-        if (node instanceof Clause) {
-            ((Clause) node).setStaticContext(argument);
+        if (node instanceof Clause clause) {
+            clause.setStaticContext(argument);
         }
         return node.accept(this, argument);
     }

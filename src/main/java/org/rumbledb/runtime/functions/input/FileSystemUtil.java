@@ -318,8 +318,8 @@ public class FileSystemUtil {
             rumbleException.initCause(e);
             throw rumbleException;
         }
-        if (e instanceof RumbleException) {
-            throw (RumbleException) e;
+        if (e instanceof RumbleException rumbleException) {
+            throw rumbleException;
         }
         if (e instanceof RuntimeException) {
             Throwable cause = e.getCause();
