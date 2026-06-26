@@ -77,6 +77,10 @@ public final class RegexPatternUtils {
         }
     }
 
+    public static boolean matchesEmptyString(Pattern pattern) {
+        return pattern.matcher("").find();
+    }
+
     static String normalizeCaseInsensitivePattern(String pattern) {
         StringBuilder result = new StringBuilder(pattern.length());
         for (int i = 0; i < pattern.length(); i++) {

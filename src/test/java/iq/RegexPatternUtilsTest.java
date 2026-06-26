@@ -67,4 +67,26 @@ public class RegexPatternUtilsTest {
             compiledRegex.getPattern().split("xÉ", -1)
         );
     }
+
+    @Test
+    public void multilineCaretMatchesEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
+
+    @Test
+    public void multilineWhitespaceAnchorsMatchEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^[\\s]*$",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
 }

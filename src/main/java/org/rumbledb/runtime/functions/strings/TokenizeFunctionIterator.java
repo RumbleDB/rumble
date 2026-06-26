@@ -118,7 +118,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                     flags,
                     getMetadata()
                 );
-                if (compiledRegex.getPattern().matcher("").matches()) {
+                if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
                     throw new MatchesEmptyStringException(
                             "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
                             getMetadata()
