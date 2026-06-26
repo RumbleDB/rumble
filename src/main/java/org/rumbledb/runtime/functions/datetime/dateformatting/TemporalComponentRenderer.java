@@ -6,7 +6,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 
 import java.math.BigInteger;
@@ -206,7 +205,7 @@ final class TemporalComponentRenderer {
         }
 
         digits = NumericFormattingSupport.applyGrouping(digits, pic);
-        digits = NumericPictureParser.mapAsciiDigits(digits, pic.getZeroDigit());
+        digits = NumericFormattingSupport.mapAsciiDigits(digits, pic.getZeroDigit());
 
         return maybeAppendOrdinal(digits, value, variableMarker, formattingContext);
     }

@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -172,7 +173,7 @@ public class NumberPictureFormatter {
                 + paddedFractionalPart;
         }
 
-        formattedNumber = FormatNumberPictureSupport.applyDecimalDigitFamily(formattedNumber, decimalFormat);
+        formattedNumber = NumericFormattingSupport.mapAsciiDigits(formattedNumber, decimalFormat.getZeroDigit());
 
         return formattedNumber;
     }
@@ -215,7 +216,7 @@ public class NumberPictureFormatter {
             digits = "0".repeat(minimumExponentSize - digits.length()) + digits;
         }
 
-        digits = FormatNumberPictureSupport.applyDecimalDigitFamily(digits, decimalFormat);
+        digits = NumericFormattingSupport.mapAsciiDigits(digits, decimalFormat.getZeroDigit());
         result.append(digits);
 
         return result.toString();
