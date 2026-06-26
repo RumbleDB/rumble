@@ -115,8 +115,9 @@ public final class RegexPatternUtils {
         } catch (PatternSyntaxException e) {
             return false;
         }
+    }
 
-  public static String[] tokenize(String input, Pattern pattern) {
+    public static String[] tokenize(String input, Pattern pattern) {
         if (input.isEmpty()) {
             return new String[0];
         }
