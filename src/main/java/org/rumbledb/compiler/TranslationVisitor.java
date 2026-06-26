@@ -2838,19 +2838,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
         Name name = parseFunctionName(ctx.functionName());
-        int arity = 0;
+        String arityLiteral = ctx.arity.getText();
         try {
-            arity = Integer.parseInt(ctx.arity.getText());
+            int arity = Integer.parseInt(arityLiteral);
+            return new NamedFunctionReferenceExpression(
+                    new FunctionIdentifier(name, arity),
+                    createMetadataFromContext(ctx)
+            );
         } catch (NumberFormatException e) {
-            throw new ParsingException(
-                    "Parser error: In a named function reference, arity must be an integer.",
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                        + name
+                        + "#"
+                        + arityLiteral,
                     createMetadataFromContext(ctx)
             );
         }
-        return new NamedFunctionReferenceExpression(
-                new FunctionIdentifier(name, arity),
-                createMetadataFromContext(ctx)
-        );
     }
 
     @Override
