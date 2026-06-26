@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidRegexFlagException;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
 
 import java.util.regex.Pattern;
@@ -55,7 +56,7 @@ public final class RegexPatternUtils {
                         quote = true;
                         break;
                     default:
-                        throw new InvalidRegexPatternException(
+                        throw new InvalidRegexFlagException(
                                 "Invalid regular expression flag: " + flag,
                                 metadata
                         );
