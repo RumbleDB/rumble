@@ -95,4 +95,41 @@ public class RegexPatternUtilsTest {
             RegexPatternUtils.tokenize("abracadabra", compiledRegex.getPattern())
         );
     }
+
+    @Test
+    public void multilineCaretMatchesEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
+
+    @Test
+    public void multilineWhitespaceAnchorsMatchEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^[\\s]*$",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
+
+    public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
+        Assert.assertArrayEquals(
+            new String[] { "abc\fdef" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
+        );
+    }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
+        Assert.assertArrayEquals(
+            new String[] { "abc", "def", "ghi", "jkl" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl ")
+        );
+    }
 }
