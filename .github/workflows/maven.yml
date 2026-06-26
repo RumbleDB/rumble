@@ -60,6 +60,7 @@ jobs:
         test_class: [
           "FrontendTests",
           "BackwardsCompatibilityTests",
+          "org.rumbledb.runtime.functions.strings.RegexPatternUtilsTest",
           "RuntimeTests",
           "RuntimeTestsNoParallelism",
           "RuntimeTestsNoInlining",
