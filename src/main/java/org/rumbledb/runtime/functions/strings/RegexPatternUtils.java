@@ -32,6 +32,8 @@ import java.util.regex.PatternSyntaxException;
 
 public final class RegexPatternUtils {
 
+    private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
+
     private RegexPatternUtils() {
     }
 
@@ -79,6 +81,52 @@ public final class RegexPatternUtils {
                     metadata
             );
         }
+    }
+
+    public static boolean matchesEmptyString(Pattern pattern) {
+        return hasZeroLengthMatch(pattern, "")
+            || hasZeroLengthMatch(pattern, "a")
+            || hasZeroLengthMatch(pattern, "\n")
+            || hasZeroLengthMatch(pattern, "a\nb")
+            || matchesEmptyStringWithoutLineAnchors(pattern);
+    }
+
+    private static boolean hasZeroLengthMatch(Pattern pattern, String input) {
+        Matcher matcher = pattern.matcher(input);
+        while (matcher.find()) {
+            if (matcher.start() == matcher.end()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesEmptyStringWithoutLineAnchors(Pattern pattern) {
+        String source = pattern.pattern();
+        if (source.startsWith("^")) {
+            source = source.substring(1);
+        }
+        if (source.endsWith("$")) {
+            source = source.substring(0, source.length() - 1);
+        }
+        if (source.equals(pattern.pattern())) {
+            return false;
+        }
+        try {
+            return Pattern.compile(source, pattern.flags()).matcher("").matches();
+        } catch (PatternSyntaxException e) {
+            return false;
+        }
+    }
+
+    public static String[] tokenizeOnXmlWhitespace(String input) {
+        String[] result = XML_WHITESPACE_PATTERN.split(input, 0);
+        if (result.length != 0 && result[0].isEmpty()) {
+            String[] trimmed = new String[result.length - 1];
+            System.arraycopy(result, 1, trimmed, 0, trimmed.length);
+            return trimmed;
+        }
+        return result;
     }
 
     public static String[] tokenize(String input, Pattern pattern) {
