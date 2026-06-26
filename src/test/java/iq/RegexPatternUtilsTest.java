@@ -104,7 +104,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
     }
 
     @Test
@@ -115,6 +115,72 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void positiveLookaheadMatchesEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(?=\\d)",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void positiveLookbehindMatchesEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(?<=a)",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void nullableAlternationMatchesEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(foo|)",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void starQuantifierMatchesEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "a*",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void plusQuantifierDoesNotMatchEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "a+",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertFalse(RegexPatternUtils.matchesEmptyString(compiledRegex));
+    }
+
+    @Test
+    public void nonNullableWhitespaceClassDoesNotMatchEmptyStringForValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "\\s+",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertFalse(RegexPatternUtils.matchesEmptyString(compiledRegex));
     }
 }

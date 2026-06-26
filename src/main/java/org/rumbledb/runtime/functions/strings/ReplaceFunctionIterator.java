@@ -64,7 +64,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex)) {
             throw new MatchesEmptyStringException(
                     "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
                     getMetadata()

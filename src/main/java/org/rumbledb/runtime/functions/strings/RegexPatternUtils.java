@@ -81,12 +81,8 @@ public final class RegexPatternUtils {
         }
     }
 
-    public static boolean matchesEmptyString(Pattern pattern) {
-        return hasZeroLengthMatch(pattern, "")
-            || hasZeroLengthMatch(pattern, "a")
-            || hasZeroLengthMatch(pattern, "\n")
-            || hasZeroLengthMatch(pattern, "a\nb")
-            || matchesEmptyStringWithoutLineAnchors(pattern);
+    public static boolean matchesEmptyString(CompiledRegex compiledRegex) {
+        return new RegexZeroLengthAnalyzer(compiledRegex).canMatchZeroLength();
     }
 
     private static boolean hasZeroLengthMatch(Pattern pattern, String input) {
@@ -97,24 +93,6 @@ public final class RegexPatternUtils {
             }
         }
         return false;
-    }
-
-    private static boolean matchesEmptyStringWithoutLineAnchors(Pattern pattern) {
-        String source = pattern.pattern();
-        if (source.startsWith("^")) {
-            source = source.substring(1);
-        }
-        if (source.endsWith("$")) {
-            source = source.substring(0, source.length() - 1);
-        }
-        if (source.equals(pattern.pattern())) {
-            return false;
-        }
-        try {
-            return Pattern.compile(source, pattern.flags()).matcher("").matches();
-        } catch (PatternSyntaxException e) {
-            return false;
-        }
     }
 
     public static String[] tokenize(String input, Pattern pattern) {
@@ -485,5 +463,800 @@ public final class RegexPatternUtils {
             this.text = text;
             this.endIndex = endIndex;
         }
+    }
+
+    private static final class RegexZeroLengthAnalyzer {
+        private static final int MAX_SAMPLES = 8;
+        private static final String[] GENERIC_WITNESSES = new String[] {
+            "",
+            "a",
+            "0",
+            " ",
+            "\n",
+            "_",
+            ","
+        };
+
+        private final CompiledRegex compiledRegex;
+        private final int flags;
+        private final String source;
+        private int index;
+
+        private RegexZeroLengthAnalyzer(CompiledRegex compiledRegex) {
+            this.compiledRegex = compiledRegex;
+            this.flags = compiledRegex.getPattern().flags();
+            this.source = compiledRegex.getEffectivePattern();
+            this.index = 0;
+        }
+
+        private boolean canMatchZeroLength() {
+            try {
+                AnalysisResult analysisResult = parseExpression();
+                if (this.index < this.source.length()) {
+                    return fallbackHeuristic();
+                }
+                for (ContextSample contextSample : analysisResult.zeroLengthContexts) {
+                    if (hasVerifiedZeroLengthMatch(contextSample)) {
+                        return true;
+                    }
+                }
+                return false;
+            } catch (UnsupportedOperationException e) {
+                return fallbackHeuristic();
+            }
+        }
+
+        private boolean fallbackHeuristic() {
+            return hasZeroLengthMatch(this.compiledRegex.getPattern(), "")
+                || hasZeroLengthMatch(this.compiledRegex.getPattern(), "a")
+                || hasZeroLengthMatch(this.compiledRegex.getPattern(), "\n")
+                || hasZeroLengthMatch(this.compiledRegex.getPattern(), "a\nb");
+        }
+
+        private boolean hasVerifiedZeroLengthMatch(ContextSample contextSample) {
+            List<String> candidates = new ArrayList<>();
+            String materialized = contextSample.materialize();
+            addSample(candidates, materialized);
+            if (!contextSample.mustBeStart) {
+                for (String leftPadding : GENERIC_WITNESSES) {
+                    if (!leftPadding.isEmpty()) {
+                        addSample(candidates, leftPadding + materialized);
+                    }
+                }
+            }
+            if (!contextSample.mustBeEnd) {
+                int size = candidates.size();
+                for (int i = 0; i < size; i++) {
+                    String baseCandidate = candidates.get(i);
+                    for (String rightPadding : GENERIC_WITNESSES) {
+                        if (!rightPadding.isEmpty()) {
+                            addSample(candidates, baseCandidate + rightPadding);
+                        }
+                    }
+                }
+            }
+            for (String candidate : candidates) {
+                if (hasZeroLengthMatch(this.compiledRegex.getPattern(), candidate)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private AnalysisResult parseExpression() {
+            AnalysisResult result = parseSequence();
+            while (peek() == '|') {
+                this.index++;
+                result = result.alternate(parseSequence());
+            }
+            return result;
+        }
+
+        private AnalysisResult parseSequence() {
+            List<AnalysisResult> parts = new ArrayList<>();
+            while (this.index < this.source.length()) {
+                char current = peek();
+                if (current == ')' || current == '|') {
+                    break;
+                }
+                parts.add(parseQuantifiedAtom());
+            }
+            return AnalysisResult.sequence(parts);
+        }
+
+        private AnalysisResult parseQuantifiedAtom() {
+            AnalysisResult atom = parseAtom();
+            while (true) {
+                skipCommentsWhitespace();
+                Quantifier quantifier = parseQuantifier();
+                if (quantifier == null) {
+                    return atom;
+                }
+                atom = atom.quantify(quantifier.min, quantifier.max);
+            }
+        }
+
+        private AnalysisResult parseAtom() {
+            skipCommentsWhitespace();
+            if (this.index >= this.source.length()) {
+                return AnalysisResult.empty();
+            }
+            char current = this.source.charAt(this.index);
+            if (current == '(') {
+                return parseGroup();
+            }
+            if (current == '[') {
+                return parseCharacterClass();
+            }
+            if (current == '\\') {
+                return parseEscapeAtom();
+            }
+            if (current == '.') {
+                this.index++;
+                return AnalysisResult.consuming(singleCharacterWitness("."));
+            }
+            if (current == '^') {
+                this.index++;
+                return AnalysisResult.zeroWidth(
+                    isMultiline()
+                        ? List.of(ContextSample.startOfInput(), ContextSample.beforeNewline())
+                        : List.of(ContextSample.startOfInput())
+                );
+            }
+            if (current == '$') {
+                this.index++;
+                return AnalysisResult.zeroWidth(
+                    isMultiline()
+                        ? List.of(ContextSample.endOfInput(), ContextSample.afterNewline())
+                        : List.of(ContextSample.endOfInput())
+                );
+            }
+            this.index++;
+            return AnalysisResult.literal(String.valueOf(current));
+        }
+
+        private AnalysisResult parseGroup() {
+            int groupStart = this.index;
+            this.index++;
+            if (peek() == '?') {
+                this.index++;
+                if (match(':')) {
+                    AnalysisResult result = parseExpression();
+                    expect(')');
+                    return result;
+                }
+                if (match('=')) {
+                    AnalysisResult inner = parseExpression();
+                    expect(')');
+                    return AnalysisResult.lookahead(inner);
+                }
+                if (match('!')) {
+                    int groupContentStart = this.index;
+                    AnalysisResult inner = parseExpression();
+                    expect(')');
+                    String groupSource = this.source.substring(groupContentStart, this.index - 1);
+                    return AnalysisResult.negativeLookahead(findNegativeLookaroundWitness(groupSource, false), inner);
+                }
+                if (match('>')) {
+                    AnalysisResult result = parseExpression();
+                    expect(')');
+                    return result;
+                }
+                if (match('<')) {
+                    if (match('=')) {
+                        int groupContentStart = this.index;
+                        AnalysisResult inner = parseExpression();
+                        expect(')');
+                        String groupSource = this.source.substring(groupContentStart, this.index - 1);
+                        return AnalysisResult.lookbehind(inner, groupSource, this.flags);
+                    }
+                    if (match('!')) {
+                        int groupContentStart = this.index;
+                        AnalysisResult inner = parseExpression();
+                        expect(')');
+                        String groupSource = this.source.substring(groupContentStart, this.index - 1);
+                        return AnalysisResult.negativeLookbehind(
+                            findNegativeLookaroundWitness(groupSource, true),
+                            inner
+                        );
+                    }
+                }
+                throw new UnsupportedOperationException("Unsupported group: " + this.source.substring(groupStart));
+            }
+            AnalysisResult result = parseExpression();
+            expect(')');
+            return result;
+        }
+
+        private AnalysisResult parseCharacterClass() {
+            int start = this.index;
+            this.index++;
+            int nesting = 1;
+            boolean escaped = false;
+            while (this.index < this.source.length() && nesting > 0) {
+                char current = this.source.charAt(this.index++);
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (current == '\\') {
+                    escaped = true;
+                    continue;
+                }
+                if (current == '[') {
+                    nesting++;
+                    continue;
+                }
+                if (current == ']') {
+                    nesting--;
+                }
+            }
+            String classSource = this.source.substring(start, this.index);
+            return AnalysisResult.consuming(singleCharacterWitness(classSource));
+        }
+
+        private AnalysisResult parseEscapeAtom() {
+            int start = this.index;
+            if (this.index + 1 >= this.source.length()) {
+                this.index = this.source.length();
+                return AnalysisResult.literal("\\");
+            }
+            char escapeType = this.source.charAt(this.index + 1);
+            if (escapeType == 'Q') {
+                int quoteEnd = this.source.indexOf("\\E", this.index + 2);
+                if (quoteEnd == -1) {
+                    throw new UnsupportedOperationException("Unterminated quoted literal");
+                }
+                String literal = this.source.substring(this.index + 2, quoteEnd);
+                this.index = quoteEnd + 2;
+                if (literal.isEmpty()) {
+                    return AnalysisResult.empty();
+                }
+                return AnalysisResult.literal(literal);
+            }
+            EscapedToken escapedToken = readEscapedToken(this.source, this.index);
+            this.index = escapedToken.endIndex + 1;
+            String escapedSource = this.source.substring(start, this.index);
+            switch (escapeType) {
+                case 'A':
+                    return AnalysisResult.zeroWidth(List.of(ContextSample.startOfInput()));
+                case 'Z':
+                case 'z':
+                    return AnalysisResult.zeroWidth(List.of(ContextSample.endOfInput()));
+                case 'b':
+                    return AnalysisResult.zeroWidth(List.of(ContextSample.wordBoundary()));
+                case 'B':
+                    return AnalysisResult.zeroWidth(List.of(ContextSample.nonWordBoundary()));
+                default:
+                    return AnalysisResult.consuming(singleCharacterWitness(escapedSource));
+            }
+        }
+
+        private Quantifier parseQuantifier() {
+            if (this.index >= this.source.length()) {
+                return null;
+            }
+            char current = this.source.charAt(this.index);
+            Quantifier quantifier;
+            switch (current) {
+                case '*':
+                    this.index++;
+                    quantifier = new Quantifier(0, -1);
+                    break;
+                case '+':
+                    this.index++;
+                    quantifier = new Quantifier(1, -1);
+                    break;
+                case '?':
+                    this.index++;
+                    quantifier = new Quantifier(0, 1);
+                    break;
+                case '{':
+                    quantifier = parseExplicitQuantifier();
+                    break;
+                default:
+                    return null;
+            }
+            if (this.index < this.source.length()) {
+                char modifier = this.source.charAt(this.index);
+                if (modifier == '?' || modifier == '+') {
+                    this.index++;
+                }
+            }
+            return quantifier;
+        }
+
+        private Quantifier parseExplicitQuantifier() {
+            int start = this.index;
+            this.index++;
+            int min = readInteger();
+            int max = min;
+            if (peek() == ',') {
+                this.index++;
+                if (Character.isDigit(peek())) {
+                    max = readInteger();
+                } else {
+                    max = -1;
+                }
+            }
+            if (!match('}')) {
+                throw new UnsupportedOperationException("Unterminated quantifier at " + start);
+            }
+            return new Quantifier(min, max);
+        }
+
+        private int readInteger() {
+            skipCommentsWhitespace();
+            int start = this.index;
+            while (this.index < this.source.length() && Character.isDigit(this.source.charAt(this.index))) {
+                this.index++;
+            }
+            if (start == this.index) {
+                throw new UnsupportedOperationException("Expected integer at " + this.index);
+            }
+            return Integer.parseInt(this.source.substring(start, this.index));
+        }
+
+        private String findNegativeLookaroundWitness(String innerSource, boolean lookbehind) {
+            Pattern innerPattern = Pattern.compile(innerSource, this.flags);
+            List<String> candidates = buildWitnessCandidates(innerSource);
+            for (String candidate : candidates) {
+                boolean matches = lookbehind
+                    ? matchesAtEnd(innerPattern, candidate)
+                    : innerPattern.matcher(candidate).lookingAt();
+                if (!matches) {
+                    return candidate;
+                }
+            }
+            return null;
+        }
+
+        private List<String> buildWitnessCandidates(String innerSource) {
+            List<String> candidates = new ArrayList<>();
+            addSample(candidates, "");
+            for (String genericWitness : GENERIC_WITNESSES) {
+                addSample(candidates, genericWitness);
+            }
+            for (int i = 0; i < innerSource.length(); i++) {
+                char current = innerSource.charAt(i);
+                if (current == '\\' && i + 1 < innerSource.length()) {
+                    EscapedToken escapedToken = readEscapedToken(innerSource, i);
+                    addSample(candidates, singleCharacterWitness(escapedToken.text));
+                    i = escapedToken.endIndex;
+                    continue;
+                }
+                if (current == '[') {
+                    int classEnd = skipNestedCharacterClass(innerSource, i);
+                    addSample(candidates, singleCharacterWitness(innerSource.substring(i, classEnd + 1)));
+                    i = classEnd;
+                    continue;
+                }
+                if ("()|*+?{}.^$".indexOf(current) == -1) {
+                    addSample(candidates, String.valueOf(current));
+                }
+            }
+            int size = candidates.size();
+            for (int i = 0; i < size; i++) {
+                for (int j = 0; j < size && candidates.size() < MAX_SAMPLES; j++) {
+                    addSample(candidates, candidates.get(i) + candidates.get(j));
+                }
+            }
+            return candidates;
+        }
+
+        private int skipNestedCharacterClass(String pattern, int startIndex) {
+            int nesting = 1;
+            boolean escaped = false;
+            int currentIndex = startIndex + 1;
+            while (currentIndex < pattern.length() && nesting > 0) {
+                char current = pattern.charAt(currentIndex++);
+                if (escaped) {
+                    escaped = false;
+                    continue;
+                }
+                if (current == '\\') {
+                    escaped = true;
+                    continue;
+                }
+                if (current == '[') {
+                    nesting++;
+                    continue;
+                }
+                if (current == ']') {
+                    nesting--;
+                }
+            }
+            return currentIndex - 1;
+        }
+
+        private String singleCharacterWitness(String atomSource) {
+            Pattern atomPattern = Pattern.compile(atomSource, this.flags);
+            for (String genericWitness : GENERIC_WITNESSES) {
+                if (genericWitness.length() == 1 && atomPattern.matcher(genericWitness).matches()) {
+                    return genericWitness;
+                }
+            }
+            for (int i = 32; i < 127; i++) {
+                String candidate = Character.toString((char) i);
+                if (atomPattern.matcher(candidate).matches()) {
+                    return candidate;
+                }
+            }
+            if (atomPattern.matcher("\n").matches()) {
+                return "\n";
+            }
+            throw new UnsupportedOperationException("Could not derive witness for " + atomSource);
+        }
+
+        private boolean matchesAtEnd(Pattern pattern, String input) {
+            Matcher matcher = pattern.matcher(input);
+            while (matcher.find()) {
+                if (matcher.end() == input.length()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void skipCommentsWhitespace() {
+            if ((this.flags & Pattern.COMMENTS) == 0) {
+                return;
+            }
+            while (this.index < this.source.length()) {
+                char current = this.source.charAt(this.index);
+                if (Character.isWhitespace(current)) {
+                    this.index++;
+                    continue;
+                }
+                if (current == '#') {
+                    this.index++;
+                    while (this.index < this.source.length() && this.source.charAt(this.index) != '\n') {
+                        this.index++;
+                    }
+                    continue;
+                }
+                break;
+            }
+        }
+
+        private boolean isMultiline() {
+            return (this.flags & Pattern.MULTILINE) != 0;
+        }
+
+        private boolean match(char expected) {
+            if (peek() == expected) {
+                this.index++;
+                return true;
+            }
+            return false;
+        }
+
+        private void expect(char expected) {
+            if (!match(expected)) {
+                throw new UnsupportedOperationException("Expected '" + expected + "' at " + this.index);
+            }
+        }
+
+        private char peek() {
+            if (this.index >= this.source.length()) {
+                return '\0';
+            }
+            return this.source.charAt(this.index);
+        }
+    }
+
+    private static final class AnalysisResult {
+        private final List<String> fullMatchSamples;
+        private final List<ContextSample> zeroLengthContexts;
+
+        private AnalysisResult(List<String> fullMatchSamples, List<ContextSample> zeroLengthContexts) {
+            this.fullMatchSamples = fullMatchSamples;
+            this.zeroLengthContexts = zeroLengthContexts;
+        }
+
+        private static AnalysisResult empty() {
+            return new AnalysisResult(List.of(""), List.of(ContextSample.empty()));
+        }
+
+        private static AnalysisResult literal(String literal) {
+            List<String> samples = new ArrayList<>();
+            addSample(samples, literal);
+            List<ContextSample> contexts = literal.isEmpty() ? List.of(ContextSample.empty()) : List.of();
+            return new AnalysisResult(samples, contexts);
+        }
+
+        private static AnalysisResult consuming(String witness) {
+            List<String> samples = new ArrayList<>();
+            addSample(samples, witness);
+            return new AnalysisResult(samples, List.of());
+        }
+
+        private static AnalysisResult zeroWidth(List<ContextSample> contexts) {
+            List<String> samples = new ArrayList<>();
+            addSample(samples, "");
+            return new AnalysisResult(samples, limitContexts(contexts));
+        }
+
+        private static AnalysisResult lookahead(AnalysisResult inner) {
+            List<ContextSample> contexts = new ArrayList<>();
+            for (String sample : inner.fullMatchSamples) {
+                addContext(contexts, ContextSample.right(sample));
+            }
+            return new AnalysisResult(List.of(""), contexts);
+        }
+
+        private static AnalysisResult lookbehind(AnalysisResult inner, String source, int flags) {
+            List<ContextSample> contexts = new ArrayList<>();
+            for (String sample : inner.fullMatchSamples) {
+                addContext(contexts, ContextSample.left(sample));
+            }
+            Pattern innerPattern = Pattern.compile(source, flags);
+            for (String sample : inner.fullMatchSamples) {
+                if (matchesAtEnd(innerPattern, sample)) {
+                    addContext(contexts, ContextSample.left(sample));
+                }
+            }
+            return new AnalysisResult(List.of(""), contexts);
+        }
+
+        private static AnalysisResult negativeLookahead(String witness, AnalysisResult inner) {
+            if (witness == null) {
+                return new AnalysisResult(List.of(), List.of());
+            }
+            return new AnalysisResult(List.of(""), List.of(ContextSample.right(witness)));
+        }
+
+        private static AnalysisResult negativeLookbehind(String witness, AnalysisResult inner) {
+            if (witness == null) {
+                return new AnalysisResult(List.of(), List.of());
+            }
+            return new AnalysisResult(List.of(""), List.of(ContextSample.left(witness)));
+        }
+
+        private static AnalysisResult sequence(List<AnalysisResult> parts) {
+            if (parts.isEmpty()) {
+                return empty();
+            }
+            List<String> samples = new ArrayList<>();
+            addSample(samples, "");
+            List<ContextSample> contexts = new ArrayList<>();
+            addContext(contexts, ContextSample.empty());
+            for (AnalysisResult part : parts) {
+                samples = combineSamples(samples, part.fullMatchSamples);
+                contexts = combineContexts(contexts, part.zeroLengthContexts);
+            }
+            return new AnalysisResult(samples, contexts);
+        }
+
+        private AnalysisResult alternate(AnalysisResult other) {
+            List<String> samples = new ArrayList<>(this.fullMatchSamples);
+            for (String sample : other.fullMatchSamples) {
+                addSample(samples, sample);
+            }
+            List<ContextSample> contexts = new ArrayList<>(this.zeroLengthContexts);
+            for (ContextSample contextSample : other.zeroLengthContexts) {
+                addContext(contexts, contextSample);
+            }
+            return new AnalysisResult(limitSamples(samples), limitContexts(contexts));
+        }
+
+        private AnalysisResult quantify(int min, int max) {
+            if (min == 0) {
+                return new AnalysisResult(List.of(""), List.of(ContextSample.empty()));
+            }
+            List<String> samples = repeatSamples(this.fullMatchSamples, min);
+            List<ContextSample> contexts = repeatContexts(this.zeroLengthContexts, min);
+            return new AnalysisResult(samples, contexts);
+        }
+
+        private static List<String> repeatSamples(List<String> samples, int count) {
+            List<String> result = new ArrayList<>();
+            addSample(result, "");
+            for (int i = 0; i < count; i++) {
+                result = combineSamples(result, samples);
+                if (result.isEmpty()) {
+                    return result;
+                }
+            }
+            return result;
+        }
+
+        private static List<ContextSample> repeatContexts(List<ContextSample> contexts, int count) {
+            List<ContextSample> result = new ArrayList<>();
+            addContext(result, ContextSample.empty());
+            for (int i = 0; i < count; i++) {
+                result = combineContexts(result, contexts);
+                if (result.isEmpty()) {
+                    return result;
+                }
+            }
+            return result;
+        }
+
+        private static List<String> combineSamples(List<String> leftSamples, List<String> rightSamples) {
+            List<String> combined = new ArrayList<>();
+            for (String leftSample : leftSamples) {
+                for (String rightSample : rightSamples) {
+                    addSample(combined, leftSample + rightSample);
+                }
+            }
+            return limitSamples(combined);
+        }
+
+        private static List<ContextSample> combineContexts(List<ContextSample> leftContexts, List<ContextSample> rightContexts) {
+            List<ContextSample> combined = new ArrayList<>();
+            for (ContextSample leftContext : leftContexts) {
+                for (ContextSample rightContext : rightContexts) {
+                    ContextSample merged = ContextSample.combine(leftContext, rightContext);
+                    if (merged != null) {
+                        addContext(combined, merged);
+                    }
+                }
+            }
+            return limitContexts(combined);
+        }
+
+        private static boolean matchesAtEnd(Pattern pattern, String input) {
+            Matcher matcher = pattern.matcher(input);
+            while (matcher.find()) {
+                if (matcher.end() == input.length()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
+
+    private static final class ContextSample {
+        private final boolean mustBeStart;
+        private final String leftSuffix;
+        private final boolean mustBeEnd;
+        private final String rightPrefix;
+
+        private ContextSample(boolean mustBeStart, String leftSuffix, boolean mustBeEnd, String rightPrefix) {
+            this.mustBeStart = mustBeStart;
+            this.leftSuffix = leftSuffix;
+            this.mustBeEnd = mustBeEnd;
+            this.rightPrefix = rightPrefix;
+        }
+
+        private static ContextSample empty() {
+            return new ContextSample(false, "", false, "");
+        }
+
+        private static ContextSample startOfInput() {
+            return new ContextSample(true, "", false, "");
+        }
+
+        private static ContextSample endOfInput() {
+            return new ContextSample(false, "", true, "");
+        }
+
+        private static ContextSample beforeNewline() {
+            return new ContextSample(false, "\n", false, "");
+        }
+
+        private static ContextSample afterNewline() {
+            return new ContextSample(false, "", false, "\n");
+        }
+
+        private static ContextSample left(String leftSuffix) {
+            return new ContextSample(false, leftSuffix, false, "");
+        }
+
+        private static ContextSample right(String rightPrefix) {
+            return new ContextSample(false, "", false, rightPrefix);
+        }
+
+        private static ContextSample wordBoundary() {
+            return new ContextSample(false, "a", false, " ");
+        }
+
+        private static ContextSample nonWordBoundary() {
+            return new ContextSample(false, "a", false, "a");
+        }
+
+        private static ContextSample combine(ContextSample left, ContextSample right) {
+            boolean mustBeStart = left.mustBeStart || right.mustBeStart;
+            String leftSuffix = combineSuffix(left.leftSuffix, right.leftSuffix);
+            if (leftSuffix == null) {
+                return null;
+            }
+            if (mustBeStart && !leftSuffix.isEmpty()) {
+                return null;
+            }
+
+            boolean mustBeEnd = left.mustBeEnd || right.mustBeEnd;
+            String rightPrefix = combinePrefix(left.rightPrefix, right.rightPrefix);
+            if (rightPrefix == null) {
+                return null;
+            }
+            if (mustBeEnd && !rightPrefix.isEmpty()) {
+                return null;
+            }
+
+            return new ContextSample(mustBeStart, leftSuffix, mustBeEnd, rightPrefix);
+        }
+
+        private static String combineSuffix(String left, String right) {
+            if (left.endsWith(right)) {
+                return left;
+            }
+            if (right.endsWith(left)) {
+                return right;
+            }
+            return null;
+        }
+
+        private static String combinePrefix(String left, String right) {
+            if (left.startsWith(right)) {
+                return left;
+            }
+            if (right.startsWith(left)) {
+                return right;
+            }
+            return null;
+        }
+
+        private String materialize() {
+            return this.leftSuffix + this.rightPrefix;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (!(other instanceof ContextSample)) {
+                return false;
+            }
+            ContextSample otherContext = (ContextSample) other;
+            return this.mustBeStart == otherContext.mustBeStart
+                && this.mustBeEnd == otherContext.mustBeEnd
+                && this.leftSuffix.equals(otherContext.leftSuffix)
+                && this.rightPrefix.equals(otherContext.rightPrefix);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = Boolean.hashCode(this.mustBeStart);
+            result = 31 * result + this.leftSuffix.hashCode();
+            result = 31 * result + Boolean.hashCode(this.mustBeEnd);
+            result = 31 * result + this.rightPrefix.hashCode();
+            return result;
+        }
+    }
+
+    private static final class Quantifier {
+        private final int min;
+        private final int max;
+
+        private Quantifier(int min, int max) {
+            this.min = min;
+            this.max = max;
+        }
+    }
+
+    private static void addSample(List<String> samples, String sample) {
+        if (!samples.contains(sample) && samples.size() < RegexZeroLengthAnalyzer.MAX_SAMPLES) {
+            samples.add(sample);
+        }
+    }
+
+    private static void addContext(List<ContextSample> contexts, ContextSample context) {
+        if (!contexts.contains(context) && contexts.size() < RegexZeroLengthAnalyzer.MAX_SAMPLES) {
+            contexts.add(context);
+        }
+    }
+
+    private static List<String> limitSamples(List<String> samples) {
+        if (samples.size() <= RegexZeroLengthAnalyzer.MAX_SAMPLES) {
+            return samples;
+        }
+        return new ArrayList<>(samples.subList(0, RegexZeroLengthAnalyzer.MAX_SAMPLES));
+    }
+
+    private static List<ContextSample> limitContexts(List<ContextSample> contexts) {
+        if (contexts.size() <= RegexZeroLengthAnalyzer.MAX_SAMPLES) {
+            return contexts;
+        }
+        return new ArrayList<>(contexts.subList(0, RegexZeroLengthAnalyzer.MAX_SAMPLES));
     }
 }
