@@ -18,12 +18,13 @@
 
 package org.rumbledb.cli;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
-import picocli.CommandLine.Unmatched;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -38,9 +39,49 @@ import java.util.Map;
     }
 )
 public final class CliOptions {
+    private static CommandLine commandLine() {
+        return new picocli.CommandLine(new CliOptions());
+    }
 
-    public static picocli.CommandLine commandLine() {
-        return new picocli.CommandLine(new CliOptions()).setUnmatchedArgumentsAllowed(true);
+    public static CommandLine.ParseResult parseArgs(String... args) {
+        return commandLine().parseArgs(normalizeLegacyDynamicOptions(args));
+    }
+
+    private static String[] normalizeLegacyDynamicOptions(String[] args) {
+        List<String> normalizedArguments = new ArrayList<>(args.length);
+        for (int i = 0; i < args.length; i++) {
+            String argument = args[i];
+            String normalizedOptionName = getNormalizedDynamicOptionName(argument);
+            if (normalizedOptionName == null) {
+                normalizedArguments.add(argument);
+                continue;
+            }
+            if (i + 1 >= args.length) {
+                normalizedArguments.add(argument);
+                continue;
+            }
+            String value = args[++i];
+            normalizedArguments.add(normalizedOptionName);
+            normalizedArguments.add(getDynamicOptionSuffix(argument) + "=" + value);
+        }
+        return normalizedArguments.toArray(new String[0]);
+    }
+
+    private static String getNormalizedDynamicOptionName(String argument) {
+        if (argument.startsWith("--variable-from-file:")) {
+            return "--variable-from-file";
+        }
+        if (argument.startsWith("--variable:")) {
+            return "--variable";
+        }
+        if (argument.startsWith("--output-format-option:")) {
+            return "--output-format-option";
+        }
+        return null;
+    }
+
+    private static String getDynamicOptionSuffix(String argument) {
+        return argument.substring(argument.indexOf(':') + 1);
     }
 
     @Mixin
@@ -74,7 +115,7 @@ public final class CliOptions {
     private Formatting formatting;
 
     @Mixin
-    private DynamicPrefixedOptions dynamicPrefixedOptions;
+    private DynamicOptions dynamicOptions;
 
     @Parameters(
         index = "0",
@@ -111,7 +152,7 @@ public final class CliOptions {
         private Formatting formatting;
 
         @Mixin
-        private DynamicPrefixedOptions dynamicPrefixedOptions;
+        private DynamicOptions dynamicOptions;
 
         @Parameters(
             index = "0",
@@ -146,7 +187,7 @@ public final class CliOptions {
         private Formatting formatting;
 
         @Mixin
-        private DynamicPrefixedOptions dynamicPrefixedOptions;
+        private DynamicOptions dynamicOptions;
     }
 
     @Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
@@ -173,7 +214,7 @@ public final class CliOptions {
         private Formatting formatting;
 
         @Mixin
-        private DynamicPrefixedOptions dynamicPrefixedOptions;
+        private DynamicOptions dynamicOptions;
     }
 
     public static final class BackwardsCompatibility {
@@ -304,18 +345,31 @@ public final class CliOptions {
         private Map<String, String> shortSerializationParameters;
     }
 
-    public static final class DynamicPrefixedOptions {
-        /*
-         * Picocli option names are static, while RumbleDB supports option names with user-defined suffixes such as
-         * --variable:foo and --output-format-option:header. These are intentionally collected here and interpreted by
-         * the CLI-to-configuration adapter.
-         *
-         * --variable:foo initializes the global variable $foo to the supplied value.
-         * --output-format-option:foo provides an option for the output format, for example a separator character for
-         * CSV or a compression format.
-         */
-        @Unmatched
-        private List<String> variableAndOutputFormatOptions;
+    public static final class DynamicOptions {
+        @Option(
+            names = "--variable",
+            paramLabel = "name=value",
+            description = {
+                "Initializes a global variable to the supplied value.",
+                "The query must contain the corresponding global variable declaration, e.g. "
+                    + "\"declare variable $foo external;\""
+            }
+        )
+        private Map<String, String> variables;
+
+        @Option(
+            names = "--variable-from-file",
+            paramLabel = "name=path",
+            description = "Initializes a global variable with a value read from the supplied file."
+        )
+        private Map<String, String> variablesFromFiles;
+
+        @Option(
+            names = "--output-format-option",
+            paramLabel = "name=value",
+            description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
+        )
+        private Map<String, String> outputFormatOptions;
     }
 
     public static final class Limits {
