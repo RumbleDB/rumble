@@ -95,4 +95,20 @@ public class RegexPatternUtilsTest {
             RegexPatternUtils.tokenize("abracadabra", compiledRegex.getPattern())
         );
     }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
+        Assert.assertArrayEquals(
+            new String[] { "abc\fdef" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
+        );
+    }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
+        Assert.assertArrayEquals(
+            new String[] { "abc", "def", "ghi", "jkl" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl ")
+        );
+    }
 }

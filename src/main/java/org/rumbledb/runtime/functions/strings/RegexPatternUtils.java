@@ -32,6 +32,8 @@ import java.util.regex.PatternSyntaxException;
 
 public final class RegexPatternUtils {
 
+    private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
+
     private RegexPatternUtils() {
     }
 
@@ -79,6 +81,16 @@ public final class RegexPatternUtils {
                     metadata
             );
         }
+    }
+
+    public static String[] tokenizeOnXmlWhitespace(String input) {
+        String[] result = XML_WHITESPACE_PATTERN.split(input, 0);
+        if (result.length != 0 && result[0].isEmpty()) {
+            String[] trimmed = new String[result.length - 1];
+            System.arraycopy(result, 1, trimmed, 0, trimmed.length);
+            return trimmed;
+        }
+        return result;
     }
 
     public static String[] tokenize(String input, Pattern pattern) {
