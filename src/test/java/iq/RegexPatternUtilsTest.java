@@ -116,5 +116,18 @@ public class RegexPatternUtilsTest {
         );
 
         Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
+        Assert.assertArrayEquals(
+            new String[] { "abc\fdef" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
+        );
+    }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
+        Assert.assertArrayEquals(
+            new String[] { "abc", "def", "ghi", "jkl" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl ")
+        );
     }
 }
