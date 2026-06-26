@@ -801,13 +801,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
-        Expression result = expression.hasResolvedIdentifier()
-            ? new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata())
-            : new NamedFunctionReferenceExpression(
-                    expression.getFunctionName(),
-                    expression.getArityLiteral(),
-                    expression.getMetadata()
-            );
+        Expression result = new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());

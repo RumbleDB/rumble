@@ -2550,9 +2550,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         } catch (NumberFormatException e) {
-            return new NamedFunctionReferenceExpression(
-                    name,
-                    arityLiteral,
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                        + name
+                        + "#"
+                        + arityLiteral,
                     createMetadataFromContext(ctx)
             );
         }

@@ -389,9 +389,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Void argument) {
-        if (expression.hasResolvedIdentifier()) {
-            addInputVariableDependency(expression, expression.getIdentifier().getNameWithArity());
-        }
+        addInputVariableDependency(expression, expression.getIdentifier().getNameWithArity());
         return null;
     }
 

@@ -23,9 +23,7 @@ package org.rumbledb.runtime.functions;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
@@ -34,8 +32,6 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
     private static final long serialVersionUID = 1L;
 
     private final FunctionIdentifier functionIdentifier;
-    private final Name functionName;
-    private final String arityLiteral;
 
     public NamedFunctionRefRuntimeIterator(
             FunctionIdentifier functionIdentifier,
@@ -43,32 +39,10 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
     ) {
         super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
-        this.functionName = null;
-        this.arityLiteral = null;
-    }
-
-    public NamedFunctionRefRuntimeIterator(
-            Name functionName,
-            String arityLiteral,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
-        this.functionIdentifier = null;
-        this.functionName = functionName;
-        this.arityLiteral = arityLiteral;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.functionIdentifier == null) {
-            throw new NumericOverflowOrUnderflow(
-                    "Named function reference arity is out of range for implementation limits: "
-                        + this.functionName
-                        + "#"
-                        + this.arityLiteral,
-                    getMetadata()
-            );
-        }
         Item resolved = NamedFunctionLookup.lookupOrNull(
             this.functionIdentifier,
             dynamicContext,
