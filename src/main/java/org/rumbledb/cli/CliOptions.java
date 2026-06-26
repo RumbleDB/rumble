@@ -18,15 +18,34 @@
 
 package org.rumbledb.cli;
 
+import org.rumbledb.config.AnalysisOptions;
+import org.rumbledb.config.DiagnosticsOptions;
+import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.config.ExecutionOptions;
+import org.rumbledb.config.ExternalVariableBindings;
+import org.rumbledb.config.FormattingOptions;
+import org.rumbledb.config.IOOptions;
+import org.rumbledb.config.LanguageOptions;
+import org.rumbledb.config.OptimizationOptions;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.RuntimeLimits;
+import org.rumbledb.config.ServerOptions;
+import org.rumbledb.context.Name;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Consumer;
 
 @Command(
     name = "rumbledb",
@@ -39,12 +58,200 @@ import java.util.Map;
     }
 )
 public final class CliOptions {
+    private interface ConfigurationSource {
+        RumbleConfiguration toRumbleConfiguration(CliOptions root);
+    }
+
     private static CommandLine commandLine() {
         return new picocli.CommandLine(new CliOptions());
     }
 
     public static CommandLine.ParseResult parseArgs(String... args) {
         return commandLine().parseArgs(normalizeLegacyDynamicOptions(args));
+    }
+
+    public static RumbleConfiguration toRumbleConfiguration(String... args) {
+        return toRumbleConfiguration(parseArgs(args));
+    }
+
+    public static RumbleConfiguration toRumbleConfiguration(CommandLine.ParseResult parseResult) {
+        CliOptions root = (CliOptions) parseResult.commandSpec().userObject();
+        CommandLine.ParseResult current = parseResult;
+        while (current.subcommand() != null) {
+            current = current.subcommand();
+        }
+        Object activeCommand = current.commandSpec().userObject();
+        if (activeCommand instanceof ConfigurationSource source) {
+            return source.toRumbleConfiguration(root);
+        }
+        return root.toRumbleConfiguration();
+    }
+
+    private RumbleConfiguration toRumbleConfiguration() {
+        Input effectiveInput = this.input;
+        Output effectiveOutput = this.output;
+        String effectiveQueryPath = this.queryPath;
+        if (effectiveInput != null && effectiveInput.queryPath != null) {
+            effectiveQueryPath = effectiveInput.queryPath;
+        }
+        return buildConfiguration(
+            ExecutionMode.RUN,
+            this.server,
+            effectiveInput,
+            effectiveOutput,
+            this.limits,
+            this.diagnostics,
+            this.execution,
+            this.optimization,
+            this.language,
+            this.formatting,
+            this.dynamicOptions,
+            effectiveQueryPath
+        );
+    }
+
+    private static RumbleConfiguration buildConfiguration(
+            ExecutionMode mode,
+            Server server,
+            Input input,
+            Output output,
+            Limits limits,
+            Diagnostics diagnostics,
+            Execution execution,
+            Optimization optimization,
+            Language language,
+            Formatting formatting,
+            DynamicOptions dynamicOptions,
+            String queryPath
+    ) {
+        Map<Name, String> unparsedExternalVariableValues = new HashMap<>();
+        if (dynamicOptions.variables != null) {
+            dynamicOptions.variables.forEach(
+                (name, value) -> unparsedExternalVariableValues.put(Name.createVariableInNoNamespace(name), value)
+            );
+        }
+        if (input != null && input.contextItem != null) {
+            unparsedExternalVariableValues.put(Name.CONTEXT_ITEM, input.contextItem);
+        }
+
+        Map<Name, String> externalVariableValuesReadFromFiles = new HashMap<>();
+        if (dynamicOptions.variablesFromFiles != null) {
+            dynamicOptions.variablesFromFiles.forEach(
+                (name, value) -> externalVariableValuesReadFromFiles.put(Name.createVariableInNoNamespace(name), value)
+            );
+        }
+
+        Set<Name> externalVariablesReadFromStandardInput = new HashSet<>();
+        if (input != null && input.contextItemInput != null) {
+            if ("-".equals(input.contextItemInput)) {
+                externalVariablesReadFromStandardInput.add(Name.CONTEXT_ITEM);
+            } else {
+                externalVariableValuesReadFromFiles.put(Name.CONTEXT_ITEM, input.contextItemInput);
+            }
+        }
+
+        Map<Name, String> externalVariablesInputFormats = new HashMap<>();
+        if (input != null && input.contextItemInputFormat != null) {
+            externalVariablesInputFormats.put(Name.CONTEXT_ITEM, input.contextItemInputFormat);
+        }
+
+        FormattingOptions.FormattingOptionsBuilder formattingBuilder = FormattingOptions.builder();
+        applyIfPresent(
+            formatting.defaultFormattingPlace,
+            value -> formattingBuilder.defaultFormattingPlace(ZoneId.of(value))
+        );
+        applyIfPresent(formatting.defaultFormattingCalendar, formattingBuilder::defaultFormattingCalendar);
+        applyIfPresent(formatting.defaultFormattingLanguage, formattingBuilder::defaultFormattingLanguage);
+
+        LanguageOptions.LanguageOptionsBuilder languageBuilder = LanguageOptions.builder()
+            .datesWithTimeZone(language.datesWithTimezone)
+            .laxJSONNullValidation(language.laxJSONNullValidation);
+        applyIfPresent(language.xmlVersion, languageBuilder::xmlVersion);
+
+        ServerOptions.ServerOptionsBuilder serverBuilder = ServerOptions.builder().mode(mode);
+        applyIfPresent(server.host, serverBuilder::host);
+        applyIfPresent(server.port, serverBuilder::port);
+
+        IOOptions.IOOptionsBuilder ioBuilder = IOOptions.builder();
+        applyIfPresent(input == null ? null : input.inputFormat, ioBuilder::inputFormat);
+        applyIfPresent(output == null ? null : output.numberOfOutputPartitions, ioBuilder::numberOfOutputPartitions);
+        applyIfPresent(queryPath, ioBuilder::queryPath);
+        applyIfPresent(output == null ? null : output.outputPath, ioBuilder::outputPath);
+        applyIfPresent(output == null ? null : output.logPath, ioBuilder::logPath);
+        applyIfPresent(input == null ? null : input.query, ioBuilder::query);
+        applyIfPresent(output == null ? null : output.shellFilter, ioBuilder::shell);
+
+        RuntimeLimits.RuntimeLimitsBuilder runtimeLimitsBuilder = RuntimeLimits.builder();
+        applyIfPresent(
+            limits.resultSize == null ? null : limits.resultSize.intValue(),
+            runtimeLimitsBuilder::resultsSizeCap
+        );
+        applyIfPresent(limits.materializationCap, runtimeLimitsBuilder::materializationCap);
+
+        ExternalVariableBindings.ExternalVariableBindingsBuilder externalVariableBindingsBuilder =
+            ExternalVariableBindings.builder();
+        applyIfNotEmpty(
+            unparsedExternalVariableValues,
+            externalVariableBindingsBuilder::unparsedExternalVariableValues
+        );
+        applyIfNotEmpty(
+            externalVariableValuesReadFromFiles,
+            externalVariableBindingsBuilder::externalVariableValuesReadFromFiles
+        );
+        applyIfNotEmpty(
+            externalVariablesReadFromStandardInput,
+            externalVariableBindingsBuilder::externalVariablesReadFromStandardInput
+        );
+        applyIfNotEmpty(
+            externalVariablesInputFormats,
+            externalVariableBindingsBuilder::externalVariablesInputFormats
+        );
+
+        applyIfPresent(language.defaultLanguage, languageBuilder::queryLanguage);
+        applyIfPresent(language.staticBaseUri, languageBuilder::staticBaseUri);
+
+        return RumbleConfiguration.builder()
+            .server(serverBuilder.build())
+            .io(ioBuilder.build())
+            .limits(runtimeLimitsBuilder.build())
+            .diagnostics(
+                DiagnosticsOptions.builder()
+                    .printIteratorTree(diagnostics.printIteratorTree)
+                    .showErrorInfo(diagnostics.showErrorInfo)
+                    .checkReturnTypeOfBuiltinFunctions(diagnostics.checkReturnTypesOfBuiltinFunctions)
+                    .debug(diagnostics.debug)
+                    .build()
+            )
+            .analysis(
+                AnalysisOptions.builder()
+                    .staticTyping(diagnostics.staticTyping)
+                    .printInferredTypes(diagnostics.printInferredTypes)
+                    .build()
+            )
+            .execution(
+                ExecutionOptions.builder()
+                    .nativeSQLPredicates(execution.nativeSQLPredicates)
+                    .dataFrameExecutionModeDetection(execution.dataFrameExecutionModeDetection)
+                    .parallelExecution(execution.parallelExecution)
+                    .dataFrameExecution(execution.dataFrameExecution)
+                    .nativeExecution(execution.nativeExecution)
+                    .tailCallOptimization(execution.tailCallOptimization)
+                    .functionInlining(execution.functionInlining)
+                    .applyUpdates(execution.applyUpdates)
+                    .build()
+            )
+            .optimization(
+                OptimizationOptions.builder()
+                    .optimizeGeneralComparisonToValueComparison(optimization.optimizeGeneralComparisonToValueComparison)
+                    .optimizeSteps(optimization.optimizeSteps)
+                    .optimizeStepsExperimental(optimization.optimizeStepsExperimental)
+                    .optimizeParentPointers(optimization.optimizeParentPointers)
+                    .build()
+            )
+            .language(languageBuilder.build())
+            .formatting(formattingBuilder.build())
+            .externalVariableBindings(externalVariableBindingsBuilder.build())
+            .build();
     }
 
     private static String[] normalizeLegacyDynamicOptions(String[] args) {
@@ -84,8 +291,23 @@ public final class CliOptions {
         return argument.substring(argument.indexOf(':') + 1);
     }
 
-    @Mixin
-    private BackwardsCompatibility backwardsCompatibility;
+    private static <T> void applyIfPresent(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    private static <T, C extends Collection<T>> void applyIfNotEmpty(C value, Consumer<C> setter) {
+        if (value != null && !value.isEmpty()) {
+            setter.accept(value);
+        }
+    }
+
+    private static <K, V> void applyIfNotEmpty(Map<K, V> value, Consumer<Map<K, V>> setter) {
+        if (value != null && !value.isEmpty()) {
+            setter.accept(value);
+        }
+    }
 
     @Mixin
     private Server server;
@@ -126,7 +348,7 @@ public final class CliOptions {
     private String queryPath;
 
     @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = false)
-    public static final class Run {
+    public static final class Run implements ConfigurationSource {
         @Mixin
         private Input input;
 
@@ -161,10 +383,29 @@ public final class CliOptions {
             description = "A JSONiq query file to read from (from any file system, even the Web!)."
         )
         private String queryPath;
+
+        @Override
+        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
+            String effectiveQueryPath = this.input.queryPath != null ? this.input.queryPath : this.queryPath;
+            return buildConfiguration(
+                ExecutionMode.RUN,
+                root.server,
+                this.input,
+                this.output,
+                this.limits,
+                this.diagnostics,
+                this.execution,
+                this.optimization,
+                this.language,
+                this.formatting,
+                this.dynamicOptions,
+                effectiveQueryPath
+            );
+        }
     }
 
     @Command(name = "serve", description = "Runs RumbleDB as a server on port 8001.", mixinStandardHelpOptions = false)
-    public static final class Serve {
+    public static final class Serve implements ConfigurationSource {
         @Mixin
         private Server server;
 
@@ -188,10 +429,28 @@ public final class CliOptions {
 
         @Mixin
         private DynamicOptions dynamicOptions;
+
+        @Override
+        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
+            return buildConfiguration(
+                ExecutionMode.SERVE,
+                this.server,
+                null,
+                null,
+                this.limits,
+                this.diagnostics,
+                this.execution,
+                this.optimization,
+                this.language,
+                this.formatting,
+                this.dynamicOptions,
+                null
+            );
+        }
     }
 
     @Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
-    public static final class Repl {
+    public static final class Repl implements ConfigurationSource {
         @Mixin
         private Output output;
 
@@ -215,24 +474,24 @@ public final class CliOptions {
 
         @Mixin
         private DynamicOptions dynamicOptions;
-    }
 
-    public static final class BackwardsCompatibility {
-        @Option(
-            names = "--shell",
-            negatable = true,
-            defaultValue = "false",
-            description = "yes runs the interactive shell. No executes a query specified with --query-path."
-        )
-        private boolean shell;
-
-        @Option(
-            names = "--server",
-            negatable = true,
-            defaultValue = "false",
-            description = "yes runs RumbleDB as a server on port 8001."
-        )
-        private boolean server;
+        @Override
+        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
+            return buildConfiguration(
+                ExecutionMode.REPL,
+                root.server,
+                null,
+                this.output,
+                this.limits,
+                this.diagnostics,
+                this.execution,
+                this.optimization,
+                this.language,
+                this.formatting,
+                this.dynamicOptions,
+                null
+            );
+        }
     }
 
     public static final class Server {
