@@ -1,8 +1,9 @@
-package org.rumbledb.runtime.functions.strings;
+package iq;
 
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.strings.RegexPatternUtils;
 
 public class RegexPatternUtilsTest {
 
