@@ -117,6 +117,7 @@ public final class RegexPatternUtils {
         } catch (PatternSyntaxException e) {
             return false;
         }
+    }
 
     public static String[] tokenizeOnXmlWhitespace(String input) {
         String[] result = XML_WHITESPACE_PATTERN.split(input, 0);
