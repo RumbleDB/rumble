@@ -18,6 +18,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
+import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -631,8 +632,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         if (!expression.hasResolvedIdentifier()) {
-            expression.setStaticSequenceType(SequenceType.createSequenceType("function(*)"));
-            return argument;
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                        + expression.getFunctionName()
+                        + "#"
+                        + expression.getArityLiteral(),
+                    expression.getMetadata()
+            );
         }
         try {
             FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
