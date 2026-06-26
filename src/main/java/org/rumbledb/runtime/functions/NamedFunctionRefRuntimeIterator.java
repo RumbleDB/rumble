@@ -24,27 +24,39 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    private FunctionIdentifier functionIdentifier;
+    private final NamedFunctionReferenceExpression expression;
 
     public NamedFunctionRefRuntimeIterator(
-            FunctionIdentifier functionIdentifier,
+            NamedFunctionReferenceExpression expression,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
-        this.functionIdentifier = functionIdentifier;
+        this.expression = expression;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (!this.expression.hasResolvedIdentifier()) {
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                        + this.expression.getFunctionName()
+                        + "#"
+                        + this.expression.getArityLiteral(),
+                    getMetadata()
+            );
+        }
+        FunctionIdentifier functionIdentifier = this.expression.getIdentifier();
         Item resolved = NamedFunctionLookup.lookupOrNull(
-            this.functionIdentifier,
+            functionIdentifier,
             dynamicContext,
             getConfiguration(),
             getMetadata()
@@ -53,8 +65,8 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
             return resolved;
         }
         throw new UnknownFunctionCallException(
-                this.functionIdentifier.getName(),
-                this.functionIdentifier.getArity(),
+                functionIdentifier.getName(),
+                functionIdentifier.getArity(),
                 getMetadata()
         );
     }

@@ -2542,19 +2542,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitNamedFunctionRef(XQueryParser.NamedFunctionRefContext ctx) {
         Name name = parseFunctionName(ctx.fn_name);
-        int arity = 0;
+        String arityLiteral = ctx.arity.getText();
         try {
-            arity = Integer.parseInt(ctx.arity.getText());
+            int arity = Integer.parseInt(arityLiteral);
+            return new NamedFunctionReferenceExpression(
+                    new FunctionIdentifier(name, arity),
+                    createMetadataFromContext(ctx)
+            );
         } catch (NumberFormatException e) {
-            throw new ParsingException(
-                    "Parser error: In a named function reference, arity must be an integer.",
+            return new NamedFunctionReferenceExpression(
+                    name,
+                    arityLiteral,
                     createMetadataFromContext(ctx)
             );
         }
-        return new NamedFunctionReferenceExpression(
-                new FunctionIdentifier(name, arity),
-                createMetadataFromContext(ctx)
-        );
     }
 
     @Override

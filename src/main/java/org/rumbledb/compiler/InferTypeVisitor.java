@@ -630,6 +630,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (!expression.hasResolvedIdentifier()) {
+            expression.setStaticSequenceType(SequenceType.createSequenceType("function(*)"));
+            return argument;
+        }
         try {
             FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));

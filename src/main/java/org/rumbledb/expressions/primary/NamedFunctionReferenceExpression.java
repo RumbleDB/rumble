@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -33,14 +34,37 @@ import java.util.List;
 public class NamedFunctionReferenceExpression extends Expression {
 
     private final FunctionIdentifier identifier;
+    private final Name functionName;
+    private final String arityLiteral;
 
     public NamedFunctionReferenceExpression(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(metadata);
         this.identifier = identifier;
+        this.functionName = identifier.getName();
+        this.arityLiteral = Integer.toString(identifier.getArity());
+    }
+
+    public NamedFunctionReferenceExpression(Name functionName, String arityLiteral, ExceptionMetadata metadata) {
+        super(metadata);
+        this.identifier = null;
+        this.functionName = functionName;
+        this.arityLiteral = arityLiteral;
     }
 
     public FunctionIdentifier getIdentifier() {
         return this.identifier;
+    }
+
+    public Name getFunctionName() {
+        return this.functionName;
+    }
+
+    public String getArityLiteral() {
+        return this.arityLiteral;
+    }
+
+    public boolean hasResolvedIdentifier() {
+        return this.identifier != null;
     }
 
     @Override
@@ -59,7 +83,7 @@ public class NamedFunctionReferenceExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
+        buffer.append(" (" + this.functionName + "#" + this.arityLiteral + ") ");
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
     }
@@ -67,6 +91,6 @@ public class NamedFunctionReferenceExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(this.identifier.toString() + "\n");
+        sb.append(this.functionName + "#" + this.arityLiteral + "\n");
     }
 }
