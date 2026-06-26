@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
 
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -78,7 +79,39 @@ public final class RegexPatternUtils {
     }
 
     public static boolean matchesEmptyString(Pattern pattern) {
-        return pattern.matcher("").find();
+        return hasZeroLengthMatch(pattern, "")
+            || hasZeroLengthMatch(pattern, "a")
+            || hasZeroLengthMatch(pattern, "\n")
+            || hasZeroLengthMatch(pattern, "a\nb")
+            || matchesEmptyStringWithoutLineAnchors(pattern);
+    }
+
+    private static boolean hasZeroLengthMatch(Pattern pattern, String input) {
+        Matcher matcher = pattern.matcher(input);
+        while (matcher.find()) {
+            if (matcher.start() == matcher.end()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesEmptyStringWithoutLineAnchors(Pattern pattern) {
+        String source = pattern.pattern();
+        if (source.startsWith("^")) {
+            source = source.substring(1);
+        }
+        if (source.endsWith("$")) {
+            source = source.substring(0, source.length() - 1);
+        }
+        if (source.equals(pattern.pattern())) {
+            return false;
+        }
+        try {
+            return Pattern.compile(source, pattern.flags()).matcher("").matches();
+        } catch (PatternSyntaxException e) {
+            return false;
+        }
     }
 
     static String normalizeCaseInsensitivePattern(String pattern) {
