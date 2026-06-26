@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -49,6 +50,8 @@ public class LanguageOptions {
     /**
      * Configured XML version.
      */
-    private String xmlVersion = DEFAULT_XML_VERSION;
     public static final String DEFAULT_XML_VERSION = "1.1";
+
+    @Default
+    private String xmlVersion = DEFAULT_XML_VERSION;
 }

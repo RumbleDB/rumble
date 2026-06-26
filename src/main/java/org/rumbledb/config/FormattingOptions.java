@@ -20,6 +20,7 @@ package org.rumbledb.config;
 
 import java.time.ZoneId;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -34,6 +35,7 @@ public class FormattingOptions {
      * {@link ZoneId}. The initial default is {@code UTC}.
      * </p>
      */
+    @Default
     private ZoneId defaultFormattingPlace = ZoneId.of("UTC");
 
     /**
@@ -46,6 +48,7 @@ public class FormattingOptions {
      * </p>
      *
      */
+    @Default
     private String defaultFormattingCalendar = FormattingCalendarModeSupport.DEFAULT;
 
     /**
@@ -58,5 +61,6 @@ public class FormattingOptions {
      * </p>
      *
      */
+    @Default
     private String defaultFormattingLanguage = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
 }

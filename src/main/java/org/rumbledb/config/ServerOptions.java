@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -27,20 +28,18 @@ public class ServerOptions {
     /**
      * Host name when used in server mode.
      */
-    private String host;
+    @Default
+    private String host = "localhost";
 
     /**
      * Port number when used in server mode.
      */
-    private int port;
+    @Default
+    private int port = 8001;
 
     /**
-     * Application should start in shell mode.
+     * Application execution mode.
      */
-    private boolean isShell;
-
-    /**
-     * Application should start in server mode.
-     */
-    private boolean isServer;
+    @Default
+    private ExecutionMode mode = ExecutionMode.RUN;
 }
