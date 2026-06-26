@@ -1083,7 +1083,10 @@ public final class RegexPatternUtils {
             return limitSamples(combined);
         }
 
-        private static List<ContextSample> combineContexts(List<ContextSample> leftContexts, List<ContextSample> rightContexts) {
+        private static List<ContextSample> combineContexts(
+                List<ContextSample> leftContexts,
+                List<ContextSample> rightContexts
+        ) {
             List<ContextSample> combined = new ArrayList<>();
             for (ContextSample leftContext : leftContexts) {
                 for (ContextSample rightContext : rightContexts) {
