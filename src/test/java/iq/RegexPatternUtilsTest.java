@@ -67,4 +67,20 @@ public class RegexPatternUtilsTest {
             compiledRegex.getPattern().split("xÉ", -1)
         );
     }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
+        Assert.assertArrayEquals(
+            new String[] { "abc\fdef" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
+        );
+    }
+
+    @Test
+    public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
+        Assert.assertArrayEquals(
+            new String[] { "abc", "def", "ghi", "jkl" },
+            RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl ")
+        );
+    }
 }
