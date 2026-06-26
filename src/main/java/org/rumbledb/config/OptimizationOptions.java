@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -27,20 +28,24 @@ public class OptimizationOptions {
     /**
      * Whether general comparisons may be rewritten using value comparisons.
      */
-    private boolean optimizeGeneralComparisonToValueComparison;
+    @Default
+    private boolean optimizeGeneralComparisonToValueComparison = true;
 
     /**
      * Whether XPath steps should be optimized.
      */
-    private boolean optimizeSteps;
+    @Default
+    private boolean optimizeSteps = true;
 
     /**
      * Whether XPath steps should be optimized including experimental algorithms.
      */
-    private boolean optimizeStepsExperimental;
+    @Default
+    private boolean optimizeStepsExperimental = false;
 
     /**
      * Whether parent pointers can be optimized away in XPath expressions.
      */
-    private boolean optimizeParentPointers;
+    @Default
+    private boolean optimizeParentPointers = true;
 }

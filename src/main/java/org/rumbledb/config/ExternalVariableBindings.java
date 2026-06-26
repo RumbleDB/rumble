@@ -23,10 +23,13 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -35,30 +38,36 @@ public class ExternalVariableBindings {
     /**
      * Stores already-materialized external variable values
      */
-    private Map<Name, List<Item>> externalVariableValues;
+    @Default
+    private Map<Name, List<Item>> externalVariableValues = new HashMap<>();
 
     /**
      * Stores raw string values passed from CLI/API before they are parsed.
      */
-    private Map<Name, String> unparsedExternalVariableValues;
+    @Default
+    private Map<Name, String> unparsedExternalVariableValues = new HashMap<>();
 
     /**
      * Maps variable names to file paths/URIs.
      */
-    private Map<Name, String> externalVariableValuesReadFromFiles;
+    @Default
+    private Map<Name, String> externalVariableValuesReadFromFiles = new HashMap<>();
 
     /**
      * Stores external variables backed by Spark Dataset<Row>
      */
-    private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames;
+    @Default
+    private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames = new HashMap<>();
 
     /**
      * Set of variable names whose value should be read from stdin.
      */
-    private Set<Name> externalVariablesReadFromStandardInput;
+    @Default
+    private Set<Name> externalVariablesReadFromStandardInput = new HashSet<>();
 
     /**
      * Maps each external variable name to the format used to parse its input
      */
-    private Map<Name, String> externalVariablesInputFormats;
+    @Default
+    private Map<Name, String> externalVariablesInputFormats = new HashMap<>();
 }

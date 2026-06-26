@@ -25,22 +25,29 @@ import lombok.Data;
 @Data
 @Builder
 public class LanguageOptions {
+    public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
+    public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
+    public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
+
     /**
      * Whether dates with time zones should be supported.
      * If supported, RumbleDB will not be able to use DataFrames for data containing dates.
      */
-    private boolean datesWithTimeZone;
+    @Default
+    private boolean datesWithTimeZone = DEFAULT_DATES_WITH_TIMEZONE;
 
     /**
      * Whether it is fine to consider JSON null values in an object as absent for validation against an optional
      * key.
      */
-    private boolean laxJSONNullValidation;
+    @Default
+    private boolean laxJSONNullValidation = DEFAULT_LAX_JSON_NULL_VALIDATION;
 
     /**
      * Version of the query language in use.
      */
-    private String queryLanguage;
+    @Default
+    private String queryLanguage = DEFAULT_QUERY_LANGUAGE;
 
     /**
      * Static base URI against which relative URIs are resolved when reading or writing data.

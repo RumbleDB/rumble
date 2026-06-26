@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -27,20 +28,24 @@ public class DiagnosticsOptions {
     /**
      * Whether the return type of built-in functions is checked.
      */
-    private boolean checkReturnTypeOfBuiltinFunctions;
+    @Default
+    private boolean checkReturnTypeOfBuiltinFunctions = false;
 
     /**
      * Whether verbose error info should be shown in case an error is returned.
      */
-    private boolean showErrorInfo;
+    @Default
+    private boolean showErrorInfo = false;
 
     /**
      * Whether verbose information on query plans should be displayed.
      */
-    private boolean printIteratorTree;
+    @Default
+    private boolean printIteratorTree = false;
 
     /**
      * Whether debug output is enabled.
      */
-    private boolean debug;
+    @Default
+    private boolean debug = false;
 }

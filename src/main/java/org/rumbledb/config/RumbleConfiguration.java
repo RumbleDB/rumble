@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 /**
@@ -27,23 +28,33 @@ import lombok.Data;
 @Data
 @Builder
 public class RumbleConfiguration {
-    private ServerOptions server;
+    @Default
+    private ServerOptions server = ServerOptions.builder().build();
 
-    private IOOptions io;
+    @Default
+    private IOOptions io = IOOptions.builder().build();
 
-    private RuntimeLimits limits;
+    @Default
+    private RuntimeLimits limits = RuntimeLimits.builder().build();
 
-    private DiagnosticsOptions diagnostics;
+    @Default
+    private DiagnosticsOptions diagnostics = DiagnosticsOptions.builder().build();
 
-    private AnalysisOptions analysis;
+    @Default
+    private AnalysisOptions analysis = AnalysisOptions.builder().build();
 
-    private ExecutionOptions execution;
+    @Default
+    private ExecutionOptions execution = ExecutionOptions.builder().build();
 
-    private OptimizationOptions optimization;
+    @Default
+    private OptimizationOptions optimization = OptimizationOptions.builder().build();
 
-    private LanguageOptions language;
+    @Default
+    private LanguageOptions language = LanguageOptions.builder().build();
 
-    private FormattingOptions formatting;
+    @Default
+    private FormattingOptions formatting = FormattingOptions.builder().build();
 
-    private ExternalVariableBindings externalVariableBindings;
+    @Default
+    private ExternalVariableBindings externalVariableBindings = ExternalVariableBindings.builder().build();
 }

@@ -19,19 +19,25 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
 @Builder
 public class RuntimeLimits {
+    public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
+    public static final int DEFAULT_MATERIALIZATION_CAP = 100000;
+
     /**
      * Number of Items that should be collected as the overall result of a query.
      */
-    private int resultsSizeCap;
+    @Default
+    private int resultsSizeCap = DEFAULT_RESULTS_SIZE_CAP;
 
     /**
      * Number of Items that should be collected in case of a forced materialization. This applies in
      * particular to a local use of the ItemIterator.
      */
-    private int materializationCap;
+    @Default
+    private int materializationCap = DEFAULT_MATERIALIZATION_CAP;
 }

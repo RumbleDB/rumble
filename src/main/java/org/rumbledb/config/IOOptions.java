@@ -18,27 +18,35 @@
 
 package org.rumbledb.config;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
 @Builder
 public class IOOptions {
+    public static final String DEFAULT_INPUT_FORMAT = "json";
+    public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;
+
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)
      */
-    private List<String> allowedPrefixes;
+    @Default
+    private List<String> allowedPrefixes = new ArrayList<>();
 
     /**
      * Input format for reading from standard input.
      */
-    private String inputFormat;
+    @Default
+    private String inputFormat = DEFAULT_INPUT_FORMAT;
 
     /**
      * Number of output partitions to write to the output path.
      */
-    private int numberOfOutputPartitions;
+    @Default
+    private int numberOfOutputPartitions = DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS;
 
     /**
      * Path from which the JSONiq or XQuery query is to be read.

@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -27,41 +28,49 @@ public class ExecutionOptions {
     /**
      * Enable native SQL predicates.
      */
-    private boolean nativeSQLPredicates;
+    @Default
+    private boolean nativeSQLPredicates = true;
 
     /**
      * Whether DataFrame execution mode detection is activated for higher-order functions.
      * If disabled, higher-order functions will be executed locally.
      */
-    private boolean dataFrameExecutionModeDetection;
+    @Default
+    private boolean dataFrameExecutionModeDetection = true;
 
     /**
      * Whether parallel execution (RDD, DataFrames) is enabled.
      */
-    private boolean parallelExecution;
+    @Default
+    private boolean parallelExecution = true;
 
     /**
      * Whether DataFrame execution is enabled.
      */
-    private boolean dataFrameExecution;
+    @Default
+    private boolean dataFrameExecution = true;
 
     /**
      * Whether advanced native execution for nested FLWOR queries is enabled.
      */
-    private boolean nativeExecution;
+    @Default
+    private boolean nativeExecution = true;
 
     /**
      * Whether tail call optimization is enabled.
      */
-    private boolean tailCallOptimization;
+    @Default
+    private boolean tailCallOptimization = true;
 
     /**
      * Whether function inlining is enabled.
      */
-    private boolean functionInlining;
+    @Default
+    private boolean functionInlining = true;
 
     /**
      * Whether the returned Pending Update List should be applied when executed on the command line.
      */
-    private boolean applyUpdates;
+    @Default
+    private boolean applyUpdates = false;
 }

@@ -19,6 +19,7 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
@@ -27,10 +28,12 @@ public class AnalysisOptions {
     /**
      * Whether static analysis should be performed at compile time.
      */
-    private boolean staticTyping;
+    @Default
+    private boolean staticTyping = false;
 
     /**
      * Whether inferred types should be printed as part of analysis output.
      */
-    private boolean printInferredTypes;
+    @Default
+    private boolean printInferredTypes = false;
 }
