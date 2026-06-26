@@ -798,8 +798,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     throw new OurBadException("No static type inferred for expression " + parameterExpressions.get(i));
                 }
                 SequenceType expectedType = parameterTypes.get(i);
-                // check actual parameters is either a subtype of or can be promoted to expected type
-                if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+                boolean isValidArgumentType;
+                if (expectedType.getItemType().isFunctionItemType()) {
+                    isValidArgumentType = actualType.isSubtypeOf(expectedType);
+                } else {
+                    // check actual parameters is either a subtype of or can be promoted to expected type
+                    isValidArgumentType = actualType.isSubtypeOfOrCanBePromotedTo(expectedType);
+                }
+                if (!isValidArgumentType) {
                     throwStaticTypeException(
                         "Argument " + i + " requires " + expectedType + " but " + actualType + " was found",
                         expression.getMetadata()
