@@ -39,12 +39,21 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
     public NamedFunctionRefRuntimeIterator(
             FunctionIdentifier functionIdentifier,
+            RuntimeStaticContext staticContext
+    ) {
+        super(null, staticContext);
+        this.functionIdentifier = functionIdentifier;
+        this.functionName = null;
+        this.arityLiteral = null;
+    }
+
+    public NamedFunctionRefRuntimeIterator(
             Name functionName,
             String arityLiteral,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
-        this.functionIdentifier = functionIdentifier;
+        this.functionIdentifier = null;
         this.functionName = functionName;
         this.arityLiteral = arityLiteral;
     }

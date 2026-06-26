@@ -1356,12 +1356,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             NamedFunctionReferenceExpression expression,
             RuntimeIterator argument
     ) {
-        RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
-                expression.getIdentifier(),
-                expression.getFunctionName(),
-                expression.getArityLiteral(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-        );
+        RuntimeIterator runtimeIterator;
+        if (expression.hasResolvedIdentifier()) {
+            runtimeIterator = new NamedFunctionRefRuntimeIterator(
+                    expression.getIdentifier(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else {
+            runtimeIterator = new NamedFunctionRefRuntimeIterator(
+                    expression.getFunctionName(),
+                    expression.getArityLiteral(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
