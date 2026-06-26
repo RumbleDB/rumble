@@ -91,6 +91,7 @@ public final class RegexPatternUtils {
             return trimmed;
         }
         return result;
+    }
 
     public static String[] tokenize(String input, Pattern pattern) {
         if (input.isEmpty()) {
