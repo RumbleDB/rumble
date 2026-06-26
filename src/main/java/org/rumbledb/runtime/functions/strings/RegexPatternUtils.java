@@ -24,6 +24,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexFlagException;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -88,6 +91,21 @@ public final class RegexPatternUtils {
             return trimmed;
         }
         return result;
+
+    public static String[] tokenize(String input, Pattern pattern) {
+        if (input.isEmpty()) {
+            return new String[0];
+        }
+
+        List<String> tokens = new ArrayList<>();
+        Matcher matcher = pattern.matcher(input);
+        int lastEnd = 0;
+        while (matcher.find()) {
+            tokens.add(input.substring(lastEnd, matcher.start()));
+            lastEnd = matcher.end();
+        }
+        tokens.add(input.substring(lastEnd));
+        return tokens.toArray(new String[0]);
     }
 
     static String normalizeCaseInsensitivePattern(String pattern) {
