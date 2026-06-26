@@ -804,9 +804,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression result = expression.hasResolvedIdentifier()
             ? new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata())
             : new NamedFunctionReferenceExpression(
-                expression.getFunctionName(),
-                expression.getArityLiteral(),
-                expression.getMetadata()
+                    expression.getFunctionName(),
+                    expression.getArityLiteral(),
+                    expression.getMetadata()
             );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());

@@ -309,9 +309,9 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return expression.hasResolvedIdentifier()
             ? new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata())
             : new NamedFunctionReferenceExpression(
-                expression.getFunctionName(),
-                expression.getArityLiteral(),
-                expression.getMetadata()
+                    expression.getFunctionName(),
+                    expression.getArityLiteral(),
+                    expression.getMetadata()
             );
     }
     // endregion
