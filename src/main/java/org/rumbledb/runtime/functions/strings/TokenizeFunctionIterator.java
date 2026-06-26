@@ -124,7 +124,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                             getMetadata()
                     );
                 }
-                this.results = compiledRegex.getPattern().split(input, -1);
+                this.results = RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
                 this.currentPosition = 0;
             }
         }
