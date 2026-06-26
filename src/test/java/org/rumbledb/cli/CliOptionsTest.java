@@ -1,0 +1,94 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package org.rumbledb.cli;
+
+import org.junit.Test;
+import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.config.RumbleConfiguration;
+
+import java.time.ZoneId;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class CliOptionsTest {
+
+    @Test
+    public void sharedOptionsAreAcceptedBeforeSubcommand() {
+        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+            "--debug",
+            "--no-native-execution",
+            "--default-formatting-place",
+            "Europe/Madrid",
+            "--port",
+            "9000",
+            "serve",
+            "--host",
+            "127.0.0.1"
+        );
+
+        assertEquals(ExecutionMode.SERVE, configuration.getServer().getMode());
+        assertEquals("127.0.0.1", configuration.getServer().getHost());
+        assertEquals(9000, configuration.getServer().getPort());
+        assertTrue(configuration.getDiagnostics().isDebug());
+        assertFalse(configuration.getExecution().isNativeExecution());
+        assertEquals(ZoneId.of("Europe/Madrid"), configuration.getFormatting().getDefaultFormattingPlace());
+    }
+
+    @Test
+    public void sharedOptionsAreAcceptedAfterSubcommand() {
+        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+            "repl",
+            "--debug",
+            "--result-size",
+            "12"
+        );
+
+        assertEquals(ExecutionMode.REPL, configuration.getServer().getMode());
+        assertTrue(configuration.getDiagnostics().isDebug());
+        assertEquals(12, configuration.getLimits().getResultsSizeCap());
+    }
+
+    @Test
+    public void positiveFormOfTrueDefaultOptionKeepsItEnabled() {
+        RumbleConfiguration defaults = CliOptions.toRumbleConfiguration();
+        RumbleConfiguration explicitlyEnabled = CliOptions.toRumbleConfiguration("--native-execution");
+        RumbleConfiguration explicitlyDisabled = CliOptions.toRumbleConfiguration("--no-native-execution");
+
+        assertTrue(defaults.getExecution().isNativeExecution());
+        assertTrue(explicitlyEnabled.getExecution().isNativeExecution());
+        assertFalse(explicitlyDisabled.getExecution().isNativeExecution());
+    }
+
+    @Test
+    public void runRetainsModeSpecificInputAndOutputOptions() {
+        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+            "run",
+            "--query",
+            "1 + 1",
+            "--output-path",
+            "result.json"
+        );
+
+        assertEquals(ExecutionMode.RUN, configuration.getServer().getMode());
+        assertEquals("1 + 1", configuration.getIo().getQuery());
+        assertEquals("result.json", configuration.getIo().getOutputPath());
+    }
+}

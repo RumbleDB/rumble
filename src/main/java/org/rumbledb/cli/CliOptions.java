@@ -31,15 +31,17 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.RuntimeLimits;
 import org.rumbledb.config.ServerOptions;
 import org.rumbledb.context.Name;
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
+import picocli.CommandLine.ScopeType;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -57,9 +59,37 @@ import java.util.function.Consumer;
         CliOptions.Repl.class
     }
 )
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public final class CliOptions {
     private interface ConfigurationSource {
-        RumbleConfiguration toRumbleConfiguration(CliOptions root);
+        ExecutionMode mode();
+
+        default Server server(CliOptions root) {
+            return root.server;
+        }
+
+        default Input input() {
+            return null;
+        }
+
+        default Output output() {
+            return null;
+        }
+
+        default String queryPath() {
+            return null;
+        }
+
+        default RumbleConfiguration toRumbleConfiguration(CliOptions root) {
+            return buildConfiguration(
+                mode(),
+                server(root),
+                input(),
+                output(),
+                root.common,
+                queryPath()
+            );
+        }
     }
 
     private static CommandLine commandLine() {
@@ -99,13 +129,7 @@ public final class CliOptions {
             this.server,
             effectiveInput,
             effectiveOutput,
-            this.limits,
-            this.diagnostics,
-            this.execution,
-            this.optimization,
-            this.language,
-            this.formatting,
-            this.dynamicOptions,
+            this.common,
             effectiveQueryPath
         );
     }
@@ -115,31 +139,29 @@ public final class CliOptions {
             Server server,
             Input input,
             Output output,
-            Limits limits,
-            Diagnostics diagnostics,
-            Execution execution,
-            Optimization optimization,
-            Language language,
-            Formatting formatting,
-            DynamicOptions dynamicOptions,
+            CommonOptions common,
             String queryPath
     ) {
+        Limits limits = common.limits;
+        Diagnostics diagnostics = common.diagnostics;
+        Execution execution = common.execution;
+        Optimization optimization = common.optimization;
+        Language language = common.language;
+        Formatting formatting = common.formatting;
+        DynamicOptions dynamicOptions = common.dynamicOptions;
+
         Map<Name, String> unparsedExternalVariableValues = new HashMap<>();
-        if (dynamicOptions.variables != null) {
-            dynamicOptions.variables.forEach(
-                (name, value) -> unparsedExternalVariableValues.put(Name.createVariableInNoNamespace(name), value)
-            );
-        }
+        dynamicOptions.variables.forEach(
+            (name, value) -> unparsedExternalVariableValues.put(Name.createVariableInNoNamespace(name), value)
+        );
         if (input != null && input.contextItem != null) {
             unparsedExternalVariableValues.put(Name.CONTEXT_ITEM, input.contextItem);
         }
 
         Map<Name, String> externalVariableValuesReadFromFiles = new HashMap<>();
-        if (dynamicOptions.variablesFromFiles != null) {
-            dynamicOptions.variablesFromFiles.forEach(
-                (name, value) -> externalVariableValuesReadFromFiles.put(Name.createVariableInNoNamespace(name), value)
-            );
-        }
+        dynamicOptions.variablesFromFiles.forEach(
+            (name, value) -> externalVariableValuesReadFromFiles.put(Name.createVariableInNoNamespace(name), value)
+        );
 
         Set<Name> externalVariablesReadFromStandardInput = new HashSet<>();
         if (input != null && input.contextItemInput != null) {
@@ -156,10 +178,7 @@ public final class CliOptions {
         }
 
         FormattingOptions.FormattingOptionsBuilder formattingBuilder = FormattingOptions.builder();
-        applyIfPresent(
-            formatting.defaultFormattingPlace,
-            value -> formattingBuilder.defaultFormattingPlace(ZoneId.of(value))
-        );
+        applyIfPresent(formatting.defaultFormattingPlace, formattingBuilder::defaultFormattingPlace);
         applyIfPresent(formatting.defaultFormattingCalendar, formattingBuilder::defaultFormattingCalendar);
         applyIfPresent(formatting.defaultFormattingLanguage, formattingBuilder::defaultFormattingLanguage);
 
@@ -187,25 +206,6 @@ public final class CliOptions {
             runtimeLimitsBuilder::resultsSizeCap
         );
         applyIfPresent(limits.materializationCap, runtimeLimitsBuilder::materializationCap);
-
-        ExternalVariableBindings.ExternalVariableBindingsBuilder externalVariableBindingsBuilder =
-            ExternalVariableBindings.builder();
-        applyIfNotEmpty(
-            unparsedExternalVariableValues,
-            externalVariableBindingsBuilder::unparsedExternalVariableValues
-        );
-        applyIfNotEmpty(
-            externalVariableValuesReadFromFiles,
-            externalVariableBindingsBuilder::externalVariableValuesReadFromFiles
-        );
-        applyIfNotEmpty(
-            externalVariablesReadFromStandardInput,
-            externalVariableBindingsBuilder::externalVariablesReadFromStandardInput
-        );
-        applyIfNotEmpty(
-            externalVariablesInputFormats,
-            externalVariableBindingsBuilder::externalVariablesInputFormats
-        );
 
         applyIfPresent(language.defaultLanguage, languageBuilder::queryLanguage);
         applyIfPresent(language.staticBaseUri, languageBuilder::staticBaseUri);
@@ -250,7 +250,14 @@ public final class CliOptions {
             )
             .language(languageBuilder.build())
             .formatting(formattingBuilder.build())
-            .externalVariableBindings(externalVariableBindingsBuilder.build())
+            .externalVariableBindings(
+                ExternalVariableBindings.builder()
+                    .unparsedExternalVariableValues(unparsedExternalVariableValues)
+                    .externalVariableValuesReadFromFiles(externalVariableValuesReadFromFiles)
+                    .externalVariablesReadFromStandardInput(externalVariablesReadFromStandardInput)
+                    .externalVariablesInputFormats(externalVariablesInputFormats)
+                    .build()
+            )
             .build();
     }
 
@@ -297,47 +304,17 @@ public final class CliOptions {
         }
     }
 
-    private static <T, C extends Collection<T>> void applyIfNotEmpty(C value, Consumer<C> setter) {
-        if (value != null && !value.isEmpty()) {
-            setter.accept(value);
-        }
-    }
-
-    private static <K, V> void applyIfNotEmpty(Map<K, V> value, Consumer<Map<K, V>> setter) {
-        if (value != null && !value.isEmpty()) {
-            setter.accept(value);
-        }
-    }
+    @Mixin
+    Server server;
 
     @Mixin
-    private Server server;
+    Input input;
 
     @Mixin
-    private Input input;
+    Output output;
 
     @Mixin
-    private Output output;
-
-    @Mixin
-    private Limits limits;
-
-    @Mixin
-    private Diagnostics diagnostics;
-
-    @Mixin
-    private Execution execution;
-
-    @Mixin
-    private Optimization optimization;
-
-    @Mixin
-    private Language language;
-
-    @Mixin
-    private Formatting formatting;
-
-    @Mixin
-    private DynamicOptions dynamicOptions;
+    CommonOptions common;
 
     @Parameters(
         index = "0",
@@ -345,36 +322,16 @@ public final class CliOptions {
         paramLabel = "query-file",
         description = "A JSONiq query file to read from (from any file system, even the Web!)."
     )
-    private String queryPath;
+    String queryPath;
 
     @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = false)
+    @FieldDefaults(level = AccessLevel.PRIVATE)
     public static final class Run implements ConfigurationSource {
         @Mixin
-        private Input input;
+        Input input;
 
         @Mixin
-        private Output output;
-
-        @Mixin
-        private Limits limits;
-
-        @Mixin
-        private Diagnostics diagnostics;
-
-        @Mixin
-        private Execution execution;
-
-        @Mixin
-        private Optimization optimization;
-
-        @Mixin
-        private Language language;
-
-        @Mixin
-        private Formatting formatting;
-
-        @Mixin
-        private DynamicOptions dynamicOptions;
+        Output output;
 
         @Parameters(
             index = "0",
@@ -382,121 +339,82 @@ public final class CliOptions {
             paramLabel = "query-file",
             description = "A JSONiq query file to read from (from any file system, even the Web!)."
         )
-        private String queryPath;
+        String queryPath;
 
         @Override
-        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
-            String effectiveQueryPath = this.input.queryPath != null ? this.input.queryPath : this.queryPath;
-            return buildConfiguration(
-                ExecutionMode.RUN,
-                root.server,
-                this.input,
-                this.output,
-                this.limits,
-                this.diagnostics,
-                this.execution,
-                this.optimization,
-                this.language,
-                this.formatting,
-                this.dynamicOptions,
-                effectiveQueryPath
-            );
+        public ExecutionMode mode() {
+            return ExecutionMode.RUN;
+        }
+
+        @Override
+        public Input input() {
+            return this.input;
+        }
+
+        @Override
+        public Output output() {
+            return this.output;
+        }
+
+        @Override
+        public String queryPath() {
+            return this.input.queryPath != null ? this.input.queryPath : this.queryPath;
         }
     }
 
     @Command(name = "serve", description = "Runs RumbleDB as a server on port 8001.", mixinStandardHelpOptions = false)
     public static final class Serve implements ConfigurationSource {
-        @Mixin
-        private Server server;
-
-        @Mixin
-        private Limits limits;
-
-        @Mixin
-        private Diagnostics diagnostics;
-
-        @Mixin
-        private Execution execution;
-
-        @Mixin
-        private Optimization optimization;
-
-        @Mixin
-        private Language language;
-
-        @Mixin
-        private Formatting formatting;
-
-        @Mixin
-        private DynamicOptions dynamicOptions;
-
         @Override
-        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
-            return buildConfiguration(
-                ExecutionMode.SERVE,
-                this.server,
-                null,
-                null,
-                this.limits,
-                this.diagnostics,
-                this.execution,
-                this.optimization,
-                this.language,
-                this.formatting,
-                this.dynamicOptions,
-                null
-            );
+        public ExecutionMode mode() {
+            return ExecutionMode.SERVE;
         }
     }
 
     @Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
+    @FieldDefaults(level = AccessLevel.PRIVATE)
     public static final class Repl implements ConfigurationSource {
         @Mixin
-        private Output output;
-
-        @Mixin
-        private Limits limits;
-
-        @Mixin
-        private Diagnostics diagnostics;
-
-        @Mixin
-        private Execution execution;
-
-        @Mixin
-        private Optimization optimization;
-
-        @Mixin
-        private Language language;
-
-        @Mixin
-        private Formatting formatting;
-
-        @Mixin
-        private DynamicOptions dynamicOptions;
+        Output output;
 
         @Override
-        public RumbleConfiguration toRumbleConfiguration(CliOptions root) {
-            return buildConfiguration(
-                ExecutionMode.REPL,
-                root.server,
-                null,
-                this.output,
-                this.limits,
-                this.diagnostics,
-                this.execution,
-                this.optimization,
-                this.language,
-                this.formatting,
-                this.dynamicOptions,
-                null
-            );
+        public ExecutionMode mode() {
+            return ExecutionMode.REPL;
         }
+
+        @Override
+        public Output output() {
+            return this.output;
+        }
+    }
+
+    @FieldDefaults(level = AccessLevel.PRIVATE)
+    private static final class CommonOptions {
+        @Mixin
+        Limits limits;
+
+        @Mixin
+        Diagnostics diagnostics;
+
+        @Mixin
+        Execution execution;
+
+        @Mixin
+        Optimization optimization;
+
+        @Mixin
+        Language language;
+
+        @Mixin
+        Formatting formatting;
+
+        @Mixin
+        DynamicOptions dynamicOptions;
     }
 
     public static final class Server {
         @Option(
             names = { "-h", "--host" },
+            scope = ScopeType.INHERIT,
             paramLabel = "host",
             description = "Changes the host of the RumbleDB HTTP server to any of your liking."
         )
@@ -504,6 +422,7 @@ public final class CliOptions {
 
         @Option(
             names = { "-p", "--port" },
+            scope = ScopeType.INHERIT,
             paramLabel = "port",
             description = "Changes the port of the RumbleDB HTTP server to any of your liking."
         )
@@ -581,7 +500,6 @@ public final class CliOptions {
         @Option(
             names = { "-O", "--overwrite" },
             negatable = true,
-            defaultValue = "false",
             description = "Whether to overwrite to --output-path. No throws an error if the output file/folder exists."
         )
         private boolean overwrite;
@@ -607,6 +525,7 @@ public final class CliOptions {
     public static final class DynamicOptions {
         @Option(
             names = "--variable",
+            scope = ScopeType.INHERIT,
             paramLabel = "name=value",
             description = {
                 "Initializes a global variable to the supplied value.",
@@ -614,26 +533,29 @@ public final class CliOptions {
                     + "\"declare variable $foo external;\""
             }
         )
-        private Map<String, String> variables;
+        private Map<String, String> variables = new HashMap<>();
 
         @Option(
             names = "--variable-from-file",
+            scope = ScopeType.INHERIT,
             paramLabel = "name=path",
             description = "Initializes a global variable with a value read from the supplied file."
         )
-        private Map<String, String> variablesFromFiles;
+        private Map<String, String> variablesFromFiles = new HashMap<>();
 
         @Option(
             names = "--output-format-option",
+            scope = ScopeType.INHERIT,
             paramLabel = "name=value",
             description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
         )
-        private Map<String, String> outputFormatOptions;
+        private Map<String, String> outputFormatOptions = new HashMap<>();
     }
 
     public static final class Limits {
         @Option(
             names = "--result-size",
+            scope = ScopeType.INHERIT,
             paramLabel = "count",
             description = "A cap on the maximum number of items to output on the screen or to a local list."
         )
@@ -641,6 +563,7 @@ public final class CliOptions {
 
         @Option(
             names = { "-c", "--materialization-cap" },
+            scope = ScopeType.INHERIT,
             paramLabel = "count",
             description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query."
         )
@@ -650,16 +573,16 @@ public final class CliOptions {
     public static final class Diagnostics {
         @Option(
             names = "--print-iterator-tree",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "For debugging purposes, prints out the expression tree and runtime interator tree."
         )
         private boolean printIteratorTree;
 
         @Option(
             names = { "-v", "--show-error-info" },
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = {
                 "For debugging purposes.",
                 "If you want to report a bug, you can use this to get the full exception stack."
@@ -669,16 +592,16 @@ public final class CliOptions {
 
         @Option(
             names = "--check-return-types-of-builtin-functions",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "Checks return types of built-in functions."
         )
         private boolean checkReturnTypesOfBuiltinFunctions;
 
         @Option(
             names = { "-t", "--static-typing" },
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = {
                 "Activates static type analysis, which annotates the expression tree with inferred types at compile time.",
                 "Enables more optimizations (experimental). Deactivated by default."
@@ -688,77 +611,96 @@ public final class CliOptions {
 
         @Option(
             names = "--print-inferred-types",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "Prints inferred types."
         )
         private boolean printInferredTypes;
 
-        @Option(names = "--debug", negatable = true, defaultValue = "false", description = "Enables debug output.")
+        @Option(
+            names = "--debug",
+            scope = ScopeType.INHERIT,
+            negatable = true,
+            description = "Enables debug output."
+        )
         private boolean debug;
     }
 
     public static final class Execution {
         @Option(
             names = "--native-sql-predicates",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates native SQL predicates when possible."
         )
         private boolean nativeSQLPredicates;
 
         @Option(
             names = "--data-frame-execution-mode-detection",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates DataFrame execution mode detection for higher-order functions."
         )
         private boolean dataFrameExecutionModeDetection;
 
         @Option(
             names = "--parallel-execution",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates parallel execution when possible (activated by default)."
         )
         private boolean parallelExecution;
 
         @Option(
             names = "--data-frame-execution",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates DataFrame execution when possible."
         )
         private boolean dataFrameExecution;
 
         @Option(
             names = "--native-execution",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates native (Spark SQL) execution when possible (activated by default)."
         )
         private boolean nativeExecution;
 
         @Option(
             names = "--function-inlining",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates function inlining for non-recursive functions (activated by default)."
         )
         private boolean functionInlining;
 
         @Option(
             names = "--tail-call-optimization",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates tail call optimization."
         )
         private boolean tailCallOptimization;
 
         @Option(
             names = "--apply-updates",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "Applies the pending update list returned by the query."
         )
         private boolean applyUpdates;
@@ -767,32 +709,38 @@ public final class CliOptions {
     public static final class Optimization {
         @Option(
             names = "--optimize-general-comparison-to-value-comparison",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Activates automatic conversion of general comparisons to value comparisons when applicable (activated by default)."
         )
         private boolean optimizeGeneralComparisonToValueComparison;
 
         @Option(
             names = "--optimize-steps",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Allows RumbleDB to optimize steps, might violate stability of document order (activated by default)."
         )
         private boolean optimizeSteps;
 
         @Option(
             names = "--optimize-steps-experimental",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "Experimentally optimizes steps more by skipping uniqueness and sorting in some cases. Correctness is not yet verified (disabled by default)."
         )
         private boolean optimizeStepsExperimental;
 
         @Option(
             names = "--optimize-parent-pointers",
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)."
         )
         private boolean optimizeParentPointers;
@@ -801,6 +749,7 @@ public final class CliOptions {
     public static final class Language {
         @Option(
             names = "--default-language",
+            scope = ScopeType.INHERIT,
             paramLabel = "language",
             description = "Specifies the query language to be used."
         )
@@ -808,26 +757,34 @@ public final class CliOptions {
 
         @Option(
             names = "--static-base-uri",
+            scope = ScopeType.INHERIT,
             paramLabel = "uri",
             description = "Sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query."
         )
         private String staticBaseUri;
 
-        @Option(names = "--xml-version", paramLabel = "version", description = "Sets the XML version to use.")
+        @Option(
+            names = "--xml-version",
+            scope = ScopeType.INHERIT,
+            paramLabel = "version",
+            description = "Sets the XML version to use."
+        )
         private String xmlVersion;
 
         @Option(
             names = "--dates-with-timezone",
+            scope = ScopeType.INHERIT,
             negatable = true,
-            defaultValue = "false",
             description = "Activates timezone support for the type xs:date (deactivated by default)."
         )
         private boolean datesWithTimezone;
 
         @Option(
             names = { "--lax-json-null-validation", "--lax-json-null-valication" },
+            scope = ScopeType.INHERIT,
             negatable = true,
             defaultValue = "true",
+            fallbackValue = "true",
             description = "Allows conflating JSON nulls with absent values when validating nillable object fields for more flexibility (activated by default)."
         )
         private boolean laxJSONNullValidation;
@@ -836,13 +793,15 @@ public final class CliOptions {
     public static final class Formatting {
         @Option(
             names = "--default-formatting-place",
+            scope = ScopeType.INHERIT,
             paramLabel = "timezone",
             description = "Sets the default place used for formatting date and time values."
         )
-        private String defaultFormattingPlace;
+        private ZoneId defaultFormattingPlace;
 
         @Option(
             names = "--default-formatting-calendar",
+            scope = ScopeType.INHERIT,
             paramLabel = "calendar",
             description = "Sets the default calendar used for formatting date and time values."
         )
@@ -850,6 +809,7 @@ public final class CliOptions {
 
         @Option(
             names = "--default-formatting-language",
+            scope = ScopeType.INHERIT,
             paramLabel = "language",
             description = "Sets the default language used for formatting date and time values."
         )
