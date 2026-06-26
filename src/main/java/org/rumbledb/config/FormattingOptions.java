@@ -19,7 +19,11 @@
 package org.rumbledb.config;
 
 import java.time.ZoneId;
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
 public class FormattingOptions {
     /**
      * The default place used for formatting date and time values.

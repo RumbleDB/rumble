@@ -18,6 +18,11 @@
 
 package org.rumbledb.config;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class OptimizationOptions {
     /**
      * Whether general comparisons may be rewritten using value comparisons.

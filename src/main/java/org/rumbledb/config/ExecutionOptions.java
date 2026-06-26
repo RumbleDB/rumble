@@ -18,6 +18,11 @@
 
 package org.rumbledb.config;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class ExecutionOptions {
     /**
      * Enable native SQL predicates.

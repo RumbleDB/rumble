@@ -18,6 +18,11 @@
 
 package org.rumbledb.config;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class LanguageOptions {
     /**
      * Whether dates with time zones should be supported.

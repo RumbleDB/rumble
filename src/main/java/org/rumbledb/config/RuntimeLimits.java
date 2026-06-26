@@ -18,6 +18,11 @@
 
 package org.rumbledb.config;
 
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
 public class RuntimeLimits {
     /**
      * Number of Items that should be collected as the overall result of a query.

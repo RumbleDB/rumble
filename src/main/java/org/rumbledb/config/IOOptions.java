@@ -19,7 +19,11 @@
 package org.rumbledb.config;
 
 import java.util.List;
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
 public class IOOptions {
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)

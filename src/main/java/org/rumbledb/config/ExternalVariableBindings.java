@@ -26,7 +26,11 @@ import org.rumbledb.context.Name;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.Builder;
+import lombok.Data;
 
+@Data
+@Builder
 public class ExternalVariableBindings {
     /**
      * Stores already-materialized external variable values
