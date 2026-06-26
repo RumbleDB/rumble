@@ -50,7 +50,7 @@ public class RegexPatternUtilsTest {
 
         Assert.assertArrayEquals(
             new String[] { "A", "Ba", "" },
-            compiledRegex.getPattern().split("AqBaQ", -1)
+            RegexPatternUtils.tokenize("AqBaQ", compiledRegex.getPattern())
         );
     }
 
@@ -64,7 +64,35 @@ public class RegexPatternUtilsTest {
 
         Assert.assertArrayEquals(
             new String[] { "", "" },
-            compiledRegex.getPattern().split("xÉ", -1)
+            RegexPatternUtils.tokenize("xÉ", compiledRegex.getPattern())
+        );
+    }
+
+    @Test
+    public void tokenizeReturnsEmptySequenceForEmptyInput() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "\\s+",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertArrayEquals(
+            new String[0],
+            RegexPatternUtils.tokenize("", compiledRegex.getPattern())
+        );
+    }
+
+    @Test
+    public void tokenizePreservesLeadingEmptyToken() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(ab)|(a)",
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertArrayEquals(
+            new String[] { "", "r", "c", "d", "r", "" },
+            RegexPatternUtils.tokenize("abracadabra", compiledRegex.getPattern())
         );
     }
 }
