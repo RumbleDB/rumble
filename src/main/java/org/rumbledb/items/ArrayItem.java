@@ -83,19 +83,18 @@ public class ArrayItem implements Item {
         return copy;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
+            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
                 return false;
             }
         }
@@ -243,10 +242,9 @@ public class ArrayItem implements Item {
     }
 
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
-            result += getItemAt(i).hashCode();
+            result = 31 * result + getItemAt(i).hashCode();
         }
         return result;
     }

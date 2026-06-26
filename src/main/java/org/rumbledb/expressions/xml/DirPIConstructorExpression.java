@@ -84,8 +84,8 @@ public class DirPIConstructorExpression extends Expression {
         sb.append(this.target);
         if (this.contentExpression != null) {
             sb.append(" ");
-            if (this.contentExpression instanceof StringLiteralExpression) {
-                sb.append(((StringLiteralExpression) this.contentExpression).getValue());
+            if (this.contentExpression instanceof StringLiteralExpression stringLiteralExpression) {
+                sb.append(stringLiteralExpression.getValue());
             } else {
                 this.contentExpression.serializeToJSONiq(sb, 0);
             }

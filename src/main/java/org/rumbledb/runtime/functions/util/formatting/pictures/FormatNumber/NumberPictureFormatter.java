@@ -253,10 +253,10 @@ public class NumberPictureFormatter {
             }
 
             if (Double.isInfinite(value)) {
-                return new AdjustedNumber(resolvedNumber.type, null, true);
+                return new AdjustedNumber(null, true);
             }
 
-            return new AdjustedNumber(resolvedNumber.type, BigDecimal.valueOf(value), false);
+            return new AdjustedNumber(BigDecimal.valueOf(value), false);
         }
 
         if (ResolvedNumber.FLOAT.equals(resolvedNumber.type)) {
@@ -268,10 +268,10 @@ public class NumberPictureFormatter {
             }
 
             if (Float.isInfinite(value)) {
-                return new AdjustedNumber(resolvedNumber.type, null, true);
+                return new AdjustedNumber(null, true);
             }
 
-            return new AdjustedNumber(resolvedNumber.type, BigDecimal.valueOf(floatToBigDecimal(value)), false);
+            return new AdjustedNumber(BigDecimal.valueOf(floatToBigDecimal(value)), false);
         }
 
         BigDecimal value = resolvedNumber.decimalValue;
@@ -281,7 +281,7 @@ public class NumberPictureFormatter {
             value = value.multiply(BigDecimal.valueOf(1000));
         }
 
-        return new AdjustedNumber(resolvedNumber.type, value, false);
+        return new AdjustedNumber(value, false);
     }
 
     private static MantissaExponentPair computeMantissaExponent(
@@ -332,12 +332,10 @@ public class NumberPictureFormatter {
     }
 
     private static final class AdjustedNumber {
-        final String type;
         final BigDecimal value;
         final boolean infinite;
 
-        AdjustedNumber(String type, BigDecimal value, boolean infinite) {
-            this.type = type;
+        AdjustedNumber(BigDecimal value, boolean infinite) {
             this.value = value;
             this.infinite = infinite;
         }
@@ -351,5 +349,82 @@ public class NumberPictureFormatter {
             this.mantissa = mantissa;
             this.exponent = exponent;
         }
+    }
+
+    // DEBUGGING METHODS
+    @SuppressWarnings("unused")
+    private static String debugValueItem(Item item) {
+        return "Item value="
+            + FormatNumberTypeResolver.getValue(item)
+            + ", type="
+            + debugNumberType(item);
+    }
+
+    private static String debugNumberType(Item item) {
+        if (item.isInteger()) {
+            return "INTEGER";
+        }
+
+        if (item.isDecimal()) {
+            return "DECIMAL";
+        }
+
+        if (item.isDouble()) {
+            return "DOUBLE";
+        }
+
+        if (item.isFloat()) {
+            return "FLOAT";
+        }
+        return "ERROR";
+    }
+
+    @SuppressWarnings("unused")
+    private static String debugFormatNumberPicture(String rawPictureString, FormatNumberPicture picture) {
+        return "rawPictureString: "
+            + rawPictureString
+            + " - positive["
+            + debugSubpicture(picture.getPositiveSubPicture())
+            + "]"
+            + " negative["
+            + debugSubpicture(picture.getNegativeSubPicture())
+            + "]";
+    }
+
+    private static String debugSubpicture(FormatNumberSubPicture subpicture) {
+        if (subpicture == null) {
+            return "null";
+        }
+
+        return "prefix="
+            + subpicture.getPrefix()
+            + " ,integer="
+            + subpicture.getIntegerPart()
+            + " ,fractional="
+            + subpicture.getFractionalPart()
+            + " ,suffix="
+            + subpicture.getSuffix()
+            + " , hasExponent="
+            + subpicture.hasExponent()
+            + " , exponentPart="
+            + subpicture.getExponentPart()
+            + " , scalingFactor="
+            + subpicture.getScalingFactor()
+            + " ,percent="
+            + subpicture.getHasPercent()
+            + " ,permille="
+            + subpicture.getHasPerMille()
+            + " ,intGroups="
+            + subpicture.getIntegerPartGroupingPositions()
+            + " ,repeat="
+            + subpicture.getRepeatingIntegerGroupingInterval()
+            + " ,fracGroups="
+            + subpicture.getFractionalPartGroupingPositions()
+            + " ,minInt="
+            + subpicture.getMinimumIntegerPartSize()
+            + " ,minFrac="
+            + subpicture.getMinimumFractionalPartSize()
+            + " ,maxFrac="
+            + subpicture.getMaximumFractionalPartSize();
     }
 }

@@ -72,21 +72,21 @@ public class XQueryArrayItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isXQueryArrayItemType()) {
+        if (itemType instanceof XQueryArrayItemType arrayItemType) {
             // structural equality check
-            return this.structurallyEqual((XQueryArrayItemType) other);
+            return this.structurallyEqual(arrayItemType);
         }
-        if (((ItemType) other).isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
+        if (itemType.isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
             // js:array() = array(item)
             ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
                 SequenceType.createSequenceType("item")
             );
             return this.equals(arrayItemType);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -348,4 +348,3 @@ public class XQueryArrayItemType implements ItemType {
         throw new UnsupportedOperationException("array item type is not mapped to Spark SQL");
     }
 }
-

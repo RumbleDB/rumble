@@ -133,6 +133,7 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         // Read the name
         boolean hasName = input.readBoolean();
@@ -149,13 +150,13 @@ public class ObjectItemType implements ItemType {
         this.isClosed = input.readBoolean();
 
         // Read keys list
-        this.keys = kryo.readObjectOrNull(input, ArrayList.class);
+        this.keys = (List<String>) kryo.readObjectOrNull(input, ArrayList.class);
         if (this.keys == null) {
             this.keys = new ArrayList<>();
         }
 
         // Read content list
-        this.content = kryo.readObjectOrNull(input, ArrayList.class);
+        this.content = (List<FieldDescriptor>) kryo.readObjectOrNull(input, ArrayList.class);
         if (this.content == null) {
             this.content = new ArrayList<>();
         }
@@ -191,14 +192,14 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isMapItemType()) {
+        if (itemType.isMapItemType()) {
             // delegate to the map item type equality check
             return other.equals(this);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -335,13 +336,12 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ObjectItemType)) {
+        if (!(other instanceof ObjectItemType otherObject)) {
             if (other.isObjectItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ObjectItemType otherObject = (ObjectItemType) other;
         if (!this.isResolved() || !otherObject.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }

@@ -23,7 +23,6 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
@@ -31,9 +30,8 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
+import java.util.regex.Pattern;
 
 public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -57,19 +55,19 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
-        Pattern p;
-
-        try {
-            p = Pattern.compile(pattern);
-        } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(
-                    e.getDescription(),
-                    getMetadata()
-            );
+        String flags = null;
+        if (this.children.size() == 4) {
+            Item flagsItem = this.children.get(3)
+                .materializeFirstItemOrNull(context);
+            if (flagsItem != null) {
+                flags = flagsItem.getStringValue();
+            }
         }
-        if ("".matches(pattern)) {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
+        Matcher patternMatcher = compiledRegex.getPattern().matcher("");
+        if (patternMatcher.matches()) {
             throw new MatchesEmptyStringException(
-                    "'" + pattern + "' matches empty string",
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
                     getMetadata()
             );
         }
@@ -77,7 +75,9 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item replacementStringItem = this.children.get(2)
             .materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (!(checkReplacementStringForValidity(replacement))) {
+        if (compiledRegex.isQuote()) {
+            replacement = Matcher.quoteReplacement(replacement);
+        } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
                     "'" + replacement + "' contains a disallowed sequence of characters",
                     getMetadata()
@@ -91,7 +91,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = p.matcher(input);
+        Matcher m = compiledRegex.getPattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
 
     }
@@ -102,6 +102,9 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         while (i < repl.length()) {
             if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
+                if (i + 1 >= repl.length()) {
+                    return false;
+                }
                 if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
                     return false;
                 }

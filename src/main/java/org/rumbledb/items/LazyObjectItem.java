@@ -105,16 +105,15 @@ public class LazyObjectItem implements Item {
 
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
+            Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -122,12 +121,12 @@ public class LazyObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : otherItem.getKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!o.getItemByKey(s).equals(v)) {
+            if (!otherItem.getItemByKey(s).equals(v)) {
                 return false;
             }
         }

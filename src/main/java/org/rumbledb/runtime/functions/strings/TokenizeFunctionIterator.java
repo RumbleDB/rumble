@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -37,7 +38,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     private String[] results;
     private Item nextResult;
     private int currentPosition;
-    private boolean lastEmptyString;
 
     public TokenizeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -79,7 +79,8 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
             // Getting second parameter
             if (this.children.size() == 1) {
-                separator = "\\s+";
+                this.results = RegexPatternUtils.tokenizeOnXmlWhitespace(input);
+                this.currentPosition = 0;
             } else {
                 RuntimeIterator separatorIterator = this.children.get(1);
                 separatorIterator.open(this.currentDynamicContextForLocalExecution);
@@ -99,22 +100,33 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                 } catch (Exception e) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
+                String flags = null;
+                if (this.children.size() == 3) {
+                    Item flagsItem = this.children.get(2)
+                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                    if (flagsItem != null) {
+                        flags = flagsItem.getStringValue();
+                    }
+                }
+                RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+                    separator,
+                    flags,
+                    getMetadata()
+                );
+                if (compiledRegex.getPattern().matcher("").matches()) {
+                    throw new MatchesEmptyStringException(
+                            "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
+                            getMetadata()
+                    );
+                }
+                this.results = RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
+                this.currentPosition = 0;
             }
-            this.results = input.split(separator);
-            this.currentPosition = 0;
-            if (this.children.size() == 1 && this.results.length != 0 && this.results[0].equals("")) {
-                this.currentPosition++;
-            }
-            this.lastEmptyString = this.children.size() == 2 && input.matches(".*" + separator + "$");
         }
         if (this.currentPosition < this.results.length) {
             this.nextResult = ItemFactory.getInstance().createStringItem(this.results[this.currentPosition]);
             this.currentPosition++;
             this.hasNext = true;
-        } else if (this.lastEmptyString) {
-            this.nextResult = ItemFactory.getInstance().createStringItem(new String(""));
-            this.hasNext = true;
-            this.lastEmptyString = false;
         } else {
             this.hasNext = false;
         }

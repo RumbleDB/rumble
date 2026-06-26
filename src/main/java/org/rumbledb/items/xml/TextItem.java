@@ -59,10 +59,9 @@ public class TextItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof TextItem)) {
+        if (!(other instanceof TextItem otherTextItem)) {
             return false;
         }
-        TextItem otherTextItem = (TextItem) other;
         return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
     }
 
