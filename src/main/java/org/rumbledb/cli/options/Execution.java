@@ -11,7 +11,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates native SQL predicates when possible."
     )
     private boolean nativeSQLPredicates;
@@ -21,7 +20,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates DataFrame execution mode detection for higher-order functions."
     )
     private boolean dataFrameExecutionModeDetection;
@@ -31,7 +29,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates parallel execution when possible (activated by default)."
     )
     private boolean parallelExecution;
@@ -41,7 +38,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates DataFrame execution when possible."
     )
     private boolean dataFrameExecution;
@@ -51,7 +47,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates native (Spark SQL) execution when possible (activated by default)."
     )
     private boolean nativeExecution;
@@ -61,7 +56,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates function inlining for non-recursive functions (activated by default)."
     )
     private boolean functionInlining;
@@ -71,7 +65,6 @@ public final class Execution {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Activates tail call optimization."
     )
     private boolean tailCallOptimization;

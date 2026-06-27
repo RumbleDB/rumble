@@ -43,7 +43,6 @@ public final class Language {
         scope = ScopeType.INHERIT,
         negatable = true,
         defaultValue = "true",
-        fallbackValue = "true",
         description = "Allows conflating JSON nulls with absent values when validating nillable object fields for more flexibility (activated by default)."
     )
     private boolean laxJSONNullValidation;
