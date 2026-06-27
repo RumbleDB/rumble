@@ -929,7 +929,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");

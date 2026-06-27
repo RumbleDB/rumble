@@ -106,8 +106,8 @@ public class Rumble {
             query,
             this.configuration
         );
-        StringBuffer stringBuffer = new StringBuffer();
-        mainModule.serializeToJSONiq(stringBuffer, 0);
-        return stringBuffer.toString();
+        StringBuilder sb = new StringBuilder();
+        mainModule.serializeToJSONiq(sb, 0);
+        return sb.toString();
     }
 }

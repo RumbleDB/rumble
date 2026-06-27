@@ -68,7 +68,7 @@ public class VariableDeclStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("declare variable $").append(this.variableName);
         if (this.variableSequenceType != null) {

@@ -101,6 +101,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ExactlyOneErrorCode = registerBuiltIn("FORG0005");
     public static final ErrorCode InvalidArgumentType = registerBuiltIn("FORG0006");
     public static final ErrorCode InconsistentTimezones = registerBuiltIn("FORG0008");
+    public static final ErrorCode InvalidRegexFlagsErrorCode = registerBuiltIn("FORX0001");
     public static final ErrorCode InvalidRegexPatternErrorCode = registerBuiltIn("FORX0002");
     public static final ErrorCode MatchesEmptyStringErrorCode = registerBuiltIn("FORX0003");
     public static final ErrorCode InvalidReplacementStringErrorCode = registerBuiltIn("FORX0004");

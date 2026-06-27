@@ -17,13 +17,13 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -107,7 +107,7 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                StringBuffer childBuffer = new StringBuffer();
+                StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
                 if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);

@@ -326,7 +326,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         return result;
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }

@@ -74,7 +74,7 @@ public class TryCatchStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("try {\n");
         this.tryStatement.serializeToJSONiq(sb, indent + 1);

@@ -19,13 +19,13 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -121,7 +121,7 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                StringBuffer childBuffer = new StringBuffer();
+                StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
                 if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);
@@ -206,7 +206,7 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
     }
 
-    private void appendJSONAtomicItem(Item item, StringBuffer sb) {
+    private void appendJSONAtomicItem(Item item, StringBuilder sb) {
         boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {

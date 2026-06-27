@@ -41,7 +41,7 @@ public class FlowrStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.returnStatementClause.serializeToJSONiq(sb, 0);
         sb.append("\n");
