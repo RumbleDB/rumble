@@ -37,7 +37,7 @@ public final class Output {
         negatable = true,
         description = "Whether to overwrite to --output-path. No throws an error if the output file/folder exists."
     )
-    private boolean overwrite;
+    private Boolean overwrite;
 
     @Option(
         names = { "-P", "--number-of-output-partitions" },
@@ -61,7 +61,9 @@ public final class Output {
     private Map<String, String> outputFormatOptions = new HashMap<>();
 
     public OutputOptions toOutputOptions() {
-        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder().allowOverwrite(this.overwrite);
+        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder();
+
+        OptionConversion.applyIfPresent(this.overwrite, builder::allowOverwrite);
         OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
         OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);

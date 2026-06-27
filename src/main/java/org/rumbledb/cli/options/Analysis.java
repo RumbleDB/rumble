@@ -33,7 +33,7 @@ public final class Analysis {
             "Enables more optimizations (experimental). Deactivated by default."
         }
     )
-    private boolean enableStaticTyping;
+    private Boolean enableStaticTyping;
 
     @Option(
         names = "--print-inferred-types",
@@ -41,7 +41,7 @@ public final class Analysis {
         negatable = true,
         description = "Prints inferred types."
     )
-    private boolean printInferredTypes;
+    private Boolean printInferredTypes;
 
     @Option(
         names = "--check-return-types-of-builtin-functions",
@@ -49,13 +49,15 @@ public final class Analysis {
         negatable = true,
         description = "Checks return types of built-in functions."
     )
-    private boolean checkReturnTypesOfBuiltinFunctions;
+    private Boolean checkReturnTypesOfBuiltinFunctions;
 
     public AnalysisOptions toAnalysisOptions() {
-        return AnalysisOptions.builder()
-            .enableStaticTyping(this.enableStaticTyping)
-            .printInferredTypes(this.printInferredTypes)
-            .checkReturnTypeOfBuiltinFunctions(this.checkReturnTypesOfBuiltinFunctions)
-            .build();
+        AnalysisOptions.AnalysisOptionsBuilder builder = AnalysisOptions.builder();
+        
+        OptionConversion.applyIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
+        OptionConversion.applyIfPresent(this.printInferredTypes, builder::printInferredTypes);
+        OptionConversion.applyIfPresent(this.checkReturnTypesOfBuiltinFunctions, builder::checkReturnTypeOfBuiltinFunctions);
+
+        return builder.build();
     }
 }

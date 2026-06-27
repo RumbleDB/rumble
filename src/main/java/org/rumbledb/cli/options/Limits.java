@@ -23,9 +23,11 @@ public final class Limits {
     private Integer materializationCap = RuntimeLimits.DEFAULT_MATERIALIZATION_CAP;
 
     public RuntimeLimits toRuntimeLimits() {
-        return RuntimeLimits.builder()
-            .resultsSizeCap(this.resultSize)
-            .materializationCap(this.materializationCap)
-            .build();
+        RuntimeLimits.RuntimeLimitsBuilder builder = RuntimeLimits.builder();
+
+        OptionConversion.applyIfPresent(this.resultSize, builder::resultsSizeCap);
+        OptionConversion.applyIfPresent(this.materializationCap, builder::materializationCap);
+        
+        return builder.build();
     }
 }

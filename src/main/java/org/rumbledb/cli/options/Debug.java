@@ -12,7 +12,7 @@ public final class Debug {
         negatable = true,
         description = "For debugging purposes, prints out the expression tree and runtime interator tree."
     )
-    private boolean printIteratorTree;
+    private Boolean printIteratorTree;
 
     @Option(
         names = { "-v", "--show-error-info" },
@@ -23,7 +23,7 @@ public final class Debug {
             "If you want to report a bug, you can use this to get the full exception stack."
         }
     )
-    private boolean showErrorInfo;
+    private Boolean showErrorInfo;
 
     @Option(
         names = "--debug",
@@ -31,13 +31,15 @@ public final class Debug {
         negatable = true,
         description = "Enables debug output."
     )
-    private boolean logging;
+    private Boolean logging;
 
     public DebugOptions toDebugOptions() {
-        return DebugOptions.builder()
-            .printIteratorTree(this.printIteratorTree)
-            .showErrorInfo(this.showErrorInfo)
-            .logging(this.logging)
-            .build();
+        DebugOptions.DebugOptionsBuilder builder = DebugOptions.builder();
+        
+        OptionConversion.applyIfPresent(this.printIteratorTree, builder::printIteratorTree);
+        OptionConversion.applyIfPresent(this.showErrorInfo, builder::showErrorInfo);
+        OptionConversion.applyIfPresent(this.logging, builder::logging);    
+
+        return builder.build();
     }
 }

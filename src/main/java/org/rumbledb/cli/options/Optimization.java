@@ -12,7 +12,7 @@ public final class Optimization {
         negatable = true,
         description = "Activates automatic conversion of general comparisons to value comparisons when applicable (activated by default)."
     )
-    private boolean optimizeGeneralComparisonToValueComparison;
+    private Boolean optimizeGeneralComparisonToValueComparison;
 
     @Option(
         names = "--optimize-steps",
@@ -20,7 +20,7 @@ public final class Optimization {
         negatable = true,
         description = "Allows RumbleDB to optimize steps, might violate stability of document order (activated by default)."
     )
-    private boolean optimizeSteps;
+    private Boolean optimizeSteps;
 
     @Option(
         names = "--optimize-steps-experimental",
@@ -28,7 +28,7 @@ public final class Optimization {
         negatable = true,
         description = "Experimentally optimizes steps more by skipping uniqueness and sorting in some cases. Correctness is not yet verified (disabled by default)."
     )
-    private boolean optimizeStepsExperimental;
+    private Boolean optimizeStepsExperimental;
 
     @Option(
         names = "--optimize-parent-pointers",
@@ -36,14 +36,16 @@ public final class Optimization {
         negatable = true,
         description = "Allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)."
     )
-    private boolean optimizeParentPointers;
+    private Boolean optimizeParentPointers;
 
     public OptimizationOptions toOptimizationOptions() {
-        return OptimizationOptions.builder()
-            .optimizeGeneralComparisonToValueComparison(this.optimizeGeneralComparisonToValueComparison)
-            .optimizeSteps(this.optimizeSteps)
-            .optimizeStepsExperimental(this.optimizeStepsExperimental)
-            .optimizeParentPointers(this.optimizeParentPointers)
-            .build();
+        OptimizationOptions.OptimizationOptionsBuilder builder = OptimizationOptions.builder();
+        
+        OptionConversion.applyIfPresent(this.optimizeGeneralComparisonToValueComparison, builder::optimizeGeneralComparisonToValueComparison);
+        OptionConversion.applyIfPresent(this.optimizeSteps, builder::optimizeSteps);
+        OptionConversion.applyIfPresent(this.optimizeStepsExperimental, builder::optimizeStepsExperimental);
+        OptionConversion.applyIfPresent(this.optimizeParentPointers, builder::optimizeParentPointers);  
+
+        return builder.build();
     }
 }

@@ -28,7 +28,7 @@ public final class Language {
         negatable = true,
         description = "Activates timezone support for the type xs:date (deactivated by default)."
     )
-    private boolean datesWithTimezone;
+    private Boolean datesWithTimezone;
 
     @Option(
         names = { "--lax-json-null-validation", "--lax-json-null-valication" },
@@ -36,14 +36,16 @@ public final class Language {
         negatable = true,
         description = "Allows conflating JSON nulls with absent values when validating nillable object fields for more flexibility (activated by default)."
     )
-    private boolean laxJSONNullValidation;
+    private Boolean laxJSONNullValidation;
 
     public LanguageOptions toLanguageOptions() {
-        LanguageOptions.LanguageOptionsBuilder builder = LanguageOptions.builder()
-            .datesWithTimeZone(this.datesWithTimezone)
-            .laxJSONNullValidation(this.laxJSONNullValidation);
+        LanguageOptions.LanguageOptionsBuilder builder = LanguageOptions.builder();
+
+        OptionConversion.applyIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
+        OptionConversion.applyIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
         OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
         OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
+        
         return builder.build();
     }
 }
