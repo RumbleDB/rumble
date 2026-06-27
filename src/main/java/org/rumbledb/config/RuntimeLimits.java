@@ -20,9 +20,9 @@ package org.rumbledb.config;
 
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
 public class RuntimeLimits {
     public static final int DEFAULT_RESULTS_SIZE_CAP = 10;

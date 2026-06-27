@@ -21,9 +21,9 @@ package org.rumbledb.config;
 import java.time.ZoneId;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
 public class FormattingOptions {
     /**

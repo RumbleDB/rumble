@@ -20,9 +20,9 @@ package org.rumbledb.config;
 
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder
 public class LanguageOptions {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;

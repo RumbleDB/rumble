@@ -22,9 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
+import lombok.Value;
 
-@Data
+@Value
 @Builder(toBuilder = true)
 public class IOOptions {
     /**
