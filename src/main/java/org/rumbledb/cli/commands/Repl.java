@@ -34,7 +34,7 @@ public final class Repl extends AbstractCommand {
     @Override
     public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.REPL)
-            .output(this.output.toOutputOptions())
+            .outputOptions(this.output.toOutputOptions())
             .build();
     }
 }

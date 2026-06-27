@@ -46,8 +46,8 @@ public final class Run extends AbstractCommand {
     @Override
     public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.RUN)
-            .input(this.input.toInputOptions(this.queryPath))
-            .output(this.output.toOutputOptions())
+            .inputOptions(this.input.toInputOptions(this.queryPath))
+            .outputOptions(this.output.toOutputOptions())
             .build();
     }
 }

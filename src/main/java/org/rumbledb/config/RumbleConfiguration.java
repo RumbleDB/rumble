@@ -26,46 +26,46 @@ import lombok.Data;
  * Temporary aggregate for the new typed configuration model.
  */
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class RumbleConfiguration {
     /**
      * Application execution mode.
      */
     @Default
-    private ExecutionMode mode = ExecutionMode.RUN;
+    private ExecutionMode executionMode = ExecutionMode.RUN;
 
     @Default
-    private ServerOptions server = ServerOptions.builder().build();
+    private ServerOptions serverOptions = ServerOptions.builder().build();
 
     @Default
-    private IOOptions io = IOOptions.builder().build();
+    private IOOptions ioOptions = IOOptions.builder().build();
 
     @Default
-    private InputOptions input = InputOptions.builder().build();
+    private InputOptions inputOptions = InputOptions.builder().build();
 
     @Default
-    private OutputOptions output = OutputOptions.builder().build();
+    private OutputOptions outputOptions = OutputOptions.builder().build();
 
     @Default
-    private RuntimeLimits limits = RuntimeLimits.builder().build();
+    private RuntimeLimits runtimeLimits = RuntimeLimits.builder().build();
 
     @Default
-    private DiagnosticsOptions diagnostics = DiagnosticsOptions.builder().build();
+    private DiagnosticsOptions diagnosticsOptions = DiagnosticsOptions.builder().build();
 
     @Default
-    private AnalysisOptions analysis = AnalysisOptions.builder().build();
+    private AnalysisOptions analysisOptions = AnalysisOptions.builder().build();
 
     @Default
-    private ExecutionOptions execution = ExecutionOptions.builder().build();
+    private ExecutionOptions executionOptions = ExecutionOptions.builder().build();
 
     @Default
-    private OptimizationOptions optimization = OptimizationOptions.builder().build();
+    private OptimizationOptions optimizationOptions = OptimizationOptions.builder().build();
 
     @Default
-    private LanguageOptions language = LanguageOptions.builder().build();
+    private LanguageOptions languageOptions = LanguageOptions.builder().build();
 
     @Default
-    private FormattingOptions formatting = FormattingOptions.builder().build();
+    private FormattingOptions formattedOptions = FormattingOptions.builder().build();
 
     @Default
     private ExternalVariableBindings externalVariableBindings = ExternalVariableBindings.builder().build();

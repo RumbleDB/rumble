@@ -97,15 +97,15 @@ public final class CliOptions {
             ExecutionMode mode
     ) {
         return RumbleConfiguration.builder()
-            .mode(mode)
-            .io(this.io.toIOOptions())
-            .limits(this.limits.toRuntimeLimits())
-            .diagnostics(this.diagnostics.toDiagnosticsOptions())
-            .analysis(this.analysis.toAnalysisOptions())
-            .execution(this.execution.toExecutionOptions())
-            .optimization(this.optimization.toOptimizationOptions())
-            .language(this.language.toLanguageOptions())
-            .formatting(this.formatting.toFormattingOptions())
+            .executionMode(mode)
+            .ioOptions(this.io.toIOOptions())
+            .runtimeLimits(this.limits.toRuntimeLimits())
+            .diagnosticsOptions(this.diagnostics.toDiagnosticsOptions())
+            .analysisOptions(this.analysis.toAnalysisOptions())
+            .executionOptions(this.execution.toExecutionOptions())
+            .optimizationOptions(this.optimization.toOptimizationOptions())
+            .languageOptions(this.language.toLanguageOptions())
+            .formattedOptions(this.formatting.toFormattingOptions())
             .externalVariableBindings(this.variables.toExternalVariableBindings());
     }
 }
