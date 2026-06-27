@@ -34,25 +34,6 @@ public final class Diagnostics {
     private boolean checkReturnTypesOfBuiltinFunctions;
 
     @Option(
-        names = { "-t", "--static-typing" },
-        scope = ScopeType.INHERIT,
-        negatable = true,
-        description = {
-            "Activates static type analysis, which annotates the expression tree with inferred types at compile time.",
-            "Enables more optimizations (experimental). Deactivated by default."
-        }
-    )
-    private boolean staticTyping;
-
-    @Option(
-        names = "--print-inferred-types",
-        scope = ScopeType.INHERIT,
-        negatable = true,
-        description = "Prints inferred types."
-    )
-    private boolean printInferredTypes;
-
-    @Option(
         names = "--debug",
         scope = ScopeType.INHERIT,
         negatable = true,
