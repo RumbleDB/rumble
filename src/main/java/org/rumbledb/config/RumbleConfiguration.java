@@ -28,6 +28,12 @@ import lombok.Data;
 @Data
 @Builder
 public class RumbleConfiguration {
+    /**
+     * Application execution mode.
+     */
+    @Default
+    private ExecutionMode mode = ExecutionMode.RUN;
+
     @Default
     private ServerOptions server = ServerOptions.builder().build();
 

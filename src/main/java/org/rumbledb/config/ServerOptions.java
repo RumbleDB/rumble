@@ -36,10 +36,4 @@ public class ServerOptions {
      */
     @Default
     private int port = 8001;
-
-    /**
-     * Application execution mode.
-     */
-    @Default
-    private ExecutionMode mode = ExecutionMode.RUN;
 }
