@@ -50,7 +50,7 @@ public class OutputOptions {
      * Whether to overwrite the output path if it already exists.
      */
     @Default
-    private boolean overwrite = false;
+    private boolean allowOverwrite = false;
 
     /**
      * Options to further specify the output format, for example a separator character for CSV or a compression format.

@@ -61,7 +61,7 @@ public final class Output {
     private Map<String, String> outputFormatOptions = new HashMap<>();
 
     public OutputOptions toOutputOptions() {
-        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder().overwrite(this.overwrite);
+        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder().allowOverwrite(this.overwrite);
         OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
         OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);
