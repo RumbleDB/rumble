@@ -34,7 +34,6 @@ public class CliOptionsTest {
 
     @Test
     public void noSubcommandShouldGiveError() {
-        ///
         try {
             CliOptions.parse();
         } catch (Exception e) {
