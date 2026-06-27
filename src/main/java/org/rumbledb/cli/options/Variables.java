@@ -11,9 +11,10 @@ import org.rumbledb.context.Name;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
-public class Variables {
+public final class Variables {
     @Option(
         names = { "-I", "--context-item" },
+        scope = ScopeType.INHERIT,
         paramLabel = "value",
         description = {
             "Initializes the global context item $$ to the supplied value.",
@@ -25,6 +26,7 @@ public class Variables {
 
     @Option(
         names = { "-i", "--context-item-input" },
+        scope = ScopeType.INHERIT,
         paramLabel = "path",
         description = "Reads the context item value from the standard input."
     )
@@ -32,6 +34,7 @@ public class Variables {
 
     @Option(
         names = "--context-item-input-format",
+        scope = ScopeType.INHERIT,
         paramLabel = "format",
         description = "Sets the input format to use for parsing the standard input (as text or as a serialized json value)."
     )
