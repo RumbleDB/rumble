@@ -20,6 +20,8 @@ package org.rumbledb.cli;
 
 import org.junit.Test;
 import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.config.InputOptions;
+import org.rumbledb.config.OutputOptions;
 import org.rumbledb.config.RumbleConfiguration;
 
 import java.time.ZoneId;
@@ -31,20 +33,30 @@ import static org.junit.Assert.assertTrue;
 public class CliOptionsTest {
 
     @Test
+    public void noSubcommandShouldGiveError() {
+        ///
+        try {
+            CliOptions.parse();
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("Missing required subcommand"));
+        }
+    }
+
+    @Test
     public void sharedOptionsAreAcceptedBeforeSubcommand() {
-        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+        RumbleConfiguration configuration = CliOptions.parse(
             "--debug",
             "--no-native-execution",
             "--default-formatting-place",
             "Europe/Madrid",
-            "--port",
-            "9000",
             "serve",
             "--host",
-            "127.0.0.1"
+            "127.0.0.1",
+            "--port",
+            "9000"
         );
 
-        assertEquals(ExecutionMode.SERVE, configuration.getServer().getMode());
+        assertEquals(ExecutionMode.SERVE, configuration.getMode());
         assertEquals("127.0.0.1", configuration.getServer().getHost());
         assertEquals(9000, configuration.getServer().getPort());
         assertTrue(configuration.getDiagnostics().isDebug());
@@ -54,32 +66,40 @@ public class CliOptionsTest {
 
     @Test
     public void sharedOptionsAreAcceptedAfterSubcommand() {
-        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+        RumbleConfiguration configuration = CliOptions.parse(
             "repl",
             "--debug",
             "--result-size",
             "12"
         );
 
-        assertEquals(ExecutionMode.REPL, configuration.getServer().getMode());
+        assertEquals(ExecutionMode.REPL, configuration.getMode());
         assertTrue(configuration.getDiagnostics().isDebug());
         assertEquals(12, configuration.getLimits().getResultsSizeCap());
     }
 
     @Test
     public void positiveFormOfTrueDefaultOptionKeepsItEnabled() {
-        RumbleConfiguration defaults = CliOptions.toRumbleConfiguration();
-        RumbleConfiguration explicitlyEnabled = CliOptions.toRumbleConfiguration("--native-execution");
-        RumbleConfiguration explicitlyDisabled = CliOptions.toRumbleConfiguration("--no-native-execution");
+        RumbleConfiguration defaults = CliOptions.parse("run");
+        RumbleConfiguration explicitlyEnabled = CliOptions.parse("run", "--native-execution");
+        RumbleConfiguration explicitlyDisabled = CliOptions.parse("run", "--no-native-execution");
 
         assertTrue(defaults.getExecution().isNativeExecution());
         assertTrue(explicitlyEnabled.getExecution().isNativeExecution());
         assertFalse(explicitlyDisabled.getExecution().isNativeExecution());
+        assertEquals("localhost", defaults.getServer().getHost());
+        assertEquals(8001, defaults.getServer().getPort());
+        assertEquals(InputOptions.DEFAULT_INPUT_FORMAT, defaults.getInput().getInputFormat());
+        assertEquals(
+            OutputOptions.DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS,
+            defaults.getOutput().getNumberOfOutputPartitions()
+        );
+        assertEquals(ZoneId.of("UTC"), defaults.getFormatting().getDefaultFormattingPlace());
     }
 
     @Test
     public void runRetainsModeSpecificInputAndOutputOptions() {
-        RumbleConfiguration configuration = CliOptions.toRumbleConfiguration(
+        RumbleConfiguration configuration = CliOptions.parse(
             "run",
             "--query",
             "1 + 1",
@@ -87,8 +107,8 @@ public class CliOptionsTest {
             "result.json"
         );
 
-        assertEquals(ExecutionMode.RUN, configuration.getServer().getMode());
-        assertEquals("1 + 1", configuration.getIo().getQuery());
-        assertEquals("result.json", configuration.getIo().getOutputPath());
+        assertEquals(ExecutionMode.RUN, configuration.getMode());
+        assertEquals("1 + 1", configuration.getInput().getQuery());
+        assertEquals("result.json", configuration.getOutput().getOutputPath());
     }
 }
