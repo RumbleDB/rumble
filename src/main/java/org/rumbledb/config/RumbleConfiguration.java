@@ -72,8 +72,8 @@ public class RumbleConfiguration {
     @Default
     private ExternalVariableBindings externalVariableBindings = ExternalVariableBindings.builder().build();
 
-    /// Avoid Javadoc error because it cannot resolve the builder class
-    /// Used as return type for the baseConfiguration method in cli.commands.AbstractCommand
+    /// Avoid Javadoc error because it cannot resolve the builder class Used as return type for the baseConfiguration
+    /// method in cli.commands.AbstractCommand
     public static class RumbleConfigurationBuilder {
     }
 }

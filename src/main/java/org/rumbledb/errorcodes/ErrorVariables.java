@@ -88,9 +88,8 @@ public final class ErrorVariables {
             Collections.singletonList(itemFactory.createIntItem(exception.getMetadata().getStart().column()))
         );
 
-        /// Value of err:additional is implementation-defined. For now, we set it to an
-        /// empty sequence, but in the future, it could be used to provide additional
-        /// information about the error.
+        /// Value of err:additional is implementation-defined. For now, we set it to an empty sequence, but in the
+        /// future, it could be used to provide additional information about the error.
         variableValues.addVariableValue(
             ErrorVariables.ERROR_ADITIONAL,
             Collections.emptyList()
