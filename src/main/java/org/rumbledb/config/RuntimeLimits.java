@@ -24,7 +24,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class RuntimeLimits {
     public static final int DEFAULT_RESULTS_SIZE_CAP = 10;

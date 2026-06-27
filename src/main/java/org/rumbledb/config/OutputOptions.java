@@ -27,7 +27,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class OutputOptions {
     public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;

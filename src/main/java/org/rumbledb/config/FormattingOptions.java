@@ -25,7 +25,7 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 
 @Value
-@Builder
+@Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class FormattingOptions {
     /**
