@@ -1,5 +1,7 @@
 package org.rumbledb.cli.options;
 
+import org.rumbledb.config.ExecutionOptions;
+
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
@@ -81,4 +83,17 @@ public final class Execution {
         description = "Applies the pending update list returned by the query."
     )
     private boolean applyUpdates;
+
+    public ExecutionOptions toExecutionOptions() {
+        return ExecutionOptions.builder()
+            .nativeSQLPredicates(this.nativeSQLPredicates)
+            .dataFrameExecutionModeDetection(this.dataFrameExecutionModeDetection)
+            .parallelExecution(this.parallelExecution)
+            .dataFrameExecution(this.dataFrameExecution)
+            .nativeExecution(this.nativeExecution)
+            .functionInlining(this.functionInlining)
+            .tailCallOptimization(this.tailCallOptimization)
+            .applyUpdates(this.applyUpdates)
+            .build();
+    }
 }
