@@ -25,7 +25,7 @@ import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
-@Builder
+@Builder(toBuilder = true)
 public class IOOptions {
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)
