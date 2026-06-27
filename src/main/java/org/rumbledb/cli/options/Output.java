@@ -66,7 +66,7 @@ public final class Output {
         OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);
         OptionConversion.applyIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
-        OptionConversion.applyIfPresent(this.shellFilter, builder::shell);
+        OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
         OptionConversion.applyIfPresent(
             this.outputFormatOptions,
             options -> builder.serializationParameters(SerializationParameterBuilder.build(options))

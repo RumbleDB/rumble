@@ -67,6 +67,6 @@ public class OutputOptions {
     /**
      * Current shell filter for post-processing output (e.g. JSON beautifier)
      */
-    private String shell;
+    private String shellFilter;
 
 }
