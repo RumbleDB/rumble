@@ -32,6 +32,8 @@ public final class Serve extends AbstractCommand {
 
     @Override
     public RumbleConfiguration call() {
-        return this.baseConfiguration(ExecutionMode.SERVE).build();
+        return this.baseConfiguration(ExecutionMode.SERVE)
+            .server(this.server.toServerOptions())
+            .build();
     }
 }
