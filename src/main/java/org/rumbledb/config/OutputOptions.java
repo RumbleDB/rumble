@@ -18,7 +18,8 @@
 
 package org.rumbledb.config;
 
-import java.util.Map;
+
+import org.rumbledb.serialization.SerializationParameters;
 
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -54,7 +55,7 @@ public class OutputOptions {
     /**
      * Options to further specify the output format, for example a separator character for CSV or a compression format.
      */
-    private Map<String, String> outputFormatOptions;
+    private SerializationParameters serializationParameters;
 
     /**
      * Log path
@@ -65,4 +66,5 @@ public class OutputOptions {
      * Current shell filter for post-processing output (e.g. JSON beautifier)
      */
     private String shell;
+
 }
