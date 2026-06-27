@@ -18,18 +18,33 @@
 
 package org.rumbledb.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
 @Builder
-public class IOOptions {
+public class OutputOptions {
+    public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;
+
     /**
-     * Allowed URI prefixes for read/write (with I/O functions to read data)
+     * Number of output partitions to write to the output path.
      */
     @Default
-    private List<String> allowedPrefixes = new ArrayList<>();
+    private int numberOfOutputPartitions = DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS;
+
+    /**
+     * Path to which the output path should be written.
+     */
+    private String outputPath;
+
+    /**
+     * Log path
+     */
+    private String logPath;
+
+    /**
+     * Current shell filter for post-processing output (e.g. JSON beautifier)
+     */
+    private String shell;
 }

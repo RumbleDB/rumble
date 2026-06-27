@@ -18,18 +18,29 @@
 
 package org.rumbledb.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
 
 @Data
 @Builder
-public class IOOptions {
+public class InputOptions {
+    public static final String DEFAULT_INPUT_FORMAT = "json";
+
     /**
-     * Allowed URI prefixes for read/write (with I/O functions to read data)
+     * Input format for reading from standard input.
      */
     @Default
-    private List<String> allowedPrefixes = new ArrayList<>();
+    private String inputFormat = DEFAULT_INPUT_FORMAT;
+
+    /**
+     * Path from which the JSONiq or XQuery query is to be read.
+     */
+    private String queryPath;
+
+    /**
+     * Query that was passed from the command line
+     * (This should be removed later when we have separate classes for CLI and API)
+     */
+    private String query;
 }
