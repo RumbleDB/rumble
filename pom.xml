@@ -85,6 +85,33 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+                <executions>
+                    <execution>
+                        <id>compile-antlr-generated-sources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
+                            </compileSourceRoots>
+                            <includes>
+                                <include>org/rumbledb/parser/**/*.java</include>
+                            </includes>
+                            <!-- Compile large ANTLR output without annotation processing, because it's large and causes StackOverflowError -->
+                            <proc>none</proc>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <excludes>
+                                <exclude>org/rumbledb/parser/**/*.java</exclude>
+                            </excludes>
+                        </configuration>
+                    </execution>
+                </executions>
                 <dependencies>
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>
