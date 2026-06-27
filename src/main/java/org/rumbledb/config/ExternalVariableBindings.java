@@ -30,9 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Data;
 
-@Data
 @Builder
 public class ExternalVariableBindings {
     /**
@@ -70,4 +68,20 @@ public class ExternalVariableBindings {
      */
     @Default
     private Map<Name, String> externalVariablesInputFormats = new HashMap<>();
+
+    public List<Item> getExternalVariableValue(Name name) {
+        return this.externalVariableValues.get(name);
+    }
+
+    public String getUnparsedExternalVariableValue(Name name) {
+        return this.unparsedExternalVariableValues.get(name);
+    }
+
+    public String getExternalVariableValueReadFromFile(Name name) {
+        return this.externalVariableValuesReadFromFiles.get(name);
+    }
+
+    public Dataset<Row> getExternalVariableValueReadFromDataFrame(Name name) {
+        return this.externalVariableValuesReadFromDataFrames.get(name);
+    }
 }
