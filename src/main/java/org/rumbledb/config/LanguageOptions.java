@@ -21,9 +21,11 @@ package org.rumbledb.config;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Builder
+@Accessors(fluent = true)
 public class LanguageOptions {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;

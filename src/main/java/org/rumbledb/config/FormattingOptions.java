@@ -22,9 +22,11 @@ import java.time.ZoneId;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Builder
+@Accessors(fluent = true)
 public class FormattingOptions {
     /**
      * The default place used for formatting date and time values.

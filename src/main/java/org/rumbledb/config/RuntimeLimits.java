@@ -21,9 +21,11 @@ package org.rumbledb.config;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Builder
+@Accessors(fluent = true)
 public class RuntimeLimits {
     public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
     public static final int DEFAULT_MATERIALIZATION_CAP = 100000;

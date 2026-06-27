@@ -21,9 +21,11 @@ package org.rumbledb.config;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Builder
+@Accessors(fluent = true)
 public class OptimizationOptions {
     /**
      * Whether general comparisons may be rewritten using value comparisons.

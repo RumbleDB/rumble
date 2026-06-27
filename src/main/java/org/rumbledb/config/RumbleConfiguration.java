@@ -21,12 +21,14 @@ package org.rumbledb.config;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 /**
  * Temporary aggregate for the new typed configuration model.
  */
 @Value
 @Builder(toBuilder = true)
+@Accessors(fluent = true)
 public class RumbleConfiguration {
     /**
      * Application execution mode.

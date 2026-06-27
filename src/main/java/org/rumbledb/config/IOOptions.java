@@ -23,9 +23,11 @@ import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
+import lombok.experimental.Accessors;
 
 @Value
 @Builder(toBuilder = true)
+@Accessors(fluent = true)
 public class IOOptions {
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)

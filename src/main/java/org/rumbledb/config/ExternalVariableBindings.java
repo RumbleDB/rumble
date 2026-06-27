@@ -23,6 +23,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -30,8 +31,12 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Builder.Default;
+import lombok.Value;
+import lombok.experimental.Accessors;
 
+@Value
 @Builder
+@Accessors(fluent = true)
 public class ExternalVariableBindings {
     /**
      * Stores already-materialized external variable values
@@ -83,5 +88,17 @@ public class ExternalVariableBindings {
 
     public Dataset<Row> getExternalVariableValueReadFromDataFrame(Name name) {
         return this.externalVariableValuesReadFromDataFrames.get(name);
+    }
+
+    public boolean readFromStandardInput(Name variableName) {
+        return this.externalVariablesReadFromStandardInput.contains(variableName);
+    }
+
+    public String getInputFormat(Name variableName) {
+        return this.externalVariablesInputFormats.get(variableName);
+    }
+
+    public List<Name> getExternalVariablesReadFromDataFrames() {
+        return new ArrayList<>(this.externalVariableValuesReadFromDataFrames.keySet());
     }
 }
