@@ -54,7 +54,7 @@ public final class Output {
     private String shellFilter;
 
     @Option(
-        names = { "-o", "--output-format-option" },
+        names = "--output-format-option",
         paramLabel = "name=value",
         description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
     )
