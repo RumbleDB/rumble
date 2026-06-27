@@ -1,6 +1,5 @@
 package org.rumbledb.cli.options;
 
-import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.ServerOptions;
 
 import picocli.CommandLine.Option;
@@ -23,11 +22,10 @@ public final class Server {
     )
     private Integer port;
 
-    public ServerOptions toServerOptions(ExecutionMode mode) {
-        return ServerOptions.builder()
-            .mode(mode)
-            .host(this.host)
-            .port(this.port)
-            .build();
+    public ServerOptions toServerOptions() {
+        ServerOptions.ServerOptionsBuilder builder = ServerOptions.builder();
+        OptionConversion.applyIfPresent(this.host, builder::host);
+        OptionConversion.applyIfPresent(this.port, builder::port);
+        return builder.build();
     }
 }

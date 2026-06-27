@@ -49,12 +49,12 @@ public final class Language {
     private boolean laxJSONNullValidation;
 
     public LanguageOptions toLanguageOptions() {
-        return LanguageOptions.builder()
-            .queryLanguage(this.defaultLanguage)
-            .staticBaseUri(this.staticBaseUri)
-            .xmlVersion(this.xmlVersion)
+        LanguageOptions.LanguageOptionsBuilder builder = LanguageOptions.builder()
             .datesWithTimeZone(this.datesWithTimezone)
-            .laxJSONNullValidation(this.laxJSONNullValidation)
-            .build();
+            .laxJSONNullValidation(this.laxJSONNullValidation);
+        OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
+        OptionConversion.applyIfPresent(this.staticBaseUri, builder::staticBaseUri);
+        OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
+        return builder.build();
     }
 }

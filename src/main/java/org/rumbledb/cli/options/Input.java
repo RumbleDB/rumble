@@ -22,11 +22,14 @@ public final class Input {
     @Option(names = "--input-format", paramLabel = "format")
     private String inputFormat;
 
-    public InputOptions toInputOptions() {
-        return InputOptions.builder()
-            .inputFormat(this.inputFormat)
-            .queryPath(this.queryPath)
-            .query(this.query)
-            .build();
+    public InputOptions toInputOptions(String positionalQueryPath) {
+        InputOptions.InputOptionsBuilder builder = InputOptions.builder();
+        OptionConversion.applyIfPresent(this.inputFormat, builder::inputFormat);
+        OptionConversion.applyIfPresent(
+            this.queryPath != null ? this.queryPath : positionalQueryPath,
+            builder::queryPath
+        );
+        OptionConversion.applyIfPresent(this.query, builder::query);
+        return builder.build();
     }
 }

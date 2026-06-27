@@ -33,10 +33,10 @@ public final class Formatting {
     private String defaultFormattingLanguage;
 
     public FormattingOptions toFormattingOptions() {
-        return FormattingOptions.builder()
-            .defaultFormattingPlace(this.defaultFormattingPlace)
-            .defaultFormattingCalendar(this.defaultFormattingCalendar)
-            .defaultFormattingLanguage(this.defaultFormattingLanguage)
-            .build();
+        FormattingOptions.FormattingOptionsBuilder builder = FormattingOptions.builder();
+        OptionConversion.applyIfPresent(this.defaultFormattingPlace, builder::defaultFormattingPlace);
+        OptionConversion.applyIfPresent(this.defaultFormattingCalendar, builder::defaultFormattingCalendar);
+        OptionConversion.applyIfPresent(this.defaultFormattingLanguage, builder::defaultFormattingLanguage);
+        return builder.build();
     }
 }

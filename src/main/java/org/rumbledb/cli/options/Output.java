@@ -6,7 +6,6 @@ import java.util.Map;
 import org.rumbledb.config.OutputOptions;
 
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ScopeType;
 
 public final class Output {
     @Option(
@@ -54,25 +53,29 @@ public final class Output {
     private String shellFilter;
 
     @Option(names = "-o:", paramLabel = "name=value")
-    private Map<String, String> shortSerializationParameters;
+    private Map<String, String> shortSerializationParameters = new HashMap<>();
 
     @Option(
         names = "--output-format-option",
-        scope = ScopeType.INHERIT,
         paramLabel = "name=value",
         description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
     )
     private Map<String, String> outputFormatOptions = new HashMap<>();
 
     public OutputOptions toOutputOptions() {
-        return OutputOptions.builder()
-            .outputPath(this.outputPath)
-            .outputFormat(this.outputFormat)
-            .logPath(this.logPath)
-            .overwrite(this.overwrite)
-            .numberOfOutputPartitions(this.numberOfOutputPartitions)
-            .shell(this.shellFilter)
-            .outputFormatOptions(this.outputFormatOptions)
-            .build();
+        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder().overwrite(this.overwrite);
+        OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
+        OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
+        OptionConversion.applyIfPresent(this.logPath, builder::logPath);
+        OptionConversion.applyIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
+        OptionConversion.applyIfPresent(this.shellFilter, builder::shell);
+
+        Map<String, String> serializationParameters = new HashMap<>();
+        serializationParameters.putAll(this.shortSerializationParameters);
+        serializationParameters.putAll(this.outputFormatOptions);
+        if (!serializationParameters.isEmpty()) {
+            builder.outputFormatOptions(serializationParameters);
+        }
+        return builder.build();
     }
 }
