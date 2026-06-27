@@ -60,10 +60,10 @@ public final class ErrorCode implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ErrorCode)) {
+        if (!(other instanceof ErrorCode errorCode)) {
             return false;
         }
-        return this.name.equals(((ErrorCode) other).name);
+        return this.name.equals(errorCode.name);
     }
 
     @Override

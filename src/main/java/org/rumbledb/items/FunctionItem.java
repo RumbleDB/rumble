@@ -403,10 +403,10 @@ public class FunctionItem implements Item {
 
     @Override
     public Estimator<?> getEstimator() {
-        if (!isEstimator()) {
+        if (!(this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator)) {
             throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
         }
-        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+        return estimatorRuntimeIterator.getEstimator();
     }
 
     @Override
@@ -416,10 +416,10 @@ public class FunctionItem implements Item {
 
     @Override
     public Transformer getTransformer() {
-        if (!isTransformer()) {
+        if (!(this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator)) {
             throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
         }
-        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+        return transformerRuntimeIterator.getTransformer();
     }
 
 

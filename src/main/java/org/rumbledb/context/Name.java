@@ -253,10 +253,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Name)) {
+        if (!(o instanceof Name other)) {
             return false;
         }
-        Name other = (Name) o;
         if (this.namespace == null && other.namespace != null) {
             return false;
         }
