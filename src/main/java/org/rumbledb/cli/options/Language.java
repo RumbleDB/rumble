@@ -34,7 +34,6 @@ public final class Language {
         names = { "--lax-json-null-validation", "--lax-json-null-valication" },
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Allows conflating JSON nulls with absent values when validating nillable object fields for more flexibility (activated by default)."
     )
     private boolean laxJSONNullValidation;

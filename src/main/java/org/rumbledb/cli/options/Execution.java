@@ -10,7 +10,6 @@ public final class Execution {
         names = "--native-sql-predicates",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates native SQL predicates when possible."
     )
     private boolean nativeSQLPredicates;
@@ -19,7 +18,6 @@ public final class Execution {
         names = "--data-frame-execution-mode-detection",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates DataFrame execution mode detection for higher-order functions."
     )
     private boolean dataFrameExecutionModeDetection;
@@ -28,7 +26,6 @@ public final class Execution {
         names = "--parallel-execution",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates parallel execution when possible (activated by default)."
     )
     private boolean parallelExecution;
@@ -37,7 +34,6 @@ public final class Execution {
         names = "--data-frame-execution",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates DataFrame execution when possible."
     )
     private boolean dataFrameExecution;
@@ -46,7 +42,6 @@ public final class Execution {
         names = "--native-execution",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates native (Spark SQL) execution when possible (activated by default)."
     )
     private boolean nativeExecution;
@@ -55,7 +50,6 @@ public final class Execution {
         names = "--function-inlining",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates function inlining for non-recursive functions (activated by default)."
     )
     private boolean functionInlining;
@@ -64,7 +58,6 @@ public final class Execution {
         names = "--tail-call-optimization",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates tail call optimization."
     )
     private boolean tailCallOptimization;

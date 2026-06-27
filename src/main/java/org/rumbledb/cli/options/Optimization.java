@@ -10,7 +10,6 @@ public final class Optimization {
         names = "--optimize-general-comparison-to-value-comparison",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Activates automatic conversion of general comparisons to value comparisons when applicable (activated by default)."
     )
     private boolean optimizeGeneralComparisonToValueComparison;
@@ -19,7 +18,6 @@ public final class Optimization {
         names = "--optimize-steps",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Allows RumbleDB to optimize steps, might violate stability of document order (activated by default)."
     )
     private boolean optimizeSteps;
@@ -36,7 +34,6 @@ public final class Optimization {
         names = "--optimize-parent-pointers",
         scope = ScopeType.INHERIT,
         negatable = true,
-        defaultValue = "true",
         description = "Allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)."
     )
     private boolean optimizeParentPointers;

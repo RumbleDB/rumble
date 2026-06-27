@@ -10,8 +10,7 @@ public final class Limits {
         names = "--result-size",
         scope = ScopeType.INHERIT,
         paramLabel = "count",
-        description = "A cap on the maximum number of items to output on the screen or to a local list.",
-        defaultValue = RuntimeLimits.DEFAULT_RESULTS_SIZE_CAP + ""
+        description = "A cap on the maximum number of items to output on the screen or to a local list."
     )
     private Integer resultSize = RuntimeLimits.DEFAULT_RESULTS_SIZE_CAP;
 
@@ -19,8 +18,7 @@ public final class Limits {
         names = { "-c", "--materialization-cap" },
         scope = ScopeType.INHERIT,
         paramLabel = "count",
-        description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query.",
-        defaultValue = RuntimeLimits.DEFAULT_MATERIALIZATION_CAP + ""
+        description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query."
     )
     private Integer materializationCap = RuntimeLimits.DEFAULT_MATERIALIZATION_CAP;
 
