@@ -18,6 +18,8 @@
 
 package org.rumbledb.config;
 
+import java.util.Map;
+
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Data;
@@ -37,6 +39,22 @@ public class OutputOptions {
      * Path to which the output path should be written.
      */
     private String outputPath;
+
+    /**
+     * Output format for writing to the output path.
+     */
+    private String outputFormat;
+
+    /**
+     * Whether to overwrite the output path if it already exists.
+     */
+    @Default
+    private boolean overwrite = false;
+
+    /**
+     * Options to further specify the output format, for example a separator character for CSV or a compression format.
+     */
+    private Map<String, String> outputFormatOptions;
 
     /**
      * Log path
