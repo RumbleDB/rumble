@@ -51,7 +51,7 @@
                 <executions>
                     <execution>
                         <id>compile-antlr-generated-sources</id>
-                        <phase>compile</phase>
+                        <phase>process-sources</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
@@ -68,7 +68,11 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>default-compile</id>
+                        <id>compile-main-sources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                         <configuration>
                             <compilerId>eclipse</compilerId>
                             <compilerArgs>
@@ -89,7 +93,8 @@
                                 </path>
                             </annotationProcessorPaths>
                             <excludes>
-                                <exclude>**/*.java</exclude>
+                                <exclude>Jsoniq*.java</exclude>
+                                <exclude>XQuery*.java</exclude>
                             </excludes>
                         </configuration>
                     </execution>
