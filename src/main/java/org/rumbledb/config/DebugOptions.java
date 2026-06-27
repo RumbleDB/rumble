@@ -26,7 +26,7 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class DiagnosticsOptions {
+public class DebugOptions {
     /**
      * Whether verbose error info should be shown in case an error is returned.
      */

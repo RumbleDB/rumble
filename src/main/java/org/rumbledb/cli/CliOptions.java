@@ -24,7 +24,7 @@ import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
 import org.rumbledb.cli.commands.Serve;
 import org.rumbledb.cli.options.Analysis;
-import org.rumbledb.cli.options.Diagnostics;
+import org.rumbledb.cli.options.Debug;
 import org.rumbledb.cli.options.Execution;
 import org.rumbledb.cli.options.Formatting;
 import org.rumbledb.cli.options.IO;
@@ -57,7 +57,7 @@ public final class CliOptions {
     Limits limits;
 
     @Mixin
-    Diagnostics diagnostics;
+    Debug diagnostics;
 
     @Mixin
     Analysis analysis;
@@ -100,7 +100,7 @@ public final class CliOptions {
             .executionMode(mode)
             .ioOptions(this.io.toIOOptions())
             .runtimeLimits(this.limits.toRuntimeLimits())
-            .diagnosticsOptions(this.diagnostics.toDiagnosticsOptions())
+            .diagnosticsOptions(this.diagnostics.toDebugOptions())
             .analysisOptions(this.analysis.toAnalysisOptions())
             .executionOptions(this.execution.toExecutionOptions())
             .optimizationOptions(this.optimization.toOptimizationOptions())

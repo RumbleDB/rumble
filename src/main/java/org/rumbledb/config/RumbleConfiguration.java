@@ -52,7 +52,7 @@ public class RumbleConfiguration {
     private RuntimeLimits runtimeLimits = RuntimeLimits.builder().build();
 
     @Default
-    private DiagnosticsOptions diagnostics = DiagnosticsOptions.builder().build();
+    private DebugOptions debug = DebugOptions.builder().build();
 
     @Default
     private AnalysisOptions analysis = AnalysisOptions.builder().build();

@@ -1,11 +1,11 @@
 package org.rumbledb.cli.options;
 
-import org.rumbledb.config.DiagnosticsOptions;
+import org.rumbledb.config.DebugOptions;
 
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
-public final class Diagnostics {
+public final class Debug {
     @Option(
         names = "--print-iterator-tree",
         scope = ScopeType.INHERIT,
@@ -33,8 +33,8 @@ public final class Diagnostics {
     )
     private boolean debug;
 
-    public DiagnosticsOptions toDiagnosticsOptions() {
-        return DiagnosticsOptions.builder()
+    public DebugOptions toDebugOptions() {
+        return DebugOptions.builder()
             .printIteratorTree(this.printIteratorTree)
             .showErrorInfo(this.showErrorInfo)
             .debug(this.debug)
