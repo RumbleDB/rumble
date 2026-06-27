@@ -509,8 +509,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);

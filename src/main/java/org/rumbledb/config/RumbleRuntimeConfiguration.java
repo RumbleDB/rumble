@@ -1115,7 +1115,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(
             "App name: "
                 + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")

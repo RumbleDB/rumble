@@ -474,7 +474,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
             iterator.getIterator().print(buffer, indent + 1);

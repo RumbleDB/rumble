@@ -31,7 +31,7 @@ public class ApplyStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         this.applyExpression.serializeToJSONiq(sb, 0);
     }
 

@@ -181,7 +181,7 @@ public class InlineFunctionExpression extends Expression {
         return visitor.visitInlineFunctionExpr(this, argument);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -219,7 +219,7 @@ public class InlineFunctionExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         String updating = isUpdating() ? "%an:updating" : "";
         if (this.name != null) {

@@ -70,10 +70,9 @@ public class CatchPattern implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof CatchPattern)) {
+        if (!(other instanceof CatchPattern pattern)) {
             return false;
         }
-        CatchPattern pattern = (CatchPattern) other;
         return Objects.equals(this.namespace, pattern.namespace)
             && Objects.equals(this.localName, pattern.localName)
             && this.namespaceWildcard == pattern.namespaceWildcard

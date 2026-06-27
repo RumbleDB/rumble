@@ -39,7 +39,7 @@ public class Program extends Node {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         this.statementsAndOptionalExpr.serializeToJSONiq(sb, indent);
     }
 

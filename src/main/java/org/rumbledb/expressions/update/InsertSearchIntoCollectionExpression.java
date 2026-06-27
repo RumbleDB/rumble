@@ -55,7 +55,7 @@ public class InsertSearchIntoCollectionExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("insert ");
         this.contentExpression.serializeToJSONiq(sb, 1);

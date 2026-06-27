@@ -39,10 +39,9 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
         }
         System.err.println("Item is of type function");
         Item functionItem = functionIterator.materializeFirstItemOrNull(context);
-        if (functionItem == null || !(functionItem instanceof FunctionItem)) {
+        if (!(functionItem instanceof FunctionItem function)) {
             throw new OurBadException("Expected argument to be of type function and not be null");
         }
-        FunctionItem function = (FunctionItem) functionItem;
         if (function.getIdentifier() == null || function.getIdentifier().getName() == null) {
             return null;
         }
