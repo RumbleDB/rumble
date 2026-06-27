@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.rumbledb.config.OutputOptions;
+import org.rumbledb.config.SerializationParameterBuilder;
 
 import picocli.CommandLine.Option;
 
@@ -52,11 +53,8 @@ public final class Output {
     )
     private String shellFilter;
 
-    @Option(names = "-o:", paramLabel = "name=value")
-    private Map<String, String> shortSerializationParameters = new HashMap<>();
-
     @Option(
-        names = "--output-format-option",
+        names = { "-o", "--output-format-option" },
         paramLabel = "name=value",
         description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
     )
@@ -69,13 +67,11 @@ public final class Output {
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);
         OptionConversion.applyIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
         OptionConversion.applyIfPresent(this.shellFilter, builder::shell);
+        OptionConversion.applyIfPresent(
+            this.outputFormatOptions,
+            options -> builder.serializationParameters(SerializationParameterBuilder.build(options))
+        );
 
-        Map<String, String> serializationParameters = new HashMap<>();
-        serializationParameters.putAll(this.shortSerializationParameters);
-        serializationParameters.putAll(this.outputFormatOptions);
-        if (!serializationParameters.isEmpty()) {
-            builder.outputFormatOptions(serializationParameters);
-        }
         return builder.build();
     }
 }
