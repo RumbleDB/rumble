@@ -68,7 +68,7 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>compile-main-sources</id>
+                        <id>default-compile</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
@@ -236,15 +236,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>3.7.0</version>
                 <configuration>
                     <java>
                         <includes>
@@ -257,6 +249,7 @@
                             <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
                         </excludes>
                         <eclipse>
+                            <version>4.39</version>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
                         <removeUnusedImports/>
