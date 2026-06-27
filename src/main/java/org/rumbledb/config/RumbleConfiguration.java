@@ -37,37 +37,37 @@ public class RumbleConfiguration {
     private ExecutionMode executionMode = ExecutionMode.RUN;
 
     @Default
-    private ServerOptions serverOptions = ServerOptions.builder().build();
+    private ServerOptions server = ServerOptions.builder().build();
 
     @Default
-    private IOOptions ioOptions = IOOptions.builder().build();
+    private IOOptions io = IOOptions.builder().build();
 
     @Default
-    private InputOptions inputOptions = InputOptions.builder().build();
+    private InputOptions input = InputOptions.builder().build();
 
     @Default
-    private OutputOptions outputOptions = OutputOptions.builder().build();
+    private OutputOptions output = OutputOptions.builder().build();
 
     @Default
     private RuntimeLimits runtimeLimits = RuntimeLimits.builder().build();
 
     @Default
-    private DiagnosticsOptions diagnosticsOptions = DiagnosticsOptions.builder().build();
+    private DiagnosticsOptions diagnostics = DiagnosticsOptions.builder().build();
 
     @Default
-    private AnalysisOptions analysisOptions = AnalysisOptions.builder().build();
+    private AnalysisOptions analysis = AnalysisOptions.builder().build();
 
     @Default
-    private ExecutionOptions executionOptions = ExecutionOptions.builder().build();
+    private ExecutionOptions execution = ExecutionOptions.builder().build();
 
     @Default
-    private OptimizationOptions optimizationOptions = OptimizationOptions.builder().build();
+    private OptimizationOptions optimization = OptimizationOptions.builder().build();
 
     @Default
-    private LanguageOptions languageOptions = LanguageOptions.builder().build();
+    private LanguageOptions language = LanguageOptions.builder().build();
 
     @Default
-    private FormattingOptions formattedOptions = FormattingOptions.builder().build();
+    private FormattingOptions formatting = FormattingOptions.builder().build();
 
     @Default
     private ExternalVariableBindings externalVariableBindings = ExternalVariableBindings.builder().build();
