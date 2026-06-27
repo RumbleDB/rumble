@@ -16,9 +16,18 @@ public final class IO {
     )
     private List<String> allowedPrefixes = new ArrayList<>();
 
+    @Option(
+        names = "--static-base-uri",
+        scope = ScopeType.INHERIT,
+        paramLabel = "uri",
+        description = "Sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query."
+    )
+    private String staticBaseUri;
+
     public IOOptions toIOOptions() {
         return IOOptions.builder()
             .allowedPrefixes(this.allowedPrefixes)
+            .staticBaseUri(this.staticBaseUri)
             .build();
     }
 }

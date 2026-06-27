@@ -15,14 +15,6 @@ public final class Language {
     private String defaultLanguage;
 
     @Option(
-        names = "--static-base-uri",
-        scope = ScopeType.INHERIT,
-        paramLabel = "uri",
-        description = "Sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query."
-    )
-    private String staticBaseUri;
-
-    @Option(
         names = "--xml-version",
         scope = ScopeType.INHERIT,
         paramLabel = "version",
@@ -52,7 +44,6 @@ public final class Language {
             .datesWithTimeZone(this.datesWithTimezone)
             .laxJSONNullValidation(this.laxJSONNullValidation);
         OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
-        OptionConversion.applyIfPresent(this.staticBaseUri, builder::staticBaseUri);
         OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
         return builder.build();
     }

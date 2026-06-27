@@ -50,11 +50,6 @@ public class LanguageOptions {
     private String queryLanguage = DEFAULT_QUERY_LANGUAGE;
 
     /**
-     * Static base URI against which relative URIs are resolved when reading or writing data.
-     */
-    private String staticBaseUri;
-
-    /**
      * Configured XML version.
      */
     public static final String DEFAULT_XML_VERSION = "1.1";

@@ -32,4 +32,9 @@ public class IOOptions {
      */
     @Default
     private List<String> allowedPrefixes = new ArrayList<>();
+
+    /**
+     * Static base URI against which relative URIs are resolved when reading or writing data.
+     */
+    private String staticBaseUri;
 }
