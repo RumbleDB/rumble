@@ -19,13 +19,17 @@
 package org.rumbledb.config;
 
 import java.time.ZoneId;
+import java.util.Objects;
+
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
+
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
 @Value
-@Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class FormattingOptions {
     /**
@@ -37,8 +41,7 @@ public class FormattingOptions {
      * {@link ZoneId}. The initial default is {@code UTC}.
      * </p>
      */
-    @Default
-    private ZoneId defaultFormattingPlace = ZoneId.of("UTC");
+    private ZoneId defaultFormattingPlace;
 
     /**
      * The default calendar used for formatting date and time values.
@@ -50,8 +53,7 @@ public class FormattingOptions {
      * </p>
      *
      */
-    @Default
-    private String defaultFormattingCalendar = FormattingCalendarModeSupport.DEFAULT;
+    private String defaultFormattingCalendar;
 
     /**
      * The default language used for formatting date and time values.
@@ -63,6 +65,57 @@ public class FormattingOptions {
      * </p>
      *
      */
-    @Default
-    private String defaultFormattingLanguage = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
+    private String defaultFormattingLanguage;
+
+    @Builder(toBuilder = true)
+    private FormattingOptions(
+            ZoneId defaultFormattingPlace,
+            String defaultFormattingCalendar,
+            String defaultFormattingLanguage
+    ) {
+        this.defaultFormattingPlace = Objects.requireNonNullElse(defaultFormattingPlace, ZoneId.of("UTC"));
+        this.defaultFormattingCalendar = Objects.requireNonNullElse(
+            defaultFormattingCalendar,
+            FormattingCalendarModeSupport.DEFAULT
+        );
+        this.defaultFormattingLanguage = Objects.requireNonNullElse(
+            defaultFormattingLanguage,
+            FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
+        );
+    }
+
+    private static String normalizeFormattingCalendar(String calendar) {
+        String normalized = CalendarSupport.normalizeKnownCalendarMode(calendar);
+        if (FormattingCalendarModeSupport.isValidFormattingCalendar(normalized)) {
+            return normalized;
+        }
+
+        throw new CliException(
+                "Invalid argument supplied for default-formatting-calendar: " + calendar
+        );
+    }
+
+    private static String normalizeFormattingLanguage(String language) {
+        String normalized = LanguageSupport.normalizeLanguage(language);
+        String primary = LanguageSupport.getPrimaryLanguageSubtag(normalized);
+        if (FormattingLanguageSupport.isValidFormattingLanguage(primary)) {
+            return primary;
+        }
+
+        throw new CliException(
+                "Invalid argument supplied for default-formatting-language: " + language
+        );
+    }
+
+    public static class FormattingOptionsBuilder {
+        public FormattingOptionsBuilder defaultFormattingCalendar(String calendar) {
+            this.defaultFormattingCalendar = normalizeFormattingCalendar(calendar);
+            return this;
+        }
+
+        public FormattingOptionsBuilder defaultFormattingLanguage(String language) {
+            this.defaultFormattingLanguage = normalizeFormattingLanguage(language);
+            return this;
+        }
+    }
 }
