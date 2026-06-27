@@ -55,12 +55,12 @@ public class CliOptionsTest {
             "9000"
         );
 
-        assertEquals(ExecutionMode.SERVE, configuration.getMode());
-        assertEquals("127.0.0.1", configuration.getServer().getHost());
-        assertEquals(9000, configuration.getServer().getPort());
-        assertTrue(configuration.getDiagnostics().isDebug());
-        assertFalse(configuration.getExecution().isNativeExecution());
-        assertEquals(ZoneId.of("Europe/Madrid"), configuration.getFormatting().getDefaultFormattingPlace());
+        assertEquals(ExecutionMode.SERVE, configuration.executionMode());
+        assertEquals("127.0.0.1", configuration.server().host());
+        assertEquals(9000, configuration.server().port());
+        assertTrue(configuration.debug().logging());
+        assertFalse(configuration.execution().useNativeExecution());
+        assertEquals(ZoneId.of("Europe/Madrid"), configuration.formatting().defaultFormattingPlace());
     }
 
     @Test
@@ -72,9 +72,9 @@ public class CliOptionsTest {
             "12"
         );
 
-        assertEquals(ExecutionMode.REPL, configuration.getMode());
-        assertTrue(configuration.getDiagnostics().isDebug());
-        assertEquals(12, configuration.getLimits().getResultsSizeCap());
+        assertEquals(ExecutionMode.REPL, configuration.executionMode());
+        assertTrue(configuration.debug().logging());
+        assertEquals(12, configuration.runtimeLimits().resultsSizeCap());
     }
 
     @Test
@@ -83,17 +83,17 @@ public class CliOptionsTest {
         RumbleConfiguration explicitlyEnabled = CliOptions.parse("run", "--native-execution");
         RumbleConfiguration explicitlyDisabled = CliOptions.parse("run", "--no-native-execution");
 
-        assertTrue(defaults.getExecution().isNativeExecution());
-        assertTrue(explicitlyEnabled.getExecution().isNativeExecution());
-        assertFalse(explicitlyDisabled.getExecution().isNativeExecution());
-        assertEquals("localhost", defaults.getServer().getHost());
-        assertEquals(8001, defaults.getServer().getPort());
-        assertEquals(InputOptions.DEFAULT_INPUT_FORMAT, defaults.getInput().getInputFormat());
+        assertTrue(defaults.execution().useNativeExecution());
+        assertTrue(explicitlyEnabled.execution().useNativeExecution());
+        assertFalse(explicitlyDisabled.execution().useNativeExecution());
+        assertEquals("localhost", defaults.server().host());
+        assertEquals(8001, defaults.server().port());
+        assertEquals(InputOptions.DEFAULT_INPUT_FORMAT, defaults.input().inputFormat());
         assertEquals(
             OutputOptions.DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS,
-            defaults.getOutput().getNumberOfOutputPartitions()
+            defaults.output().numberOfOutputPartitions()
         );
-        assertEquals(ZoneId.of("UTC"), defaults.getFormatting().getDefaultFormattingPlace());
+        assertEquals(ZoneId.of("UTC"), defaults.formatting().defaultFormattingPlace());
     }
 
     @Test
@@ -106,8 +106,8 @@ public class CliOptionsTest {
             "result.json"
         );
 
-        assertEquals(ExecutionMode.RUN, configuration.getMode());
-        assertEquals("1 + 1", configuration.getInput().getQuery());
-        assertEquals("result.json", configuration.getOutput().getOutputPath());
+        assertEquals(ExecutionMode.RUN, configuration.executionMode());
+        assertEquals("1 + 1", configuration.input().query());
+        assertEquals("result.json", configuration.output().outputPath());
     }
 }
