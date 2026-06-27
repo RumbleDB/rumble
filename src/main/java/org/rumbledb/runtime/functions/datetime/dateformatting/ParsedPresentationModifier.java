@@ -11,15 +11,37 @@ final class ParsedPresentationModifier {
 
     final String firstPresentationModifier;
     final char secondModifier;
+    final String formatSpecifier;
 
-    private ParsedPresentationModifier(String firstPresentationModifier, char secondModifier) {
+    private ParsedPresentationModifier(
+            String firstPresentationModifier,
+            char secondModifier,
+            String formatSpecifier
+    ) {
         this.firstPresentationModifier = firstPresentationModifier;
         this.secondModifier = secondModifier;
+        this.formatSpecifier = formatSpecifier;
     }
 
     static ParsedPresentationModifier parse(
             String presentation
     ) {
+        // A cardinal or ordinal modifier may carry a parenthesized format specifier, e.g. o(-te).
+        if (presentation.endsWith(")")) {
+            int open = presentation.lastIndexOf('(');
+            if (
+                open > 1
+                    && open < presentation.length() - 2
+                    && isCardinalityModifier(presentation.charAt(open - 1))
+            ) {
+                return new ParsedPresentationModifier(
+                        presentation.substring(0, open - 1),
+                        presentation.charAt(open - 1),
+                        presentation.substring(open + 1, presentation.length() - 1)
+                );
+            }
+        }
+
         String basePresentation = presentation;
         char secondModifier = NO_SECOND_MODIFIER;
 
@@ -32,10 +54,14 @@ final class ParsedPresentationModifier {
             }
         }
 
-        return new ParsedPresentationModifier(basePresentation, secondModifier);
+        return new ParsedPresentationModifier(basePresentation, secondModifier, null);
     }
 
     private static boolean isSecondPresentationModifier(char c) {
         return c == ALPHABETIC || c == TRADITIONAL || c == CARDINAL || c == ORDINAL;
+    }
+
+    private static boolean isCardinalityModifier(char c) {
+        return c == CARDINAL || c == ORDINAL;
     }
 }

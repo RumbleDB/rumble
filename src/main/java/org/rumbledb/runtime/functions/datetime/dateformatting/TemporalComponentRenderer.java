@@ -135,8 +135,8 @@ final class TemporalComponentRenderer {
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String words = variableMarker.isOrdinal()
-            ? NumberWords.ordinalWords(numericValue, formattingContext.uLocale, null)
-            : NumberWords.cardinal(numericValue, formattingContext.uLocale, null);
+            ? NumberWords.ordinalWords(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier)
+            : NumberWords.cardinal(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier);
 
         return TemporalFormattingSupport.applyWordCase(words, variableMarker.wordCase, formattingContext.locale);
     }

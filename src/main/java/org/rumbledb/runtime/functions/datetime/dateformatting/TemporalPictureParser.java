@@ -171,7 +171,8 @@ final class TemporalPictureParser {
                     width.minWidth,
                     width.maxWidth,
                     presentation.secondModifier,
-                    parseWordCase(presentation.firstPresentationModifier)
+                    parseWordCase(presentation.firstPresentationModifier),
+                    presentation.formatSpecifier
                 );
 
             case PrimaryFormatToken.OTHER:
