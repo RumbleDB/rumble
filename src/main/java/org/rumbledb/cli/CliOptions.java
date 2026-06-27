@@ -18,7 +18,8 @@
 
 package org.rumbledb.cli;
 
-import org.rumbledb.cli.commands.AbstractCommand;
+import java.util.List;
+
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
 import org.rumbledb.cli.commands.Serve;
@@ -76,24 +77,20 @@ public final class CliOptions {
     @Mixin
     Variables variables;
 
-    public static RumbleConfiguration toRumbleConfiguration(String... args) {
+    public static RumbleConfiguration parse(String... args) {
         CommandLine commandLine = new CommandLine(new CliOptions());
-        String[] normalizedArgs = LegacyCompatibility.normalizeLegacyDynamicOptions(args);
+        String[] normalizedArgs =
+            LegacyCompatibility.normalizeLegacyDynamicOptions(args);
 
-        return toRumbleConfiguration(commandLine.parseArgs(normalizedArgs));
-    }
+        CommandLine.ParseResult parseResult =
+            commandLine.parseArgs(normalizedArgs);
 
-    public static RumbleConfiguration toRumbleConfiguration(CommandLine.ParseResult parseResult) {
-        CommandLine.ParseResult current = parseResult;
-        while (current.subcommand() != null) {
-            current = current.subcommand();
-        }
-        Object activeCommand = current.commandSpec().userObject();
-        if (activeCommand instanceof AbstractCommand command) {
-            return command.toRumbleConfiguration();
-        }
+        commandLine.getExecutionStrategy().execute(parseResult);
 
-        throw new IllegalStateException("No active command found in the parse result.");
+        List<CommandLine> commands = parseResult.asCommandLineList();
+        CommandLine activeCommand = commands.get(commands.size() - 1);
+
+        return activeCommand.getExecutionResult();
     }
 
     public RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(
