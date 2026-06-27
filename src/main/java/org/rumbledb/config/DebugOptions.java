@@ -41,7 +41,9 @@ public class DebugOptions {
 
     /**
      * Whether debug output is enabled.
+     * Note: this was meant to replace debug() of RumbleRuntimeConfiguration
+     * But it's only used in one single place, so it might be worth merge this with showErrorInfo
      */
     @Default
-    private boolean enableDebugLogging = false;
+    private boolean logging = false;
 }

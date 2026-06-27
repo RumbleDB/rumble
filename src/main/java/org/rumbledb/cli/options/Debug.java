@@ -31,13 +31,13 @@ public final class Debug {
         negatable = true,
         description = "Enables debug output."
     )
-    private boolean enableDebugLogging;
+    private boolean logging;
 
     public DebugOptions toDebugOptions() {
         return DebugOptions.builder()
             .printIteratorTree(this.printIteratorTree)
             .showErrorInfo(this.showErrorInfo)
-            .enableDebugLogging(this.enableDebugLogging)
+            .logging(this.logging)
             .build();
     }
 }
