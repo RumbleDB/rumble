@@ -70,11 +70,13 @@
                 <executions>
                     <execution>
                         <id>compile-generated-antlr-sources</id>
-                        <phase>compile</phase>
+                        <phase>process-sources</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                         <configuration>
+                            <compilerId>javac</compilerId>
+                            <compilerArgs combine.self="override"/>
                             <compileSourceRoots>
                                 <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
                             </compileSourceRoots>
@@ -87,6 +89,11 @@
                         <goals>
                             <goal>compile</goal>
                         </goals>
+                        <configuration>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+                            </compileSourceRoots>
+                        </configuration>
                     </execution>
                 </executions>
                 <dependencies>
