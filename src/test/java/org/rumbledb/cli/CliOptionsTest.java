@@ -19,6 +19,7 @@
 package org.rumbledb.cli;
 
 import org.junit.Test;
+import org.rumbledb.context.Name;
 import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.InputOptions;
 import org.rumbledb.config.OutputOptions;
@@ -126,6 +127,78 @@ public class CliOptionsTest {
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("--context-item"));
             assertTrue(e.getMessage().contains("--context-item-input"));
+        }
+    }
+
+    @Test
+    public void contextItemInputDefaultsToJsonFormat() {
+        RumbleConfiguration configuration = CliOptions.parse(
+            "run",
+            "--context-item-input",
+            "-"
+        );
+
+        assertEquals(
+            "json",
+            configuration.externalVariableBindings().getInputFormat(Name.CONTEXT_ITEM)
+        );
+    }
+
+    @Test
+    public void invalidXmlVersionIsRejected() {
+        try {
+            CliOptions.parse(
+                "run",
+                "--xml-version",
+                "1.2"
+            );
+            fail("Expected invalid xml version to be rejected.");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("--xml-version"));
+        }
+    }
+
+    @Test
+    public void formattingCalendarAndLanguageAreNormalized() {
+        RumbleConfiguration configuration = CliOptions.parse(
+            "run",
+            "--default-formatting-calendar",
+            "default",
+            "--default-formatting-language",
+            "EN_us"
+        );
+
+        assertEquals("ISO", configuration.formatting().defaultFormattingCalendar());
+        assertEquals("en", configuration.formatting().defaultFormattingLanguage());
+    }
+
+    @Test
+    public void invalidFormattingCalendarIsRejected() {
+        try {
+            CliOptions.parse(
+                "run",
+                "--default-formatting-calendar",
+                "julian"
+            );
+            fail("Expected invalid formatting calendar to be rejected.");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("default-formatting-calendar"));
+            assertTrue(e.getMessage().contains("julian"));
+        }
+    }
+
+    @Test
+    public void invalidFormattingLanguageIsRejected() {
+        try {
+            CliOptions.parse(
+                "run",
+                "--default-formatting-language",
+                "fr"
+            );
+            fail("Expected invalid formatting language to be rejected.");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("default-formatting-language"));
+            assertTrue(e.getMessage().contains("fr"));
         }
     }
 }
