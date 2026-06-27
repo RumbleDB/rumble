@@ -18,6 +18,7 @@
 
 package org.rumbledb.cli.commands;
 
+import org.rumbledb.cli.options.Server;
 import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.RumbleConfiguration;
 
@@ -30,7 +31,7 @@ public final class Serve extends AbstractCommand {
     Server server;
 
     @Override
-    public RumbleConfiguration toRumbleConfiguration() {
+    public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.SERVE).build();
     }
 }

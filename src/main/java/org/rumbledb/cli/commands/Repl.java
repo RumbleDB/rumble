@@ -32,7 +32,7 @@ public final class Repl extends AbstractCommand {
     Output output;
 
     @Override
-    public RumbleConfiguration toRumbleConfiguration() {
+    public RumbleConfiguration call() throws Exception {
         return this.baseConfiguration(ExecutionMode.REPL)
             .output(this.output.toOutputOptions())
             .build();

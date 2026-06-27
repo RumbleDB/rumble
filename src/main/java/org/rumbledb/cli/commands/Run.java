@@ -44,7 +44,7 @@ public final class Run extends AbstractCommand {
     String queryPath;
 
     @Override
-    public RumbleConfiguration toRumbleConfiguration() {
+    public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.RUN)
             .input(this.input.toInputOptions(this.queryPath))
             .output(this.output.toOutputOptions())

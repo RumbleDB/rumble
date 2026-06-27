@@ -25,12 +25,12 @@ import org.rumbledb.config.RumbleConfiguration;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParentCommand;
 
+import java.util.concurrent.Callable;
+
 @Command
-public abstract class AbstractCommand {
+public abstract class AbstractCommand implements Callable<RumbleConfiguration> {
     @ParentCommand
     private CliOptions root;
-
-    public abstract RumbleConfiguration toRumbleConfiguration();
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(ExecutionMode mode) {
         return this.root.baseConfiguration(mode);
