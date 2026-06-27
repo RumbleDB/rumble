@@ -72,15 +72,18 @@ public final class Execution {
 
     public ExecutionOptions toExecutionOptions() {
         ExecutionOptions.ExecutionOptionsBuilder builder = ExecutionOptions.builder();
-        
-        OptionConversion.applyIfPresent(this.nativeSQLPredicates, builder::useNativeSQLPredicates);
-        OptionConversion.applyIfPresent(this.dataFrameExecutionModeDetection, builder::detectDataFrameExecutionMode);
-        OptionConversion.applyIfPresent(this.parallelExecution, builder::useParallelExecution);
-        OptionConversion.applyIfPresent(this.dataFrameExecution, builder::useDataFrameExecution);
-        OptionConversion.applyIfPresent(this.nativeExecution, builder::useNativeExecution); 
-        OptionConversion.applyIfPresent(this.functionInlining, builder::useFunctionInlining);
-        OptionConversion.applyIfPresent(this.tailCallOptimization, builder::useTailCallOptimization);
-        OptionConversion.applyIfPresent(this.applyUpdates, builder::shouldApplyUpdates);
+
+        OptionConversion.applyBooleanIfPresent(this.nativeSQLPredicates, builder::useNativeSQLPredicates);
+        OptionConversion.applyBooleanIfPresent(
+            this.dataFrameExecutionModeDetection,
+            builder::detectDataFrameExecutionMode
+        );
+        OptionConversion.applyBooleanIfPresent(this.parallelExecution, builder::useParallelExecution);
+        OptionConversion.applyBooleanIfPresent(this.dataFrameExecution, builder::useDataFrameExecution);
+        OptionConversion.applyBooleanIfPresent(this.nativeExecution, builder::useNativeExecution);
+        OptionConversion.applyBooleanIfPresent(this.functionInlining, builder::useFunctionInlining);
+        OptionConversion.applyBooleanIfPresent(this.tailCallOptimization, builder::useTailCallOptimization);
+        OptionConversion.applyBooleanIfPresent(this.applyUpdates, builder::shouldApplyUpdates);
 
         return builder.build();
     }

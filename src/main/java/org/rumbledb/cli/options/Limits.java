@@ -25,9 +25,9 @@ public final class Limits {
     public RuntimeLimits toRuntimeLimits() {
         RuntimeLimits.RuntimeLimitsBuilder builder = RuntimeLimits.builder();
 
-        OptionConversion.applyIfPresent(this.resultSize, builder::resultsSizeCap);
-        OptionConversion.applyIfPresent(this.materializationCap, builder::materializationCap);
-        
+        OptionConversion.applyIntIfPresent(this.resultSize, builder::resultsSizeCap);
+        OptionConversion.applyIntIfPresent(this.materializationCap, builder::materializationCap);
+
         return builder.build();
     }
 }

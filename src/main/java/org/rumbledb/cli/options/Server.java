@@ -25,7 +25,7 @@ public final class Server {
     public ServerOptions toServerOptions() {
         ServerOptions.ServerOptionsBuilder builder = ServerOptions.builder();
         OptionConversion.applyIfPresent(this.host, builder::host);
-        OptionConversion.applyIfPresent(this.port, builder::port);
+        OptionConversion.applyIntIfPresent(this.port, builder::port);
         return builder.build();
     }
 }

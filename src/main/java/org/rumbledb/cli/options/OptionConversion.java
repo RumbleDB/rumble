@@ -18,13 +18,28 @@
 
 package org.rumbledb.cli.options;
 
+import java.util.function.IntConsumer;
 import java.util.function.Consumer;
 
 final class OptionConversion {
-    private OptionConversion() {
+    @FunctionalInterface
+    interface BooleanConsumer {
+        void accept(boolean value);
     }
 
-    static <T> void applyIfPresent(T value, Consumer<T> setter) {
+    static void applyBooleanIfPresent(Boolean value, BooleanConsumer setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    static void applyIntIfPresent(Integer value, IntConsumer setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    static <T> void applyIfPresent(T value, Consumer<? super T> setter) {
         if (value != null) {
             setter.accept(value);
         }

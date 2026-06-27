@@ -53,10 +53,13 @@ public final class Analysis {
 
     public AnalysisOptions toAnalysisOptions() {
         AnalysisOptions.AnalysisOptionsBuilder builder = AnalysisOptions.builder();
-        
-        OptionConversion.applyIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
-        OptionConversion.applyIfPresent(this.printInferredTypes, builder::printInferredTypes);
-        OptionConversion.applyIfPresent(this.checkReturnTypesOfBuiltinFunctions, builder::checkReturnTypeOfBuiltinFunctions);
+
+        OptionConversion.applyBooleanIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
+        OptionConversion.applyBooleanIfPresent(this.printInferredTypes, builder::printInferredTypes);
+        OptionConversion.applyBooleanIfPresent(
+            this.checkReturnTypesOfBuiltinFunctions,
+            builder::checkReturnTypeOfBuiltinFunctions
+        );
 
         return builder.build();
     }

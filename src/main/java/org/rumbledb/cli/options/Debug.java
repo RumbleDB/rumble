@@ -35,10 +35,10 @@ public final class Debug {
 
     public DebugOptions toDebugOptions() {
         DebugOptions.DebugOptionsBuilder builder = DebugOptions.builder();
-        
-        OptionConversion.applyIfPresent(this.printIteratorTree, builder::printIteratorTree);
-        OptionConversion.applyIfPresent(this.showErrorInfo, builder::showErrorInfo);
-        OptionConversion.applyIfPresent(this.logging, builder::logging);    
+
+        OptionConversion.applyBooleanIfPresent(this.printIteratorTree, builder::printIteratorTree);
+        OptionConversion.applyBooleanIfPresent(this.showErrorInfo, builder::showErrorInfo);
+        OptionConversion.applyBooleanIfPresent(this.logging, builder::logging);
 
         return builder.build();
     }

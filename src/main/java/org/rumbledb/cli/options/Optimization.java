@@ -40,11 +40,14 @@ public final class Optimization {
 
     public OptimizationOptions toOptimizationOptions() {
         OptimizationOptions.OptimizationOptionsBuilder builder = OptimizationOptions.builder();
-        
-        OptionConversion.applyIfPresent(this.optimizeGeneralComparisonToValueComparison, builder::optimizeGeneralComparisonToValueComparison);
-        OptionConversion.applyIfPresent(this.optimizeSteps, builder::optimizeSteps);
-        OptionConversion.applyIfPresent(this.optimizeStepsExperimental, builder::optimizeStepsExperimental);
-        OptionConversion.applyIfPresent(this.optimizeParentPointers, builder::optimizeParentPointers);  
+
+        OptionConversion.applyBooleanIfPresent(
+            this.optimizeGeneralComparisonToValueComparison,
+            builder::optimizeGeneralComparisonToValueComparison
+        );
+        OptionConversion.applyBooleanIfPresent(this.optimizeSteps, builder::optimizeSteps);
+        OptionConversion.applyBooleanIfPresent(this.optimizeStepsExperimental, builder::optimizeStepsExperimental);
+        OptionConversion.applyBooleanIfPresent(this.optimizeParentPointers, builder::optimizeParentPointers);
 
         return builder.build();
     }

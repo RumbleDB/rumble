@@ -37,7 +37,7 @@ public final class Formatting {
         OptionConversion.applyIfPresent(this.defaultFormattingPlace, builder::defaultFormattingPlace);
         OptionConversion.applyIfPresent(this.defaultFormattingCalendar, builder::defaultFormattingCalendar);
         OptionConversion.applyIfPresent(this.defaultFormattingLanguage, builder::defaultFormattingLanguage);
-        
+
         return builder.build();
     }
 }

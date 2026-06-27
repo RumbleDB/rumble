@@ -63,11 +63,11 @@ public final class Output {
     public OutputOptions toOutputOptions() {
         OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder();
 
-        OptionConversion.applyIfPresent(this.overwrite, builder::allowOverwrite);
+        OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);
         OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
         OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);
-        OptionConversion.applyIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
+        OptionConversion.applyIntIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
         OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
         OptionConversion.applyIfPresent(
             this.outputFormatOptions,

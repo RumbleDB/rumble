@@ -41,11 +41,11 @@ public final class Language {
     public LanguageOptions toLanguageOptions() {
         LanguageOptions.LanguageOptionsBuilder builder = LanguageOptions.builder();
 
-        OptionConversion.applyIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
-        OptionConversion.applyIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
+        OptionConversion.applyBooleanIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
+        OptionConversion.applyBooleanIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
         OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
         OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
-        
+
         return builder.build();
     }
 }
