@@ -33,7 +33,7 @@ public final class Analysis {
             "Enables more optimizations (experimental). Deactivated by default."
         }
     )
-    private boolean staticTyping;
+    private boolean enableStaticTyping;
 
     @Option(
         names = "--print-inferred-types",
@@ -53,7 +53,7 @@ public final class Analysis {
 
     public AnalysisOptions toAnalysisOptions() {
         return AnalysisOptions.builder()
-            .staticTyping(this.staticTyping)
+            .enableStaticTyping(this.enableStaticTyping)
             .printInferredTypes(this.printInferredTypes)
             .checkReturnTypeOfBuiltinFunctions(this.checkReturnTypesOfBuiltinFunctions)
             .build();

@@ -31,7 +31,7 @@ public class AnalysisOptions {
      * Whether static analysis should be performed at compile time.
      */
     @Default
-    private boolean staticTyping = false;
+    private boolean enableStaticTyping = false;
 
     /**
      * Whether inferred types should be printed as part of analysis output.
