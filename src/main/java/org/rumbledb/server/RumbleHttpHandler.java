@@ -209,10 +209,10 @@ public class RumbleHttpHandler implements HttpHandler {
                                     + ex.getMessage()
                         )
                     );
-                } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
+                } else if (ex instanceof RumbleException rumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
-                        ((RumbleException) ex).getErrorCode().toString(),
+                        rumbleException.getErrorCode().toString(),
                         ex.getStackTrace()
                     );
                 } else if (ex instanceof OutOfMemoryError) {

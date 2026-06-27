@@ -23,7 +23,6 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
@@ -31,9 +30,8 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
+import java.util.regex.Pattern;
 
 public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -57,54 +55,18 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
-        boolean quote = false;
-        int flags = 0;
+        String flags = null;
         if (this.children.size() == 4) {
             Item flagsItem = this.children.get(3)
                 .materializeFirstItemOrNull(context);
             if (flagsItem != null) {
-                for (char flag : flagsItem.getStringValue().toCharArray()) {
-                    switch (flag) {
-                        case 'i':
-                            flags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
-                            break;
-                        case 'm':
-                            flags |= Pattern.MULTILINE;
-                            break;
-                        case 's':
-                            flags |= Pattern.DOTALL;
-                            break;
-                        case 'x':
-                            flags |= Pattern.COMMENTS;
-                            break;
-                        case 'q':
-                            quote = true;
-                            break;
-                        default:
-                            throw new InvalidRegexPatternException(
-                                    "Invalid regular expression flag: " + flag,
-                                    getMetadata()
-                            );
-                    }
-                }
+                flags = flagsItem.getStringValue();
             }
         }
-        if (quote) {
-            pattern = Pattern.quote(pattern);
-        }
-        Pattern p;
-
-        try {
-            p = Pattern.compile(pattern, flags);
-        } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(
-                    e.getDescription(),
-                    getMetadata()
-            );
-        }
-        if (p.matcher("").matches()) {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + pattern + "' matches empty string",
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
                     getMetadata()
             );
         }
@@ -112,7 +74,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item replacementStringItem = this.children.get(2)
             .materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (quote) {
+        if (compiledRegex.isQuote()) {
             replacement = Matcher.quoteReplacement(replacement);
         } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
@@ -128,7 +90,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = p.matcher(input);
+        Matcher m = compiledRegex.getPattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
 
     }

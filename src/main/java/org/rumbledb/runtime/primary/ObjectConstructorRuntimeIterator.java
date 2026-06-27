@@ -152,8 +152,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
         List<RuntimeIterator> objectsToMerge = this.children;
-        if (this.children.get(0) instanceof CommaExpressionIterator) {
-            objectsToMerge = ((CommaExpressionIterator) this.children.get(0)).getChildren();
+        if (this.children.get(0) instanceof CommaExpressionIterator commaExpressionIterator) {
+            objectsToMerge = commaExpressionIterator.getChildren();
         }
         if (
             !objectsToMerge.stream()
@@ -187,8 +187,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                         objectsToMerge.size() > 1 ? ".*" : ""
                     )
                 );
-            } else {
-                ObjectConstructorRuntimeIterator child = (ObjectConstructorRuntimeIterator) objectToMerge;
+            } else if (objectToMerge instanceof ObjectConstructorRuntimeIterator child) {
                 if (child.isMergedObject) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -251,6 +250,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     .stream()
                     .map(value -> value.getResultingType().getItemType())
                     .forEach(valueTypes::add);
+            } else {
+                return NativeClauseContext.NoNativeQuery;
             }
         }
         String resultString = "(" + String.join(",", queries) + ")";

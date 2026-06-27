@@ -230,7 +230,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
 
             schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
+            if (!(schema instanceof ArrayType arraySchema)) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
@@ -252,7 +252,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         SequenceType.Arity.OneOrZero
                 )
             );
-            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
+            newContext.setSchema(arraySchema.elementType());
             newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
         }
         return newContext;

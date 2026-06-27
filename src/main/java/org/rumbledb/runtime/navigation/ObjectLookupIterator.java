@@ -296,7 +296,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
-        if (!(leftSchema instanceof StructType)) {
+        if (!(leftSchema instanceof StructType structSchema)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
@@ -316,7 +316,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             return NativeClauseContext.NoNativeQuery;
         }
-        StructType structSchema = (StructType) leftSchema;
         if (
             Arrays.asList(structSchema.fieldNames()).contains(key)
                 || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
