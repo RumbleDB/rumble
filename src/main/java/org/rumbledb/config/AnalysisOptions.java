@@ -36,4 +36,10 @@ public class AnalysisOptions {
      */
     @Default
     private boolean printInferredTypes = false;
+
+    /**
+     * Whether the return type of built-in functions is checked.
+     */
+    @Default
+    private boolean checkReturnTypeOfBuiltinFunctions = false;
 }

@@ -26,12 +26,6 @@ import lombok.Data;
 @Builder
 public class DiagnosticsOptions {
     /**
-     * Whether the return type of built-in functions is checked.
-     */
-    @Default
-    private boolean checkReturnTypeOfBuiltinFunctions = false;
-
-    /**
      * Whether verbose error info should be shown in case an error is returned.
      */
     @Default

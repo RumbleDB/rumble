@@ -43,10 +43,19 @@ public final class Analysis {
     )
     private boolean printInferredTypes;
 
+    @Option(
+        names = "--check-return-types-of-builtin-functions",
+        scope = ScopeType.INHERIT,
+        negatable = true,
+        description = "Checks return types of built-in functions."
+    )
+    private boolean checkReturnTypesOfBuiltinFunctions;
+
     public AnalysisOptions toAnalysisOptions() {
         return AnalysisOptions.builder()
             .staticTyping(this.staticTyping)
             .printInferredTypes(this.printInferredTypes)
+            .checkReturnTypeOfBuiltinFunctions(this.checkReturnTypesOfBuiltinFunctions)
             .build();
     }
 }

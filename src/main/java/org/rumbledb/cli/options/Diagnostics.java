@@ -26,14 +26,6 @@ public final class Diagnostics {
     private boolean showErrorInfo;
 
     @Option(
-        names = "--check-return-types-of-builtin-functions",
-        scope = ScopeType.INHERIT,
-        negatable = true,
-        description = "Checks return types of built-in functions."
-    )
-    private boolean checkReturnTypesOfBuiltinFunctions;
-
-    @Option(
         names = "--debug",
         scope = ScopeType.INHERIT,
         negatable = true,
@@ -45,7 +37,6 @@ public final class Diagnostics {
         return DiagnosticsOptions.builder()
             .printIteratorTree(this.printIteratorTree)
             .showErrorInfo(this.showErrorInfo)
-            .checkReturnTypeOfBuiltinFunctions(this.checkReturnTypesOfBuiltinFunctions)
             .debug(this.debug)
             .build();
     }
