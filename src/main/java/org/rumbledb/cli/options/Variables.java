@@ -8,29 +8,13 @@ import java.util.Set;
 import org.rumbledb.config.ExternalVariableBindings;
 import org.rumbledb.context.Name;
 
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.ScopeType;
 
 public final class Variables {
-    @Option(
-        names = { "-I", "--context-item" },
-        scope = ScopeType.INHERIT,
-        paramLabel = "value",
-        description = {
-            "Initializes the global context item $$ to the supplied value.",
-            "The query must contain the corresponding global variable declaration, e.g. "
-                + "\"declare context item external;\""
-        }
-    )
-    private String contextItem;
-
-    @Option(
-        names = { "-i", "--context-item-input" },
-        scope = ScopeType.INHERIT,
-        paramLabel = "path",
-        description = "Reads the context item value from the standard input."
-    )
-    private String contextItemInput;
+    @ArgGroup(exclusive = true, multiplicity = "0..1")
+    private ContextItemSource contextItemSource;
 
     @Option(
         names = "--context-item-input-format",
@@ -66,8 +50,8 @@ public final class Variables {
             (name, value) -> unparsedExternalVariableValues.put(Name.createVariableInNoNamespace(name), value)
         );
 
-        if (this.contextItem != null) {
-            unparsedExternalVariableValues.put(Name.CONTEXT_ITEM, this.contextItem);
+        if (this.contextItemSource != null && this.contextItemSource.contextItem != null) {
+            unparsedExternalVariableValues.put(Name.CONTEXT_ITEM, this.contextItemSource.contextItem);
         }
 
         Map<Name, String> externalVariableValuesReadFromFiles = new HashMap<>();
@@ -76,11 +60,11 @@ public final class Variables {
         );
 
         Set<Name> externalVariablesReadFromStandardInput = new HashSet<>();
-        if (this.contextItemInput != null) {
-            if ("-".equals(this.contextItemInput)) {
+        if (this.contextItemSource != null && this.contextItemSource.contextItemInput != null) {
+            if ("-".equals(this.contextItemSource.contextItemInput)) {
                 externalVariablesReadFromStandardInput.add(Name.CONTEXT_ITEM);
             } else {
-                externalVariableValuesReadFromFiles.put(Name.CONTEXT_ITEM, this.contextItemInput);
+                externalVariableValuesReadFromFiles.put(Name.CONTEXT_ITEM, this.contextItemSource.contextItemInput);
             }
         }
 
@@ -95,5 +79,27 @@ public final class Variables {
             .externalVariablesReadFromStandardInput(externalVariablesReadFromStandardInput)
             .externalVariablesInputFormats(externalVariablesInputFormats)
             .build();
+    }
+
+    private static final class ContextItemSource {
+        @Option(
+            names = { "-I", "--context-item" },
+            scope = ScopeType.INHERIT,
+            paramLabel = "value",
+            description = {
+                "Initializes the global context item $$ to the supplied value.",
+                "The query must contain the corresponding global variable declaration, e.g. "
+                    + "\"declare context item external;\""
+            }
+        )
+        private String contextItem;
+
+        @Option(
+            names = { "-i", "--context-item-input" },
+            scope = ScopeType.INHERIT,
+            paramLabel = "path",
+            description = "Reads the context item value from the standard input."
+        )
+        private String contextItemInput;
     }
 }

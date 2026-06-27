@@ -29,6 +29,7 @@ import java.time.ZoneId;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class CliOptionsTest {
 
@@ -109,5 +110,22 @@ public class CliOptionsTest {
         assertEquals(ExecutionMode.RUN, configuration.executionMode());
         assertEquals("1 + 1", configuration.input().query());
         assertEquals("result.json", configuration.output().outputPath());
+    }
+
+    @Test
+    public void contextItemAndContextItemInputAreMutuallyExclusive() {
+        try {
+            CliOptions.parse(
+                "run",
+                "--context-item",
+                "1",
+                "--context-item-input",
+                "-"
+            );
+            fail("Expected picocli to reject mutually exclusive context item options.");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("--context-item"));
+            assertTrue(e.getMessage().contains("--context-item-input"));
+        }
     }
 }
