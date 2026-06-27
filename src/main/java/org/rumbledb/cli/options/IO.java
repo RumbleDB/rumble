@@ -6,14 +6,15 @@ import java.util.List;
 import org.rumbledb.config.IOOptions;
 
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ScopeType;
 
-public class IO {
+public final class IO {
     @Option(
-        names = { "allowed-uri-prefixes" },
+        names = { "--allowed-uri-prefixes" },
+        scope = ScopeType.INHERIT,
         description = "Allowed URI prefixes for read/write (with I/O functions to read data)"
     )
-    List<String> allowedPrefixes = new ArrayList<>();
-
+    private List<String> allowedPrefixes = new ArrayList<>();
 
     public IOOptions toIOOptions() {
         return IOOptions.builder()
