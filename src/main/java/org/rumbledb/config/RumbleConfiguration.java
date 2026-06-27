@@ -41,6 +41,12 @@ public class RumbleConfiguration {
     private IOOptions io = IOOptions.builder().build();
 
     @Default
+    private InputOptions input = InputOptions.builder().build();
+
+    @Default
+    private OutputOptions output = OutputOptions.builder().build();
+
+    @Default
     private RuntimeLimits limits = RuntimeLimits.builder().build();
 
     @Default
