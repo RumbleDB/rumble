@@ -57,7 +57,7 @@ public final class CliOptions {
     Limits limits;
 
     @Mixin
-    Debug diagnostics;
+    Debug debug;
 
     @Mixin
     Analysis analysis;
@@ -98,14 +98,14 @@ public final class CliOptions {
     ) {
         return RumbleConfiguration.builder()
             .executionMode(mode)
-            .ioOptions(this.io.toIOOptions())
+            .io(this.io.toIOOptions())
             .runtimeLimits(this.limits.toRuntimeLimits())
-            .diagnosticsOptions(this.diagnostics.toDebugOptions())
-            .analysisOptions(this.analysis.toAnalysisOptions())
-            .executionOptions(this.execution.toExecutionOptions())
-            .optimizationOptions(this.optimization.toOptimizationOptions())
-            .languageOptions(this.language.toLanguageOptions())
-            .formattedOptions(this.formatting.toFormattingOptions())
+            .debug(this.debug.toDebugOptions())
+            .analysis(this.analysis.toAnalysisOptions())
+            .execution(this.execution.toExecutionOptions())
+            .optimization(this.optimization.toOptimizationOptions())
+            .language(this.language.toLanguageOptions())
+            .formatting(this.formatting.toFormattingOptions())
             .externalVariableBindings(this.variables.toExternalVariableBindings());
     }
 }
