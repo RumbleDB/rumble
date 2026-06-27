@@ -79,14 +79,14 @@ public final class Execution {
 
     public ExecutionOptions toExecutionOptions() {
         return ExecutionOptions.builder()
-            .nativeSQLPredicates(this.nativeSQLPredicates)
-            .dataFrameExecutionModeDetection(this.dataFrameExecutionModeDetection)
-            .parallelExecution(this.parallelExecution)
-            .dataFrameExecution(this.dataFrameExecution)
-            .nativeExecution(this.nativeExecution)
-            .functionInlining(this.functionInlining)
-            .tailCallOptimization(this.tailCallOptimization)
-            .applyUpdates(this.applyUpdates)
+            .useNativeSQLPredicates(this.nativeSQLPredicates)
+            .detectDataFrameExecutionMode(this.dataFrameExecutionModeDetection)
+            .useParallelExecution(this.parallelExecution)
+            .useDataFrameExecution(this.dataFrameExecution)
+            .useNativeExecution(this.nativeExecution)
+            .useFunctionInlining(this.functionInlining)
+            .useTailCallOptimization(this.tailCallOptimization)
+            .shouldApplyUpdates(this.applyUpdates)
             .build();
     }
 }

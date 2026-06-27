@@ -31,48 +31,48 @@ public class ExecutionOptions {
      * Enable native SQL predicates.
      */
     @Default
-    private boolean nativeSQLPredicates = true;
+    private boolean useNativeSQLPredicates = true;
 
     /**
      * Whether DataFrame execution mode detection is activated for higher-order functions.
      * If disabled, higher-order functions will be executed locally.
      */
     @Default
-    private boolean dataFrameExecutionModeDetection = true;
+    private boolean detectDataFrameExecutionMode = true;
 
     /**
      * Whether parallel execution (RDD, DataFrames) is enabled.
      */
     @Default
-    private boolean parallelExecution = true;
+    private boolean useParallelExecution = true;
 
     /**
      * Whether DataFrame execution is enabled.
      */
     @Default
-    private boolean dataFrameExecution = true;
+    private boolean useDataFrameExecution = true;
 
     /**
      * Whether advanced native execution for nested FLWOR queries is enabled.
      */
     @Default
-    private boolean nativeExecution = true;
+    private boolean useNativeExecution = true;
 
     /**
      * Whether tail call optimization is enabled.
      */
     @Default
-    private boolean tailCallOptimization = true;
+    private boolean useTailCallOptimization = true;
 
     /**
      * Whether function inlining is enabled.
      */
     @Default
-    private boolean functionInlining = true;
+    private boolean useFunctionInlining = true;
 
     /**
      * Whether the returned Pending Update List should be applied when executed on the command line.
      */
     @Default
-    private boolean applyUpdates = false;
+    private boolean shouldApplyUpdates = false;
 }
