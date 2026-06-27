@@ -43,5 +43,5 @@ public class DebugOptions {
      * Whether debug output is enabled.
      */
     @Default
-    private boolean debug = false;
+    private boolean enableDebugLogging = false;
 }
