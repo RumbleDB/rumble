@@ -1,10 +1,12 @@
 package org.rumbledb.cli.options;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.rumbledb.config.OutputOptions;
 
 import picocli.CommandLine.Option;
+import picocli.CommandLine.ScopeType;
 
 public final class Output {
     @Option(
@@ -54,6 +56,14 @@ public final class Output {
     @Option(names = "-o:", paramLabel = "name=value")
     private Map<String, String> shortSerializationParameters;
 
+    @Option(
+        names = "--output-format-option",
+        scope = ScopeType.INHERIT,
+        paramLabel = "name=value",
+        description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
+    )
+    private Map<String, String> outputFormatOptions = new HashMap<>();
+
     public OutputOptions toOutputOptions() {
         return OutputOptions.builder()
             .outputPath(this.outputPath)
@@ -62,6 +72,7 @@ public final class Output {
             .overwrite(this.overwrite)
             .numberOfOutputPartitions(this.numberOfOutputPartitions)
             .shell(this.shellFilter)
+            .outputFormatOptions(this.outputFormatOptions)
             .build();
     }
 }
