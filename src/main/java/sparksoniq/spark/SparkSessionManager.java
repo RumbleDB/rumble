@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.DoubleType;
 import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.UDTRegistration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -202,6 +203,7 @@ public class SparkSessionManager {
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
             this.session.sparkContext().setLogLevel("WARN");
+            UDTRegistration.register("org.rumbledb.api.Item", "org.rumbledb.items.parsing.ItemUserDefinedType");
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
