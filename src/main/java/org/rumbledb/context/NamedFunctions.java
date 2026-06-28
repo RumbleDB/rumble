@@ -29,13 +29,21 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.PartiallyAppliedFunctionItem;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.ArgumentBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.DataFrameBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.LocalBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.PlaceholderBinding;
+import org.rumbledb.items.PartiallyAppliedFunctionItem.RddBinding;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
+import org.rumbledb.runtime.functions.CapturedFunctionArgumentIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
+import org.rumbledb.runtime.functions.PartialFunctionCallIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
@@ -44,6 +52,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -51,6 +60,12 @@ import java.util.List;
 public class NamedFunctions implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
+
+    public record ResolvedFunctionCall(
+            Item functionItem,
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode) {
+    }
 
     // two maps for User defined function are needed as execution mode is known at
     // static analysis phase
@@ -104,7 +119,56 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             List<RuntimeIterator> arguments,
             boolean isTailOptimization
     ) {
-        ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
+        if (functionItem instanceof PartiallyAppliedFunctionItem) {
+            return buildResolvedFunctionItemCallIterator(
+                resolveFunctionItemCall(functionItem, arguments, callerRuntimeContext),
+                callerRuntimeContext
+            );
+        }
+        return buildDirectFunctionItemCallIterator(
+            functionItem,
+            callerRuntimeContext,
+            executionModeForFunctionCall,
+            arguments,
+            isTailOptimization
+        );
+    }
+
+    public static RuntimeIterator buildResolvedFunctionItemCallIterator(
+            ResolvedFunctionCall resolvedCall,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        return buildDirectFunctionItemCallIterator(
+            resolvedCall.functionItem(),
+            callerRuntimeContext,
+            resolvedCall.executionMode(),
+            new ArrayList<>(resolvedCall.arguments()),
+            false
+        );
+    }
+
+    private static RuntimeIterator buildDirectFunctionItemCallIterator(
+            Item functionItem,
+            RuntimeStaticContext callerRuntimeContext,
+            ExecutionMode executionModeForFunctionCall,
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization
+    ) {
+        if (isTailOptimization) {
+            return new PartialFunctionCallIterator(
+                    functionItem,
+                    arguments,
+                    callerRuntimeContext.withExecutionMode(ExecutionMode.LOCAL),
+                    Name.TAIL_CALL_OPTIMIZATION
+            );
+        }
+        if (arguments.stream().anyMatch(a -> a == null)) {
+            return new PartialFunctionCallIterator(
+                    functionItem,
+                    arguments,
+                    callerRuntimeContext.withExecutionMode(ExecutionMode.LOCAL)
+            );
+        }
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
         RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticType(
@@ -118,12 +182,6 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         ).withExecutionMode(executionModeForFunctionCall);
         RuntimeIterator functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
-            if (arguments.stream().anyMatch(a -> a == null)) {
-                throw new UnsupportedFeatureException(
-                        "Partial application of builtin named function references is not supported yet.",
-                        metadata
-                );
-            }
             functionCallIterator = new BuiltinFunctionItemCallIterator(
                     functionItem,
                     arguments,
@@ -167,6 +225,89 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     outerStaticContext
             );
         }
+    }
+
+    public static ResolvedFunctionCall resolveFunctionItemCall(
+            Item functionItem,
+            List<RuntimeIterator> arguments,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        Item resolvedFunction = functionItem;
+        List<RuntimeIterator> resolvedArguments = new ArrayList<>(arguments);
+        while (resolvedFunction instanceof PartiallyAppliedFunctionItem partiallyAppliedFunction) {
+            FunctionCallArgumentCoercion.validateArity(
+                resolvedFunction,
+                resolvedArguments,
+                callerRuntimeContext.getMetadata()
+            );
+            FunctionCallArgumentCoercion.wrapAccordingToSignature(
+                resolvedFunction,
+                resolvedArguments,
+                callerRuntimeContext
+            );
+            resolvedArguments = expandPartialArguments(
+                partiallyAppliedFunction,
+                resolvedArguments,
+                callerRuntimeContext
+            );
+            resolvedFunction = partiallyAppliedFunction.getTargetFunction();
+        }
+        ExecutionMode executionMode = resolvedArguments.stream().anyMatch(argument -> argument == null)
+            ? ExecutionMode.LOCAL
+            : resolveDirectFunctionItemExecutionMode(resolvedFunction, resolvedArguments, callerRuntimeContext);
+        return new ResolvedFunctionCall(resolvedFunction, resolvedArguments, executionMode);
+    }
+
+    private static ExecutionMode resolveDirectFunctionItemExecutionMode(
+            Item functionItem,
+            List<RuntimeIterator> arguments,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        if (functionItem.isBuiltinFunction()) {
+            BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(functionItem.getIdentifier());
+            ExecutionMode firstArgumentMode = arguments.isEmpty() || arguments.get(0) == null
+                ? ExecutionMode.LOCAL
+                : arguments.get(0).getHighestExecutionMode();
+            return BuiltinFunctionExecutionModes.resolve(
+                builtin,
+                firstArgumentMode,
+                callerRuntimeContext.getConfiguration()
+            );
+        }
+        return functionItem.getBodyIterator().getHighestExecutionMode();
+    }
+
+    private static List<RuntimeIterator> expandPartialArguments(
+            PartiallyAppliedFunctionItem functionItem,
+            List<RuntimeIterator> suppliedArguments,
+            RuntimeStaticContext callerRuntimeContext
+    ) {
+        List<RuntimeIterator> result = new ArrayList<>();
+        int suppliedIndex = 0;
+        for (ArgumentBinding binding : functionItem.getArgumentBindings()) {
+            if (binding instanceof PlaceholderBinding) {
+                result.add(suppliedArguments.get(suppliedIndex++));
+                continue;
+            }
+            ExecutionMode executionMode;
+            if (binding instanceof DataFrameBinding) {
+                executionMode = ExecutionMode.DATAFRAME;
+            } else if (binding instanceof RddBinding) {
+                executionMode = ExecutionMode.RDD;
+            } else if (binding instanceof LocalBinding) {
+                executionMode = ExecutionMode.LOCAL;
+            } else {
+                throw new OurBadException("Unsupported partial-function argument binding.");
+            }
+            result.add(
+                CapturedFunctionArgumentIterator.create(
+                    binding,
+                    callerRuntimeContext.withStaticType(binding.sequenceType())
+                        .withExecutionMode(executionMode)
+                )
+            );
+        }
+        return result;
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
