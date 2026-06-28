@@ -35,8 +35,7 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
         Map<Name, SequenceType> params = new LinkedHashMap<>();
 
-        /// We will create a new function call to builtin function, but this time
-        /// replace ? with real parameters
+        /// We will create a new function call to builtin function, but this time replace ? with real parameters
         List<Expression> fullArguments = new ArrayList<>(arguments.size());
 
         for (int i = 0; i < arguments.size(); i++) {
@@ -82,10 +81,8 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
 
         if (!expression.isPartialApplication() || builtin == null) {
-            /// In case of non-partial application or non-builtin function, we still need to
-            /// keep descending
-            /// Because a partial builtin function might be in the nested level
-            /// See qt3 test hof-041
+            /// In case of non-partial application or non-builtin function, we still need to keep descending Because a
+            /// partial builtin function might be in the nested level See qt3 test hof-041
             return super.visitFunctionCall(expression, argument);
         }
 
