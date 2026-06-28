@@ -137,7 +137,7 @@ final class ParsedVariableMarker {
             String pictureString,
             ExceptionMetadata metadata
     ) {
-        switch (component) {
+        switch (this.component) {
             case 'Y':
                 return CalendarFields.year(value, formattingContext);
             case 'M':
@@ -163,7 +163,7 @@ final class ParsedVariableMarker {
             case 'P':
                 return value.getHour() < 12 ? 0 : 1;
             default:
-                throw unsupported(pictureString, metadata, String.valueOf(component));
+                throw unsupported(pictureString, metadata, String.valueOf(this.component));
         }
     }
 
@@ -178,21 +178,21 @@ final class ParsedVariableMarker {
                 return DateNames.dayName(
                     value,
                     formattingContext,
-                    minWidth,
-                    maxWidth
+                    this.minWidth,
+                    this.maxWidth
                 );
             case 'M':
                 return DateNames.monthName(
                     value,
                     formattingContext,
-                    minWidth,
-                    maxWidth
+                    this.minWidth,
+                    this.maxWidth
                 );
             case 'P':
                 Calendar calendar = CalendarFields.calendar(value, formattingContext);
                 return DateNames.amPmName(calendar, formattingContext);
             default:
-                throw unsupported(pictureString, metadata, presentation);
+                throw unsupported(pictureString, metadata, this.presentation);
         }
     }
 
