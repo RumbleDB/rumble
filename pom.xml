@@ -35,6 +35,7 @@
         <encoding>UTF-8</encoding>
         <antlr4.version>4.13.2</antlr4.version>
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
+        <lombok.version>1.18.46</lombok.version>
     </properties>
 
     <build>
@@ -81,6 +82,11 @@
                         <groupId>org.eclipse.jdt</groupId>
                         <artifactId>ecj</artifactId>
                         <version>3.45.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -433,6 +439,12 @@
             <groupId>org.mongodb.spark</groupId>
             <artifactId>mongo-spark-connector_2.13</artifactId>
             <version>10.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 
