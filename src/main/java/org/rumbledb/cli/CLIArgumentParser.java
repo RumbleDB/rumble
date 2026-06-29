@@ -23,7 +23,6 @@ import java.util.List;
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
 import org.rumbledb.cli.commands.Serve;
-import org.rumbledb.cli.options.LegacyCompatibility;
 import org.rumbledb.config.RumbleConfiguration;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -41,11 +40,8 @@ import picocli.CommandLine.Command;
 public final class CLIArgumentParser {
     public static RumbleConfiguration parse(String... args) {
         CommandLine commandLine = new CommandLine(new CLIArgumentParser());
-        String[] normalizedArgs =
-            LegacyCompatibility.normalizeLegacyDynamicOptions(args);
-
         CommandLine.ParseResult parseResult =
-            commandLine.parseArgs(normalizedArgs);
+            commandLine.parseArgs(args);
 
         commandLine.getExecutionStrategy().execute(parseResult);
 
