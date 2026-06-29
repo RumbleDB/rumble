@@ -19,12 +19,8 @@ public final class Input {
     )
     private String queryPath;
 
-    @Option(names = "--input-format", paramLabel = "format")
-    private String inputFormat;
-
     public InputOptions toInputOptions(String positionalQueryPath) {
         InputOptions.InputOptionsBuilder builder = InputOptions.builder();
-        OptionConversion.applyIfPresent(this.inputFormat, builder::inputFormat);
         OptionConversion.applyIfPresent(
             this.queryPath != null ? this.queryPath : positionalQueryPath,
             builder::queryPath

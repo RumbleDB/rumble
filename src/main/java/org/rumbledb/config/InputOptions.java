@@ -19,7 +19,6 @@
 package org.rumbledb.config;
 
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -27,14 +26,6 @@ import lombok.experimental.Accessors;
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class InputOptions {
-    public static final String DEFAULT_INPUT_FORMAT = "json";
-
-    /**
-     * Input format for reading from standard input.
-     */
-    @Default
-    private String inputFormat = DEFAULT_INPUT_FORMAT;
-
     /**
      * Path from which the JSONiq or XQuery query is to be read.
      */
