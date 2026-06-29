@@ -153,16 +153,36 @@ public final class RegexPatternUtils {
             throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
         }
 
-        int referencedGroupNumber = Integer.parseInt(groupNumberText);
-        if (referencedGroupNumber >= nextCaptureGroupNumber) {
+        int longestExistingPrefixLength = findLongestExistingBackReferencePrefixLength(
+            groupNumberText,
+            nextCaptureGroupNumber
+        );
+        if (longestExistingPrefixLength == 0) {
             throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
         }
+        int referencedGroupNumber = Integer.parseInt(groupNumberText.substring(0, longestExistingPrefixLength));
 
         for (GroupContext groupContext : openGroups) {
             if (groupContext.isCapturing() && groupContext.getNumber() == referencedGroupNumber) {
                 throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
             }
         }
+    }
+
+    private static int findLongestExistingBackReferencePrefixLength(
+            String groupNumberText,
+            int nextCaptureGroupNumber
+    ) {
+        long referencedGroupNumber = 0;
+        int longestExistingPrefixLength = 0;
+        for (int i = 0; i < groupNumberText.length(); i++) {
+            referencedGroupNumber = referencedGroupNumber * 10 + Character.digit(groupNumberText.charAt(i), 10);
+            if (referencedGroupNumber >= nextCaptureGroupNumber) {
+                break;
+            }
+            longestExistingPrefixLength = i + 1;
+        }
+        return longestExistingPrefixLength;
     }
 
     public static boolean matchesEmptyString(Pattern pattern) {
