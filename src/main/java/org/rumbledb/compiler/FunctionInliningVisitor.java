@@ -140,6 +140,26 @@ public class FunctionInliningVisitor extends CloneVisitor {
             Expression expression,
             SequenceType paramType
     ) {
+        if (
+            isNamespaceSensitiveFunctionParameter(paramType)
+                && expression.getStaticSequenceType() != null
+                && expression.getStaticSequenceType().getItemType() != null
+                && (
+                    expression.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                        || expression.getStaticSequenceType()
+                            .getItemType()
+                            .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
+                )
+        ) {
+            TreatExpression result = new TreatExpression(
+                    expression,
+                    paramType,
+                    ErrorCode.CannotConvertToQNameErrorCode,
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(paramType);
+            return result;
+        }
         // integer > decimal > double
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
@@ -401,6 +421,11 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return typeSwitchExpression;
         }
         return expression;
+    }
+
+    private boolean isNamespaceSensitiveFunctionParameter(SequenceType paramType) {
+        return paramType.getItemType().equals(BuiltinTypesCatalogue.QNameItem)
+            || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
     }
 
     @Override
