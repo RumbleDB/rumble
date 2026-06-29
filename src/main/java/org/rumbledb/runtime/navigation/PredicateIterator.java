@@ -357,11 +357,12 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (!(this.iterator instanceof ArrayUnboxingIterator)) {
+        if (!(this.iterator instanceof ArrayUnboxingIterator arrayUnboxingIterator)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext arrayReferenceQuery = ((ArrayUnboxingIterator) this.children.get(0))
-            .generateArrayReferenceQuery(nativeClauseContext);
+        NativeClauseContext arrayReferenceQuery = arrayUnboxingIterator.generateArrayReferenceQuery(
+            nativeClauseContext
+        );
         if (arrayReferenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

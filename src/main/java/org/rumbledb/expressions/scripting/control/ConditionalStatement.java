@@ -53,7 +53,7 @@ public class ConditionalStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("if (");
         this.conditionExpression.serializeToJSONiq(sb, 0);

@@ -67,7 +67,7 @@ public class TransformExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         for (CopyDeclaration copyDecl : this.copyDeclarations) {
             sb.append("copy $").append(copyDecl.getVariableName().toString());
