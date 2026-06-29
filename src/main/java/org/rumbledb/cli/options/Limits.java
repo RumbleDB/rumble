@@ -3,12 +3,10 @@ package org.rumbledb.cli.options;
 import org.rumbledb.config.RuntimeLimits;
 
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ScopeType;
 
 public final class Limits {
     @Option(
         names = "--result-size",
-        scope = ScopeType.INHERIT,
         paramLabel = "count",
         description = "A cap on the maximum number of items to output on the screen or to a local list."
     )
@@ -16,7 +14,6 @@ public final class Limits {
 
     @Option(
         names = { "-c", "--materialization-cap" },
-        scope = ScopeType.INHERIT,
         paramLabel = "count",
         description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query."
     )

@@ -21,12 +21,10 @@ package org.rumbledb.cli.options;
 import org.rumbledb.config.AnalysisOptions;
 
 import picocli.CommandLine.Option;
-import picocli.CommandLine.ScopeType;
 
 public final class Analysis {
     @Option(
         names = { "-t", "--static-typing" },
-        scope = ScopeType.INHERIT,
         negatable = true,
         description = {
             "Activates static type analysis, which annotates the expression tree with inferred types at compile time.",
@@ -37,7 +35,6 @@ public final class Analysis {
 
     @Option(
         names = "--print-inferred-types",
-        scope = ScopeType.INHERIT,
         negatable = true,
         description = "Prints inferred types."
     )
@@ -45,7 +42,6 @@ public final class Analysis {
 
     @Option(
         names = "--check-return-types-of-builtin-functions",
-        scope = ScopeType.INHERIT,
         negatable = true,
         description = "Checks return types of built-in functions."
     )
