@@ -155,4 +155,5 @@ public class JavaAPITest {
         Assert.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
         Assert.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
     }
+
 }
