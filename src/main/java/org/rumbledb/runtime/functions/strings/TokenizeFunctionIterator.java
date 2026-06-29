@@ -31,7 +31,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
@@ -80,12 +79,8 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
             // Getting second parameter
             if (this.children.size() == 1) {
-                Pattern separatorPattern = Pattern.compile("\\s+");
-                this.results = separatorPattern.split(input, 0);
+                this.results = RegexPatternUtils.tokenizeOnXmlWhitespace(input);
                 this.currentPosition = 0;
-                if (this.results.length != 0 && this.results[0].equals("")) {
-                    this.currentPosition++;
-                }
             } else {
                 RuntimeIterator separatorIterator = this.children.get(1);
                 separatorIterator.open(this.currentDynamicContextForLocalExecution);
@@ -118,7 +113,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                     flags,
                     getMetadata()
                 );
-                if (compiledRegex.getPattern().matcher("").matches()) {
+                if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
                     throw new MatchesEmptyStringException(
                             "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
                             getMetadata()

@@ -41,7 +41,7 @@ public class VisitorHelpers {
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
         RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
         if (conf.isPrintIteratorTree() || conf.debug()) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             result.print(sb, 0);
             System.err.println(sb);
         }

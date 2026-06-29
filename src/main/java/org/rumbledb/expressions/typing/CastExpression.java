@@ -48,7 +48,7 @@ public class CastExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -75,7 +75,7 @@ public class CastExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" cast as " + this.sequenceType.toString() + "\n");

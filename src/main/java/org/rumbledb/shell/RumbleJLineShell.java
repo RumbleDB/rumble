@@ -115,7 +115,7 @@ public class RumbleJLineShell {
                 stdin.write(result);
                 stdin.flush();
                 stdin.close();
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String s = stdout.readLine();
                 while (s != null) {
                     sb.append(s);

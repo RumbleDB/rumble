@@ -134,7 +134,7 @@ public class ComputedPIConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("processing-instruction ");
         if (this.hasStaticTarget()) {

@@ -31,7 +31,7 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
     private static final long serialVersionUID = 1L;
 
-    private FunctionIdentifier functionIdentifier;
+    private final FunctionIdentifier functionIdentifier;
 
     public NamedFunctionRefRuntimeIterator(
             FunctionIdentifier functionIdentifier,

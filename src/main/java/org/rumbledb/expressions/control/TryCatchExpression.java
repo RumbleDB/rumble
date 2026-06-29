@@ -90,7 +90,7 @@ public class TryCatchExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("try {\n");
         this.tryExpression.serializeToJSONiq(sb, indent + 1);
