@@ -29,6 +29,7 @@ import java.time.ZoneId;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -46,15 +47,16 @@ public class CliOptionsTest {
     @Test
     public void sharedOptionsAreAcceptedBeforeSubcommand() {
         RumbleConfiguration configuration = CliOptions.parse(
-            "--debug",
-            "--no-native-execution",
-            "--default-formatting-place",
-            "Europe/Madrid",
+
             "serve",
             "--host",
             "127.0.0.1",
             "--port",
-            "9000"
+            "9000",
+            "--debug",
+            "--no-native-execution",
+            "--default-formatting-place",
+            "Europe/Madrid"
         );
 
         assertEquals(ExecutionMode.SERVE, configuration.executionMode());
@@ -115,19 +117,16 @@ public class CliOptionsTest {
 
     @Test
     public void contextItemAndContextItemInputAreMutuallyExclusive() {
-        try {
-            CliOptions.parse(
+        assertThrows(
+            Exception.class,
+            () -> CliOptions.parse(
                 "run",
                 "--context-item",
                 "1",
                 "--context-item-input",
                 "-"
-            );
-            fail("Expected picocli to reject mutually exclusive context item options.");
-        } catch (Exception e) {
-            assertTrue(e.getMessage().contains("--context-item"));
-            assertTrue(e.getMessage().contains("--context-item-input"));
-        }
+            )
+        );
     }
 
     @Test

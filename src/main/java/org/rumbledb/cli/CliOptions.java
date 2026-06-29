@@ -23,21 +23,10 @@ import java.util.List;
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
 import org.rumbledb.cli.commands.Serve;
-import org.rumbledb.cli.options.Analysis;
-import org.rumbledb.cli.options.Debug;
-import org.rumbledb.cli.options.Execution;
-import org.rumbledb.cli.options.Formatting;
-import org.rumbledb.cli.options.IO;
-import org.rumbledb.cli.options.Language;
 import org.rumbledb.cli.options.LegacyCompatibility;
-import org.rumbledb.cli.options.Limits;
-import org.rumbledb.cli.options.Optimization;
-import org.rumbledb.cli.options.Variables;
-import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.RumbleConfiguration;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
 
 @Command(
     name = "rumbledb",
@@ -50,33 +39,6 @@ import picocli.CommandLine.Mixin;
     }
 )
 public final class CliOptions {
-    @Mixin
-    IO io;
-
-    @Mixin
-    Limits limits;
-
-    @Mixin
-    Debug debug;
-
-    @Mixin
-    Analysis analysis;
-
-    @Mixin
-    Execution execution;
-
-    @Mixin
-    Optimization optimization;
-
-    @Mixin
-    Language language;
-
-    @Mixin
-    Formatting formatting;
-
-    @Mixin
-    Variables variables;
-
     public static RumbleConfiguration parse(String... args) {
         CommandLine commandLine = new CommandLine(new CliOptions());
         String[] normalizedArgs =
@@ -91,21 +53,5 @@ public final class CliOptions {
         CommandLine activeCommand = commands.get(commands.size() - 1);
 
         return activeCommand.getExecutionResult();
-    }
-
-    public RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(
-            ExecutionMode mode
-    ) {
-        return RumbleConfiguration.builder()
-            .executionMode(mode)
-            .io(this.io.toIOOptions())
-            .runtimeLimits(this.limits.toRuntimeLimits())
-            .debug(this.debug.toDebugOptions())
-            .analysis(this.analysis.toAnalysisOptions())
-            .execution(this.execution.toExecutionOptions())
-            .optimization(this.optimization.toOptimizationOptions())
-            .language(this.language.toLanguageOptions())
-            .formatting(this.formatting.toFormattingOptions())
-            .externalVariableBindings(this.variables.toExternalVariableBindings());
     }
 }

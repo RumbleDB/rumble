@@ -18,21 +18,55 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.cli.CliOptions;
+import org.rumbledb.cli.options.*;
 import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.RumbleConfiguration;
 
 import picocli.CommandLine.Command;
-import picocli.CommandLine.ParentCommand;
+import picocli.CommandLine.Mixin;
 
 import java.util.concurrent.Callable;
 
 @Command
 public abstract class AbstractCommand implements Callable<RumbleConfiguration> {
-    @ParentCommand
-    private CliOptions root;
+    @Mixin
+    IO io;
+
+    @Mixin
+    Limits limits;
+
+    @Mixin
+    Debug debug;
+
+    @Mixin
+    Analysis analysis;
+
+    @Mixin
+    Execution execution;
+
+    @Mixin
+    Optimization optimization;
+
+    @Mixin
+    Language language;
+
+    @Mixin
+    Formatting formatting;
+
+    @Mixin
+    Variables variables;
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(ExecutionMode mode) {
-        return this.root.baseConfiguration(mode);
+        return RumbleConfiguration.builder()
+            .executionMode(mode)
+            .io(this.io.toIOOptions())
+            .runtimeLimits(this.limits.toRuntimeLimits())
+            .debug(this.debug.toDebugOptions())
+            .analysis(this.analysis.toAnalysisOptions())
+            .execution(this.execution.toExecutionOptions())
+            .optimization(this.optimization.toOptimizationOptions())
+            .language(this.language.toLanguageOptions())
+            .formatting(this.formatting.toFormattingOptions())
+            .externalVariableBindings(this.variables.toExternalVariableBindings());
     }
 }
