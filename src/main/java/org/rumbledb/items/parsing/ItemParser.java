@@ -458,9 +458,12 @@ public class ItemParser implements Serializable {
      * @return the converted item.
      */
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
+        return getItemFromRow(row, row.schema(), metadata, itemType);
+    }
+
+    private static Item getItemFromRow(Row row, StructType schema, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
-        StructType schema = row.schema();
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
@@ -794,7 +797,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Row) o;
             }
-            Item item = getItemFromRow(value, metadata, itemType);
+            Item item = getItemFromRow(value, (StructType) fieldType, metadata, itemType);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                 return item;
             } else {
