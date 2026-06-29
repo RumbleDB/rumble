@@ -42,7 +42,7 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         for (int i = 0; i < arguments.size(); i++) {
             Expression currentArgument = arguments.get(i);
             if (currentArgument != null) {
-                /// It was not a ?
+                // It was not a ?
                 fullArguments.add(currentArgument);
                 continue;
             }
