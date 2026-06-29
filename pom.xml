@@ -67,12 +67,19 @@
                     <target>17</target>
                 </configuration>
                 <executions>
+                    <!-- We skip the default compilation -->
                     <execution>
                         <id>default-compile</id>
                         <configuration>
                             <skipMain>true</skipMain>
                         </configuration>
                     </execution>
+
+                    <!-- 
+                        Compile ANTLR-generated sources without processing
+                        If we don't do this, since parser and lexer classes are very large, Lombok will throw a
+                    StackOverflowError when processing them, and the build will fail.
+                    -->
                     <execution>
                         <id>compile-generated-sources</id>
                         <phase>compile</phase>
@@ -86,6 +93,8 @@
                             </compileSourceRoots>
                         </configuration>
                     </execution>
+
+                    <!-- Compile main sources using the normal configuration -->
                     <execution>
                         <id>compile-main-sources</id>
                         <phase>compile</phase>
