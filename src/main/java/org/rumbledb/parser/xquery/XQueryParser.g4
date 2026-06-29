@@ -902,7 +902,6 @@ stringLiteralTokenContent :
                    | NCNameWithLocalWildcard
                    | NCNameWithPrefixWildcard
                    | NCName
-                   | ContentChar
                    )+
  ;
 
