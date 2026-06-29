@@ -838,7 +838,7 @@ stringLiteral : stringLiteralQuot
               ;
 
 stringContentQuot : ContentChar+
-                  | LBRACE expr? RBRACE?
+                  | stringLiteralTokenContent
                   | RBRACE
                   | DOUBLE_LBRACE
                   | DOUBLE_RBRACE
@@ -847,13 +847,64 @@ stringContentQuot : ContentChar+
                   ;
 
 stringContentApos : ContentChar+
-                  | LBRACE expr? RBRACE?
+                  | stringLiteralTokenContent
                   | RBRACE
                   | DOUBLE_LBRACE
                   | DOUBLE_RBRACE
                   | noQuotesNoBracesNoAmpNoLAng                  
                   | stringLiteralQuot
                   ;
+
+stringLiteralTokenContent :
+                   ( keyword
+                   | IntegerLiteral
+                   | DecimalLiteral
+                   | DoubleLiteral
+                   | PRAGMA
+                   | EQUAL
+                   | HASH
+                   | NOT_EQUAL
+                   | LPAREN
+                   | RPAREN
+                   | LBRACKET
+                   | RBRACKET
+                   | LBRACE
+                   | STAR
+                   | PLUS
+                   | MINUS
+                   | TILDE
+                   | COMMA
+                   | ARROW
+                   | MOD
+                   | DOT
+                   | GRAVE
+                   | DDOT
+                   | COLON
+                   | CARAT
+                   | COLON_EQ
+                   | SEMICOLON
+                   | SLASH
+                   | DSLASH
+                   | BACKSLASH
+                   | COMMENT
+                   | XMLDECL
+                   | PI
+                   | CDATA
+                   | VBAR
+                   | LANGLE
+                   | RANGLE
+                   | QUESTION
+                   | AT
+                   | DOLLAR
+                   | BANG
+                   | FullQName
+                   | URIQualifiedName
+                   | NCNameWithLocalWildcard
+                   | NCNameWithPrefixWildcard
+                   | NCName
+                   | ContentChar
+                   )+
+ ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 
