@@ -3425,7 +3425,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return CatchPattern.localNameWildcard(namespace, wildcardText);
         }
         if (wildcardContext instanceof JsoniqParser.BracedURILiteralContext) {
-            /// Declare namespace in place, and match any local name For example, Q{http://example.com}:*
+            // Declare namespace in place, and match any local name
+            // For example, Q{http://example.com}:*
             String wildcardText = wildcardContext.getText();
             int closingBrace = wildcardText.indexOf('}');
             return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
