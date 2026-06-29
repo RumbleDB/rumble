@@ -88,7 +88,7 @@ public class RumbleException extends RuntimeException {
                 + message
                 + "\n"
                 + "Metadata: "
-                + ((metadata != null) ? metadata.toString() : null)
+                + metadata
                 + "\n"
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
         }
@@ -105,7 +105,7 @@ public class RumbleException extends RuntimeException {
             + message
             + "\n"
             + "Metadata: "
-            + ((metadata != null) ? metadata.toString() : null)
+            + metadata
             + "\n"
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
