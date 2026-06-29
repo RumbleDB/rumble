@@ -85,10 +85,9 @@ public class FlworDataFrameColumn implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof FlworDataFrameColumn)) {
+        if (!(o instanceof FlworDataFrameColumn other)) {
             return false;
         }
-        FlworDataFrameColumn other = (FlworDataFrameColumn) o;
         if (this.tableName == null && other.tableName != null) {
             return false;
         }

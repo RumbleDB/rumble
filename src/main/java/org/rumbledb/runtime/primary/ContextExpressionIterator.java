@@ -77,11 +77,10 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         DataType schema = nativeClauseContext.getSchema();
-        if (!(schema instanceof StructType)) {
+        if (!(schema instanceof StructType structSchema)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
-        StructType structSchema = (StructType) schema;
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, Name.CONTEXT_ITEM)) {
             return getContextItem(nativeClauseContext.getContext()).generateNativeQuery(nativeClauseContext);
         }

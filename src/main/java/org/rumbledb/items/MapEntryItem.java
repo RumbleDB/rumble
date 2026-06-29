@@ -87,11 +87,6 @@ public class MapEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return Collections.singletonList(this.key.getStringValue());
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return Collections.singletonList(this.key.getStringValue());
     }
@@ -114,11 +109,6 @@ public class MapEntryItem implements Item {
     @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         return new ItemSameKeyComparator().compare(this.key, key) == 0;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override

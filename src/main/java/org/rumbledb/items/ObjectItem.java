@@ -105,7 +105,7 @@ public class ObjectItem implements Item {
         if (!otherItem.isObject()) {
             return false;
         }
-        for (String s : getKeys()) {
+        for (String s : getStringKeys()) {
             Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
@@ -207,11 +207,6 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.keys;
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.keys;
     }
@@ -239,11 +234,6 @@ public class ObjectItem implements Item {
             result.add(ItemFactory.getInstance().createStringItem(key));
         }
         return result;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.values;
     }
 
     @Override
@@ -422,8 +412,8 @@ public class ObjectItem implements Item {
 
     public int hashCode() {
         int result = 0;
-        result += getKeys().size();
-        for (String s : getKeys()) {
+        result += getStringKeys().size();
+        for (String s : getStringKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;

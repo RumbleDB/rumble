@@ -158,7 +158,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // for (RuntimeIterator r : rightHandSideEqualityCriteria) {
-        // StringBuffer sb = new StringBuffer();
+        // StringBuilder sb = new StringBuilder();
         // r.print(sb, 2);
         // System.out.println(sb.toString());
         // }
