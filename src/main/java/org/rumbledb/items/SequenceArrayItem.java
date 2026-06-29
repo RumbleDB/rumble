@@ -125,11 +125,6 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public List<Item> getItems() {
-        return this.getItemMembers();
-    }
-
-    @Override
     public List<Item> getItemMembers() throws OurBadException {
         List<Item> members = new ArrayList<>(this.memberSequences.size());
         for (List<Item> member : this.memberSequences) {
@@ -179,11 +174,6 @@ public class SequenceArrayItem implements Item {
         }
         List<Item> member = this.memberSequences.get(position);
         return member;
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override

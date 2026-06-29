@@ -50,14 +50,16 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         List<Item> strings = this.children.get(0).materialize(context);
 
         StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
         for (Item item : strings) {
             if (!(item.isString())) {
                 throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
             }
-            if (!stringBuilder.toString().isEmpty()) {
+            if (!first) {
                 stringBuilder.append(joinString.getStringValue());
             }
             stringBuilder.append(item.getStringValue());
+            first = false;
         }
 
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());

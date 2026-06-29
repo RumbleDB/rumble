@@ -11,3 +11,4 @@ org.eclipse.jdt.core.compiler.problem.unhandledWarningToken=ignore
 org.eclipse.jdt.core.compiler.problem.unqualifiedFieldAccess=warning
 org.eclipse.jdt.core.compiler.release=enabled
 org.eclipse.jdt.core.compiler.source=17
+org.eclipse.jdt.core.compiler.problem.deprecation=warning

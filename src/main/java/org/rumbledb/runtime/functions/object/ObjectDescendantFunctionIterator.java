@@ -95,10 +95,10 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     private void getDescendantObjects(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantObjects(item.getItems());
+                getDescendantObjects(item.getItemMembers());
             } else if (item.isObject()) {
                 this.nextResults.add(item);
-                getDescendantObjects(item.getValues());
+                getDescendantObjects(item.getItemValues());
             } else {
                 // for atomic types: do nothing
             }
