@@ -766,7 +766,7 @@ public class ItemTypeFactory {
             if (item.getSize() == 0) {
                 return ItemTypeFactory.createEmptyArrayType();
             }
-            ItemType result = item.getItemAt(0).getDynamicType();
+            ItemType result = createItemTypeFromItem(item.getItemAt(0));
             for (int i = 1; i < item.getSize(); i++) {
                 result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
             }
