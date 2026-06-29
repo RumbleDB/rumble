@@ -522,7 +522,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<String> getKeys() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getStringKeys();
     }
 
     /**
@@ -554,7 +554,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<Item> getValues() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getItemValues();
     }
 
     /**
@@ -790,7 +790,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<Item> getItems() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getItemMembers();
     }
 
     /**
@@ -852,7 +852,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @deprecated use {@link #appendItem(Item)} instead
      */
     default void append(Item item) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        this.appendItem(item);
     }
 
     /**
