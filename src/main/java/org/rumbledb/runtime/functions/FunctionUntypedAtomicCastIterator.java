@@ -6,6 +6,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -105,11 +106,20 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
             return item;
         }
         if (
-            usesQNameCoercionErrorSemantics()
-                && (this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
-                    || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem))
+            this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
+                || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem)
         ) {
-            throw new CannotConvertToQNameException(
+            if (usesQNameCoercionErrorSemantics()) {
+                throw new CannotConvertToQNameException(
+                        this.exceptionMessage
+                            + item.getDynamicType()
+                            + " cannot be implicitly converted to type "
+                            + this.targetType
+                            + ".",
+                        getMetadata()
+                );
+            }
+            throw new UnexpectedTypeException(
                     this.exceptionMessage
                         + item.getDynamicType()
                         + " cannot be implicitly converted to type "
