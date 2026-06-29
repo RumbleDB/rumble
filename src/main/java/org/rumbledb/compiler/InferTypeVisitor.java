@@ -770,7 +770,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
             if (expression.isPartialApplication()) {
-                /// This should never be reached because partial application on built-in functions should have been rewritten before
+                // This should never be reached because partial application on built-in functions should have been
+                // rewritten before
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         expression.getMetadata()
