@@ -62,7 +62,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 if (item.isObject()) {
                     if (firstItem) {
                         // add all key-value pairs of the first item
-                        for (String key : item.getKeys()) {
+                        for (String key : item.getStringKeys()) {
                             Item value = item.getItemByKey(key);
                             ArrayList<Item> valueList = new ArrayList<>();
                             valueList.add(value);
@@ -75,7 +75,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                         while (keyIterator.hasNext()) {
                             String key = keyIterator.next();
                             // if the new item doesn't contain the same keys
-                            if (!item.getKeys().contains(key)) {
+                            if (!item.getStringKeys().contains(key)) {
                                 // remove the key from the map
                                 keyIterator.remove();
                             } else {
@@ -88,7 +88,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 }
             }
 
-            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
+            Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
 
             return result;
         }

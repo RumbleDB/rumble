@@ -300,11 +300,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.itemToAnnotate.getKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.itemToAnnotate.getStringKeys();
     }
@@ -312,11 +307,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getItemKeys() {
         return this.itemToAnnotate.getItemKeys();
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.itemToAnnotate.getValues();
     }
 
     @Override
@@ -414,11 +404,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<Item> getItems() {
-        return this.itemToAnnotate.getItems();
-    }
-
-    @Override
     public List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
         return this.itemToAnnotate.getItemMembers();
     }
@@ -436,11 +421,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
         return this.itemToAnnotate.getSequenceAt(position);
-    }
-
-    @Override
-    public void append(Item item) throws UnsupportedOperationException {
-        this.itemToAnnotate.append(item);
     }
 
     @Override
