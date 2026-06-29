@@ -391,7 +391,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private FlworDataFrame getDataFrameFromJoin(
             DynamicContext context
     ) {
-        if (!(this.assignmentIterator instanceof PredicateIterator)) {
+        if (!(this.assignmentIterator instanceof PredicateIterator predicateAssignmentIterator)) {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. A piece of advice: if you use a predicate expression in your for clause, like for $"
                         + this.variableName.toString()
@@ -399,8 +399,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     getMetadata()
             );
         }
-        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
-        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+        RuntimeIterator sequenceIterator = predicateAssignmentIterator.sequenceIterator();
+        RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
 
         // If the left hand side depends on the input tuple, we do not how to handle it.
         if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -929,7 +929,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");

@@ -27,7 +27,7 @@ public class ReverseStepExpr extends StepExpr {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.reverseAxis.getAxisValue());
         sb.append(this.nodeTest.toString());

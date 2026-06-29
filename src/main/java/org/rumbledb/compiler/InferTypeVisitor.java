@@ -444,11 +444,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
         }
+        List<StringLiteralExpression> stringLiteralKeys = new ArrayList<>();
+        if (expression.getKeys() != null) {
+            for (Expression key : expression.getKeys()) {
+                if (!(key instanceof StringLiteralExpression stringLiteralKey)) {
+                    stringLiteralKeys.clear();
+                    break;
+                }
+                stringLiteralKeys.add(stringLiteralKey);
+            }
+        }
         if (
             expression.getKeys() != null
-                && expression.getKeys()
-                    .stream()
-                    .allMatch(key -> key instanceof StringLiteralExpression)
+                && stringLiteralKeys.size() == expression.getKeys().size()
                 && expression.getValues()
                     .stream()
                     .map(Expression::getStaticSequenceType)
@@ -457,9 +465,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(
                 new SequenceType(
                         ItemTypeFactory.createAnonymousObjectType(
-                            expression.getKeys()
+                            stringLiteralKeys
                                 .stream()
-                                .map(key -> ((StringLiteralExpression) key).getValue())
+                                .map(StringLiteralExpression::getValue)
                                 .collect(Collectors.toList()),
                             expression.getValues()
                                 .stream()
@@ -657,9 +665,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             functionName.equals(Name.createVariableInDefaultFunctionNamespace("parquet-file"))
                 && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression
+                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
-            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
                 return false;
@@ -683,9 +691,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-file"))
                 && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression
+                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
-            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
                 return false;
@@ -706,9 +714,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
                 && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression
+                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
-            String name = ((StringLiteralExpression) args.get(0)).getValue();
+            String name = stringLiteralExpr.getValue();
             SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
             if (session.catalog().tableExists(name) == false) {
                 return false;
@@ -762,7 +770,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
             if (expression.isPartialApplication()) {
-                /// This should never be reached because partial application on built-in functions should have been rewritten before
+                // This should never be reached because partial application on built-in functions should have been
+                // rewritten before
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         expression.getMetadata()
@@ -2031,9 +2040,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we have a specific object type and a string literal as key try to perform better inference
         if (
             mainType.getItemType().isObjectItemType()
-                && (expression.getLookupExpression() instanceof StringLiteralExpression)
+                && (expression.getLookupExpression() instanceof StringLiteralExpression stringLiteralExpr)
         ) {
-            String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
+            String key = stringLiteralExpr.getValue();
             boolean isObjectClosed = mainType.getItemType().getClosedFacet();
             List<String> objectKeys = mainType.getItemType().getObjectKeysFacet();
             if (objectKeys.contains(key)) {

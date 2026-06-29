@@ -59,7 +59,7 @@ public class InsertExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("insert json ");
         this.toInsertExpression.serializeToJSONiq(sb, 0);

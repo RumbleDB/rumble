@@ -204,7 +204,7 @@ public class FileSystemUtil {
         checkAllowed(locator, conf, metadata);
         InputStream inputStream = getDataInputStream(locator, conf, metadata);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         String line;
         try {
             while ((line = reader.readLine()) != null) {

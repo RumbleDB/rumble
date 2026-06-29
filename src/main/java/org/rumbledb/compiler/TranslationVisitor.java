@@ -2849,19 +2849,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
         Name name = parseFunctionName(ctx.functionName());
-        int arity = 0;
+        String arityLiteral = ctx.arity.getText();
         try {
-            arity = Integer.parseInt(ctx.arity.getText());
+            int arity = Integer.parseInt(arityLiteral);
+            return new NamedFunctionReferenceExpression(
+                    new FunctionIdentifier(name, arity),
+                    createMetadataFromContext(ctx)
+            );
         } catch (NumberFormatException e) {
-            throw new ParsingException(
-                    "Parser error: In a named function reference, arity must be an integer.",
+            throw new NumericOverflowOrUnderflow(
+                    "Named function reference arity is out of range for implementation limits: "
+                        + name
+                        + "#"
+                        + arityLiteral,
                     createMetadataFromContext(ctx)
             );
         }
-        return new NamedFunctionReferenceExpression(
-                new FunctionIdentifier(name, arity),
-                createMetadataFromContext(ctx)
-        );
     }
 
     @Override
@@ -3408,20 +3411,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private CatchPattern parseWildcardPattern(JsoniqParser.WildcardContext wildcardContext) {
         if (wildcardContext instanceof JsoniqParser.AllNamesContext) {
-            /// Only * is provided
+            // Only * is provided
             return CatchPattern.catchAll();
         }
         if (wildcardContext instanceof JsoniqParser.AllWithLocalContext) {
-            /// Namespace is the wildcard
+            // Namespace is the wildcard
             String wildcardText = wildcardContext.getText();
-            /// First two characters *: are stripped to keep only the local name
+            // First two characters *: are stripped to keep only the local name
             return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
         }
         if (wildcardContext instanceof JsoniqParser.AllWithNSContext) {
-            /// Local name is the wildcard
+            // Local name is the wildcard
             String wildcardText = wildcardContext.getText();
 
-            /// Strip the last two characters :*
+            // Strip the last two characters :*
             String prefix = wildcardText.substring(0, wildcardText.length() - 2);
             String namespace = resolvePrefixForDirConstructor(prefix);
             if (namespace == null) {
@@ -3433,8 +3436,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return CatchPattern.localNameWildcard(namespace, wildcardText);
         }
         if (wildcardContext instanceof JsoniqParser.BracedURILiteralContext) {
-            /// Declare namespace in place, and match any local name
-            /// For example, Q{http://example.com}:*
+            // Declare namespace in place, and match any local name
+            // For example, Q{http://example.com}:*
             String wildcardText = wildcardContext.getText();
             int closingBrace = wildcardText.indexOf('}');
             return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
@@ -4115,13 +4118,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
         StringBuilder uriBuilder = new StringBuilder();
         for (Expression expression : uriExpressions) {
-            if (!(expression instanceof AttributeNodeContentExpression)) {
+            if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx)
                 );
             }
-            uriBuilder.append(((AttributeNodeContentExpression) expression).getContent());
+            uriBuilder.append(attributeContent.getContent());
         }
         return uriBuilder.toString();
     }
@@ -4242,9 +4245,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 allowEnclosedExpressions
             );
         } else if (
-            ctx instanceof JsoniqParser.DirAttributeContentQuotContext
+            ctx instanceof JsoniqParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
                 &&
-                ((JsoniqParser.DirAttributeContentQuotContext) ctx).expr() != null
+                dirAttributeContentQuotContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -4252,11 +4255,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentQuotContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
         } else if (
-            ctx instanceof JsoniqParser.DirAttributeContentAposContext
+            ctx instanceof JsoniqParser.DirAttributeContentAposContext dirAttributeContentAposContext
                 &&
-                ((JsoniqParser.DirAttributeContentAposContext) ctx).expr() != null
+                dirAttributeContentAposContext.expr() != null
         ) {
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
@@ -4264,7 +4267,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx)
                 );
             }
-            expressions.add((Expression) this.visitExpr(((JsoniqParser.DirAttributeContentAposContext) ctx).expr()));
+            expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         } else {
             // handle other cases
             String childText = child.getText();
