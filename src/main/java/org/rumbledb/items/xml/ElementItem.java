@@ -370,7 +370,9 @@ public class ElementItem implements Item {
         for (Item child : this.children) {
             stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
         }
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(stringValueBuilder.toString()));
+        return Collections.singletonList(
+            ItemFactory.getInstance().createUntypedAtomicItem(stringValueBuilder.toString())
+        );
     }
 
     @Override
