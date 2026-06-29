@@ -144,12 +144,10 @@ public class FunctionInliningVisitor extends CloneVisitor {
             isNamespaceSensitiveFunctionParameter(paramType)
                 && expression.getStaticSequenceType() != null
                 && expression.getStaticSequenceType().getItemType() != null
-                && (
-                    expression.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-                        || expression.getStaticSequenceType()
-                            .getItemType()
-                            .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
-                )
+                && (expression.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                    || expression.getStaticSequenceType()
+                        .getItemType()
+                        .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem))
         ) {
             TreatExpression result = new TreatExpression(
                     expression,
