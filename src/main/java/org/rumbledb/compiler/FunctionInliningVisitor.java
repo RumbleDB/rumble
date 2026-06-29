@@ -35,6 +35,8 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
+    private String queryLanguage;
+
     public FunctionInliningVisitor() {
     }
 
@@ -142,12 +144,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
     ) {
         if (
             isNamespaceSensitiveFunctionParameter(paramType)
+                && usesQNameCoercionErrorSemantics(expression)
                 && expression.getStaticSequenceType() != null
                 && expression.getStaticSequenceType().getItemType() != null
-                && (expression.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-                    || expression.getStaticSequenceType()
-                        .getItemType()
-                        .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem))
+                && expression.getStaticSequenceType()
+                    .getItemType()
+                    .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
         ) {
             TreatExpression result = new TreatExpression(
                     expression,
@@ -426,8 +428,21 @@ public class FunctionInliningVisitor extends CloneVisitor {
             || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
     }
 
+    private boolean usesQNameCoercionErrorSemantics(Expression expression) {
+        String currentQueryLanguage = this.queryLanguage;
+        if (currentQueryLanguage == null && expression.getStaticContext() != null) {
+            currentQueryLanguage = expression.getStaticContext().getQueryLanguage();
+        }
+        return currentQueryLanguage != null
+            && !currentQueryLanguage.equals("xquery10")
+            && !currentQueryLanguage.equals("jsoniq10");
+    }
+
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
+        if (mainModule.getStaticContext() != null) {
+            this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
+        }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
