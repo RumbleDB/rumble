@@ -144,7 +144,12 @@ public class JavaAPITest {
         Assert.assertEquals(1, rows.get(1).getList(0).size());
 
         JavaRDD<Item> itemRDD = dataFrame.javaRDD()
-            .map(new RowToItemMapper(org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA, ItemTypeFactory.createItemType(dataFrame.schema())));
+            .map(
+                new RowToItemMapper(
+                        org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
+                        ItemTypeFactory.createItemType(dataFrame.schema())
+                )
+            );
         List<Item> items = itemRDD.collect();
 
         Assert.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
