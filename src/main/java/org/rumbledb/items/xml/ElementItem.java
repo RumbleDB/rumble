@@ -363,17 +363,14 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        // Reference: https://www.w3.org/TR/xpath-functions-31/#func-data
-        // If the item is a node, the typed value of the node is appended to the result sequence.
-        // The typed value is a sequence of zero or more atomic values: specifically, the result of the dm:typed-value
-        // accessor as defined in [XQuery and XPath Data Model (XDM) 3.1] (See Section 5.14 typed-value Accessor DM31).
-        // TODO: implement this following the spec. Most importantly, implement the dm:typed-value accessor.
-        // This naive implementation is enough for now
+        // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
+        // We still approximate typed-value by concatenating children for now, but preserve the
+        // untypedAtomic dynamic type instead of collapsing to xs:string.
         StringBuilder stringValueBuilder = new StringBuilder();
         for (Item child : this.children) {
             stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
         }
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(stringValueBuilder.toString()));
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(stringValueBuilder.toString()));
     }
 
     @Override

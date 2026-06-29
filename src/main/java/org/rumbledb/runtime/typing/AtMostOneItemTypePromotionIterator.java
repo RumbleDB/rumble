@@ -11,7 +11,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -100,7 +99,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             usesQNameCoercionErrorSemantics()
                 && (this.itemType.equals(BuiltinTypesCatalogue.QNameItem)
                     || this.itemType.equals(BuiltinTypesCatalogue.NOTATIONItem))
-                && (item.isUntypedAtomic() || atomizedFromNode())
+                && item.isUntypedAtomic()
         ) {
             throw new CannotConvertToQNameException(
                     this.exceptionMessage
@@ -116,11 +115,6 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     private boolean usesQNameCoercionErrorSemantics() {
         String queryLanguage = this.staticContext.getQueryLanguage();
         return !queryLanguage.equals("xquery10") && !queryLanguage.equals("jsoniq10");
-    }
-
-    private boolean atomizedFromNode() {
-        return this.iterator instanceof DataFunctionIterator
-            && !((DataFunctionIterator) this.iterator).getInputIterator().getStaticType().getItemType().isAtomicItemType();
     }
 
     private Item checkTypePromotion(Item item) {

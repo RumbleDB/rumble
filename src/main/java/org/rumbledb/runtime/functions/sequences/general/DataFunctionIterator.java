@@ -53,10 +53,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             this.sequenceIterator = this.children.get(0);
     }
 
-    public RuntimeIterator getInputIterator() {
-        return this.sequenceIterator;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
