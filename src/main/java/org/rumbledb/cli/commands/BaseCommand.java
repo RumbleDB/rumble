@@ -18,16 +18,16 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.cli.options.Access;
-import org.rumbledb.cli.options.Analysis;
-import org.rumbledb.cli.options.Bindings;
-import org.rumbledb.cli.options.Debug;
-import org.rumbledb.cli.options.Formatting;
-import org.rumbledb.cli.options.Optimization;
-import org.rumbledb.cli.options.Runtime;
-import org.rumbledb.cli.options.Semantics;
-import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.cli.arguments.AccessArguments;
+import org.rumbledb.cli.arguments.AnalysisArguments;
+import org.rumbledb.cli.arguments.BindingsArguments;
+import org.rumbledb.cli.arguments.DebugArguments;
+import org.rumbledb.cli.arguments.FormattingArguments;
+import org.rumbledb.cli.arguments.OptimizationArguments;
+import org.rumbledb.cli.arguments.RuntimeArguments;
+import org.rumbledb.cli.arguments.SemanticsArguments;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.ExecutionMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -37,39 +37,39 @@ import java.util.concurrent.Callable;
 @Command
 public abstract class BaseCommand implements Callable<RumbleConfiguration> {
     @Mixin
-    Access access;
+    AccessArguments access;
 
     @Mixin
-    Runtime runtime;
+    RuntimeArguments runtime;
 
     @Mixin
-    Debug debug;
+    DebugArguments debug;
 
     @Mixin
-    Analysis analysis;
+    AnalysisArguments analysis;
 
     @Mixin
-    Optimization optimization;
+    OptimizationArguments optimization;
 
     @Mixin
-    Semantics semantics;
+    SemanticsArguments semantics;
 
     @Mixin
-    Formatting formatting;
+    FormattingArguments formatting;
 
     @Mixin
-    Bindings bindings;
+    BindingsArguments bindings;
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(ExecutionMode mode) {
         return RumbleConfiguration.builder()
             .executionMode(mode)
-            .access(this.access.toAccess())
-            .runtime(this.runtime.toRuntime())
-            .debug(this.debug.toDebugOptions())
-            .analysis(this.analysis.toAnalysisOptions())
-            .optimization(this.optimization.toOptimizationOptions())
-            .semantics(this.semantics.toSemantics())
-            .formatting(this.formatting.toFormattingOptions())
-            .bindings(this.bindings.toBindings());
+            .access(this.access.toConfig())
+            .runtime(this.runtime.toConfig())
+            .debug(this.debug.toConfig())
+            .analysis(this.analysis.toConfig())
+            .optimization(this.optimization.toConfig())
+            .semantics(this.semantics.toConfig())
+            .formatting(this.formatting.toConfig())
+            .bindings(this.bindings.toConfig());
     }
 }

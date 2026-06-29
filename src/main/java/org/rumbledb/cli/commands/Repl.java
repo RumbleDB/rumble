@@ -18,10 +18,9 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.config.ExecutionMode;
-
-import org.rumbledb.cli.options.Output;
+import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.ExecutionMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -29,12 +28,12 @@ import picocli.CommandLine.Mixin;
 @Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
 public final class Repl extends BaseCommand {
     @Mixin
-    Output output;
+    OutputArguments output;
 
     @Override
     public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.REPL)
-            .output(this.output.toOutputOptions())
+            .output(this.output.toConfig())
             .build();
     }
 }

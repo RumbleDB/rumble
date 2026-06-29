@@ -1,12 +1,12 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
 import java.time.ZoneId;
 
-import org.rumbledb.config.FormattingOptions;
+import org.rumbledb.config.model.FormattingConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Formatting {
+public final class FormattingArguments {
     @Option(
         names = "--default-formatting-place",
         paramLabel = "timezone",
@@ -28,8 +28,8 @@ public final class Formatting {
     )
     private String defaultFormattingLanguage;
 
-    public FormattingOptions toFormattingOptions() {
-        FormattingOptions.FormattingOptionsBuilder builder = FormattingOptions.builder();
+    public FormattingConfig toConfig() {
+        FormattingConfig.FormattingConfigBuilder builder = FormattingConfig.builder();
         OptionConversion.applyIfPresent(this.defaultFormattingPlace, builder::defaultFormattingPlace);
         OptionConversion.applyIfPresent(this.defaultFormattingCalendar, builder::defaultFormattingCalendar);
         OptionConversion.applyIfPresent(this.defaultFormattingLanguage, builder::defaultFormattingLanguage);

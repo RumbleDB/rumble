@@ -1,10 +1,10 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.OptimizationOptions;
+import org.rumbledb.config.model.OptimizationConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Optimization {
+public final class OptimizationArguments {
     @Option(
         names = "--function-inlining",
         negatable = true,
@@ -47,8 +47,8 @@ public final class Optimization {
     )
     private Boolean optimizeParentPointers;
 
-    public OptimizationOptions toOptimizationOptions() {
-        OptimizationOptions.OptimizationOptionsBuilder builder = OptimizationOptions.builder();
+    public OptimizationConfig toConfig() {
+        OptimizationConfig.OptimizationConfigBuilder builder = OptimizationConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(
             this.optimizeGeneralComparisonToValueComparison,

@@ -1,8 +1,10 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
+
+import org.rumbledb.config.model.SemanticsConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Semantics {
+public final class SemanticsArguments {
     @Option(
         names = "--default-language",
         paramLabel = "language",
@@ -38,8 +40,8 @@ public final class Semantics {
     )
     private String staticBaseUri;
 
-    public org.rumbledb.config.Semantics toSemantics() {
-        org.rumbledb.config.Semantics.SemanticsBuilder builder = org.rumbledb.config.Semantics.builder();
+    public SemanticsConfig toConfig() {
+        SemanticsConfig.SemanticsConfigBuilder builder = SemanticsConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
         OptionConversion.applyBooleanIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);

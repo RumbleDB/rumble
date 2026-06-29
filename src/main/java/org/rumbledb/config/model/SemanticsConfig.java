@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ import lombok.experimental.Accessors;
 
 @Value
 @Accessors(fluent = true)
-public class Semantics {
+public class SemanticsConfig {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
@@ -41,7 +41,7 @@ public class Semantics {
     private String staticBaseUri;
 
     @Builder(toBuilder = true)
-    private Semantics(
+    private SemanticsConfig(
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
             String queryLanguage,
@@ -73,8 +73,8 @@ public class Semantics {
         );
     }
 
-    public static class SemanticsBuilder {
-        public SemanticsBuilder xmlVersion(String xmlVersion) {
+    public static class SemanticsConfigBuilder {
+        public SemanticsConfigBuilder xmlVersion(String xmlVersion) {
             this.xmlVersion = normalizeXmlVersion(xmlVersion);
             return this;
         }

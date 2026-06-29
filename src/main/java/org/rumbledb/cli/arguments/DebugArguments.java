@@ -1,10 +1,10 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.DebugOptions;
+import org.rumbledb.config.model.DebugConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Debug {
+public final class DebugArguments {
     @Option(
         names = "--print-iterator-tree",
         negatable = true,
@@ -29,8 +29,8 @@ public final class Debug {
     )
     private Boolean logging;
 
-    public DebugOptions toDebugOptions() {
-        DebugOptions.DebugOptionsBuilder builder = DebugOptions.builder();
+    public DebugConfig toConfig() {
+        DebugConfig.DebugConfigBuilder builder = DebugConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.printIteratorTree, builder::printIteratorTree);
         OptionConversion.applyBooleanIfPresent(this.showErrorInfo, builder::showErrorInfo);

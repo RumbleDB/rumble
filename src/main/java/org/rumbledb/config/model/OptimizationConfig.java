@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -26,24 +26,40 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class DebugOptions {
+public class OptimizationConfig {
     /**
-     * Whether verbose error info should be shown in case an error is returned.
+     * Whether function inlining is enabled.
      */
     @Default
-    private boolean showErrorInfo = false;
+    private boolean useFunctionInlining = true;
 
     /**
-     * Whether verbose information on query plans should be displayed.
+     * Whether tail call optimization is enabled.
      */
     @Default
-    private boolean printIteratorTree = false;
+    private boolean useTailCallOptimization = true;
 
     /**
-     * Whether debug output is enabled.
-     * Note: this was meant to replace debug() of RumbleRuntimeConfiguration
-     * But it's only used in one single place, so it might be worth merge this with showErrorInfo
+     * Whether general comparisons may be rewritten using value comparisons.
      */
     @Default
-    private boolean logging = false;
+    private boolean optimizeGeneralComparisonToValueComparison = true;
+
+    /**
+     * Whether XPath steps should be optimized.
+     */
+    @Default
+    private boolean optimizeSteps = true;
+
+    /**
+     * Whether XPath steps should be optimized including experimental algorithms.
+     */
+    @Default
+    private boolean optimizeStepsExperimental = false;
+
+    /**
+     * Whether parent pointers can be optimized away in XPath expressions.
+     */
+    @Default
+    private boolean optimizeParentPointers = true;
 }

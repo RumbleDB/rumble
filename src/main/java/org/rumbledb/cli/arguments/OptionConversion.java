@@ -16,26 +16,32 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.cli.arguments;
 
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Value;
-import lombok.experimental.Accessors;
+import java.util.function.IntConsumer;
+import java.util.function.Consumer;
 
-@Value
-@Builder(toBuilder = true)
-@Accessors(fluent = true)
-public class ServerOptions {
-    /**
-     * Host name when used in server mode.
-     */
-    @Default
-    private String host = "localhost";
+final class OptionConversion {
+    @FunctionalInterface
+    interface BooleanConsumer {
+        void accept(boolean value);
+    }
 
-    /**
-     * Port number when used in server mode.
-     */
-    @Default
-    private int port = 8001;
+    static void applyBooleanIfPresent(Boolean value, BooleanConsumer setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    static void applyIntIfPresent(Integer value, IntConsumer setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
+
+    static <T> void applyIfPresent(T value, Consumer<? super T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
+    }
 }

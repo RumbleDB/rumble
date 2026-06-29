@@ -16,7 +16,10 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
+
+
+import org.rumbledb.serialization.SerializationParameters;
 
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -26,40 +29,44 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class OptimizationOptions {
-    /**
-     * Whether function inlining is enabled.
-     */
-    @Default
-    private boolean useFunctionInlining = true;
+public class OutputConfig {
+    public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;
 
     /**
-     * Whether tail call optimization is enabled.
+     * Number of output partitions to write to the output path.
      */
     @Default
-    private boolean useTailCallOptimization = true;
+    private int numberOfOutputPartitions = DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS;
 
     /**
-     * Whether general comparisons may be rewritten using value comparisons.
+     * Path to which the output path should be written.
      */
-    @Default
-    private boolean optimizeGeneralComparisonToValueComparison = true;
+    private String outputPath;
 
     /**
-     * Whether XPath steps should be optimized.
+     * Output format for writing to the output path.
      */
-    @Default
-    private boolean optimizeSteps = true;
+    private String outputFormat;
 
     /**
-     * Whether XPath steps should be optimized including experimental algorithms.
+     * Whether to overwrite the output path if it already exists.
      */
     @Default
-    private boolean optimizeStepsExperimental = false;
+    private boolean allowOverwrite = false;
 
     /**
-     * Whether parent pointers can be optimized away in XPath expressions.
+     * Options to further specify the output format, for example a separator character for CSV or a compression format.
      */
-    @Default
-    private boolean optimizeParentPointers = true;
+    private SerializationParameters serializationParameters;
+
+    /**
+     * Log path
+     */
+    private String logPath;
+
+    /**
+     * Current shell filter for post-processing output (e.g. JSON beautifier)
+     */
+    private String shellFilter;
+
 }

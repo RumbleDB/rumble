@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,7 +28,7 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class Access {
+public class AccessConfig {
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)
      */

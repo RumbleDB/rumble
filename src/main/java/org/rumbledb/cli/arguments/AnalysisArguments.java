@@ -16,13 +16,13 @@
  *
  */
 
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.AnalysisOptions;
+import org.rumbledb.config.model.AnalysisConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Analysis {
+public final class AnalysisArguments {
     @Option(
         names = { "-t", "--static-typing" },
         negatable = true,
@@ -47,8 +47,8 @@ public final class Analysis {
     )
     private Boolean checkReturnTypesOfBuiltinFunctions;
 
-    public AnalysisOptions toAnalysisOptions() {
-        AnalysisOptions.AnalysisOptionsBuilder builder = AnalysisOptions.builder();
+    public AnalysisConfig toConfig() {
+        AnalysisConfig.AnalysisConfigBuilder builder = AnalysisConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
         OptionConversion.applyBooleanIfPresent(this.printInferredTypes, builder::printInferredTypes);

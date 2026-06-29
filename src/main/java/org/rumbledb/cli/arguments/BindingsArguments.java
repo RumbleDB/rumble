@@ -1,4 +1,4 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -6,13 +6,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.rumbledb.config.model.BindingsConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 
-public final class Bindings {
+public final class BindingsArguments {
     private static final String DEFAULT_CONTEXT_ITEM_INPUT_FORMAT = "json";
 
     @ArgGroup(exclusive = true, multiplicity = "0..1")
@@ -73,7 +74,7 @@ public final class Bindings {
     )
     private Map<String, String> variablesFromFiles = new HashMap<>();
 
-    public org.rumbledb.config.Bindings toBindings() {
+    public BindingsConfig toConfig() {
         if (hasContextItemValue() && hasContextItemInput()) {
             throw new CliException("It is not possible to both set --context-item and --context-item-input.");
         }
@@ -113,7 +114,7 @@ public final class Bindings {
             )
         );
 
-        return org.rumbledb.config.Bindings.builder()
+        return BindingsConfig.builder()
             .unparsedExternalVariableValues(unparsedExternalVariableValues)
             .externalVariableValuesReadFromFiles(externalVariableValuesReadFromFiles)
             .externalVariablesReadFromStandardInput(externalVariablesReadFromStandardInput)

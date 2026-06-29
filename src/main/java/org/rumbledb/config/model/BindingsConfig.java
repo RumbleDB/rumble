@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -37,7 +37,7 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class Bindings {
+public class BindingsConfig {
     @Default
     private Map<Name, List<Item>> externalVariableValues = new HashMap<>();
 

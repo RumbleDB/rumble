@@ -1,21 +1,23 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
+
+import org.rumbledb.config.model.RuntimeConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Runtime {
+public final class RuntimeArguments {
     @Option(
         names = "--result-size",
         paramLabel = "count",
         description = "A cap on the maximum number of items to output on the screen or to a local list."
     )
-    private Integer resultSize = org.rumbledb.config.Runtime.DEFAULT_RESULTS_SIZE_CAP;
+    private Integer resultSize = org.rumbledb.config.model.RuntimeConfig.DEFAULT_RESULTS_SIZE_CAP;
 
     @Option(
         names = { "-c", "--materialization-cap" },
         paramLabel = "count",
         description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query."
     )
-    private Integer materializationCap = org.rumbledb.config.Runtime.DEFAULT_MATERIALIZATION_CAP;
+    private Integer materializationCap = org.rumbledb.config.model.RuntimeConfig.DEFAULT_MATERIALIZATION_CAP;
 
     @Option(
         names = "--native-sql-predicates",
@@ -59,8 +61,8 @@ public final class Runtime {
     )
     private Boolean applyUpdates;
 
-    public org.rumbledb.config.Runtime toRuntime() {
-        org.rumbledb.config.Runtime.RuntimeBuilder builder = org.rumbledb.config.Runtime.builder();
+    public RuntimeConfig toConfig() {
+        RuntimeConfig.RuntimeConfigBuilder builder = RuntimeConfig.builder();
         OptionConversion.applyIntIfPresent(this.resultSize, builder::resultsSizeCap);
         OptionConversion.applyIntIfPresent(this.materializationCap, builder::materializationCap);
         OptionConversion.applyBooleanIfPresent(this.nativeSQLPredicates, builder::useNativeSQLPredicates);

@@ -16,24 +16,26 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import lombok.Builder;
+import lombok.Builder.Default;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class InputOptions {
+public class ServerConfig {
     /**
-     * Path from which the JSONiq or XQuery query is to be read.
+     * Host name when used in server mode.
      */
-    private String queryPath;
+    @Default
+    private String host = "localhost";
 
     /**
-     * Query that was passed from the command line
-     * (This should be removed later when we have separate classes for CLI and API)
+     * Port number when used in server mode.
      */
-    private String query;
+    @Default
+    private int port = 8001;
 }

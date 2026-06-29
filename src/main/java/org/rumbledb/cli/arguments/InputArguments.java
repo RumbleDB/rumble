@@ -1,10 +1,10 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.InputOptions;
+import org.rumbledb.config.model.InputConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Input {
+public final class InputArguments {
     @Option(
         names = { "-q", "--query" },
         paramLabel = "query",
@@ -19,8 +19,8 @@ public final class Input {
     )
     private String queryPath;
 
-    public InputOptions toInputOptions(String positionalQueryPath) {
-        InputOptions.InputOptionsBuilder builder = InputOptions.builder();
+    public InputConfig toConfig(String positionalQueryPath) {
+        InputConfig.InputConfigBuilder builder = InputConfig.builder();
         OptionConversion.applyIfPresent(
             this.queryPath != null ? this.queryPath : positionalQueryPath,
             builder::queryPath

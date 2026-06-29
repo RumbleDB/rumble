@@ -18,9 +18,9 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.cli.options.Server;
-import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.cli.arguments.ServerArguments;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.ExecutionMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -28,12 +28,12 @@ import picocli.CommandLine.Mixin;
 @Command(name = "serve", description = "Runs RumbleDB as a server on port 8001.", mixinStandardHelpOptions = false)
 public final class Serve extends BaseCommand {
     @Mixin
-    Server server;
+    ServerArguments server;
 
     @Override
     public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.SERVE)
-            .server(this.server.toServerOptions())
+            .server(this.server.toConfig())
             .build();
     }
 }

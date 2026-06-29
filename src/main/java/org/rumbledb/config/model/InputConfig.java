@@ -16,13 +16,24 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
-/**
- * Application execution mode selected by the launcher.
- */
-public enum ExecutionMode {
-    RUN,
-    SERVE,
-    REPL
+import lombok.Builder;
+import lombok.Value;
+import lombok.experimental.Accessors;
+
+@Value
+@Builder(toBuilder = true)
+@Accessors(fluent = true)
+public class InputConfig {
+    /**
+     * Path from which the JSONiq or XQuery query is to be read.
+     */
+    private String queryPath;
+
+    /**
+     * Query that was passed from the command line
+     * (This should be removed later when we have separate classes for CLI and API)
+     */
+    private String query;
 }

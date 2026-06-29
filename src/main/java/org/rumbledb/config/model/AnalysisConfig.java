@@ -16,10 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
-
-
-import org.rumbledb.serialization.SerializationParameters;
+package org.rumbledb.config.model;
 
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -29,44 +26,22 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class OutputOptions {
-    public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;
-
+public class AnalysisConfig {
     /**
-     * Number of output partitions to write to the output path.
+     * Whether static analysis should be performed at compile time.
      */
     @Default
-    private int numberOfOutputPartitions = DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS;
+    private boolean enableStaticTyping = false;
 
     /**
-     * Path to which the output path should be written.
-     */
-    private String outputPath;
-
-    /**
-     * Output format for writing to the output path.
-     */
-    private String outputFormat;
-
-    /**
-     * Whether to overwrite the output path if it already exists.
+     * Whether inferred types should be printed as part of analysis output.
      */
     @Default
-    private boolean allowOverwrite = false;
+    private boolean printInferredTypes = false;
 
     /**
-     * Options to further specify the output format, for example a separator character for CSV or a compression format.
+     * Whether the return type of built-in functions is checked.
      */
-    private SerializationParameters serializationParameters;
-
-    /**
-     * Log path
-     */
-    private String logPath;
-
-    /**
-     * Current shell filter for post-processing output (e.g. JSON beautifier)
-     */
-    private String shellFilter;
-
+    @Default
+    private boolean checkReturnTypeOfBuiltinFunctions = false;
 }

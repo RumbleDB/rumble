@@ -16,11 +16,13 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import java.time.ZoneId;
 import java.util.Objects;
 
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
@@ -31,7 +33,7 @@ import lombok.experimental.Accessors;
 
 @Value
 @Accessors(fluent = true)
-public class FormattingOptions {
+public class FormattingConfig {
     /**
      * The default place used for formatting date and time values.
      *
@@ -68,7 +70,7 @@ public class FormattingOptions {
     private String defaultFormattingLanguage;
 
     @Builder(toBuilder = true)
-    private FormattingOptions(
+    private FormattingConfig(
             ZoneId defaultFormattingPlace,
             String defaultFormattingCalendar,
             String defaultFormattingLanguage
@@ -107,13 +109,13 @@ public class FormattingOptions {
         );
     }
 
-    public static class FormattingOptionsBuilder {
-        public FormattingOptionsBuilder defaultFormattingCalendar(String calendar) {
+    public static class FormattingConfigBuilder {
+        public FormattingConfigBuilder defaultFormattingCalendar(String calendar) {
             this.defaultFormattingCalendar = normalizeFormattingCalendar(calendar);
             return this;
         }
 
-        public FormattingOptionsBuilder defaultFormattingLanguage(String language) {
+        public FormattingConfigBuilder defaultFormattingLanguage(String language) {
             this.defaultFormattingLanguage = normalizeFormattingLanguage(language);
             return this;
         }

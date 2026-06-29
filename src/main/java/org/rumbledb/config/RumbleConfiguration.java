@@ -18,6 +18,19 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.config.model.AccessConfig;
+import org.rumbledb.config.model.AnalysisConfig;
+import org.rumbledb.config.model.BindingsConfig;
+import org.rumbledb.config.model.DebugConfig;
+import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.FormattingConfig;
+import org.rumbledb.config.model.InputConfig;
+import org.rumbledb.config.model.OptimizationConfig;
+import org.rumbledb.config.model.OutputConfig;
+import org.rumbledb.config.model.RuntimeConfig;
+import org.rumbledb.config.model.SemanticsConfig;
+import org.rumbledb.config.model.ServerConfig;
+
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
@@ -37,37 +50,37 @@ public class RumbleConfiguration {
     private ExecutionMode executionMode = ExecutionMode.RUN;
 
     @Default
-    private ServerOptions server = ServerOptions.builder().build();
+    private ServerConfig server = ServerConfig.builder().build();
 
     @Default
-    private Access access = Access.builder().build();
+    private AccessConfig access = AccessConfig.builder().build();
 
     @Default
-    private InputOptions input = InputOptions.builder().build();
+    private InputConfig input = InputConfig.builder().build();
 
     @Default
-    private OutputOptions output = OutputOptions.builder().build();
+    private OutputConfig output = OutputConfig.builder().build();
 
     @Default
-    private Runtime runtime = Runtime.builder().build();
+    private RuntimeConfig runtime = RuntimeConfig.builder().build();
 
     @Default
-    private DebugOptions debug = DebugOptions.builder().build();
+    private DebugConfig debug = DebugConfig.builder().build();
 
     @Default
-    private AnalysisOptions analysis = AnalysisOptions.builder().build();
+    private AnalysisConfig analysis = AnalysisConfig.builder().build();
 
     @Default
-    private OptimizationOptions optimization = OptimizationOptions.builder().build();
+    private OptimizationConfig optimization = OptimizationConfig.builder().build();
 
     @Default
-    private Semantics semantics = Semantics.builder().build();
+    private SemanticsConfig semantics = SemanticsConfig.builder().build();
 
     @Default
-    private FormattingOptions formatting = FormattingOptions.builder().build();
+    private FormattingConfig formatting = FormattingConfig.builder().build();
 
     @Default
-    private Bindings bindings = Bindings.builder().build();
+    private BindingsConfig bindings = BindingsConfig.builder().build();
 
     /// Avoid Javadoc error because it cannot resolve the builder class Used as return type for the baseConfiguration
     /// method in cli.commands.AbstractCommand

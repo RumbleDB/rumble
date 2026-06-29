@@ -16,32 +16,13 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
-import lombok.Builder;
-import lombok.Builder.Default;
-import lombok.Value;
-import lombok.experimental.Accessors;
-
-@Value
-@Builder(toBuilder = true)
-@Accessors(fluent = true)
-public class AnalysisOptions {
-    /**
-     * Whether static analysis should be performed at compile time.
-     */
-    @Default
-    private boolean enableStaticTyping = false;
-
-    /**
-     * Whether inferred types should be printed as part of analysis output.
-     */
-    @Default
-    private boolean printInferredTypes = false;
-
-    /**
-     * Whether the return type of built-in functions is checked.
-     */
-    @Default
-    private boolean checkReturnTypeOfBuiltinFunctions = false;
+/**
+ * Application execution mode selected by the launcher.
+ */
+public enum ExecutionMode {
+    RUN,
+    SERVE,
+    REPL
 }

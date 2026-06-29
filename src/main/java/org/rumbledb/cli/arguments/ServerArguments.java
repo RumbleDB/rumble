@@ -1,10 +1,10 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
-import org.rumbledb.config.ServerOptions;
+import org.rumbledb.config.model.ServerConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Server {
+public final class ServerArguments {
     @Option(
         names = { "-h", "--host" },
         paramLabel = "host",
@@ -19,8 +19,8 @@ public final class Server {
     )
     private Integer port;
 
-    public ServerOptions toServerOptions() {
-        ServerOptions.ServerOptionsBuilder builder = ServerOptions.builder();
+    public ServerConfig toConfig() {
+        ServerConfig.ServerConfigBuilder builder = ServerConfig.builder();
         OptionConversion.applyIfPresent(this.host, builder::host);
         OptionConversion.applyIntIfPresent(this.port, builder::port);
         return builder.build();

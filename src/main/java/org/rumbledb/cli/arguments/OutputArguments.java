@@ -1,14 +1,14 @@
-package org.rumbledb.cli.options;
+package org.rumbledb.cli.arguments;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import org.rumbledb.config.OutputOptions;
 import org.rumbledb.config.SerializationParameterBuilder;
+import org.rumbledb.config.model.OutputConfig;
 
 import picocli.CommandLine.Option;
 
-public final class Output {
+public final class OutputArguments {
     @Option(
         names = { "-o", "--output-path" },
         paramLabel = "path",
@@ -60,8 +60,8 @@ public final class Output {
     )
     private Map<String, String> outputFormatOptions = new HashMap<>();
 
-    public OutputOptions toOutputOptions() {
-        OutputOptions.OutputOptionsBuilder builder = OutputOptions.builder();
+    public OutputConfig toConfig() {
+        OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);
         OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);

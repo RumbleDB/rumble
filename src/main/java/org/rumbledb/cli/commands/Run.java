@@ -18,10 +18,10 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.cli.options.Input;
-import org.rumbledb.cli.options.Output;
-import org.rumbledb.config.ExecutionMode;
+import org.rumbledb.cli.arguments.InputArguments;
+import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.ExecutionMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -30,10 +30,10 @@ import picocli.CommandLine.Parameters;
 @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = false)
 public final class Run extends BaseCommand {
     @Mixin
-    Input input;
+    InputArguments input;
 
     @Mixin
-    Output output;
+    OutputArguments output;
 
     @Parameters(
         index = "0",
@@ -46,8 +46,8 @@ public final class Run extends BaseCommand {
     @Override
     public RumbleConfiguration call() {
         return this.baseConfiguration(ExecutionMode.RUN)
-            .input(this.input.toInputOptions(this.queryPath))
-            .output(this.output.toOutputOptions())
+            .input(this.input.toConfig(this.queryPath))
+            .output(this.output.toConfig())
             .build();
     }
 }

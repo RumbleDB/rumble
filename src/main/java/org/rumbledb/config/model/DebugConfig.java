@@ -16,7 +16,7 @@
  *
  */
 
-package org.rumbledb.config;
+package org.rumbledb.config.model;
 
 import lombok.Builder;
 import lombok.Builder.Default;
@@ -26,31 +26,24 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class Runtime {
-    public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
-    public static final int DEFAULT_MATERIALIZATION_CAP = 100000;
-
+public class DebugConfig {
+    /**
+     * Whether verbose error info should be shown in case an error is returned.
+     */
     @Default
-    private int resultsSizeCap = DEFAULT_RESULTS_SIZE_CAP;
+    private boolean showErrorInfo = false;
 
+    /**
+     * Whether verbose information on query plans should be displayed.
+     */
     @Default
-    private int materializationCap = DEFAULT_MATERIALIZATION_CAP;
+    private boolean printIteratorTree = false;
 
+    /**
+     * Whether debug output is enabled.
+     * Note: this was meant to replace debug() of RumbleRuntimeConfiguration
+     * But it's only used in one single place, so it might be worth merge this with showErrorInfo
+     */
     @Default
-    private boolean useNativeSQLPredicates = true;
-
-    @Default
-    private boolean detectDataFrameExecutionMode = true;
-
-    @Default
-    private boolean useParallelExecution = true;
-
-    @Default
-    private boolean useDataFrameExecution = true;
-
-    @Default
-    private boolean useNativeExecution = true;
-
-    @Default
-    private boolean shouldApplyUpdates = false;
+    private boolean logging = false;
 }

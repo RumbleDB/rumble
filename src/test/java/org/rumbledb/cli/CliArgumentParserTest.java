@@ -20,9 +20,9 @@ package org.rumbledb.cli;
 
 import org.junit.Test;
 import org.rumbledb.context.Name;
-import org.rumbledb.config.ExecutionMode;
-import org.rumbledb.config.OutputOptions;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.OutputConfig;
 
 import java.time.ZoneId;
 
@@ -94,7 +94,7 @@ public class CliArgumentParserTest {
         assertEquals(null, defaults.input().query());
         assertEquals(null, defaults.input().queryPath());
         assertEquals(
-            OutputOptions.DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS,
+            OutputConfig.DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS,
             defaults.output().numberOfOutputPartitions()
         );
         assertEquals(ZoneId.of("UTC"), defaults.formatting().defaultFormattingPlace());
