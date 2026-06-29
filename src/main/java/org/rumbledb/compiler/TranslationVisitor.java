@@ -168,6 +168,7 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
@@ -562,6 +563,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return unescapeStringLiteral(rawValue);
     }
 
+    private Item parseJSONItem(String value, ExceptionMetadata metadata) {
+        return ItemParser.getItemFromJSONString(
+            value,
+            JSONParsingOptions.defaultInstance(true),
+            this.configuration.getXmlVersion(),
+            true,
+            metadata
+        );
+    }
+
     private Name nameForUnprefixedFunction(String localName) {
         String uri = this.moduleContext.getDefaultFunctionNamespaceUri();
         if (uri != null) {
@@ -790,8 +801,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             );
         }
         try {
-            definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx), false);
-        } catch (ParsingException e) {
+            definitionItem = parseJSONItem(definitionString, createMetadataFromContext(ctx));
+        } catch (InvalidJSONException | ParsingException e) {
             ParsingException pe = new ParsingException(
                     "A type definition must be a JSON literal: no dynamic evaluation is allowed.",
                     createMetadataFromContext(ctx)

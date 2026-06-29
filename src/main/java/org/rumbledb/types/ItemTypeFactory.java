@@ -42,7 +42,7 @@ public class ItemTypeFactory {
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
         if (item.isArray()) {
-            List<Item> members = item.getItems();
+            List<Item> members = item.getItemMembers();
             if (members.size() != 1) {
                 throw new InvalidSchemaException(
                         "Invalid JSound, an array type should only contain one member type: " + item.serialize(),
@@ -61,7 +61,7 @@ public class ItemTypeFactory {
         }
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
                 boolean unique = false;
@@ -198,7 +198,7 @@ public class ItemTypeFactory {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        List<String> keys = item.getKeys();
+        List<String> keys = item.getStringKeys();
         if (!keys.contains("kind")) {
             throw new InvalidSchemaException(
                     "A JSound verbose schema must contain a 'kind' field.",
@@ -276,7 +276,7 @@ public class ItemTypeFactory {
                         );
                     closed = true;
                 }
-                List<Item> contents = contentItem.getItems();
+                List<Item> contents = contentItem.getItemMembers();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
                 for (Item c : contents) {
                     Item fieldItem = c.getItemByKey("name");

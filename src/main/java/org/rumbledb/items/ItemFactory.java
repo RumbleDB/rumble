@@ -326,6 +326,10 @@ public class ItemFactory {
      */
     @Deprecated
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+        return createObjectItemFromValueLists(keyValuePairs, mutable);
+    }
+
+    public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
         if (mutable) {
             result.setMutabilityLevel(0);
