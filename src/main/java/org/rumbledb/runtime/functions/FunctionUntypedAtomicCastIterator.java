@@ -101,10 +101,13 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
         if (item == null || !item.isUntypedAtomic()) {
             return item;
         }
+        if (item.getDynamicType().isSubtypeOf(this.targetType)) {
+            return item;
+        }
         if (
             usesQNameCoercionErrorSemantics()
-                && (this.targetType.equals(BuiltinTypesCatalogue.QNameItem)
-                    || this.targetType.equals(BuiltinTypesCatalogue.NOTATIONItem))
+                && (this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
+                    || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem))
         ) {
             throw new CannotConvertToQNameException(
                     this.exceptionMessage
