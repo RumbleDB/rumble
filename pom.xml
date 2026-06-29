@@ -203,7 +203,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.7.0</version>
                 <executions>
                     <execution>
                         <phase>verify</phase>
@@ -218,11 +218,6 @@
                             <!-- include all java files in "java" folders under "src" -->
                             <include>src/**/java/**/*.java</include>
                         </includes>
-
-                        <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
-                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
-                        </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
