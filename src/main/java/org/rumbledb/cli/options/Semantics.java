@@ -1,10 +1,8 @@
 package org.rumbledb.cli.options;
 
-import org.rumbledb.config.LanguageOptions;
-
 import picocli.CommandLine.Option;
 
-public final class Language {
+public final class Semantics {
     @Option(
         names = "--default-language",
         paramLabel = "language",
@@ -33,13 +31,21 @@ public final class Language {
     )
     private Boolean laxJSONNullValidation;
 
-    public LanguageOptions toLanguageOptions() {
-        LanguageOptions.LanguageOptionsBuilder builder = LanguageOptions.builder();
+    @Option(
+        names = "--static-base-uri",
+        paramLabel = "uri",
+        description = "Sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query."
+    )
+    private String staticBaseUri;
+
+    public org.rumbledb.config.Semantics toSemantics() {
+        org.rumbledb.config.Semantics.SemanticsBuilder builder = org.rumbledb.config.Semantics.builder();
 
         OptionConversion.applyBooleanIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
         OptionConversion.applyBooleanIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
         OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
         OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
+        OptionConversion.applyIfPresent(this.staticBaseUri, builder::staticBaseUri);
 
         return builder.build();
     }

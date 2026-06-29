@@ -18,7 +18,14 @@
 
 package org.rumbledb.cli.commands;
 
-import org.rumbledb.cli.options.*;
+import org.rumbledb.cli.options.Access;
+import org.rumbledb.cli.options.Analysis;
+import org.rumbledb.cli.options.Bindings;
+import org.rumbledb.cli.options.Debug;
+import org.rumbledb.cli.options.Formatting;
+import org.rumbledb.cli.options.Optimization;
+import org.rumbledb.cli.options.Runtime;
+import org.rumbledb.cli.options.Semantics;
 import org.rumbledb.config.ExecutionMode;
 import org.rumbledb.config.RumbleConfiguration;
 
@@ -30,10 +37,10 @@ import java.util.concurrent.Callable;
 @Command
 public abstract class BaseCommand implements Callable<RumbleConfiguration> {
     @Mixin
-    IO io;
+    Access access;
 
     @Mixin
-    Limits limits;
+    Runtime runtime;
 
     @Mixin
     Debug debug;
@@ -42,31 +49,27 @@ public abstract class BaseCommand implements Callable<RumbleConfiguration> {
     Analysis analysis;
 
     @Mixin
-    Execution execution;
-
-    @Mixin
     Optimization optimization;
 
     @Mixin
-    Language language;
+    Semantics semantics;
 
     @Mixin
     Formatting formatting;
 
     @Mixin
-    Variables variables;
+    Bindings bindings;
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(ExecutionMode mode) {
         return RumbleConfiguration.builder()
             .executionMode(mode)
-            .io(this.io.toIOOptions())
-            .runtimeLimits(this.limits.toRuntimeLimits())
+            .access(this.access.toAccess())
+            .runtime(this.runtime.toRuntime())
             .debug(this.debug.toDebugOptions())
             .analysis(this.analysis.toAnalysisOptions())
-            .execution(this.execution.toExecutionOptions())
             .optimization(this.optimization.toOptimizationOptions())
-            .language(this.language.toLanguageOptions())
+            .semantics(this.semantics.toSemantics())
             .formatting(this.formatting.toFormattingOptions())
-            .externalVariableBindings(this.variables.toExternalVariableBindings());
+            .bindings(this.bindings.toBindings());
     }
 }

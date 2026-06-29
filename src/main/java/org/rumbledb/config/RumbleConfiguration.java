@@ -40,7 +40,7 @@ public class RumbleConfiguration {
     private ServerOptions server = ServerOptions.builder().build();
 
     @Default
-    private IOOptions io = IOOptions.builder().build();
+    private Access access = Access.builder().build();
 
     @Default
     private InputOptions input = InputOptions.builder().build();
@@ -49,7 +49,7 @@ public class RumbleConfiguration {
     private OutputOptions output = OutputOptions.builder().build();
 
     @Default
-    private RuntimeLimits runtimeLimits = RuntimeLimits.builder().build();
+    private Runtime runtime = Runtime.builder().build();
 
     @Default
     private DebugOptions debug = DebugOptions.builder().build();
@@ -58,19 +58,16 @@ public class RumbleConfiguration {
     private AnalysisOptions analysis = AnalysisOptions.builder().build();
 
     @Default
-    private ExecutionOptions execution = ExecutionOptions.builder().build();
-
-    @Default
     private OptimizationOptions optimization = OptimizationOptions.builder().build();
 
     @Default
-    private LanguageOptions language = LanguageOptions.builder().build();
+    private Semantics semantics = Semantics.builder().build();
 
     @Default
     private FormattingOptions formatting = FormattingOptions.builder().build();
 
     @Default
-    private ExternalVariableBindings externalVariableBindings = ExternalVariableBindings.builder().build();
+    private Bindings bindings = Bindings.builder().build();
 
     /// Avoid Javadoc error because it cannot resolve the builder class Used as return type for the baseConfiguration
     /// method in cli.commands.AbstractCommand

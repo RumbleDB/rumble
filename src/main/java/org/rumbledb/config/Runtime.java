@@ -18,8 +18,6 @@
 
 package org.rumbledb.config;
 
-import java.util.ArrayList;
-import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
@@ -28,15 +26,31 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class IOOptions {
-    /**
-     * Allowed URI prefixes for read/write (with I/O functions to read data)
-     */
-    @Default
-    private List<String> allowedPrefixes = new ArrayList<>();
+public class Runtime {
+    public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
+    public static final int DEFAULT_MATERIALIZATION_CAP = 100000;
 
-    /**
-     * Static base URI against which relative URIs are resolved when reading or writing data.
-     */
-    private String staticBaseUri;
+    @Default
+    private int resultsSizeCap = DEFAULT_RESULTS_SIZE_CAP;
+
+    @Default
+    private int materializationCap = DEFAULT_MATERIALIZATION_CAP;
+
+    @Default
+    private boolean useNativeSQLPredicates = true;
+
+    @Default
+    private boolean detectDataFrameExecutionMode = true;
+
+    @Default
+    private boolean useParallelExecution = true;
+
+    @Default
+    private boolean useDataFrameExecution = true;
+
+    @Default
+    private boolean useNativeExecution = true;
+
+    @Default
+    private boolean shouldApplyUpdates = false;
 }

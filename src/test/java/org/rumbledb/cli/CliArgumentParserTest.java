@@ -21,7 +21,6 @@ package org.rumbledb.cli;
 import org.junit.Test;
 import org.rumbledb.context.Name;
 import org.rumbledb.config.ExecutionMode;
-import org.rumbledb.config.InputOptions;
 import org.rumbledb.config.OutputOptions;
 import org.rumbledb.config.RumbleConfiguration;
 
@@ -63,7 +62,7 @@ public class CliArgumentParserTest {
         assertEquals("127.0.0.1", configuration.server().host());
         assertEquals(9000, configuration.server().port());
         assertTrue(configuration.debug().logging());
-        assertFalse(configuration.execution().useNativeExecution());
+        assertFalse(configuration.runtime().useNativeExecution());
         assertEquals(ZoneId.of("Europe/Madrid"), configuration.formatting().defaultFormattingPlace());
     }
 
@@ -78,7 +77,7 @@ public class CliArgumentParserTest {
 
         assertEquals(ExecutionMode.REPL, configuration.executionMode());
         assertTrue(configuration.debug().logging());
-        assertEquals(12, configuration.runtimeLimits().resultsSizeCap());
+        assertEquals(12, configuration.runtime().resultsSizeCap());
     }
 
     @Test
@@ -87,12 +86,13 @@ public class CliArgumentParserTest {
         RumbleConfiguration explicitlyEnabled = CLIArgumentParser.parse("run", "--native-execution");
         RumbleConfiguration explicitlyDisabled = CLIArgumentParser.parse("run", "--no-native-execution");
 
-        assertTrue(defaults.execution().useNativeExecution());
-        assertTrue(explicitlyEnabled.execution().useNativeExecution());
-        assertFalse(explicitlyDisabled.execution().useNativeExecution());
+        assertTrue(defaults.runtime().useNativeExecution());
+        assertTrue(explicitlyEnabled.runtime().useNativeExecution());
+        assertFalse(explicitlyDisabled.runtime().useNativeExecution());
         assertEquals("localhost", defaults.server().host());
         assertEquals(8001, defaults.server().port());
-        assertEquals(InputOptions.DEFAULT_INPUT_FORMAT, defaults.input().inputFormat());
+        assertEquals(null, defaults.input().query());
+        assertEquals(null, defaults.input().queryPath());
         assertEquals(
             OutputOptions.DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS,
             defaults.output().numberOfOutputPartitions()
@@ -139,7 +139,7 @@ public class CliArgumentParserTest {
 
         assertEquals(
             "json",
-            configuration.externalVariableBindings().getInputFormat(Name.CONTEXT_ITEM)
+            configuration.bindings().getInputFormat(Name.CONTEXT_ITEM)
         );
     }
 

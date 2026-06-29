@@ -1,10 +1,22 @@
 package org.rumbledb.cli.options;
 
-import org.rumbledb.config.ExecutionOptions;
-
 import picocli.CommandLine.Option;
 
-public final class Execution {
+public final class Runtime {
+    @Option(
+        names = "--result-size",
+        paramLabel = "count",
+        description = "A cap on the maximum number of items to output on the screen or to a local list."
+    )
+    private Integer resultSize = org.rumbledb.config.Runtime.DEFAULT_RESULTS_SIZE_CAP;
+
+    @Option(
+        names = { "-c", "--materialization-cap" },
+        paramLabel = "count",
+        description = "A cap on the maximum number of items to materialize during the query execution for large sequences within a query."
+    )
+    private Integer materializationCap = org.rumbledb.config.Runtime.DEFAULT_MATERIALIZATION_CAP;
+
     @Option(
         names = "--native-sql-predicates",
         negatable = true,
@@ -41,29 +53,16 @@ public final class Execution {
     private Boolean nativeExecution;
 
     @Option(
-        names = "--function-inlining",
-        negatable = true,
-        description = "Activates function inlining for non-recursive functions (activated by default)."
-    )
-    private Boolean functionInlining;
-
-    @Option(
-        names = "--tail-call-optimization",
-        negatable = true,
-        description = "Activates tail call optimization."
-    )
-    private Boolean tailCallOptimization;
-
-    @Option(
         names = "--apply-updates",
         negatable = true,
         description = "Applies the pending update list returned by the query."
     )
     private Boolean applyUpdates;
 
-    public ExecutionOptions toExecutionOptions() {
-        ExecutionOptions.ExecutionOptionsBuilder builder = ExecutionOptions.builder();
-
+    public org.rumbledb.config.Runtime toRuntime() {
+        org.rumbledb.config.Runtime.RuntimeBuilder builder = org.rumbledb.config.Runtime.builder();
+        OptionConversion.applyIntIfPresent(this.resultSize, builder::resultsSizeCap);
+        OptionConversion.applyIntIfPresent(this.materializationCap, builder::materializationCap);
         OptionConversion.applyBooleanIfPresent(this.nativeSQLPredicates, builder::useNativeSQLPredicates);
         OptionConversion.applyBooleanIfPresent(
             this.dataFrameExecutionModeDetection,
@@ -72,10 +71,7 @@ public final class Execution {
         OptionConversion.applyBooleanIfPresent(this.parallelExecution, builder::useParallelExecution);
         OptionConversion.applyBooleanIfPresent(this.dataFrameExecution, builder::useDataFrameExecution);
         OptionConversion.applyBooleanIfPresent(this.nativeExecution, builder::useNativeExecution);
-        OptionConversion.applyBooleanIfPresent(this.functionInlining, builder::useFunctionInlining);
-        OptionConversion.applyBooleanIfPresent(this.tailCallOptimization, builder::useTailCallOptimization);
         OptionConversion.applyBooleanIfPresent(this.applyUpdates, builder::shouldApplyUpdates);
-
         return builder.build();
     }
 }

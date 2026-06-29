@@ -37,40 +37,22 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class ExternalVariableBindings {
-    /**
-     * Stores already-materialized external variable values
-     */
+public class Bindings {
     @Default
     private Map<Name, List<Item>> externalVariableValues = new HashMap<>();
 
-    /**
-     * Stores raw string values passed from CLI/API before they are parsed.
-     */
     @Default
     private Map<Name, String> unparsedExternalVariableValues = new HashMap<>();
 
-    /**
-     * Maps variable names to file paths/URIs.
-     */
     @Default
     private Map<Name, String> externalVariableValuesReadFromFiles = new HashMap<>();
 
-    /**
-     * Stores external variables backed by Spark Dataset<Row>
-     */
     @Default
     private Map<Name, Dataset<Row>> externalVariableValuesReadFromDataFrames = new HashMap<>();
 
-    /**
-     * Set of variable names whose value should be read from stdin.
-     */
     @Default
     private Set<Name> externalVariablesReadFromStandardInput = new HashSet<>();
 
-    /**
-     * Maps each external variable name to the format used to parse its input
-     */
     @Default
     private Map<Name, String> externalVariablesInputFormats = new HashMap<>();
 

@@ -28,41 +28,25 @@ import lombok.experimental.Accessors;
 
 @Value
 @Accessors(fluent = true)
-public class LanguageOptions {
+public class Semantics {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
-
-    /**
-     * Whether dates with time zones should be supported.
-     * If supported, RumbleDB will not be able to use DataFrames for data containing dates.
-     */
-    private boolean datesWithTimeZone;
-
-    /**
-     * Whether it is fine to consider JSON null values in an object as absent for validation against an optional
-     * key.
-     */
-    private boolean laxJSONNullValidation;
-
-    /**
-     * Version of the query language in use.
-     */
-    private String queryLanguage;
-
-    /**
-     * Configured XML version.
-     */
     public static final String DEFAULT_XML_VERSION = "1.1";
 
+    private boolean datesWithTimeZone;
+    private boolean laxJSONNullValidation;
+    private String queryLanguage;
     private String xmlVersion;
+    private String staticBaseUri;
 
     @Builder(toBuilder = true)
-    private LanguageOptions(
+    private Semantics(
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
             String queryLanguage,
-            String xmlVersion
+            String xmlVersion,
+            String staticBaseUri
     ) {
         this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
         this.laxJSONNullValidation = Objects.requireNonNullElse(
@@ -71,6 +55,7 @@ public class LanguageOptions {
         );
         this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
         this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
+        this.staticBaseUri = staticBaseUri;
     }
 
     private static String normalizeXmlVersion(String xmlVersion) {
@@ -88,8 +73,8 @@ public class LanguageOptions {
         );
     }
 
-    public static class LanguageOptionsBuilder {
-        public LanguageOptionsBuilder xmlVersion(String xmlVersion) {
+    public static class SemanticsBuilder {
+        public SemanticsBuilder xmlVersion(String xmlVersion) {
             this.xmlVersion = normalizeXmlVersion(xmlVersion);
             return this;
         }

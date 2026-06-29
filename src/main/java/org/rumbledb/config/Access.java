@@ -18,6 +18,8 @@
 
 package org.rumbledb.config;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
@@ -26,20 +28,10 @@ import lombok.experimental.Accessors;
 @Value
 @Builder(toBuilder = true)
 @Accessors(fluent = true)
-public class RuntimeLimits {
-    public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
-    public static final int DEFAULT_MATERIALIZATION_CAP = 100000;
-
+public class Access {
     /**
-     * Number of Items that should be collected as the overall result of a query.
+     * Allowed URI prefixes for read/write (with I/O functions to read data)
      */
     @Default
-    private int resultsSizeCap = DEFAULT_RESULTS_SIZE_CAP;
-
-    /**
-     * Number of Items that should be collected in case of a forced materialization. This applies in
-     * particular to a local use of the ItemIterator.
-     */
-    @Default
-    private int materializationCap = DEFAULT_MATERIALIZATION_CAP;
+    private List<String> allowedPrefixes = new ArrayList<>();
 }

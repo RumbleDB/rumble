@@ -28,6 +28,18 @@ import lombok.experimental.Accessors;
 @Accessors(fluent = true)
 public class OptimizationOptions {
     /**
+     * Whether function inlining is enabled.
+     */
+    @Default
+    private boolean useFunctionInlining = true;
+
+    /**
+     * Whether tail call optimization is enabled.
+     */
+    @Default
+    private boolean useTailCallOptimization = true;
+
+    /**
      * Whether general comparisons may be rewritten using value comparisons.
      */
     @Default

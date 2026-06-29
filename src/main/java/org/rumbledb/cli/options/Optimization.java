@@ -6,6 +6,20 @@ import picocli.CommandLine.Option;
 
 public final class Optimization {
     @Option(
+        names = "--function-inlining",
+        negatable = true,
+        description = "Activates function inlining for non-recursive functions (activated by default)."
+    )
+    private Boolean functionInlining;
+
+    @Option(
+        names = "--tail-call-optimization",
+        negatable = true,
+        description = "Activates tail call optimization."
+    )
+    private Boolean tailCallOptimization;
+
+    @Option(
         names = "--optimize-general-comparison-to-value-comparison",
         negatable = true,
         description = "Activates automatic conversion of general comparisons to value comparisons when applicable (activated by default)."
@@ -40,6 +54,8 @@ public final class Optimization {
             this.optimizeGeneralComparisonToValueComparison,
             builder::optimizeGeneralComparisonToValueComparison
         );
+        OptionConversion.applyBooleanIfPresent(this.functionInlining, builder::useFunctionInlining);
+        OptionConversion.applyBooleanIfPresent(this.tailCallOptimization, builder::useTailCallOptimization);
         OptionConversion.applyBooleanIfPresent(this.optimizeSteps, builder::optimizeSteps);
         OptionConversion.applyBooleanIfPresent(this.optimizeStepsExperimental, builder::optimizeStepsExperimental);
         OptionConversion.applyBooleanIfPresent(this.optimizeParentPointers, builder::optimizeParentPointers);
