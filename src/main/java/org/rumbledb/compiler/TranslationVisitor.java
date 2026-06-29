@@ -3400,20 +3400,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private CatchPattern parseWildcardPattern(JsoniqParser.WildcardContext wildcardContext) {
         if (wildcardContext instanceof JsoniqParser.AllNamesContext) {
-            /// Only * is provided
+            // Only * is provided
             return CatchPattern.catchAll();
         }
         if (wildcardContext instanceof JsoniqParser.AllWithLocalContext) {
-            /// Namespace is the wildcard
+            // Namespace is the wildcard
             String wildcardText = wildcardContext.getText();
-            /// First two characters *: are stripped to keep only the local name
+            // First two characters *: are stripped to keep only the local name
             return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
         }
         if (wildcardContext instanceof JsoniqParser.AllWithNSContext) {
-            /// Local name is the wildcard
+            // Local name is the wildcard
             String wildcardText = wildcardContext.getText();
 
-            /// Strip the last two characters :*
+            // Strip the last two characters :*
             String prefix = wildcardText.substring(0, wildcardText.length() - 2);
             String namespace = resolvePrefixForDirConstructor(prefix);
             if (namespace == null) {
@@ -3425,8 +3425,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return CatchPattern.localNameWildcard(namespace, wildcardText);
         }
         if (wildcardContext instanceof JsoniqParser.BracedURILiteralContext) {
-            /// Declare namespace in place, and match any local name
-            /// For example, Q{http://example.com}:*
+            // Declare namespace in place, and match any local name
+            // For example, Q{http://example.com}:*
             String wildcardText = wildcardContext.getText();
             int closingBrace = wildcardText.indexOf('}');
             return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
