@@ -5,7 +5,6 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotConvertToQNameException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -113,7 +112,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
         checkItemsSize(this.childIndex);
         if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
-            rejectNamespaceSensitiveArgumentCoercion();
             checkTypePromotion();
         }
     }
@@ -254,26 +252,4 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
     }
 
-    private void rejectNamespaceSensitiveArgumentCoercion() {
-        if (
-            usesQNameCoercionErrorSemantics()
-                && (this.itemType.equals(BuiltinTypesCatalogue.QNameItem)
-                    || this.itemType.equals(BuiltinTypesCatalogue.NOTATIONItem))
-                && this.nextResult.isUntypedAtomic()
-        ) {
-            throw new CannotConvertToQNameException(
-                    this.exceptionMessage
-                        + this.nextResult.getDynamicType()
-                        + " cannot be implicitly converted to type "
-                        + this.sequenceType
-                        + ".",
-                    getMetadata()
-            );
-        }
-    }
-
-    private boolean usesQNameCoercionErrorSemantics() {
-        String queryLanguage = this.staticContext.getQueryLanguage();
-        return !queryLanguage.equals("xquery10") && !queryLanguage.equals("jsoniq10");
-    }
 }

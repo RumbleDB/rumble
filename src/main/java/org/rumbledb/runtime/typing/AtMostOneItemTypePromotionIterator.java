@@ -3,7 +3,6 @@ package org.rumbledb.runtime.typing;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotConvertToQNameException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -88,33 +87,9 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
 
         if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
-            rejectNamespaceSensitiveArgumentCoercion(item);
             item = checkTypePromotion(item);
         }
         return item;
-    }
-
-    private void rejectNamespaceSensitiveArgumentCoercion(Item item) {
-        if (
-            usesQNameCoercionErrorSemantics()
-                && (this.itemType.equals(BuiltinTypesCatalogue.QNameItem)
-                    || this.itemType.equals(BuiltinTypesCatalogue.NOTATIONItem))
-                && item.isUntypedAtomic()
-        ) {
-            throw new CannotConvertToQNameException(
-                    this.exceptionMessage
-                        + item.getDynamicType()
-                        + " cannot be implicitly converted to type "
-                        + this.sequenceType
-                        + ".",
-                    getMetadata()
-            );
-        }
-    }
-
-    private boolean usesQNameCoercionErrorSemantics() {
-        String queryLanguage = this.staticContext.getQueryLanguage();
-        return !queryLanguage.equals("xquery10") && !queryLanguage.equals("jsoniq10");
     }
 
     private Item checkTypePromotion(Item item) {
