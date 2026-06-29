@@ -27,7 +27,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
-public final class Repl extends AbstractCommand {
+public final class Repl extends BaseCommand {
     @Mixin
     Output output;
 

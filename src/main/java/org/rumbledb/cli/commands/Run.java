@@ -28,7 +28,7 @@ import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Parameters;
 
 @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = false)
-public final class Run extends AbstractCommand {
+public final class Run extends BaseCommand {
     @Mixin
     Input input;
 

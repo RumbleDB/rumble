@@ -26,7 +26,7 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 @Command(name = "serve", description = "Runs RumbleDB as a server on port 8001.", mixinStandardHelpOptions = false)
-public final class Serve extends AbstractCommand {
+public final class Serve extends BaseCommand {
     @Mixin
     Server server;
 

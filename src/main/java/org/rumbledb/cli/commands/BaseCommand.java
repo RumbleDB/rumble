@@ -28,7 +28,7 @@ import picocli.CommandLine.Mixin;
 import java.util.concurrent.Callable;
 
 @Command
-public abstract class AbstractCommand implements Callable<RumbleConfiguration> {
+public abstract class BaseCommand implements Callable<RumbleConfiguration> {
     @Mixin
     IO io;
 
