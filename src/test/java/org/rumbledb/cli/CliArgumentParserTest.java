@@ -33,12 +33,12 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-public class CliOptionsTest {
+public class CliArgumentParserTest {
 
     @Test
     public void noSubcommandShouldGiveError() {
         try {
-            CliOptions.parse();
+            CLIArgumentParser.parse();
         } catch (Exception e) {
             assertTrue(e.getMessage().contains("Missing required subcommand"));
         }
@@ -46,7 +46,7 @@ public class CliOptionsTest {
 
     @Test
     public void sharedOptionsAreAcceptedBeforeSubcommand() {
-        RumbleConfiguration configuration = CliOptions.parse(
+        RumbleConfiguration configuration = CLIArgumentParser.parse(
 
             "serve",
             "--host",
@@ -69,7 +69,7 @@ public class CliOptionsTest {
 
     @Test
     public void sharedOptionsAreAcceptedAfterSubcommand() {
-        RumbleConfiguration configuration = CliOptions.parse(
+        RumbleConfiguration configuration = CLIArgumentParser.parse(
             "repl",
             "--debug",
             "--result-size",
@@ -83,9 +83,9 @@ public class CliOptionsTest {
 
     @Test
     public void positiveFormOfTrueDefaultOptionKeepsItEnabled() {
-        RumbleConfiguration defaults = CliOptions.parse("run");
-        RumbleConfiguration explicitlyEnabled = CliOptions.parse("run", "--native-execution");
-        RumbleConfiguration explicitlyDisabled = CliOptions.parse("run", "--no-native-execution");
+        RumbleConfiguration defaults = CLIArgumentParser.parse("run");
+        RumbleConfiguration explicitlyEnabled = CLIArgumentParser.parse("run", "--native-execution");
+        RumbleConfiguration explicitlyDisabled = CLIArgumentParser.parse("run", "--no-native-execution");
 
         assertTrue(defaults.execution().useNativeExecution());
         assertTrue(explicitlyEnabled.execution().useNativeExecution());
@@ -102,7 +102,7 @@ public class CliOptionsTest {
 
     @Test
     public void runRetainsModeSpecificInputAndOutputOptions() {
-        RumbleConfiguration configuration = CliOptions.parse(
+        RumbleConfiguration configuration = CLIArgumentParser.parse(
             "run",
             "--query",
             "1 + 1",
@@ -119,7 +119,7 @@ public class CliOptionsTest {
     public void contextItemAndContextItemInputAreMutuallyExclusive() {
         assertThrows(
             Exception.class,
-            () -> CliOptions.parse(
+            () -> CLIArgumentParser.parse(
                 "run",
                 "--context-item",
                 "1",
@@ -131,7 +131,7 @@ public class CliOptionsTest {
 
     @Test
     public void contextItemInputDefaultsToJsonFormat() {
-        RumbleConfiguration configuration = CliOptions.parse(
+        RumbleConfiguration configuration = CLIArgumentParser.parse(
             "run",
             "--context-item-input",
             "-"
@@ -146,7 +146,7 @@ public class CliOptionsTest {
     @Test
     public void invalidXmlVersionIsRejected() {
         try {
-            CliOptions.parse(
+            CLIArgumentParser.parse(
                 "run",
                 "--xml-version",
                 "1.2"
@@ -159,7 +159,7 @@ public class CliOptionsTest {
 
     @Test
     public void formattingCalendarAndLanguageAreNormalized() {
-        RumbleConfiguration configuration = CliOptions.parse(
+        RumbleConfiguration configuration = CLIArgumentParser.parse(
             "run",
             "--default-formatting-calendar",
             "default",
@@ -174,7 +174,7 @@ public class CliOptionsTest {
     @Test
     public void invalidFormattingCalendarIsRejected() {
         try {
-            CliOptions.parse(
+            CLIArgumentParser.parse(
                 "run",
                 "--default-formatting-calendar",
                 "julian"
@@ -189,7 +189,7 @@ public class CliOptionsTest {
     @Test
     public void invalidFormattingLanguageIsRejected() {
         try {
-            CliOptions.parse(
+            CLIArgumentParser.parse(
                 "run",
                 "--default-formatting-language",
                 "fr"

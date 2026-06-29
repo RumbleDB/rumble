@@ -38,9 +38,9 @@ import picocli.CommandLine.Command;
         Repl.class
     }
 )
-public final class CliOptions {
+public final class CLIArgumentParser {
     public static RumbleConfiguration parse(String... args) {
-        CommandLine commandLine = new CommandLine(new CliOptions());
+        CommandLine commandLine = new CommandLine(new CLIArgumentParser());
         String[] normalizedArgs =
             LegacyCompatibility.normalizeLegacyDynamicOptions(args);
 
