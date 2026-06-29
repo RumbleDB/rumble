@@ -44,13 +44,13 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
             return arg0;
 
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-        for (String key : arg0.getKeys()) {
+        for (String key : arg0.getStringKeys()) {
             Item value = arg0.getItemByKey(key);
             Item arrayValue = ItemFactory.getInstance()
                 .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), this.mutable);
             keyValuePairs.put(key, new ArrayList<Item>(Collections.singletonList(arrayValue)));
         }
 
-        return ItemFactory.getInstance().createObjectItem(keyValuePairs, this.mutable);
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, this.mutable);
     }
 };

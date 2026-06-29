@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -195,6 +196,8 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                 JsonReader object = new JsonReader(new StringReader(line));
                 this.nextItem = ItemParser.getItemFromObject(
                     object,
+                    true,
+                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
                     getMetadata(),
                     this.getRuntimeStaticContext().isQuerySideEffecting()
                 );

@@ -94,11 +94,6 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>();
         for (String key : this.original.getStringKeys()) {
@@ -145,11 +140,6 @@ public class MapWithAdditionalEntryItem implements Item {
             return true;
         }
         return this.original.hasKey(key);
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return getItemValues();
     }
 
     @Override

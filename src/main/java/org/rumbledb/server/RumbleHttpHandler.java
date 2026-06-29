@@ -188,7 +188,7 @@ public class RumbleHttpHandler implements HttpHandler {
         }
         output.putItemByKey("stack-trace", stackTrace);
         for (StackTraceElement e : stackTraceElements) {
-            stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
+            stackTrace.appendItem(ItemFactory.getInstance().createStringItem(e.toString()));
         }
         return output;
     }

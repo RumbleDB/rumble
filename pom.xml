@@ -41,6 +41,24 @@
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/antlr4</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
@@ -49,53 +67,60 @@
                     <target>17</target>
                 </configuration>
                 <executions>
+                    <!-- We skip the default compilation -->
                     <execution>
-                        <id>compile-antlr-generated-sources</id>
-                        <phase>process-sources</phase>
+                        <id>default-compile</id>
+                        <configuration>
+                            <skipMain>true</skipMain>
+                        </configuration>
+                    </execution>
+
+                    <!-- 
+                        Compile ANTLR-generated sources without processing
+                        If we don't do this, since parser and lexer classes are very large, Lombok will throw a
+                    StackOverflowError when processing them, and the build will fail.
+                    -->
+                    <execution>
+                        <id>compile-generated-sources</id>
+                        <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                         <configuration>
-                            <compilerId>javac</compilerId>
+                            <proc>none</proc>
                             <compileSourceRoots>
                                 <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
                             </compileSourceRoots>
-                            <includes>
-                                <include>org/rumbledb/parser/**/*.java</include>
-                            </includes>
-                            <!-- Compile large ANTLR output without annotation processing, because it's large and causes StackOverflowError -->
-                            <proc>none</proc>
                         </configuration>
                     </execution>
+
+                    <!-- Compile main sources using the normal configuration -->
                     <execution>
-                        <id>default-compile</id>
+                        <id>compile-main-sources</id>
                         <phase>compile</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
                         <configuration>
                             <compilerId>eclipse</compilerId>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+                            </compileSourceRoots>
+                            <!-- Holy grail of eclipse configuration: https://stackoverflow.com/a/49599478/10707488 -->
                             <compilerArgs>
                                 <arg>-properties</arg>
                                 <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
-                                <arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
                             </compilerArgs>
-                            <annotationProcessorPaths>
-                                <path>
-                                    <groupId>org.projectlombok</groupId>
-                                    <artifactId>lombok</artifactId>
-                                    <version>1.18.46</version>
-                                </path>
-                                <path>
-                                    <groupId>info.picocli</groupId>
-                                    <artifactId>picocli-codegen</artifactId>
-                                    <version>4.7.7</version>
-                                </path>
-                            </annotationProcessorPaths>
-                            <excludes>
-                                <exclude>Jsoniq*.java</exclude>
-                                <exclude>XQuery*.java</exclude>
-                            </excludes>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <compilerId>eclipse</compilerId>
+                            <compilerArgs>
+                                <arg>-properties</arg>
+                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                            </compilerArgs>
                         </configuration>
                     </execution>
                 </executions>
@@ -243,13 +268,7 @@
                             <!-- include all java files in "java" folders under "src" -->
                             <include>src/**/java/**/*.java</include>
                         </includes>
-
-                        <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
-                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
-                        </excludes>
                         <eclipse>
-                            <version>4.39</version>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
                         <removeUnusedImports/>

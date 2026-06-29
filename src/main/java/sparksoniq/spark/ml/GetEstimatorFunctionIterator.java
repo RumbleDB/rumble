@@ -89,9 +89,9 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
-                for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
-                    String paramName = paramMapItem.getKeys().get(paramIndex);
-                    Item paramValue = paramMapItem.getValues().get(paramIndex);
+                for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
+                    String paramName = paramMapItem.getStringKeys().get(paramIndex);
+                    Item paramValue = paramMapItem.getItemValues().get(paramIndex);
 
                     RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, getMetadata());
 

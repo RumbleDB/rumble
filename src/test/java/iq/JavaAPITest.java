@@ -22,6 +22,8 @@ package iq;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -29,6 +31,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -69,7 +73,7 @@ public class JavaAPITest {
             Assert.assertTrue(iterator.hasNext());
             Item item = iterator.next();
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
@@ -94,7 +98,7 @@ public class JavaAPITest {
             Assert.assertTrue(iterator.hasNext());
             Item item = iterator.next();
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
@@ -117,7 +121,7 @@ public class JavaAPITest {
         for (int i = 1; i <= 5; ++i) {
             Item item = list.get(i - 1);
             Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
+            List<String> keys = item.getStringKeys();
             Assert.assertTrue(keys.size() == 1);
             String key = keys.get(0);
             Assert.assertTrue(key.contentEquals("foo"));
@@ -126,4 +130,30 @@ public class JavaAPITest {
             Assert.assertTrue(value.getIntValue() == i);
         }
     }
+
+    @Test(timeout = 1000000)
+    public void testGetAsDataFramePreservesArrayMembers() throws Throwable {
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        SequenceOfItems iterator = rumble.runQuery("({ \"arr\" : [ { \"x\" : 1 }]},{\"arr\":[{\"x\":\"s\"}]})");
+
+        Dataset<Row> dataFrame = iterator.getAsDataFrame();
+        List<Row> rows = dataFrame.collectAsList();
+
+        Assert.assertEquals(2, rows.size());
+        Assert.assertEquals(1, rows.get(0).getList(0).size());
+        Assert.assertEquals(1, rows.get(1).getList(0).size());
+
+        JavaRDD<Item> itemRDD = dataFrame.javaRDD()
+            .map(
+                new RowToItemMapper(
+                        org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
+                        ItemTypeFactory.createItemType(dataFrame.schema())
+                )
+            );
+        List<Item> items = itemRDD.collect();
+
+        Assert.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assert.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+    }
+
 }
