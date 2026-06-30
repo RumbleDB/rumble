@@ -3589,6 +3589,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
+        if (!prefix.isEmpty() && namespace.isEmpty()) {
+            throw new EmptyNamespaceURIForPrefixedBindingException(
+                    "A prefixed namespace declaration cannot use the empty string as its namespace URI.",
+                    metadata
+            );
+        }
         boolean success = this.moduleContext.bindNamespace(
             prefix,
             namespace

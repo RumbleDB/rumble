@@ -345,7 +345,11 @@ public class BuiltinFunctionCatalogue {
         }
         Name typeName = functionName;
         if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
-            if ("boolean".equals(functionName.getLocalName()) || "string".equals(functionName.getLocalName())) {
+            if (
+                "boolean".equals(functionName.getLocalName())
+                    || "string".equals(functionName.getLocalName())
+                    || "QName".equals(functionName.getLocalName())
+            ) {
                 return null;
             }
             typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
