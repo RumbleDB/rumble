@@ -25,7 +25,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
