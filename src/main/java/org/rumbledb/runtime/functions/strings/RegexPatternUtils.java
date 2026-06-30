@@ -24,7 +24,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexFlagException;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -66,6 +68,7 @@ public final class RegexPatternUtils {
                 }
             }
         }
+        validateXQueryRegex(pattern, quote, metadata);
         if (quote) {
             pattern = Pattern.quote(pattern);
         }
@@ -80,6 +83,146 @@ public final class RegexPatternUtils {
                     e.getDescription(),
                     metadata
             );
+        }
+    }
+
+    private static void validateXQueryRegex(String pattern, boolean quote, ExceptionMetadata metadata) {
+        if (quote) {
+            return;
+        }
+
+        int nextCaptureGroupNumber = 1;
+        Deque<GroupContext> openGroups = new ArrayDeque<>();
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (current == '[') {
+                i = skipCharacterClass(pattern, i);
+                continue;
+            }
+            if (current == '\\') {
+                if (i + 1 >= pattern.length()) {
+                    continue;
+                }
+                char next = pattern.charAt(i + 1);
+                if (Character.isDigit(next)) {
+                    int end = i + 1;
+                    while (end < pattern.length() && Character.isDigit(pattern.charAt(end))) {
+                        end++;
+                    }
+                    validateBackReference(
+                        pattern.substring(i, end),
+                        pattern.substring(i + 1, end),
+                        openGroups,
+                        nextCaptureGroupNumber,
+                        metadata
+                    );
+                    i = end - 1;
+                    continue;
+                }
+                if ((next == 'p' || next == 'P') && i + 2 < pattern.length() && pattern.charAt(i + 2) == '{') {
+                    i = skipUnicodeEscape(pattern, i);
+                    continue;
+                }
+                i++;
+                continue;
+            }
+            if (current == '(') {
+                boolean capturing = !(i + 1 < pattern.length() && pattern.charAt(i + 1) == '?');
+                if (capturing) {
+                    openGroups.push(new GroupContext(nextCaptureGroupNumber));
+                    nextCaptureGroupNumber++;
+                } else {
+                    openGroups.push(GroupContext.nonCapturingGroup());
+                }
+                continue;
+            }
+            if (current == ')' && !openGroups.isEmpty()) {
+                openGroups.pop();
+            }
+        }
+    }
+
+    private static void validateBackReference(
+            String token,
+            String groupNumberText,
+            Deque<GroupContext> openGroups,
+            int nextCaptureGroupNumber,
+            ExceptionMetadata metadata
+    ) {
+        if (groupNumberText.isEmpty() || groupNumberText.charAt(0) == '0') {
+            throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
+        }
+
+        int longestExistingPrefixLength = findLongestExistingBackReferencePrefixLength(
+            groupNumberText,
+            nextCaptureGroupNumber
+        );
+        if (longestExistingPrefixLength == 0) {
+            throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
+        }
+        int referencedGroupNumber = Integer.parseInt(groupNumberText.substring(0, longestExistingPrefixLength));
+
+        for (GroupContext groupContext : openGroups) {
+            if (groupContext.isCapturing() && groupContext.getNumber() == referencedGroupNumber) {
+                throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
+            }
+        }
+    }
+
+    private static int findLongestExistingBackReferencePrefixLength(
+            String groupNumberText,
+            int nextCaptureGroupNumber
+    ) {
+        int maxExistingGroupNumber = nextCaptureGroupNumber - 1;
+        int referencedGroupNumber = 0;
+        int longestExistingPrefixLength = 0;
+        for (int i = 0; i < groupNumberText.length(); i++) {
+            int digit = Character.digit(groupNumberText.charAt(i), 10);
+            if (referencedGroupNumber > (maxExistingGroupNumber - digit) / 10) {
+                break;
+            }
+            referencedGroupNumber = referencedGroupNumber * 10 + digit;
+            if (referencedGroupNumber >= nextCaptureGroupNumber) {
+                break;
+            }
+            longestExistingPrefixLength = i + 1;
+        }
+        return longestExistingPrefixLength;
+    }
+
+    public static boolean matchesEmptyString(Pattern pattern) {
+        return hasZeroLengthMatch(pattern, "")
+            || hasZeroLengthMatch(pattern, "a")
+            || hasZeroLengthMatch(pattern, "\n")
+            || hasZeroLengthMatch(pattern, "a\nb")
+            || matchesEmptyStringWithoutLineAnchors(pattern);
+    }
+
+    private static boolean hasZeroLengthMatch(Pattern pattern, String input) {
+        Matcher matcher = pattern.matcher(input);
+        while (matcher.find()) {
+            if (matcher.start() == matcher.end()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesEmptyStringWithoutLineAnchors(Pattern pattern) {
+        String source = pattern.pattern();
+        if (source.startsWith("^")) {
+            source = source.substring(1);
+        }
+        if (source.endsWith("$")) {
+            source = source.substring(0, source.length() - 1);
+        }
+        if (source.equals(pattern.pattern())) {
+            return false;
+        }
+        try {
+            return Pattern.compile(source, pattern.flags()).matcher("").matches();
+        } catch (PatternSyntaxException e) {
+            return false;
         }
     }
 
@@ -389,6 +532,33 @@ public final class RegexPatternUtils {
         return Math.min(index, pattern.length() - 1);
     }
 
+    private static int skipCharacterClass(String pattern, int startIndex) {
+        int index = startIndex + 1;
+        boolean firstToken = true;
+        while (index < pattern.length()) {
+            char current = pattern.charAt(index);
+            if (current == '\\') {
+                if (index + 1 >= pattern.length()) {
+                    return index;
+                }
+                if (
+                    index + 2 < pattern.length()
+                        && (pattern.charAt(index + 1) == 'p' || pattern.charAt(index + 1) == 'P')
+                        && pattern.charAt(index + 2) == '{'
+                ) {
+                    index = skipUnicodeEscape(pattern, index);
+                } else {
+                    index++;
+                }
+            } else if (current == ']' && !firstToken) {
+                return index;
+            }
+            firstToken = false;
+            index++;
+        }
+        return pattern.length() - 1;
+    }
+
     private static boolean isAsciiUppercase(int codePoint) {
         return codePoint >= 'A' && codePoint <= 'Z';
     }
@@ -460,6 +630,32 @@ public final class RegexPatternUtils {
         private EscapedToken(String text, int endIndex) {
             this.text = text;
             this.endIndex = endIndex;
+        }
+    }
+
+    private static final class GroupContext {
+        private final boolean capturing;
+        private final int number;
+
+        private GroupContext(boolean capturing, int number) {
+            this.capturing = capturing;
+            this.number = number;
+        }
+
+        private GroupContext(int number) {
+            this(true, number);
+        }
+
+        private static GroupContext nonCapturingGroup() {
+            return new GroupContext(false, -1);
+        }
+
+        private boolean isCapturing() {
+            return this.capturing;
+        }
+
+        private int getNumber() {
+            return this.number;
         }
     }
 }

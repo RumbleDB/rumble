@@ -97,10 +97,45 @@ public class RegexPatternUtilsTest {
     }
 
     @Test
+    public void multilineCaretMatchesEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
+
+    @Test
+    public void multilineWhitespaceAnchorsMatchEmptyStringForTokenizeValidation() {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "^[\\s]*$",
+            "m",
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+    }
+
     public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
         Assert.assertArrayEquals(
             new String[] { "abc\fdef" },
             RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
+        );
+    }
+
+    @Test
+    public void longTrailingDigitsAfterValidBackReferenceRemainValid() {
+        String backReferenceDigits = "111111111111111111111111111111";
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(a)\\" + backReferenceDigits,
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(
+            compiledRegex.getPattern().matcher("aa" + backReferenceDigits.substring(1)).matches()
         );
     }
 

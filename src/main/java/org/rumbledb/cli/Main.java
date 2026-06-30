@@ -102,7 +102,7 @@ public class Main {
                     );
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
-                System.err.println("⚠️  ️" + ex.getMessage());
+                System.err.println("⚠️ " + ex.getMessage());
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }

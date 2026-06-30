@@ -105,7 +105,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             if (item.isArray()) {
                 if (0 < item.getSize()) {
                     if (item.isArrayOfItems()) {
-                        this.nextResults.addAll(item.getItems());
+                        this.nextResults.addAll(item.getItemMembers());
                     } else {
                         for (java.util.List<Item> member : item.getSequenceMembers()) {
                             this.nextResults.addAll(member);

@@ -22,7 +22,7 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
         }
 
         if (arg0.isArrayOfItems()) {
-            for (Item item : arg0.getItems()) {
+            for (Item item : arg0.getItemMembers()) {
                 if (item != null) {
                     results.add(item);
                 }

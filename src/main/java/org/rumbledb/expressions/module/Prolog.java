@@ -63,31 +63,39 @@ public class Prolog extends Node {
 
     public List<FunctionDeclaration> getFunctionDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof FunctionDeclaration)
-            .map(x -> (FunctionDeclaration) x)
+            .<FunctionDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof FunctionDeclaration functionDeclaration) {
+                    downstream.accept(functionDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
     public List<VariableDeclaration> getVariableDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof VariableDeclaration)
-            .map(x -> (VariableDeclaration) x)
+            .<VariableDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof VariableDeclaration variableDeclaration) {
+                    downstream.accept(variableDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
     public List<TypeDeclaration> getTypeDeclarations() {
         return this.declarations.stream()
-            .filter(x -> x instanceof TypeDeclaration)
-            .map(x -> (TypeDeclaration) x)
+            .<TypeDeclaration>mapMulti((x, downstream) -> {
+                if (x instanceof TypeDeclaration typeDeclaration) {
+                    downstream.accept(typeDeclaration);
+                }
+            })
             .collect(Collectors.toList());
     }
 
     public boolean hasContextItemDeclaration() {
         for (Node d : this.declarations) {
-            if (!(d instanceof VariableDeclaration)) {
+            if (!(d instanceof VariableDeclaration vd)) {
                 continue;
             }
-            VariableDeclaration vd = (VariableDeclaration) d;
             if (vd.getVariableName().equals(Name.CONTEXT_ITEM)) {
                 return true;
             }
@@ -116,7 +124,7 @@ public class Prolog extends Node {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         for (int i = 0; i < this.declarations.size(); i++) {
             this.declarations.get(i).serializeToJSONiq(sb, indent);
             this.importedModules.get(i).serializeToJSONiq(sb, indent);
@@ -146,4 +154,3 @@ public class Prolog extends Node {
         return null;
     }
 }
-
