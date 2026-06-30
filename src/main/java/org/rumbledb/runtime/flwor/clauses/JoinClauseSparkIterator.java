@@ -488,7 +488,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         );
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(
             columnsToSelect,
-            newRightSideVariableName != null
+            false
         );
         Dataset<Row> result = leftInputTuple.sparkSession()
             .sql(

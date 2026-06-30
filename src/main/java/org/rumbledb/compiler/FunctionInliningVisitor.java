@@ -558,6 +558,19 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 expressionClauses = expressionClause;
             }
         }
+        if (expressionClauses == null) {
+            if (inlineFunction.getReturnType() != null) {
+                TreatExpression result = new TreatExpression(
+                        body,
+                        inlineFunction.getReturnType(),
+                        ErrorCode.UnexpectedTypeErrorCode,
+                        expression.getMetadata()
+                );
+                result.setSequential(inlineFunction.isSequential());
+                return result;
+            }
+            return body;
+        }
         if (assignmentClauses != null) {
             assignmentClauses.getLastClause().chainWith(returnClause);
             expressionClauses.getLastClause().chainWith(assignmentClauses);

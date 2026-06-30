@@ -126,6 +126,20 @@ public class RegexPatternUtilsTest {
     }
 
     @Test
+    public void longTrailingDigitsAfterValidBackReferenceRemainValid() {
+        String backReferenceDigits = "111111111111111111111111111111";
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            "(a)\\" + backReferenceDigits,
+            null,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+
+        Assert.assertTrue(
+            compiledRegex.getPattern().matcher("aa" + backReferenceDigits.substring(1)).matches()
+        );
+    }
+
+    @Test
     public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
         Assert.assertArrayEquals(
             new String[] { "abc", "def", "ghi", "jkl" },
