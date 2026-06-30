@@ -132,6 +132,7 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -831,6 +832,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
+                }
+                if (
+                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())
+                        && parameterExpressions.size() == 1
+                ) {
+                    BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                        expression.getFunctionIdentifier()
+                    );
+                    if (
+                        builtinFunction != null
+                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)
+                    ) {
+                        SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
+                        if (
+                            argumentType != null
+                                && argumentType.getArity().equals(SequenceType.Arity.One)
+                                && returnType.getArity().equals(SequenceType.Arity.OneOrZero)
+                        ) {
+                            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
+                        }
+                    }
                 }
                 expression.setStaticSequenceType(returnType);
             }
