@@ -63,8 +63,8 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         try {
             if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
-                List<String> keys = options.getKeys();
-                List<Item> values = options.getValues();
+                List<String> keys = options.getStringKeys();
+                List<Item> values = options.getItemValues();
                 for (int i = 0; i < keys.size(); i++) {
                     Item value = values.get(i);
                     if (value.isString()) {

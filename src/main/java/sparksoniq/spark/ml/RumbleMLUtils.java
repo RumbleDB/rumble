@@ -29,9 +29,9 @@ public class RumbleMLUtils {
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem
-        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
-            String paramName = paramMapItem.getKeys().get(paramIndex);
-            Item paramValue = paramMapItem.getValues().get(paramIndex);
+        for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getStringKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getItemValues().get(paramIndex);
 
             RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
@@ -67,9 +67,9 @@ public class RumbleMLUtils {
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem
-        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
-            String paramName = paramMapItem.getKeys().get(paramIndex);
-            Item paramValue = paramMapItem.getValues().get(paramIndex);
+        for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getStringKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getItemValues().get(paramIndex);
 
             RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
@@ -109,7 +109,7 @@ public class RumbleMLUtils {
             }
             List<Object> paramAsListInJava = new ArrayList<>();
             // paramValue is expected to be an ArrayItem
-            param.getItems().forEach(item -> {
+            param.getItemMembers().forEach(item -> {
                 paramAsListInJava.add(
                     convertParamItemToJava(
                         paramName,
@@ -247,8 +247,8 @@ public class RumbleMLUtils {
     }
 
     public static Item removeParameter(Item paramMapItem, String key, ExceptionMetadata metadata) {
-        List<String> keys = paramMapItem.getKeys();
-        List<Item> values = paramMapItem.getValues();
+        List<String> keys = paramMapItem.getStringKeys();
+        List<Item> values = paramMapItem.getItemValues();
         int indexToRemove = keys.indexOf(key);
         keys.remove(indexToRemove);
         values.remove(indexToRemove);

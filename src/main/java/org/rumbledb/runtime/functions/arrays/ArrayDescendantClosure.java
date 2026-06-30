@@ -29,7 +29,7 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
                 }
             }
         } else if (arg0.isObject()) {
-            innerValues = arg0.getValues();
+            innerValues = arg0.getItemValues();
         } else {
             return results.iterator();
         }

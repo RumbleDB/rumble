@@ -19,7 +19,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
 
     public InsertIntoObjectPrimitive(Item targetObject, Item contentObject, ExceptionMetadata metadata) {
-        for (String key : contentObject.getKeys()) {
+        for (String key : contentObject.getStringKeys()) {
             if (targetObject.getItemByKey(key) != null) {
                 throw new DuplicateKeyOnUpdateApplyException(
                         "cannot insert a key already present in an object",
@@ -44,7 +44,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         try {
-            for (String key : this.content.getKeys()) {
+            for (String key : this.content.getStringKeys()) {
                 this.target.putItemByKey(key, this.content.getItemByKey(key));
             }
         } catch (DuplicateObjectKeyException e) {
@@ -65,8 +65,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
         if (startOfArrayIndexing == -1) {
             List<String> columnsClauseList = new ArrayList<>();
-            List<String> keys = this.content.getKeys();
-            List<Item> values = this.content.getValues();
+            List<String> keys = this.content.getStringKeys();
+            List<Item> values = this.content.getItemValues();
             for (int i = 0; i < keys.size(); i++) {
                 columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
             }
@@ -141,8 +141,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
 
         List<String> columnsClauseList = new ArrayList<>();
-        List<String> keys = this.content.getKeys();
-        List<Item> values = this.content.getValues();
+        List<String> keys = this.content.getStringKeys();
+        List<Item> values = this.content.getItemValues();
         for (int i = 0; i < keys.size(); i++) {
             columnsClauseList.add(pathInSchema + keys.get(i) + " " + values.get(i).getSparkSQLType());
         }
@@ -168,11 +168,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public static Item mergeSources(Item first, Item second, ExceptionMetadata metadata) {
         Item res;
 
-        List<String> keys = new ArrayList<>(first.getKeys());
-        keys.addAll(second.getKeys());
+        List<String> keys = new ArrayList<>(first.getStringKeys());
+        keys.addAll(second.getStringKeys());
 
-        List<Item> values = new ArrayList<>(first.getValues());
-        values.addAll(second.getValues());
+        List<Item> values = new ArrayList<>(first.getItemValues());
+        values.addAll(second.getItemValues());
 
         try {
             res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);

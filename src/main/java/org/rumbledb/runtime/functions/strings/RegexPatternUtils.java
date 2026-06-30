@@ -173,10 +173,15 @@ public final class RegexPatternUtils {
             String groupNumberText,
             int nextCaptureGroupNumber
     ) {
-        long referencedGroupNumber = 0;
+        int maxExistingGroupNumber = nextCaptureGroupNumber - 1;
+        int referencedGroupNumber = 0;
         int longestExistingPrefixLength = 0;
         for (int i = 0; i < groupNumberText.length(); i++) {
-            referencedGroupNumber = referencedGroupNumber * 10 + Character.digit(groupNumberText.charAt(i), 10);
+            int digit = Character.digit(groupNumberText.charAt(i), 10);
+            if (referencedGroupNumber > (maxExistingGroupNumber - digit) / 10) {
+                break;
+            }
+            referencedGroupNumber = referencedGroupNumber * 10 + digit;
             if (referencedGroupNumber >= nextCaptureGroupNumber) {
                 break;
             }

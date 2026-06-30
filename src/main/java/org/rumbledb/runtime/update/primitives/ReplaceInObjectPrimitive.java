@@ -47,7 +47,7 @@ public class ReplaceInObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         String name = this.getSelector().getStringValue();
-        if (this.getTarget().getKeys().contains(name)) {
+        if (this.getTarget().getStringKeys().contains(name)) {
             this.getTarget().removeItemByKey(name);
             this.getTarget().putItemByKey(name, this.getContent());
         }
