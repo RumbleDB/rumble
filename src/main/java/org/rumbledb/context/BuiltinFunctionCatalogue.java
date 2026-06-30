@@ -349,6 +349,7 @@ public class BuiltinFunctionCatalogue {
                 "boolean".equals(functionName.getLocalName())
                     || "string".equals(functionName.getLocalName())
                     || "QName".equals(functionName.getLocalName())
+                    || "dateTime".equals(functionName.getLocalName())
             ) {
                 return null;
             }
@@ -363,7 +364,8 @@ public class BuiltinFunctionCatalogue {
             return null;
         }
         if (
-            !targetType.isAtomicItemType()
+            !(targetType.isAtomicItemType()
+                || (targetType.isUnionType() && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
                 || targetType.equals(BuiltinTypesCatalogue.atomicItem)
                 || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
         ) {

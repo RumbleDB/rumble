@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.EmptyNamespaceURIForPrefixedBindingException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
@@ -366,6 +367,11 @@ public final class NamespaceBindingUtils {
         // "Bind the prefix xmlns to any namespace URI."
         // "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
         // "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
+        if (!prefix.isEmpty() && uri.isEmpty()) {
+            throw new EmptyNamespaceURIForPrefixedBindingException(
+                    "Namespace declaration attribute cannot bind a prefixed namespace to the empty string."
+            );
+        }
         ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, uri);
         if (error == null) {
             return;
@@ -390,7 +396,6 @@ public final class NamespaceBindingUtils {
             default:
                 return;
         }
-        // TODO: handle binding a prefix to a zero-length namespace URI
     }
 
     /**
@@ -421,4 +426,3 @@ public final class NamespaceBindingUtils {
     }
 
 }
-

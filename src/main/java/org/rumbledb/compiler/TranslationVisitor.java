@@ -3900,8 +3900,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
         if (!prefix.isEmpty() && namespace.isEmpty()) {
-            throw new EmptyNamespaceURIForPrefixedBindingException(
-                    "A prefixed namespace declaration cannot use the empty string as its namespace URI.",
+            if (this.moduleContext.unbindNamespace(prefix)) {
+                return;
+            }
+            throw new NamespacePrefixBoundTwiceException(
+                    "Prefix " + prefix + " is bound twice.",
                     metadata
             );
         }

@@ -9,4 +9,8 @@ public class EmptyNamespaceURIForPrefixedBindingException extends RumbleExceptio
     public EmptyNamespaceURIForPrefixedBindingException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.EmptyNamespaceURIForPrefixedBindingErrorCode, metadata);
     }
+
+    public EmptyNamespaceURIForPrefixedBindingException(String message) {
+        super(message, ErrorCode.EmptyNamespaceURIForPrefixedBindingErrorCode);
+    }
 }
