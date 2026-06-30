@@ -24,9 +24,12 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -85,13 +88,19 @@ public final class FunctionCallArgumentCoercion {
                     callerStaticContext.withStaticType(sequenceType)
                         .withExecutionMode(executionMode)
                         .withMetadata(functionArguments.get(i).getMetadata());
+                RuntimeIterator argumentIterator = wrapForFunctionConversion(
+                    functionArguments.get(i),
+                    sequenceType,
+                    "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                    runtimeStaticContext
+                );
                 if (
                     sequenceType.isEmptySequence()
                         || sequenceType.getArity().equals(Arity.One)
                         || sequenceType.getArity().equals(Arity.OneOrZero)
                 ) {
                     RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                            functionArguments.get(i),
+                            argumentIterator,
                             sequenceType,
                             "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
                             runtimeStaticContext
@@ -99,7 +108,7 @@ public final class FunctionCallArgumentCoercion {
                     functionArguments.set(i, typePromotionIterator);
                 } else {
                     RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                            functionArguments.get(i),
+                            argumentIterator,
                             sequenceType,
                             "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
                             runtimeStaticContext
@@ -108,5 +117,32 @@ public final class FunctionCallArgumentCoercion {
                 }
             }
         }
+    }
+
+    public static RuntimeIterator wrapForFunctionConversion(
+            RuntimeIterator argumentIterator,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            RuntimeStaticContext runtimeStaticContext
+    ) {
+        ItemType targetItemType = sequenceType.getItemType();
+        if (
+            targetItemType.isAtomicItemType()
+                && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
+        ) {
+            argumentIterator = new DataFunctionIterator(
+                    Collections.singletonList(argumentIterator),
+                    runtimeStaticContext
+            );
+        }
+        if (targetItemType.isAtomicItemType()) {
+            argumentIterator = new FunctionUntypedAtomicCastIterator(
+                    argumentIterator,
+                    targetItemType,
+                    exceptionMessage,
+                    runtimeStaticContext
+            );
+        }
+        return argumentIterator;
     }
 }

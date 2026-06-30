@@ -1,6 +1,7 @@
 package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
@@ -234,8 +235,11 @@ import org.rumbledb.runtime.functions.xml.ParseXMLFragmentFunctionIterator;
 import org.rumbledb.runtime.functions.xml.ParseXMLFunctionIterator;
 import org.rumbledb.runtime.functions.xml.PathFunctionIterator;
 import org.rumbledb.runtime.functions.xml.XMLToJsonFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
@@ -300,6 +304,10 @@ public class BuiltinFunctionCatalogue {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
         }
+        BuiltinFunction constructorFunction = resolveConstructorFunction(identifier);
+        if (constructorFunction != null) {
+            return constructorFunction;
+        }
         FunctionIdentifier resolved = resolveIdentifierFallback(identifier);
         if (resolved != null) {
             if (resolved.getName().getLocalName().equals("concat")) {
@@ -326,7 +334,36 @@ public class BuiltinFunctionCatalogue {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
-        return resolveIdentifierFallback(identifier) != null;
+        return resolveConstructorFunction(identifier) != null
+            || resolveIdentifierFallback(identifier) != null;
+    }
+
+    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier) {
+        if (identifier.getArity() != 1 || !Name.XS_NS.equals(identifier.getName().getNamespace())) {
+            return null;
+        }
+        ItemType targetType;
+        try {
+            targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
+        } catch (RuntimeException e) {
+            return null;
+        }
+        if (
+            !targetType.isAtomicItemType()
+                || targetType.equals(BuiltinTypesCatalogue.atomicItem)
+                || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+        ) {
+            return null;
+        }
+        return new BuiltinFunction(
+                identifier,
+                new FunctionSignature(
+                        List.of(SequenceType.createSequenceType("anyAtomicType?")),
+                        new SequenceType(targetType, Arity.OneOrZero)
+                ),
+                ConstructorFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
     }
 
     private static BuiltinFunction createBuiltinFunction(
