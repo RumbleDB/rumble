@@ -122,11 +122,9 @@ public class JsoniqQueryExecutor {
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
                 issueMaterializationWarning(materializationCount, this.configuration.getResultSizeCap());
-                if (outputPath == null) {
-                    System.err.println(
-                        "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
-                    );
-                }
+                System.err.println(
+                    "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
+                );
             }
         }
 

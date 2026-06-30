@@ -1457,7 +1457,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @throws NullPointerException if {@code language} is {@code null}
      * @throws IllegalArgumentException if {@code language} is not supported
      */
-    private void setDefaultFormattingLanguage(String language) {
+    public void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
 
         String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(

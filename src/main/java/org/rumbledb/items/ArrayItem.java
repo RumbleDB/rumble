@@ -118,12 +118,6 @@ public class ArrayItem implements Item {
         return this.arrayItems.size();
     }
 
-    @Deprecated
-    @Override
-    public List<Item> getItems() {
-        return this.arrayItems;
-    }
-
     @Override
     public List<Item> getItemMembers() {
         return this.arrayItems;
@@ -156,11 +150,6 @@ public class ArrayItem implements Item {
     public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
         Item member = this.getItemAt(position);
         return Collections.singletonList(member);
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -375,7 +364,7 @@ public class ArrayItem implements Item {
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItems();
+        List<Item> arrayItems = this.getItemMembers();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());

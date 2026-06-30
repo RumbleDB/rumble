@@ -374,7 +374,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
         try {
             if (dataType instanceof ArrayType arrayType) {
-                List<Item> arrayItems = item.getItems();
+                List<Item> arrayItems = item.getItemMembers();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
                 DataType elementType = arrayType.elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
@@ -529,7 +529,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             List<Item> members = new ArrayList<>();
-            for (Item member : item.getItems()) {
+            for (Item member : item.getItemMembers()) {
                 members.add(validate(member, itemType.getArrayContentFacet(), metadata, true, staticContext));
             }
 
@@ -590,7 +590,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             List<String> keys = new ArrayList<>();
             List<Item> values = new ArrayList<>();
             List<String> facetKeys = itemType.getObjectKeysFacet();
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 if (facetKeys.contains(key)) {
                     FieldDescriptor fieldDescriptor = itemType.getObjectContentFacet(key);
                     ItemType expectedType = fieldDescriptor.getType();
@@ -644,7 +644,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
             }
             for (String key : itemType.getObjectKeysFacet()) {
-                if (!item.getKeys().contains(key)) {
+                if (!item.getStringKeys().contains(key)) {
                     FieldDescriptor fieldDescriptor = itemType.getObjectContentFacet(key);
                     Item defaultValue = fieldDescriptor.getDefaultValue();
                     if (defaultValue != null) {
