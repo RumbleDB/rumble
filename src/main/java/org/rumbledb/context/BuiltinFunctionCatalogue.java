@@ -339,12 +339,22 @@ public class BuiltinFunctionCatalogue {
     }
 
     private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier) {
-        if (identifier.getArity() != 1 || !Name.XS_NS.equals(identifier.getName().getNamespace())) {
+        Name functionName = identifier.getName();
+        if (identifier.getArity() != 1) {
+            return null;
+        }
+        Name typeName = functionName;
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
+            if ("boolean".equals(functionName.getLocalName()) || "string".equals(functionName.getLocalName())) {
+                return null;
+            }
+            typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
+        } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
             return null;
         }
         ItemType targetType;
         try {
-            targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
+            targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
         } catch (RuntimeException e) {
             return null;
         }
@@ -356,7 +366,7 @@ public class BuiltinFunctionCatalogue {
             return null;
         }
         return new BuiltinFunction(
-                identifier,
+                new FunctionIdentifier(typeName, identifier.getArity()),
                 new FunctionSignature(
                         List.of(SequenceType.createSequenceType("anyAtomicType?")),
                         new SequenceType(targetType, Arity.OneOrZero)
