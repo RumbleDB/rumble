@@ -35,8 +35,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
@@ -44,7 +45,6 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -220,16 +220,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         callerStaticContext.withStaticType(sequenceType)
                             .withExecutionMode(arguments.get(i).getHighestExecutionMode())
                             .withMetadata(arguments.get(i).getMetadata());
-                    RuntimeIterator argumentIterator = arguments.get(i);
-                    if (
-                        sequenceType.getItemType().isAtomicItemType()
-                            && !argumentIterator.getStaticType().getItemType().isAtomicItemType()
-                    ) {
-                        argumentIterator = new DataFunctionIterator(
-                                Collections.singletonList(argumentIterator),
-                                argStaticContext
-                        );
-                    }
+                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                        arguments.get(i),
+                        sequenceType,
+                        "Invalid argument for function " + identifier.getName() + ". ",
+                        argStaticContext
+                    );
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
@@ -271,9 +267,15 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
         RuntimeIterator functionCallIterator;
         try {
-            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                .getConstructor(List.class, RuntimeStaticContext.class);
-            functionCallIterator = constructor.newInstance(arguments, delegateContext);
+            if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
+                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                    .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
+                functionCallIterator = constructor.newInstance(identifier, arguments, delegateContext);
+            } else {
+                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                    .getConstructor(List.class, RuntimeStaticContext.class);
+                functionCallIterator = constructor.newInstance(arguments, delegateContext);
+            }
         } catch (ReflectiveOperationException ex) {
             RuntimeException e = new UnknownFunctionCallException(
                     identifier.getName(),

@@ -28,7 +28,7 @@ public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRun
             return null;
         }
         Name qname = qnameItem.getQNameValue();
-
-        return ItemFactory.getInstance().createAnyURIItem(qname.getNamespace());
+        String namespace = qname.getNamespace();
+        return ItemFactory.getInstance().createAnyURIItem(namespace == null ? "" : namespace);
     }
 }
