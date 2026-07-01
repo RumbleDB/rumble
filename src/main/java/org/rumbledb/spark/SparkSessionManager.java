@@ -61,11 +61,10 @@ import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.tuple.FlworKey;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class SparkSessionManager {
 

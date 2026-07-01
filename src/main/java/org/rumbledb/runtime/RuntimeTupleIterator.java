@@ -38,8 +38,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 
 import java.util.HashSet;
 import java.util.Map;

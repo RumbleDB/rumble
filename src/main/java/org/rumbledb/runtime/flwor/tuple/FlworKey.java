@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.jsoniq.tuple;
+package org.rumbledb.runtime.flwor.tuple;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
