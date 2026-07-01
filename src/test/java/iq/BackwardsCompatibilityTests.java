@@ -27,8 +27,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.spark.SparkSessionManager;
+
 import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 import scala.Function0;
 

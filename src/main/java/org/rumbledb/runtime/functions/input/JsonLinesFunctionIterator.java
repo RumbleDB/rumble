@@ -32,10 +32,9 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 
 import com.google.gson.stream.JsonReader;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.BufferedReader;
 import java.io.IOException;

@@ -1,6 +1,7 @@
 package iq;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.spark.SparkSessionManager;
 
 import iq.base.AnnotationsTestsBase;
 import scala.Function0;
@@ -11,7 +12,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import sparksoniq.spark.SparkSessionManager;
+
 import utils.FileManager;
 
 import java.io.File;

@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.spark;
+package org.rumbledb.spark;
 
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;

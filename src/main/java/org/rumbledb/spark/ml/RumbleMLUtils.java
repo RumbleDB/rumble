@@ -1,4 +1,4 @@
-package sparksoniq.spark.ml;
+package org.rumbledb.spark.ml;
 
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.PipelineStage;

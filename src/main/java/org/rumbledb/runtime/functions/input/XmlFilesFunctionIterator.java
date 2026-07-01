@@ -29,8 +29,9 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
+
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.*;
 import java.net.URI;

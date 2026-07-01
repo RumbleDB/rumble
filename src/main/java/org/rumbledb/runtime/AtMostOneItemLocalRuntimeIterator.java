@@ -32,10 +32,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
-import sparksoniq.spark.SparkSessionManager;
-
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

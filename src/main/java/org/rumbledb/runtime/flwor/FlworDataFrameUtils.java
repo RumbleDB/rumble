@@ -85,6 +85,7 @@ import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -94,7 +95,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
-import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 

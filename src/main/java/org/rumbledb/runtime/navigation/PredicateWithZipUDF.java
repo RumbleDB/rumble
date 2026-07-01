@@ -29,10 +29,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 
 import scala.Option;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
