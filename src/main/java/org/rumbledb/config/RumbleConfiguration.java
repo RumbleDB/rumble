@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.experimental.Tolerate;
 import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
@@ -40,6 +41,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Temporary aggregate for the new typed configuration model.
@@ -132,90 +135,148 @@ public class RumbleConfiguration {
             return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
         }
 
-        public RumbleConfigurationBuilder configureServer(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
-            ServerConfig.ServerConfigBuilder builder = this.server == null
-                ? ServerConfig.builder()
-                : this.server.toBuilder();
+        private <T, B> T configureSection(
+                T currentValue,
+                Supplier<B> emptyBuilder,
+                Function<T, B> toBuilder,
+                Consumer<B> customizer,
+                Function<B, T> build
+        ) {
+            B builder = currentValue == null ? emptyBuilder.get() : toBuilder.apply(currentValue);
             customizer.accept(builder);
-            return server(builder.build());
+            return build.apply(builder);
         }
 
-        public RumbleConfigurationBuilder configureAccess(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
-            AccessConfig.AccessConfigBuilder builder = this.access == null
-                ? AccessConfig.builder()
-                : this.access.toBuilder();
-            customizer.accept(builder);
-            return access(builder.build());
+        @Tolerate // So Lombok still keep the original builder setter method
+        public RumbleConfigurationBuilder server(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
+            return server(
+                configureSection(
+                    this.server,
+                    ServerConfig::builder,
+                    ServerConfig::toBuilder,
+                    customizer,
+                    ServerConfig.ServerConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureInput(Consumer<InputConfig.InputConfigBuilder> customizer) {
-            InputConfig.InputConfigBuilder builder = this.input == null
-                ? InputConfig.builder()
-                : this.input.toBuilder();
-            customizer.accept(builder);
-            return input(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder access(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
+            return access(
+                configureSection(
+                    this.access,
+                    AccessConfig::builder,
+                    AccessConfig::toBuilder,
+                    customizer,
+                    AccessConfig.AccessConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureOutput(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
-            OutputConfig.OutputConfigBuilder builder = this.output == null
-                ? OutputConfig.builder()
-                : this.output.toBuilder();
-            customizer.accept(builder);
-            return output(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder input(Consumer<InputConfig.InputConfigBuilder> customizer) {
+            return input(
+                configureSection(
+                    this.input,
+                    InputConfig::builder,
+                    InputConfig::toBuilder,
+                    customizer,
+                    InputConfig.InputConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureRuntime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
-            RuntimeConfig.RuntimeConfigBuilder builder = this.runtime == null
-                ? RuntimeConfig.builder()
-                : this.runtime.toBuilder();
-            customizer.accept(builder);
-            return runtime(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder output(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
+            return output(
+                configureSection(
+                    this.output,
+                    OutputConfig::builder,
+                    OutputConfig::toBuilder,
+                    customizer,
+                    OutputConfig.OutputConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureDebug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
-            DebugConfig.DebugConfigBuilder builder = this.debug == null
-                ? DebugConfig.builder()
-                : this.debug.toBuilder();
-            customizer.accept(builder);
-            return debug(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder runtime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
+            return runtime(
+                configureSection(
+                    this.runtime,
+                    RuntimeConfig::builder,
+                    RuntimeConfig::toBuilder,
+                    customizer,
+                    RuntimeConfig.RuntimeConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureAnalysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
-            AnalysisConfig.AnalysisConfigBuilder builder = this.analysis == null
-                ? AnalysisConfig.builder()
-                : this.analysis.toBuilder();
-            customizer.accept(builder);
-            return analysis(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder debug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
+            return debug(
+                configureSection(
+                    this.debug,
+                    DebugConfig::builder,
+                    DebugConfig::toBuilder,
+                    customizer,
+                    DebugConfig.DebugConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureOptimization(
+        @Tolerate
+        public RumbleConfigurationBuilder analysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
+            return analysis(
+                configureSection(
+                    this.analysis,
+                    AnalysisConfig::builder,
+                    AnalysisConfig::toBuilder,
+                    customizer,
+                    AnalysisConfig.AnalysisConfigBuilder::build
+                )
+            );
+        }
+
+        @Tolerate
+        public RumbleConfigurationBuilder optimization(
                 Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
         ) {
-            OptimizationConfig.OptimizationConfigBuilder builder = this.optimization == null
-                ? OptimizationConfig.builder()
-                : this.optimization.toBuilder();
-            customizer.accept(builder);
-            return optimization(builder.build());
+            return optimization(
+                configureSection(
+                    this.optimization,
+                    OptimizationConfig::builder,
+                    OptimizationConfig::toBuilder,
+                    customizer,
+                    OptimizationConfig.OptimizationConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureSemantics(
-                Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer
-        ) {
-            SemanticsConfig.SemanticsConfigBuilder builder = this.semantics == null
-                ? SemanticsConfig.builder()
-                : this.semantics.toBuilder();
-            customizer.accept(builder);
-            return semantics(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder semantics(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
+            return semantics(
+                configureSection(
+                    this.semantics,
+                    SemanticsConfig::builder,
+                    SemanticsConfig::toBuilder,
+                    customizer,
+                    SemanticsConfig.SemanticsConfigBuilder::build
+                )
+            );
         }
 
-        public RumbleConfigurationBuilder configureFormatting(
-                Consumer<FormattingConfig.FormattingConfigBuilder> customizer
-        ) {
-            FormattingConfig.FormattingConfigBuilder builder = this.formatting == null
-                ? FormattingConfig.builder()
-                : this.formatting.toBuilder();
-            customizer.accept(builder);
-            return formatting(builder.build());
+        @Tolerate
+        public RumbleConfigurationBuilder formatting(Consumer<FormattingConfig.FormattingConfigBuilder> customizer) {
+            return formatting(
+                configureSection(
+                    this.formatting,
+                    FormattingConfig::builder,
+                    FormattingConfig::toBuilder,
+                    customizer,
+                    FormattingConfig.FormattingConfigBuilder::build
+                )
+            );
         }
     }
 }
