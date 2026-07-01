@@ -41,7 +41,9 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.stringValue = "<" + this.dmNodeName + "/>";
+        StringBuilder sb = new StringBuilder();
+        computeStringValue(children, sb);
+        this.stringValue = sb.toString();
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
@@ -64,6 +66,16 @@ public class ElementItem implements Item {
                 addOrReplaceNamespace(
                     ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
                 );
+            }
+        }
+    }
+
+    private void computeStringValue(List<Item> items, StringBuilder sb) {
+        for (Item item : items) {
+            if (item.isTextNode()) {
+                sb.append(item.getStringValue());
+            } else if (item.isElementNode() && item.children() != null) {
+                computeStringValue(item.children(), sb);
             }
         }
     }
