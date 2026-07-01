@@ -349,7 +349,6 @@ public class BuiltinFunctionCatalogue {
                 "boolean".equals(functionName.getLocalName())
                     || "string".equals(functionName.getLocalName())
                     || "QName".equals(functionName.getLocalName())
-                    || "dateTime".equals(functionName.getLocalName())
             ) {
                 return null;
             }
