@@ -31,8 +31,9 @@ import org.rumbledb.config.model.RuntimeConfig;
 import org.rumbledb.config.model.SemanticsConfig;
 import org.rumbledb.config.model.ServerConfig;
 
+import java.util.Objects;
+import java.util.function.Consumer;
 import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.Value;
 import lombok.experimental.Accessors;
 
@@ -40,50 +41,159 @@ import lombok.experimental.Accessors;
  * Temporary aggregate for the new typed configuration model.
  */
 @Value
-@Builder(toBuilder = true)
 @Accessors(fluent = true)
 public class RumbleConfiguration {
     /**
      * Application execution mode.
      */
-    @Default
-    private ExecutionMode executionMode = ExecutionMode.RUN;
+    private ExecutionMode executionMode;
 
-    @Default
-    private ServerConfig server = ServerConfig.builder().build();
+    private ServerConfig server;
 
-    @Default
-    private AccessConfig access = AccessConfig.builder().build();
+    private AccessConfig access;
 
-    @Default
-    private InputConfig input = InputConfig.builder().build();
+    private InputConfig input;
 
-    @Default
-    private OutputConfig output = OutputConfig.builder().build();
+    private OutputConfig output;
 
-    @Default
-    private RuntimeConfig runtime = RuntimeConfig.builder().build();
+    private RuntimeConfig runtime;
 
-    @Default
-    private DebugConfig debug = DebugConfig.builder().build();
+    private DebugConfig debug;
 
-    @Default
-    private AnalysisConfig analysis = AnalysisConfig.builder().build();
+    private AnalysisConfig analysis;
 
-    @Default
-    private OptimizationConfig optimization = OptimizationConfig.builder().build();
+    private OptimizationConfig optimization;
 
-    @Default
-    private SemanticsConfig semantics = SemanticsConfig.builder().build();
+    private SemanticsConfig semantics;
 
-    @Default
-    private FormattingConfig formatting = FormattingConfig.builder().build();
+    private FormattingConfig formatting;
 
-    @Default
-    private BindingsConfig bindings = BindingsConfig.builder().build();
+    private BindingsConfig bindings;
+
+    @Builder(toBuilder = true)
+    private RumbleConfiguration(
+            ExecutionMode executionMode,
+            ServerConfig server,
+            AccessConfig access,
+            InputConfig input,
+            OutputConfig output,
+            RuntimeConfig runtime,
+            DebugConfig debug,
+            AnalysisConfig analysis,
+            OptimizationConfig optimization,
+            SemanticsConfig semantics,
+            FormattingConfig formatting,
+            BindingsConfig bindings
+    ) {
+        this.executionMode = Objects.requireNonNullElse(executionMode, ExecutionMode.RUN);
+        this.server = Objects.requireNonNullElseGet(server, () -> ServerConfig.builder().build());
+        this.access = Objects.requireNonNullElseGet(access, () -> AccessConfig.builder().build());
+        this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
+        this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
+        this.runtime = Objects.requireNonNullElseGet(runtime, () -> RuntimeConfig.builder().build());
+        this.debug = Objects.requireNonNullElseGet(debug, () -> DebugConfig.builder().build());
+        this.analysis = Objects.requireNonNullElseGet(analysis, () -> AnalysisConfig.builder().build());
+        this.optimization = Objects.requireNonNullElseGet(optimization, () -> OptimizationConfig.builder().build());
+        this.semantics = Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
+        this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
+        this.bindings = Objects.requireNonNullElseGet(bindings, () -> BindingsConfig.builder().build());
+    }
 
     // Avoid Javadoc error because it cannot resolve the builder class used as return type for the baseConfiguration
     // method in cli.commands.AbstractCommand
     public static class RumbleConfigurationBuilder {
+        public RumbleConfigurationBuilder configureServer(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
+            ServerConfig.ServerConfigBuilder builder = this.server == null
+                ? ServerConfig.builder()
+                : this.server.toBuilder();
+            customizer.accept(builder);
+            return server(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureAccess(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
+            AccessConfig.AccessConfigBuilder builder = this.access == null
+                ? AccessConfig.builder()
+                : this.access.toBuilder();
+            customizer.accept(builder);
+            return access(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureInput(Consumer<InputConfig.InputConfigBuilder> customizer) {
+            InputConfig.InputConfigBuilder builder = this.input == null
+                ? InputConfig.builder()
+                : this.input.toBuilder();
+            customizer.accept(builder);
+            return input(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureOutput(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
+            OutputConfig.OutputConfigBuilder builder = this.output == null
+                ? OutputConfig.builder()
+                : this.output.toBuilder();
+            customizer.accept(builder);
+            return output(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureRuntime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
+            RuntimeConfig.RuntimeConfigBuilder builder = this.runtime == null
+                ? RuntimeConfig.builder()
+                : this.runtime.toBuilder();
+            customizer.accept(builder);
+            return runtime(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureDebug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
+            DebugConfig.DebugConfigBuilder builder = this.debug == null
+                ? DebugConfig.builder()
+                : this.debug.toBuilder();
+            customizer.accept(builder);
+            return debug(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureAnalysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
+            AnalysisConfig.AnalysisConfigBuilder builder = this.analysis == null
+                ? AnalysisConfig.builder()
+                : this.analysis.toBuilder();
+            customizer.accept(builder);
+            return analysis(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureOptimization(
+                Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
+        ) {
+            OptimizationConfig.OptimizationConfigBuilder builder = this.optimization == null
+                ? OptimizationConfig.builder()
+                : this.optimization.toBuilder();
+            customizer.accept(builder);
+            return optimization(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureSemantics(
+                Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer
+        ) {
+            SemanticsConfig.SemanticsConfigBuilder builder = this.semantics == null
+                ? SemanticsConfig.builder()
+                : this.semantics.toBuilder();
+            customizer.accept(builder);
+            return semantics(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureFormatting(
+                Consumer<FormattingConfig.FormattingConfigBuilder> customizer
+        ) {
+            FormattingConfig.FormattingConfigBuilder builder = this.formatting == null
+                ? FormattingConfig.builder()
+                : this.formatting.toBuilder();
+            customizer.accept(builder);
+            return formatting(builder.build());
+        }
+
+        public RumbleConfigurationBuilder configureBindings(Consumer<BindingsConfig.BindingsConfigBuilder> customizer) {
+            BindingsConfig.BindingsConfigBuilder builder = this.bindings == null
+                ? BindingsConfig.builder()
+                : this.bindings.toBuilder();
+            customizer.accept(builder);
+            return bindings(builder.build());
+        }
     }
 }
