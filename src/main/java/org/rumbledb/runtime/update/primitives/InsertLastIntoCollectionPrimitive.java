@@ -5,7 +5,7 @@ import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.expr;
 import static org.apache.spark.sql.functions.lit;

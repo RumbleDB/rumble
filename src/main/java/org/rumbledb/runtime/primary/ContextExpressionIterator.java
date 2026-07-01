@@ -31,11 +31,10 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 import java.util.Map;

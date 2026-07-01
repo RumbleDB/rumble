@@ -45,7 +45,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -55,11 +55,9 @@ import scala.collection.Iterator;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.Date;
@@ -78,24 +76,6 @@ public class ItemParser implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    /**
-     * Parses a JSON string to an item.
-     * 
-     * @param string the JSON string.
-     * @param metadata exception metadata is an error is thrown.
-     * @return the parsed item.
-     */
-    @Deprecated
-    public static Item getItemFromString(String string, ExceptionMetadata metadata, boolean mutable) {
-        string = "[ " + string + " ]";
-        JsonReader object = new JsonReader(new StringReader(string));
-        Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata, mutable);
-        if (arrayItem.getSize() == 0) {
-            throw new ParsingException("Empty string to parse as JSON!", metadata);
-        }
-        return arrayItem.getItemAt(0);
-    }
-
     public static Item getItemFromJSONString(
             String string,
             JSONParsingOptions options,
@@ -104,15 +84,6 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata
     ) {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
-    }
-
-    /**
-     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
-     */
-    @Deprecated
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**
@@ -138,15 +109,6 @@ public class ItemParser implements Serializable {
             ex.initCause(e);
             throw ex;
         }
-    }
-
-    /**
-     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
-     */
-    @Deprecated
-    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
     }
 
     /**

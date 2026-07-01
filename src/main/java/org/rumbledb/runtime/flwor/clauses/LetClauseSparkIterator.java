@@ -56,6 +56,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -64,7 +65,6 @@ import org.rumbledb.types.TypeMappings;
 // import org.rumbledb.exceptions.ExceptionMetadata;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
 import java.util.*;

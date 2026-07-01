@@ -18,16 +18,15 @@
  *
  */
 
-package sparksoniq.spark.ml;
+package org.rumbledb.spark.ml;
 
-import org.apache.spark.ml.Transformer;
+import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -39,23 +38,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
 
-public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<Name> transformerParameterNames = new ArrayList<>(
+    public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(
                 Name.createVariableInDefaultFunctionNamespace(
-                    "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224"
+                    "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
                 ),
                 Name.createVariableInDefaultFunctionNamespace(
-                    "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
+                    "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
                 )
             )
     );
 
-    public GetTransformerFunctionIterator(
+    public GetEstimatorFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
@@ -66,36 +64,36 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String transformerShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String estimatorShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
         if (this.children.size() >= 2) {
             paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
         }
 
-        String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
-            transformerShortName,
+        String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(
+            estimatorShortName,
             getMetadata()
         );
 
-        Class<?> transformerSparkMLClass = null;
+        Class<?> estimatorSparkMLClass = null;
         try {
-            transformerSparkMLClass = Class.forName(transformerFullClassName);
+            estimatorSparkMLClass = Class.forName(estimatorFullClassName);
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
-                    transformerShortName
-                        + ": we could not find any transformer with that name. Please check the documentation."
+                    estimatorShortName
+                        + ": we could not find any estimator with that name. Please check the documentation."
             );
         }
 
         try {
-            Transformer transformer = (Transformer) transformerSparkMLClass.getDeclaredConstructor().newInstance();
+            Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
                 for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
                     String paramName = paramMapItem.getStringKeys().get(paramIndex);
                     Item paramValue = paramMapItem.getItemValues().get(paramIndex);
 
-                    RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, getMetadata());
+                    RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, getMetadata());
 
                     String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, getMetadata());
                     Object paramValueInJava = RumbleMLUtils.convertParamItemToJava(
@@ -105,22 +103,15 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                         getMetadata()
                     );
 
-                    try {
-                        transformer.set(paramName, paramValueInJava);
-                    } catch (NoSuchElementException e) {
-                        RumbleException ex = new OurBadException(
-                                "Error in a parameter for transformer " + transformerShortName + ": " + e.getMessage(),
-                                getMetadata()
-                        );
-                        ex.initCause(e);
-                    }
+                    estimator.set(paramName, paramValueInJava);
                 }
             }
-            RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                    transformerShortName,
-                    transformer,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("object*"))
-                        .withExecutionMode(ExecutionMode.DATAFRAME)
+
+            RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
+                    estimatorShortName,
+                    estimator,
+                    this.staticContext.withStaticType(SequenceType.createSequenceType("function(*)"))
+                        .withExecutionMode(ExecutionMode.LOCAL)
                         .withMetadata(getMetadata())
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
@@ -129,16 +120,16 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     SequenceType.createSequenceType("object")
                 )
             );
-            SequenceType returnType = SequenceType.createSequenceType("object*");
+            SequenceType returnType = SequenceType.createSequenceType("function(object*, object) as object*");
 
             return new FunctionItem(
                     new FunctionIdentifier(
                             Name.createVariableInDefaultFunctionNamespace(
-                                transformerSparkMLClass.getName()
+                                estimatorSparkMLClass.getName()
                             ),
                             2
                     ),
-                    transformerParameterNames,
+                    estimatorFunctionParameterNames,
                     new FunctionSignature(
                             paramTypes,
                             returnType
@@ -154,7 +145,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                 | NoSuchMethodException e
         ) {
             throw new OurBadException(
-                    "Error while generating an instance from transformer class + " + transformerFullClassName,
+                    "Error while generating an instance from the estimator class " + estimatorFullClassName,
                     getMetadata()
             );
         }

@@ -1,4 +1,4 @@
-package sparksoniq.spark.ml;
+package org.rumbledb.spark.ml;
 
 import java.util.ArrayList;
 import java.util.List;

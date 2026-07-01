@@ -34,8 +34,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import java.util.List;
 
