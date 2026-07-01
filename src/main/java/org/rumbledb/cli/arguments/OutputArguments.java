@@ -3,6 +3,9 @@ package org.rumbledb.cli.arguments;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.rumbledb.config.SerializationParameterBuilder;
+import org.rumbledb.config.model.OutputConfig;
+
 import picocli.CommandLine.Option;
 
 public final class OutputArguments {
@@ -56,4 +59,21 @@ public final class OutputArguments {
         description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
     )
     private Map<String, String> outputFormatOptions = new HashMap<>();
+
+    public OutputConfig toConfig() {
+        OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();
+
+        OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);
+        OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
+        OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
+        OptionConversion.applyIfPresent(this.logPath, builder::logPath);
+        OptionConversion.applyIntIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
+        OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
+        OptionConversion.applyIfPresent(
+            this.outputFormatOptions,
+            options -> builder.serializationParameters(SerializationParameterBuilder.build(options))
+        );
+
+        return builder.build();
+    }
 }
