@@ -1,7 +1,5 @@
 package org.rumbledb.cli.arguments;
 
-import java.time.ZoneId;
-
 import org.rumbledb.config.model.FormattingConfig;
 
 import picocli.CommandLine.Option;
@@ -12,7 +10,7 @@ public final class FormattingArguments {
         paramLabel = "timezone",
         description = "Sets the default place used for formatting date and time values."
     )
-    private ZoneId defaultFormattingPlace;
+    private String defaultFormattingPlace;
 
     @Option(
         names = "--default-formatting-calendar",
