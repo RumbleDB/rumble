@@ -362,17 +362,33 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.staticallyKnownNamespaces == null) {
             this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+        if (canBindNamespace(prefix)) {
             this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
-        if (defaultBindings.containsKey(prefix)) {
-            if (this.staticallyKnownNamespaces.get(prefix).equals(defaultBindings.get(prefix))) {
-                this.staticallyKnownNamespaces.put(prefix, namespace);
-                return true;
-            }
-        }
         return false;
+    }
+
+    /**
+     * Explicitly removes a namespace binding in this context, shadowing any inherited or predeclared binding.
+     */
+    public boolean unbindNamespace(String prefix) {
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
+        }
+        if (!canBindNamespace(prefix)) {
+            return false;
+        }
+        this.staticallyKnownNamespaces.put(prefix, null);
+        return true;
+    }
+
+    private boolean canBindNamespace(String prefix) {
+        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return true;
+        }
+        return defaultBindings.containsKey(prefix)
+            && defaultBindings.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
     }
 
     public String resolveNamespace(String prefix) {

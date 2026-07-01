@@ -174,8 +174,11 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             throw new OurBadException("Only a function item can be added as a user-defined function.");
         }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
+        String queryLanguage = function.getModuleDynamicContext()
+            .getRumbleRuntimeConfiguration()
+            .getQueryLanguage();
         if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier)
+            BuiltinFunctionCatalogue.exists(functionIdentifier, queryLanguage)
                 || this.userDefinedFunctions.containsKey(functionIdentifier)
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
@@ -203,7 +206,10 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
         ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();
-        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+            identifier,
+            callerStaticContext.getQueryLanguage()
+        );
         if (builtinFunction == null) {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
         }
@@ -270,7 +276,11 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
                 Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
-                functionCallIterator = constructor.newInstance(identifier, arguments, delegateContext);
+                functionCallIterator = constructor.newInstance(
+                    builtinFunction.getIdentifier(),
+                    arguments,
+                    delegateContext
+                );
             } else {
                 Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(List.class, RuntimeStaticContext.class);
