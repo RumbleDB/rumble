@@ -21,9 +21,11 @@ package org.rumbledb.config.model;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
 
 @Value
 @Builder(toBuilder = true)
+@Jacksonized
 @Accessors(fluent = true)
 public class InputConfig {
     /**

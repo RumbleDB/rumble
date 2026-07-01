@@ -20,14 +20,19 @@ package org.rumbledb.config.model;
 
 import java.util.Objects;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.rumbledb.exceptions.CliException;
 
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
 
 @Value
+@Jacksonized
 @Accessors(fluent = true)
+@JsonDeserialize(builder = SemanticsConfig.SemanticsConfigBuilder.class)
 public class SemanticsConfig {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
@@ -73,6 +78,7 @@ public class SemanticsConfig {
         );
     }
 
+    @JsonPOJOBuilder(withPrefix = "")
     public static class SemanticsConfigBuilder {
         public SemanticsConfigBuilder xmlVersion(String xmlVersion) {
             this.xmlVersion = normalizeXmlVersion(xmlVersion);

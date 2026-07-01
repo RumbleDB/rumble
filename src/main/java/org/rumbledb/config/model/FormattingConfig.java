@@ -18,9 +18,10 @@
 
 package org.rumbledb.config.model;
 
-import java.time.ZoneId;
 import java.util.Objects;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.rumbledb.config.FormattingCalendarModeSupport;
 import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.CliException;
@@ -30,20 +31,22 @@ import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
 
 @Value
+@Jacksonized
 @Accessors(fluent = true)
+@JsonDeserialize(builder = FormattingConfig.FormattingConfigBuilder.class)
 public class FormattingConfig {
     /**
      * The default place used for formatting date and time values.
      *
      * <p>
      * The default place is used by date/time formatting functions when no explicit
-     * place is supplied. This implementation represents the place as a Java
-     * {@link ZoneId}. The initial default is {@code UTC}.
+     * place is supplied. The initial default is {@code UTC}.
      * </p>
      */
-    private ZoneId defaultFormattingPlace;
+    private String defaultFormattingPlace;
 
     /**
      * The default calendar used for formatting date and time values.
@@ -71,11 +74,11 @@ public class FormattingConfig {
 
     @Builder(toBuilder = true)
     private FormattingConfig(
-            ZoneId defaultFormattingPlace,
+            String defaultFormattingPlace,
             String defaultFormattingCalendar,
             String defaultFormattingLanguage
     ) {
-        this.defaultFormattingPlace = Objects.requireNonNullElse(defaultFormattingPlace, ZoneId.of("UTC"));
+        this.defaultFormattingPlace = Objects.requireNonNullElse(defaultFormattingPlace, "UTC");
         this.defaultFormattingCalendar = Objects.requireNonNullElse(
             defaultFormattingCalendar,
             FormattingCalendarModeSupport.DEFAULT
@@ -109,7 +112,27 @@ public class FormattingConfig {
         );
     }
 
+    private static String normalizeFormattingPlace(String place) {
+        if (place == null) {
+            return "UTC";
+        }
+        try {
+            java.time.ZoneId.of(place);
+            return place;
+        } catch (java.time.DateTimeException e) {
+            throw new CliException(
+                    "Invalid argument supplied for default-formatting-place: " + place
+            );
+        }
+    }
+
+    @JsonPOJOBuilder(withPrefix = "")
     public static class FormattingConfigBuilder {
+        public FormattingConfigBuilder defaultFormattingPlace(String place) {
+            this.defaultFormattingPlace = normalizeFormattingPlace(place);
+            return this;
+        }
+
         public FormattingConfigBuilder defaultFormattingCalendar(String calendar) {
             this.defaultFormattingCalendar = normalizeFormattingCalendar(calendar);
             return this;
