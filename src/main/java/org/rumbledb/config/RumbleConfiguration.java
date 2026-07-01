@@ -104,8 +104,6 @@ public class RumbleConfiguration {
         this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
     }
 
-    // Avoid Javadoc error because it cannot resolve the builder class used as return type for the baseConfiguration
-    // method in cli.commands.AbstractCommand
     @JsonPOJOBuilder(withPrefix = "")
     public static class RumbleConfigurationBuilder {
         private final Map<String, Object> withEntries = new LinkedHashMap<>();
