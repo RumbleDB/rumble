@@ -623,7 +623,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -765,7 +765,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
             if (expression.isPartialApplication()) {
                 // This should never be reached because partial application on built-in functions should have been
                 // rewritten before
@@ -775,7 +776,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                expression.getFunctionIdentifier()
+                expression.getFunctionIdentifier(),
+                queryLanguage
             );
             if (builtinFunction == null) {
                 throw new UnknownFunctionCallException(
@@ -834,11 +836,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     returnType = SequenceType.createSequenceType("item*");
                 }
                 if (
-                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())
+                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
                         && parameterExpressions.size() == 1
                 ) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                        expression.getFunctionIdentifier()
+                        expression.getFunctionIdentifier(),
+                        queryLanguage
                     );
                     if (
                         builtinFunction != null
