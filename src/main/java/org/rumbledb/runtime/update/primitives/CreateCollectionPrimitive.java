@@ -6,8 +6,7 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.catalyst.analysis.TableAlreadyExistsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.TooManyCollectionCreationsOnSameTargetException;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.monotonically_increasing_id;
 

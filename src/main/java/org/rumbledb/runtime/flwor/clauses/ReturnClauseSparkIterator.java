@@ -48,9 +48,9 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.spark.SparkSessionManager;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

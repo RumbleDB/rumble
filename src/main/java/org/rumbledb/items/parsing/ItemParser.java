@@ -45,7 +45,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -55,7 +55,6 @@ import scala.collection.Iterator;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.io.Serializable;

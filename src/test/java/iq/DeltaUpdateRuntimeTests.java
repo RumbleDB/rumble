@@ -22,6 +22,8 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.spark.SparkSessionManager;
+
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
@@ -32,7 +34,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import scala.Function0;
 import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
 import java.io.File;

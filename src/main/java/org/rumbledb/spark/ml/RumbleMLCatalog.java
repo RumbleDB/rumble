@@ -1,4 +1,4 @@
-package sparksoniq.spark.ml;
+package org.rumbledb.spark.ml;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;

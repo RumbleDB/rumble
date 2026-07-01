@@ -32,9 +32,8 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 

@@ -35,10 +35,9 @@ import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
 import java.util.List;

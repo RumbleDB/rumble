@@ -44,6 +44,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
+import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -52,9 +54,6 @@ import org.rumbledb.types.SequenceType;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
-import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 
 public class FunctionItem implements Item {
 

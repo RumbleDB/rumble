@@ -26,13 +26,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.spark.SparkSessionManager;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
 import java.time.DateTimeException;

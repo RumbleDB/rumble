@@ -38,10 +38,10 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import org.rumbledb.types.SequenceType;
-import sparksoniq.spark.SparkSessionManager;
 
 public class RangeOperationIterator extends HybridRuntimeIterator {
 

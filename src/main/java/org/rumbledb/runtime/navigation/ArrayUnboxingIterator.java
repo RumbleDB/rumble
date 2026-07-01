@@ -39,10 +39,9 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;

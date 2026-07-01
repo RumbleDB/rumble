@@ -41,9 +41,9 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.spark.SparkSessionManager;
 
 import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;

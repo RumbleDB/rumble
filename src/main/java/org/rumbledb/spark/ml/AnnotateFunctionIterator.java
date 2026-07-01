@@ -1,4 +1,4 @@
-package sparksoniq.spark.ml;
+package org.rumbledb.spark.ml;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
