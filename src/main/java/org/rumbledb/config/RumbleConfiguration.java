@@ -20,7 +20,6 @@ package org.rumbledb.config;
 
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
-import org.rumbledb.config.model.BindingsConfig;
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.config.model.ExecutionMode;
 import org.rumbledb.config.model.FormattingConfig;
@@ -68,8 +67,6 @@ public class RumbleConfiguration {
 
     private FormattingConfig formatting;
 
-    private BindingsConfig bindings;
-
     @Builder(toBuilder = true)
     private RumbleConfiguration(
             ExecutionMode executionMode,
@@ -82,8 +79,7 @@ public class RumbleConfiguration {
             AnalysisConfig analysis,
             OptimizationConfig optimization,
             SemanticsConfig semantics,
-            FormattingConfig formatting,
-            BindingsConfig bindings
+            FormattingConfig formatting
     ) {
         this.executionMode = Objects.requireNonNullElse(executionMode, ExecutionMode.RUN);
         this.server = Objects.requireNonNullElseGet(server, () -> ServerConfig.builder().build());
@@ -96,7 +92,6 @@ public class RumbleConfiguration {
         this.optimization = Objects.requireNonNullElseGet(optimization, () -> OptimizationConfig.builder().build());
         this.semantics = Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
         this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
-        this.bindings = Objects.requireNonNullElseGet(bindings, () -> BindingsConfig.builder().build());
     }
 
     // Avoid Javadoc error because it cannot resolve the builder class used as return type for the baseConfiguration
@@ -186,14 +181,6 @@ public class RumbleConfiguration {
                 : this.formatting.toBuilder();
             customizer.accept(builder);
             return formatting(builder.build());
-        }
-
-        public RumbleConfigurationBuilder configureBindings(Consumer<BindingsConfig.BindingsConfigBuilder> customizer) {
-            BindingsConfig.BindingsConfigBuilder builder = this.bindings == null
-                ? BindingsConfig.builder()
-                : this.bindings.toBuilder();
-            customizer.accept(builder);
-            return bindings(builder.build());
         }
     }
 }
