@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.jsoniq.tuple;
+package org.rumbledb.runtime.flwor.tuple;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
