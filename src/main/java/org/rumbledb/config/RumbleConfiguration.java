@@ -18,6 +18,12 @@
 
 package org.rumbledb.config;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import lombok.Builder;
+import lombok.Value;
+import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
 import org.rumbledb.config.model.DebugConfig;
@@ -30,17 +36,18 @@ import org.rumbledb.config.model.RuntimeConfig;
 import org.rumbledb.config.model.SemanticsConfig;
 import org.rumbledb.config.model.ServerConfig;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import lombok.Builder;
-import lombok.Value;
-import lombok.experimental.Accessors;
 
 /**
  * Temporary aggregate for the new typed configuration model.
  */
 @Value
+@Jacksonized
 @Accessors(fluent = true)
+@JsonDeserialize(builder = RumbleConfiguration.RumbleConfigurationBuilder.class)
 public class RumbleConfiguration {
     /**
      * Application execution mode.
@@ -96,7 +103,35 @@ public class RumbleConfiguration {
 
     // Avoid Javadoc error because it cannot resolve the builder class used as return type for the baseConfiguration
     // method in cli.commands.AbstractCommand
+    @JsonPOJOBuilder(withPrefix = "")
     public static class RumbleConfigurationBuilder {
+        private final Map<String, Object> withEntries = new LinkedHashMap<>();
+
+        public RumbleConfigurationBuilder with(String key, Object value) {
+            this.withEntries.put(Objects.requireNonNull(key, "Configuration key cannot be null."), value);
+            return this;
+        }
+
+        public RumbleConfiguration build() {
+            RumbleConfiguration baseConfiguration = new RumbleConfiguration(
+                    this.executionMode,
+                    this.server,
+                    this.access,
+                    this.input,
+                    this.output,
+                    this.runtime,
+                    this.debug,
+                    this.analysis,
+                    this.optimization,
+                    this.semantics,
+                    this.formatting
+            );
+            if (this.withEntries.isEmpty()) {
+                return baseConfiguration;
+            }
+            return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
+        }
+
         public RumbleConfigurationBuilder configureServer(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
             ServerConfig.ServerConfigBuilder builder = this.server == null
                 ? ServerConfig.builder()

@@ -20,6 +20,7 @@ package org.rumbledb.config;
 
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.config.model.ExecutionMode;
 import org.rumbledb.config.model.RuntimeConfig;
 
 public class RumbleConfigurationTest {
@@ -60,5 +61,42 @@ public class RumbleConfigurationTest {
         Assert.assertEquals(42, updated.runtime().materializationCap());
         Assert.assertFalse(updated.runtime().useParallelExecution());
         Assert.assertFalse(updated.runtime().useNativeExecution());
+    }
+
+    @Test
+    public void withEntriesApplyNestedOverrides() {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+            .configureRuntime(runtime -> runtime.materializationCap(42))
+            .with("executionMode", "SERVE")
+            .with("input.queryPath", "queries/main.jq")
+            .with("runtime.resultsSizeCap", 100)
+            .with("debug.showErrorInfo", true)
+            .build();
+
+        Assert.assertEquals(ExecutionMode.SERVE, configuration.executionMode());
+        Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
+        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
+        Assert.assertEquals(42, configuration.runtime().materializationCap());
+        Assert.assertTrue(configuration.debug().showErrorInfo());
+    }
+
+    @Test
+    public void withEntriesOverrideTypedBuilderValues() {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+            .executionMode(ExecutionMode.RUN)
+            .configureRuntime(runtime -> runtime.resultsSizeCap(25))
+            .with("executionMode", "REPL")
+            .with("runtime.resultsSizeCap", 100)
+            .build();
+
+        Assert.assertEquals(ExecutionMode.REPL, configuration.executionMode());
+        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void withUnknownEntryFailsFast() {
+        RumbleConfiguration.builder()
+            .with("runtime.unknownOption", true)
+            .build();
     }
 }
