@@ -6,7 +6,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.Name;
 
-import java.net.URI;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -23,17 +22,12 @@ import java.util.Objects;
 @Value
 @Accessors(fluent = true)
 public class ExternalBindings {
-    public static final String INPUT_FORMAT_JSON = "json";
-    public static final String INPUT_FORMAT_TEXT = "text";
-
     private static final ExternalBindings EMPTY = new Builder().build();
 
     private Map<Name, Binding> variables;
-    private Binding contextItem;
 
-    private ExternalBindings(Map<Name, Binding> variables, Binding contextItem) {
+    private ExternalBindings(Map<Name, Binding> variables) {
         this.variables = Collections.unmodifiableMap(new LinkedHashMap<>(variables));
-        this.contextItem = contextItem;
     }
 
     public static Builder builder() {
@@ -45,7 +39,7 @@ public class ExternalBindings {
     }
 
     public boolean isEmpty() {
-        return this.variables.isEmpty() && this.contextItem == null;
+        return this.variables.isEmpty();
     }
 
     public interface Binding {
@@ -54,10 +48,7 @@ public class ExternalBindings {
 
     public enum Kind {
         ITEM_SEQUENCE,
-        DATAFRAME,
-        LEXICAL_VALUE,
-        URI_SOURCE,
-        STDIN_SOURCE
+        DATAFRAME
     }
 
     @Value
@@ -88,58 +79,27 @@ public class ExternalBindings {
         }
     }
 
-    @Value
-    public static class LexicalValueBinding implements Binding {
-        String value;
-
-        public LexicalValueBinding(String value) {
-            this.value = Objects.requireNonNull(value, "value");
-        }
-
-        @Override
-        public Kind kind() {
-            return Kind.LEXICAL_VALUE;
-        }
-    }
-
-    @Value
-    public static class UriSourceBinding implements Binding {
-        URI uri;
-        String inputFormat;
-
-        public UriSourceBinding(URI uri, String inputFormat) {
-            this.uri = Objects.requireNonNull(uri, "uri");
-            this.inputFormat = normalizeInputFormat(inputFormat);
-        }
-
-        @Override
-        public Kind kind() {
-            return Kind.URI_SOURCE;
-        }
-    }
-
-    @Value
-    public static class StdinSourceBinding implements Binding {
-        String inputFormat;
-
-        public StdinSourceBinding(String inputFormat) {
-            this.inputFormat = normalizeInputFormat(inputFormat);
-        }
-
-        @Override
-        public Kind kind() {
-            return Kind.STDIN_SOURCE;
-        }
-    }
-
     public static class Builder {
         private final Map<Name, Binding> variables = new LinkedHashMap<>();
-        private Binding contextItem;
 
         public Builder variables(Map<Name, Binding> variables) {
             this.variables.clear();
             this.variables.putAll(Objects.requireNonNull(variables, "variables"));
             return this;
+        }
+
+        /**
+         * Convenience equivalent of binding a singleton sequence of one item.
+         */
+        public Builder bindItem(String variableName, Item item) {
+            return bindItem(Name.createVariableInNoNamespace(variableName), item);
+        }
+
+        /**
+         * Convenience equivalent of binding a singleton sequence of one item.
+         */
+        public Builder bindItem(Name variableName, Item item) {
+            return bindItems(variableName, List.of(Objects.requireNonNull(item, "item")));
         }
 
         /**
@@ -178,102 +138,8 @@ public class ExternalBindings {
             return this;
         }
 
-        /**
-         * Replaces CLI-style lexical bindings such as {@code --variable name=value}, which are later read via
-         * {@code RumbleRuntimeConfiguration.getUnparsedExternalVariableValue(Name)}.
-         */
-        public Builder bindLexical(String variableName, String value) {
-            return bindLexical(Name.createVariableInNoNamespace(variableName), value);
-        }
-
-        /**
-         * Replaces CLI-style lexical bindings such as {@code --variable name=value}, which are later read via
-         * {@code RumbleRuntimeConfiguration.getUnparsedExternalVariableValue(Name)}.
-         */
-        public Builder bindLexical(Name variableName, String value) {
-            this.variables.put(
-                Objects.requireNonNull(variableName, "variableName"),
-                new LexicalValueBinding(value)
-            );
-            return this;
-        }
-
-        /**
-         * Replaces CLI-style file bindings such as {@code --variable-from-file name=path}, which are later read via
-         * {@code RumbleRuntimeConfiguration.getExternalVariableValueReadFromFile(Name)}.
-         */
-        public Builder bindFromUri(String variableName, URI uri, String inputFormat) {
-            return bindFromUri(Name.createVariableInNoNamespace(variableName), uri, inputFormat);
-        }
-
-        /**
-         * Replaces CLI-style file bindings such as {@code --variable-from-file name=path}, which are later read via
-         * {@code RumbleRuntimeConfiguration.getExternalVariableValueReadFromFile(Name)}.
-         */
-        public Builder bindFromUri(Name variableName, URI uri, String inputFormat) {
-            this.variables.put(
-                Objects.requireNonNull(variableName, "variableName"),
-                new UriSourceBinding(uri, inputFormat)
-            );
-            return this;
-        }
-
-        /**
-         * Replaces binding the context item through
-         * {@code RumbleRuntimeConfiguration.setExternalVariableValue(Name.CONTEXT_ITEM, List<Item>)}.
-         */
-        public Builder bindContextItemItems(List<Item> items) {
-            this.contextItem = new ItemSequenceBinding(items);
-            return this;
-        }
-
-        /**
-         * Replaces binding the context item through
-         * {@code RumbleRuntimeConfiguration.setExternalVariableValue(Name.CONTEXT_ITEM, Dataset<Row>)}.
-         */
-        public Builder bindContextItemDataFrame(Dataset<Row> dataFrame) {
-            this.contextItem = new DataFrameBinding(dataFrame);
-            return this;
-        }
-
-        /**
-         * Replaces {@code --context-item value}, which is later read via
-         * {@code RumbleRuntimeConfiguration.getUnparsedExternalVariableValue(Name.CONTEXT_ITEM)}.
-         */
-        public Builder bindContextItemLexical(String value) {
-            this.contextItem = new LexicalValueBinding(value);
-            return this;
-        }
-
-        /**
-         * Replaces {@code --context-item-input path}, together with
-         * {@code RumbleRuntimeConfiguration.getInputFormat(Name.CONTEXT_ITEM)}.
-         */
-        public Builder bindContextItemFromUri(URI uri, String inputFormat) {
-            this.contextItem = new UriSourceBinding(uri, inputFormat);
-            return this;
-        }
-
-        /**
-         * Replaces {@code --context-item-input -}, together with
-         * {@code RumbleRuntimeConfiguration.readFromStandardInput(Name.CONTEXT_ITEM)} and
-         * {@code RumbleRuntimeConfiguration.getInputFormat(Name.CONTEXT_ITEM)}.
-         */
-        public Builder bindContextItemFromStdin(String inputFormat) {
-            this.contextItem = new StdinSourceBinding(inputFormat);
-            return this;
-        }
-
         public ExternalBindings build() {
-            return new ExternalBindings(this.variables, this.contextItem);
+            return new ExternalBindings(this.variables);
         }
-    }
-
-    private static String normalizeInputFormat(String inputFormat) {
-        String normalized = Objects.requireNonNullElse(inputFormat, INPUT_FORMAT_JSON).trim().toLowerCase();
-        if (!INPUT_FORMAT_JSON.equals(normalized) && !INPUT_FORMAT_TEXT.equals(normalized)) {
-            throw new IllegalArgumentException("Unsupported input format: " + inputFormat);
-        }
-        return normalized;
     }
 }
