@@ -957,7 +957,7 @@ public class ItemParser implements Serializable {
                     }
                 }
                 String uri = attribute.getNodeValue();
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateParsedNamespaceBinding(prefix, uri);
                 namespaceBindings.put(prefix, uri);
                 continue;
             }
