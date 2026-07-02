@@ -23,7 +23,6 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import lombok.experimental.Tolerate;
 import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
@@ -145,8 +144,7 @@ public class RumbleConfiguration {
             return build.apply(builder);
         }
 
-        @Tolerate // So Lombok still keep the original builder setter method
-        public RumbleConfigurationBuilder server(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder serverWith(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
             return server(
                 configureSection(
                     this.server,
@@ -158,8 +156,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder access(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder accessWith(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
             return access(
                 configureSection(
                     this.access,
@@ -171,8 +168,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder input(Consumer<InputConfig.InputConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder inputWith(Consumer<InputConfig.InputConfigBuilder> customizer) {
             return input(
                 configureSection(
                     this.input,
@@ -184,8 +180,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder output(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder outputWith(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
             return output(
                 configureSection(
                     this.output,
@@ -197,8 +192,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder runtime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder runtimeWith(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
             return runtime(
                 configureSection(
                     this.runtime,
@@ -210,8 +204,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder debug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder debugWith(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
             return debug(
                 configureSection(
                     this.debug,
@@ -223,8 +216,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder analysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder analysisWith(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
             return analysis(
                 configureSection(
                     this.analysis,
@@ -236,8 +228,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder optimization(
+        public RumbleConfigurationBuilder optimizationWith(
                 Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
         ) {
             return optimization(
@@ -251,8 +242,7 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder semantics(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder semanticsWith(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
             return semantics(
                 configureSection(
                     this.semantics,
@@ -264,8 +254,9 @@ public class RumbleConfiguration {
             );
         }
 
-        @Tolerate
-        public RumbleConfigurationBuilder formatting(Consumer<FormattingConfig.FormattingConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder formattingWith(
+                Consumer<FormattingConfig.FormattingConfigBuilder> customizer
+        ) {
             return formatting(
                 configureSection(
                     this.formatting,

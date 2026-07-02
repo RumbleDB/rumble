@@ -32,9 +32,9 @@ public class RumbleConfigurationTest {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
                 .executionMode(ExecutionMode.SERVE)
-                .runtime(runtime -> runtime.resultsSizeCap(100))
-                .debug(debug -> debug.showErrorInfo(true))
-                .access(access -> access.allowedPrefixes(List.of("file:", "https:")))
+                .runtimeWith(runtime -> runtime.resultsSizeCap(100))
+                .debugWith(debug -> debug.showErrorInfo(true))
+                .accessWith(access -> access.allowedPrefixes(List.of("file:", "https:")))
                 .build()
         );
 
@@ -48,7 +48,7 @@ public class RumbleConfigurationTest {
     public void getReturnsConfigurationSectionsAsMaps() {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
-                .server(server -> server.host("example.org").port(9000))
+                .serverWith(server -> server.host("example.org").port(9000))
                 .build()
         );
 

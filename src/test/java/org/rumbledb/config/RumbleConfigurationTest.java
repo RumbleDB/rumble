@@ -28,9 +28,9 @@ public class RumbleConfigurationTest {
     @Test
     public void lambdaCustomizersConfigureSections() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .runtime(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
-            .output(output -> output.outputPath("output.json").allowOverwrite(true))
-            .server(server -> server.host("example.org").port(9000))
+            .runtimeWith(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
+            .outputWith(output -> output.outputPath("output.json").allowOverwrite(true))
+            .serverWith(server -> server.host("example.org").port(9000))
             .build();
 
         Assert.assertEquals(25, configuration.runtime().resultsSizeCap());
@@ -50,11 +50,11 @@ public class RumbleConfigurationTest {
                     .useParallelExecution(false)
                     .build()
             )
-            .runtime(runtime -> runtime.resultsSizeCap(25))
+            .runtimeWith(runtime -> runtime.resultsSizeCap(25))
             .build();
 
         RumbleConfiguration updated = original.toBuilder()
-            .runtime(runtime -> runtime.useNativeExecution(false))
+            .runtimeWith(runtime -> runtime.useNativeExecution(false))
             .build();
 
         Assert.assertEquals(25, updated.runtime().resultsSizeCap());
@@ -66,7 +66,7 @@ public class RumbleConfigurationTest {
     @Test
     public void withEntriesApplyNestedOverrides() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .runtime(runtime -> runtime.materializationCap(42))
+            .runtimeWith(runtime -> runtime.materializationCap(42))
             .with("executionMode", "SERVE")
             .with("input.queryPath", "queries/main.jq")
             .with("runtime.resultsSizeCap", 100)
@@ -84,7 +84,7 @@ public class RumbleConfigurationTest {
     public void withEntriesOverrideTypedBuilderValues() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
             .executionMode(ExecutionMode.RUN)
-            .runtime(runtime -> runtime.resultsSizeCap(25))
+            .runtimeWith(runtime -> runtime.resultsSizeCap(25))
             .with("executionMode", "REPL")
             .with("runtime.resultsSizeCap", 100)
             .build();
