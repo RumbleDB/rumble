@@ -277,7 +277,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             throw invalidRepresentation("A number element must not be empty.");
         }
         if (JSON_NUMBER_PATTERN.matcher(stringValue).matches()) {
-            return JSONLiteralParsingUtils.getItemFromJSONNumber(stringValue, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(
+                stringValue,
+                JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE
+            );
         }
         if (!PERMISSIVE_NUMBER_PATTERN.matcher(stringValue).matches()) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
