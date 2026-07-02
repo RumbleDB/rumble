@@ -23,16 +23,17 @@ package org.rumbledb.runtime.functions.sequences.general;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -72,14 +73,14 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         this.inputItems = this.sequenceIterator.materialize(context);
 
         List<Item> functionItems = this.actionIterator.materialize(context);
-        if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
+        if (functionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:for-each must be a single function item [err:XPTY0004].",
                     getMetadata()
             );
         }
         this.actionFunction = functionItems.get(0);
-        if (this.actionFunction.getIdentifier().getArity() != 1) {
+        if (!acceptsSingleArgument(this.actionFunction)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each must accept exactly one argument [err:XPTY0004].",
                     getMetadata()
@@ -96,13 +97,24 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.actionFunction,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            callbackArguments,
-            false
+        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
+                getConfiguration(),
+                SequenceType.createSequenceType("item*"),
+                ExecutionMode.LOCAL,
+                getMetadata()
         );
+        this.currentCallbackIterator = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(this.actionFunction, functionItemContext),
+                callbackArguments,
+                functionItemContext
+        );
+    }
+
+    private static boolean acceptsSingleArgument(Item item) {
+        if (item.isMap() || item.isArray()) {
+            return true;
+        }
+        return item.isFunction() && item.getIdentifier().getArity() == 1;
     }
 
     private void advanceToNextResult(DynamicContext context) {
