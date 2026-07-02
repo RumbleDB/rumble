@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Credit to Andrei Barsan, teammate from ACD ;)
@@ -34,9 +33,6 @@ public class AnnotationProcessor {
 
     public static final String OUTPUT_KEY = "Output";
     public static final String UPDATE_DIM_KEY = "UpdateDim";
-    public static final String UPDATE_TABLE_KEY = "UpdateTable";
-    public static final String CREATE_TABLE = "CreateTable";
-    public static final String DELETE_TABLE = "DeleteTable";
     public static final String ERROR_MESSAGE = "ErrorCode";
     public static final String ERROR_METADATA = "ErrorMetadata";
     public static final String SHOULD_PARSE = "ShouldParse";
@@ -69,9 +65,6 @@ public class AnnotationProcessor {
         String[] annotationTokens = annotationText.split("\\s*;\\s*");
 
         AnnotationExpectation expectation = null;
-        UpdateDimensions updateDimensions = null;
-        boolean shouldCreateTable = false;
-        boolean shouldDeleteTable = false;
         Map<String, String> parameters = new HashMap<>();
         for (String token : annotationTokens) {
             AnnotationExpectation tokenExpectation = AnnotationExpectation.fromToken(token);
@@ -80,10 +73,6 @@ public class AnnotationProcessor {
                     throw new AnnotationParseException(annotationText, "Found multiple test expectations.");
                 }
                 expectation = tokenExpectation;
-            } else if (token.equals(CREATE_TABLE)) {
-                shouldCreateTable = true;
-            } else if (token.equals(DELETE_TABLE)) {
-                shouldDeleteTable = true;
             } else if (token.contains("=")) {
                 String[] tokenParts = token.split("=", 2);
                 String key = tokenParts[0].trim();
@@ -93,9 +82,6 @@ public class AnnotationProcessor {
                 }
                 value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
                 parameters.put(key, value);
-                if (key.equals(UPDATE_DIM_KEY)) {
-                    updateDimensions = parseUpdateDimensions(annotationText, value);
-                }
             }
         }
 
@@ -106,25 +92,11 @@ public class AnnotationProcessor {
             );
         }
 
-        Optional<UpdateSpec> updateSpec = Optional.empty();
-        if (expectation == AnnotationExpectation.RUNNABLE && updateDimensions != null) {
-            // Update metadata is meaningful only for runnable tests with an UpdateDim annotation.
-            updateSpec = Optional.of(
-                new UpdateSpec(
-                        parameters.get(UPDATE_TABLE_KEY),
-                        updateDimensions,
-                        shouldDeleteTable,
-                        shouldCreateTable
-                )
-            );
-        }
-
         return new TestAnnotation(
                 expectation,
                 parameters.get(OUTPUT_KEY),
                 parameters.get(ERROR_MESSAGE),
-                parameters.get(ERROR_METADATA),
-                updateSpec
+                parameters.get(ERROR_METADATA)
         );
     }
 
@@ -233,18 +205,11 @@ public class AnnotationProcessor {
             AnnotationExpectation expectation,
             String output,
             String errorCode,
-            String errorMetadata,
-            Optional<UpdateSpec> updateSpec) {
+            String errorMetadata) {
     }
 
     // Update tests use these coordinates to run files in deterministic dependency order.
     public record UpdateDimensions(int dimension1, int dimension2) {
     }
 
-    public record UpdateSpec(
-            String tablePath,
-            UpdateDimensions dimensions,
-            boolean shouldDeleteTable,
-            boolean shouldCreateTable) {
-    }
 }
