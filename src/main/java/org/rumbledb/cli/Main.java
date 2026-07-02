@@ -27,7 +27,6 @@ import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
 
 import javassist.CannotCompileException;
@@ -57,7 +56,8 @@ public class Main {
             if (sparksoniqConf.isShell()) {
                 launchShell(sparksoniqConf);
             } else if (sparksoniqConf.isServer()) {
-                launchServer(sparksoniqConf);
+                // Remove this block when configuration class refactoring is done and `isServer()` is removed
+                System.out.println("⚠️  RumbleDB server mode is deprecated.");
             } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
             } else {
@@ -185,11 +185,6 @@ public class Main {
     private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
         terminal = new RumbleJLineShell(sparksoniqConf);
         terminal.launch();
-    }
-
-    private static void launchServer(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-        RumbleServer server = new RumbleServer(sparksoniqConf);
-        server.start();
     }
 
     public static void printMessageToLog(String message) {

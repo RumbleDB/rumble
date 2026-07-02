@@ -20,7 +20,6 @@ package org.rumbledb.cli;
 
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
-import org.rumbledb.cli.commands.Serve;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.ParseResult;
@@ -30,7 +29,6 @@ import picocli.CommandLine.ParseResult;
     description = "RumbleDB command line interface.",
     subcommands = {
         Run.class,
-        Serve.class,
         Repl.class
     }
 )
