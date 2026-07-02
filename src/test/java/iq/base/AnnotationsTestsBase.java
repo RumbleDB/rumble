@@ -37,7 +37,7 @@ import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import utils.annotations.AnnotationProcessor.AnnotationExpectation;
-import utils.annotations.AnnotationProcessor.PhaseExpectation;
+import utils.annotations.AnnotationProcessor.TestStage;
 
 import java.io.File;
 import java.io.FileReader;
@@ -78,32 +78,12 @@ public class AnnotationsTestsBase {
             )
         );
 
-    private enum FailureStage {
-        PARSING("parse"),
-        SEMANTIC("compile"),
-        RUNTIME("run");
-
-        private final String verb;
-
-        FailureStage(String verb) {
-            this.verb = verb;
-        }
-
-        private String unexpectedFailureMessage(String errorOutput) {
-            return "Program did not " + this.verb + " when expected to.\nError output: " + errorOutput + "\n";
-        }
-
-        private String unexpectedSuccessMessage() {
-            return "Program did " + this.verb + " when not expected to.\n";
-        }
-    }
-
-    private record QueryExecutionResult(SequenceOfItems sequence, FailureStage failureStage, String failureMessage) {
+    private record QueryExecutionResult(SequenceOfItems sequence, TestStage failureStage, String failureMessage) {
         private static QueryExecutionResult success(SequenceOfItems sequence) {
             return new QueryExecutionResult(sequence, null, null);
         }
 
-        private static QueryExecutionResult failure(FailureStage failureStage, String failureMessage) {
+        private static QueryExecutionResult failure(TestStage failureStage, String failureMessage) {
             return new QueryExecutionResult(null, failureStage, failureMessage);
         }
 
@@ -140,27 +120,29 @@ public class AnnotationsTestsBase {
             return;
         }
 
-        // If the query has run successfully, we check if that's expected and if the output matches the expected output.
-        assertSuccessfulParseAndCompile(annotation);
-        PhaseExpectation runtimeExpectation = annotation.getExpectation().runtime();
-        if (runtimeExpectation == PhaseExpectation.NOT_APPLICABLE) {
-            // The test did not specify any runtime expectation, so we don't check the output.
-            return;
+        switch (annotation.expectation()) {
+            case UNPARSABLE, UNCOMPILABLE:
+                // Fail the test because the query was expected to fail during parsing or compilation, but it succeeded.
+                Assert.fail(unexpectedSuccessMessage(annotation.expectation().stage()));
+                return;
+            case PARSABLE, COMPILABLE:
+                return;
+            case RUNNABLE:
+                assertOutput(annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
+                return;
+            case UNRUNNABLE:
+                // Runtime errors may be deferred until the sequence is materialized.
+                assertExpectedRuntimeFailureDuringMaterialization(
+                    annotation,
+                    executionResult.sequence(),
+                    checkOutput,
+                    applyUpdates,
+                    resultSizeCap
+                );
+                return;
+            default:
+                throw new IllegalStateException("Unhandled expectation: " + annotation.expectation());
         }
-        if (runtimeExpectation == PhaseExpectation.MUST_SUCCEED) {
-            // The test is expected to succeed, so we check the output against the expected output.
-            assertOutput(annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
-            return;
-        }
-
-        // Some tests are expected to compile but fail only when the result is materialized.
-        assertExpectedRuntimeFailureDuringMaterialization(
-            annotation,
-            executionResult.sequence(),
-            checkOutput,
-            applyUpdates,
-            resultSizeCap
-        );
     }
 
     private static AnnotationProcessor.TestAnnotation readAnnotation(String path) throws IOException {
@@ -181,11 +163,11 @@ public class AnnotationsTestsBase {
             Rumble rumble = new Rumble(configuration);
             return QueryExecutionResult.success(rumble.runQuery(uri));
         } catch (ParsingException exception) {
-            return QueryExecutionResult.failure(FailureStage.PARSING, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.PARSING, exception.getMessage());
         } catch (SemanticException exception) {
-            return QueryExecutionResult.failure(FailureStage.SEMANTIC, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.COMPILATION, exception.getMessage());
         } catch (RumbleException exception) {
-            return QueryExecutionResult.failure(FailureStage.RUNTIME, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.RUNTIME, exception.getMessage());
         } catch (IOException exception) {
             throw new AssertionError("Could not execute test query for " + path, exception);
         }
@@ -195,96 +177,41 @@ public class AnnotationsTestsBase {
             AnnotationProcessor.TestAnnotation annotation,
             QueryExecutionResult executionResult
     ) {
-        FailureStage actualFailureStage = executionResult.failureStage();
-        FailureStage expectedFailureStage = expectedFailureStage(annotation.getExpectation());
-
-        // Negative annotations require an exact failure stage; positive annotations only
-        // guarantee success up to their declared stage and may fail later.
-        boolean failureWasExpected = expectedFailureStage == null
-            ? !shouldReachStage(annotation.getExpectation(), actualFailureStage)
-            : actualFailureStage == expectedFailureStage;
-
-        if (!failureWasExpected) {
-            assertUnexpectedFailure(actualFailureStage, expectedFailureStage, executionResult.failureMessage());
+        AnnotationExpectation expectation = annotation.expectation();
+        if (!expectation.acceptsFailureAt(executionResult.failureStage())) {
+            Assert.fail(unexpectedFailureMessage(expectation, executionResult));
         }
 
         checkErrorCode(
             executionResult.failureMessage(),
-            annotation.getErrorCode(),
-            annotation.getErrorMetadata()
+            annotation.errorCode(),
+            annotation.errorMetadata()
         );
         System.out.println(executionResult.failureMessage());
     }
 
-    private static boolean shouldReachStage(
+    private static String unexpectedFailureMessage(
             AnnotationExpectation expectation,
-            FailureStage failureStage
+            QueryExecutionResult executionResult
     ) {
-        return expectationForStage(expectation, failureStage) == PhaseExpectation.MUST_SUCCEED;
+        if (expectation.expectsSuccess()) {
+            return unexpectedFailureMessage(executionResult.failureStage(), executionResult.failureMessage());
+        }
+        return "Program failed during "
+            + executionResult.failureStage().verb()
+            + " when expected to fail during "
+            + expectation.stage().verb()
+            + ".\nError output: "
+            + executionResult.failureMessage()
+            + "\n";
     }
 
-    private static void assertUnexpectedFailure(
-            FailureStage actualFailureStage,
-            FailureStage expectedFailureStage,
-            String failureMessage
-    ) {
-        if (expectedFailureStage == null) {
-            Assert.fail(actualFailureStage.unexpectedFailureMessage(failureMessage));
-            return;
-        }
-        Assert.fail(
-            "Program failed during "
-                + actualFailureStage.verb
-                + " when expected to fail during "
-                + expectedFailureStage.verb
-                + ".\nError output: "
-                + failureMessage
-                + "\n"
-        );
+    private static String unexpectedFailureMessage(TestStage stage, String errorOutput) {
+        return "Program did not " + stage.verb() + " when expected to.\nError output: " + errorOutput + "\n";
     }
 
-    private static void assertSuccessfulParseAndCompile(AnnotationProcessor.TestAnnotation annotation) {
-        AnnotationExpectation expectation = annotation.getExpectation();
-        if (expectation.parsing() == PhaseExpectation.MUST_FAIL) {
-            Assert.fail(FailureStage.PARSING.unexpectedSuccessMessage());
-        }
-        PhaseExpectation compileExpectation = expectation.compilation();
-        if (compileExpectation == PhaseExpectation.NOT_APPLICABLE) {
-            return;
-        }
-        if (compileExpectation == PhaseExpectation.MUST_FAIL) {
-            Assert.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
-        }
-    }
-
-    private static FailureStage expectedFailureStage(AnnotationExpectation expectation) {
-        // There is at most one stage where an annotation explicitly requires failure.
-        if (expectation.parsing() == PhaseExpectation.MUST_FAIL) {
-            return FailureStage.PARSING;
-        }
-        if (expectation.compilation() == PhaseExpectation.MUST_FAIL) {
-            return FailureStage.SEMANTIC;
-        }
-        if (expectation.runtime() == PhaseExpectation.MUST_FAIL) {
-            return FailureStage.RUNTIME;
-        }
-        return null;
-    }
-
-    private static PhaseExpectation expectationForStage(
-            AnnotationExpectation expectation,
-            FailureStage failureStage
-    ) {
-        switch (failureStage) {
-            case PARSING:
-                return expectation.parsing();
-            case SEMANTIC:
-                return expectation.compilation();
-            case RUNTIME:
-                return expectation.runtime();
-            default:
-                throw new IllegalStateException("Unhandled failure stage: " + failureStage);
-        }
+    private static String unexpectedSuccessMessage(TestStage stage) {
+        return "Program did " + stage.verb() + " when not expected to.\n";
     }
 
     private static void assertOutput(
@@ -295,10 +222,10 @@ public class AnnotationsTestsBase {
             int resultSizeCap
     ) {
         try {
-            checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            checkExpectedOutput(annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
             String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assert.fail(FailureStage.RUNTIME.unexpectedFailureMessage(errorOutput));
+            Assert.fail(unexpectedFailureMessage(TestStage.RUNTIME, errorOutput));
         }
     }
 
@@ -310,10 +237,10 @@ public class AnnotationsTestsBase {
             int resultSizeCap
     ) {
         try {
-            checkExpectedOutput(annotation.getOutput(), sequence, checkOutput, applyUpdates, resultSizeCap);
-            Assert.fail(FailureStage.RUNTIME.unexpectedSuccessMessage());
+            checkExpectedOutput(annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            Assert.fail(unexpectedSuccessMessage(TestStage.RUNTIME));
         } catch (Exception exception) {
-            checkErrorCode(exception.getMessage(), annotation.getErrorCode(), annotation.getErrorMetadata());
+            checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
         }
     }
 
@@ -335,18 +262,19 @@ public class AnnotationsTestsBase {
     }
 
     protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
-        if (errorOutput != null && expectedErrorCode != null) {
-            Assert.assertTrue(
-                "Unexpected error code returned; Expected: " + expectedErrorCode + "; Error: " + errorOutput,
-                errorOutput.contains(expectedErrorCode)
-            );
+        assertErrorContains(errorOutput, "error code", expectedErrorCode);
+        assertErrorContains(errorOutput, "metadata", errorMetadata);
+    }
+
+    private static void assertErrorContains(String errorOutput, String label, String expectedValue) {
+        if (expectedValue == null) {
+            return;
         }
-        if (errorOutput != null && errorMetadata != null) {
-            Assert.assertTrue(
-                "Unexpected metadata returned; Expected: " + errorMetadata + "; Error: " + errorOutput,
-                errorOutput.contains(errorMetadata)
-            );
-        }
+        Assert.assertNotNull("Missing error output; Expected " + label + ": " + expectedValue, errorOutput);
+        Assert.assertTrue(
+            "Unexpected " + label + "; Expected: " + expectedValue + "; Error: " + errorOutput,
+            errorOutput.contains(expectedValue)
+        );
     }
 
     public static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {

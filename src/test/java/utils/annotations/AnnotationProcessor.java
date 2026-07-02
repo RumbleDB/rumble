@@ -48,11 +48,11 @@ public class AnnotationProcessor {
     public static final String MAGIC_COOKIE = "(:JIQS:";
 
     public static String readAnnotationText(Reader reader) throws IOException {
-        BufferedReader bread = new BufferedReader(reader);
+        BufferedReader bufferedReader = new BufferedReader(reader);
         return String
             .join(
                 " ",
-                (Iterable<String>) bread.lines()
+                (Iterable<String>) bufferedReader.lines()
                     .map(String::trim)
                     .filter((line) -> line.startsWith(MAGIC_COOKIE))
                     .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator
@@ -68,104 +68,67 @@ public class AnnotationProcessor {
         }
         String[] annotationTokens = annotationText.split("\\s*;\\s*");
 
-        Optional<Boolean> shouldParse = Optional.empty();
-        Optional<Boolean> shouldCompile = Optional.empty();
-        Optional<Boolean> shouldRun = Optional.empty();
-
-        Optional<Boolean> deleteTable = Optional.of(false);
-        Optional<Boolean> createTable = Optional.of(false);
-
-        Optional<Integer> updateDim1 = Optional.empty();
-        Optional<Integer> updateDim2 = Optional.empty();
-
+        AnnotationExpectation expectation = null;
+        UpdateDimensions updateDimensions = null;
+        boolean shouldCreateTable = false;
+        boolean shouldDeleteTable = false;
         Map<String, String> parameters = new HashMap<>();
         for (String token : annotationTokens) {
-            if (token.equals(SHOULD_PARSE)) {
-                shouldParse = Optional.of(true);
-            } else if (token.equals(SHOULD_NOT_PARSE)) {
-                shouldParse = Optional.of(false);
-            }
-            if (token.equals(SHOULD_COMPILE)) {
-                shouldCompile = Optional.of(true);
-            } else if (token.equals(SHOULD_NOT_COMPILE)) {
-                shouldCompile = Optional.of(false);
-            }
-            if (token.equals(SHOULD_RUN)) {
-                shouldRun = Optional.of(true);
-            } else if (token.equals(SHOULD_CRASH)) {
-                shouldRun = Optional.of(false);
-            } else if (token.equals(DELETE_TABLE)) {
-                deleteTable = Optional.of(true);
+            AnnotationExpectation tokenExpectation = AnnotationExpectation.fromToken(token);
+            if (tokenExpectation != null) {
+                if (expectation != null) {
+                    throw new AnnotationParseException(annotationText, "Found multiple test expectations.");
+                }
+                expectation = tokenExpectation;
             } else if (token.equals(CREATE_TABLE)) {
-                createTable = Optional.of(true);
+                shouldCreateTable = true;
+            } else if (token.equals(DELETE_TABLE)) {
+                shouldDeleteTable = true;
             } else if (token.contains("=")) {
-
                 String[] tokenParts = token.split("=", 2);
                 String key = tokenParts[0].trim();
                 String value = tokenParts[1].trim();
-                // Trim any quotes surrounding the value.
-                if (value.startsWith("\"")) {
+                if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
                     value = value.substring(1, value.length() - 1);
                 }
-                if (key.equals(UPDATE_DIM_KEY)) {
-                    String[] dimsArr = value.substring(1, value.length() - 1).split(",");
-                    updateDim1 = Optional.of(Integer.parseInt(dimsArr[0]));
-                    updateDim2 = Optional.of(Integer.parseInt(dimsArr[1]));
-                }
-
                 value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
                 parameters.put(key, value);
+                if (key.equals(UPDATE_DIM_KEY)) {
+                    updateDimensions = parseUpdateDimensions(annotationText, value);
+                }
             }
         }
 
-        if (!shouldParse.isPresent() && !shouldCompile.isPresent() && !shouldRun.isPresent()) {
+        if (expectation == null) {
             throw new AnnotationParseException(
                     annotationText,
-                    String.format("Missing compilability indicator (e.g. [%s]).", SHOULD_PARSE)
+                    String.format("Missing test expectation (e.g. [%s]).", SHOULD_PARSE)
             );
         }
 
-        if (shouldRun.isPresent()) {
-            if (shouldRun.get())
-                if (updateDim1.isPresent() && updateDim2.isPresent()) {
-                    return new UpdatingRunnableTestAnnotation(
-                            parameters.get(OUTPUT_KEY),
-                            parameters.get(UPDATE_TABLE_KEY),
-                            updateDim1.get(),
-                            updateDim2.get(),
-                            deleteTable.get(),
-                            createTable.get()
-                    );
-                } else {
-                    return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
-                }
-            else
-                return new UnrunnableTestAnnotation(
-                        parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA)
-                );
-        }
-
-        if (shouldCompile.isPresent()) {
-            if (shouldCompile.get())
-                return new CompilableTestAnnotation();
-            else
-                return new UncompilableTestAnnotation(
-                        parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA)
-                );
-        }
-
-        if (shouldParse.get())
-            return new ParsableTestAnnotation();
-        else
-            return new UnparsableTestAnnotation(
-                    parameters.get(ERROR_MESSAGE),
-                    parameters.get(ERROR_METADATA)
+        Optional<UpdateSpec> updateSpec = Optional.empty();
+        if (expectation == AnnotationExpectation.RUNNABLE && updateDimensions != null) {
+            // Update metadata is meaningful only for runnable tests with an UpdateDim annotation.
+            updateSpec = Optional.of(
+                new UpdateSpec(
+                        parameters.get(UPDATE_TABLE_KEY),
+                        updateDimensions,
+                        shouldDeleteTable,
+                        shouldCreateTable
+                )
             );
+        }
+
+        return new TestAnnotation(
+                expectation,
+                parameters.get(OUTPUT_KEY),
+                parameters.get(ERROR_MESSAGE),
+                parameters.get(ERROR_METADATA),
+                updateSpec
+        );
     }
 
-    public static String getUpdateDimensionAnnotation(Reader reader) throws IOException, AnnotationParseException {
+    public static UpdateDimensions readUpdateDimensions(Reader reader) throws IOException, AnnotationParseException {
         String annotationText = readAnnotationText(reader);
         if (annotationText.isEmpty()) {
             throw new AnnotationParseException(annotationText, "Found empty annotation.");
@@ -176,175 +139,112 @@ public class AnnotationProcessor {
 
                 String[] tokenParts = token.split("=", 2);
                 String value = tokenParts[1].trim();
-                if (!value.matches("\\[\\d+,\\d+]")) {
-                    throw new AnnotationParseException(
-                            annotationText,
-                            "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\""
-                    );
-                }
-                return value;
+                return parseUpdateDimensions(annotationText, value);
             }
         }
         throw new AnnotationParseException(annotationText, "No UpdateDim key found.");
     }
 
-    public enum PhaseExpectation {
-        MUST_SUCCEED,
-        MUST_FAIL,
-        NOT_APPLICABLE
+    private static UpdateDimensions parseUpdateDimensions(String annotationText, String value)
+            throws AnnotationParseException {
+        if (!value.matches("\\[\\d+,\\d+]")) {
+            throw new AnnotationParseException(
+                    annotationText,
+                    "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\""
+            );
+        }
+        String[] dimensions = value.substring(1, value.length() - 1).split(",");
+        return new UpdateDimensions(
+                Integer.parseInt(dimensions[0]),
+                Integer.parseInt(dimensions[1])
+        );
     }
 
-    // Each annotation type describes the furthest phase a query is expected to reach.
+    // Declaration order follows the query pipeline and is used for stage comparisons.
+    public enum TestStage {
+        PARSING("parse"),
+        COMPILATION("compile"),
+        RUNTIME("run");
+
+        private final String verb;
+
+        TestStage(String verb) {
+            this.verb = verb;
+        }
+
+        public String verb() {
+            return this.verb;
+        }
+
+        private boolean isAfter(TestStage other) {
+            return this.ordinal() > other.ordinal();
+        }
+    }
+
+    public enum ExpectedOutcome {
+        SUCCESS,
+        FAILURE
+    }
+
     public enum AnnotationExpectation {
-        UNPARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),
-        PARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),
-        UNCOMPILABLE(PhaseExpectation.MUST_FAIL, PhaseExpectation.NOT_APPLICABLE),
-        COMPILABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.NOT_APPLICABLE),
-        UNRUNNABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.MUST_FAIL),
-        RUNNABLE(PhaseExpectation.MUST_SUCCEED, PhaseExpectation.MUST_SUCCEED);
+        UNPARSABLE(SHOULD_NOT_PARSE, TestStage.PARSING, ExpectedOutcome.FAILURE),
+        PARSABLE(SHOULD_PARSE, TestStage.PARSING, ExpectedOutcome.SUCCESS),
+        UNCOMPILABLE(SHOULD_NOT_COMPILE, TestStage.COMPILATION, ExpectedOutcome.FAILURE),
+        COMPILABLE(SHOULD_COMPILE, TestStage.COMPILATION, ExpectedOutcome.SUCCESS),
+        UNRUNNABLE(SHOULD_CRASH, TestStage.RUNTIME, ExpectedOutcome.FAILURE),
+        RUNNABLE(SHOULD_RUN, TestStage.RUNTIME, ExpectedOutcome.SUCCESS);
 
-        private final PhaseExpectation compilation;
-        private final PhaseExpectation runtime;
+        private final String token;
+        private final TestStage stage;
+        private final ExpectedOutcome outcome;
 
-        AnnotationExpectation(
-                PhaseExpectation compilation,
-                PhaseExpectation runtime
-        ) {
-            this.compilation = compilation;
-            this.runtime = runtime;
+        AnnotationExpectation(String token, TestStage stage, ExpectedOutcome outcome) {
+            this.token = token;
+            this.stage = stage;
+            this.outcome = outcome;
         }
 
-        public PhaseExpectation parsing() {
-            return this == UNPARSABLE ? PhaseExpectation.MUST_FAIL : PhaseExpectation.MUST_SUCCEED;
+        public TestStage stage() {
+            return this.stage;
         }
 
-        public PhaseExpectation compilation() {
-            return this.compilation;
+        public boolean expectsSuccess() {
+            return this.outcome == ExpectedOutcome.SUCCESS;
         }
 
-        public PhaseExpectation runtime() {
-            return this.runtime;
-        }
-    }
-
-    public static abstract class TestAnnotation {
-        private final AnnotationExpectation expectation;
-        protected String expectedOutput = "";
-        protected String errorCode = "";
-        protected String errorMetadata = "";
-        protected String deltaTablePath = "";
-        protected int updatingDim1 = -1;
-        protected int updatingDim2 = -1;
-        protected boolean shouldDeleteTable = false;
-        protected boolean shouldCreateTable = false;
-
-        public TestAnnotation(AnnotationExpectation expectation) {
-            this.expectation = expectation;
+        public boolean acceptsFailureAt(TestStage failureStage) {
+            // Positive annotations guarantee only their target stage; later failures are out of scope.
+            return expectsSuccess()
+                ? failureStage.isAfter(this.stage)
+                : failureStage == this.stage;
         }
 
-        public AnnotationExpectation getExpectation() {
-            return this.expectation;
-        }
-
-        public String getOutput() {
-            return this.expectedOutput;
-        }
-
-        public String getErrorCode() {
-            return this.errorCode;
-        }
-
-        public String getErrorMetadata() {
-            return this.errorMetadata;
-        }
-
-        public String getDeltaTablePath() {
-            return this.deltaTablePath;
-        }
-
-        public int getUpdatingDim1() {
-            return this.updatingDim1;
-        }
-
-        public int getUpdatingDim2() {
-            return this.updatingDim2;
-        }
-
-        public boolean shouldDeleteTable() {
-            return this.shouldDeleteTable;
-        }
-
-        public boolean shouldCreateTable() {
-            return this.shouldCreateTable;
+        private static AnnotationExpectation fromToken(String token) {
+            for (AnnotationExpectation expectation : values()) {
+                if (expectation.token.equals(token)) {
+                    return expectation;
+                }
+            }
+            return null;
         }
     }
 
-    public static class RunnableTestAnnotation extends TestAnnotation {
-        public RunnableTestAnnotation(String expectedOut) {
-            super(AnnotationExpectation.RUNNABLE);
-            this.expectedOutput = expectedOut;
-            this.errorCode = null;
-            this.errorMetadata = null;
-        }
-
-        public String getOutput() {
-            return this.expectedOutput;
-        }
+    public record TestAnnotation(
+            AnnotationExpectation expectation,
+            String output,
+            String errorCode,
+            String errorMetadata,
+            Optional<UpdateSpec> updateSpec) {
     }
 
-    public static class UpdatingRunnableTestAnnotation extends RunnableTestAnnotation {
-        public UpdatingRunnableTestAnnotation(
-                String expectedOut,
-                String deltaTablePath,
-                int dim1,
-                int dim2,
-                boolean shouldDeleteTable,
-                boolean shouldCreateTable
-        ) {
-            super(expectedOut);
-            this.deltaTablePath = deltaTablePath;
-            this.updatingDim1 = dim1;
-            this.updatingDim2 = dim2;
-            this.shouldDeleteTable = shouldDeleteTable;
-            this.shouldCreateTable = shouldCreateTable;
-        }
+    // Update tests use these coordinates to run files in deterministic dependency order.
+    public record UpdateDimensions(int dimension1, int dimension2) {
     }
 
-    public static class UnrunnableTestAnnotation extends TestAnnotation {
-        public UnrunnableTestAnnotation(String errorCode, String errorMetadata) {
-            super(AnnotationExpectation.UNRUNNABLE);
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
-        }
-    }
-
-    public static class UncompilableTestAnnotation extends TestAnnotation {
-        public UncompilableTestAnnotation(String errorCode, String errorMetadata) {
-            super(AnnotationExpectation.UNCOMPILABLE);
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
-        }
-    }
-
-    public static class CompilableTestAnnotation extends TestAnnotation {
-        public CompilableTestAnnotation() {
-            super(AnnotationExpectation.COMPILABLE);
-            this.errorCode = null;
-        }
-    }
-
-    public static class ParsableTestAnnotation extends TestAnnotation {
-        public ParsableTestAnnotation() {
-            super(AnnotationExpectation.PARSABLE);
-            this.errorCode = null;
-        }
-    }
-
-    public static class UnparsableTestAnnotation extends TestAnnotation {
-        public UnparsableTestAnnotation(String errorCode, String errorMetadata) {
-            super(AnnotationExpectation.UNPARSABLE);
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
-        }
+    public record UpdateSpec(
+            String tablePath,
+            UpdateDimensions dimensions,
+            boolean shouldDeleteTable,
+            boolean shouldCreateTable) {
     }
 }
