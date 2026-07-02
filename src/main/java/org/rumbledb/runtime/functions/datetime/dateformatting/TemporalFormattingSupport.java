@@ -5,7 +5,6 @@ import java.time.ZoneOffset;
 import java.util.Locale;
 
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
-import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 

@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.math.BigInteger;
