@@ -60,6 +60,7 @@ final class ParsedVariableMarker {
     final ParsedTimezonePicture timezonePicture;
     final String nameForm;
     final String wordCase;
+    final String formatSpecifier;
 
     private ParsedVariableMarker(
             char component,
@@ -76,6 +77,40 @@ final class ParsedVariableMarker {
             String nameForm,
             String wordCase
     ) {
+        this(
+            component,
+            presentation,
+            minWidth,
+            maxWidth,
+            kind,
+            secondPresentationModifier,
+            numericPicture,
+            explicitNumeric,
+            lowerCaseRoman,
+            lowerCaseAlphabetic,
+            timezonePicture,
+            nameForm,
+            wordCase,
+            null
+        );
+    }
+
+    private ParsedVariableMarker(
+            char component,
+            String presentation,
+            int minWidth,
+            int maxWidth,
+            String kind,
+            char secondPresentationModifier,
+            NumericPicture numericPicture,
+            boolean explicitNumeric,
+            boolean lowerCaseRoman,
+            boolean lowerCaseAlphabetic,
+            ParsedTimezonePicture timezonePicture,
+            String nameForm,
+            String wordCase,
+            String formatSpecifier
+    ) {
         this.component = component;
         this.presentation = presentation;
         this.minWidth = minWidth;
@@ -89,6 +124,7 @@ final class ParsedVariableMarker {
         this.timezonePicture = timezonePicture;
         this.nameForm = nameForm;
         this.wordCase = wordCase;
+        this.formatSpecifier = formatSpecifier;
     }
 
     boolean isOrdinal() {
@@ -101,7 +137,7 @@ final class ParsedVariableMarker {
             String pictureString,
             ExceptionMetadata metadata
     ) {
-        switch (component) {
+        switch (this.component) {
             case 'Y':
                 return CalendarFields.year(value, formattingContext);
             case 'M':
@@ -127,7 +163,7 @@ final class ParsedVariableMarker {
             case 'P':
                 return value.getHour() < 12 ? 0 : 1;
             default:
-                throw unsupported(pictureString, metadata, String.valueOf(component));
+                throw unsupported(pictureString, metadata, String.valueOf(this.component));
         }
     }
 
@@ -142,21 +178,21 @@ final class ParsedVariableMarker {
                 return DateNames.dayName(
                     value,
                     formattingContext,
-                    minWidth,
-                    maxWidth
+                    this.minWidth,
+                    this.maxWidth
                 );
             case 'M':
                 return DateNames.monthName(
                     value,
                     formattingContext,
-                    minWidth,
-                    maxWidth
+                    this.minWidth,
+                    this.maxWidth
                 );
             case 'P':
                 Calendar calendar = CalendarFields.calendar(value, formattingContext);
                 return DateNames.amPmName(calendar, formattingContext);
             default:
-                throw unsupported(pictureString, metadata, presentation);
+                throw unsupported(pictureString, metadata, this.presentation);
         }
     }
 
@@ -299,7 +335,8 @@ final class ParsedVariableMarker {
             int min,
             int max,
             char secondPresentationModifier,
-            String wordCase
+            String wordCase,
+            String formatSpecifier
     ) {
         return new ParsedVariableMarker(
                 c,
@@ -314,7 +351,8 @@ final class ParsedVariableMarker {
                 false,
                 null,
                 null,
-                wordCase
+                wordCase,
+                formatSpecifier
         );
     }
 
