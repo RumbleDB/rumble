@@ -42,8 +42,7 @@ public class ComposabilityTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testComposabilityContraints() throws Throwable {
-        initializeTests(composabilityTestsDirectory);
-        for (File testFile : this.testFiles) {
+        for (File testFile : loadTestFiles(composabilityTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
             testAnnotations(
                 testFile.getAbsolutePath(),

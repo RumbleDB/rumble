@@ -25,7 +25,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -118,16 +117,14 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
 
     public static void readFileList(File dir) throws IOException, AnnotationParseException {
         Map<Integer, Map<Integer, File>> updateDimToFileMap = new TreeMap<>();
-        Map<Integer, File> innerMap;
         for (File file : FileManager.loadJiqFiles(dir)) {
-            FileReader reader = new FileReader(file.getPath());
-            String dims = AnnotationProcessor.getUpdateDimensionAnnotation(reader);
-            String[] dimsArr = dims.substring(1, dims.length() - 1).split(",");
-            int dim1 = Integer.parseInt(dimsArr[0]);
-            int dim2 = Integer.parseInt(dimsArr[1]);
-            innerMap = updateDimToFileMap.getOrDefault(dim1, new TreeMap<>());
-            innerMap.put(dim2, file);
-            updateDimToFileMap.put(dim1, innerMap);
+            AnnotationProcessor.UpdateDimensions dimensions;
+            try (FileReader reader = new FileReader(file)) {
+                dimensions = AnnotationProcessor.readUpdateDimensions(reader);
+            }
+            updateDimToFileMap
+                .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
+                .put(dimensions.dimension2(), file);
         }
         IcebergUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
     }
@@ -204,14 +201,6 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        try {
-            AnnotationProcessor.TestAnnotation currentAnnotation = AnnotationProcessor.readAnnotation(
-                new FileReader(this.testFile.getAbsolutePath())
-            );
-        } catch (AnnotationParseException e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
         testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),

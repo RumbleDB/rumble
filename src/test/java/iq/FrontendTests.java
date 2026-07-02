@@ -64,8 +64,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testGrammarAndParser() throws Throwable {
-        initializeTests(grammarTestsDirectory);
-        for (File testFile : this.testFiles) {
+        for (File testFile : loadTestFiles(grammarTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
             testAnnotations(
@@ -106,8 +105,7 @@ public class FrontendTests extends AnnotationsTestsBase {
      */
     @Test(timeout = 1000000)
     public void testSematicChecks() throws Throwable {
-        initializeTests(semanticTestsDirectory);
-        for (File testFile : this.testFiles) {
+        for (File testFile : loadTestFiles(semanticTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
             testAnnotations(
                 testFile.getAbsolutePath(),

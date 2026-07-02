@@ -292,8 +292,7 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
                     +
                     "/src/test/resources/test_files/sequential/non-sequential"
         );
-        initializeTests(nonsequentialTestsDirectory);
-        for (File testFile : this.testFiles) {
+        for (File testFile : loadTestFiles(nonsequentialTestsDirectory)) {
             System.err.println(counter++ + " : " + testFile);
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
