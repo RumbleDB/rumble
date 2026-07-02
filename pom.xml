@@ -34,6 +34,7 @@
     <properties>
         <encoding>UTF-8</encoding>
         <antlr4.version>4.13.2</antlr4.version>
+        <junit.version>6.1.1</junit.version>
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
         <lombok.version>1.18.46</lombok.version>
     </properties>
@@ -406,9 +407,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
