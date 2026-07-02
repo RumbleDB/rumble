@@ -132,6 +132,7 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -622,7 +623,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -764,7 +765,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
             if (expression.isPartialApplication()) {
                 // This should never be reached because partial application on built-in functions should have been
                 // rewritten before
@@ -774,7 +776,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                expression.getFunctionIdentifier()
+                expression.getFunctionIdentifier(),
+                queryLanguage
             );
             if (builtinFunction == null) {
                 throw new UnknownFunctionCallException(
@@ -831,6 +834,28 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
+                }
+                if (
+                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
+                        && parameterExpressions.size() == 1
+                ) {
+                    BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                        expression.getFunctionIdentifier(),
+                        queryLanguage
+                    );
+                    if (
+                        builtinFunction != null
+                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)
+                    ) {
+                        SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
+                        if (
+                            argumentType != null
+                                && argumentType.getArity().equals(SequenceType.Arity.One)
+                                && returnType.getArity().equals(SequenceType.Arity.OneOrZero)
+                        ) {
+                            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
+                        }
+                    }
                 }
                 expression.setStaticSequenceType(returnType);
             }

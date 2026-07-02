@@ -254,25 +254,7 @@ public class ItemParser implements Serializable {
      *         the method returns the most appropriate numeric Item based on the input value
      */
     static Item getItemFromJSONNumber(String number, String numberFormat) {
-        if (JSONParsingOptions.NUMBER_FORMAT_DOUBLE.equals(numberFormat)) {
-            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-        }
-
-        if (JSONParsingOptions.NUMBER_FORMAT_DECIMAL.equals(numberFormat)) {
-            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-        }
-
-        if (JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE.equals(numberFormat)) {
-            if (number.contains("E") || number.contains("e")) {
-                return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
-            }
-            if (number.contains(".")) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-            }
-            return ItemFactory.getInstance().createIntegerItem(number);
-        }
-
-        throw new OurBadException("Unexpected number-format: " + numberFormat);
+        return JSONLiteralParsingUtils.getItemFromJSONNumber(number, numberFormat);
     }
 
     /**
@@ -919,7 +901,7 @@ public class ItemParser implements Serializable {
                     }
                 }
                 String uri = attribute.getNodeValue();
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateParsedNamespaceBinding(prefix, uri);
                 namespaceBindings.put(prefix, uri);
                 continue;
             }

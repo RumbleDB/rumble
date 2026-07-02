@@ -30,26 +30,24 @@ public final class CalendarSupport {
     public static String normalizeKnownCalendarMode(String calendar) {
         String value = normalizeCalendarArgument(calendar);
 
-        if ("DEFAULT".equalsIgnoreCase(value)) {
-            return DEFAULT_CALENDAR;
-        }
-
         CalendarName name = parseEQNameLiteral(value);
         if (name == null || !name.hasEmptyNamespace()) {
             return value;
         }
 
-        String knownCalendar = knownCalendarOrNull(name.localName);
-        return knownCalendar != null ? knownCalendar : value;
+        return CalendarModes.isKnownDesignator(name.localName)
+            ? CalendarModes.normalizeDesignator(name.localName)
+            : name.localName;
     }
 
     /**
-     * Resolves the given calendar mode to the calendar identifier used internally.
-     * <p>
-     * Unqualified calendar names must refer to a known supported calendar.
-     * Namespace-qualified calendar names are considered valid if their prefix can be
-     * resolved using the statically known namespaces, but since external calendar
-     * systems are not supported, they fall back to the default calendar.
+     * Unqualified calendar names must be syntactically valid. Supported calendar
+     * designators are handled by the ICU formatting backend; unsupported valid
+     * designators fall back later.
+     * Namespace-qualified calendar names are syntactically accepted when their prefix
+     * is statically known, but this implementation does not resolve arbitrary
+     * namespace-qualified calendar systems. They also fall back to the default
+     * calendar.
      */
     public static String resolveCalendarMode(
             String calendar,
@@ -58,10 +56,6 @@ public final class CalendarSupport {
     ) {
         String value = normalizeCalendarArgument(calendar);
 
-        if ("DEFAULT".equalsIgnoreCase(value)) {
-            return DEFAULT_CALENDAR;
-        }
-
         CalendarName name = parseCalendarName(value, staticallyKnownNamespaces, metadata);
 
         if (!isValidCalendarLocalName(name.localName)) {
@@ -69,9 +63,8 @@ public final class CalendarSupport {
         }
 
         if (name.hasEmptyNamespace()) {
-            String knownCalendar = knownCalendarOrNull(name.localName);
-            if (knownCalendar != null) {
-                return knownCalendar;
+            if (CalendarModes.isKnownDesignator(name.localName)) {
+                return CalendarModes.normalizeDesignator(name.localName);
             }
 
             throw invalidCalendar(calendar, metadata);
@@ -90,10 +83,8 @@ public final class CalendarSupport {
 
     /**
      * Parses a calendar name from the given string value.
-     * <p>
      * The value may be an EQName literal, an unprefixed local name, or a prefixed
      * name whose prefix is resolved using the statically known namespaces.
-     * </p>
      */
     private static CalendarName parseCalendarName(
             String value,
@@ -139,24 +130,6 @@ public final class CalendarSupport {
         }
 
         return new CalendarName(matcher.group(1), matcher.group(2));
-    }
-
-    /**
-     * Looks for exact names in {@link FormattingCalendarModeSupport#supportedCalendarModes} and returns true if a match
-     * is found. This does not support aliasing.
-     */
-    private static String knownCalendarOrNull(String localName) {
-        if (localName == null) {
-            return null;
-        }
-
-        for (String calendar : FormattingCalendarModeSupport.supportedCalendarModes) {
-            if (calendar.equalsIgnoreCase(localName)) {
-                return calendar;
-            }
-        }
-
-        return null;
     }
 
     private static boolean isValidCalendarLocalName(String localName) {

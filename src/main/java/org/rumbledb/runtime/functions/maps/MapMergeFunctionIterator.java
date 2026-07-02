@@ -190,7 +190,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                             if (allKeysString && !bKey.isString()) {
                                 allKeysString = false;
                             }
-                            if (allValuesSingletons && bSeq.size() != 1) {
+                            if (allValuesSingletons && combined.size() != 1) {
                                 allValuesSingletons = false;
                             }
                             break;
@@ -238,4 +238,3 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     }
 }
-

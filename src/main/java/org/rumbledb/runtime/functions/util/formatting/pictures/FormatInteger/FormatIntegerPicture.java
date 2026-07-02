@@ -2,36 +2,15 @@ package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 public class FormatIntegerPicture {
 
-    private final String rawPicture;
-    private final String rawPrimaryFormatToken;
-    private final String rawFormatModifier;
     private final PrimaryFormatToken primaryFormatToken;
     private final IntegerFormatModifier formatModifier;
 
-    public FormatIntegerPicture(
-            String rawPicture,
-            String rawPrimaryFormatToken,
-            String rawFormatModifier,
+    FormatIntegerPicture(
             PrimaryFormatToken primaryFormatToken,
             IntegerFormatModifier formatModifier
     ) {
-        this.rawPicture = rawPicture;
-        this.rawPrimaryFormatToken = rawPrimaryFormatToken;
-        this.rawFormatModifier = rawFormatModifier;
         this.primaryFormatToken = primaryFormatToken;
         this.formatModifier = formatModifier;
-    }
-
-    public String getRawPicture() {
-        return this.rawPicture;
-    }
-
-    public String getRawPrimaryFormatToken() {
-        return this.rawPrimaryFormatToken;
-    }
-
-    public String getRawFormatModifier() {
-        return this.rawFormatModifier;
     }
 
     public PrimaryFormatToken getPrimaryFormatToken() {
