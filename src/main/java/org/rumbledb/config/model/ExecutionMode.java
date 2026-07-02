@@ -16,24 +16,13 @@
  *
  */
 
-package org.rumbledb.cli.commands;
+package org.rumbledb.config.model;
 
-import org.rumbledb.cli.arguments.OutputArguments;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.model.ExecutionMode;
-
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-
-@Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
-public final class Repl extends BaseCommand {
-    @Mixin
-    OutputArguments output;
-
-    @Override
-    public RumbleConfiguration call() {
-        return this.baseConfiguration(ExecutionMode.REPL)
-            .output(this.output.toConfig())
-            .build();
-    }
+/**
+ * Application execution mode selected by the launcher.
+ */
+public enum ExecutionMode {
+    RUN,
+    SERVE,
+    REPL
 }

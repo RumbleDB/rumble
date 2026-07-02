@@ -18,6 +18,8 @@
 
 package org.rumbledb.cli.arguments;
 
+import org.rumbledb.config.model.AnalysisConfig;
+
 import picocli.CommandLine.Option;
 
 public final class AnalysisArguments {
@@ -44,4 +46,17 @@ public final class AnalysisArguments {
         description = "Checks return types of built-in functions."
     )
     private Boolean checkReturnTypesOfBuiltinFunctions;
+
+    public AnalysisConfig toConfig() {
+        AnalysisConfig.AnalysisConfigBuilder builder = AnalysisConfig.builder();
+
+        OptionConversion.applyBooleanIfPresent(this.enableStaticTyping, builder::enableStaticTyping);
+        OptionConversion.applyBooleanIfPresent(this.printInferredTypes, builder::printInferredTypes);
+        OptionConversion.applyBooleanIfPresent(
+            this.checkReturnTypesOfBuiltinFunctions,
+            builder::checkReturnTypeOfBuiltinFunctions
+        );
+
+        return builder.build();
+    }
 }

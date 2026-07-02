@@ -1,5 +1,7 @@
 package org.rumbledb.cli.arguments;
 
+import org.rumbledb.config.model.DebugConfig;
+
 import picocli.CommandLine.Option;
 
 public final class DebugArguments {
@@ -26,4 +28,14 @@ public final class DebugArguments {
         description = "Enables debug output."
     )
     private Boolean logging;
+
+    public DebugConfig toConfig() {
+        DebugConfig.DebugConfigBuilder builder = DebugConfig.builder();
+
+        OptionConversion.applyBooleanIfPresent(this.printIteratorTree, builder::printIteratorTree);
+        OptionConversion.applyBooleanIfPresent(this.showErrorInfo, builder::showErrorInfo);
+        OptionConversion.applyBooleanIfPresent(this.logging, builder::logging);
+
+        return builder.build();
+    }
 }

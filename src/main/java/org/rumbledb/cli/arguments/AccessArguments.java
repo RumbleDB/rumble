@@ -3,6 +3,8 @@ package org.rumbledb.cli.arguments;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.config.model.AccessConfig;
+
 import picocli.CommandLine.Option;
 
 public final class AccessArguments {
@@ -12,4 +14,10 @@ public final class AccessArguments {
         description = "Allowed URI prefixes for read/write (with I/O functions to read data)"
     )
     private List<String> allowedPrefixes = new ArrayList<>();
+
+    public AccessConfig toConfig() {
+        return AccessConfig.builder()
+            .allowedPrefixes(this.allowedPrefixes)
+            .build();
+    }
 }

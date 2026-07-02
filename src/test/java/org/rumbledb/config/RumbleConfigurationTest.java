@@ -1,0 +1,102 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+package org.rumbledb.config;
+
+import org.junit.Assert;
+import org.junit.Test;
+import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.RuntimeConfig;
+
+public class RumbleConfigurationTest {
+
+    @Test
+    public void lambdaCustomizersConfigureSections() {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+            .runtime(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
+            .output(output -> output.outputPath("output.json").allowOverwrite(true))
+            .server(server -> server.host("example.org").port(9000))
+            .build();
+
+        Assert.assertEquals(25, configuration.runtime().resultsSizeCap());
+        Assert.assertFalse(configuration.runtime().useNativeExecution());
+        Assert.assertEquals("output.json", configuration.output().outputPath());
+        Assert.assertTrue(configuration.output().allowOverwrite());
+        Assert.assertEquals("example.org", configuration.server().host());
+        Assert.assertEquals(9000, configuration.server().port());
+    }
+
+    @Test
+    public void lambdaCustomizersPreserveExistingSectionValues() {
+        RumbleConfiguration original = RumbleConfiguration.builder()
+            .runtime(
+                RuntimeConfig.builder()
+                    .materializationCap(42)
+                    .useParallelExecution(false)
+                    .build()
+            )
+            .runtime(runtime -> runtime.resultsSizeCap(25))
+            .build();
+
+        RumbleConfiguration updated = original.toBuilder()
+            .runtime(runtime -> runtime.useNativeExecution(false))
+            .build();
+
+        Assert.assertEquals(25, updated.runtime().resultsSizeCap());
+        Assert.assertEquals(42, updated.runtime().materializationCap());
+        Assert.assertFalse(updated.runtime().useParallelExecution());
+        Assert.assertFalse(updated.runtime().useNativeExecution());
+    }
+
+    @Test
+    public void withEntriesApplyNestedOverrides() {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+            .runtime(runtime -> runtime.materializationCap(42))
+            .with("executionMode", "SERVE")
+            .with("input.queryPath", "queries/main.jq")
+            .with("runtime.resultsSizeCap", 100)
+            .with("debug.showErrorInfo", true)
+            .build();
+
+        Assert.assertEquals(ExecutionMode.SERVE, configuration.executionMode());
+        Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
+        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
+        Assert.assertEquals(42, configuration.runtime().materializationCap());
+        Assert.assertTrue(configuration.debug().showErrorInfo());
+    }
+
+    @Test
+    public void withEntriesOverrideTypedBuilderValues() {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+            .executionMode(ExecutionMode.RUN)
+            .runtime(runtime -> runtime.resultsSizeCap(25))
+            .with("executionMode", "REPL")
+            .with("runtime.resultsSizeCap", 100)
+            .build();
+
+        Assert.assertEquals(ExecutionMode.REPL, configuration.executionMode());
+        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void withUnknownEntryFailsFast() {
+        RumbleConfiguration.builder()
+            .with("runtime.unknownOption", true)
+            .build();
+    }
+}

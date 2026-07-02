@@ -1,5 +1,7 @@
 package org.rumbledb.cli.arguments;
 
+import org.rumbledb.config.model.OptimizationConfig;
+
 import picocli.CommandLine.Option;
 
 public final class OptimizationArguments {
@@ -44,4 +46,20 @@ public final class OptimizationArguments {
         description = "Allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)."
     )
     private Boolean optimizeParentPointers;
+
+    public OptimizationConfig toConfig() {
+        OptimizationConfig.OptimizationConfigBuilder builder = OptimizationConfig.builder();
+
+        OptionConversion.applyBooleanIfPresent(
+            this.optimizeGeneralComparisonToValueComparison,
+            builder::optimizeGeneralComparisonToValueComparison
+        );
+        OptionConversion.applyBooleanIfPresent(this.functionInlining, builder::useFunctionInlining);
+        OptionConversion.applyBooleanIfPresent(this.tailCallOptimization, builder::useTailCallOptimization);
+        OptionConversion.applyBooleanIfPresent(this.optimizeSteps, builder::optimizeSteps);
+        OptionConversion.applyBooleanIfPresent(this.optimizeStepsExperimental, builder::optimizeStepsExperimental);
+        OptionConversion.applyBooleanIfPresent(this.optimizeParentPointers, builder::optimizeParentPointers);
+
+        return builder.build();
+    }
 }

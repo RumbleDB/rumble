@@ -1,5 +1,7 @@
 package org.rumbledb.cli.arguments;
 
+import org.rumbledb.config.model.SemanticsConfig;
+
 import picocli.CommandLine.Option;
 
 public final class SemanticsArguments {
@@ -37,4 +39,16 @@ public final class SemanticsArguments {
         description = "Sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query."
     )
     private String staticBaseUri;
+
+    public SemanticsConfig toConfig() {
+        SemanticsConfig.SemanticsConfigBuilder builder = SemanticsConfig.builder();
+
+        OptionConversion.applyBooleanIfPresent(this.datesWithTimezone, builder::datesWithTimeZone);
+        OptionConversion.applyBooleanIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
+        OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
+        OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
+        OptionConversion.applyIfPresent(this.staticBaseUri, builder::staticBaseUri);
+
+        return builder.build();
+    }
 }

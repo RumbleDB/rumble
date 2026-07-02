@@ -18,11 +18,14 @@
 
 package org.rumbledb.cli;
 
+import java.util.List;
+
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
+import org.rumbledb.config.RumbleConfiguration;
+
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
-import picocli.CommandLine.ParseResult;
 
 @Command(
     name = "rumbledb",
@@ -33,8 +36,16 @@ import picocli.CommandLine.ParseResult;
     }
 )
 public final class CLIArgumentParser {
-    public static ParseResult parse(String... args) {
+    public static RumbleConfiguration parse(String... args) {
         CommandLine commandLine = new CommandLine(new CLIArgumentParser());
-        return commandLine.parseArgs(args);
+        CommandLine.ParseResult parseResult =
+            commandLine.parseArgs(args);
+
+        commandLine.getExecutionStrategy().execute(parseResult);
+
+        List<CommandLine> commands = parseResult.asCommandLineList();
+        CommandLine activeCommand = commands.get(commands.size() - 1);
+
+        return activeCommand.getExecutionResult();
     }
 }
