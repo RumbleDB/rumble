@@ -357,7 +357,7 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }

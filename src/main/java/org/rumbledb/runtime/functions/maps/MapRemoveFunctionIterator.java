@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -83,7 +84,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<Item> keysToRemove = new ArrayList<>();
-        boolean allKeysToRemoveString = true;
         for (Item it : rawKeys) {
             List<Item> atomized = it.atomizedValue();
             for (Item a : atomized) {
@@ -92,9 +92,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
                             "map:remove expects keys that atomize to atomic items [err:XPTY0004].",
                             getMetadata()
                     );
-                }
-                if (allKeysToRemoveString && !a.isString()) {
-                    allKeysToRemoveString = false;
                 }
                 keysToRemove.add(a);
             }
@@ -116,7 +113,7 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         HashMap<String, Item> newStringKeyValuePairs = new HashMap<>();
         for (int i = 0; i < mapKeys.size(); i++) {
             Item mapKey = mapKeys.get(i);
-            if (keysToRemove.contains(mapKey)) {
+            if (shouldRemoveKey(mapKey, keysToRemove)) {
                 continue;
             }
             List<Item> seq = mapValueSequences.get(i);
@@ -148,6 +145,15 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             this.resultItem = ItemFactory.getInstance()
                 .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+    }
+
+    private static boolean shouldRemoveKey(Item mapKey, List<Item> keysToRemove) {
+        for (Item keyToRemove : keysToRemove) {
+            if (MapAtomicSameKey.sameKey(mapKey, keyToRemove)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
