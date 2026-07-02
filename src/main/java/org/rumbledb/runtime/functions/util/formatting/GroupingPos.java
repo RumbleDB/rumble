@@ -1,31 +1,13 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-public final class GroupingPos {
-    // TODO refactor to remove String separator and completely replace by integer codepoints then remove overloaded
-    // constructor
-    public final int distanceFromRight; // TODO fractional grouping of format-number uses this but passes a left
-                                        // distance think about how to refactor
-    public final String separator;
-    public final int separatorCP;
-
-    public GroupingPos(int distanceFromRight, String separator) {
-        this.distanceFromRight = distanceFromRight;
-        this.separator = separator;
-        this.separatorCP = -1;
-    }
-
-    public GroupingPos(int distanceFromRight, int separator) {
-        this.distanceFromRight = distanceFromRight;
-        this.separator = null;
-        this.separatorCP = separator;
-    }
-
-    public int getDistanceFromRight() {
-        return this.distanceFromRight;
-    }
+/**
+ * @param distanceFromAnchor Digit signs between the separator and the edge grouping is measured from: the right for an
+ *        integer part, the left for a fractional part.
+ */
+public record GroupingPos(int distanceFromAnchor, int separatorCP) {
 
     @Override
     public String toString() {
-        return Integer.toString(this.distanceFromRight);
+        return Integer.toString(this.distanceFromAnchor);
     }
 }

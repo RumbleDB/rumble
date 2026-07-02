@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.math.BigInteger;
@@ -109,11 +108,11 @@ public final class IntegerPictureFormatter {
         }
 
         digits = NumericFormattingSupport.applyGrouping(digits, picture);
-        digits = NumericPictureParser.mapAsciiDigits(digits, picture.getZeroDigit()); // TODO this is not spec
-                                                                                      // compliant, should be switched
-                                                                                      // with statement above. (But
-                                                                                      // breaks one test) (works for
-                                                                                      // now)
+        digits = NumericFormattingSupport.mapAsciiDigits(digits, picture.getZeroDigit()); // TODO this is not spec
+        // compliant, should be switched
+        // with statement above. (But
+        // breaks one test) (works for
+        // now)
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
             digits = digits + NumberWords.ordinalSuffix(value, locale);

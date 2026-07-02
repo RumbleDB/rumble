@@ -10,7 +10,7 @@ public class UnimplementedFunctionException extends RumbleException {
     public UnimplementedFunctionException(String functionName, ExceptionMetadata metadata) {
         super(
             "Unimplemented function: " + functionName,
-            new ErrorCode(new Name(null, null, functionName + " unimplemented")),
+            new ErrorCode(new Name(null, null, functionName + "_unimplemented")),
             metadata
         );
     }
