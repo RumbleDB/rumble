@@ -194,6 +194,7 @@ public class AnnotationProcessor {
         NOT_APPLICABLE
     }
 
+    // Each annotation type describes the furthest phase a query is expected to reach.
     public enum AnnotationExpectation {
         UNPARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),
         PARSABLE(PhaseExpectation.NOT_APPLICABLE, PhaseExpectation.NOT_APPLICABLE),

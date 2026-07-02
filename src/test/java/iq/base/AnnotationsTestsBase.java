@@ -98,17 +98,7 @@ public class AnnotationsTestsBase {
         }
     }
 
-    private static final class QueryExecutionResult {
-        private final SequenceOfItems sequence;
-        private final FailureStage failureStage;
-        private final String failureMessage;
-
-        private QueryExecutionResult(SequenceOfItems sequence, FailureStage failureStage, String failureMessage) {
-            this.sequence = sequence;
-            this.failureStage = failureStage;
-            this.failureMessage = failureMessage;
-        }
-
+    private record QueryExecutionResult(SequenceOfItems sequence, FailureStage failureStage, String failureMessage) {
         private static QueryExecutionResult success(SequenceOfItems sequence) {
             return new QueryExecutionResult(sequence, null, null);
         }
@@ -118,7 +108,7 @@ public class AnnotationsTestsBase {
         }
 
         private boolean failed() {
-            return this.failureStage != null;
+            return this.failureStage() != null;
         }
     }
 
@@ -144,24 +134,29 @@ public class AnnotationsTestsBase {
         AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
         QueryExecutionResult executionResult = executeQuery(path, configuration);
 
+        // Parse, compile, or early runtime failures are handled before any result materialization.
         if (executionResult.failed()) {
             assertExpectedFailure(annotation, executionResult);
             return;
         }
 
+        // If the query has run successfully, we check if that's expected and if the output matches the expected output.
         assertSuccessfulParseAndCompile(annotation);
         PhaseExpectation runtimeExpectation = annotation.getExpectation().runtime();
         if (runtimeExpectation == PhaseExpectation.NOT_APPLICABLE) {
+            // The test did not specify any runtime expectation, so we don't check the output.
             return;
         }
         if (runtimeExpectation == PhaseExpectation.MUST_SUCCEED) {
-            assertOutput(annotation, executionResult.sequence, checkOutput, applyUpdates, resultSizeCap);
+            // The test is expected to succeed, so we check the output against the expected output.
+            assertOutput(annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
             return;
         }
 
+        // Some tests are expected to compile but fail only when the result is materialized.
         assertExpectedRuntimeFailureDuringMaterialization(
             annotation,
-            executionResult.sequence,
+            executionResult.sequence(),
             checkOutput,
             applyUpdates,
             resultSizeCap
@@ -201,16 +196,31 @@ public class AnnotationsTestsBase {
             QueryExecutionResult executionResult
     ) {
         checkErrorCode(
-            executionResult.failureMessage,
+            executionResult.failureMessage(),
             annotation.getErrorCode(),
             annotation.getErrorMetadata()
         );
 
-        if (shouldReachStage(annotation, executionResult.failureStage)) {
-            Assert.fail(executionResult.failureStage.unexpectedFailureMessage(executionResult.failureMessage));
+        // Positive expectations such as ShouldParse/ShouldCompile may still fail later,
+        // but negative expectations must fail at their exact stage.
+        FailureStage expectedFailureStage = expectedFailureStage(annotation.getExpectation());
+        if (expectedFailureStage == null) {
+            if (shouldReachStage(annotation, executionResult.failureStage())) {
+                Assert.fail(executionResult.failureStage().unexpectedFailureMessage(executionResult.failureMessage()));
+            }
+        } else if (executionResult.failureStage() != expectedFailureStage) {
+            Assert.fail(
+                "Program failed during "
+                    + executionResult.failureStage().verb
+                    + " when expected to fail during "
+                    + expectedFailureStage.verb
+                    + ".\nError output: "
+                    + executionResult.failureMessage()
+                    + "\n"
+            );
         }
 
-        System.out.println(executionResult.failureMessage);
+        System.out.println(executionResult.failureMessage());
     }
 
     private static boolean shouldReachStage(
@@ -232,6 +242,20 @@ public class AnnotationsTestsBase {
         if (compileExpectation == PhaseExpectation.MUST_FAIL) {
             Assert.fail(FailureStage.SEMANTIC.unexpectedSuccessMessage());
         }
+    }
+
+    private static FailureStage expectedFailureStage(AnnotationExpectation expectation) {
+        // There is at most one stage where an annotation explicitly requires failure.
+        if (expectation.parsing() == PhaseExpectation.MUST_FAIL) {
+            return FailureStage.PARSING;
+        }
+        if (expectation.compilation() == PhaseExpectation.MUST_FAIL) {
+            return FailureStage.SEMANTIC;
+        }
+        if (expectation.runtime() == PhaseExpectation.MUST_FAIL) {
+            return FailureStage.RUNTIME;
+        }
+        return null;
     }
 
     private static PhaseExpectation expectationForStage(
