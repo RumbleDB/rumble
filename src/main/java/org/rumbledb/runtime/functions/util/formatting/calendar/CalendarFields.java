@@ -2,7 +2,6 @@ package org.rumbledb.runtime.functions.util.formatting.calendar;
 
 import com.ibm.icu.util.Calendar;
 import com.ibm.icu.util.TimeZone;
-import com.ibm.icu.util.ULocale;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.time.LocalDate;
@@ -121,8 +120,7 @@ public final class CalendarFields {
             return week;
         }
 
-        Calendar previousMonth = Calendar.getInstance(cal.getTimeZone(), cal.getLocale(ULocale.ACTUAL_LOCALE));
-        previousMonth.setTimeInMillis(cal.getTimeInMillis());
+        Calendar previousMonth = cal.clone();
         previousMonth.add(Calendar.MONTH, -1);
         previousMonth.set(Calendar.DAY_OF_MONTH, previousMonth.getActualMaximum(Calendar.DAY_OF_MONTH));
         return previousMonth.get(Calendar.WEEK_OF_MONTH);

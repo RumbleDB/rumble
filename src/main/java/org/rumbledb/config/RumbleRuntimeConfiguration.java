@@ -35,8 +35,6 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
-import java.time.DateTimeException;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -543,21 +541,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             } catch (Exception e) {
                 CliException ex = new CliException(
                         "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-        if (this.arguments.containsKey("default-formatting-place")) {
-            String defaultPlace = this.arguments.get("default-formatting-place").trim();
-
-            try {
-                setDefaultFormattingPlace(ZoneId.of(defaultPlace));
-            } catch (DateTimeException e) {
-                CliException ex = new CliException(
-                        "Argument --default-formatting-place must be a valid timezone ID, e.g. \"Europe/Zurich\" (was: "
-                            + defaultPlace
-                            + ")."
                 );
                 ex.initCause(e);
                 throw ex;
@@ -1339,42 +1322,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             throw new IllegalArgumentException("Invalid xml-version");
         }
         this.xmlVersion = version;
-    }
-
-    private ZoneId defaultFormattingPlace = ZoneId.of("UTC");
-
-    /**
-     * Returns the default place used for formatting date and time values.
-     *
-     * <p>
-     * The default place is used by date/time formatting functions when no explicit
-     * place is supplied. This implementation represents the place as a Java
-     * {@link ZoneId}. The initial default is {@code UTC}.
-     * </p>
-     *
-     * @return the default formatting place as a time zone
-     */
-    public ZoneId getDefaultFormattingPlace() {
-        return this.defaultFormattingPlace;
-    }
-
-    /**
-     * Sets the default place used for formatting date and time values.
-     *
-     * <p>
-     * This implementation represents the XQuery/XPath default place as a Java
-     * {@link ZoneId}. When configured from the command line, the value must be a
-     * valid Java time-zone ID, such as {@code Europe/Zurich}, {@code America/New_York},
-     * or {@code UTC}. ISO country codes such as {@code CH}, {@code DE}, or
-     * {@code US} are not resolved specially.
-     * </p>
-     *
-     * @param defaultFormattingPlace the default formatting place as a time zone;
-     *        must not be {@code null}
-     * @throws NullPointerException if {@code defaultFormattingPlace} is {@code null}
-     */
-    public void setDefaultFormattingPlace(ZoneId defaultFormattingPlace) {
-        this.defaultFormattingPlace = Objects.requireNonNull(defaultFormattingPlace, "defaultPlace");
     }
 
 

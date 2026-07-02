@@ -6,6 +6,7 @@ import java.util.Locale;
 
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 
 final class TemporalFormattingSupport {
@@ -164,7 +165,7 @@ final class TemporalFormattingSupport {
             }
         }
 
-        body = NumericPictureParser.mapAsciiDigits(body, tz.zeroDigit);
+        body = NumericFormattingSupport.mapAsciiDigits(body, tz.zeroDigit);
         return tz.gmtPrefix ? "GMT" + body : body;
     }
 

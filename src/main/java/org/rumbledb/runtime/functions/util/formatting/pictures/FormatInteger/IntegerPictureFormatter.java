@@ -109,11 +109,11 @@ public final class IntegerPictureFormatter {
         }
 
         digits = NumericFormattingSupport.applyGrouping(digits, picture);
-        digits = NumericPictureParser.mapAsciiDigits(digits, picture.getZeroDigit()); // TODO this is not spec
-                                                                                      // compliant, should be switched
-                                                                                      // with statement above. (But
-                                                                                      // breaks one test) (works for
-                                                                                      // now)
+        digits = NumericFormattingSupport.mapAsciiDigits(digits, picture.getZeroDigit()); // TODO this is not spec
+        // compliant, should be switched
+        // with statement above. (But
+        // breaks one test) (works for
+        // now)
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
             digits = digits + NumberWords.ordinalSuffix(value, locale);
