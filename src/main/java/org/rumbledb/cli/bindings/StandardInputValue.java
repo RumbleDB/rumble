@@ -8,6 +8,11 @@ public class StandardInputValue implements VariableSource {
 
     public final InputFormat format;
 
+    public StandardInputValue() {
+        // Default to JSON if no format is specified
+        this(InputFormat.JSON);
+    }
+
     public StandardInputValue(InputFormat format) {
         this.format = format;
     }
