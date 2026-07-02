@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
-import org.rumbledb.cli.commands.Serve;
 import org.rumbledb.config.RumbleConfiguration;
 
 import picocli.CommandLine;
@@ -33,7 +32,6 @@ import picocli.CommandLine.Command;
     description = "RumbleDB command line interface.",
     subcommands = {
         Run.class,
-        Serve.class,
         Repl.class
     }
 )

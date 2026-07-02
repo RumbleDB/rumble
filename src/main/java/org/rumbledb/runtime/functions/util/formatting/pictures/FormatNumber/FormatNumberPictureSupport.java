@@ -2,9 +2,9 @@ package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.IntPredicate;
 
@@ -245,7 +245,7 @@ public class FormatNumberPictureSupport {
         }
 
         for (GroupingPos gp : groupingPositions) {
-            if (gp.getDistanceFromRight() <= 0) {
+            if (gp.distanceFromAnchor() <= 0) {
                 return true;
             }
         }
@@ -265,7 +265,7 @@ public class FormatNumberPictureSupport {
         int totalDigitSigns = countActiveDigitSigns(fractionalPart, decimalFormat);
 
         for (GroupingPos gp : groupingPositions) {
-            if (gp.getDistanceFromRight() >= totalDigitSigns) {
+            if (gp.distanceFromAnchor() >= totalDigitSigns) {
                 return true;
             }
         }
@@ -331,7 +331,7 @@ public class FormatNumberPictureSupport {
 
         List<Integer> positions = new ArrayList<>();
         for (GroupingPos groupingPos : groupingPositions) {
-            positions.add(groupingPos.getDistanceFromRight());
+            positions.add(groupingPos.distanceFromAnchor());
         }
 
         positions.sort(Integer::compareTo);
@@ -375,25 +375,6 @@ public class FormatNumberPictureSupport {
         return groupingSize;
     }
 
-    static String applyDecimalDigitFamily(String s, DecimalFormatDefinition decimalFormat) {
-        int zeroDigit = decimalFormat.getZeroDigit();
-        if (zeroDigit == '0') {
-            return s;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                int mapped = zeroDigit + (ch - '0');
-                sb.appendCodePoint(mapped);
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
-
     static boolean containsOptionalDigit(String s, DecimalFormatDefinition decimalFormat) {
         for (int i = 0; i < s.length();) {
             int cp = s.codePointAt(i);
@@ -423,73 +404,24 @@ public class FormatNumberPictureSupport {
             String digits,
             FormatNumberSubPicture picture
     ) {
-
-        List<GroupingPos> groupingPositions = picture.getIntegerPartGroupingPositions();
-
-        if (groupingPositions == null || groupingPositions.isEmpty()) {
-            return digits;
-        }
-
-        String reversedDigits = new StringBuilder(digits).reverse().toString();
-
-        Integer repeatingInterval = picture.getRepeatingIntegerGroupingInterval();
-
-        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
-
-        if (repeatingInterval != null) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < reversedDigits.length(); i++) {
-                if (i > 0 && i % repeatingInterval == 0) {
-                    sb.append(separator);
-                }
-                sb.append(reversedDigits.charAt(i));
-            }
-            return sb.reverse().toString();
-        }
-
-        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
-
-        StringBuilder sb = new StringBuilder(reversedDigits);
-
-        for (int i = gps.size() - 1; i >= 0; i--) {
-            GroupingPos gp = gps.get(i);
-            int insertPos = gp.distanceFromRight;
-            if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, separator);
-            }
-        }
-
-        return sb.reverse().toString();
+        return NumericFormattingSupport.applyGrouping(
+            digits,
+            picture.getIntegerPartGroupingPositions(),
+            picture.getRepeatingIntegerGroupingInterval(),
+            true
+        );
     }
 
     static String applyFractionalPartGrouping(
             String digits,
             FormatNumberSubPicture picture
     ) {
-        List<GroupingPos> groupingPositions = picture.getFractionalPartGroupingPositions();
-
-        if (groupingPositions == null || groupingPositions.isEmpty()) {
-            return digits;
-        }
-
-        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
-
-        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
-
-        StringBuilder sb = new StringBuilder(digits);
-
-        for (int i = gps.size() - 1; i >= 0; i--) {
-            GroupingPos gp = gps.get(i);
-            int insertPos = gp.getDistanceFromRight();
-
-            if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, separator);
-            }
-        }
-
-        return sb.toString();
+        return NumericFormattingSupport.applyGrouping(
+            digits,
+            picture.getFractionalPartGroupingPositions(),
+            null,
+            false
+        );
     }
 
     static int findDecimalSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {

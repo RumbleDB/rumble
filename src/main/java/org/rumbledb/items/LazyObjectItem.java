@@ -199,7 +199,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -216,7 +216,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -276,7 +276,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return;
         }
         removeItemByKey(key.getStringValue());

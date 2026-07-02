@@ -47,6 +47,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
@@ -61,10 +62,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
-
-// import org.rumbledb.exceptions.ExceptionMetadata;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.math.BigDecimal;
 import java.util.*;

@@ -248,7 +248,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        if (!BuiltinFunctionCatalogue.exists(identifier)) {
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
+        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {
                 if (parameter == null) {
@@ -267,9 +268,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
         }
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                expression.getFunctionIdentifier()
+                expression.getFunctionIdentifier(),
+                queryLanguage
             );
             expression.setHighestExecutionMode(
                 BuiltinFunctionExecutionModes.resolve(

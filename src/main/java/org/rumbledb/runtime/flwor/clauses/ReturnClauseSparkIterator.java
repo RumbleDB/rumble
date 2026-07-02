@@ -43,14 +43,13 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
-
-import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;

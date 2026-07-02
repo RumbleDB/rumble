@@ -114,6 +114,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidJSONErrorCode = registerBuiltIn("FOJS0001");
     public static final ErrorCode DuplicateJSONKeyErrorCode = registerBuiltIn("FOJS0003");
     public static final ErrorCode InvalidOptionErrorCode = registerBuiltIn("FOJS0005");
+    public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
+    public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
@@ -185,6 +187,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
+    public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");

@@ -136,7 +136,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return false;
         }
         return this.original.hasKey(key);
@@ -176,7 +176,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public Item getItemByKey(String key) {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return null;
         }
         return this.original.getItemByKey(key);
@@ -192,7 +192,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(String key) {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return null;
         }
         return this.original.getSequenceByKey(key);

@@ -212,7 +212,9 @@ public class VisitorHelpers {
         JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
-        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
+        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
+        executionModes.setQueryLanguage(configuration.getQueryLanguage());
+        moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
@@ -322,7 +324,9 @@ public class VisitorHelpers {
         XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
-        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
+        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
+        executionModes.setQueryLanguage(configuration.getQueryLanguage());
+        moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
                 moduleContext,
                 true,

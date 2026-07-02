@@ -46,14 +46,13 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.flwor.tuple.FlworKey;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.TypeMappings;
-import sparksoniq.jsoniq.tuple.FlworKey;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 
