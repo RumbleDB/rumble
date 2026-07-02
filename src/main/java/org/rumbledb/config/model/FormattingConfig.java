@@ -102,9 +102,8 @@ public class FormattingConfig {
 
     private static String normalizeFormattingLanguage(String language) {
         String normalized = LanguageSupport.normalizeLanguage(language);
-        String primary = LanguageSupport.getPrimaryLanguageSubtag(normalized);
-        if (FormattingLanguageSupport.isValidFormattingLanguage(primary)) {
-            return primary;
+        if (FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
+            return normalized;
         }
 
         throw new CliException(
