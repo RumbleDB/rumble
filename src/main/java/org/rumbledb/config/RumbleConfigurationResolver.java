@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.Map;
+import java.util.Objects;
 
 public final class RumbleConfigurationResolver {
     private static final ObjectMapper MAPPER = new ObjectMapper();
@@ -17,6 +18,21 @@ public final class RumbleConfigurationResolver {
         ObjectNode mergedTree = MAPPER.valueToTree(baseConfiguration);
         deepMerge(mergedTree, toTree(entries));
         return fromTree(mergedTree);
+    }
+
+    public static Object get(RumbleConfiguration configuration, String path) {
+        return get(configuration, path, Object.class);
+    }
+
+    public static <T> T get(RumbleConfiguration configuration, String path, Class<T> valueType) {
+        Objects.requireNonNull(configuration, "Configuration cannot be null.");
+        Objects.requireNonNull(valueType, "Value type cannot be null.");
+
+        JsonNode value = getPath(MAPPER.valueToTree(configuration), path);
+        if (value == null) {
+            throw new IllegalArgumentException("Unknown configuration path: " + path);
+        }
+        return MAPPER.convertValue(value, valueType);
     }
 
     public static ObjectNode toTree(Map<String, ?> entries) {
@@ -36,16 +52,10 @@ public final class RumbleConfigurationResolver {
     }
 
     private static void setPath(ObjectNode root, String path, Object value) {
-        if (path == null || path.isBlank()) {
-            throw new IllegalArgumentException("Configuration path cannot be blank.");
-        }
-        String[] parts = path.split("\\.");
+        String[] parts = pathSegments(path);
         ObjectNode current = root;
         for (int i = 0; i < parts.length - 1; i++) {
             String segment = parts[i];
-            if (segment.isBlank()) {
-                throw new IllegalArgumentException("Invalid configuration path: " + path);
-            }
             JsonNode child = current.get(segment);
             if (child == null) {
                 ObjectNode next = MAPPER.createObjectNode();
@@ -59,10 +69,32 @@ public final class RumbleConfigurationResolver {
         }
 
         String leaf = parts[parts.length - 1];
-        if (leaf.isBlank()) {
-            throw new IllegalArgumentException("Invalid configuration path: " + path);
-        }
         current.set(leaf, MAPPER.valueToTree(value));
+    }
+
+    private static JsonNode getPath(JsonNode root, String path) {
+        JsonNode current = root;
+        for (String segment : pathSegments(path)) {
+            current = current.get(segment);
+            if (current == null) {
+                return null;
+            }
+        }
+        return current;
+    }
+
+    private static String[] pathSegments(String path) {
+        if (path == null || path.isBlank()) {
+            throw new IllegalArgumentException("Configuration path cannot be blank.");
+        }
+
+        String[] segments = path.split("\\.", -1);
+        for (String segment : segments) {
+            if (segment.isBlank()) {
+                throw new IllegalArgumentException("Invalid configuration path: " + path);
+            }
+        }
+        return segments;
     }
 
     private static void deepMerge(ObjectNode target, ObjectNode updates) {

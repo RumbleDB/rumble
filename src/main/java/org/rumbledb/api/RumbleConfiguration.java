@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import org.rumbledb.config.RumbleConfigurationResolver;
+
 public class RumbleConfiguration {
     // Internal configuration, not meant to be exposed to the user.
     private final org.rumbledb.config.RumbleConfiguration configuration;
@@ -33,7 +35,7 @@ public class RumbleConfiguration {
      * @return the value at the requested path
      */
     public Object get(String path) {
-        return this.configuration.get(path);
+        return RumbleConfigurationResolver.get(this.configuration, path);
     }
 
     /**
@@ -45,6 +47,6 @@ public class RumbleConfiguration {
      * @return the value at the requested path
      */
     public <T> T get(String path, Class<T> valueType) {
-        return this.configuration.get(path, valueType);
+        return RumbleConfigurationResolver.get(this.configuration, path, valueType);
     }
 }
