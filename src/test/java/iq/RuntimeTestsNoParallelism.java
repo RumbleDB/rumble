@@ -24,22 +24,17 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import java.util.List;
 
-import iq.base.AnnotationsTestsBase;
-
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class RuntimeTestsNoParallelism extends RuntimeTests {
-
-    public RuntimeTestsNoParallelism(File testFile) {
-        super(testFile);
-    }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -72,15 +67,8 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
             );
     }
 
-    @Test(timeout = 1000000)
-    public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
+    public static List<File> testFiles() {
+        return loadTestFiles(runtimeTestsDirectory);
     }
+
 }

@@ -21,7 +21,7 @@
 package iq.base;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -96,11 +96,23 @@ public class AnnotationsTestsBase {
         return defaultConfiguration;
     }
 
-    protected List<File> loadTestFiles(File dir) {
+    protected static List<File> loadTestFiles(File dir) {
         return FileManager.loadJiqFiles(dir)
             .stream()
             .sorted(Comparator.comparing(File::getName))
             .collect(Collectors.toList());
+    }
+
+    protected void runAnnotationTest(File testFile, boolean checkOutput) throws Throwable {
+        System.err.println(counter++ + " : " + testFile);
+        RumbleRuntimeConfiguration configuration = getConfiguration();
+        testAnnotations(
+            testFile.getAbsolutePath(),
+            configuration,
+            checkOutput,
+            configuration.applyUpdates(),
+            configuration.getResultSizeCap()
+        );
     }
 
     public static void testAnnotations(
@@ -123,7 +135,7 @@ public class AnnotationsTestsBase {
         switch (annotation.expectation()) {
             case UNPARSABLE, UNCOMPILABLE:
                 // Fail the test because the query was expected to fail during parsing or compilation, but it succeeded.
-                Assert.fail(unexpectedSuccessMessage(annotation.expectation().stage()));
+                Assertions.fail(unexpectedSuccessMessage(annotation.expectation().stage()));
                 return;
             case PARSABLE, COMPILABLE:
                 return;
@@ -178,7 +190,7 @@ public class AnnotationsTestsBase {
     ) {
         AnnotationExpectation expectation = annotation.expectation();
         if (!expectation.acceptsFailureAt(executionResult.failureStage())) {
-            Assert.fail(unexpectedFailureMessage(expectation, executionResult));
+            Assertions.fail(unexpectedFailureMessage(expectation, executionResult));
         }
 
         checkErrorCode(
@@ -224,7 +236,7 @@ public class AnnotationsTestsBase {
             checkExpectedOutput(annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
             String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assert.fail(unexpectedFailureMessage(TestStage.RUNTIME, errorOutput));
+            Assertions.fail(unexpectedFailureMessage(TestStage.RUNTIME, errorOutput));
         }
     }
 
@@ -237,7 +249,7 @@ public class AnnotationsTestsBase {
         try {
             // Crash tests materialize the sequence only to trigger a runtime error; their output is undefined.
             materializeSequence(sequence, applyUpdates, resultSizeCap);
-            Assert.fail(unexpectedSuccessMessage(TestStage.RUNTIME));
+            Assertions.fail(unexpectedSuccessMessage(TestStage.RUNTIME));
         } catch (Exception exception) {
             checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
         }
@@ -254,7 +266,7 @@ public class AnnotationsTestsBase {
         if (!checkOutput) {
             return;
         }
-        Assert.assertEquals("Unexpected query output.", expectedOutput, actualOutput);
+        Assertions.assertEquals(expectedOutput, actualOutput, "Unexpected query output.");
     }
 
     private static String materializeSequence(
@@ -278,10 +290,10 @@ public class AnnotationsTestsBase {
         if (expectedValue == null) {
             return;
         }
-        Assert.assertNotNull("Missing error output; Expected " + label + ": " + expectedValue, errorOutput);
-        Assert.assertTrue(
-            "Unexpected " + label + "; Expected: " + expectedValue + "; Error: " + errorOutput,
-            errorOutput.contains(expectedValue)
+        Assertions.assertNotNull(errorOutput, "Missing error output; Expected " + label + ": " + expectedValue);
+        Assertions.assertTrue(
+            errorOutput.contains(expectedValue),
+            "Unexpected " + label + "; Expected: " + expectedValue + "; Error: " + errorOutput
         );
     }
 

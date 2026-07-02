@@ -1,7 +1,9 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -31,10 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 public class SequentialClassificationTests extends AnnotationsTestsBase {
 
     private MainModule parseAndCompile(String filePath) throws IOException {
@@ -49,7 +47,8 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         );
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testBlockStatementWithSequentialStatement() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -58,14 +57,15 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(2, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(2, statementsAndOptionalExpr.getStatements().size());
         BlockStatement statement1 = (BlockStatement) statementsAndOptionalExpr.getStatements().get(0);
         BlockStatement statement2 = (BlockStatement) statementsAndOptionalExpr.getStatements().get(1);
-        assertTrue(statement1.isSequential());
-        assertFalse(statement2.isSequential());
+        Assertions.assertTrue(statement1.isSequential());
+        Assertions.assertFalse(statement2.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testWhileStatementWithNestedBreak() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -73,16 +73,17 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(2, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(2, statementsAndOptionalExpr.getStatements().size());
         WhileStatement whileStatement = (WhileStatement) statementsAndOptionalExpr.getStatements().get(1);
         BlockStatement blockStatement = (BlockStatement) whileStatement.getStatement();
         ConditionalStatement conditionalStatement = (ConditionalStatement) blockStatement.getBlockStatements().get(1);
-        assertTrue(blockStatement.isSequential());
-        assertTrue(conditionalStatement.isSequential());
-        assertTrue(whileStatement.isSequential());
+        Assertions.assertTrue(blockStatement.isSequential());
+        Assertions.assertTrue(conditionalStatement.isSequential());
+        Assertions.assertTrue(whileStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testAssignStatementSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -90,13 +91,14 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(3, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(3, statementsAndOptionalExpr.getStatements().size());
         ConditionalStatement conditionalStatement = (ConditionalStatement) statementsAndOptionalExpr.getStatements()
             .get(2);
-        assertTrue(conditionalStatement.isSequential());
+        Assertions.assertTrue(conditionalStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testAssignStatementNestedSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -104,13 +106,14 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(3, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(3, statementsAndOptionalExpr.getStatements().size());
         ConditionalStatement conditionalStatement = (ConditionalStatement) statementsAndOptionalExpr.getStatements()
             .get(2);
-        assertTrue(conditionalStatement.isSequential());
+        Assertions.assertTrue(conditionalStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testApplyStatementSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -118,12 +121,13 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(2, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(2, statementsAndOptionalExpr.getStatements().size());
         ApplyStatement applyStatement = (ApplyStatement) statementsAndOptionalExpr.getStatements().get(1);
-        assertTrue(applyStatement.isSequential());
+        Assertions.assertTrue(applyStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testApplyStatementNestedSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -131,26 +135,27 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(1, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(1, statementsAndOptionalExpr.getStatements().size());
         BlockStatement blockStatement = (BlockStatement) statementsAndOptionalExpr.getStatements().get(0);
-        assertTrue(blockStatement.isSequential());
+        Assertions.assertTrue(blockStatement.isSequential());
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) blockStatement.getBlockStatements()
             .get(0);
         FlowrStatement flowrStatement = (FlowrStatement) blockStatement.getBlockStatements().get(1);
-        assertTrue(variableDeclStatement.isSequential());
-        assertTrue(flowrStatement.isSequential());
+        Assertions.assertTrue(variableDeclStatement.isSequential());
+        Assertions.assertTrue(flowrStatement.isSequential());
         SwitchStatement switchStatement = (SwitchStatement) flowrStatement.getReturnStatementClause()
             .getReturnStatement();
-        assertTrue(switchStatement.isSequential());
+        Assertions.assertTrue(switchStatement.isSequential());
         SwitchCaseStatement case1 = switchStatement.getCases().get(0);
         SwitchCaseStatement case2 = switchStatement.getCases().get(1);
         VariableDeclStatement defaultStatement = (VariableDeclStatement) switchStatement.getDefaultStatement();
-        assertTrue(case1.getReturnStatement().isSequential());
-        assertTrue(case2.getReturnStatement().isSequential());
-        assertTrue(defaultStatement.isSequential());
+        Assertions.assertTrue(case1.getReturnStatement().isSequential());
+        Assertions.assertTrue(case2.getReturnStatement().isSequential());
+        Assertions.assertTrue(defaultStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testApplyStatementNestedSequential2() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -158,37 +163,38 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(1, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(1, statementsAndOptionalExpr.getStatements().size());
         WhileStatement whileStatement = (WhileStatement) statementsAndOptionalExpr.getStatements().get(0);
-        assertTrue(whileStatement.isSequential());
+        Assertions.assertTrue(whileStatement.isSequential());
         BlockStatement blockStatement = (BlockStatement) whileStatement.getStatement();
-        assertTrue(blockStatement.isSequential());
-        assertEquals(3, blockStatement.getBlockStatements().size());
+        Assertions.assertTrue(blockStatement.isSequential());
+        Assertions.assertEquals(3, blockStatement.getBlockStatements().size());
         ConditionalStatement blockConditionalStatement = (ConditionalStatement) blockStatement.getBlockStatements()
             .get(0);
         WhileStatement blockWhileStatement = (WhileStatement) blockStatement.getBlockStatements().get(1);
         TryCatchStatement blockTryCatchStatement = (TryCatchStatement) blockStatement.getBlockStatements().get(2);
-        assertFalse(blockConditionalStatement.isSequential());
-        assertFalse(blockWhileStatement.isSequential());
-        assertTrue(blockTryCatchStatement.isSequential());
+        Assertions.assertFalse(blockConditionalStatement.isSequential());
+        Assertions.assertFalse(blockWhileStatement.isSequential());
+        Assertions.assertTrue(blockTryCatchStatement.isSequential());
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) blockTryCatchStatement.getTryStatement()
             .getBlockStatements()
             .get(0);
         FlowrStatement flowrStatement = (FlowrStatement) blockTryCatchStatement.getTryStatement()
             .getBlockStatements()
             .get(1);
-        assertTrue(variableDeclStatement.isSequential());
-        assertTrue(flowrStatement.isSequential());
+        Assertions.assertTrue(variableDeclStatement.isSequential());
+        Assertions.assertTrue(flowrStatement.isSequential());
         ConditionalStatement flowrConditionStatement = (ConditionalStatement) flowrStatement.getReturnStatementClause()
             .getReturnStatement();
-        assertTrue(flowrConditionStatement.isSequential());
+        Assertions.assertTrue(flowrConditionStatement.isSequential());
         ApplyStatement applyStatement1 = (ApplyStatement) flowrConditionStatement.getBranch();
         ApplyStatement applyStatement2 = (ApplyStatement) flowrConditionStatement.getElseBranch();
-        assertTrue(applyStatement1.isSequential());
-        assertTrue(applyStatement2.isSequential());
+        Assertions.assertTrue(applyStatement1.isSequential());
+        Assertions.assertTrue(applyStatement2.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testTypeSwitchWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -196,43 +202,45 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(1, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(1, statementsAndOptionalExpr.getStatements().size());
         TypeSwitchStatement typeSwitchStatement = (TypeSwitchStatement) statementsAndOptionalExpr.getStatements()
             .get(0);
-        assertTrue(typeSwitchStatement.isSequential());
-        assertEquals(3, typeSwitchStatement.getCases().size());
+        Assertions.assertTrue(typeSwitchStatement.isSequential());
+        Assertions.assertEquals(3, typeSwitchStatement.getCases().size());
         TypeSwitchStatementCase case1 = typeSwitchStatement.getCases().get(0);
         TypeSwitchStatementCase case2 = typeSwitchStatement.getCases().get(1);
         TypeSwitchStatementCase caseWithExit = typeSwitchStatement.getCases().get(2);
         TypeSwitchStatementCase defaultStatement = typeSwitchStatement.getDefaultCase();
-        assertTrue(case1.getReturnStatement().isSequential());
-        assertTrue(case2.getReturnStatement().isSequential());
-        assertTrue(caseWithExit.getReturnStatement().isSequential());
-        assertTrue(defaultStatement.getReturnStatement().isSequential());
+        Assertions.assertTrue(case1.getReturnStatement().isSequential());
+        Assertions.assertTrue(case2.getReturnStatement().isSequential());
+        Assertions.assertTrue(caseWithExit.getReturnStatement().isSequential());
+        Assertions.assertTrue(defaultStatement.getReturnStatement().isSequential());
         ExitStatement exitStatement = (ExitStatement) caseWithExit.getReturnStatement();
-        assertTrue(exitStatement.isSequential());
+        Assertions.assertTrue(exitStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testFunctionWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
             "/src/test/resources/test_files/sequential/FunctionWithExitSequential.jq";
         MainModule mainModule = parseAndCompile(filePath);
         Prolog prolog = mainModule.getProlog();
-        assertEquals(1, prolog.getFunctionDeclarations().size());
+        Assertions.assertEquals(1, prolog.getFunctionDeclarations().size());
         FunctionDeclaration functionDeclaration = prolog.getFunctionDeclarations().get(0);
-        assertTrue(functionDeclaration.getExpression().isSequential());
+        Assertions.assertTrue(functionDeclaration.getExpression().isSequential());
         StatementsAndOptionalExpr functionBody = ((InlineFunctionExpression) functionDeclaration.getExpression())
             .getBody();
-        assertEquals(2, functionBody.getStatements().size());
+        Assertions.assertEquals(2, functionBody.getStatements().size());
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) functionBody.getStatements().get(0);
         ExitStatement exitStatement = (ExitStatement) functionBody.getStatements().get(1);
-        assertTrue(variableDeclStatement.isSequential());
-        assertTrue(exitStatement.isSequential());
+        Assertions.assertTrue(variableDeclStatement.isSequential());
+        Assertions.assertTrue(exitStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testSequentialPropagation() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -240,22 +248,23 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = mainModule.getProgram();
         StatementsAndOptionalExpr query = program.getStatementsAndOptionalExpr();
-        assertEquals(1, query.getStatements().size());
+        Assertions.assertEquals(1, query.getStatements().size());
         TryCatchStatement tryCatchStatement = (TryCatchStatement) query.getStatements().get(0);
-        assertTrue(tryCatchStatement.isSequential());
+        Assertions.assertTrue(tryCatchStatement.isSequential());
         BlockStatement tryBlock = tryCatchStatement.getTryStatement();
         BlockStatement catchBlock = tryCatchStatement.getCatchAllStatement();
-        assertTrue(tryBlock.isSequential());
-        assertFalse(catchBlock.isSequential());
-        assertEquals(2, tryBlock.getBlockStatements().size());
+        Assertions.assertTrue(tryBlock.isSequential());
+        Assertions.assertFalse(catchBlock.isSequential());
+        Assertions.assertEquals(2, tryBlock.getBlockStatements().size());
         VariableDeclStatement variableDeclStatement = (VariableDeclStatement) tryBlock.getBlockStatements().get(0);
-        assertTrue(variableDeclStatement.isSequential());
+        Assertions.assertTrue(variableDeclStatement.isSequential());
         FlowrStatement flowrStatement = (FlowrStatement) tryBlock.getBlockStatements().get(1);
-        assertTrue(flowrStatement.isSequential());
+        Assertions.assertTrue(flowrStatement.isSequential());
     }
 
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testBlockStatementWithExitSequential() throws Throwable {
         String filePath = System.getProperty("user.dir")
             +
@@ -263,7 +272,7 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
         MainModule mainModule = parseAndCompile(filePath);
         Program program = (Program) mainModule.getDescendantsMatching(stmt -> stmt instanceof Program).get(0);
         StatementsAndOptionalExpr statementsAndOptionalExpr = program.getStatementsAndOptionalExpr();
-        assertEquals(5, statementsAndOptionalExpr.getStatements().size());
+        Assertions.assertEquals(5, statementsAndOptionalExpr.getStatements().size());
         VariableDeclStatement variableDeclStatement1 = (VariableDeclStatement) statementsAndOptionalExpr.getStatements()
             .get(0);
         VariableDeclStatement variableDeclStatement2 = (VariableDeclStatement) statementsAndOptionalExpr.getStatements()
@@ -272,20 +281,21 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
             .get(2);
         VariableDeclStatement variableDeclStatement4 = (VariableDeclStatement) statementsAndOptionalExpr.getStatements()
             .get(3);
-        assertTrue(variableDeclStatement1.isSequential());
-        assertTrue(variableDeclStatement2.isSequential());
-        assertTrue(variableDeclStatement3.isSequential());
-        assertTrue(variableDeclStatement4.isSequential());
+        Assertions.assertTrue(variableDeclStatement1.isSequential());
+        Assertions.assertTrue(variableDeclStatement2.isSequential());
+        Assertions.assertTrue(variableDeclStatement3.isSequential());
+        Assertions.assertTrue(variableDeclStatement4.isSequential());
         ConditionalStatement conditionalStatement = (ConditionalStatement) statementsAndOptionalExpr.getStatements()
             .get(4);
-        assertTrue(conditionalStatement.isSequential());
+        Assertions.assertTrue(conditionalStatement.isSequential());
         BlockStatement thenStatement = (BlockStatement) conditionalStatement.getBranch();
         BlockStatement elseStatement = (BlockStatement) conditionalStatement.getElseBranch();
-        assertTrue(thenStatement.isSequential());
-        assertTrue(elseStatement.isSequential());
+        Assertions.assertTrue(thenStatement.isSequential());
+        Assertions.assertTrue(elseStatement.isSequential());
     }
 
-    @Test(timeout = 100000)
+    @Test
+    @Timeout(100)
     public void testNonSequential() throws Throwable {
         File nonsequentialTestsDirectory = new File(
                 System.getProperty("user.dir")
@@ -297,12 +307,12 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
                 if (descendant instanceof Expression) {
-                    assertFalse(((Expression) descendant).isSequential());
+                    Assertions.assertFalse(((Expression) descendant).isSequential());
                 } else if (descendant instanceof Statement) {
                     if (descendant instanceof VariableDeclStatement || descendant instanceof ApplyStatement) {
-                        assertTrue(((Statement) descendant).isSequential());
+                        Assertions.assertTrue(((Statement) descendant).isSequential());
                     } else {
-                        assertFalse(((Statement) descendant).isSequential());
+                        Assertions.assertFalse(((Statement) descendant).isSequential());
                     }
                 }
             }

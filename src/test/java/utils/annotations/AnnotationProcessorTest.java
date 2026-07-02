@@ -17,8 +17,8 @@
 
 package utils.annotations;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 import java.io.StringReader;
 
@@ -33,7 +33,7 @@ public class AnnotationProcessorTest {
             new StringReader(annotation)
         );
 
-        Assert.assertEquals("FODC0002", parsed.errorCode());
-        Assert.assertEquals("LINE:2;COLUMN:0;", parsed.errorMetadata());
+        Assertions.assertEquals("FODC0002", parsed.errorCode());
+        Assertions.assertEquals("LINE:2;COLUMN:0;", parsed.errorMetadata());
     }
 }

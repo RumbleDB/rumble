@@ -25,19 +25,19 @@ import scala.Function0;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import sparksoniq.spark.SparkSessionManager;
-import utils.FileManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class Bugs extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -54,26 +54,14 @@ public class Bugs extends AnnotationsTestsBase {
                 return "unknown";
             }
         });
-    protected static List<File> _testFiles = new ArrayList<>();
-    protected final File testFile;
+    @Parameter
+    File testFile;
 
-    public Bugs(File testFile) {
-        this.testFile = testFile;
+    public static List<File> testFiles() {
+        return loadTestFiles(runtimeTestsDirectory);
     }
 
-    public static void readFileList(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> Bugs._testFiles.add(file));
-    }
-
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        Bugs.readFileList(Bugs.runtimeTestsDirectory);
-        Bugs._testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
-    }
-
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -97,15 +85,9 @@ public class Bugs extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        AnnotationsTestsBase.testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
+        runAnnotationTest(this.testFile, true);
     }
 }

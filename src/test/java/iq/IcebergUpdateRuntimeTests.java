@@ -21,14 +21,16 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
@@ -39,7 +41,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -56,6 +59,8 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
                 return "unknown";
             }
         });
+    @Parameter
+    File testFile;
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -106,15 +111,6 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
             }
     );
 
-    protected static Map<Integer, Map<Integer, File>> _testFilesMap;
-
-    protected final File testFile;
-
-
-    public IcebergUpdateRuntimeTests(File testFile) {
-        this.testFile = testFile;
-    }
-
     public static void readFileList(File dir) throws IOException, AnnotationParseException {
         Map<Integer, Map<Integer, File>> updateDimToFileMap = new TreeMap<>();
         for (File file : FileManager.loadJiqFiles(dir)) {
@@ -129,9 +125,10 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         IcebergUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() throws IOException, AnnotationParseException {
-        List<Object[]> result = new ArrayList<>();
+    protected static Map<Integer, Map<Integer, File>> _testFilesMap;
+
+    public static List<File> testFiles() throws IOException, AnnotationParseException {
+        List<File> result = new ArrayList<>();
 
         // Base test folder
         File baseDir = IcebergUpdateRuntimeTests.runtimeTestsDirectory;
@@ -155,13 +152,13 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
             innerMap = IcebergUpdateRuntimeTests._testFilesMap.get(i);
             for (int j : innerMap.keySet()) {
                 curr = innerMap.get(j);
-                result.add(new Object[] { curr });
+                result.add(curr);
             }
         }
         return result;
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -198,16 +195,10 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
+        runAnnotationTest(this.testFile, true);
     }
 
 }

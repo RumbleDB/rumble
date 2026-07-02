@@ -3,7 +3,7 @@ package iq;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
 import org.apache.spark.SparkConf;
-import org.junit.Assert;
+import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -593,7 +593,7 @@ public class UpdatesForRumbleBenchmark {
             System.err.println("Deleted file: " + oldTable.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-            Assert.fail();
+            Assertions.fail();
         }
     }
 

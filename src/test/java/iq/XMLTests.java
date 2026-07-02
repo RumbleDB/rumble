@@ -22,22 +22,22 @@ package iq;
 
 import iq.base.AnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import scala.Function0;
 import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
-import utils.FileManager;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+import java.io.File;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class XMLTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
@@ -54,12 +54,8 @@ public class XMLTests extends AnnotationsTestsBase {
                 return "unknown";
             }
         });
-    protected static List<File> _testFiles = new ArrayList<>();
-    protected final File testFile;
-
-    public XMLTests(File testFile) {
-        this.testFile = testFile;
-    }
+    @Parameter
+    File testFile;
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -77,19 +73,11 @@ public class XMLTests extends AnnotationsTestsBase {
         );
     }
 
-    public static void readFileList(File dir) {
-        XMLTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
+    public static List<File> testFiles() {
+        return loadTestFiles(runtimeTestsDirectory);
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        XMLTests.readFileList(XMLTests.runtimeTestsDirectory);
-        XMLTests._testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
-    }
-
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         System.err.println("Java version: " + javaVersion);
@@ -110,15 +98,9 @@ public class XMLTests extends AnnotationsTestsBase {
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
-    @Test(timeout = 1000000)
-    public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
+    @Test
+    @Timeout(1000)
+    public void testRuntimeIterators() throws Throwable {
+        runAnnotationTest(this.testFile, true);
     }
 }
