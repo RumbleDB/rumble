@@ -301,10 +301,14 @@ public class BuiltinFunctionCatalogue {
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
+        return getBuiltinFunction(identifier, null);
+    }
+
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
         }
-        BuiltinFunction constructorFunction = resolveConstructorFunction(identifier);
+        BuiltinFunction constructorFunction = resolveConstructorFunction(identifier, queryLanguage);
         if (constructorFunction != null) {
             return constructorFunction;
         }
@@ -331,32 +335,58 @@ public class BuiltinFunctionCatalogue {
     }
 
     public static boolean exists(FunctionIdentifier identifier) {
+        return exists(identifier, null);
+    }
+
+    public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
-        return resolveConstructorFunction(identifier) != null
+        return resolveConstructorFunction(identifier, queryLanguage) != null
             || resolveIdentifierFallback(identifier) != null;
     }
 
-    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier) {
-        if (identifier.getArity() != 1 || !Name.XS_NS.equals(identifier.getName().getNamespace())) {
+    private static boolean supportsUnprefixedConstructorFunctions(String queryLanguage) {
+        return queryLanguage != null && queryLanguage.startsWith("jsoniq");
+    }
+
+    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier, String queryLanguage) {
+        Name functionName = identifier.getName();
+        if (identifier.getArity() != 1) {
+            return null;
+        }
+        Name typeName = functionName;
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
+            if (!supportsUnprefixedConstructorFunctions(queryLanguage)) {
+                return null;
+            }
+            if (
+                "boolean".equals(functionName.getLocalName())
+                    || "string".equals(functionName.getLocalName())
+                    || "QName".equals(functionName.getLocalName())
+            ) {
+                return null;
+            }
+            typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
+        } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
             return null;
         }
         ItemType targetType;
         try {
-            targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
+            targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
         } catch (RuntimeException e) {
             return null;
         }
         if (
-            !targetType.isAtomicItemType()
+            !(targetType.isAtomicItemType()
+                || (targetType.isUnionType() && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
                 || targetType.equals(BuiltinTypesCatalogue.atomicItem)
                 || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
         ) {
             return null;
         }
         return new BuiltinFunction(
-                identifier,
+                new FunctionIdentifier(typeName, identifier.getArity()),
                 new FunctionSignature(
                         List.of(SequenceType.createSequenceType("anyAtomicType?")),
                         new SequenceType(targetType, Arity.OneOrZero)
