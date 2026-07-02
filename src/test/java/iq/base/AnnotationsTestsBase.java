@@ -195,39 +195,52 @@ public class AnnotationsTestsBase {
             AnnotationProcessor.TestAnnotation annotation,
             QueryExecutionResult executionResult
     ) {
+        FailureStage actualFailureStage = executionResult.failureStage();
+        FailureStage expectedFailureStage = expectedFailureStage(annotation.getExpectation());
+
+        // Negative annotations require an exact failure stage; positive annotations only
+        // guarantee success up to their declared stage and may fail later.
+        boolean failureWasExpected = expectedFailureStage == null
+            ? !shouldReachStage(annotation.getExpectation(), actualFailureStage)
+            : actualFailureStage == expectedFailureStage;
+
+        if (!failureWasExpected) {
+            assertUnexpectedFailure(actualFailureStage, expectedFailureStage, executionResult.failureMessage());
+        }
+
         checkErrorCode(
             executionResult.failureMessage(),
             annotation.getErrorCode(),
             annotation.getErrorMetadata()
         );
-
-        // Positive expectations such as ShouldParse/ShouldCompile may still fail later,
-        // but negative expectations must fail at their exact stage.
-        FailureStage expectedFailureStage = expectedFailureStage(annotation.getExpectation());
-        if (expectedFailureStage == null) {
-            if (shouldReachStage(annotation, executionResult.failureStage())) {
-                Assert.fail(executionResult.failureStage().unexpectedFailureMessage(executionResult.failureMessage()));
-            }
-        } else if (executionResult.failureStage() != expectedFailureStage) {
-            Assert.fail(
-                "Program failed during "
-                    + executionResult.failureStage().verb
-                    + " when expected to fail during "
-                    + expectedFailureStage.verb
-                    + ".\nError output: "
-                    + executionResult.failureMessage()
-                    + "\n"
-            );
-        }
-
         System.out.println(executionResult.failureMessage());
     }
 
     private static boolean shouldReachStage(
-            AnnotationProcessor.TestAnnotation annotation,
+            AnnotationExpectation expectation,
             FailureStage failureStage
     ) {
-        return expectationForStage(annotation.getExpectation(), failureStage) == PhaseExpectation.MUST_SUCCEED;
+        return expectationForStage(expectation, failureStage) == PhaseExpectation.MUST_SUCCEED;
+    }
+
+    private static void assertUnexpectedFailure(
+            FailureStage actualFailureStage,
+            FailureStage expectedFailureStage,
+            String failureMessage
+    ) {
+        if (expectedFailureStage == null) {
+            Assert.fail(actualFailureStage.unexpectedFailureMessage(failureMessage));
+            return;
+        }
+        Assert.fail(
+            "Program failed during "
+                + actualFailureStage.verb
+                + " when expected to fail during "
+                + expectedFailureStage.verb
+                + ".\nError output: "
+                + failureMessage
+                + "\n"
+        );
     }
 
     private static void assertSuccessfulParseAndCompile(AnnotationProcessor.TestAnnotation annotation) {
