@@ -18,9 +18,9 @@
 
 package org.rumbledb.cli.commands;
 
+import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.InputArguments;
 import org.rumbledb.cli.arguments.OutputArguments;
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.ExecutionMode;
 
 import picocli.CommandLine.Command;
@@ -44,10 +44,12 @@ public final class Run extends BaseCommand {
     String queryPath;
 
     @Override
-    public RumbleConfiguration call() {
-        return this.baseConfiguration(ExecutionMode.RUN)
-            .input(this.input.toConfig(this.queryPath))
-            .output(this.output.toConfig())
-            .build();
+    public CLIInvocation call() {
+        return this.invocation(
+            this.baseConfiguration(ExecutionMode.RUN)
+                .input(this.input.toConfig(this.queryPath))
+                .output(this.output.toConfig())
+                .build()
+        );
     }
 }
