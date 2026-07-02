@@ -13,5 +13,8 @@ public class DataFrameBinding implements Binding {
         this.dataFrame = Objects.requireNonNull(dataFrame, "dataFrame");
     }
 
-
+    @Override
+    public Dataset<Row> getDataFrame() {
+        return this.dataFrame;
+    }
 }
