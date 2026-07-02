@@ -1400,15 +1400,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      *
      * <p>
      * The calendar value is used by date/time formatting functions when no explicit
-     * calendar is supplied. The calendar must be supported by
-     * {@link FormattingCalendarModeSupport}, and a
-     * corresponding formatter must be registered in
-     * {@link org.rumbledb.runtime.functions.util.formatting.calendar.CalendarRegistry}.
+     * calendar is supplied. Calendar data is resolved by the ICU formatting backend;
+     * valid but unsupported designators fall back at render time.
      * </p>
      *
      * @param calendar the default formatting calendar; must not be {@code null}
      * @throws NullPointerException if {@code calendar} is {@code null}
-     * @throws IllegalArgumentException if {@code calendar} is not supported
+     * @throws IllegalArgumentException if {@code calendar} is syntactically invalid
      */
     private void setDefaultFormattingCalendar(String calendar) {
         Objects.requireNonNull(calendar, "calendar");
@@ -1447,15 +1445,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * <p>
      * The value is a language code as defined by the type xs:language. This value is used by
      * date/time formatting functions when no explicit language is supplied. The
-     * language must be supported by {@link FormattingLanguageSupport}, and a
-     * corresponding formatter must be registered in
-     * {@link org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry}.
+     * language must be accepted by {@link FormattingLanguageSupport}. Locale data is
+     * resolved by the ICU formatting backend.
      * </p>
      *
      * @param language the default formatting language as an ISO 639-1 language code;
      *        must not be {@code null}
      * @throws NullPointerException if {@code language} is {@code null}
-     * @throws IllegalArgumentException if {@code language} is not supported
+     * @throws IllegalArgumentException if {@code language} is syntactically invalid
      */
     public void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
@@ -1463,14 +1460,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
             language
         );
-        String primary = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport
-            .getPrimaryLanguageSubtag(normalized);
 
-        if (!FormattingLanguageSupport.isValidFormattingLanguage(primary)) {
+        if (!FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
             throw new IllegalArgumentException("Unsupported default formatting language: " + language);
         }
 
-        this.defaultFormattingLanguage = primary;
+        this.defaultFormattingLanguage = normalized;
     }
 
     /**

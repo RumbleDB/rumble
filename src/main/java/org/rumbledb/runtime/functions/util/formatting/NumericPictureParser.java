@@ -91,7 +91,6 @@ public final class NumericPictureParser {
         RepeatingGroupingInfo repeatingInfo = detectRepeatingGrouping(groupings, runLengths, kind);
 
         return new NumericPicture(
-                picture,
                 zeroDigit,
                 mandatoryCount,
                 activeCount,

@@ -1,5 +1,9 @@
-package org.rumbledb.runtime.functions.datetime;
+package org.rumbledb.runtime.functions.datetime.dateformatting;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
+import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 import java.time.OffsetDateTime;
@@ -12,16 +16,30 @@ final class FractionalSecondsFormatter {
     static String format(
             OffsetDateTime dt,
             ParsedVariableMarker variableMarker,
-            FormattingOptions formattingOptions
+            FormattingContext formattingContext,
+            String pictureString,
+            ExceptionMetadata metadata
+    ) {
+        try {
+            return format(dt, variableMarker, formattingContext);
+        } catch (IllegalArgumentException e) {
+            throw new IncorrectSyntaxFormatDateTimeException(
+                    "\"" + pictureString + "\": invalid picture string",
+                    metadata
+            );
+        }
+    }
+
+    private static String format(
+            OffsetDateTime dt,
+            ParsedVariableMarker variableMarker,
+            FormattingContext formattingContext
     ) {
         if ("I".equals(variableMarker.presentation) || "i".equals(variableMarker.presentation)) {
             int value = fractionAsInteger(dt);
-            String roman = org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport.integerToRoman(
-                value
-            );
-            return "i".equals(variableMarker.presentation) ? roman.toLowerCase(formattingOptions.locale) : roman;
+            String roman = NumericFormattingSupport.integerToRoman(value);
+            return "i".equals(variableMarker.presentation) ? roman.toLowerCase(formattingContext.locale) : roman;
         }
-
         FractionalPattern pattern = FractionalPattern.parse(variableMarker.presentation);
         String fractionDigits = canonicalFractionDigits(dt);
 
@@ -252,6 +270,25 @@ final class FractionalSecondsFormatter {
                 return null;
             }
             return this.separatorsAfterSlot[index];
+        }
+    }
+
+    static void validatePresentation(
+            String picture,
+            String pictureString,
+            ExceptionMetadata metadata
+    ) {
+        if ("I".equals(picture) || "i".equals(picture)) {
+            return;
+        }
+
+        try {
+            FractionalPattern.parse(picture);
+        } catch (IllegalArgumentException e) {
+            throw new IncorrectSyntaxFormatDateTimeException(
+                    "\"" + pictureString + "\": invalid picture string",
+                    metadata
+            );
         }
     }
 }
