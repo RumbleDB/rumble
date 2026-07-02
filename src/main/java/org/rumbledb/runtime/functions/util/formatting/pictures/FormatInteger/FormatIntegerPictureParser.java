@@ -42,15 +42,12 @@ public final class FormatIntegerPictureParser {
         );
 
         return new FormatIntegerPicture(
-                pictureString,
-                primaryFormatTokenString,
-                formatModifierString,
                 primaryFormatToken,
                 formatModifier
         );
     }
 
-    private static PrimaryFormatToken parsePrimaryFormatToken(
+    public static PrimaryFormatToken parsePrimaryFormatToken(
             String primaryFormatTokenString,
             String pictureStringForErrors,
             ExceptionMetadata metadata

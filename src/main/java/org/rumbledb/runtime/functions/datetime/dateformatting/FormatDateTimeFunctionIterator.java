@@ -1,14 +1,13 @@
-package org.rumbledb.runtime.functions.datetime;
+package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CastException;
 import org.rumbledb.runtime.RuntimeIterator;
 
-public class FormatDateTimeFunctionIterator extends TemporalFormatFunctionIterator {
+public class FormatDateTimeFunctionIterator extends DateFormattingFunctionIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -17,15 +16,13 @@ public class FormatDateTimeFunctionIterator extends TemporalFormatFunctionIterat
     }
 
     @Override
-    protected OffsetDateTime getTemporalValue(Item valueItem) {
-        try {
-            return valueItem.getDateTimeValue();
-        } catch (UnsupportedOperationException e) {
-            String message = String.format("\"%s\": not castable to type %s", valueItem.serialize(), "dateTime");
-            CastException ex = new CastException(message, getMetadata());
-            ex.initCause(e);
-            throw ex;
-        }
+    protected OffsetDateTime extractTemporalValue(Item valueItem) {
+        return valueItem.getDateTimeValue();
+    }
+
+    @Override
+    protected String temporalTypeName() {
+        return "dateTime";
     }
 
     @Override
