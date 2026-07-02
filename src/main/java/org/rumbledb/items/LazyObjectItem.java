@@ -276,7 +276,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return;
         }
         removeItemByKey(key.getStringValue());
