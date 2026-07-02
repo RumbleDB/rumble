@@ -20,7 +20,7 @@ public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
     @Override
     protected OffsetDateTime extractTemporalValue(Item valueItem) {
         OffsetTime timeValue = valueItem.getTimeValue();
-        return timeValue.atDate(LocalDate.of(1972, 12, 31));
+        return timeValue.atDate(LocalDate.of(1972, 1, 1));
     }
 
     @Override

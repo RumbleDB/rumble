@@ -39,9 +39,6 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
         if (valueItem == null) {
             return null;
         }
-        if (valueItem.isNull()) {
-            return valueItem;
-        }
 
         String language = getOptionalString(languageItem);
         String calendar = getOptionalString(calendarItem);
