@@ -4,20 +4,16 @@ import lombok.Value;
 import java.util.Objects;
 
 @Value
-public class FileBinding implements Binding {
+public final class FileBinding implements Binding {
     String location;
+    InputFormat format;
 
     public FileBinding(String location) {
+        this(location, InputFormat.JSON);
+    }
+
+    public FileBinding(String location, InputFormat format) {
         this.location = Objects.requireNonNull(location, "location");
-    }
-
-    @Override
-    public boolean isFileBinding() {
-        return true;
-    }
-
-    @Override
-    public String getFileLocation() {
-        return this.location;
+        this.format = Objects.requireNonNullElse(format, InputFormat.JSON);
     }
 }
