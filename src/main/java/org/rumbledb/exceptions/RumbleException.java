@@ -88,7 +88,7 @@ public class RumbleException extends RuntimeException {
                 + message
                 + "\n"
                 + "Metadata: "
-                + ((metadata != null) ? metadata.toString() : null)
+                + metadata
                 + "\n"
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
         }
@@ -105,7 +105,7 @@ public class RumbleException extends RuntimeException {
             + message
             + "\n"
             + "Metadata: "
-            + ((metadata != null) ? metadata.toString() : null)
+            + metadata
             + "\n"
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
@@ -134,8 +134,8 @@ public class RumbleException extends RuntimeException {
         if (ex instanceof SparkException) {
             Throwable sparkExceptionCause = ex.getCause();
             return unnestException(sparkExceptionCause);
-        } else if (ex instanceof RumbleException) {
-            return (RumbleException) ex;
+        } else if (ex instanceof RumbleException rumbleException) {
+            return rumbleException;
         } else {
             RumbleException e2 = new OurBadException("Unanticipated exception!");
             e2.initCause(ex);

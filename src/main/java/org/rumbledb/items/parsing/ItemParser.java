@@ -684,7 +684,7 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType instanceof DecimalType && ((DecimalType) fieldType).scale() == 0) {
+        } else if (fieldType instanceof DecimalType decimalType && decimalType.scale() == 0) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
@@ -800,8 +800,7 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType instanceof ArrayType) {
-            ArrayType arrayType = (ArrayType) fieldType;
+        } else if (fieldType instanceof ArrayType arrayType) {
             DataType dataType = arrayType.elementType();
             ItemType memberType = null;
             if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
@@ -815,8 +814,8 @@ public class ItemParser implements Serializable {
                 }
             } else {
                 Iterator<Object> iterator = null;
-                if (o instanceof scala.collection.mutable.ArraySeq) {
-                    iterator = ((scala.collection.mutable.ArraySeq<Object>) o).iterator();
+                if (o instanceof scala.collection.mutable.ArraySeq<?> arraySeq) {
+                    iterator = ((scala.collection.mutable.ArraySeq<Object>) arraySeq).iterator();
                 } else {
                     iterator = ((ArraySeq<Object>) o).iterator();
                 }
@@ -838,9 +837,8 @@ public class ItemParser implements Serializable {
             } else {
                 vector = (Vector) o;
             }
-            if (vector instanceof DenseVector) {
+            if (vector instanceof DenseVector denseVector) {
                 // a dense vector is mapped to a rumble array
-                DenseVector denseVector = (DenseVector) vector;
                 List<Item> members = new ArrayList<>(vector.size());
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
@@ -851,9 +849,8 @@ public class ItemParser implements Serializable {
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
                 }
-            } else if (vector instanceof SparseVector) {
+            } else if (vector instanceof SparseVector sparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
-                SparseVector sparseVector = (SparseVector) vector;
                 List<String> objectKeyList = new ArrayList<>();
                 List<Item> objectValueList = new ArrayList<>();
                 int[] vectorIndices = sparseVector.indices();
@@ -960,7 +957,7 @@ public class ItemParser implements Serializable {
                     }
                 }
                 String uri = attribute.getNodeValue();
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateParsedNamespaceBinding(prefix, uri);
                 namespaceBindings.put(prefix, uri);
                 continue;
             }

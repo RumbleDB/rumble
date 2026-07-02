@@ -42,7 +42,7 @@ public class ItemTypeFactory {
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
         if (item.isArray()) {
-            List<Item> members = item.getItems();
+            List<Item> members = item.getItemMembers();
             if (members.size() != 1) {
                 throw new InvalidSchemaException(
                         "Invalid JSound, an array type should only contain one member type: " + item.serialize(),
@@ -61,7 +61,7 @@ public class ItemTypeFactory {
         }
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
-            for (String key : item.getKeys()) {
+            for (String key : item.getStringKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
                 boolean unique = false;
@@ -198,7 +198,7 @@ public class ItemTypeFactory {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        List<String> keys = item.getKeys();
+        List<String> keys = item.getStringKeys();
         if (!keys.contains("kind")) {
             throw new InvalidSchemaException(
                     "A JSound verbose schema must contain a 'kind' field.",
@@ -276,7 +276,7 @@ public class ItemTypeFactory {
                         );
                     closed = true;
                 }
-                List<Item> contents = contentItem.getItems();
+                List<Item> contents = contentItem.getItemMembers();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
                 for (Item c : contents) {
                     Item fieldItem = c.getItemByKey("name");
@@ -766,7 +766,7 @@ public class ItemTypeFactory {
             if (item.getSize() == 0) {
                 return ItemTypeFactory.createEmptyArrayType();
             }
-            ItemType result = item.getItemAt(0).getDynamicType();
+            ItemType result = createItemTypeFromItem(item.getItemAt(0));
             for (int i = 1; i < item.getSize(); i++) {
                 result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
             }
@@ -788,12 +788,12 @@ public class ItemTypeFactory {
     }
 
     public static ItemType createItemType(DataType dt) {
-        if (dt instanceof StructType) {
-            return createItemTypeFromSparkStructType((StructType) dt);
+        if (dt instanceof StructType structType) {
+            return createItemTypeFromSparkStructType(structType);
         }
-        if (dt instanceof ArrayType) {
+        if (dt instanceof ArrayType arrayType) {
             return createArrayTypeWithSparkDataTypeContent(
-                ((ArrayType) dt).elementType()
+                arrayType.elementType()
             );
         }
         if (dt.equals(DataTypes.StringType)) {
@@ -810,7 +810,7 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
             return BuiltinTypesCatalogue.floatItem;
-        } else if (dt instanceof DecimalType && ((DecimalType) dt).scale() == 0) {
+        } else if (dt instanceof DecimalType decimalType && decimalType.scale() == 0) {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt instanceof DecimalType) {
             return BuiltinTypesCatalogue.decimalItem;

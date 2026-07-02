@@ -106,7 +106,7 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
                     }
                 }
             } else if (item.isObject()) {
-                getDescendantArrays(item.getValues());
+                getDescendantArrays(item.getItemValues());
             } else {
                 // for atomic types: do nothing
             }

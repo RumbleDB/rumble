@@ -98,16 +98,15 @@ public class ObjectItem implements Item {
         return result;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
+        for (String s : getStringKeys()) {
+            Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -115,12 +114,12 @@ public class ObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : otherItem.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!o.getItemByKey(s).equals(v)) {
+            if (!otherItem.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
@@ -160,8 +159,7 @@ public class ObjectItem implements Item {
                     } else {
                         throw new RuntimeException("Unexpected list size found.");
                     }
-                } else if (keyValuePairs.get(key) instanceof Item) {
-                    Item value = (Item) keyValuePairs.get(key);
+                } else if (keyValuePairs.get(key) instanceof Item value) {
                     valueList.add(value);
                 } else {
                     throw new RuntimeException("Unexpected value type found.");
@@ -209,11 +207,6 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.keys;
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.keys;
     }
@@ -228,7 +221,7 @@ public class ObjectItem implements Item {
     }
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return false;
         }
         return hasKey(key.getStringValue());
@@ -241,11 +234,6 @@ public class ObjectItem implements Item {
             result.add(ItemFactory.getInstance().createStringItem(key));
         }
         return result;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.values;
     }
 
     @Override
@@ -276,7 +264,7 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -293,7 +281,7 @@ public class ObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -369,7 +357,7 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }
@@ -424,8 +412,8 @@ public class ObjectItem implements Item {
 
     public int hashCode() {
         int result = 0;
-        result += getKeys().size();
-        for (String s : getKeys()) {
+        result += getStringKeys().size();
+        for (String s : getStringKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;

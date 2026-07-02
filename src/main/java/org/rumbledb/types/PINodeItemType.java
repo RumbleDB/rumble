@@ -55,10 +55,10 @@ public class PINodeItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
+        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
             return false;
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -68,10 +68,9 @@ public class PINodeItemType implements ItemType {
 
     @Override
     public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof PINodeItemType)) {
+        if (!(otherType instanceof PINodeItemType other)) {
             return false;
         }
-        PINodeItemType other = (PINodeItemType) otherType;
         return Objects.equals(this.catalogueName, other.catalogueName)
             && Objects.equals(this.normalizedTarget, other.normalizedTarget);
     }
@@ -110,10 +109,9 @@ public class PINodeItemType implements ItemType {
         ) {
             return true;
         }
-        if (!(superType instanceof PINodeItemType)) {
+        if (!(superType instanceof PINodeItemType other)) {
             return false;
         }
-        PINodeItemType other = (PINodeItemType) superType;
         if (other.isWildcardPI()) {
             return true;
         }

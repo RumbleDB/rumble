@@ -219,8 +219,7 @@ public class DataFrameContext implements Serializable {
                 throw ex;
             }
         }
-        if (dt instanceof ArrayType) {
-            ArrayType arrayType = (ArrayType) dt;
+        if (dt instanceof ArrayType arrayType) {
             if (arrayType.elementType().equals(DataTypes.BinaryType)) {
                 List<Object> objects = row.getList(columnIndex);
                 List<Item> items = new ArrayList<>();
@@ -243,7 +242,7 @@ public class DataFrameContext implements Serializable {
                 for (Object object : objects) {
                     Item item = ItemParser.convertValueToItem(
                         object,
-                        ((ArrayType) dt).elementType(),
+                        (arrayType).elementType(),
                         ExceptionMetadata.EMPTY_METADATA,
                         itemType == null ? null : itemType.getArrayContentFacet()
                     );

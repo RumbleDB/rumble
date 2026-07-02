@@ -93,7 +93,7 @@ public class LazyObjectItem implements Item {
     public Item copy(boolean mutable) {
         List<String> newKeys = new ArrayList<>(this.keys.size());
         List<Item> newValues = new ArrayList<>();
-        for (String key : this.getKeys()) {
+        for (String key : this.getStringKeys()) {
             newKeys.add(key);
             newValues.add(this.getItemByKey(key).copy(mutable));
         }
@@ -105,16 +105,15 @@ public class LazyObjectItem implements Item {
 
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
+        for (String s : this.getStringKeys()) {
+            Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -122,12 +121,12 @@ public class LazyObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : otherItem.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!o.getItemByKey(s).equals(v)) {
+            if (!otherItem.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
@@ -148,11 +147,6 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.keys;
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.keys;
     }
@@ -167,18 +161,13 @@ public class LazyObjectItem implements Item {
     }
 
     @Override
-    public List<Item> getValues() {
+    public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         materialize();
         for (Item i : this.values.values()) {
             result.add(i);
         }
         return result;
-    }
-
-    @Override
-    public List<Item> getItemValues() {
-        return getValues();
     }
 
     @Override
@@ -210,7 +199,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -227,7 +216,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -287,7 +276,7 @@ public class LazyObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return;
         }
         removeItemByKey(key.getStringValue());
@@ -338,8 +327,8 @@ public class LazyObjectItem implements Item {
 
     public int hashCode() {
         int result = 0;
-        result += getKeys().size();
-        for (String s : getKeys()) {
+        result += getStringKeys().size();
+        for (String s : getStringKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;

@@ -1227,7 +1227,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(
             "App name: "
                 + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")
@@ -1438,7 +1438,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the default formatting language
      */
     public String getDefaultFormattingLanguage() {
-        return defaultFormattingLanguage;
+        return this.defaultFormattingLanguage;
     }
 
     /**
@@ -1457,7 +1457,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @throws NullPointerException if {@code language} is {@code null}
      * @throws IllegalArgumentException if {@code language} is not supported
      */
-    private void setDefaultFormattingLanguage(String language) {
+    public void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
 
         String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(

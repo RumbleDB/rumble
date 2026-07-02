@@ -60,6 +60,7 @@ jobs:
         test_class: [
           "FrontendTests",
           "BackwardsCompatibilityTests",
+          "RegexPatternUtilsTest",
           "RuntimeTests",
           "RuntimeTestsNoParallelism",
           "RuntimeTestsNoInlining",

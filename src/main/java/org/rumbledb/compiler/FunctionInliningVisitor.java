@@ -35,17 +35,19 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
+    private String queryLanguage;
+
     public FunctionInliningVisitor() {
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
-        if (expression instanceof VariableReferenceExpression) {
-            return ((VariableReferenceExpression) expression).getVariableName().equals(name);
+        if (expression instanceof VariableReferenceExpression variableReference) {
+            return variableReference.getVariableName().equals(name);
         }
-        if (expression instanceof Clause) {
+        if (expression instanceof Clause clause) {
             if (
-                ((Clause) expression).getPreviousClause() != null
-                    && isVariableReferenced(((Clause) expression).getPreviousClause(), name)
+                clause.getPreviousClause() != null
+                    && isVariableReferenced(clause.getPreviousClause(), name)
             ) {
                 return true;
             }
@@ -71,9 +73,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
         boolean allArgumentsMatch = true;
         for (int i = 0; i < expression.getArguments().size(); i++) {
             allArgumentsMatch = allArgumentsMatch
-                && expression.getArguments().get(i) instanceof VariableReferenceExpression
+                && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
                 && paramNames.get(i)
-                    .equals(((VariableReferenceExpression) expression.getArguments().get(i)).getVariableName());
+                    .equals(variableReference.getVariableName());
         }
         return allArgumentsMatch;
     }
@@ -140,6 +142,24 @@ public class FunctionInliningVisitor extends CloneVisitor {
             Expression expression,
             SequenceType paramType
     ) {
+        if (
+            isNamespaceSensitiveFunctionParameter(paramType)
+                && usesQNameCoercionErrorSemantics(expression)
+                && expression.getStaticSequenceType() != null
+                && expression.getStaticSequenceType().getItemType() != null
+                && expression.getStaticSequenceType()
+                    .getItemType()
+                    .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
+        ) {
+            TreatExpression result = new TreatExpression(
+                    expression,
+                    paramType,
+                    ErrorCode.CannotConvertToQNameErrorCode,
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(paramType);
+            return result;
+        }
         // integer > decimal > double
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
@@ -403,8 +423,26 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return expression;
     }
 
+    private boolean isNamespaceSensitiveFunctionParameter(SequenceType paramType) {
+        return paramType.getItemType().equals(BuiltinTypesCatalogue.QNameItem)
+            || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
+    }
+
+    private boolean usesQNameCoercionErrorSemantics(Expression expression) {
+        String currentQueryLanguage = this.queryLanguage;
+        if (currentQueryLanguage == null && expression.getStaticContext() != null) {
+            currentQueryLanguage = expression.getStaticContext().getQueryLanguage();
+        }
+        return currentQueryLanguage != null
+            && !currentQueryLanguage.equals("xquery10")
+            && !currentQueryLanguage.equals("jsoniq10");
+    }
+
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
+        if (mainModule.getStaticContext() != null) {
+            this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
+        }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
@@ -468,8 +506,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
             // only use assignment clause when the variables have different names
             if (
-                argumentExpression instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) argumentExpression).getVariableName().equals(paramName)
+                argumentExpression instanceof VariableReferenceExpression variableReference
+                    && variableReference.getVariableName().equals(paramName)
             ) {
                 continue;
             }
@@ -519,6 +557,19 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 }
                 expressionClauses = expressionClause;
             }
+        }
+        if (expressionClauses == null) {
+            if (inlineFunction.getReturnType() != null) {
+                TreatExpression result = new TreatExpression(
+                        body,
+                        inlineFunction.getReturnType(),
+                        ErrorCode.UnexpectedTypeErrorCode,
+                        expression.getMetadata()
+                );
+                result.setSequential(inlineFunction.isSequential());
+                return result;
+            }
+            return body;
         }
         if (assignmentClauses != null) {
             assignmentClauses.getLastClause().chainWith(returnClause);

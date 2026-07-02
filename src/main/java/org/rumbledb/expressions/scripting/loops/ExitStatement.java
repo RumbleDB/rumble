@@ -28,7 +28,7 @@ public class ExitStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.exitExpression.serializeToJSONiq(sb, 0);
     }

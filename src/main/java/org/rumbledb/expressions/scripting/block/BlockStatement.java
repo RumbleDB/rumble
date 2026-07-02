@@ -36,7 +36,7 @@ public class BlockStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         for (int i = 0; i < this.blockStatements.size(); i++) {
             this.blockStatements.get(i).serializeToJSONiq(sb, 0);

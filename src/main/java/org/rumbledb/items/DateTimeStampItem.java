@@ -20,7 +20,6 @@ public class DateTimeStampItem implements Item {
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
-    @SuppressWarnings("unused")
     public DateTimeStampItem() {
         super();
     }
@@ -46,11 +45,11 @@ public class DateTimeStampItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -164,4 +163,3 @@ public class DateTimeStampItem implements Item {
         return Timestamp.valueOf(this.getDateTimeValue().toLocalDateTime());
     }
 }
-

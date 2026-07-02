@@ -82,7 +82,7 @@ public class ObjectConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         if (this.isMergedConstructor) {
             indentIt(sb, indent);
             sb.append("{| ");

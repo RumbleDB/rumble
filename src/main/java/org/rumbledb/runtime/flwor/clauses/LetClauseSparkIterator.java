@@ -32,11 +32,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -49,8 +51,10 @@ import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
+import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -224,15 +228,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We try to detect an equi-join.
 
         // Is this a predicate expression?
-        if (!(this.assignmentIterator instanceof PredicateIterator)) {
+        if (!(this.assignmentIterator instanceof PredicateIterator predicateAssignmentIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble is able to handle large scale left outer joins, but this requires the let expression to be a predicate expression, the left-hand-side of which is independent from the previous variables of the current FLWOR expression.",
                     getMetadata()
             );
         }
 
-        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
-        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+        RuntimeIterator sequenceIterator = predicateAssignmentIterator.sequenceIterator();
+        RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -242,60 +246,18 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        // Is the predicate a comparison?
-        if (!(predicateIterator instanceof ComparisonIterator)) {
-            throw new JobWithinAJobException(
-                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not a comparison.",
-                    getMetadata()
-            );
-
-        }
-        ComparisonIterator comparisonIterator = (ComparisonIterator) predicateIterator;
-        // Is the predicate a value equality comparison?
-        if (!comparisonIterator.isValueEquality()) {
-            throw new JobWithinAJobException(
-                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.",
-                    getMetadata()
-            );
-        }
-
-        // Is the equality comparing the left hand side of the predicate with the input tuple?
-        RuntimeIterator leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-        RuntimeIterator rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
-        Set<Name> leftDependencies = new HashSet<>(
-                leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+        List<RuntimeIterator> contextItemEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> inputTupleEqualityCriteria = new ArrayList<>();
+        String failureMessage = extractEqualityComparisonsForConjunction(
+            predicateIterator,
+            contextItemEqualityCriteria,
+            inputTupleEqualityCriteria
         );
-        Set<Name> rightDependencies = new HashSet<>(
-                rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
-        );
-        RuntimeIterator contextItemValueExpression = null;
-        RuntimeIterator inputTupleValueExpression = null;
-        if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
-            if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
-                contextItemValueExpression = leftHandSideOfJoinEqualityCriterion;
-                inputTupleValueExpression = rightHandSideOfJoinEqualityCriterion;
-            } else {
-                throw new JobWithinAJobException(
-                        "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.",
-                        getMetadata()
-                );
-            }
-        }
 
-        if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
-            if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
-                contextItemValueExpression = rightHandSideOfJoinEqualityCriterion;
-                inputTupleValueExpression = leftHandSideOfJoinEqualityCriterion;
-            } else {
-                throw new JobWithinAJobException(
-                        "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.",
-                        getMetadata()
-                );
-            }
-        }
-        if (inputTupleValueExpression == null) {
+        if (failureMessage != null) {
             throw new JobWithinAJobException(
-                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.",
+                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. "
+                        + failureMessage,
                     getMetadata()
             );
         }
@@ -334,6 +296,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         ).getDataFrame();
 
         // We compute the hashes for both sides of the equality predicate.
+        RuntimeIterator contextItemValueExpression = getJoinKeyExpression(
+            contextItemEqualityCriteria,
+            getMetadata()
+        );
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
             Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
@@ -346,6 +312,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             getConfiguration()
         );
 
+        RuntimeIterator inputTupleValueExpression = getJoinKeyExpression(
+            inputTupleEqualityCriteria,
+            getMetadata()
+        );
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
@@ -474,6 +444,82 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(inputDF);
     }
 
+    private RuntimeIterator getJoinKeyExpression(
+            List<RuntimeIterator> equalityCriteria,
+            ExceptionMetadata metadata
+    ) {
+        if (equalityCriteria.size() == 1) {
+            return equalityCriteria.get(0);
+        }
+        RuntimeStaticContext staticContext = new RuntimeStaticContext(
+                this.getStaticContext()
+                    .withStaticType(SequenceType.createSequenceType("item*"))
+                    .withExecutionMode(ExecutionMode.LOCAL)
+                    .withMetadata(metadata)
+        );
+        return new ArrayRuntimeIterator(
+                new CommaExpressionIterator(
+                        equalityCriteria,
+                        staticContext
+                ),
+                staticContext,
+                false
+        );
+    }
+
+    private static String extractEqualityComparisonsForConjunction(
+            RuntimeIterator predicateIterator,
+            List<RuntimeIterator> contextItemEqualityCriteria,
+            List<RuntimeIterator> inputTupleEqualityCriteria
+    ) {
+        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        candidateIterators.push(predicateIterator);
+        while (!candidateIterators.isEmpty()) {
+            RuntimeIterator iterator = candidateIterators.pop();
+            if (iterator instanceof AndOperationIterator andIterator) {
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
+                continue;
+            }
+            if (!(iterator instanceof ComparisonIterator comparisonIterator)) {
+                return "We did detect a predicate expression, but the criterion inside the predicate is not a comparison.";
+            }
+            if (!comparisonIterator.isValueEquality()) {
+                return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
+            }
+
+            RuntimeIterator leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+            RuntimeIterator rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+            Set<Name> leftDependencies = new HashSet<>(
+                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+            );
+            Set<Name> rightDependencies = new HashSet<>(
+                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+            );
+
+            if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                    contextItemEqualityCriteria.add(leftHandSideOfJoinEqualityCriterion);
+                    inputTupleEqualityCriteria.add(rightHandSideOfJoinEqualityCriterion);
+                    continue;
+                }
+                return "We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.";
+            }
+
+            if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                    contextItemEqualityCriteria.add(rightHandSideOfJoinEqualityCriterion);
+                    inputTupleEqualityCriteria.add(leftHandSideOfJoinEqualityCriterion);
+                    continue;
+                }
+                return "We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.";
+            }
+
+            return "We did detect a predicate expression, but the criterion inside the predicate is not comparing the left-hand-side of this predicate to the input tuple.";
+        }
+        return null;
+    }
+
     public static boolean isExpressionIndependentFromInputTuple(
             RuntimeIterator sequenceIterator,
             RuntimeTupleIterator tupleIterator
@@ -507,7 +553,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");

@@ -135,7 +135,7 @@ public class ExceptionMetadata implements Serializable {
      * @return the code with a pointer to the error location.
      */
     public String getLineInContext() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         String[] lines = this.code.split("\n");
         if (lines.length < this.range.start().line()) {
             return "";
@@ -164,7 +164,7 @@ public class ExceptionMetadata implements Serializable {
     }
 
     public String toString() {
-        StringBuffer buffer = new StringBuffer();
+        StringBuilder buffer = new StringBuilder();
         buffer.append(this.location);
         buffer.append(":LINE:");
         buffer.append(this.range.start().line());

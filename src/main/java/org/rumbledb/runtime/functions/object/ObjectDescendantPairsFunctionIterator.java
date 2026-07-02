@@ -103,9 +103,9 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     private void getDescendantPairs(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantPairs(item.getItems());
+                getDescendantPairs(item.getItemMembers());
             } else if (item.isObject()) {
-                List<String> keys = item.getKeys();
+                List<String> keys = item.getStringKeys();
                 for (String key : keys) {
                     Item value = item.getItemByKey(key);
 

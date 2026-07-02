@@ -134,7 +134,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (item.isArray()) {
-            scanItems(item.getItems(), lookupKey, foundMembers);
+            scanItems(item.getItemMembers(), lookupKey, foundMembers);
         }
     }
 

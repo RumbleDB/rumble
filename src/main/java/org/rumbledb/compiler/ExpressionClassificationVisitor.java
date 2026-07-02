@@ -60,14 +60,12 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     protected ExpressionClassification defaultAction(Node node, ExpressionClassification argument) {
         ExpressionClassification expressionClassification = this.visitDescendants(node, argument);
 
-        if (
-            !(node instanceof Expression)
-        ) {
+        if (!(node instanceof Expression expression)) {
             return expressionClassification;
         }
 
-        if (node instanceof InlineFunctionExpression) {
-            ((InlineFunctionExpression) node).setExpressionClassification(expressionClassification);
+        if (node instanceof InlineFunctionExpression inlineFunctionExpression) {
+            inlineFunctionExpression.setExpressionClassification(expressionClassification);
             return expressionClassification;
         }
         if (expressionClassification.isUpdating()) {
@@ -76,7 +74,6 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
                     node.getMetadata()
             );
         }
-        Expression expression = (Expression) node;
         expression.setExpressionClassification(expressionClassification);
         return expressionClassification;
     }
@@ -348,7 +345,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function;
         FunctionSignature signature;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
         if (function != null) {
             signature = function.getSignature();
         } else {

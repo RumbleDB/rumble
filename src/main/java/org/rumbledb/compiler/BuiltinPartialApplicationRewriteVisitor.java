@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
  */
 public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
+    private static String getQueryLanguage(Expression expression) {
+        return expression.getStaticContext() == null ? null : expression.getStaticContext().getQueryLanguage();
+    }
+
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
             Name functionName,
             BuiltinFunction builtin,
@@ -35,14 +39,14 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
         Map<Name, SequenceType> params = new LinkedHashMap<>();
 
-        /// We will create a new function call to builtin function, but this time
-        /// replace ? with real parameters
+        // We will create a new function call to builtin function, but this time
+        // replace ? with real parameters
         List<Expression> fullArguments = new ArrayList<>(arguments.size());
 
         for (int i = 0; i < arguments.size(); i++) {
             Expression currentArgument = arguments.get(i);
             if (currentArgument != null) {
-                /// It was not a ?
+                // It was not a ?
                 fullArguments.add(currentArgument);
                 continue;
             }
@@ -79,13 +83,15 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
+            expression.getFunctionIdentifier(),
+            getQueryLanguage(expression)
+        );
 
         if (!expression.isPartialApplication() || builtin == null) {
-            /// In case of non-partial application or non-builtin function, we still need to
-            /// keep descending
-            /// Because a partial builtin function might be in the nested level
-            /// See qt3 test hof-041
+            // In case of non-partial application or non-builtin function, we still need to keep descending Because a
+            // partial builtin function might be in the nested level
+            // See qt3 test hof-041
             return super.visitFunctionCall(expression, argument);
         }
 
@@ -108,7 +114,10 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
             return super.visitDynamicFunctionCallExpression(expression, argument);
         }
 
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(namedFunctionReference.getIdentifier());
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
+            namedFunctionReference.getIdentifier(),
+            getQueryLanguage(namedFunctionReference)
+        );
         boolean isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
         if (!isPartialApplication || builtin == null) {
             return super.visitDynamicFunctionCallExpression(expression, argument);

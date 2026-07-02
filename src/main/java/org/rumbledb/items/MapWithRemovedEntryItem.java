@@ -107,11 +107,6 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>(
                 CollectionUtils.subtract(
@@ -141,7 +136,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return false;
         }
         return this.original.hasKey(key);
@@ -153,11 +148,6 @@ public class MapWithRemovedEntryItem implements Item {
             return false;
         }
         return this.original.hasKey(key);
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override
@@ -186,7 +176,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public Item getItemByKey(String key) {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return null;
         }
         return this.original.getItemByKey(key);
@@ -202,7 +192,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(String key) {
-        if (this.removedKeys.stream().anyMatch(k -> k.isString() && k.getStringValue().equals(key))) {
+        if (this.removedKeys.contains(ItemFactory.getInstance().createStringItem(key))) {
             return null;
         }
         return this.original.getSequenceByKey(key);
@@ -255,9 +245,10 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = kryo.readObject(input, TreeSet.class);
+        this.removedKeys = (Set<Item>) kryo.readObject(input, TreeSet.class);
     }
 
     @Override
@@ -367,12 +358,11 @@ public class MapWithRemovedEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item other = (Item) otherItem;
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (Item key : this.original.getItemKeys()) {
@@ -380,7 +370,7 @@ public class MapWithRemovedEntryItem implements Item {
                 continue;
             }
             List<Item> thisSequence = this.original.getSequenceByKey(key);
-            List<Item> otherSequence = other.getSequenceByKey(key);
+            List<Item> otherSequence = otherItem.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
             }
@@ -390,7 +380,7 @@ public class MapWithRemovedEntryItem implements Item {
                 }
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (this.removedKeys.contains(key)) {
                 return false;
             }

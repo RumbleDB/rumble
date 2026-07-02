@@ -59,8 +59,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
         // key.
-        if (iterator instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
+        if (iterator instanceof VariableReferenceIterator expr) {
             // this.hasNext = false;
             return context.getVariableValues()
                 .getVariableCount(expr.getVariableName(), getMetadata());
@@ -143,8 +142,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;

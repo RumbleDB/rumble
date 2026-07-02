@@ -143,13 +143,19 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
                         .withExecutionMode(executionMode)
                         .withMetadata(this.functionArguments.get(i).getMetadata());
+                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                        this.functionArguments.get(i),
+                        sequenceType,
+                        "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
+                        runtimeStaticContext
+                    );
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
                             || sequenceType.getArity().equals(Arity.OneOrZero)
                     ) {
                         RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                                this.functionArguments.get(i),
+                                argumentIterator,
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
@@ -157,7 +163,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         this.functionArguments.set(i, typePromotionIterator);
                     } else {
                         RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                                this.functionArguments.get(i),
+                                argumentIterator,
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext

@@ -237,8 +237,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
-        if (outerContextSchema instanceof StructType) {
-            StructType structSchema = (StructType) outerContextSchema;
+        if (outerContextSchema instanceof StructType structSchema) {
             for (Name n : keyDependencies.keySet()) {
                 if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
                     return NativeClauseContext.NoNativeQuery;
@@ -270,8 +269,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         nativeClauseContext.getResultingType()
                 );
             } else {
-                if (leftSchema instanceof ArrayType) {
-                    leftSchema = ((ArrayType) leftSchema).elementType();
+                if (leftSchema instanceof ArrayType arrayType) {
+                    leftSchema = arrayType.elementType();
                 }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
@@ -297,7 +296,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
-        if (!(leftSchema instanceof StructType)) {
+        if (!(leftSchema instanceof StructType structSchema)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
@@ -317,7 +316,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             return NativeClauseContext.NoNativeQuery;
         }
-        StructType structSchema = (StructType) leftSchema;
         if (
             Arrays.asList(structSchema.fieldNames()).contains(key)
                 || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)

@@ -83,19 +83,18 @@ public class ArrayItem implements Item {
         return copy;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
+            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
                 return false;
             }
         }
@@ -117,12 +116,6 @@ public class ArrayItem implements Item {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Deprecated
-    @Override
-    public List<Item> getItems() {
-        return this.arrayItems;
     }
 
     @Override
@@ -157,11 +150,6 @@ public class ArrayItem implements Item {
     public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
         Item member = this.getItemAt(position);
         return Collections.singletonList(member);
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -243,10 +231,9 @@ public class ArrayItem implements Item {
     }
 
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
-            result += getItemAt(i).hashCode();
+            result = 31 * result + getItemAt(i).hashCode();
         }
         return result;
     }
@@ -377,7 +364,7 @@ public class ArrayItem implements Item {
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItems();
+        List<Item> arrayItems = this.getItemMembers();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());

@@ -56,7 +56,7 @@ public class PostfixLookupExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("?");

@@ -350,8 +350,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
-        if (clause instanceof ForClause) {
-            ForClause forClause = (ForClause) clause;
+        if (clause instanceof ForClause forClause) {
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
             return new ForClauseSparkIterator(
                     previousIterator,
@@ -361,8 +360,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof LetClause) {
-            LetClause letClause = (LetClause) clause;
+        } else if (clause instanceof LetClause letClause) {
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
             return new LetClauseSparkIterator(
                     previousIterator,
@@ -371,9 +369,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof GroupByClause) {
+        } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -395,9 +393,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     groupingExpressions,
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof OrderByClause) {
+        } else if (clause instanceof OrderByClause orderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
+            for (OrderByClauseSortingKey orderExpr : orderByClause.getSortingKeys()) {
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
                 if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
                     if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
@@ -418,19 +416,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new OrderByClauseSparkIterator(
                     previousIterator,
                     expressionsWithIterator,
-                    ((OrderByClause) clause).isStable(),
+                    orderByClause.isStable(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof WhereClause) {
+        } else if (clause instanceof WhereClause whereClause) {
             return new WhereClauseSparkIterator(
                     previousIterator,
-                    this.visit(((WhereClause) clause).getWhereExpression(), argument),
+                    this.visit(whereClause.getWhereExpression(), argument),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof CountClause) {
+        } else if (clause instanceof CountClause countClause) {
             return new CountClauseSparkIterator(
                     previousIterator,
-                    ((CountClause) clause).getCountVariableName(),
+                    countClause.getCountVariableName(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
@@ -726,22 +724,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Expression predicateExpression = expression.getPredicateExpression();
 
         // if we have a int in the predicate we can optimize to a SequenceLookupIterator
-        if (predicateExpression instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) predicateExpression).getLexicalValue();
+        if (predicateExpression instanceof IntegerLiteralExpression integerLiteral) {
+            String lexicalValue = integerLiteral.getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
                 return getSequenceLookupIterator(expression, mainIterator, n);
             }
         }
 
-        if (predicateExpression instanceof DecimalLiteralExpression) {
-            if (((DecimalLiteralExpression) predicateExpression).isIntValue()) {
-                int n = ((DecimalLiteralExpression) predicateExpression).getValue().intValue();
+        if (predicateExpression instanceof DecimalLiteralExpression decimalLiteral) {
+            if (decimalLiteral.isIntValue()) {
+                int n = decimalLiteral.getValue().intValue();
                 return getSequenceLookupIterator(expression, mainIterator, n);
             }
 
             // if decimal has digits to the right of the decimal point, return empty sequence according to spec
-            if (((DecimalLiteralExpression) predicateExpression).getValue().stripTrailingZeros().scale() > 0) {
+            if (decimalLiteral.getValue().stripTrailingZeros().scale() > 0) {
                 return new EmptySequenceIterator(
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 );
@@ -749,26 +747,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
 
         if (
-            predicateExpression instanceof ComparisonExpression
-                && ((ComparisonExpression) predicateExpression).getComparisonOperator()
+            predicateExpression instanceof ComparisonExpression comparisonExpression
+                && comparisonExpression.getComparisonOperator()
                     .toString()
                     .equals("eq")
         ) {
-            Node left = predicateExpression.getChildren().get(0);
-            Node right = predicateExpression.getChildren().get(1);
+            Node left = comparisonExpression.getChildren().get(0);
+            Node right = comparisonExpression.getChildren().get(1);
 
             Node intLiteral = null;
             if (
-                left instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+                left instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")
             ) {
                 if (right instanceof IntegerLiteralExpression) {
                     intLiteral = right;
                 }
             }
             if (
-                right instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+                right instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")
             ) {
                 if (left instanceof IntegerLiteralExpression) {
                     intLiteral = left;
@@ -1328,9 +1326,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
@@ -1358,9 +1357,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             NamedFunctionReferenceExpression expression,
             RuntimeIterator argument
     ) {
-        FunctionIdentifier identifier = expression.getIdentifier();
         RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
-                identifier,
+                expression.getIdentifier(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

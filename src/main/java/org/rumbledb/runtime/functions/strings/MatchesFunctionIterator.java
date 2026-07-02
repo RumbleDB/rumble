@@ -23,15 +23,12 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
 public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -53,15 +50,19 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
-        try {
-            Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
-            boolean result = matcher.find();
-            return ItemFactory.getInstance().createBooleanItem(result);
-        } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(
-                    e.getDescription(),
-                    getMetadata()
-            );
+        String pattern = regexpItem.getStringValue();
+        String flags = null;
+        if (this.children.size() == 3) {
+            Item flagsItem = this.children.get(2)
+                .materializeFirstItemOrNull(context);
+            if (flagsItem != null) {
+                flags = flagsItem.getStringValue();
+            }
         }
+        Matcher matcher = RegexPatternUtils.compileRegex(pattern, flags, getMetadata())
+            .getPattern()
+            .matcher(stringItem.getStringValue());
+        boolean result = matcher.find();
+        return ItemFactory.getInstance().createBooleanItem(result);
     }
 }

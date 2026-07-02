@@ -87,11 +87,6 @@ public class MapEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return Collections.singletonList(this.key.getStringValue());
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return Collections.singletonList(this.key.getStringValue());
     }
@@ -114,11 +109,6 @@ public class MapEntryItem implements Item {
     @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         return new ItemSameKeyComparator().compare(this.key, key) == 0;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override
@@ -199,6 +189,7 @@ public class MapEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.key = (Item) kryo.readClassAndObject(input);
         this.value = (List<Item>) kryo.readClassAndObject(input);
@@ -353,15 +344,14 @@ public class MapEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item other = (Item) otherItem;
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
-        List<Item> otherSequence = other.getSequenceByKey(this.key);
+        List<Item> otherSequence = otherItem.getSequenceByKey(this.key);
         if (otherSequence == null || this.value.size() != otherSequence.size()) {
             return false;
         }
@@ -370,7 +360,7 @@ public class MapEntryItem implements Item {
                 return false;
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (getSequenceByKey(key) == null) {
                 return false;
             }

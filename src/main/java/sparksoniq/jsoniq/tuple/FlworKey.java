@@ -61,8 +61,8 @@ public class FlworKey implements KryoSerializable {
 
     @Override
     public boolean equals(Object otherKey) {
-        if (otherKey instanceof FlworKey) {
-            return this.equalFlworKey((FlworKey) otherKey);
+        if (otherKey instanceof FlworKey flworKey) {
+            return this.equalFlworKey(flworKey);
         } else {
             return false;
         }

@@ -155,11 +155,16 @@ public class AttributeItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof AttributeItem)) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof AttributeItem otherAttributeItem)) {
             return false;
         }
-        AttributeItem otherAttributeItem = (AttributeItem) other;
-        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
+        if (this.documentPos == null || otherAttributeItem.documentPos == null) {
+            return false;
+        }
+        return this.documentPos.equals(otherAttributeItem.documentPos);
     }
 
     @Override
@@ -174,6 +179,9 @@ public class AttributeItem implements Item {
 
     @Override
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 

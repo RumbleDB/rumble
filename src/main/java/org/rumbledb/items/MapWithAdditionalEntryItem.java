@@ -94,11 +94,6 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>();
         for (String key : this.original.getStringKeys()) {
@@ -117,7 +112,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
                 result.add(key);
             }
         }
@@ -148,15 +143,10 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
-    public List<Item> getValues() {
-        return getItemValues();
-    }
-
-    @Override
     public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 continue;
             }
             result.add(this.original.getItemByKey(key));
@@ -172,7 +162,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 continue;
             }
             result.add(this.original.getSequenceByKey(key));
@@ -259,6 +249,7 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
         this.original = (Item) kryo.readClassAndObject(input);
         this.additionalKey = (Item) kryo.readClassAndObject(input);
@@ -372,12 +363,11 @@ public class MapWithAdditionalEntryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item other = (Item) otherItem;
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (Item key : this.original.getItemKeys()) {
@@ -385,7 +375,7 @@ public class MapWithAdditionalEntryItem implements Item {
             if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
                 thisSequence = this.additionalValue;
             }
-            List<Item> otherSequence = other.getSequenceByKey(key);
+            List<Item> otherSequence = otherItem.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
             }
@@ -395,14 +385,14 @@ public class MapWithAdditionalEntryItem implements Item {
                 }
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
-                List<Item> otherSequence = other.getSequenceByKey(key);
+                List<Item> otherSequence = otherItem.getSequenceByKey(key);
                 if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
                     return false;
                 }
                 for (int i = 0; i < this.additionalValue.size(); i++) {
-                    if (!additionalValue.get(i).equals(otherSequence.get(i))) {
+                    if (!this.additionalValue.get(i).equals(otherSequence.get(i))) {
                         return false;
                     }
                 }
