@@ -1,7 +1,8 @@
 package org.rumbledb.cli.arguments;
 
 import org.rumbledb.bindings.FileBinding;
-import org.rumbledb.bindings.LexicalValue;
+import org.rumbledb.bindings.InputFormat;
+import org.rumbledb.bindings.LexicalBinding;
 import org.rumbledb.bindings.StandardInputBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.context.Name;
@@ -72,8 +73,8 @@ public final class BindingsArguments {
      */
     public ExternalBindings toExternalBindings() {
         // Check that we don't have duplicated variables defined from different sources
-        Set<String> duplicatedVariables = new HashSet<>(literalVariables.keySet());
-        duplicatedVariables.retainAll(fileVariables.keySet());
+        Set<String> duplicatedVariables = new HashSet<>(this.literalVariables.keySet());
+        duplicatedVariables.retainAll(this.fileVariables.keySet());
 
         if (!duplicatedVariables.isEmpty()) {
             throw new CliException(
@@ -84,26 +85,42 @@ public final class BindingsArguments {
 
         ExternalBindings binding = new ExternalBindings();
 
-        for (Map.Entry<String, String> entry : literalVariables.entrySet()) {
-            binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new LexicalValue(entry.getValue()));
+        for (Map.Entry<String, String> entry : this.literalVariables.entrySet()) {
+            binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new LexicalBinding(entry.getValue()));
         }
 
-        for (Map.Entry<String, String> entry : fileVariables.entrySet()) {
-            binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new FileBinding(entry.getValue()));
+        for (Map.Entry<String, String> entry : this.fileVariables.entrySet()) {
+            binding.bind(
+                Name.createVariableInNoNamespace(entry.getKey()),
+                new FileBinding(entry.getValue())
+            );
         }
 
+        ContextItemSource contextItemSource = this.contextItemSource;
         if (contextItemSource != null) {
             if (contextItemSource.value != null) {
-                binding.bind(Name.CONTEXT_ITEM, new LexicalValue(contextItemSource.value));
+                binding.bind(Name.CONTEXT_ITEM, new LexicalBinding(contextItemSource.value));
             } else if (contextItemSource.input != null) {
+                InputFormat inputFormat = parseInputFormat(this.contextItemInputFormat);
                 if (contextItemSource.input.equals("-")) {
-                    binding.bind(Name.CONTEXT_ITEM, new StandardInputBinding(this.contextItemInputFormat));
+                    binding.bind(Name.CONTEXT_ITEM, new StandardInputBinding(inputFormat));
                 } else {
-                    binding.bind(Name.CONTEXT_ITEM, new FileBinding(contextItemSource.input));
+                    binding.bind(
+                        Name.CONTEXT_ITEM,
+                        new FileBinding(contextItemSource.input, inputFormat)
+                    );
                 }
             }
         }
 
         return binding;
+    }
+
+    private static InputFormat parseInputFormat(String format) {
+        try {
+            return InputFormat.fromString(format);
+        } catch (IllegalArgumentException e) {
+            throw new CliException(e.getMessage());
+        }
     }
 }
