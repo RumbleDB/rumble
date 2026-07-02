@@ -80,7 +80,8 @@ jobs:
           "XMLTests",
           "XQueryTests",
           "DeltaUpdateRuntimeTests",
-          "IcebergUpdateRuntimeTests"
+          "IcebergUpdateRuntimeTests",
+          "org.rumbledb.api.RumbleConfigurationTest",
         ]
     steps:
       - uses: actions/checkout@v5
