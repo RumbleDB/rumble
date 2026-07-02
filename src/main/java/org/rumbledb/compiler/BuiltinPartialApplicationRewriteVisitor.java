@@ -26,6 +26,10 @@ import java.util.stream.Collectors;
  */
 public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
+    private static String getQueryLanguage(Expression expression) {
+        return expression.getStaticContext() == null ? null : expression.getStaticContext().getQueryLanguage();
+    }
+
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
             Name functionName,
             BuiltinFunction builtin,
@@ -79,7 +83,10 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
+            expression.getFunctionIdentifier(),
+            getQueryLanguage(expression)
+        );
 
         if (!expression.isPartialApplication() || builtin == null) {
             // In case of non-partial application or non-builtin function, we still need to keep descending Because a
@@ -107,7 +114,10 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
             return super.visitDynamicFunctionCallExpression(expression, argument);
         }
 
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(namedFunctionReference.getIdentifier());
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
+            namedFunctionReference.getIdentifier(),
+            getQueryLanguage(namedFunctionReference)
+        );
         boolean isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
         if (!isPartialApplication || builtin == null) {
             return super.visitDynamicFunctionCallExpression(expression, argument);

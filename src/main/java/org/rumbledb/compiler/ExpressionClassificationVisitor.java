@@ -345,7 +345,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function;
         FunctionSignature signature;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
         if (function != null) {
             signature = function.getSignature();
         } else {
