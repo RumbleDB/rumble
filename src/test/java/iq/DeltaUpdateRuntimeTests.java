@@ -197,14 +197,6 @@ public class DeltaUpdateRuntimeTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        try {
-            AnnotationProcessor.TestAnnotation currentAnnotation = AnnotationProcessor.readAnnotation(
-                new FileReader(this.testFile.getAbsolutePath())
-            );
-        } catch (AnnotationParseException e) {
-            e.printStackTrace();
-            Assert.fail();
-        }
         testAnnotations(
             this.testFile.getAbsolutePath(),
             getConfiguration(),
