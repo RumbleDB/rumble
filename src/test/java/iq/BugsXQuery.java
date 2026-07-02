@@ -34,9 +34,7 @@ import scala.util.Properties;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Comparator;
 
 @ParameterizedClass
 @MethodSource("testFiles")
@@ -73,25 +71,8 @@ public class BugsXQuery extends AnnotationsTestsBase {
         );
     }
 
-    private static void readFileList(File dir, List<File> testFiles) {
-        File[] files = dir.listFiles();
-        if (files == null) {
-            return;
-        }
-        for (File file : files) {
-            if (file.isDirectory()) {
-                readFileList(file, testFiles);
-            } else if (file.getName().endsWith(".xq")) {
-                testFiles.add(file);
-            }
-        }
-    }
-
     public static List<File> testFiles() {
-        List<File> testFiles = new ArrayList<>();
-        readFileList(runtimeTestsDirectory, testFiles);
-        testFiles.sort(Comparator.comparing(File::getName));
-        return testFiles;
+        return loadTestFiles(runtimeTestsDirectory, false);
     }
 
     @BeforeAll

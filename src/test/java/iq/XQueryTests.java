@@ -72,7 +72,7 @@ public class XQueryTests extends AnnotationsTestsBase {
     }
 
     public static List<File> testFiles() {
-        return loadTestFiles(runtimeTestsDirectory);
+        return loadTestFiles(runtimeTestsDirectory, false);
     }
 
     @BeforeAll

@@ -97,8 +97,15 @@ public class AnnotationsTestsBase {
     }
 
     protected static List<File> loadTestFiles(File dir) {
-        return FileManager.loadJiqFiles(dir)
-            .stream()
+        return loadTestFiles(dir, true);
+    }
+
+    protected static List<File> loadTestFiles(File dir, boolean isJsoniq) {
+        List<File> files = isJsoniq
+            ? FileManager.loadJiqFiles(dir)
+            : FileManager.loadXqFiles(dir);
+
+        return files.stream()
             .sorted(Comparator.comparing(File::getName))
             .collect(Collectors.toList());
     }
