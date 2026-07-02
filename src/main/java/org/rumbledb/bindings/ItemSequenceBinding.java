@@ -1,13 +1,9 @@
 package org.rumbledb.bindings;
 
-import lombok.Value;
-
-import java.util.List;
-
 import org.rumbledb.api.Item;
-
+import lombok.Value;
+import java.util.List;
 import java.util.Objects;
-
 
 @Value
 public class ItemSequenceBinding implements Binding {
