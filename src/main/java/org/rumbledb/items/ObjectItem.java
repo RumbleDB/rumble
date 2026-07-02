@@ -221,7 +221,7 @@ public class ObjectItem implements Item {
     }
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return false;
         }
         return hasKey(key.getStringValue());
@@ -264,7 +264,7 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -281,7 +281,7 @@ public class ObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -357,7 +357,7 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }
