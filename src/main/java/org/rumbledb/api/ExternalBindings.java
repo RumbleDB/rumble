@@ -30,4 +30,8 @@ public class ExternalBindings {
     public void unbind(String variableName) {
         this.bindings.unbind(Name.createVariableInNoNamespace(variableName));
     }
+
+    org.rumbledb.bindings.ExternalBindings internalBindings() {
+        return this.bindings;
+    }
 }
