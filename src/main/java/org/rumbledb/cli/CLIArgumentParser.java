@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.rumbledb.cli.commands.Repl;
 import org.rumbledb.cli.commands.Run;
-import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.CliException;
 
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
@@ -36,12 +36,19 @@ import picocli.CommandLine.Command;
     }
 )
 public final class CLIArgumentParser {
-    public static RumbleConfiguration parse(String... args) {
+    public static CLIInvocation parse(String... args) {
         CommandLine commandLine = new CommandLine(new CLIArgumentParser());
         CommandLine.ParseResult parseResult =
             commandLine.parseArgs(args);
 
-        commandLine.getExecutionStrategy().execute(parseResult);
+        try {
+            commandLine.getExecutionStrategy().execute(parseResult);
+        } catch (CommandLine.ExecutionException e) {
+            if (e.getCause() instanceof CliException cliException) {
+                throw cliException;
+            }
+            throw e;
+        }
 
         List<CommandLine> commands = parseResult.asCommandLineList();
         CommandLine activeCommand = commands.get(commands.size() - 1);
