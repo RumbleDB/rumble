@@ -1,8 +1,8 @@
-package org.rumbledb.cli.bindings;
+package org.rumbledb.bindings;
 
 import java.util.Objects;
 
-public class StandardInputValue implements VariableSource {
+public class StandardInputBinding implements Binding {
     public enum InputFormat {
         JSON("json"),
         TEXT("text");
@@ -25,16 +25,16 @@ public class StandardInputValue implements VariableSource {
 
     public final InputFormat format;
 
-    public StandardInputValue(String format) {
+    public StandardInputBinding(String format) {
         this.format = Objects.requireNonNullElse(InputFormat.fromString(format), InputFormat.JSON);
     }
 
-    public StandardInputValue(InputFormat format) {
+    public StandardInputBinding(InputFormat format) {
         this.format = format;
     }
 
     @Override
-    public boolean isStandardInput() {
+    public boolean isStandardInputBinding() {
         return true;
     }
 

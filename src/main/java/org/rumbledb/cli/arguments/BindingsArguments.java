@@ -1,14 +1,12 @@
 package org.rumbledb.cli.arguments;
 
-import org.rumbledb.cli.bindings.CLIBindings;
-import org.rumbledb.cli.bindings.FileValue;
-import org.rumbledb.cli.bindings.LexicalValue;
-import org.rumbledb.cli.bindings.StandardInputValue;
-import org.rumbledb.cli.bindings.VariableSource;
+import org.rumbledb.bindings.FileBinding;
+import org.rumbledb.bindings.LexicalValue;
+import org.rumbledb.bindings.StandardInputBinding;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 
-import java.net.URI;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -34,7 +32,9 @@ public final class BindingsArguments {
         private String value;
 
         @Option(
-            names = { "-i", "--context-item-input" },
+            names = {
+                "-i",
+                "--context-item-input" },
             paramLabel = "path",
             description = "Reads the context item from a file, or from standard input when the path is '-'."
         )
@@ -67,11 +67,11 @@ public final class BindingsArguments {
     private Map<String, String> fileVariables = new HashMap<>();
 
     /**
-     * Converts parsed command-line arguments without reading or interpreting their values.
+     * Converts parsed command-line arguments without reading or interpreting their
+     * values.
      */
-    public CLIBindings toCliBindings() {
+    public ExternalBindings toExternalBindings() {
         // Check that we don't have duplicated variables defined from different sources
-
         Set<String> duplicatedVariables = new HashSet<>(literalVariables.keySet());
         duplicatedVariables.retainAll(fileVariables.keySet());
 
@@ -82,41 +82,28 @@ public final class BindingsArguments {
             );
         }
 
-        Map<Name, VariableSource> variables = new HashMap<>();
+        ExternalBindings binding = new ExternalBindings();
 
         for (Map.Entry<String, String> entry : literalVariables.entrySet()) {
-            variables.put(Name.createVariableInNoNamespace(entry.getKey()), new LexicalValue(entry.getValue()));
+            binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new LexicalValue(entry.getValue()));
         }
 
         for (Map.Entry<String, String> entry : fileVariables.entrySet()) {
-            variables.put(
-                Name.createVariableInNoNamespace(entry.getKey()),
-                new FileValue(
-                        parseLocation(entry.getValue())
-                )
-            );
+            binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new FileBinding(entry.getValue()));
         }
 
         if (contextItemSource != null) {
             if (contextItemSource.value != null) {
-                variables.put(Name.CONTEXT_ITEM, new LexicalValue(contextItemSource.value));
+                binding.bind(Name.CONTEXT_ITEM, new LexicalValue(contextItemSource.value));
             } else if (contextItemSource.input != null) {
                 if (contextItemSource.input.equals("-")) {
-                    variables.put(Name.CONTEXT_ITEM, new StandardInputValue(this.contextItemInputFormat));
+                    binding.bind(Name.CONTEXT_ITEM, new StandardInputBinding(this.contextItemInputFormat));
                 } else {
-                    variables.put(Name.CONTEXT_ITEM, new FileValue(parseLocation(contextItemSource.input)));
+                    binding.bind(Name.CONTEXT_ITEM, new FileBinding(contextItemSource.input));
                 }
             }
         }
 
-        return new CLIBindings(variables);
-    }
-
-    private static URI parseLocation(String location) {
-        try {
-            return URI.create(location);
-        } catch (IllegalArgumentException e) {
-            throw new CliException("Invalid URI provided: " + location);
-        }
+        return binding;
     }
 }

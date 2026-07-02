@@ -1,4 +1,4 @@
-package org.rumbledb.api.binding;
+package org.rumbledb.bindings;
 
 import lombok.Value;
 import org.apache.spark.sql.Dataset;
@@ -13,8 +13,5 @@ public class DataFrameBinding implements Binding {
         this.dataFrame = Objects.requireNonNull(dataFrame, "dataFrame");
     }
 
-    @Override
-    public Kind kind() {
-        return Kind.DATAFRAME;
-    }
+
 }

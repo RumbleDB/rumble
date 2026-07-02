@@ -1,10 +1,10 @@
-package org.rumbledb.cli.bindings;
+package org.rumbledb.bindings;
 
 import java.util.Objects;
 import lombok.Value;
 
 @Value
-public class LexicalValue implements VariableSource {
+public class LexicalValue implements Binding {
     private final String value;
 
     public LexicalValue(String value) {
@@ -12,7 +12,7 @@ public class LexicalValue implements VariableSource {
     }
 
     @Override
-    public boolean isLexicalValue() {
+    public boolean isLexicalBinding() {
         return true;
     }
 

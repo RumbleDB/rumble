@@ -1,10 +1,11 @@
-package org.rumbledb.api.binding;
+package org.rumbledb.bindings;
 
 import lombok.Value;
 
 import java.util.List;
 
 import org.rumbledb.api.Item;
+
 import java.util.Objects;
 
 
@@ -17,7 +18,7 @@ public class ItemSequenceBinding implements Binding {
     }
 
     @Override
-    public Kind kind() {
-        return Kind.ITEM_SEQUENCE;
+    public boolean isItemSequenceBinding() {
+        return true;
     }
 }
