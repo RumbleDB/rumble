@@ -135,7 +135,6 @@ public class AnnotationsTestsBase {
                 assertExpectedRuntimeFailureDuringMaterialization(
                     annotation,
                     executionResult.sequence(),
-                    checkOutput,
                     applyUpdates,
                     resultSizeCap
                 );
@@ -232,12 +231,12 @@ public class AnnotationsTestsBase {
     private static void assertExpectedRuntimeFailureDuringMaterialization(
             AnnotationProcessor.TestAnnotation annotation,
             SequenceOfItems sequence,
-            boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
     ) {
         try {
-            checkExpectedOutput(annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            // Crash tests materialize the sequence only to trigger a runtime error; their output is undefined.
+            materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assert.fail(unexpectedSuccessMessage(TestStage.RUNTIME));
         } catch (Exception exception) {
             checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
@@ -251,14 +250,23 @@ public class AnnotationsTestsBase {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String actualOutput = getIteratorOutput(sequence, resultSizeCap);
-        if (applyUpdates && sequence.availableAsPUL()) {
-            sequence.applyPUL();
-        }
+        String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
         if (!checkOutput) {
             return;
         }
         Assert.assertEquals("Unexpected query output.", expectedOutput, actualOutput);
+    }
+
+    private static String materializeSequence(
+            SequenceOfItems sequence,
+            boolean applyUpdates,
+            int resultSizeCap
+    ) {
+        String output = getIteratorOutput(sequence, resultSizeCap);
+        if (applyUpdates && sequence.availableAsPUL()) {
+            sequence.applyPUL();
+        }
+        return output;
     }
 
     protected static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
