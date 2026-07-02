@@ -8,12 +8,14 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Pattern;
@@ -41,8 +43,8 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
 
         boolean indent = resolveIndentOption(context);
-        JsonValue value = parseInputItem(input);
-        return org.rumbledb.items.ItemFactory.getInstance().createStringItem(serialize(value, indent, 0));
+        Item value = parseInputItem(input);
+        return ItemFactory.getInstance().createStringItem(serializeAsJson(value, indent));
     }
 
     private Item materializeInput(DynamicContext context) {
@@ -97,7 +99,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return indentOption.get(0).getBooleanValue();
     }
 
-    private JsonValue parseInputItem(Item input) {
+    private Item parseInputItem(Item input) {
         if (input.isDocumentNode()) {
             Item root = extractDocumentElement(input);
             return parseJsonElement(root, true);
@@ -137,7 +139,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return root;
     }
 
-    private JsonValue parseJsonElement(Item element, boolean allowKeyAttribute) {
+    private Item parseJsonElement(Item element, boolean allowKeyAttribute) {
         assertJsonElementName(element);
         validateAttributes(element, allowKeyAttribute);
 
@@ -146,11 +148,11 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             case "map" -> parseMap(element);
             case "array" -> parseArray(element);
             case "string" -> parseStringValue(element);
-            case "number" -> new JsonNumber(parseNumberValue(element));
-            case "boolean" -> new JsonBoolean(parseBooleanValue(element));
+            case "number" -> parseNumberValue(element);
+            case "boolean" -> ItemFactory.getInstance().createBooleanItem(parseBooleanValue(element));
             case "null" -> {
                 ensureOnlyScalarChildren(element);
-                yield JsonNull.INSTANCE;
+                yield ItemFactory.getInstance().createNullItem();
             }
             default -> throw invalidRepresentation("Unsupported JSON representation element: " + localName + ".");
         };
@@ -200,9 +202,9 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
     }
 
-    private JsonObject parseMap(Item element) {
-        List<JsonObjectEntry> members = new ArrayList<>();
-        LinkedHashMap<String, Boolean> seenKeys = new LinkedHashMap<>();
+    private Item parseMap(Item element) {
+        List<String> keys = new ArrayList<>();
+        List<Item> values = new ArrayList<>();
         for (Item child : element.children()) {
             if (child.isCommentNode()) {
                 continue;
@@ -217,19 +219,18 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 throw invalidRepresentation("A map contains an invalid child node.");
             }
 
-            validateAttributes(child, true);
-            JsonString key = extractRequiredKey(child);
-            if (seenKeys.containsKey(key.semanticValue)) {
+            String key = extractRequiredKey(child);
+            if (keys.contains(key)) {
                 throw invalidRepresentation("Duplicate keys are not permitted in the XML representation of JSON.");
             }
-            seenKeys.put(key.semanticValue, Boolean.TRUE);
-            members.add(new JsonObjectEntry(key.serializedValue, parseJsonElement(child, true)));
+            keys.add(key);
+            values.add(parseJsonElement(child, true));
         }
-        return new JsonObject(members);
+        return ItemFactory.getInstance().createObjectItem(keys, values, getMetadata(), false);
     }
 
-    private JsonArray parseArray(Item element) {
-        List<JsonValue> members = new ArrayList<>();
+    private Item parseArray(Item element) {
+        List<Item> members = new ArrayList<>();
         for (Item child : element.children()) {
             if (child.isCommentNode()) {
                 continue;
@@ -245,10 +246,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             }
             members.add(parseJsonElement(child, false));
         }
-        return new JsonArray(members);
+        return ItemFactory.getInstance().createArrayItem(members, false);
     }
 
-    private JsonString extractRequiredKey(Item element) {
+    private String extractRequiredKey(Item element) {
         Item keyAttribute = getAttribute(element, "key");
         if (keyAttribute == null) {
             throw invalidRepresentation("Members of a map must carry a key attribute.");
@@ -256,27 +257,27 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         String key = keyAttribute.getStringValue();
         if (isBooleanLikeAttributeTrue(getAttributeValue(element, "escaped-key"))) {
             EscapedJsonString escapedKey = normalizeEscapedJsonString(key);
-            return new JsonString(escapedKey.semanticValue, escapedKey.serializedValue);
+            return escapedKey.semanticValue;
         }
-        return new JsonString(key, escapeJsonString(key));
+        return key;
     }
 
-    private JsonString parseStringValue(Item element) {
+    private Item parseStringValue(Item element) {
         String stringValue = collectScalarTextContent(element);
         if (isBooleanLikeAttributeTrue(getAttributeValue(element, "escaped"))) {
             EscapedJsonString escapedValue = normalizeEscapedJsonString(stringValue);
-            return new JsonString(escapedValue.semanticValue, escapedValue.serializedValue);
+            return ItemFactory.getInstance().createStringItem(escapedValue.semanticValue);
         }
-        return new JsonString(stringValue, escapeJsonString(stringValue));
+        return ItemFactory.getInstance().createStringItem(stringValue);
     }
 
-    private String parseNumberValue(Item element) {
+    private Item parseNumberValue(Item element) {
         String stringValue = collectScalarTextContent(element).trim();
         if (stringValue.isEmpty()) {
             throw invalidRepresentation("A number element must not be empty.");
         }
         if (JSON_NUMBER_PATTERN.matcher(stringValue).matches()) {
-            return stringValue;
+            return createNumericItem(stringValue);
         }
         if (!PERMISSIVE_NUMBER_PATTERN.matcher(stringValue).matches()) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
@@ -288,9 +289,9 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 normalized = normalized.replace("E+", "E");
             }
             if (normalized.equals("0") && stringValue.startsWith("-")) {
-                return "-0";
+                return ItemFactory.getInstance().createDoubleItem(-0d);
             }
-            return normalized;
+            return createNumericItem(normalized);
         } catch (NumberFormatException e) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
         }
@@ -384,12 +385,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private EscapedJsonString normalizeEscapedJsonString(String content) {
-        StringBuilder normalized = new StringBuilder();
         StringBuilder semantic = new StringBuilder();
         for (int i = 0; i < content.length(); i++) {
             char c = content.charAt(i);
             if (c != '\\') {
-                appendEscapedCharacter(normalized, c);
                 semantic.append(c);
                 continue;
             }
@@ -400,31 +399,24 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             switch (next) {
                 case '"':
                 case '/':
-                    normalized.append('\\').append(next);
                     semantic.append(next);
                     break;
                 case '\\':
-                    normalized.append("\\\\");
                     semantic.append('\\');
                     break;
                 case 'b':
-                    normalized.append("\\b");
                     semantic.append('\b');
                     break;
                 case 'f':
-                    normalized.append("\\f");
                     semantic.append('\f');
                     break;
                 case 'n':
-                    normalized.append("\\n");
                     semantic.append('\n');
                     break;
                 case 'r':
-                    normalized.append("\\r");
                     semantic.append('\r');
                     break;
                 case 't':
-                    normalized.append("\\t");
                     semantic.append('\t');
                     break;
                 case 'u':
@@ -435,7 +427,6 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                     if (!hex.matches("[0-9A-Fa-f]{4}")) {
                         throw invalidEscape("Invalid unicode escape in escaped JSON string.");
                     }
-                    normalized.append("\\u").append(hex);
                     semantic.append((char) Integer.parseInt(hex, 16));
                     i += 4;
                     break;
@@ -443,107 +434,59 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                     throw invalidEscape("Invalid escape sequence in escaped JSON string.");
             }
         }
-        return new EscapedJsonString(semantic.toString(), normalized.toString());
+        return new EscapedJsonString(semantic.toString());
     }
 
-    private void appendEscapedCharacter(StringBuilder builder, char c) {
-        switch (c) {
-            case '"' -> builder.append("\\\"");
-            case '\\' -> builder.append("\\\\");
-            case '/' -> builder.append("\\/");
-            case '\b' -> builder.append("\\b");
-            case '\f' -> builder.append("\\f");
-            case '\n' -> builder.append("\\n");
-            case '\r' -> builder.append("\\r");
-            case '\t' -> builder.append("\\t");
-            default -> {
-                if ((c >= 0x00 && c <= 0x1F) || (c >= 0x7F && c <= 0x9F)) {
-                    builder.append(String.format("\\u%04X", (int) c));
-                } else {
-                    builder.append(c);
+    private Item createNumericItem(String lexicalValue) {
+        if (lexicalValue.contains("E") || lexicalValue.contains("e")) {
+            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(lexicalValue));
+        }
+        if (lexicalValue.contains(".")) {
+            if (lexicalValue.startsWith("-") && BigDecimal.ZERO.compareTo(new BigDecimal(lexicalValue)) == 0) {
+                return ItemFactory.getInstance().createDoubleItem(-0d);
+            }
+            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(lexicalValue));
+        }
+        if (lexicalValue.equals("-0")) {
+            return ItemFactory.getInstance().createDoubleItem(-0d);
+        }
+        return ItemFactory.getInstance().createIntegerItem(lexicalValue);
+    }
+
+    private String serializeAsJson(Item value, boolean indent) {
+        SerializationParameters params = SerializationParameters.defaults();
+        params.setMethod("json");
+        params.setEncoding("UTF-8");
+        params.setIndent(indent);
+        params.setItemSeparator("\n");
+        String serialized = Serializers.from(params).serialize(value);
+        return indent ? serialized : compactJson(serialized);
+    }
+
+    private String compactJson(String serialized) {
+        StringBuilder result = new StringBuilder(serialized.length());
+        boolean inString = false;
+        boolean escaping = false;
+        for (int i = 0; i < serialized.length(); i++) {
+            char current = serialized.charAt(i);
+            if (inString) {
+                result.append(current);
+                if (escaping) {
+                    escaping = false;
+                } else if (current == '\\') {
+                    escaping = true;
+                } else if (current == '"') {
+                    inString = false;
                 }
+                continue;
             }
-        }
-    }
-
-    private String serialize(JsonValue value, boolean indent, int level) {
-        if (value instanceof JsonNull) {
-            return "null";
-        }
-        if (value instanceof JsonBoolean jsonBoolean) {
-            return jsonBoolean.value ? "true" : "false";
-        }
-        if (value instanceof JsonNumber jsonNumber) {
-            return jsonNumber.lexicalValue;
-        }
-        if (value instanceof JsonString jsonString) {
-            return "\"" + jsonString.serializedValue + "\"";
-        }
-        if (value instanceof JsonArray jsonArray) {
-            return serializeArray(jsonArray, indent, level);
-        }
-        if (value instanceof JsonObject jsonObject) {
-            return serializeObject(jsonObject, indent, level);
-        }
-        throw new IllegalStateException("Unsupported JSON value.");
-    }
-
-    private String serializeArray(JsonArray array, boolean indent, int level) {
-        if (array.values.isEmpty()) {
-            return "[]";
-        }
-        StringBuilder result = new StringBuilder();
-        result.append("[");
-        for (int i = 0; i < array.values.size(); i++) {
-            if (i > 0) {
-                result.append(",");
+            if (Character.isWhitespace(current)) {
+                continue;
             }
-            if (indent) {
-                result.append("\n").append("  ".repeat(level + 1));
+            result.append(current);
+            if (current == '"') {
+                inString = true;
             }
-            result.append(serialize(array.values.get(i), indent, level + 1));
-        }
-        if (indent) {
-            result.append("\n").append("  ".repeat(level));
-        }
-        result.append("]");
-        return result.toString();
-    }
-
-    private String serializeObject(JsonObject object, boolean indent, int level) {
-        if (object.values.isEmpty()) {
-            return "{}";
-        }
-        StringBuilder result = new StringBuilder();
-        result.append("{");
-        boolean first = true;
-        for (JsonObjectEntry entry : object.values) {
-            if (!first) {
-                result.append(",");
-            }
-            if (indent) {
-                result.append("\n").append("  ".repeat(level + 1));
-            }
-            result.append("\"")
-                .append(entry.serializedKey)
-                .append("\":");
-            if (indent) {
-                result.append(" ");
-            }
-            result.append(serialize(entry.value, indent, level + 1));
-            first = false;
-        }
-        if (indent) {
-            result.append("\n").append("  ".repeat(level));
-        }
-        result.append("}");
-        return result.toString();
-    }
-
-    private String escapeJsonString(String value) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < value.length(); i++) {
-            appendEscapedCharacter(result, value.charAt(i));
         }
         return result.toString();
     }
@@ -556,72 +499,11 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return new RumbleException(message, ErrorCode.InvalidEscapeSequenceJSON, getMetadata());
     }
 
-    private interface JsonValue {
-    }
-
-    private static class JsonNull implements JsonValue {
-        private static final JsonNull INSTANCE = new JsonNull();
-    }
-
-    private static class JsonBoolean implements JsonValue {
-        private final boolean value;
-
-        private JsonBoolean(boolean value) {
-            this.value = value;
-        }
-    }
-
-    private static class JsonNumber implements JsonValue {
-        private final String lexicalValue;
-
-        private JsonNumber(String lexicalValue) {
-            this.lexicalValue = lexicalValue;
-        }
-    }
-
-    private static class JsonString implements JsonValue {
-        private final String semanticValue;
-        private final String serializedValue;
-
-        private JsonString(String semanticValue, String serializedValue) {
-            this.semanticValue = semanticValue;
-            this.serializedValue = serializedValue;
-        }
-    }
-
-    private static class JsonArray implements JsonValue {
-        private final List<JsonValue> values;
-
-        private JsonArray(List<JsonValue> values) {
-            this.values = values;
-        }
-    }
-
-    private static class JsonObject implements JsonValue {
-        private final List<JsonObjectEntry> values;
-
-        private JsonObject(List<JsonObjectEntry> values) {
-            this.values = values;
-        }
-    }
-
-    private static class JsonObjectEntry {
-        private final String serializedKey;
-        private final JsonValue value;
-
-        private JsonObjectEntry(String serializedKey, JsonValue value) {
-            this.serializedKey = serializedKey;
-            this.value = value;
-        }
-    }
-
     private static class EscapedJsonString {
         private final String semanticValue;
-        private final String serializedValue;
 
-        private EscapedJsonString(String semanticValue, String serializedValue) {
+        private EscapedJsonString(String semanticValue) {
             this.semanticValue = semanticValue;
-            this.serializedValue = serializedValue;
         }
     }
 }
