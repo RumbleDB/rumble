@@ -114,6 +114,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidJSONErrorCode = registerBuiltIn("FOJS0001");
     public static final ErrorCode DuplicateJSONKeyErrorCode = registerBuiltIn("FOJS0003");
     public static final ErrorCode InvalidOptionErrorCode = registerBuiltIn("FOJS0005");
+    public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
+    public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
