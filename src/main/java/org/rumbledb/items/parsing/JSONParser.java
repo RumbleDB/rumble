@@ -396,7 +396,7 @@ public final class JSONParser {
 
         String number = this.input.substring(start, this.position);
         try {
-            return ItemParser.getItemFromJSONNumber(number, this.options.getNumberFormat());
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
             InvalidJSONException error = new InvalidJSONException(
                     "Invalid number literal '" + number + "'. [position " + start + "]",
@@ -480,49 +480,27 @@ public final class JSONParser {
                     );
                 }
 
-                char esc = advance();
-                switch (esc) {
-                    case '"':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '"', "\\\"");
-                        break;
-                    case '\\':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\\', "\\\\");
-                        break;
-                    case '/':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '/', "\\/");
-                        break;
-                    case 'b':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\b', "\\b");
-                        break;
-                    case 'f':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\f', "\\f");
-                        break;
-                    case 'n':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\n', "\\n");
-                        break;
-                    case 'r':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\r', "\\r");
-                        break;
-                    case 't':
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\t', "\\t");
-                        break;
-                    case '\'':
-                        if (!this.options.isLiberal()) {
-                            throw new InvalidJSONException(
-                                    "Invalid escape sequence \\" + esc + " in string. [position " + this.position + "]",
-                                    this.metadata
-                            );
-                        }
-                        handleEscapedCodePoint(xdmValue, keyComparisonValue, '\'', "\\'");
-                        break;
-                    case 'u':
-                        parseUnicodeEscape(xdmValue, keyComparisonValue);
-                        break;
-                    default:
-                        throw new InvalidJSONException(
-                                "Invalid escape sequence \\" + esc + " in string. [position " + this.position + "]",
-                                this.metadata
-                        );
+                if (peek() == '\'' && this.options.isLiberal()) {
+                    advance();
+                    handleEscapedCodePoint(xdmValue, keyComparisonValue, '\'', "\\'");
+                    continue;
+                }
+
+                try {
+                    JSONLiteralParsingUtils.DecodedEscape decodedEscape =
+                        JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
+                    this.position = decodedEscape.getNextIndex();
+                    appendDecodedEscape(
+                        xdmValue,
+                        keyComparisonValue,
+                        decodedEscape.getDecodedText(),
+                        decodedEscape.getRawEscape()
+                    );
+                } catch (IllegalArgumentException e) {
+                    throw new InvalidJSONException(
+                            e.getMessage() + " [position " + this.position + "]",
+                            this.metadata
+                    );
                 }
                 continue;
             }
@@ -556,82 +534,26 @@ public final class JSONParser {
         );
     }
 
-    /**
-     * Parses a JSON Unicode escape sequence after the leading {@code "\\u"} has
-     * already been consumed.
-     *
-     * <p>
-     * Handles surrogate pairs such as {@code "\\uD83D\\uDE00"} as a single Unicode
-     * code point.
-     * </p>
-     *
-     * <p>
-     * Unpaired surrogates are treated as invalid XML characters:
-     * </p>
-     *
-     * <ul>
-     * <li>
-     * {@code escape=true}: they are kept as {@code "\\uXXXX"}
-     * </li>
-     * <li>
-     * {@code escape=false}: they are passed to the fallback function for the XDM value
-     * </li>
-     * </ul>
-     */
-    private void parseUnicodeEscape(
+    private void appendDecodedEscape(
             StringBuilder xdmValue,
-            StringBuilder keyComparisonValue
+            StringBuilder keyComparisonValue,
+            String decodedText,
+            String originalEscape
     ) {
-        int first = parseHexQuad();
-        String firstEscape = "\\u" + hex4(first);
-
-        if (Character.isHighSurrogate((char) first)) {
-            int save = this.position;
-
-            if (canReadLowSurrogateEscape()) {
-                expect('\\');
-                expect('u');
-
-                int second = parseHexQuad();
-                String secondEscape = "\\u" + hex4(second);
-
-                if (Character.isLowSurrogate((char) second)) {
-                    int codePoint = Character.toCodePoint((char) first, (char) second);
-
-                    handleEscapedCodePoint(
-                        xdmValue,
-                        keyComparisonValue,
-                        codePoint,
-                        firstEscape + secondEscape
-                    );
-                    return;
-                }
-
-                this.position = save;
-            }
-
+        if (decodedText.length() == 2 && Character.isSurrogatePair(decodedText.charAt(0), decodedText.charAt(1))) {
             handleEscapedCodePoint(
                 xdmValue,
                 keyComparisonValue,
-                first,
-                firstEscape
-            );
-            return;
-        }
-        if (Character.isLowSurrogate((char) first)) {
-            handleEscapedCodePoint(
-                xdmValue,
-                keyComparisonValue,
-                first,
-                firstEscape
+                Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
+                originalEscape
             );
             return;
         }
         handleEscapedCodePoint(
             xdmValue,
             keyComparisonValue,
-            first,
-            firstEscape
+            decodedText.charAt(0),
+            originalEscape
         );
     }
 
@@ -772,40 +694,6 @@ public final class JSONParser {
                 );
             }
         }
-    }
-
-    private int parseHexQuad() {
-        if (this.position + 4 > this.input.length()) {
-            throw new InvalidJSONException(
-                    "Incomplete unicode escape sequence in string. [position " + this.position + "]",
-                    this.metadata
-            );
-        }
-
-        int value = 0;
-        for (int i = 0; i < 4; i++) {
-            char c = advance();
-            int digit = Character.digit(c, 16);
-            if (digit < 0) {
-                throw new InvalidJSONException(
-                        "Invalid hexadecimal digit '"
-                            + printable(c)
-                            + "' in unicode escape. [position "
-                            + this.position
-                            + "]",
-                        this.metadata
-                );
-            }
-            value = (value << 4) | digit;
-        }
-        return value;
-    }
-
-    private boolean canReadLowSurrogateEscape() {
-        if (this.position + 5 >= this.input.length()) {
-            return false;
-        }
-        return this.input.charAt(this.position) == '\\' && this.input.charAt(this.position + 1) == 'u';
     }
 
     /**

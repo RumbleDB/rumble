@@ -9,6 +9,8 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -256,8 +258,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         }
         String key = keyAttribute.getStringValue();
         if (isBooleanLikeAttributeTrue(getAttributeValue(element, "escaped-key"))) {
-            EscapedJsonString escapedKey = normalizeEscapedJsonString(key);
-            return escapedKey.semanticValue;
+            return decodeEscapedJsonString(key);
         }
         return key;
     }
@@ -265,8 +266,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private Item parseStringValue(Item element) {
         String stringValue = collectScalarTextContent(element);
         if (isBooleanLikeAttributeTrue(getAttributeValue(element, "escaped"))) {
-            EscapedJsonString escapedValue = normalizeEscapedJsonString(stringValue);
-            return ItemFactory.getInstance().createStringItem(escapedValue.semanticValue);
+            return ItemFactory.getInstance().createStringItem(decodeEscapedJsonString(stringValue));
         }
         return ItemFactory.getInstance().createStringItem(stringValue);
     }
@@ -277,7 +277,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             throw invalidRepresentation("A number element must not be empty.");
         }
         if (JSON_NUMBER_PATTERN.matcher(stringValue).matches()) {
-            return createNumericItem(stringValue);
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(stringValue, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
         }
         if (!PERMISSIVE_NUMBER_PATTERN.matcher(stringValue).matches()) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
@@ -291,7 +291,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             if (normalized.equals("0") && stringValue.startsWith("-")) {
                 return ItemFactory.getInstance().createDoubleItem(-0d);
             }
-            return createNumericItem(normalized);
+            return JSONLiteralParsingUtils.getItemFromJSONNumber(normalized, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE);
         } catch (NumberFormatException e) {
             throw invalidRepresentation("Invalid lexical representation for a JSON number.");
         }
@@ -384,73 +384,26 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         throw invalidRepresentation("Invalid boolean attribute value.");
     }
 
-    private EscapedJsonString normalizeEscapedJsonString(String content) {
-        StringBuilder semantic = new StringBuilder();
-        for (int i = 0; i < content.length(); i++) {
-            char c = content.charAt(i);
-            if (c != '\\') {
-                semantic.append(c);
+    private String decodeEscapedJsonString(String content) {
+        StringBuilder decoded = new StringBuilder();
+        int index = 0;
+        while (index < content.length()) {
+            char current = content.charAt(index);
+            if (current != '\\') {
+                decoded.append(current);
+                index++;
                 continue;
             }
-            if (i + 1 >= content.length()) {
-                throw invalidEscape("Dangling backslash in escaped JSON string.");
-            }
-            char next = content.charAt(++i);
-            switch (next) {
-                case '"':
-                case '/':
-                    semantic.append(next);
-                    break;
-                case '\\':
-                    semantic.append('\\');
-                    break;
-                case 'b':
-                    semantic.append('\b');
-                    break;
-                case 'f':
-                    semantic.append('\f');
-                    break;
-                case 'n':
-                    semantic.append('\n');
-                    break;
-                case 'r':
-                    semantic.append('\r');
-                    break;
-                case 't':
-                    semantic.append('\t');
-                    break;
-                case 'u':
-                    if (i + 4 >= content.length()) {
-                        throw invalidEscape("Incomplete unicode escape in escaped JSON string.");
-                    }
-                    String hex = content.substring(i + 1, i + 5);
-                    if (!hex.matches("[0-9A-Fa-f]{4}")) {
-                        throw invalidEscape("Invalid unicode escape in escaped JSON string.");
-                    }
-                    semantic.append((char) Integer.parseInt(hex, 16));
-                    i += 4;
-                    break;
-                default:
-                    throw invalidEscape("Invalid escape sequence in escaped JSON string.");
+            try {
+                JSONLiteralParsingUtils.DecodedEscape decodedEscape =
+                    JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
+                decoded.append(decodedEscape.getDecodedText());
+                index = decodedEscape.getNextIndex();
+            } catch (IllegalArgumentException e) {
+                throw invalidEscape(e.getMessage());
             }
         }
-        return new EscapedJsonString(semantic.toString());
-    }
-
-    private Item createNumericItem(String lexicalValue) {
-        if (lexicalValue.contains("E") || lexicalValue.contains("e")) {
-            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(lexicalValue));
-        }
-        if (lexicalValue.contains(".")) {
-            if (lexicalValue.startsWith("-") && BigDecimal.ZERO.compareTo(new BigDecimal(lexicalValue)) == 0) {
-                return ItemFactory.getInstance().createDoubleItem(-0d);
-            }
-            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(lexicalValue));
-        }
-        if (lexicalValue.equals("-0")) {
-            return ItemFactory.getInstance().createDoubleItem(-0d);
-        }
-        return ItemFactory.getInstance().createIntegerItem(lexicalValue);
+        return decoded.toString();
     }
 
     private String serializeAsJson(Item value, boolean indent) {
@@ -497,13 +450,5 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private RumbleException invalidEscape(String message) {
         return new RumbleException(message, ErrorCode.InvalidEscapeSequenceJSON, getMetadata());
-    }
-
-    private static class EscapedJsonString {
-        private final String semanticValue;
-
-        private EscapedJsonString(String semanticValue) {
-            this.semanticValue = semanticValue;
-        }
     }
 }
