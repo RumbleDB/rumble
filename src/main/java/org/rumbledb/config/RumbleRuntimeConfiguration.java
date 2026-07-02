@@ -48,9 +48,7 @@ import java.util.Set;
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
-    private static final String SHORTCUT_PREFIX = "-";
-    private static final String ARGUMENT_PREFIX = "--";
-    private HashMap<String, String> arguments;
+    private Map<String, String> arguments;
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
@@ -91,127 +89,17 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean optimizeParentPointers; // true if no steps in query require the parent pointer, allows removal of
                                             // parent pointer from node items
 
-    private Map<String, String> shortcutMap;
-    private Set<String> yesNoShortcuts;
-
     private SerializationParameters serializationParameters;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
-        initShortcuts();
         init();
     }
 
-    private void initShortcuts() {
-        this.shortcutMap = new HashMap<>();
-        this.shortcutMap.put("q", "query");
-        this.shortcutMap.put("o", "output-path");
-        this.shortcutMap.put("O", "overwrite");
-        this.shortcutMap.put("c", "materialization-cap");
-        this.shortcutMap.put("I", "context-item");
-        this.shortcutMap.put("i", "context-item-input");
-        this.shortcutMap.put("P", "number-of-output-partitions");
-        this.shortcutMap.put("v", "show-error-info");
-        this.shortcutMap.put("t", "static-typing");
-        this.shortcutMap.put("h", "host");
-        this.shortcutMap.put("p", "port");
-        this.yesNoShortcuts = new HashSet<>();
-        this.yesNoShortcuts.add("O");
-        this.yesNoShortcuts.add("v");
-        this.yesNoShortcuts.add("t");
-    }
-
     public RumbleRuntimeConfiguration(String[] args) {
-        this.arguments = new HashMap<>();
-        initShortcuts();
-        for (int i = 0; i < args.length; ++i) {
-            if (args[i].startsWith(ARGUMENT_PREFIX)) {
-                if (args[i].equals("--run") || args[i].equals("--serve") || args[i].equals("--repl")) {
-                    System.err.println("Did you know?  🧑‍🏫");
-                    System.err.println(
-                        "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
-                    );
-                    System.err.println();
-                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run query.jq");
-                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar serve -p 8001");
-                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run -q '1+1'");
-                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar repl -c 10");
-                    System.err.println();
-                    System.err.println(
-                        "The list of single-dash shortcuts is documented in our documentation page, accessible from www.rumbledb.org."
-                    );
-                    System.err.println();
-                    System.err.println("Try it out! The old parameters will continue to work, though.");
-                }
-                String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                if (
-                    i + 1 >= args.length
-                        || (!(args[i + 1].equals("-"))
-                            && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))
-                ) {
-                    throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
-                }
-                String argumentValue = args[i + 1];
-                this.arguments.put(argumentName, argumentValue);
-                ++i;
-                continue;
-            }
-            if (args[i].startsWith(SHORTCUT_PREFIX)) {
-                String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
-                // Handle -o:<option> <value> pattern (distinct from -o output-path) separately
-                // from the other shortcuts
-                if (argumentName.startsWith("o:") && argumentName.length() > 2) {
-                    String optionName = argumentName.substring(2); // Remove "o:" prefix
-                    if (
-                        i + 1 < args.length
-                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
-                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
-                    ) {
-                        String optionValue = args[i + 1];
-                        this.arguments.put("output:" + optionName, optionValue);
-                        ++i;
-                        continue;
-                    } else {
-                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
-                    }
-                }
-                if (!this.yesNoShortcuts.contains(argumentName)) {
-                    if (
-                        i + 1 >= args.length
-                            || (!(args[i + 1].equals("-"))
-                                &&
-                                (args[i + 1].startsWith(ARGUMENT_PREFIX)
-                                    || args[i + 1].startsWith(SHORTCUT_PREFIX)))
-                    ) {
-                        throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
-                    }
-                    this.arguments.put(this.shortcutMap.get(argumentName), args[i + 1]);
-                    ++i;
-                    continue;
-                } else {
-                    this.arguments.put(this.shortcutMap.get(argumentName), "yes");
-                    continue;
-                }
-            }
-            if (i == 0 && args[i].equals("serve")) {
-                this.arguments.put("server", "yes");
-                continue;
-            }
-            if (i == 0 && args[i].equals("repl")) {
-                this.arguments.put("shell", "yes");
-                continue;
-            }
-            if (i == 0 && args[i].equals("run")) {
-                // This is the default, do nothing.
-                continue;
-            }
-            if (i == 0) {
-                System.err.println("Missing mode (run/serve/repl), assuming run.");
-            }
-            this.arguments.put("query-path", args[i]);
-        }
+        this.arguments = new CliArgumentsParser().parse(args);
         init();
     }
 
