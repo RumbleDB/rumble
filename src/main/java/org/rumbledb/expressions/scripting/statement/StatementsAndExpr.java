@@ -47,7 +47,7 @@ public class StatementsAndExpr extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.statements.forEach(statement -> {
             statement.serializeToJSONiq(sb, 0);

@@ -228,15 +228,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We try to detect an equi-join.
 
         // Is this a predicate expression?
-        if (!(this.assignmentIterator instanceof PredicateIterator)) {
+        if (!(this.assignmentIterator instanceof PredicateIterator predicateAssignmentIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble is able to handle large scale left outer joins, but this requires the let expression to be a predicate expression, the left-hand-side of which is independent from the previous variables of the current FLWOR expression.",
                     getMetadata()
             );
         }
 
-        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
-        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+        RuntimeIterator sequenceIterator = predicateAssignmentIterator.sequenceIterator();
+        RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -481,10 +481,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 candidateIterators.push(andIterator.getRightIterator());
                 continue;
             }
-            if (!(iterator instanceof ComparisonIterator)) {
+            if (!(iterator instanceof ComparisonIterator comparisonIterator)) {
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a comparison.";
             }
-            ComparisonIterator comparisonIterator = (ComparisonIterator) iterator;
             if (!comparisonIterator.isValueEquality()) {
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
             }
@@ -554,7 +553,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");

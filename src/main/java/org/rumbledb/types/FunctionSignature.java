@@ -61,9 +61,9 @@ public class FunctionSignature implements Serializable {
 
     @Override
     public boolean equals(Object instance) {
-        return instance instanceof FunctionSignature
-            && this.getParameterTypes() == ((FunctionSignature) instance).getParameterTypes()
-            && this.getReturnType() == ((FunctionSignature) instance).getReturnType();
+        return instance instanceof FunctionSignature functionSignature
+            && this.getParameterTypes() == functionSignature.getParameterTypes()
+            && this.getReturnType() == functionSignature.getReturnType();
     }
 
     public boolean isSubtypeOf(FunctionSignature other) {

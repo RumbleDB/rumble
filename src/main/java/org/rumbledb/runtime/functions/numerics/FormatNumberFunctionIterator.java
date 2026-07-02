@@ -56,7 +56,7 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
         String result = NumberPictureFormatter.format(
             valueItem,
-            pictureItem,
+            pictureItem.getStringValue(),
             decimalFormat,
             getMetadata()
         );

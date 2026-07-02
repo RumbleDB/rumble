@@ -1,6 +1,7 @@
 package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
@@ -38,9 +39,9 @@ import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.dateformatting.FormatDateFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.dateformatting.FormatDateTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.dateformatting.FormatTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.ParseIETFDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.TimeInMillis;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
@@ -234,8 +235,11 @@ import org.rumbledb.runtime.functions.xml.ParseXMLFragmentFunctionIterator;
 import org.rumbledb.runtime.functions.xml.ParseXMLFunctionIterator;
 import org.rumbledb.runtime.functions.xml.PathFunctionIterator;
 import org.rumbledb.runtime.functions.xml.XMLToJsonFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
@@ -297,8 +301,16 @@ public class BuiltinFunctionCatalogue {
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
+        return getBuiltinFunction(identifier, null);
+    }
+
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
+        }
+        BuiltinFunction constructorFunction = resolveConstructorFunction(identifier, queryLanguage);
+        if (constructorFunction != null) {
+            return constructorFunction;
         }
         FunctionIdentifier resolved = resolveIdentifierFallback(identifier);
         if (resolved != null) {
@@ -323,10 +335,65 @@ public class BuiltinFunctionCatalogue {
     }
 
     public static boolean exists(FunctionIdentifier identifier) {
+        return exists(identifier, null);
+    }
+
+    public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
-        return resolveIdentifierFallback(identifier) != null;
+        return resolveConstructorFunction(identifier, queryLanguage) != null
+            || resolveIdentifierFallback(identifier) != null;
+    }
+
+    private static boolean supportsUnprefixedConstructorFunctions(String queryLanguage) {
+        return queryLanguage != null && queryLanguage.startsWith("jsoniq");
+    }
+
+    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier, String queryLanguage) {
+        Name functionName = identifier.getName();
+        if (identifier.getArity() != 1) {
+            return null;
+        }
+        Name typeName = functionName;
+        if (Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace())) {
+            if (!supportsUnprefixedConstructorFunctions(queryLanguage)) {
+                return null;
+            }
+            if (
+                "boolean".equals(functionName.getLocalName())
+                    || "string".equals(functionName.getLocalName())
+                    || "QName".equals(functionName.getLocalName())
+            ) {
+                return null;
+            }
+            typeName = Name.createVariableInDefaultTypeNamespace(functionName.getLocalName());
+        } else if (!Name.XS_NS.equals(functionName.getNamespace())) {
+            return null;
+        }
+        ItemType targetType;
+        try {
+            targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
+        } catch (RuntimeException e) {
+            return null;
+        }
+        if (
+            !(targetType.isAtomicItemType()
+                || (targetType.isUnionType() && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
+                || targetType.equals(BuiltinTypesCatalogue.atomicItem)
+                || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+        ) {
+            return null;
+        }
+        return new BuiltinFunction(
+                new FunctionIdentifier(typeName, identifier.getArity()),
+                new FunctionSignature(
+                        List.of(SequenceType.createSequenceType("anyAtomicType?")),
+                        new SequenceType(targetType, Arity.OneOrZero)
+                ),
+                ConstructorFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
     }
 
     private static BuiltinFunction createBuiltinFunction(

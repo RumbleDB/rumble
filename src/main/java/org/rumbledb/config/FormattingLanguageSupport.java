@@ -1,19 +1,37 @@
 package org.rumbledb.config;
 
-import java.util.List;
+import com.ibm.icu.util.ULocale;
+
+import java.util.Locale;
 
 public final class FormattingLanguageSupport {
     private FormattingLanguageSupport() {
     }
 
-    // Language Codes
-    public static final String ENGLISH = "en";
-
-    public static final String DEFAULT_FORMATTING_LANGUAGE = ENGLISH;
-
-    public static final List<String> supportedLanguages = List.of(ENGLISH);
+    public static final String DEFAULT_FORMATTING_LANGUAGE = "en";
 
     public static boolean isValidFormattingLanguage(String language) {
-        return language != null && supportedLanguages.contains(language);
+        if (language == null || language.trim().isEmpty()) {
+            return false;
+        }
+
+        Locale locale = Locale.forLanguageTag(language.trim());
+        String resolvedLanguage = locale.getLanguage();
+        return !resolvedLanguage.isEmpty();
+    }
+
+    public static boolean isSupportedFormattingLanguage(String language) {
+        if (!isValidFormattingLanguage(language)) {
+            return false;
+        }
+
+        String requestedLanguage = ULocale.forLanguageTag(language.trim()).getLanguage();
+        for (ULocale availableLocale : ULocale.getAvailableLocales()) {
+            if (requestedLanguage.equalsIgnoreCase(availableLocale.getLanguage())) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

@@ -101,16 +101,16 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return textKindTest(node);
         } else if (this.nodeTest instanceof CommentTest) {
             return commentKindTest(node);
-        } else if (this.nodeTest instanceof PITest) {
-            return piKindTest(node);
+        } else if (this.nodeTest instanceof PITest piTest) {
+            return piKindTest(node, piTest);
         } else if (this.nodeTest instanceof NamespaceNodeTest) {
             return namespaceNodeKindTest(node);
-        } else if (this.nodeTest instanceof AttributeTest) {
-            return attributeKindTest(node);
-        } else if (this.nodeTest instanceof ElementTest) {
-            return elementKindTest(node);
-        } else if (this.nodeTest instanceof NameTest) {
-            return nameKindTest(node);
+        } else if (this.nodeTest instanceof AttributeTest attributeTest) {
+            return attributeKindTest(node, attributeTest);
+        } else if (this.nodeTest instanceof ElementTest elementTest) {
+            return elementKindTest(node, elementTest);
+        } else if (this.nodeTest instanceof NameTest nameTest) {
+            return nameKindTest(node, nameTest);
         } else if (this.nodeTest instanceof DocumentTest documentTest) {
             return documentKindTest(node, documentTest);
         } else {
@@ -164,8 +164,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item nameKindTest(Item node) {
-        NameTest nameTest = (NameTest) this.nodeTest;
+    private Item nameKindTest(Item node, NameTest nameTest) {
         if (nameTest.hasQName()) {
             if (!isPrincipalNodeKind(node)) {
                 return null;
@@ -201,8 +200,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return node.isElementNode();
     }
 
-    private Item elementKindTest(Item node) {
-        ElementTest elementTest = (ElementTest) this.nodeTest;
+    private Item elementKindTest(Item node, ElementTest elementTest) {
         if (elementTest.isEmptyCheck()) {
             if (node.isElementNode()) {
                 return node;
@@ -228,8 +226,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item attributeKindTest(Item node) {
-        AttributeTest attributeTest = (AttributeTest) this.nodeTest;
+    private Item attributeKindTest(Item node, AttributeTest attributeTest) {
         if (attributeTest.isEmptyCheck()) {
             if (node.isAttributeNode()) {
                 return node;
@@ -273,8 +270,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return null;
     }
 
-    private Item piKindTest(Item node) {
-        PITest piTest = (PITest) this.nodeTest;
+    private Item piKindTest(Item node, PITest piTest) {
         if (!node.isProcessingInstructionNode()) {
             return null;
         }

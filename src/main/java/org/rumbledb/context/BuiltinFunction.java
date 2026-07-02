@@ -53,11 +53,11 @@ public class BuiltinFunction {
 
     @Override
     public boolean equals(Object instance) {
-        return instance instanceof BuiltinFunction
-            && this.getIdentifier().equals(((BuiltinFunction) instance).getIdentifier())
-            && this.getSignature().equals(((BuiltinFunction) instance).getSignature())
-            && this.getFunctionIteratorClass().equals(((BuiltinFunction) instance).getFunctionIteratorClass())
-            && this.getBuiltinFunctionExecutionMode() == ((BuiltinFunction) instance).getBuiltinFunctionExecutionMode();
+        return instance instanceof BuiltinFunction builtinFunction
+            && this.getIdentifier().equals(builtinFunction.getIdentifier())
+            && this.getSignature().equals(builtinFunction.getSignature())
+            && this.getFunctionIteratorClass().equals(builtinFunction.getFunctionIteratorClass())
+            && this.getBuiltinFunctionExecutionMode() == builtinFunction.getBuiltinFunctionExecutionMode();
     }
 
     @Override

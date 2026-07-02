@@ -31,7 +31,7 @@ public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        for (String key : arg0.getKeys()) {
+        for (String key : arg0.getStringKeys()) {
             if (this.projectionKeys.contains(new StringItem(key))) {
                 keys.add(key);
                 values.add(arg0.getItemByKey(key));

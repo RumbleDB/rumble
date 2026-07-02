@@ -95,7 +95,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isObject()) { // ignore non-object items
                 Item result;
-                for (String key : item.getKeys()) {
+                for (String key : item.getStringKeys()) {
                     result = ItemFactory.getInstance().createStringItem(key);
                     if (!this.alreadyFoundKeys.contains(result)) {
                         this.alreadyFoundKeys.add(result);

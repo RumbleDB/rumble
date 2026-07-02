@@ -13,12 +13,10 @@ public class NumberPictureFormatter {
 
     public static String format(
             Item valueItem,
-            Item pictureItem,
+            String pictureString,
             DecimalFormatDefinition decimalFormat,
             ExceptionMetadata metadata
     ) {
-        String pictureString = pictureItem.getStringValue();
-
         FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
 
         if (valueItem.isDouble()) {

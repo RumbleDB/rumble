@@ -45,7 +45,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private List<Item> getStructureItems() {
         if (this.itemType.isArrayItemType()) {
-            return this.materializedArgument.get(0).getItems();
+            return this.materializedArgument.get(0).getItemMembers();
         }
         return this.materializedArgument;
     }

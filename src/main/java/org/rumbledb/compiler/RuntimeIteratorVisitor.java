@@ -1326,9 +1326,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
@@ -1356,9 +1357,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             NamedFunctionReferenceExpression expression,
             RuntimeIterator argument
     ) {
-        FunctionIdentifier identifier = expression.getIdentifier();
         RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
-                identifier,
+                expression.getIdentifier(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());

@@ -188,7 +188,7 @@ public class RumbleHttpHandler implements HttpHandler {
         }
         output.putItemByKey("stack-trace", stackTrace);
         for (StackTraceElement e : stackTraceElements) {
-            stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
+            stackTrace.appendItem(ItemFactory.getInstance().createStringItem(e.toString()));
         }
         return output;
     }
@@ -209,10 +209,10 @@ public class RumbleHttpHandler implements HttpHandler {
                                     + ex.getMessage()
                         )
                     );
-                } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
+                } else if (ex instanceof RumbleException rumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
-                        ((RumbleException) ex).getErrorCode().toString(),
+                        rumbleException.getErrorCode().toString(),
                         ex.getStackTrace()
                     );
                 } else if (ex instanceof OutOfMemoryError) {
