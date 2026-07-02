@@ -19,17 +19,15 @@ public final class LanguageSupport {
         return language.trim().replace('_', '-').toLowerCase(Locale.ROOT);
     }
 
+    /** Returns the normalized language if ICU supports it, otherwise the default. */
+    public static String effectiveLanguageOf(String normalizedLanguage) {
+        return FormattingLanguageSupport.isSupportedFormattingLanguage(normalizedLanguage)
+            ? normalizedLanguage
+            : DEFAULT_LANGUAGE;
+    }
+
 
     public static Locale resolveLocale(String language) {
         return Locale.forLanguageTag(normalizeLanguage(language));
-    }
-
-    public static String getPrimaryLanguageSubtag(String language) {
-        String normalized = normalizeLanguage(language);
-        int dash = normalized.indexOf('-');
-        if (dash > 0) {
-            return normalized.substring(0, dash);
-        }
-        return normalized;
     }
 }

@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.functions.datetime;
+package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 final class ParsedTimezonePicture {
     final boolean gmtPrefix;

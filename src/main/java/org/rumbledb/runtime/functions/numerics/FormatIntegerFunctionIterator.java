@@ -31,16 +31,12 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
         if (valueItem == null)
             return ItemFactory.getInstance().createStringItem("");
 
-        if (valueItem.isNull()) {
-            return valueItem;
-        }
-
         if (language == null) {
             language = getConfiguration().getDefaultFormattingLanguage();
         }
 
         String result = IntegerPictureFormatter.format(
-            valueItem,
+            valueItem.getIntegerValue(),
             pictureItem.getStringValue(),
             language,
             getMetadata()
