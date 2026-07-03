@@ -3336,6 +3336,7 @@ public class BuiltinFunctionCatalogue {
      * W3C array:for-each — F&amp;O 3.1: array:for-each($array as array(*), $action as function(item()*) as item()*) as
      * array(*).
      * Returns an array of the same size; each member is $action applied to the corresponding member of $array.
+     * The second parameter is registered as {@code item} so map/array function items reach runtime.
      */
     static final BuiltinFunction array_for_each = createBuiltinFunction(
         new Name(
@@ -3343,7 +3344,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "for-each"
         ),
-        List.of("array", "function(item*) as item*"),
+        List.of("array", "item"),
         "array",
         ArrayForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL

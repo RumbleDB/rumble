@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -32,19 +31,18 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:filter}:
  * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
- * Map-as-predicate is not supported yet ({@code isObject()} predicates are rejected at runtime).
  */
 public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
@@ -114,38 +112,21 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         }
 
         Item predicate = predicateItems.get(0);
-        if (predicate.isObject()) {
+        boolean allSingleton = true;
+        List<List<Item>> kept = new ArrayList<>();
+        if (!acceptsSingleArgument(predicate)) {
             throw new UnexpectedTypeException(
-                    "Type error; map-as-predicate for array:filter is not supported yet.",
+                    "Type error; second argument to array:filter must accept exactly one argument.",
                     getMetadata()
             );
         }
-        boolean allSingleton = true;
-        List<List<Item>> kept = new ArrayList<>();
-        if (predicate.isFunction()) {
-            FunctionItem functionItem = (FunctionItem) predicate;
-            for (List<Item> memberSequence : memberSequences) {
-                if (predicateHoldsForFunction(functionItem, memberSequence, context)) {
-                    if (allSingleton && memberSequence.size() != 1) {
-                        allSingleton = false;
-                    }
-                    kept.add(memberSequence);
+        for (List<Item> memberSequence : memberSequences) {
+            if (predicateHolds(predicate, memberSequence, context)) {
+                if (allSingleton && memberSequence.size() != 1) {
+                    allSingleton = false;
                 }
+                kept.add(memberSequence);
             }
-        } else if (predicate.isArray()) {
-            for (List<Item> memberSequence : memberSequences) {
-                if (predicateHoldsForArray(predicate, memberSequence, context)) {
-                    if (allSingleton && memberSequence.size() != 1) {
-                        allSingleton = false;
-                    }
-                    kept.add(memberSequence);
-                }
-            }
-        } else {
-            throw new UnexpectedTypeException(
-                    "Type error; second argument to array:filter must be a function item or an array.",
-                    getMetadata()
-            );
         }
 
         if (allSingleton) {
@@ -161,81 +142,34 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-    private boolean predicateHoldsForFunction(
-            FunctionItem functionItem,
+    private static boolean acceptsSingleArgument(Item item) {
+        if (item.isMap() || item.isArray()) {
+            return true;
+        }
+        return item.isFunction() && item.getIdentifier().getArity() == 1;
+    }
+
+    private boolean predicateHolds(
+            Item predicate,
             List<Item> memberSequence,
             DynamicContext context
     ) {
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
+        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
+                getConfiguration(),
+                SequenceType.createSequenceType("item*"),
+                ExecutionMode.LOCAL,
+                getMetadata()
+        );
+        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(predicate, functionItemContext),
+                arguments,
+                functionItemContext
         );
         List<Item> result = functionCall.materialize(context);
         return booleanValueFromFilterResult(result);
-    }
-
-    private boolean predicateHoldsForArray(
-            Item predicateArray,
-            List<Item> memberSequence,
-            DynamicContext context
-    ) {
-        if (memberSequence.isEmpty()) {
-            throw new UnexpectedTypeException(
-                    "Type error; when the second argument is an array, each member of the first array must be "
-                        + "exactly one numeric value usable as a 1-based index.",
-                    getMetadata()
-            );
-        }
-        if (memberSequence.size() != 1) {
-            throw new UnexpectedTypeException(
-                    "Type error; when the second argument is an array, each member of the first array must be "
-                        + "exactly one numeric value usable as a 1-based index.",
-                    getMetadata()
-            );
-        }
-        Item indexItem = memberSequence.get(0);
-        if (!indexItem.isNumeric()) {
-            throw new UnexpectedTypeException(
-                    "Type error; when the second argument is an array, each member of the first array must be "
-                        + "exactly one numeric value usable as a 1-based index.",
-                    getMetadata()
-            );
-        }
-
-        RuntimeStaticContext indexStaticContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        RuntimeIterator indexIterator = new ConstantRuntimeIterator(indexItem, indexStaticContext);
-        RuntimeStaticContext callStaticContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
-                predicateArray,
-                indexIterator,
-                callStaticContext
-        );
-        lookup.open(context);
-        try {
-            List<Item> lookedUp = new ArrayList<>();
-            while (lookup.hasNext()) {
-                lookedUp.add(lookup.next());
-            }
-            return booleanValueFromFilterResult(lookedUp);
-        } finally {
-            lookup.close();
-        }
     }
 
     private boolean booleanValueFromFilterResult(List<Item> items) {

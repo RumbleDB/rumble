@@ -40,7 +40,6 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.indexIterator.open(this.currentDynamicContextForLocalExecution);
         initializeResults(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -152,4 +151,3 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
         );
     }
 }
-
