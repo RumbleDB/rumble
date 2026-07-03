@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -762,6 +763,20 @@ public class ItemTypeFactory {
                 itemTypes.add(createItemTypeFromItem(item.getItemByKey(key)));
             }
             return ItemTypeFactory.createAnonymousObjectType(item.getStringKeys(), itemTypes);
+        } else if (item.isMap()) {
+            if (item.getSize() == 0) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                item.getItemKeys(),
+                ExceptionMetadata.EMPTY_METADATA,
+                TypeInferrenceUtils.TypeMergeMode.STRICT
+            );
+            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                item.getSequenceValues(),
+                TypeInferrenceUtils.TypeMergeMode.STRICT
+            );
+            return ItemTypeFactory.mapOf(keyType, valueSequenceType);
         } else if (item.isArrayOfItems()) {
             if (item.getSize() == 0) {
                 return ItemTypeFactory.createEmptyArrayType();

@@ -364,6 +364,7 @@ public class BuiltinFunctionCatalogue {
                 "boolean".equals(functionName.getLocalName())
                     || "string".equals(functionName.getLocalName())
                     || "QName".equals(functionName.getLocalName())
+                    || "error".equals(functionName.getLocalName())
             ) {
                 return null;
             }
@@ -3829,7 +3830,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of(),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3841,7 +3842,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3853,7 +3854,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?", "string"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3865,7 +3866,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?", "string", "item*"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
