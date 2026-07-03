@@ -30,11 +30,7 @@ import java.util.Map;
  * Credit to Andrei Barsan, teammate from ACD ;)
  */
 public class AnnotationProcessor {
-
-    // A semicolon separates tokens only when the following text starts another annotation field.
-    // This preserves semicolons inside values such as ErrorMetadata="LINE:2;COLUMN:0;".
-    private static final String TOKEN_SEPARATOR =
-        "\\s*;\\s*(?=(?:Should(?:Parse|NotParse|Compile|NotCompile|Run|Crash)\\b|[A-Za-z][A-Za-z0-9]*\\s*=|$))";
+    private static final String TOKEN_SEPARATOR = "\\s*;\\s*";
 
     public static final String OUTPUT_KEY = "Output";
     public static final String UPDATE_DIM_KEY = "UpdateDim";
