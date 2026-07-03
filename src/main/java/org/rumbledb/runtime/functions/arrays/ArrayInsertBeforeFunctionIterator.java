@@ -46,9 +46,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        this.positionIterator.open(this.currentDynamicContextForLocalExecution);
-        this.memberIterator.open(this.currentDynamicContextForLocalExecution);
+        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close them.
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
         this.hasProducedResult = false;
@@ -210,4 +208,3 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-
