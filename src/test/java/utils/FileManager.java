@@ -23,23 +23,33 @@ package utils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class FileManager {
-
-    public static final String TEST_FILE_EXTENSION = ".jq";
+    public static final List<String> JSONIQ_TEST_FILE_EXTENSIONS = List.of(".jq");
+    public static final List<String> XQUERY_TEST_FILE_EXTENSIONS = List.of(".xq", ".xqy", ".xquery");
 
     public static List<File> loadJiqFiles(File directory) {
+        return loadFiles(directory, JSONIQ_TEST_FILE_EXTENSIONS.toArray(new String[0]));
+    }
+
+    public static List<File> loadXqFiles(File directory) {
+        return loadFiles(directory, XQUERY_TEST_FILE_EXTENSIONS.toArray(new String[0]));
+    }
+
+    public static List<File> loadFiles(File directory, String... extensions) {
         List<File> files = new ArrayList<>();
+        Set<String> allowedExtensions = new HashSet<>(Arrays.asList(extensions));
         Arrays.asList(directory.listFiles())
             .stream()
-            .filter(file -> file.getName().endsWith(FileManager.TEST_FILE_EXTENSION))
+            .filter(file -> allowedExtensions.stream().anyMatch(extension -> file.getName().endsWith(extension)))
             .forEach(file -> files.add(file));
         Arrays.asList(directory.listFiles())
             .stream()
             .filter(file -> file.isDirectory())
-            .forEach(file -> files.addAll(FileManager.loadJiqFiles(file)));
+            .forEach(file -> files.addAll(FileManager.loadFiles(file, extensions)));
         return files;
     }
-
 }

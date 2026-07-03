@@ -20,17 +20,15 @@
 
 package iq;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class NativeFLWORRuntimeTests extends RuntimeTests {
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -51,16 +49,7 @@ public class NativeFLWORRuntimeTests extends RuntimeTests {
                 "/src/test/resources/test_files/runtime-native-flwor"
     );
 
-    public NativeFLWORRuntimeTests(File testFile) {
-        super(testFile);
-    }
-
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        _testFiles.clear();
-        readFileList(nativeFlworRuntimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
+    public static List<File> testFiles() {
+        return loadTestFiles(nativeFlworRuntimeTestsDirectory);
     }
 }

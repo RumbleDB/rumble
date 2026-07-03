@@ -24,9 +24,10 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -43,7 +44,7 @@ public class JavaAPITest {
     public JavaAPITest() {
     }
 
-    @BeforeClass
+    @BeforeAll
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         SparkConf sparkConfiguration = new SparkConf();
@@ -60,78 +61,82 @@ public class JavaAPITest {
 
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testLocal() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(!iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.availableAsRDD());
         iterator.open();
-        Assert.assertTrue(iterator.isOpen());
-        Assert.assertTrue(iterator.hasNext());
+        Assertions.assertTrue(iterator.isOpen());
+        Assertions.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
-            Assert.assertTrue(iterator.hasNext());
+            Assertions.assertTrue(iterator.hasNext());
             Item item = iterator.next();
-            Assert.assertTrue(item.isObject());
+            Assertions.assertTrue(item.isObject());
             List<String> keys = item.getStringKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
-        Assert.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.isOpen());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testCollect() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(iterator.availableAsRDD());
         iterator.open();
-        Assert.assertTrue(iterator.isOpen());
-        Assert.assertTrue(iterator.hasNext());
+        Assertions.assertTrue(iterator.isOpen());
+        Assertions.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
-            Assert.assertTrue(iterator.hasNext());
+            Assertions.assertTrue(iterator.hasNext());
             Item item = iterator.next();
-            Assert.assertTrue(item.isObject());
+            Assertions.assertTrue(item.isObject());
             List<String> keys = item.getStringKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
-        Assert.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.isOpen());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testRDD() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(iterator.availableAsRDD());
         JavaRDD<Item> items = iterator.getAsRDD();
         List<Item> list = items.collect();
         for (int i = 1; i <= 5; ++i) {
             Item item = list.get(i - 1);
-            Assert.assertTrue(item.isObject());
+            Assertions.assertTrue(item.isObject());
             List<String> keys = item.getStringKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testGetAsDataFramePreservesArrayMembers() throws Throwable {
         Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("({ \"arr\" : [ { \"x\" : 1 }]},{\"arr\":[{\"x\":\"s\"}]})");
@@ -139,9 +144,9 @@ public class JavaAPITest {
         Dataset<Row> dataFrame = iterator.getAsDataFrame();
         List<Row> rows = dataFrame.collectAsList();
 
-        Assert.assertEquals(2, rows.size());
-        Assert.assertEquals(1, rows.get(0).getList(0).size());
-        Assert.assertEquals(1, rows.get(1).getList(0).size());
+        Assertions.assertEquals(2, rows.size());
+        Assertions.assertEquals(1, rows.get(0).getList(0).size());
+        Assertions.assertEquals(1, rows.get(1).getList(0).size());
 
         JavaRDD<Item> itemRDD = dataFrame.javaRDD()
             .map(
@@ -152,8 +157,8 @@ public class JavaAPITest {
             );
         List<Item> items = itemRDD.collect();
 
-        Assert.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
-        Assert.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assertions.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assertions.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
     }
 
 }

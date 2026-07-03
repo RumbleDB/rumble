@@ -1,7 +1,7 @@
 package iq;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.strings.RegexPatternUtils;
 
@@ -15,7 +15,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertEquals("I", compiledRegex.getPattern().matcher("I").replaceAll("x"));
+        Assertions.assertEquals("I", compiledRegex.getPattern().matcher("I").replaceAll("x"));
     }
 
     @Test
@@ -26,7 +26,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertEquals("O", compiledRegex.getPattern().matcher("O").replaceAll("x"));
+        Assertions.assertEquals("O", compiledRegex.getPattern().matcher("O").replaceAll("x"));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertEquals("x", compiledRegex.getPattern().matcher("\u212A").replaceAll("x"));
+        Assertions.assertEquals("x", compiledRegex.getPattern().matcher("\u212A").replaceAll("x"));
     }
 
     @Test
@@ -48,7 +48,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[] { "A", "Ba", "" },
             RegexPatternUtils.tokenize("AqBaQ", compiledRegex.getPattern())
         );
@@ -62,7 +62,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[] { "", "" },
             RegexPatternUtils.tokenize("xÉ", compiledRegex.getPattern())
         );
@@ -76,7 +76,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[0],
             RegexPatternUtils.tokenize("", compiledRegex.getPattern())
         );
@@ -90,7 +90,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[] { "", "r", "c", "d", "r", "" },
             RegexPatternUtils.tokenize("abracadabra", compiledRegex.getPattern())
         );
@@ -104,7 +104,7 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
     }
 
     @Test
@@ -115,11 +115,12 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
     }
 
+    @Test
     public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[] { "abc\fdef" },
             RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef")
         );
@@ -134,14 +135,14 @@ public class RegexPatternUtilsTest {
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        Assert.assertTrue(
+        Assertions.assertTrue(
             compiledRegex.getPattern().matcher("aa" + backReferenceDigits.substring(1)).matches()
         );
     }
 
     @Test
     public void tokenizeOnXmlWhitespaceSplitsOnXmlWhitespaceOnly() {
-        Assert.assertArrayEquals(
+        Assertions.assertArrayEquals(
             new String[] { "abc", "def", "ghi", "jkl" },
             RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl ")
         );

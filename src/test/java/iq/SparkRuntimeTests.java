@@ -20,18 +20,15 @@
 
 package iq;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-
-
-@RunWith(Parameterized.class)
+@ParameterizedClass
+@MethodSource("testFiles")
 public class SparkRuntimeTests extends RuntimeTests {
 
     public static final File sparkRuntimeTestsDirectory = new File(
@@ -57,16 +54,7 @@ public class SparkRuntimeTests extends RuntimeTests {
         );
     }
 
-    public SparkRuntimeTests(File testFile) {
-        super(testFile);
-    }
-
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        _testFiles.clear();
-        readFileList(sparkRuntimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
+    public static List<File> testFiles() {
+        return loadTestFiles(sparkRuntimeTestsDirectory);
     }
 }
