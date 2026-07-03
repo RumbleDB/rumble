@@ -1,6 +1,7 @@
 package iq;
 
-import iq.base.AnnotationsTestsBase;
+import iq.base.TestConfigurations;
+import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -27,23 +28,26 @@ import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 
-public class SequentialClassificationTests extends AnnotationsTestsBase {
+public class SequentialClassificationTests {
+
+    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
 
     private MainModule parseAndCompile(String filePath) throws IOException {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             filePath,
-            getConfiguration(),
+            configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         return VisitorHelpers.parseMainModuleFromLocation(
             uri,
-            getConfiguration()
+            configuration
         );
     }
 
@@ -302,8 +306,9 @@ public class SequentialClassificationTests extends AnnotationsTestsBase {
                     +
                     "/src/test/resources/test_files/sequential/non-sequential"
         );
-        for (File testFile : loadTestFiles(nonsequentialTestsDirectory)) {
-            System.err.println(counter++ + " : " + testFile);
+        int testIndex = 0;
+        for (File testFile : TestFileDiscovery.jsoniqFiles(nonsequentialTestsDirectory)) {
+            System.err.println(testIndex++ + " : " + testFile);
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
                 if (descendant instanceof Expression) {
