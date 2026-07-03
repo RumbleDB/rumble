@@ -54,6 +54,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -360,7 +361,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 );
             } else {
                 JavaRDD<Item> rdd = this.getRDD(context);
-                ItemType type = ValidateTypeIterator.inferSchemaTypeOfRDDItems(rdd, getMetadata());
+                ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                    rdd,
+                    getMetadata(),
+                    TypeInferrenceUtils.TypeMergeMode.LAX
+                );
                 return ValidateTypeIterator.convertRDDToValidDataFrame(
                     rdd,
                     type,
@@ -381,7 +386,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 this.staticContext
             );
         } else {
-            ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
+            ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                items,
+                getMetadata(),
+                TypeInferrenceUtils.TypeMergeMode.LAX
+            );
             if (this.getConfiguration().printInferredTypes()) {
                 System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
             }

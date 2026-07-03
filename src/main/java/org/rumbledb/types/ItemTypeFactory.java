@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -766,8 +767,15 @@ public class ItemTypeFactory {
             if (item.getSize() == 0) {
                 return BuiltinTypesCatalogue.mapItem;
             }
-            ItemType keyType = getLeastCommonSuperItemType(item.getItemKeys());
-            SequenceType valueSequenceType = getLeastCommonSuperSequenceType(item.getSequenceValues());
+            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                item.getItemKeys(),
+                ExceptionMetadata.EMPTY_METADATA,
+                TypeInferrenceUtils.TypeMergeMode.STRICT
+            );
+            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                item.getSequenceValues(),
+                TypeInferrenceUtils.TypeMergeMode.STRICT
+            );
             return ItemTypeFactory.mapOf(keyType, valueSequenceType);
         } else if (item.isArrayOfItems()) {
             if (item.getSize() == 0) {
@@ -781,39 +789,6 @@ public class ItemTypeFactory {
         } else {
             return item.getDynamicType();
         }
-    }
-
-    private static ItemType getLeastCommonSuperItemType(List<Item> items) {
-        ItemType result = createItemTypeFromItem(items.get(0));
-        for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(createItemTypeFromItem(items.get(i)));
-        }
-        return result;
-    }
-
-    private static SequenceType getLeastCommonSuperSequenceType(List<List<Item>> sequences) {
-        if (sequences.isEmpty()) {
-            return SequenceType.createSequenceType("item*");
-        }
-        SequenceType result = sequenceTypeFromRuntimeItems(sequences.get(0));
-        for (int i = 1; i < sequences.size(); i++) {
-            result = result.leastCommonSupertypeWith(sequenceTypeFromRuntimeItems(sequences.get(i)));
-        }
-        return result;
-    }
-
-    private static SequenceType sequenceTypeFromRuntimeItems(List<Item> items) {
-        if (items.isEmpty()) {
-            return SequenceType.createSequenceType("()");
-        }
-        ItemType itemType = createItemTypeFromItem(items.get(0));
-        for (int i = 1; i < items.size(); i++) {
-            itemType = itemType.findLeastCommonSuperTypeWith(createItemTypeFromItem(items.get(i)));
-        }
-        if (items.size() == 1) {
-            return new SequenceType(itemType, SequenceType.Arity.One);
-        }
-        return new SequenceType(itemType, SequenceType.Arity.OneOrMore);
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
