@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.SequenceType;
 
 public final class TypeInferrenceUtils {
@@ -30,7 +29,7 @@ public final class TypeInferrenceUtils {
             return BuiltinTypesCatalogue.item;
         }
 
-        ItemType neutralElement = new NeutralItemType();
+        ItemType neutralElement = BuiltinTypesCatalogue.errorItem;
 
         return itemRDD.aggregate(
             neutralElement,

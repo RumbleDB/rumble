@@ -422,6 +422,18 @@ public class SequenceType implements Serializable {
             case "anyAtomicType*":
                 st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore);
                 break;
+            case "error":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.One);
+                break;
+            case "error+":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, Arity.OneOrMore);
+                break;
+            case "error?":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "error*":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.ZeroOrMore);
+                break;
             case "string":
                 st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One);
                 break;

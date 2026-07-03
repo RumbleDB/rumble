@@ -3829,7 +3829,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of(),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3841,7 +3841,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3853,7 +3853,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?", "string"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -3865,7 +3865,7 @@ public class BuiltinFunctionCatalogue {
                 "error"
         ),
         List.of("QName?", "string", "item*"),
-        "()",
+        "error",
         ThrowErrorIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
