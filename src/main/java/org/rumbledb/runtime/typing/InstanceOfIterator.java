@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -152,9 +153,14 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 return true;
             }
             List<Item> keys = itemToMatch.getItemKeys();
-            ItemType keyType = getLeastCommonSuperItemType(keys, BuiltinTypesCatalogue.atomicItem);
-            SequenceType valueSequenceType = getLeastCommonSuperSequenceType(
-                itemToMatch.getSequenceValues()
+            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                keys,
+                ExceptionMetadata.EMPTY_METADATA,
+                TypeInferrenceUtils.TypeMergeMode.STRICT
+            );
+            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                itemToMatch.getSequenceValues(),
+                TypeInferrenceUtils.TypeMergeMode.STRICT
             );
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
 
@@ -200,8 +206,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 return true;
             }
-            SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
-                members
+            SequenceType memberSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                members,
+                TypeInferrenceUtils.TypeMergeMode.STRICT
             );
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
@@ -211,42 +218,5 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
-
-    private static ItemType getLeastCommonSuperItemType(List<Item> items, ItemType defaultType) {
-        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
-        for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
-        }
-        return result;
-    }
-
-    private static SequenceType getLeastCommonSuperSequenceType(
-            List<List<Item>> sequences
-    ) {
-        if (sequences.isEmpty()) {
-            return SequenceType.createSequenceType("item*");
-        }
-        SequenceType result = sequenceTypeFromRuntimeItems(sequences.get(0));
-        for (int i = 1; i < sequences.size(); i++) {
-            result = result.leastCommonSupertypeWith(sequenceTypeFromRuntimeItems(sequences.get(i)));
-        }
-        return result;
-    }
-
-    private static SequenceType sequenceTypeFromRuntimeItems(List<Item> items) {
-        if (items.isEmpty()) {
-            return SequenceType.createSequenceType("()");
-        }
-        Item item = items.get(0);
-        ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
-        for (int i = 1; i < items.size(); i++) {
-            itemType = itemType.findLeastCommonSuperTypeWith(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
-        }
-        if (items.size() == 1) {
-            return new SequenceType(itemType, SequenceType.Arity.One);
-        }
-        return new SequenceType(itemType, SequenceType.Arity.OneOrMore);
-    }
-
 
 }
