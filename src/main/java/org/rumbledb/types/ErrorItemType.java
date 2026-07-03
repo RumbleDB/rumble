@@ -1,19 +1,22 @@
 package org.rumbledb.types;
 
+import java.util.Set;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
-import java.util.Set;
-
 /**
- * Neutral element ItemType for aggregation operations.
- * This type serves as the neutral element in Spark aggregation operations
- * and ensures that any real ItemType combined with it returns the real ItemType.
+ * Bottom item type implementing {@code xs:error}.
+ *
+ * <p>
+ * This type has an empty value space and behaves as the identity element for least-common-supertype
+ * computations. That makes it useful both as the spec-facing {@code xs:error} type and as the merge
+ * identity when inferring a type across many runtime items.
  */
-public class NeutralItemType implements ItemType {
+public class ErrorItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
-    private static final Name name = Name.createVariableInDefaultTypeNamespace("neutral");
+    private static final Name name = new Name(Name.XS_NS, "xs", "error");
 
     @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
@@ -27,7 +30,7 @@ public class NeutralItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        return other instanceof NeutralItemType;
+        return other instanceof ErrorItemType;
     }
 
     @Override
@@ -42,34 +45,37 @@ public class NeutralItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return false; // Neutral type is not a subtype of any real type
+        return true;
     }
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        // Identity property: neutral element combined with any type returns that type
+        return other;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
         return other;
     }
 
     @Override
     public int getTypeTreeDepth() {
-        // Return a very large value to ensure it's treated as neutral
         return Integer.MAX_VALUE;
     }
 
     @Override
     public ItemType getBaseType() {
-        return null;
+        return BuiltinTypesCatalogue.item;
     }
 
     @Override
     public Set<ConstrainingFacetTypes> getAllowedFacets() {
-        throw new UnsupportedOperationException("neutral type does not support facets");
+        throw new UnsupportedOperationException("xs:error does not support facets");
     }
 
     @Override
     public String toString() {
-        return "neutral";
+        return this.name.toString();
     }
 
     @Override
@@ -79,53 +85,17 @@ public class NeutralItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
-        return false; // Neutral type cannot be used in DataFrames
+        return false;
     }
 
     @Override
     public String getSparkSQLType() {
-        throw new UnsupportedOperationException("neutral type does not have SparkSQL representation");
-    }
-
-    // Default implementations for all other ItemType methods
-    @Override
-    public boolean isTopmostItemType() {
-        return false;
+        throw new UnsupportedOperationException("xs:error does not have a SparkSQL representation");
     }
 
     @Override
     public boolean isAtomicItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isObjectItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isArrayItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isJsonItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isUnionType() {
-        return false;
-    }
-
-    @Override
-    public boolean isFunctionItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        return false;
+        return true;
     }
 
     @Override
