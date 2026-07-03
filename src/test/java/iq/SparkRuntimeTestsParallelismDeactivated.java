@@ -20,15 +20,10 @@
 
 package iq;
 
-import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import java.io.File;
-import java.util.List;
 
-@ParameterizedClass
-@MethodSource("testFiles")
 public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -54,7 +49,8 @@ public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
                 "/src/test/resources/test_files/runtime-spark"
     );
 
-    public static List<File> testFiles() {
-        return loadTestFiles(sparkRuntimeTestsDirectory);
+    @Override
+    protected File testDirectory() {
+        return sparkRuntimeTestsDirectory;
     }
 }

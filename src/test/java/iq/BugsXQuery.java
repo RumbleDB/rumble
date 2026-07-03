@@ -20,43 +20,23 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
-import org.apache.spark.SparkConf;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.params.Parameter;
-import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.MethodSource;
+import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import scala.Function0;
-import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
-@ParameterizedClass
-@MethodSource("testFiles")
-public class BugsXQuery extends AnnotationsTestsBase {
+public class BugsXQuery extends SparkAnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/bugs-xquery"
     );
-    public static final String javaVersion =
-        System.getProperty("java.version");
-    public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", new Function0<String>() {
-            @Override
-            public String apply() {
-                return "unknown";
-            }
-        });
-    @Parameter
-    File testFile;
 
+    @Override
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
@@ -71,30 +51,13 @@ public class BugsXQuery extends AnnotationsTestsBase {
         );
     }
 
-    public static List<File> testFiles() {
-        return loadTestFiles(runtimeTestsDirectory, false);
+    @Override
+    protected File testDirectory() {
+        return runtimeTestsDirectory;
     }
 
-    @BeforeAll
-    public static void setupSparkSession() {
-        SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
-        SparkConf sparkConfiguration = new SparkConf();
-        sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.submit.deployMode", "client");
-        sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true");
-        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
-
-        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
-    }
-
-    @Test
-    @Timeout(1000)
-    public void testRuntimeIterators() throws Throwable {
-        runAnnotationTest(this.testFile, true);
+    @Override
+    protected List<File> testFiles() throws IOException {
+        return TestFileDiscovery.xqueryFiles(testDirectory());
     }
 }

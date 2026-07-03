@@ -20,20 +20,14 @@
 
 package iq;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import java.util.List;
 
-@ParameterizedClass
-@MethodSource("testFiles")
 public class RuntimeTestsNoParallelism extends RuntimeTests {
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -65,10 +59,6 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
                     }
                 )
             );
-    }
-
-    public static List<File> testFiles() {
-        return loadTestFiles(runtimeTestsDirectory);
     }
 
 }

@@ -20,71 +20,19 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.params.Parameter;
-import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.MethodSource;
+import iq.base.UpdateRuntimeTestsBase;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import utils.annotations.AnnotationParseException;
-import utils.annotations.AnnotationProcessor;
 import org.apache.spark.SparkConf;
-import scala.Function0;
-import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
-import utils.FileManager;
 
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.*;
 
-@ParameterizedClass
-@MethodSource("testFiles")
-public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
+public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/runtime-iceberg-updates"
     );
-    public static final String javaVersion =
-        System.getProperty("java.version");
-    public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", new Function0<String>() {
-            @Override
-            public String apply() {
-                return "unknown";
-            }
-        });
-    @Parameter
-    File testFile;
-
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--dates-with-timezone",
-                    "yes",
-                    "--print-iterator-tree",
-                    "yes",
-                    "--show-error-info",
-                    "yes",
-                    "--apply-updates",
-                    "yes",
-                    "--materialization-cap",
-                    "900000",
-                    "--result-size",
-                    "900000"
-                }
-        );
-    }
-
     protected static final RumbleRuntimeConfiguration createIcebergConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
                 "--print-iterator-tree",
@@ -111,69 +59,13 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
             }
     );
 
-    public static void readFileList(File dir) throws IOException, AnnotationParseException {
-        Map<Integer, Map<Integer, File>> updateDimToFileMap = new TreeMap<>();
-        for (File file : FileManager.loadJiqFiles(dir)) {
-            AnnotationProcessor.UpdateDimensions dimensions;
-            try (FileReader reader = new FileReader(file)) {
-                dimensions = AnnotationProcessor.readUpdateDimensions(reader);
-            }
-            updateDimToFileMap
-                .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
-                .put(dimensions.dimension2(), file);
-        }
-        IcebergUpdateRuntimeTests._testFilesMap = updateDimToFileMap;
+    @Override
+    protected File testDirectory() {
+        return runtimeTestsDirectory;
     }
 
-    protected static Map<Integer, Map<Integer, File>> _testFilesMap;
-
-    public static List<File> testFiles() throws IOException, AnnotationParseException {
-        List<File> result = new ArrayList<>();
-
-        // Base test folder
-        File baseDir = IcebergUpdateRuntimeTests.runtimeTestsDirectory;
-
-        // Optional subdirectory via -Ddir
-        String subDir = System.getProperty("dir");
-        File chosenDir = (subDir == null || subDir.trim().isEmpty())
-            ? baseDir
-            : new File(baseDir, subDir.trim());
-
-        // Check existence
-        if (!chosenDir.exists() || !chosenDir.isDirectory()) {
-            throw new IOException("[IcebergUpdateRuntimeTests] Subdirectory not found: " + chosenDir.getAbsolutePath());
-        }
-
-        IcebergUpdateRuntimeTests.readFileList(chosenDir);
-
-        Map<Integer, File> innerMap;
-        File curr;
-        for (int i : IcebergUpdateRuntimeTests._testFilesMap.keySet()) {
-            innerMap = IcebergUpdateRuntimeTests._testFilesMap.get(i);
-            for (int j : innerMap.keySet()) {
-                curr = innerMap.get(j);
-                result.add(curr);
-            }
-        }
-        return result;
-    }
-
-    @BeforeAll
-    public static void setupSparkSession() {
-        SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
-        SparkConf sparkConfiguration = new SparkConf();
-        sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
-        sparkConfiguration.set("spark.submit.deployMode", "client");
-        sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
-        // ^ the above was copied from DeltaUpdateRuntimeTests
-        // below is the same as in session.py (default session catalog for Iceberg).
-        // If you want to test custom multi-catalog sessions, override spark_catalog
-        // and add explicit named catalogs (e.g., spark.sql.catalog.ice_b, etc.).
+    @Override
+    protected void configureUpdateStore(SparkConf sparkConfiguration) {
         sparkConfiguration.set(
             "spark.sql.extensions",
             "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions"
@@ -182,23 +74,5 @@ public class IcebergUpdateRuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.sql.catalog.spark_catalog.type", "hadoop");
         sparkConfiguration.set("spark.sql.catalog.spark_catalog.warehouse", "./iceberg-warehouse/spark_catalog");
         sparkConfiguration.set("spark.sql.iceberg.check-ordering", "false");
-
-        // prevents spark from failing to start on MacOS when disconnected from the internet
-        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
-
-
-        // sparkConfiguration.set("spark.driver.memory", "2g");
-        // sparkConfiguration.set("spark.executor.memory", "2g");
-        // sparkConfiguration.set("spark.speculation", "true");
-        // sparkConfiguration.set("spark.speculation.quantile", "0.5");
-        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
-
-    @Test
-    @Timeout(1000)
-    public void testRuntimeIterators() throws Throwable {
-        runAnnotationTest(this.testFile, true);
-    }
-
 }
