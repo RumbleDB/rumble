@@ -364,6 +364,7 @@ public class BuiltinFunctionCatalogue {
                 "boolean".equals(functionName.getLocalName())
                     || "string".equals(functionName.getLocalName())
                     || "QName".equals(functionName.getLocalName())
+                    || "error".equals(functionName.getLocalName())
             ) {
                 return null;
             }
