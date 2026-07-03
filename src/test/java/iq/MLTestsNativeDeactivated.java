@@ -21,6 +21,7 @@
 package iq;
 
 import java.io.File;
+import java.util.List;
 
 import org.junit.jupiter.params.ParameterizedClass;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -51,7 +52,7 @@ public class MLTestsNativeDeactivated extends RuntimeTests {
         );
     }
 
-    public static java.util.List<File> testFiles() {
+    public static List<File> testFiles() {
         return loadTestFiles(sparkRuntimeTestsDirectory);
     }
 }

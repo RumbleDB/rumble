@@ -25,6 +25,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import java.io.File;
+import java.util.List;
 
 @ParameterizedClass
 @MethodSource("testFiles")
@@ -54,7 +55,7 @@ public class NativeFLWORRuntimeTestsParallelismDeactivated extends RuntimeTests 
                 "/src/test/resources/test_files/runtime-native-flwor"
     );
 
-    public static java.util.List<File> testFiles() {
+    public static List<File> testFiles() {
         return loadTestFiles(nativeFlworRuntimeTestsDirectory);
     }
 }
