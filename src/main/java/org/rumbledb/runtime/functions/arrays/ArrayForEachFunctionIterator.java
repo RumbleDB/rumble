@@ -37,8 +37,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}:
@@ -113,17 +111,19 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         Item action = actionItems.get(0);
-        if (!acceptsSingleArgument(action)) {
+        if (!action.isFunction()) {
             throw new UnexpectedTypeException(
-                    "Type error; second argument to array:for-each must accept exactly one argument.",
+                    "Type error; second argument to array:for-each must be a function item "
+                        + "(function(item()*) as item()*).",
                     getMetadata()
             );
         }
+        FunctionItem functionItem = (FunctionItem) action;
 
         boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(memberSequences.size());
         for (List<Item> memberSequence : memberSequences) {
-            List<Item> result = applyAction(action, memberSequence, context);
+            List<Item> result = applyAction(functionItem, memberSequence, context);
             if (allSingleton && result.size() != 1) {
                 allSingleton = false;
             }
@@ -185,31 +185,22 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
     /**
      * Invokes {@code $action} with the array member as {@code item()*} (one argument, sequence type).
      */
-    private static boolean acceptsSingleArgument(Item item) {
-        if (item.isMap() || item.isArray()) {
-            return true;
-        }
-        return item.isFunction() && item.getIdentifier().getArity() == 1;
-    }
-
     private List<Item> applyAction(
-            Item actionItem,
+            FunctionItem functionItem,
             List<Item> memberSequence,
             DynamicContext context
     ) {
         RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
+
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
-                getConfiguration(),
-                org.rumbledb.types.SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(actionItem, functionItemContext),
-                arguments,
-                functionItemContext
+
+        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
+            functionItem,
+            this.staticContext,
+            ExecutionMode.LOCAL,
+            arguments,
+            false
         );
         return functionCall.materialize(context);
     }
