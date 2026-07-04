@@ -2,8 +2,9 @@ package org.rumbledb.runtime.functions.json;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.Serial;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -11,7 +12,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
@@ -21,10 +21,10 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import com.google.gson.stream.JsonReader;
 
 public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public JsonDocFunctionIterator(
@@ -53,46 +53,12 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         JSONParsingOptions options = JSONParsingOptions.resolveOptions(
             optionsItem,
             isJSONiq10,
+            context,
+            this.staticContext,
             getMetadata()
         );
 
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
-
-        if (optionsItem == null) {
-            try (
-                InputStream is = FileSystemUtil.getDataInputStream(
-                    uri,
-                    context.getRumbleRuntimeConfiguration(),
-                    getMetadata()
-                )
-            ) {
-                JsonReader object = new JsonReader(new InputStreamReader(is));
-                return ItemParser.getItemFromObject(
-                    object,
-                    isJSONiq10,
-                    options.getNumberFormat(),
-                    getMetadata(),
-                    false
-                );
-            } catch (CannotRetrieveResourceException e) {
-                UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
-                ex.initCause(e);
-                throw ex;
-            } catch (UnavailableResourceException e) {
-                throw e;
-            } catch (Exception e) {
-                String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
-
-                return ItemParser.getItemFromJSONString(
-                    jsonText,
-                    options,
-                    getConfiguration().getXmlVersion(),
-                    isJSONiq10,
-                    getMetadata()
-                );
-            }
-        }
-
 
         String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
 
@@ -172,7 +138,8 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             while ((nRead = is.read(data, 0, data.length)) != -1) {
                 buffer.write(data, 0, nRead);
             }
-            return buffer.toString(StandardCharsets.UTF_8);
+            byte[] bytes = buffer.toByteArray();
+            return new String(bytes, detectEncoding(bytes));
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Unable to read or decode the resource supplied to fn:json-doc().",
@@ -181,5 +148,48 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ex.initCause(e);
             throw ex;
         }
+    }
+
+    /**
+     * Detects the resource encoding as required by fn:json-doc: UTF-8, UTF-16, or UTF-32,
+     * from a leading byte-order mark or from the NUL pattern of the first
+     * bytes.
+     */
+    private static Charset detectEncoding(byte[] b) {
+        int b0 = b.length > 0 ? b[0] & 0xFF : -1;
+        int b1 = b.length > 1 ? b[1] & 0xFF : -1;
+        int b2 = b.length > 2 ? b[2] & 0xFF : -1;
+        int b3 = b.length > 3 ? b[3] & 0xFF : -1;
+
+        if (b0 == 0x00 && b1 == 0x00 && b2 == 0xFE && b3 == 0xFF) {
+            return Charset.forName("UTF-32BE");
+        }
+        if (b0 == 0xFF && b1 == 0xFE && b2 == 0x00 && b3 == 0x00) {
+            return Charset.forName("UTF-32LE");
+        }
+        if (b0 == 0xFE && b1 == 0xFF) {
+            return StandardCharsets.UTF_16BE;
+        }
+        if (b0 == 0xFF && b1 == 0xFE) {
+            return StandardCharsets.UTF_16LE;
+        }
+        if (b0 == 0xEF && b1 == 0xBB && b2 == 0xBF) {
+            return StandardCharsets.UTF_8;
+        }
+
+        if (b0 == 0x00 && b1 == 0x00 && b2 == 0x00 && b3 > 0x00) {
+            return Charset.forName("UTF-32BE");
+        }
+        if (b0 > 0x00 && b1 == 0x00 && b2 == 0x00 && b3 == 0x00) {
+            return Charset.forName("UTF-32LE");
+        }
+        if (b0 == 0x00 && b1 > 0x00) {
+            return StandardCharsets.UTF_16BE;
+        }
+        if (b0 > 0x00 && b1 == 0x00) {
+            return StandardCharsets.UTF_16LE;
+        }
+
+        return StandardCharsets.UTF_8;
     }
 }
