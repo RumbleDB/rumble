@@ -61,6 +61,17 @@ public class RumbleConfigurationTest {
         Assert.assertNull(configuration.get("input.queryPath"));
     }
 
+    @Test
+    public void getStringListReturnsTypedList() {
+        RumbleConfiguration configuration = configuration(
+            org.rumbledb.config.RumbleConfiguration.builder()
+                .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
+                .build()
+        );
+
+        Assert.assertEquals(List.of("file:", "https:"), configuration.getStringList("access.allowedPrefixes"));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void getRejectsUnknownPath() {
         new RumbleConfiguration().get("runtime.unknownOption");

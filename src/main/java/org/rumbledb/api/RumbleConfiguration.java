@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import java.util.List;
+
 import org.rumbledb.config.RumbleConfigurationResolver;
 
 public class RumbleConfiguration {
@@ -38,22 +40,26 @@ public class RumbleConfiguration {
         return RumbleConfigurationResolver.get(this.configuration, path);
     }
 
-    /**
-     * Returns a configuration value converted to the requested Java type.
-     *
-     * @param path dot-separated configuration path
-     * @param valueType requested Java type
-     * @param <T> requested Java type
-     * @return the value at the requested path
-     */
-    public <T> T get(String path, Class<T> valueType) {
-        return RumbleConfigurationResolver.get(this.configuration, path, valueType);
+    public int getInt(String path) {
+        return RumbleConfigurationResolver.get(this.configuration, path, Integer.class);
+    }
+
+    public String getString(String path) {
+        return RumbleConfigurationResolver.get(this.configuration, path, String.class);
+    }
+
+    public boolean getBoolean(String path) {
+        return RumbleConfigurationResolver.get(this.configuration, path, Boolean.class);
+    }
+
+    public List<String> getStringList(String path) {
+        return RumbleConfigurationResolver.getList(this.configuration, path, String.class);
     }
 
     /**
      * Returns the internal configuration object. This method is not meant to be used by the user (only for internal
      * purposes).
-     * 
+     *
      * @return the internal configuration object
      */
     org.rumbledb.config.RumbleConfiguration getInternalConfiguration() {

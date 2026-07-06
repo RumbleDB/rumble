@@ -1,10 +1,12 @@
 package org.rumbledb.config;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -31,14 +33,23 @@ public final class RumbleConfigurationResolver {
     }
 
     public static <T> T get(RumbleConfiguration configuration, String path, Class<T> valueType) {
-        Objects.requireNonNull(configuration, "Configuration cannot be null.");
         Objects.requireNonNull(valueType, "Value type cannot be null.");
+        return MAPPER.convertValue(getValue(configuration, path), valueType);
+    }
 
+    public static <T> List<T> getList(RumbleConfiguration configuration, String path, Class<T> elementType) {
+        Objects.requireNonNull(elementType, "List element type cannot be null.");
+        JavaType listType = MAPPER.getTypeFactory().constructCollectionType(List.class, elementType);
+        return MAPPER.convertValue(getValue(configuration, path), listType);
+    }
+
+    private static JsonNode getValue(RumbleConfiguration configuration, String path) {
+        Objects.requireNonNull(configuration, "Configuration cannot be null.");
         JsonNode value = getPath(MAPPER.valueToTree(configuration), path);
         if (value == null) {
             throw new IllegalArgumentException("Unknown configuration path: " + path);
         }
-        return MAPPER.convertValue(value, valueType);
+        return value;
     }
 
     public static ObjectNode toTree(Map<String, ?> entries) {
