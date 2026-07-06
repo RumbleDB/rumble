@@ -68,13 +68,13 @@ public class RumbleConfigurationTest {
     public void withEntriesApplyNestedOverrides() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
             .configureRuntime(runtime -> runtime.materializationCap(42))
-            .with("executionMode", "SERVE")
+            .with("executionMode", "RUN")
             .with("input.queryPath", "queries/main.jq")
             .with("runtime.resultsSizeCap", 100)
             .with("debug.showErrorInfo", true)
             .build();
 
-        Assert.assertEquals(RumbleMode.SERVE, configuration.executionMode());
+        Assert.assertEquals(RumbleMode.RUN, configuration.executionMode());
         Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
         Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
         Assert.assertEquals(42, configuration.runtime().materializationCap());

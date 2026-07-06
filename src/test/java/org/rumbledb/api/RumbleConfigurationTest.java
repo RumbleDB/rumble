@@ -30,14 +30,14 @@ public class RumbleConfigurationTest {
     public void getReturnsPlainJavaValues() {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
-                .executionMode(RumbleMode.SERVE)
+                .executionMode(RumbleMode.RUN)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
                 .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
                 .build()
         );
 
-        Assert.assertEquals("SERVE", configuration.get("executionMode"));
+        Assert.assertEquals("RUN", configuration.get("executionMode"));
         Assert.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
         Assert.assertEquals(true, configuration.get("debug.showErrorInfo"));
         Assert.assertEquals(List.of("file:", "https:"), configuration.get("access.allowedPrefixes"));

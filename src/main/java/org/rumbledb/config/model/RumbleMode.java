@@ -23,6 +23,5 @@ package org.rumbledb.config.model;
  */
 public enum RumbleMode {
     RUN,
-    SERVE,
     REPL
 }
