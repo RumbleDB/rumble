@@ -38,7 +38,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.NeutralItemType;
 import org.rumbledb.types.TypeMappings;
 
 public class ValidateTypeIterator extends HybridRuntimeIterator {
@@ -743,50 +742,4 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return type;
     }
 
-    public static ItemType inferSchemaTypeOfRDDItems(
-            JavaRDD<Item> itemRDD,
-            ExceptionMetadata metadata
-    ) {
-        // Handle empty RDD
-        if (itemRDD.isEmpty()) {
-            return BuiltinTypesCatalogue.item;
-        }
-
-        // Neutral element for aggregation
-        ItemType neutralElement = new NeutralItemType();
-
-        // Aggregate using Spark's aggregate method with findLeastCommonSuperTypeLax
-        ItemType result = itemRDD.aggregate(
-            neutralElement,
-            (ItemType acc, Item item) -> {
-                ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
-                return acc.equals(neutralElement) ? itemType : acc.findLeastCommonSuperTypeLax(itemType);
-            },
-            (ItemType a, ItemType b) -> {
-                if (a.equals(neutralElement))
-                    return b;
-                if (b.equals(neutralElement))
-                    return a;
-                return a.findLeastCommonSuperTypeLax(b);
-            }
-        );
-
-        return result;
-    }
-
-    public static ItemType inferSchemaTypeOfLocalItems(
-            List<Item> items,
-            ExceptionMetadata metadata
-    ) {
-        if (items.isEmpty()) {
-            return BuiltinTypesCatalogue.item;
-        }
-
-        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
-        for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeLax(ItemTypeFactory.createItemTypeFromItem(items.get(i)));
-        }
-
-        return result;
-    }
 }

@@ -20,48 +20,24 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
+import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
 import org.apache.spark.SparkConf;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.spark.SparkSessionManager;
-
-import scala.Function0;
-import scala.util.Properties;
-import utils.FileManager;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.io.IOException;
 import java.util.List;
 
-@RunWith(Parameterized.class)
-public class XQueryTests extends AnnotationsTestsBase {
+public class XQueryTests extends SparkAnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/xquery-parser"
     );
-    public static final String javaVersion =
-        System.getProperty("java.version");
-    public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", new Function0<String>() {
-            @Override
-            public String apply() {
-                return "unknown";
-            }
-        });
-    protected static List<File> _testFiles = new ArrayList<>();
-    protected final File testFile;
 
-    public XQueryTests(File testFile) {
-        this.testFile = testFile;
-    }
-
+    @Override
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
@@ -76,48 +52,19 @@ public class XQueryTests extends AnnotationsTestsBase {
         );
     }
 
-    public static void readFileList(File dir) {
-        XQueryTests._testFiles.addAll(FileManager.loadJiqFiles(dir));
+    @Override
+    protected File testDirectory() {
+        return runtimeTestsDirectory;
     }
 
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        XQueryTests.readFileList(XQueryTests.runtimeTestsDirectory);
-        XQueryTests._testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
+    @Override
+    protected List<File> testFiles() throws IOException {
+        return TestFileDiscovery.files(testDirectory(), ".jq", ".xq", ".xqy", ".xquery");
     }
 
-    @BeforeClass
-    public static void setupSparkSession() {
-        SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
-        SparkConf sparkConfiguration = new SparkConf();
-        sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.submit.deployMode", "client");
-        sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+    @Override
+    protected void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
         sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
-
-        // prevents spark from failing to start on MacOS when disconnected from the internet
-        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
-
-        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
-    }
-
-    @Test(timeout = 1000000)
-    public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
     }
 }
