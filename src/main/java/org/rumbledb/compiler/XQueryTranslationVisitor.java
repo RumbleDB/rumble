@@ -27,7 +27,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -189,7 +191,8 @@ import java.util.stream.Collectors;
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
+    private ExternalBindings externalBindings;
     private boolean isMainModule;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
@@ -198,25 +201,28 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
             String code,
             CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
+        this.externalBindings = externalBindings;
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
 
-        if (configuration.getQueryLanguage().equals("xquery10")) {
+        String queryLanguage = configuration.semantics().queryLanguage();
+        if (queryLanguage.equals("xquery10")) {
             this.moduleContext.setQueryLanguage("xquery10");
-        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+        } else if (queryLanguage.equals("xquery30")) {
             this.moduleContext.setQueryLanguage("xquery30");
-        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+        } else if (queryLanguage.equals("xquery31")) {
             this.moduleContext.setQueryLanguage("xquery31");
-        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+        } else if (queryLanguage.equals("xquery40")) {
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -264,67 +270,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         // We override with a context item declaration if not present already.
         Program program = (Program) this.visitProgram(ctx.program());
-        if (!prolog.hasContextItemDeclaration()) {
-            if (
-                this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
-                    || this.configuration.getUnparsedExternalVariableValue(Name.CONTEXT_ITEM) != null
-            ) {
-                System.err.println("[WARNING] Adding context item declaration.");
-                prolog.addDeclaration(
-                    new VariableDeclaration(
-                            Name.CONTEXT_ITEM,
-                            true,
-                            SequenceType.createSequenceType("item"),
-                            null,
-                            null,
-                            createMetadataFromContext(ctx)
-                    )
-                );
-            }
-        }
-        for (Name externalVariable : this.configuration.getExternalVariablesReadFromDataFrames()) {
-            boolean isAlreadyDeclared = false;
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                if (declaration.getVariableName().equals(externalVariable)) {
-                    isAlreadyDeclared = true;
-                    continue;
-                }
-            }
-            if (isAlreadyDeclared) {
-                continue;
-            }
-            Dataset<Row> dataFrame = this.configuration.getExternalVariableValueReadFromDataFrame(externalVariable);
-            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+        if (!prolog.hasContextItemDeclaration() && getExternalVariableType(Name.CONTEXT_ITEM) != null) {
+            System.err.println("[WARNING] Adding context item declaration.");
             prolog.addDeclaration(
                 new VariableDeclaration(
-                        externalVariable,
+                        Name.CONTEXT_ITEM,
                         true,
-                        new SequenceType(
-                                itemType,
-                                SequenceType.Arity.ZeroOrMore
-                        ),
-                        null,
-                        null,
-                        createMetadataFromContext(ctx)
-                )
-            );
-        }
-        for (Name externalVariable : this.configuration.getExternalVariablesReadFromListsOfItems()) {
-            boolean isAlreadyDeclared = false;
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                if (declaration.getVariableName().equals(externalVariable)) {
-                    isAlreadyDeclared = true;
-                    continue;
-                }
-            }
-            if (isAlreadyDeclared) {
-                continue;
-            }
-            prolog.addDeclaration(
-                new VariableDeclaration(
-                        externalVariable,
-                        true,
-                        SequenceType.createSequenceType("item*"),
+                        SequenceType.createSequenceType("item"),
                         null,
                         null,
                         createMetadataFromContext(ctx)
@@ -332,9 +284,53 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             );
         }
 
+        for (Name externalVariable : this.externalBindings.names()) {
+            if (externalVariable.equals(Name.CONTEXT_ITEM) || hasDeclaration(prolog, externalVariable)) {
+                continue;
+            }
+
+            SequenceType sequenceType = getExternalVariableType(externalVariable);
+            if (sequenceType != null) {
+                prolog.addDeclaration(
+                    new VariableDeclaration(
+                            externalVariable,
+                            true,
+                            sequenceType,
+                            null,
+                            null,
+                            createMetadataFromContext(ctx)
+                    )
+                );
+            }
+        }
+
         MainModule module = new MainModule(prolog, program, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
+    }
+
+    private boolean hasDeclaration(Prolog prolog, Name variableName) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (declaration.getVariableName().equals(variableName)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private SequenceType getExternalVariableType(Name variableName) {
+        DataFrameBinding dataFrameBinding = this.externalBindings.get(variableName, DataFrameBinding.class)
+            .orElse(null);
+        if (dataFrameBinding != null) {
+            Dataset<Row> dataFrame = dataFrameBinding.getDataFrame();
+            ItemType itemType = ItemTypeFactory.createItemType(dataFrame.schema());
+            return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
+        }
+
+        if (this.externalBindings.get(variableName).isPresent()) {
+            return SequenceType.createSequenceType("item*");
+        }
+        return null;
     }
 
     // region program

@@ -218,7 +218,14 @@ public class VisitorHelpers {
         UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
         executionModes.setQueryLanguage(configuration.semantics().queryLanguage());
         moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query, jsoniqTokens);
+        TranslationVisitor visitor = new TranslationVisitor(
+                moduleContext,
+                true,
+                configuration,
+                externalBindings,
+                query,
+                jsoniqTokens
+        );
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
@@ -301,6 +308,7 @@ public class VisitorHelpers {
                 moduleContext,
                 true,
                 configuration,
+                externalBindings,
                 query,
                 xQueryTokens
         );
@@ -377,7 +385,14 @@ public class VisitorHelpers {
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query, jsoniqTokens);
+        TranslationVisitor visitor = new TranslationVisitor(
+                moduleContext,
+                false,
+                configuration,
+                new ExternalBindings(),
+                query,
+                jsoniqTokens
+        );
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
@@ -419,6 +434,7 @@ public class VisitorHelpers {
                 moduleContext,
                 false,
                 configuration,
+                new ExternalBindings(),
                 query,
                 xQueryTokens
         );
