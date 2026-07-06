@@ -69,7 +69,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
             );
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                 getMetadata()
             );
             YAMLFactory factory = new YAMLFactory();

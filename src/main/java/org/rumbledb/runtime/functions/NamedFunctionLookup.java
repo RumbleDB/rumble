@@ -18,7 +18,7 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.DynamicContext;
@@ -41,7 +41,7 @@ public final class NamedFunctionLookup {
     public static Item lookupOrNull(
             FunctionIdentifier identifier,
             DynamicContext dynamicContext,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             ExceptionMetadata metadata
     ) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
@@ -52,7 +52,7 @@ public final class NamedFunctionLookup {
         }
         BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
             identifier,
-            configuration.getQueryLanguage()
+            configuration.semantics().queryLanguage()
         );
         if (builtin != null) {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
