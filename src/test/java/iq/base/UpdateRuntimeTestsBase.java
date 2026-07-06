@@ -18,7 +18,7 @@
 package iq.base;
 
 import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
 
@@ -33,27 +33,14 @@ import java.util.TreeMap;
 public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     @Override
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--dates-with-timezone",
-                    "yes",
-                    "--print-iterator-tree",
-                    "yes",
-                    "--show-error-info",
-                    "yes",
-                    "--apply-updates",
-                    "yes",
-                    "--materialization-cap",
-                    "900000",
-                    "--result-size",
-                    "900000"
-                }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return TestConfigurations.defaultConfigurationBuilder()
+            .configureDebug(debug -> debug.showErrorInfo(true))
+            .configureRuntime(
+                runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
+            )
+            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+            .build();
     }
 
     @Override
