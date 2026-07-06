@@ -124,7 +124,7 @@ public class RumbleConfiguration {
             return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
         }
 
-        public RumbleConfigurationBuilder accessWith(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureAccess(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
             AccessConfig.AccessConfigBuilder builder = this.access == null
                 ? AccessConfig.builder()
                 : this.access.toBuilder();
@@ -132,7 +132,7 @@ public class RumbleConfiguration {
             return access(builder.build());
         }
 
-        public RumbleConfigurationBuilder inputWith(Consumer<InputConfig.InputConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureInput(Consumer<InputConfig.InputConfigBuilder> customizer) {
             InputConfig.InputConfigBuilder builder = this.input == null
                 ? InputConfig.builder()
                 : this.input.toBuilder();
@@ -140,7 +140,7 @@ public class RumbleConfiguration {
             return input(builder.build());
         }
 
-        public RumbleConfigurationBuilder outputWith(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureOutput(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
             OutputConfig.OutputConfigBuilder builder = this.output == null
                 ? OutputConfig.builder()
                 : this.output.toBuilder();
@@ -148,7 +148,7 @@ public class RumbleConfiguration {
             return output(builder.build());
         }
 
-        public RumbleConfigurationBuilder runtimeWith(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureRuntime(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
             RuntimeConfig.RuntimeConfigBuilder builder = this.runtime == null
                 ? RuntimeConfig.builder()
                 : this.runtime.toBuilder();
@@ -156,7 +156,7 @@ public class RumbleConfiguration {
             return runtime(builder.build());
         }
 
-        public RumbleConfigurationBuilder debugWith(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureDebug(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
             DebugConfig.DebugConfigBuilder builder = this.debug == null
                 ? DebugConfig.builder()
                 : this.debug.toBuilder();
@@ -164,7 +164,7 @@ public class RumbleConfiguration {
             return debug(builder.build());
         }
 
-        public RumbleConfigurationBuilder analysisWith(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureAnalysis(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
             AnalysisConfig.AnalysisConfigBuilder builder = this.analysis == null
                 ? AnalysisConfig.builder()
                 : this.analysis.toBuilder();
@@ -172,7 +172,7 @@ public class RumbleConfiguration {
             return analysis(builder.build());
         }
 
-        public RumbleConfigurationBuilder optimizationWith(
+        public RumbleConfigurationBuilder configureOptimization(
                 Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
         ) {
             OptimizationConfig.OptimizationConfigBuilder builder = this.optimization == null
@@ -182,7 +182,9 @@ public class RumbleConfiguration {
             return optimization(builder.build());
         }
 
-        public RumbleConfigurationBuilder semanticsWith(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
+        public RumbleConfigurationBuilder configureSemantics(
+                Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer
+        ) {
             SemanticsConfig.SemanticsConfigBuilder builder = this.semantics == null
                 ? SemanticsConfig.builder()
                 : this.semantics.toBuilder();
@@ -190,7 +192,7 @@ public class RumbleConfiguration {
             return semantics(builder.build());
         }
 
-        public RumbleConfigurationBuilder formattingWith(
+        public RumbleConfigurationBuilder configureFormatting(
                 Consumer<FormattingConfig.FormattingConfigBuilder> customizer
         ) {
             FormattingConfig.FormattingConfigBuilder builder = this.formatting == null

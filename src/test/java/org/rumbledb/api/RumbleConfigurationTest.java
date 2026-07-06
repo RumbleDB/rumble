@@ -31,9 +31,9 @@ public class RumbleConfigurationTest {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
                 .executionMode(ExecutionMode.SERVE)
-                .runtimeWith(runtime -> runtime.resultsSizeCap(100))
-                .debugWith(debug -> debug.showErrorInfo(true))
-                .accessWith(access -> access.allowedPrefixes(List.of("file:", "https:")))
+                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
+                .configureDebug(debug -> debug.showErrorInfo(true))
+                .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
                 .build()
         );
 
