@@ -19,6 +19,8 @@
 package org.rumbledb.config.model;
 
 
+import java.io.Serializable;
+
 import org.rumbledb.serialization.SerializationParameters;
 
 import lombok.Builder;
@@ -31,7 +33,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class OutputConfig {
+public class OutputConfig implements Serializable {
     public static final int DEFAULT_NUMBER_OF_OUTPUT_PARTITIONS = -1;
 
     /**

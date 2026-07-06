@@ -18,6 +18,8 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serializable;
+
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Value;
@@ -28,7 +30,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class DebugConfig {
+public class DebugConfig implements Serializable {
     /**
      * Whether verbose error info should be shown in case an error is returned.
      */

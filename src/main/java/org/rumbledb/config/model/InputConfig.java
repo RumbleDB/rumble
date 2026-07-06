@@ -18,6 +18,8 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serializable;
+
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
@@ -27,7 +29,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class InputConfig {
+public class InputConfig implements Serializable {
     /**
      * Path from which the JSONiq or XQuery query is to be read.
      */

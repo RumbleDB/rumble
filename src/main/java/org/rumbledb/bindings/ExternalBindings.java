@@ -2,6 +2,7 @@ package org.rumbledb.bindings;
 
 import org.rumbledb.context.Name;
 
+import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -17,7 +18,7 @@ import java.util.Set;
  * configuration. The model is broader than what the current runtime bridge can consume so the public API can settle
  * before the remaining plumbing is migrated away from {@code RumbleRuntimeConfiguration}.
  */
-public final class ExternalBindings {
+public final class ExternalBindings implements Serializable {
     private final Map<Name, Binding> variables;
 
     public ExternalBindings() {

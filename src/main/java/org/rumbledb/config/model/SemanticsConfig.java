@@ -18,6 +18,7 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -33,7 +34,7 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = SemanticsConfig.SemanticsConfigBuilder.class)
-public class SemanticsConfig {
+public class SemanticsConfig implements Serializable {
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";

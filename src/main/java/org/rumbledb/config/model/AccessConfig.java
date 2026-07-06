@@ -18,6 +18,7 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 import lombok.Builder;
@@ -30,7 +31,7 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class AccessConfig {
+public class AccessConfig implements Serializable {
     /**
      * Allowed URI prefixes for read/write (with I/O functions to read data)
      */
