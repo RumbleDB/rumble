@@ -8,6 +8,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Map;
 import java.util.Objects;
 
+/**
+ * Utility class to manipulate RumbleConfiguration as JSON objects.
+ * 
+ * This is mainly used for the public configuration API. Our internal Java code should use the RumbleConfiguration class
+ * directly, and not rely on this class because it is not type-safe and does not provide compile-time guarantees.
+ */
 public final class RumbleConfigurationResolver {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
