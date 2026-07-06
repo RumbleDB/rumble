@@ -378,7 +378,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String input = FlworDataFrameUtils.createTempView(df);
 
         Dataset<Row> nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 variableAccessNames,

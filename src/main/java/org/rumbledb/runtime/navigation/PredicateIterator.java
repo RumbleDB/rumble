@@ -252,7 +252,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 context
         );
         NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQuery = filter.generateNativeQuery(nativeClauseContext);
         }
         if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {

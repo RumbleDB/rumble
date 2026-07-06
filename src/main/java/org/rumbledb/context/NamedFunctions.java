@@ -176,7 +176,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         String queryLanguage = function.getModuleDynamicContext()
             .getRumbleConfiguration()
-            .semantics().queryLanguage();
+            .semantics()
+            .queryLanguage();
         if (
             BuiltinFunctionCatalogue.exists(functionIdentifier, queryLanguage)
                 || this.userDefinedFunctions.containsKey(functionIdentifier)
