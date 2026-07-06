@@ -30,8 +30,9 @@ public final class TestConfigurations {
 
     public static RumbleConfiguration defaultConfiguration() {
         return RumbleConfiguration.builder()
-                .configureDebug(d -> d.printIteratorTree(true))
-                .configureRuntime(r -> r.materializationCap(200)).build();
+            .configureDebug(d -> d.printIteratorTree(true))
+            .configureRuntime(r -> r.materializationCap(200))
+            .build();
     }
 
     public static ExternalBindings defaultExternalBindings() {

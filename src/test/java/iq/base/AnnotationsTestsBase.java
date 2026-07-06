@@ -24,7 +24,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import utils.annotations.AnnotationParseException;
 
 import java.io.File;
@@ -33,7 +33,7 @@ import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AnnotationsTestsBase {
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return TestConfigurations.defaultConfiguration();
     }
 
