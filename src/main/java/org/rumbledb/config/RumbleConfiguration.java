@@ -40,7 +40,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Temporary aggregate for the new typed configuration model.
@@ -127,13 +126,10 @@ public class RumbleConfiguration {
         }
 
         private <T, B> T configureSection(
-                T currentValue,
-                Supplier<B> emptyBuilder,
-                Function<T, B> toBuilder,
+                B builder,
                 Consumer<B> customizer,
                 Function<B, T> build
         ) {
-            B builder = currentValue == null ? emptyBuilder.get() : toBuilder.apply(currentValue);
             customizer.accept(builder);
             return build.apply(builder);
         }
@@ -141,9 +137,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder accessWith(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
             return access(
                 configureSection(
-                    this.access,
-                    AccessConfig::builder,
-                    AccessConfig::toBuilder,
+                    this.access == null ? AccessConfig.builder() : this.access.toBuilder(),
                     customizer,
                     AccessConfig.AccessConfigBuilder::build
                 )
@@ -153,9 +147,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder inputWith(Consumer<InputConfig.InputConfigBuilder> customizer) {
             return input(
                 configureSection(
-                    this.input,
-                    InputConfig::builder,
-                    InputConfig::toBuilder,
+                    this.input == null ? InputConfig.builder() : this.input.toBuilder(),
                     customizer,
                     InputConfig.InputConfigBuilder::build
                 )
@@ -165,9 +157,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder outputWith(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
             return output(
                 configureSection(
-                    this.output,
-                    OutputConfig::builder,
-                    OutputConfig::toBuilder,
+                    this.output == null ? OutputConfig.builder() : this.output.toBuilder(),
                     customizer,
                     OutputConfig.OutputConfigBuilder::build
                 )
@@ -177,9 +167,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder runtimeWith(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
             return runtime(
                 configureSection(
-                    this.runtime,
-                    RuntimeConfig::builder,
-                    RuntimeConfig::toBuilder,
+                    this.runtime == null ? RuntimeConfig.builder() : this.runtime.toBuilder(),
                     customizer,
                     RuntimeConfig.RuntimeConfigBuilder::build
                 )
@@ -189,9 +177,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder debugWith(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
             return debug(
                 configureSection(
-                    this.debug,
-                    DebugConfig::builder,
-                    DebugConfig::toBuilder,
+                    this.debug == null ? DebugConfig.builder() : this.debug.toBuilder(),
                     customizer,
                     DebugConfig.DebugConfigBuilder::build
                 )
@@ -201,9 +187,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder analysisWith(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
             return analysis(
                 configureSection(
-                    this.analysis,
-                    AnalysisConfig::builder,
-                    AnalysisConfig::toBuilder,
+                    this.analysis == null ? AnalysisConfig.builder() : this.analysis.toBuilder(),
                     customizer,
                     AnalysisConfig.AnalysisConfigBuilder::build
                 )
@@ -215,9 +199,7 @@ public class RumbleConfiguration {
         ) {
             return optimization(
                 configureSection(
-                    this.optimization,
-                    OptimizationConfig::builder,
-                    OptimizationConfig::toBuilder,
+                    this.optimization == null ? OptimizationConfig.builder() : this.optimization.toBuilder(),
                     customizer,
                     OptimizationConfig.OptimizationConfigBuilder::build
                 )
@@ -227,9 +209,7 @@ public class RumbleConfiguration {
         public RumbleConfigurationBuilder semanticsWith(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
             return semantics(
                 configureSection(
-                    this.semantics,
-                    SemanticsConfig::builder,
-                    SemanticsConfig::toBuilder,
+                    this.semantics == null ? SemanticsConfig.builder() : this.semantics.toBuilder(),
                     customizer,
                     SemanticsConfig.SemanticsConfigBuilder::build
                 )
@@ -241,9 +221,7 @@ public class RumbleConfiguration {
         ) {
             return formatting(
                 configureSection(
-                    this.formatting,
-                    FormattingConfig::builder,
-                    FormattingConfig::toBuilder,
+                    this.formatting == null ? FormattingConfig.builder() : this.formatting.toBuilder(),
                     customizer,
                     FormattingConfig.FormattingConfigBuilder::build
                 )
