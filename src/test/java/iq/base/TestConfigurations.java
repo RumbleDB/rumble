@@ -28,11 +28,14 @@ public final class TestConfigurations {
     private TestConfigurations() {
     }
 
-    public static RumbleConfiguration defaultConfiguration() {
+    public static RumbleConfiguration.RumbleConfigurationBuilder defaultConfigurationBuilder() {
         return RumbleConfiguration.builder()
             .configureDebug(d -> d.printIteratorTree(true))
-            .configureRuntime(r -> r.materializationCap(200))
-            .build();
+            .configureRuntime(r -> r.materializationCap(200));
+    }
+
+    public static RumbleConfiguration defaultConfiguration() {
+        return defaultConfigurationBuilder().build();
     }
 
     public static ExternalBindings defaultExternalBindings() {
