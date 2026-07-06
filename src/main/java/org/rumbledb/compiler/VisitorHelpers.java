@@ -200,7 +200,6 @@ public class VisitorHelpers {
         } else {
             return parseJSONiqMainModule(query, uri, configuration);
         }
-
     }
 
     public static MainModule parseJSONiqMainModule(
