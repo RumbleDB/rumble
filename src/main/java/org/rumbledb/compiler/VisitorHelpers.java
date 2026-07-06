@@ -233,8 +233,6 @@ public class VisitorHelpers {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
 
-            boolean logging = configuration.debug().logging();
-
             debugPrintHeader(configuration, "Parsing program");
             MainModule mainModule = (MainModule) visitor.visit(modulectx);
 
