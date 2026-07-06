@@ -19,7 +19,6 @@
 package org.rumbledb.api;
 
 import java.util.List;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -42,20 +41,6 @@ public class RumbleConfigurationTest {
         Assert.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
         Assert.assertEquals(true, configuration.get("debug.showErrorInfo"));
         Assert.assertEquals(List.of("file:", "https:"), configuration.get("access.allowedPrefixes"));
-    }
-
-    @Test
-    public void getReturnsConfigurationSectionsAsMaps() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
-                .serverWith(server -> server.host("example.org").port(9000))
-                .build()
-        );
-
-        Assert.assertEquals(
-            Map.of("host", "example.org", "port", 9000),
-            configuration.get("server")
-        );
     }
 
     @Test

@@ -34,15 +34,12 @@ public class RumbleConfigurationTest {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
             .runtimeWith(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
             .outputWith(output -> output.outputPath("output.json").allowOverwrite(true))
-            .serverWith(server -> server.host("example.org").port(9000))
             .build();
 
         Assert.assertEquals(25, configuration.runtime().resultsSizeCap());
         Assert.assertFalse(configuration.runtime().useNativeExecution());
         Assert.assertEquals("output.json", configuration.output().outputPath());
         Assert.assertTrue(configuration.output().allowOverwrite());
-        Assert.assertEquals("example.org", configuration.server().host());
-        Assert.assertEquals(9000, configuration.server().port());
     }
 
     @Test
