@@ -69,7 +69,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
+                context.getRumbleConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -95,7 +95,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                     );
             }
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 

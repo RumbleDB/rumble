@@ -31,7 +31,7 @@ public class DeltaFileFunctionIterator extends DataFrameRuntimeIterator {
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+        if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 

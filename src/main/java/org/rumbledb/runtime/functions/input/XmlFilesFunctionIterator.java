@@ -72,7 +72,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleRuntimeConfiguration(),
+                context.getRumbleConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -95,7 +95,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                     partitions
                 );
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
@@ -108,7 +108,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
                 );
         }
         return strings.mapPartitions(
-            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleRuntimeConfiguration().optimizeParentPointers())
+            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleConfiguration().optimization().optimizeParentPointers())
         );
     }
 }
