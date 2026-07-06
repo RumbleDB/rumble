@@ -20,7 +20,7 @@ package iq.base;
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.BeforeAll;
 import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.spark.SparkSessionManager;
 
 public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
 
