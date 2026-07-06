@@ -20,8 +20,8 @@ package org.rumbledb.api;
 
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.rumbledb.config.model.RumbleMode;
 
 public class RumbleConfigurationTest {
@@ -37,10 +37,10 @@ public class RumbleConfigurationTest {
                 .build()
         );
 
-        Assert.assertEquals("RUN", configuration.get("mode"));
-        Assert.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
-        Assert.assertEquals(true, configuration.get("debug.showErrorInfo"));
-        Assert.assertEquals(List.of("file:", "https:"), configuration.get("access.allowedPrefixes"));
+        Assertions.assertEquals("RUN", configuration.get("mode"));
+        Assertions.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
+        Assertions.assertEquals(true, configuration.get("debug.showErrorInfo"));
+        Assertions.assertEquals(List.of("file:", "https:"), configuration.get("access.allowedPrefixes"));
     }
 
     @Test
@@ -51,14 +51,14 @@ public class RumbleConfigurationTest {
                 .build()
         );
 
-        Assert.assertEquals(RumbleMode.REPL, configuration.get("mode"));
+        Assertions.assertEquals(RumbleMode.REPL, configuration.get("mode"));
     }
 
     @Test
     public void getReturnsNullForConfiguredNullValue() {
         RumbleConfiguration configuration = new RumbleConfiguration();
 
-        Assert.assertNull(configuration.get("input.queryPath"));
+        Assertions.assertNull(configuration.get("input.queryPath"));
     }
 
     @Test
@@ -69,17 +69,23 @@ public class RumbleConfigurationTest {
                 .build()
         );
 
-        Assert.assertEquals(List.of("file:", "https:"), configuration.getStringList("access.allowedPrefixes"));
+        Assertions.assertEquals(List.of("file:", "https:"), configuration.getStringList("access.allowedPrefixes"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getRejectsUnknownPath() {
-        new RumbleConfiguration().get("runtime.unknownOption");
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new RumbleConfiguration().get("runtime.unknownOption")
+        );
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getRejectsInvalidPath() {
-        new RumbleConfiguration().get("runtime..resultsSizeCap");
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> new RumbleConfiguration().get("runtime..resultsSizeCap")
+        );
     }
 
     private static RumbleConfiguration configuration(

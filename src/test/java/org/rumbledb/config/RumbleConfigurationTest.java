@@ -21,8 +21,8 @@ package org.rumbledb.config;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.config.model.RuntimeConfig;
@@ -36,10 +36,10 @@ public class RumbleConfigurationTest {
             .configureOutput(output -> output.outputPath("output.json").allowOverwrite(true))
             .build();
 
-        Assert.assertEquals(25, configuration.runtime().resultsSizeCap());
-        Assert.assertFalse(configuration.runtime().useNativeExecution());
-        Assert.assertEquals("output.json", configuration.output().outputPath());
-        Assert.assertTrue(configuration.output().allowOverwrite());
+        Assertions.assertEquals(25, configuration.runtime().resultsSizeCap());
+        Assertions.assertFalse(configuration.runtime().useNativeExecution());
+        Assertions.assertEquals("output.json", configuration.output().outputPath());
+        Assertions.assertTrue(configuration.output().allowOverwrite());
     }
 
     @Test
@@ -58,10 +58,10 @@ public class RumbleConfigurationTest {
             .configureRuntime(runtime -> runtime.useNativeExecution(false))
             .build();
 
-        Assert.assertEquals(25, updated.runtime().resultsSizeCap());
-        Assert.assertEquals(42, updated.runtime().materializationCap());
-        Assert.assertFalse(updated.runtime().useParallelExecution());
-        Assert.assertFalse(updated.runtime().useNativeExecution());
+        Assertions.assertEquals(25, updated.runtime().resultsSizeCap());
+        Assertions.assertEquals(42, updated.runtime().materializationCap());
+        Assertions.assertFalse(updated.runtime().useParallelExecution());
+        Assertions.assertFalse(updated.runtime().useNativeExecution());
     }
 
     @Test
@@ -74,11 +74,11 @@ public class RumbleConfigurationTest {
             .with("debug.showErrorInfo", true)
             .build();
 
-        Assert.assertEquals(RumbleMode.RUN, configuration.mode());
-        Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
-        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
-        Assert.assertEquals(42, configuration.runtime().materializationCap());
-        Assert.assertTrue(configuration.debug().showErrorInfo());
+        Assertions.assertEquals(RumbleMode.RUN, configuration.mode());
+        Assertions.assertEquals("queries/main.jq", configuration.input().queryPath());
+        Assertions.assertEquals(100, configuration.runtime().resultsSizeCap());
+        Assertions.assertEquals(42, configuration.runtime().materializationCap());
+        Assertions.assertTrue(configuration.debug().showErrorInfo());
     }
 
     @Test
@@ -90,15 +90,18 @@ public class RumbleConfigurationTest {
             .with("runtime.resultsSizeCap", 100)
             .build();
 
-        Assert.assertEquals(RumbleMode.REPL, configuration.mode());
-        Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
+        Assertions.assertEquals(RumbleMode.REPL, configuration.mode());
+        Assertions.assertEquals(100, configuration.runtime().resultsSizeCap());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test()
     public void withUnknownEntryFailsFast() {
-        RumbleConfiguration.builder()
-            .with("runtime.unknownOption", true)
-            .build();
+        Assertions.assertThrows(
+            IllegalArgumentException.class,
+            () -> RumbleConfiguration.builder()
+                .with("runtime.unknownOption", true)
+                .build()
+        );
     }
 
     @Test
@@ -110,15 +113,17 @@ public class RumbleConfigurationTest {
 
         prefixes.add("https:");
 
-        Assert.assertEquals(List.of("file:"), configuration.allowedPrefixes());
+        Assertions.assertEquals(List.of("file:"), configuration.allowedPrefixes());
     }
 
-    @Test(expected = UnsupportedOperationException.class)
+    @Test
     public void accessConfigAllowedPrefixesCannotBeMutatedThroughAccessor() {
-        AccessConfig.builder()
-            .allowedPrefixes(List.of("file:"))
-            .build()
-            .allowedPrefixes()
-            .add("https:");
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> {
+            AccessConfig.builder()
+                .allowedPrefixes(List.of("file:"))
+                .build()
+                .allowedPrefixes()
+                .add("https:");
+        });
     }
 }
