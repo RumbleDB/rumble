@@ -3,7 +3,7 @@ package org.rumbledb.runtime.update.primitives;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.List;
@@ -138,7 +138,7 @@ public class UpdatePrimitiveFactory {
     public UpdatePrimitive createTruncateCollectionPrimitive(
             Collection collection,
             ExceptionMetadata metadata,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         return new TruncateCollectionPrimitive(collection, metadata, configuration);
     }

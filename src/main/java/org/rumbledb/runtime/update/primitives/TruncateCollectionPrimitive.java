@@ -1,6 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -13,12 +13,12 @@ import org.apache.spark.sql.SparkSession;
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
     private ExceptionMetadata metadata;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
 
     public TruncateCollectionPrimitive(
             Collection collection,
             ExceptionMetadata metadata,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         this.collection = collection;
         this.metadata = metadata;
