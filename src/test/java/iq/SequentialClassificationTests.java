@@ -5,6 +5,7 @@ import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -47,7 +48,8 @@ public class SequentialClassificationTests {
         );
         return VisitorHelpers.parseMainModuleFromLocation(
             uri,
-            configuration
+            configuration,
+            new ExternalBindings()
         );
     }
 
