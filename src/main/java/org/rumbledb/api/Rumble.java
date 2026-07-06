@@ -92,7 +92,7 @@ public class Rumble {
     public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration,
+            this.configuration,
             bindings
         );
         return createSequence(mainModule, bindings);
@@ -132,7 +132,7 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            configuration,
+            this.configuration,
             bindings
         );
         return createSequence(mainModule, bindings);
@@ -164,7 +164,7 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration,
+            this.configuration,
             ExternalBindings.empty().getInternalBindings()
         );
         StringBuilder sb = new StringBuilder();
