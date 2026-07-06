@@ -24,7 +24,7 @@ import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.config.model.AccessConfig;
-import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.config.model.RuntimeConfig;
 
 public class RumbleConfigurationTest {
@@ -74,7 +74,7 @@ public class RumbleConfigurationTest {
             .with("debug.showErrorInfo", true)
             .build();
 
-        Assert.assertEquals(ExecutionMode.SERVE, configuration.executionMode());
+        Assert.assertEquals(RumbleMode.SERVE, configuration.executionMode());
         Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
         Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
         Assert.assertEquals(42, configuration.runtime().materializationCap());
@@ -84,13 +84,13 @@ public class RumbleConfigurationTest {
     @Test
     public void withEntriesOverrideTypedBuilderValues() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .executionMode(ExecutionMode.RUN)
+            .executionMode(RumbleMode.RUN)
             .configureRuntime(runtime -> runtime.resultsSizeCap(25))
             .with("executionMode", "REPL")
             .with("runtime.resultsSizeCap", 100)
             .build();
 
-        Assert.assertEquals(ExecutionMode.REPL, configuration.executionMode());
+        Assert.assertEquals(RumbleMode.REPL, configuration.executionMode());
         Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
     }
 

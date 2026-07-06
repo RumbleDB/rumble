@@ -22,7 +22,7 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
-import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.RumbleMode;
 
 public class RumbleConfigurationTest {
 
@@ -30,7 +30,7 @@ public class RumbleConfigurationTest {
     public void getReturnsPlainJavaValues() {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
-                .executionMode(ExecutionMode.SERVE)
+                .executionMode(RumbleMode.SERVE)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
                 .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
@@ -47,11 +47,11 @@ public class RumbleConfigurationTest {
     public void getConvertsValueToRequestedType() {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
-                .executionMode(ExecutionMode.REPL)
+                .executionMode(RumbleMode.REPL)
                 .build()
         );
 
-        Assert.assertEquals(ExecutionMode.REPL, configuration.get("executionMode", ExecutionMode.class));
+        Assert.assertEquals(RumbleMode.REPL, configuration.get("executionMode", RumbleMode.class));
     }
 
     @Test

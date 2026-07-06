@@ -30,7 +30,7 @@ import org.rumbledb.cli.arguments.OptimizationArguments;
 import org.rumbledb.cli.arguments.RuntimeArguments;
 import org.rumbledb.cli.arguments.SemanticsArguments;
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.RumbleMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -62,7 +62,7 @@ public abstract class BaseCommand implements Callable<CLIInvocation> {
     @Mixin
     BindingsArguments bindings;
 
-    protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(ExecutionMode mode) {
+    protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
         return RumbleConfiguration.builder()
             .executionMode(mode)
             .access(this.access.toConfig())

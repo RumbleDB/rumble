@@ -27,7 +27,7 @@ import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
 import org.rumbledb.config.model.DebugConfig;
-import org.rumbledb.config.model.ExecutionMode;
+import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.config.model.FormattingConfig;
 import org.rumbledb.config.model.InputConfig;
 import org.rumbledb.config.model.OptimizationConfig;
@@ -51,7 +51,7 @@ public class RumbleConfiguration {
     /**
      * Application execution mode.
      */
-    private ExecutionMode executionMode;
+    private RumbleMode executionMode;
 
     private AccessConfig access;
 
@@ -73,7 +73,7 @@ public class RumbleConfiguration {
 
     @Builder(toBuilder = true)
     private RumbleConfiguration(
-            ExecutionMode executionMode,
+            RumbleMode executionMode,
             AccessConfig access,
             InputConfig input,
             OutputConfig output,
@@ -84,7 +84,7 @@ public class RumbleConfiguration {
             SemanticsConfig semantics,
             FormattingConfig formatting
     ) {
-        this.executionMode = Objects.requireNonNullElse(executionMode, ExecutionMode.RUN);
+        this.executionMode = Objects.requireNonNullElse(executionMode, RumbleMode.RUN);
         this.access = Objects.requireNonNullElseGet(access, () -> AccessConfig.builder().build());
         this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
         this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
