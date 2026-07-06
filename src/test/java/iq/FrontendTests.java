@@ -21,7 +21,9 @@
 package iq;
 
 
-import iq.base.AnnotationsTestsBase;
+import iq.base.AnnotationTestExecutor;
+import iq.base.TestConfigurations;
+import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -31,6 +33,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
@@ -38,8 +41,9 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+public class FrontendTests {
 
-public class FrontendTests extends AnnotationsTestsBase {
+    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
 
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -66,8 +70,8 @@ public class FrontendTests extends AnnotationsTestsBase {
     @Test
     @Timeout(1000)
     public void testGrammarAndParser() throws Throwable {
-        for (File testFile : loadTestFiles(grammarTestsDirectory)) {
-            runAnnotationTest(testFile, true);
+        for (File testFile : TestFileDiscovery.jsoniqFiles(grammarTestsDirectory)) {
+            AnnotationTestExecutor.run(testFile, configuration, true);
         }
 
     }
@@ -100,17 +104,17 @@ public class FrontendTests extends AnnotationsTestsBase {
     @Test
     @Timeout(1000)
     public void testSematicChecks() throws Throwable {
-        for (File testFile : loadTestFiles(semanticTestsDirectory)) {
-            runAnnotationTest(testFile, true);
+        for (File testFile : TestFileDiscovery.jsoniqFiles(semanticTestsDirectory)) {
+            AnnotationTestExecutor.run(testFile, configuration, true);
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
-                    getConfiguration(),
+                    configuration,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
                     uri,
-                    getConfiguration()
+                    configuration
                 );
 
                 testVariableTypes(mainModule);
