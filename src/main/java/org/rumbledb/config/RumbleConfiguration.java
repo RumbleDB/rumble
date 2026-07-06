@@ -34,7 +34,6 @@ import org.rumbledb.config.model.OptimizationConfig;
 import org.rumbledb.config.model.OutputConfig;
 import org.rumbledb.config.model.RuntimeConfig;
 import org.rumbledb.config.model.SemanticsConfig;
-import org.rumbledb.config.model.ServerConfig;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -55,8 +54,6 @@ public class RumbleConfiguration {
      * Application execution mode.
      */
     private ExecutionMode executionMode;
-
-    private ServerConfig server;
 
     private AccessConfig access;
 
@@ -79,7 +76,6 @@ public class RumbleConfiguration {
     @Builder(toBuilder = true)
     private RumbleConfiguration(
             ExecutionMode executionMode,
-            ServerConfig server,
             AccessConfig access,
             InputConfig input,
             OutputConfig output,
@@ -91,7 +87,6 @@ public class RumbleConfiguration {
             FormattingConfig formatting
     ) {
         this.executionMode = Objects.requireNonNullElse(executionMode, ExecutionMode.RUN);
-        this.server = Objects.requireNonNullElseGet(server, () -> ServerConfig.builder().build());
         this.access = Objects.requireNonNullElseGet(access, () -> AccessConfig.builder().build());
         this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
         this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
@@ -115,7 +110,6 @@ public class RumbleConfiguration {
         public RumbleConfiguration build() {
             RumbleConfiguration baseConfiguration = new RumbleConfiguration(
                     this.executionMode,
-                    this.server,
                     this.access,
                     this.input,
                     this.output,
@@ -142,18 +136,6 @@ public class RumbleConfiguration {
             B builder = currentValue == null ? emptyBuilder.get() : toBuilder.apply(currentValue);
             customizer.accept(builder);
             return build.apply(builder);
-        }
-
-        public RumbleConfigurationBuilder serverWith(Consumer<ServerConfig.ServerConfigBuilder> customizer) {
-            return server(
-                configureSection(
-                    this.server,
-                    ServerConfig::builder,
-                    ServerConfig::toBuilder,
-                    customizer,
-                    ServerConfig.ServerConfigBuilder::build
-                )
-            );
         }
 
         public RumbleConfigurationBuilder accessWith(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
