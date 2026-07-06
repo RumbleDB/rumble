@@ -34,7 +34,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.Serializer;
@@ -58,7 +58,7 @@ public class RumbleJLineShell {
     private static final String PROMPT = ANSIColor.CYAN + "RumbleDB$ " + ANSIColor.RESET;
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean printTime;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
@@ -66,7 +66,7 @@ public class RumbleJLineShell {
     private String currentQueryContent = "";
     private String welcomeMessage;
 
-    public RumbleJLineShell(RumbleRuntimeConfiguration configuration) throws IOException {
+    public RumbleJLineShell(RumbleConfiguration configuration) throws IOException {
         this.configuration = configuration;
         initialize();
         this.printTime = true;
@@ -89,7 +89,7 @@ public class RumbleJLineShell {
                     }
                 }
             } catch (Exception ex) {
-                handleException(ex, this.configuration.getShowErrorInfo());
+                handleException(ex, this.configuration.debug().showErrorInfo());
             }
         }
     }
@@ -100,14 +100,14 @@ public class RumbleJLineShell {
         List<Item> results = new ArrayList<>();
         try {
             long count = this.jsoniqQueryExecutor.runInteractive(query, results);
-            Serializer serializer = Serializers.from(this.configuration.getSerializationParameters());
+            Serializer serializer = Serializers.from(this.configuration.output().serializationParameters());
             String result = String.join(
                 "\n",
                 results.stream()
                     .map(x -> serializer.serialize(x))
                     .collect(Collectors.toList())
             );
-            String shell = this.configuration.getShellFilter();
+            String shell = this.configuration.output().shellFilter();
             if (shell != null) {
                 Process process = Runtime.getRuntime().exec(shell);
                 BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -128,14 +128,14 @@ public class RumbleJLineShell {
             }
             output(result);
             if (count != -1) {
-                JsoniqQueryExecutor.issueMaterializationWarning(count, this.configuration.getResultSizeCap());
+                JsoniqQueryExecutor.issueMaterializationWarning(count, this.configuration.runtime().resultsSizeCap());
             }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
                 output("The query took " + time + " milliseconds to execute.");
             }
         } catch (Exception ex) {
-            handleException(ex, this.configuration.getShowErrorInfo());
+            handleException(ex, this.configuration.debug().showErrorInfo());
         }
         this.queryStarted = false;
         this.currentQueryContent = "";
