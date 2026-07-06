@@ -1,7 +1,7 @@
 package org.rumbledb.types;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
@@ -29,16 +29,16 @@ public class ObjectItemTypeTest {
         );
 
         ItemType mergedType = left.findLeastCommonSuperTypeLax(right);
-        Assert.assertTrue(mergedType instanceof ObjectItemType);
+        Assertions.assertTrue(mergedType instanceof ObjectItemType);
         ObjectItemType mergedObject = (ObjectItemType) mergedType;
-        Assert.assertEquals(2, mergedObject.getObjectContentFacet().size());
-        Assert.assertFalse(
-            "Fields present on only one side of a lax merge are currently treated as optional.",
-            mergedObject.getObjectContentFacet("first").isRequired()
+        Assertions.assertEquals(2, mergedObject.getObjectContentFacet().size());
+        Assertions.assertFalse(
+            mergedObject.getObjectContentFacet("first").isRequired(),
+            "Fields present on only one side of a lax merge are currently treated as optional."
         );
-        Assert.assertFalse(mergedObject.getObjectContentFacet("second").isRequired());
-        Assert.assertTrue(mergedObject.getObjectContentFacet("second").isUnique());
-        Assert.assertFalse("Merged object should be open if any operand is open.", mergedObject.getClosedFacet());
+        Assertions.assertFalse(mergedObject.getObjectContentFacet("second").isRequired());
+        Assertions.assertTrue(mergedObject.getObjectContentFacet("second").isUnique());
+        Assertions.assertFalse(mergedObject.getClosedFacet(), "Merged object should be open if any operand is open.");
     }
 
     /**
@@ -71,17 +71,17 @@ public class ObjectItemTypeTest {
 
         FieldDescriptor mergedDescriptor = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
             .getObjectContentFacet("nested");
-        Assert.assertFalse(
-            "Nested field should be optional if any operand is optional.",
-            mergedDescriptor.isRequired()
+        Assertions.assertFalse(
+            mergedDescriptor.isRequired(),
+            "Nested field should be optional if any operand is optional."
         );
-        Assert.assertTrue("Nested field should be unique if any operand is unique.", mergedDescriptor.isUnique());
+        Assertions.assertTrue(mergedDescriptor.isUnique(), "Nested field should be unique if any operand is unique.");
         ItemType mergedNestedType = mergedDescriptor.getType();
-        Assert.assertTrue(mergedNestedType instanceof ObjectItemType);
+        Assertions.assertTrue(mergedNestedType instanceof ObjectItemType);
         ObjectItemType innerObject = (ObjectItemType) mergedNestedType;
-        Assert.assertEquals(2, innerObject.getObjectContentFacet().size());
-        Assert.assertTrue(innerObject.getObjectKeysFacet().contains("a"));
-        Assert.assertTrue(innerObject.getObjectKeysFacet().contains("b"));
+        Assertions.assertEquals(2, innerObject.getObjectContentFacet().size());
+        Assertions.assertTrue(innerObject.getObjectKeysFacet().contains("a"));
+        Assertions.assertTrue(innerObject.getObjectKeysFacet().contains("b"));
     }
 
     /**
@@ -112,7 +112,7 @@ public class ObjectItemTypeTest {
 
         FieldDescriptor merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
             .getObjectContentFacet("flag");
-        Assert.assertEquals(defaultTrue, merged.getDefaultValue());
+        Assertions.assertEquals(defaultTrue, merged.getDefaultValue());
 
         FieldDescriptor conflictingRight = field(
             "flag",
@@ -123,7 +123,7 @@ public class ObjectItemTypeTest {
         );
         merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(createObjectType(true, conflictingRight)))
             .getObjectContentFacet("flag");
-        Assert.assertNull("Conflicting defaults should be discarded.", merged.getDefaultValue());
+        Assertions.assertNull(merged.getDefaultValue(), "Conflicting defaults should be discarded.");
     }
 
     /**

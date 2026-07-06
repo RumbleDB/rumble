@@ -13,45 +13,43 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package iq;
+package iq.base;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
 
-import java.io.File;
+import java.util.List;
 
-public class NativeFLWORRuntimeTestsDataFramesDeactivated extends RuntimeTests {
+public final class TestConfigurations {
 
-    @Override
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--data-frame-execution",
-                    "no",
-                    "--materialization-cap",
-                    "100000",
-                    "--result-size",
-                    "200"
-                }
-        );
+    private TestConfigurations() {
     }
 
-    public static final File nativeFlworRuntimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-native-flwor"
-    );
-
-    @Override
-    protected File testDirectory() {
-        return nativeFlworRuntimeTestsDirectory;
+    public static RumbleRuntimeConfiguration defaultConfiguration() {
+        return new RumbleRuntimeConfiguration(
+                new String[] {
+                    "--print-iterator-tree",
+                    "yes",
+                    "--variable:externalUnparsedString",
+                    "unparsed string",
+                    "--materialization-cap",
+                    "200" }
+        ).setExternalVariableValue(
+            Name.createVariableInNoNamespace("externalStringItem"),
+            List.of(ItemFactory.getInstance().createStringItem("this is a string"))
+        )
+            .setExternalVariableValue(
+                Name.createVariableInNoNamespace("externalIntegerItems"),
+                List.of(
+                    ItemFactory.getInstance().createIntItem(1),
+                    ItemFactory.getInstance().createIntItem(2),
+                    ItemFactory.getInstance().createIntItem(3),
+                    ItemFactory.getInstance().createIntItem(4),
+                    ItemFactory.getInstance().createIntItem(5)
+                )
+            );
     }
 }

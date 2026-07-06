@@ -19,6 +19,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "anyAtomicType"),
             Collections.emptySet()
     );
+    public static final ItemType errorItem = new ErrorItemType();
     public static final ItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
@@ -759,6 +760,7 @@ public class BuiltinTypesCatalogue {
         processingInstructionNode,
         objectItem,
         atomicItem,
+        errorItem,
         stringItem,
         untypedAtomicItem,
         integerItem,
