@@ -21,7 +21,7 @@ public class RumbleConfiguration {
 
     /**
      * Returns a builder initialized with the current configuration values.
-     * 
+     *
      * @return a builder initialized with the current configuration values
      */
     public RumbleConfigurationBuilder toBuilder() {
