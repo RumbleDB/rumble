@@ -23,6 +23,7 @@ package org.rumbledb.cli;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -40,9 +41,15 @@ import java.util.stream.Collectors;
 
 public class JsoniqQueryExecutor {
     private RumbleConfiguration configuration;
+    private ExternalBindings externalBindings;
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration) {
+        this(configuration, new ExternalBindings());
+    }
+
+    public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
+        this.externalBindings = externalBindings.snapshot();
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
@@ -102,9 +109,9 @@ public class JsoniqQueryExecutor {
                         "It is not possible to specify both a --query and a --query-path. It is either or."
                 );
             }
-            sequence = rumble.runQuery(this.configuration.input().query());
+            sequence = rumble.runQuery(this.configuration.input().query(), this.externalBindings);
         } else {
-            sequence = rumble.runQuery(queryUri);
+            sequence = rumble.runQuery(queryUri, this.externalBindings);
         }
 
         if (outputPath != null) {
@@ -172,7 +179,7 @@ public class JsoniqQueryExecutor {
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
-        SequenceOfItems sequence = rumble.runQuery(query);
+        SequenceOfItems sequence = rumble.runQuery(query, this.externalBindings);
         if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
