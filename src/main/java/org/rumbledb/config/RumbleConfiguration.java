@@ -39,7 +39,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Temporary aggregate for the new typed configuration model.
@@ -125,107 +124,80 @@ public class RumbleConfiguration {
             return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
         }
 
-        private <T, B> T configureSection(
-                B builder,
-                Consumer<B> customizer,
-                Function<B, T> build
-        ) {
-            customizer.accept(builder);
-            return build.apply(builder);
-        }
-
         public RumbleConfigurationBuilder accessWith(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
-            return access(
-                configureSection(
-                    this.access == null ? AccessConfig.builder() : this.access.toBuilder(),
-                    customizer,
-                    AccessConfig.AccessConfigBuilder::build
-                )
-            );
+            AccessConfig.AccessConfigBuilder builder = this.access == null
+                ? AccessConfig.builder()
+                : this.access.toBuilder();
+            customizer.accept(builder);
+            return access(builder.build());
         }
 
         public RumbleConfigurationBuilder inputWith(Consumer<InputConfig.InputConfigBuilder> customizer) {
-            return input(
-                configureSection(
-                    this.input == null ? InputConfig.builder() : this.input.toBuilder(),
-                    customizer,
-                    InputConfig.InputConfigBuilder::build
-                )
-            );
+            InputConfig.InputConfigBuilder builder = this.input == null
+                ? InputConfig.builder()
+                : this.input.toBuilder();
+            customizer.accept(builder);
+            return input(builder.build());
         }
 
         public RumbleConfigurationBuilder outputWith(Consumer<OutputConfig.OutputConfigBuilder> customizer) {
-            return output(
-                configureSection(
-                    this.output == null ? OutputConfig.builder() : this.output.toBuilder(),
-                    customizer,
-                    OutputConfig.OutputConfigBuilder::build
-                )
-            );
+            OutputConfig.OutputConfigBuilder builder = this.output == null
+                ? OutputConfig.builder()
+                : this.output.toBuilder();
+            customizer.accept(builder);
+            return output(builder.build());
         }
 
         public RumbleConfigurationBuilder runtimeWith(Consumer<RuntimeConfig.RuntimeConfigBuilder> customizer) {
-            return runtime(
-                configureSection(
-                    this.runtime == null ? RuntimeConfig.builder() : this.runtime.toBuilder(),
-                    customizer,
-                    RuntimeConfig.RuntimeConfigBuilder::build
-                )
-            );
+            RuntimeConfig.RuntimeConfigBuilder builder = this.runtime == null
+                ? RuntimeConfig.builder()
+                : this.runtime.toBuilder();
+            customizer.accept(builder);
+            return runtime(builder.build());
         }
 
         public RumbleConfigurationBuilder debugWith(Consumer<DebugConfig.DebugConfigBuilder> customizer) {
-            return debug(
-                configureSection(
-                    this.debug == null ? DebugConfig.builder() : this.debug.toBuilder(),
-                    customizer,
-                    DebugConfig.DebugConfigBuilder::build
-                )
-            );
+            DebugConfig.DebugConfigBuilder builder = this.debug == null
+                ? DebugConfig.builder()
+                : this.debug.toBuilder();
+            customizer.accept(builder);
+            return debug(builder.build());
         }
 
         public RumbleConfigurationBuilder analysisWith(Consumer<AnalysisConfig.AnalysisConfigBuilder> customizer) {
-            return analysis(
-                configureSection(
-                    this.analysis == null ? AnalysisConfig.builder() : this.analysis.toBuilder(),
-                    customizer,
-                    AnalysisConfig.AnalysisConfigBuilder::build
-                )
-            );
+            AnalysisConfig.AnalysisConfigBuilder builder = this.analysis == null
+                ? AnalysisConfig.builder()
+                : this.analysis.toBuilder();
+            customizer.accept(builder);
+            return analysis(builder.build());
         }
 
         public RumbleConfigurationBuilder optimizationWith(
                 Consumer<OptimizationConfig.OptimizationConfigBuilder> customizer
         ) {
-            return optimization(
-                configureSection(
-                    this.optimization == null ? OptimizationConfig.builder() : this.optimization.toBuilder(),
-                    customizer,
-                    OptimizationConfig.OptimizationConfigBuilder::build
-                )
-            );
+            OptimizationConfig.OptimizationConfigBuilder builder = this.optimization == null
+                ? OptimizationConfig.builder()
+                : this.optimization.toBuilder();
+            customizer.accept(builder);
+            return optimization(builder.build());
         }
 
         public RumbleConfigurationBuilder semanticsWith(Consumer<SemanticsConfig.SemanticsConfigBuilder> customizer) {
-            return semantics(
-                configureSection(
-                    this.semantics == null ? SemanticsConfig.builder() : this.semantics.toBuilder(),
-                    customizer,
-                    SemanticsConfig.SemanticsConfigBuilder::build
-                )
-            );
+            SemanticsConfig.SemanticsConfigBuilder builder = this.semantics == null
+                ? SemanticsConfig.builder()
+                : this.semantics.toBuilder();
+            customizer.accept(builder);
+            return semantics(builder.build());
         }
 
         public RumbleConfigurationBuilder formattingWith(
                 Consumer<FormattingConfig.FormattingConfigBuilder> customizer
         ) {
-            return formatting(
-                configureSection(
-                    this.formatting == null ? FormattingConfig.builder() : this.formatting.toBuilder(),
-                    customizer,
-                    FormattingConfig.FormattingConfigBuilder::build
-                )
-            );
+            FormattingConfig.FormattingConfigBuilder builder = this.formatting == null
+                ? FormattingConfig.builder()
+                : this.formatting.toBuilder();
+            customizer.accept(builder);
+            return formatting(builder.build());
         }
     }
 }
