@@ -1237,7 +1237,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             ctx.op.get(0).getText()
         );
-        if (kind.isValueComparison() || this.configuration.optimization().optimizeGeneralComparisonToValueComparison()) {
+        if (
+            kind.isValueComparison() || this.configuration.optimization().optimizeGeneralComparisonToValueComparison()
+        ) {
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,

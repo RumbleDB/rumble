@@ -1156,7 +1156,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
             operatorSymbol
         );
-        if (kind.isValueComparison() || this.configuration.optimization().optimizeGeneralComparisonToValueComparison()) {
+        if (
+            kind.isValueComparison() || this.configuration.optimization().optimizeGeneralComparisonToValueComparison()
+        ) {
             return new ComparisonExpression(
                     mainExpression,
                     childExpression,
