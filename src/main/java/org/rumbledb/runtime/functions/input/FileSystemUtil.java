@@ -89,6 +89,7 @@ public class FileSystemUtil {
             RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
+        // TODO: conf is not used here, maybe we can remove it from the signature of this method and all its callers.
         try {
             Path workingDirectory = FileContext.getFileContext().getWorkingDirectory();
             Path virtualPath = new Path(workingDirectory, "foo");
