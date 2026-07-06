@@ -35,6 +35,16 @@ public class Rumble {
     }
 
     /**
+     * Creates a new Rumble instance from internal configuration.
+     * This should only be used for internal purposes.
+     * 
+     * @param configuration
+     */
+    public Rumble(org.rumbledb.config.RumbleConfiguration configuration) {
+        this(new RumbleConfiguration(configuration));
+    }
+
+    /**
      * Creates a new Rumble instance. It uses the supplied spark session.
      *
      */
