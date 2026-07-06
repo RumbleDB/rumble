@@ -14,7 +14,7 @@ public class RumbleConfiguration {
 
     public RumbleConfiguration() {
         // Initialize with default configuration values
-        this(org.rumbledb.config.RumbleConfiguration.builder().build());
+        this(org.rumbledb.config.RumbleConfiguration.defaultConfiguration());
     }
 
     public static RumbleConfigurationBuilder builder() {

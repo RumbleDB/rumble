@@ -71,6 +71,10 @@ public class RumbleConfiguration {
 
     private FormattingConfig formatting;
 
+    public static RumbleConfiguration defaultConfiguration() {
+        return RumbleConfiguration.builder().build();
+    }
+
     @Builder(toBuilder = true)
     private RumbleConfiguration(
             RumbleMode mode,
