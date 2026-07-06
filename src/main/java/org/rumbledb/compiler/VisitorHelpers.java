@@ -129,7 +129,11 @@ public class VisitorHelpers {
         }
     }
 
-    public static MainModule parseMainModuleFromLocation(URI location, RumbleConfiguration configuration)
+    public static MainModule parseMainModuleFromLocation(
+            URI location,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    )
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
@@ -140,7 +144,7 @@ public class VisitorHelpers {
                 ExceptionMetadata.EMPTY_METADATA
             );
         }
-        return parseMainModule(query, location, configuration);
+        return parseMainModule(query, location, configuration, externalBindings);
     }
 
     public static LibraryModule parseLibraryModuleFromLocation(
@@ -162,38 +166,48 @@ public class VisitorHelpers {
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
-    public static MainModule parseMainModuleFromQuery(String query, RumbleConfiguration configuration) {
+    public static MainModule parseMainModuleFromQuery(
+            String query,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    ) {
         String url = Objects.requireNonNullElse(configuration.semantics().staticBaseUri(), ".");
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             url,
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
-        return parseMainModule(query, location, configuration);
+        return parseMainModule(query, location, configuration, externalBindings);
     }
 
-    public static MainModule parseMainModule(String query, URI uri, RumbleConfiguration configuration) {
+    public static MainModule parseMainModule(
+            String query,
+            URI uri,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    ) {
         if (query.contains("xquery version")) {
-            return parseXQueryMainModule(query, uri, configuration);
+            return parseXQueryMainModule(query, uri, configuration, externalBindings);
         } else if (query.contains("jsoniq version")) {
-            return parseJSONiqMainModule(query, uri, configuration);
+            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
         }
         if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
-            return parseXQueryMainModule(query, uri, configuration);
+            return parseXQueryMainModule(query, uri, configuration, externalBindings);
         }
         if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
-            return parseJSONiqMainModule(query, uri, configuration);
+            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
         } else if (configuration.semantics().queryLanguage().startsWith("xquery")) {
-            return parseXQueryMainModule(query, uri, configuration);
+            return parseXQueryMainModule(query, uri, configuration, externalBindings);
         } else {
-            return parseJSONiqMainModule(query, uri, configuration);
+            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
         }
     }
 
     public static MainModule parseJSONiqMainModule(
             String query,
             URI uri,
-            RumbleConfiguration configuration
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
@@ -245,7 +259,7 @@ public class VisitorHelpers {
             mainModule = applyTypeDependentOptimizations(mainModule);
 
             debugPrintHeader(configuration, "Populating execution modes");
-            populateExecutionModes(mainModule, configuration);
+            populateExecutionModes(mainModule, configuration, externalBindings);
 
             debugPrintHeader(configuration, "Populating expression classifications");
             populateExpressionClassifications(mainModule, configuration);
@@ -271,7 +285,8 @@ public class VisitorHelpers {
     public static MainModule parseXQueryMainModule(
             String query,
             URI uri,
-            RumbleConfiguration configuration
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
@@ -302,7 +317,7 @@ public class VisitorHelpers {
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
-            populateExecutionModes(mainModule, configuration);
+            populateExecutionModes(mainModule, configuration, externalBindings);
             // TODO populate expression classifications here?
             // populateExpressionClassifications(mainModule, configuration);
             if (configuration.debug().printIteratorTree()) {
@@ -429,7 +444,11 @@ public class VisitorHelpers {
         }
     }
 
-    private static void populateExecutionModes(Module module, RumbleConfiguration conf) {
+    private static void populateExecutionModes(
+            Module module,
+            RumbleConfiguration conf,
+            ExternalBindings externalBindings
+    ) {
         if (conf.debug().printIteratorTree()) {
             debugPrintTree(module, conf);
         }
@@ -446,7 +465,7 @@ public class VisitorHelpers {
             }
             return;
         }
-        ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf);
+        ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf, externalBindings);
         visitor.visit(module, module.getStaticContext());
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);

@@ -21,7 +21,9 @@
 package org.rumbledb.compiler;
 
 import org.apache.log4j.LogManager;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.BuiltinFunctionExecutionModes;
@@ -96,12 +98,14 @@ import java.util.Map.Entry;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
+    private ExternalBindings externalBindings;
     private List<Statement> exitStatementChildren;
 
-    ExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
+    ExecutionModeVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
         this.configuration = configuration;
+        this.externalBindings = externalBindings;
         this.exitStatementChildren = new ArrayList<>();
     }
 
@@ -111,7 +115,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     public ExecutionMode DATAFRAMEifConfigurationAllows() {
-        if (this.configuration.dataFrameExecution()) {
+        if (this.configuration.runtime().useDataFrameExecution()) {
             return ExecutionMode.DATAFRAME;
         } else {
             return ExecutionMode.RDD;
@@ -583,9 +587,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (
             variableDeclaration.external()
                 && (arity.equals(Arity.ZeroOrMore) || arity.equals(Arity.OneOrMore))
-                && this.configuration.getExternalVariableValueReadFromDataFrame(
-                    variableDeclaration.getVariableName()
-                ) != null
+                && this.externalBindings.get(variableDeclaration.getVariableName(), DataFrameBinding.class).isPresent()
         ) {
             variableDeclaration.setVariableHighestStorageMode(ExecutionMode.DATAFRAME);
         } else {
@@ -950,7 +952,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getHighestExecutionMode().equals(ExecutionMode.RDD)) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
-        if (!this.configuration.getDataFrameExecutionModeDetection()) {
+        if (!this.configuration.runtime().detectDataFrameExecutionMode()) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         }
         return argument;

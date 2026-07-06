@@ -81,7 +81,8 @@ public class Rumble {
     public SequenceOfItems runQuery(String query, ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration
+            configuration,
+            bindings.getInternalBindings()
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
@@ -118,7 +119,8 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            configuration
+            configuration,
+            bindings.getInternalBindings()
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
@@ -142,7 +144,8 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration
+            configuration,
+            ExternalBindings.empty().getInternalBindings()
         );
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
