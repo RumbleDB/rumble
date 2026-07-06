@@ -1163,7 +1163,7 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         if (this.getPrimitiveType().equals(dateItem)) {
-            return !configuration.dateWithTimezone(); // xs:date has a time zone but not in DataFrames.
+            return !configuration.semantics().datesWithTimeZone(); // xs:date has a time zone but not in DataFrames.
         }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;
