@@ -24,6 +24,10 @@ public final class ExternalBindings {
         this.variables = new LinkedHashMap<>();
     }
 
+    public static ExternalBindings empty() {
+        return new ExternalBindings();
+    }
+
     private ExternalBindings(Map<Name, Binding> variables) {
         this.variables = new LinkedHashMap<>(variables);
     }

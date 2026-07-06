@@ -44,7 +44,7 @@ public class JsoniqQueryExecutor {
     private ExternalBindings externalBindings;
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration) {
-        this(configuration, new ExternalBindings());
+        this(configuration, ExternalBindings.empty());
     }
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {

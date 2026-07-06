@@ -12,7 +12,7 @@ public class ExternalBindings {
     private final org.rumbledb.bindings.ExternalBindings bindings;
 
     public ExternalBindings() {
-        this.bindings = new org.rumbledb.bindings.ExternalBindings();
+        this.bindings = org.rumbledb.bindings.ExternalBindings.empty();
     }
 
     public static ExternalBindings empty() {

@@ -39,7 +39,7 @@ public final class TestConfigurations {
     }
 
     public static ExternalBindings defaultExternalBindings() {
-        ExternalBindings externalBindings = new ExternalBindings();
+        ExternalBindings externalBindings = ExternalBindings.empty();
         externalBindings.bindItem(
             "externalStringItem",
             ItemFactory.getInstance().createStringItem("this is a string")

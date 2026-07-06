@@ -80,7 +80,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
      * @param conf the Rumble configuration.
      */
     public DynamicContext(RumbleConfiguration conf) {
-        this(conf, new ExternalBindings());
+        this(conf, ExternalBindings.empty());
     }
 
     public DynamicContext(RumbleConfiguration conf, ExternalBindings externalBindings) {

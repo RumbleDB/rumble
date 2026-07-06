@@ -27,6 +27,7 @@ import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -114,7 +115,8 @@ public class FrontendTests {
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
                     uri,
-                    configuration
+                    configuration,
+                    ExternalBindings.empty()
                 );
 
                 testVariableTypes(mainModule);

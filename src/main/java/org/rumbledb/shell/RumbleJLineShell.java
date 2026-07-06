@@ -69,7 +69,7 @@ public class RumbleJLineShell {
     private String welcomeMessage;
 
     public RumbleJLineShell(RumbleConfiguration configuration) throws IOException {
-        this(configuration, new ExternalBindings());
+        this(configuration, ExternalBindings.empty());
     }
 
     public RumbleJLineShell(RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {

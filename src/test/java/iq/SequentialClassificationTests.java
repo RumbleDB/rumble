@@ -49,7 +49,7 @@ public class SequentialClassificationTests {
         return VisitorHelpers.parseMainModuleFromLocation(
             uri,
             configuration,
-            new ExternalBindings()
+            ExternalBindings.empty()
         );
     }
 

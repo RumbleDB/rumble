@@ -387,7 +387,7 @@ public class VisitorHelpers {
                 moduleContext,
                 false,
                 configuration,
-                new ExternalBindings(),
+                ExternalBindings.empty(),
                 query,
                 jsoniqTokens
         );
@@ -432,7 +432,7 @@ public class VisitorHelpers {
                 moduleContext,
                 false,
                 configuration,
-                new ExternalBindings(),
+                ExternalBindings.empty(),
                 query,
                 xQueryTokens
         );
@@ -573,7 +573,7 @@ public class VisitorHelpers {
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleConfiguration configuration) {
-        return createDynamicContext(node, configuration, new ExternalBindings());
+        return createDynamicContext(node, configuration, ExternalBindings.empty());
     }
 
     public static DynamicContext createDynamicContext(
