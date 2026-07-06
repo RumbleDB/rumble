@@ -32,6 +32,7 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.api.Item;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleConfiguration;
@@ -59,6 +60,7 @@ public class RumbleJLineShell {
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean printTime;
     private final RumbleConfiguration configuration;
+    private final ExternalBindings externalBindings;
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
@@ -67,7 +69,12 @@ public class RumbleJLineShell {
     private String welcomeMessage;
 
     public RumbleJLineShell(RumbleConfiguration configuration) throws IOException {
+        this(configuration, new ExternalBindings());
+    }
+
+    public RumbleJLineShell(RumbleConfiguration configuration, ExternalBindings externalBindings) throws IOException {
         this.configuration = configuration;
+        this.externalBindings = externalBindings.snapshot();
         initialize();
         this.printTime = true;
     }
@@ -161,7 +168,7 @@ public class RumbleJLineShell {
             .highlighter(new DefaultHighlighter())
             // .parser(new JiqsJlineParser())
             .build();
-        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(this.configuration);
+        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(this.configuration, this.externalBindings);
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {
