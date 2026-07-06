@@ -51,7 +51,7 @@ public class RumbleConfigurationTest {
                 .build()
         );
 
-        Assert.assertEquals(RumbleMode.REPL, configuration.get("mode", RumbleMode.class));
+        Assert.assertEquals(RumbleMode.REPL, configuration.get("mode"));
     }
 
     @Test
