@@ -400,7 +400,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                         paramTypes,
                         returnType
                 ),
-                new DynamicContext(dynamicContext.getRumbleRuntimeConfiguration()),
+                new DynamicContext(dynamicContext.getRumbleConfiguration()),
                 bodyIterator
         );
     }
