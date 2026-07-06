@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -539,7 +540,15 @@ public class VisitorHelpers {
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleConfiguration configuration) {
-        DynamicContextVisitor visitor = new DynamicContextVisitor(configuration);
+        return createDynamicContext(node, configuration, new ExternalBindings());
+    }
+
+    public static DynamicContext createDynamicContext(
+            Node node,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    ) {
+        DynamicContextVisitor visitor = new DynamicContextVisitor(configuration, externalBindings);
         return visitor.visit(node, null);
     }
 
