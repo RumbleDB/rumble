@@ -12,7 +12,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -29,8 +29,8 @@ import java.util.List;
 
 public class FileSystemUtil {
 
-    public static void checkAllowed(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
-        List<String> prefixes = conf.getAllowedURIPrefixes();
+    public static void checkAllowed(URI uri, RumbleConfiguration conf, ExceptionMetadata metadata) {
+        List<String> prefixes = conf.access().allowedPrefixes();
         if (prefixes.isEmpty()) {
             return;
         }
@@ -86,7 +86,7 @@ public class FileSystemUtil {
 
     public static URI resolveURIAgainstWorkingDirectory(
             String url,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         try {
@@ -114,7 +114,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean exists(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    public static boolean exists(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
             throw new OurBadException("Unresolved uri passed to exists()");
         }
@@ -130,7 +130,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean delete(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    public static boolean delete(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         checkAllowed(locator, conf, metadata);
         try {
@@ -151,7 +151,7 @@ public class FileSystemUtil {
 
     public static InputStream getDataInputStream(
             URI locator,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
@@ -174,7 +174,7 @@ public class FileSystemUtil {
 
     public static InputStream getDataInputStreamHTML(
             URI locator,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkAllowed(locator, conf, metadata);
@@ -199,7 +199,7 @@ public class FileSystemUtil {
         return null;
     }
 
-    public static String readContent(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    public static String readContent(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         checkAllowed(locator, conf, metadata);
         InputStream inputStream = getDataInputStream(locator, conf, metadata);
@@ -221,7 +221,7 @@ public class FileSystemUtil {
     public static void write(
             URI locator,
             List<String> content,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
@@ -246,7 +246,7 @@ public class FileSystemUtil {
     public static void append(
             URI locator,
             List<String> content,
-            RumbleRuntimeConfiguration conf,
+            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
