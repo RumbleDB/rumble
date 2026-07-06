@@ -2,7 +2,6 @@ package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 import com.ibm.icu.util.ULocale;
 
-import org.apache.hadoop.shaded.org.xbill.DNS.tools.primary;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
