@@ -15,6 +15,10 @@ public class ExternalBindings {
         this.bindings = new org.rumbledb.bindings.ExternalBindings();
     }
 
+    public static ExternalBindings empty() {
+        return new ExternalBindings();
+    }
+
     public void bindItem(String variableName, Item item) {
         this.bindItems(variableName, List.of(item));
     }
