@@ -45,7 +45,7 @@ import java.util.Collections;
  *
  * <ul>
  * <li>
- * {@code xdmValue}: the string value stored in the resulting XDM item
+ * {@code resultValue}: the string value stored in the resulting item
  * </li>
  * <li>
  * {@code keyComparisonValue}: the value used to detect duplicate object keys
@@ -134,10 +134,10 @@ public final class JSONParser {
             case '[':
                 return parseArray();
             case '"':
-                return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
+                return ItemFactory.getInstance().createStringItem(parseString().resultValue);
             case '\'':
                 if (this.options.isLiberal()) {
-                    return ItemFactory.getInstance().createStringItem(parseString().xdmValue);
+                    return ItemFactory.getInstance().createStringItem(parseString().resultValue);
                 }
                 throw new InvalidJSONException(
                         "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
@@ -210,20 +210,20 @@ public final class JSONParser {
 
             if (existingIndex == null) {
                 seen.put(key.keyComparisonValue, keys.size());
-                keys.add(key.xdmValue);
+                keys.add(key.resultValue);
                 values.add(parsedValue);
             } else {
                 String policy = this.options.getDuplicates();
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.xdmValue + "' found in JSON object.",
+                            "Duplicate key '" + key.resultValue + "' found in JSON object.",
                             this.metadata
                     );
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
-                    keys.set(existingIndex, key.xdmValue);
+                    keys.set(existingIndex, key.resultValue);
                     values.set(existingIndex, parsedValue);
                 }
             }
@@ -411,12 +411,12 @@ public final class JSONParser {
      * Parses a quoted JSON string and returns both:
      *
      * <ul>
-     * <li>the XDM string value</li>
+     * <li>the result string value</li>
      * <li>the value used for duplicate-key comparison</li>
      * </ul>
      *
      * <p>
-     * The XDM value depends on the {@code escape} option:
+     * The result value depends on the {@code escape} option:
      * </p>
      *
      * <ul>
@@ -459,7 +459,7 @@ public final class JSONParser {
         }
         advance();
 
-        StringBuilder xdmValue = new StringBuilder();
+        StringBuilder resultValue = new StringBuilder();
         StringBuilder keyComparisonValue = new StringBuilder();
 
         while (!isEnd()) {
@@ -467,7 +467,7 @@ public final class JSONParser {
 
             if (c == quote) {
                 return new ParsedString(
-                        xdmValue.toString(),
+                        resultValue.toString(),
                         keyComparisonValue.toString()
                 );
             }
@@ -482,7 +482,7 @@ public final class JSONParser {
 
                 if (peek() == '\'' && this.options.isLiberal()) {
                     advance();
-                    handleEscapedCodePoint(xdmValue, keyComparisonValue, '\'', "\\'");
+                    handleEscapedCodePoint(resultValue, keyComparisonValue, '\'', "\\'");
                     continue;
                 }
 
@@ -491,7 +491,7 @@ public final class JSONParser {
                         JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
                     this.position = decodedEscape.getNextIndex();
                     appendDecodedEscape(
-                        xdmValue,
+                        resultValue,
                         keyComparisonValue,
                         decodedEscape.getDecodedText(),
                         decodedEscape.getRawEscape()
@@ -518,12 +518,12 @@ public final class JSONParser {
                 }
             }
 
-            if (this.options.isEscape() && shouldEscapeInXdmOutput(c)) {
+            if (this.options.isEscape() && shouldEscapeInOutput(c)) {
                 String escaped = normalizedEscapeForCodePoint(c);
-                xdmValue.append(escaped);
+                resultValue.append(escaped);
                 keyComparisonValue.append(escaped);
             } else {
-                xdmValue.append(c);
+                resultValue.append(c);
                 keyComparisonValue.append(c);
             }
         }
@@ -535,14 +535,14 @@ public final class JSONParser {
     }
 
     private void appendDecodedEscape(
-            StringBuilder xdmValue,
+            StringBuilder resultValue,
             StringBuilder keyComparisonValue,
             String decodedText,
             String originalEscape
     ) {
         if (decodedText.length() == 2 && Character.isSurrogatePair(decodedText.charAt(0), decodedText.charAt(1))) {
             handleEscapedCodePoint(
-                xdmValue,
+                resultValue,
                 keyComparisonValue,
                 Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
                 originalEscape
@@ -550,7 +550,7 @@ public final class JSONParser {
             return;
         }
         handleEscapedCodePoint(
-            xdmValue,
+            resultValue,
             keyComparisonValue,
             decodedText.charAt(0),
             originalEscape
@@ -566,7 +566,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: the actual string value stored in the XDM result
+     * {@code resultValue}: the actual string value stored in the result
      * </li>
      * <li>
      * {@code keyComparisonValue}: the string used for duplicate-key comparison
@@ -583,34 +583,34 @@ public final class JSONParser {
      * in both values
      * </li>
      * <li>
-     * {@code escape=false}: {@code xdmValue} may use the fallback for invalid XML
+     * {@code escape=false}: {@code resultValue} may use the fallback for invalid XML
      * characters, while {@code keyComparisonValue} keeps the decoded character
      * for duplicate-key comparison
      * </li>
      * </ul>
      */
     private void handleEscapedCodePoint(
-            StringBuilder xdmValue,
+            StringBuilder resultValue,
             StringBuilder keyComparisonValue,
             int codePoint,
             String originalEscape
     ) {
         if (this.options.isEscape()) {
-            if (shouldEscapeInXdmOutput(codePoint)) {
+            if (shouldEscapeInOutput(codePoint)) {
                 String escaped = normalizedEscapeForCodePoint(codePoint);
-                xdmValue.append(escaped);
+                resultValue.append(escaped);
                 keyComparisonValue.append(escaped);
             } else {
-                xdmValue.appendCodePoint(codePoint);
+                resultValue.appendCodePoint(codePoint);
                 keyComparisonValue.appendCodePoint(codePoint);
             }
             return;
         }
 
         if (isValidXMLCodePoint(codePoint)) {
-            xdmValue.appendCodePoint(codePoint);
+            resultValue.appendCodePoint(codePoint);
         } else {
-            xdmValue.append(this.options.getFallback().apply(originalEscape));
+            resultValue.append(this.options.getFallback().apply(originalEscape));
         }
 
         keyComparisonValue.appendCodePoint(codePoint);
@@ -644,9 +644,9 @@ public final class JSONParser {
 
     /**
      * Returns true if a codepoint must be represented using a JSON escape sequence
-     * in the XDM output when option escape=true is enabled.
+     * in the output when option escape=true is enabled.
      */
-    private boolean shouldEscapeInXdmOutput(int codePoint) {
+    private boolean shouldEscapeInOutput(int codePoint) {
         return codePoint == '\\'
             || XMLUtils.isControlCharacter(codePoint)
             || !isValidXMLCodePoint(codePoint);
@@ -704,7 +704,7 @@ public final class JSONParser {
         while (!isEnd()) {
             char c = peek();
 
-            if (Character.isWhitespace(c)) {
+            if (isJSONWhitespace(c)) {
                 advance();
                 continue;
             }
@@ -851,6 +851,10 @@ public final class JSONParser {
         return String.valueOf(c);
     }
 
+    private boolean isJSONWhitespace(char c) {
+        return c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0D;
+    }
+
     /**
      * Result of parsing a JSON string.
      *
@@ -860,7 +864,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: the string value stored in the resulting XDM item
+     * {@code resultValue}: the string value stored in the resulting item
      * </li>
      * <li>
      * {@code keyComparisonValue}: the string used to detect duplicate object keys
@@ -887,7 +891,7 @@ public final class JSONParser {
      *
      * <ul>
      * <li>
-     * {@code xdmValue}: contains the fallback result
+     * {@code resultValue}: contains the fallback result
      * </li>
      * <li>
      * {@code keyComparisonValue}: keeps the decoded character for duplicate-key comparison
@@ -895,11 +899,11 @@ public final class JSONParser {
      * </ul>
      */
     private static final class ParsedString {
-        private final String xdmValue;
+        private final String resultValue;
         private final String keyComparisonValue;
 
-        private ParsedString(String xdmValue, String keyComparisonValue) {
-            this.xdmValue = xdmValue;
+        private ParsedString(String resultValue, String keyComparisonValue) {
+            this.resultValue = resultValue;
             this.keyComparisonValue = keyComparisonValue;
         }
     }
