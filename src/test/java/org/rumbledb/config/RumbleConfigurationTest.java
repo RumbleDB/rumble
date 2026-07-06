@@ -18,8 +18,12 @@
 
 package org.rumbledb.config;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.ExecutionMode;
 import org.rumbledb.config.model.RuntimeConfig;
 
@@ -98,5 +102,26 @@ public class RumbleConfigurationTest {
         RumbleConfiguration.builder()
             .with("runtime.unknownOption", true)
             .build();
+    }
+
+    @Test
+    public void accessConfigDefensivelyCopiesAllowedPrefixes() {
+        List<String> prefixes = new ArrayList<>(List.of("file:"));
+        AccessConfig configuration = AccessConfig.builder()
+            .allowedPrefixes(prefixes)
+            .build();
+
+        prefixes.add("https:");
+
+        Assert.assertEquals(List.of("file:"), configuration.allowedPrefixes());
+    }
+
+    @Test(expected = UnsupportedOperationException.class)
+    public void accessConfigAllowedPrefixesCannotBeMutatedThroughAccessor() {
+        AccessConfig.builder()
+            .allowedPrefixes(List.of("file:"))
+            .build()
+            .allowedPrefixes()
+            .add("https:");
     }
 }
