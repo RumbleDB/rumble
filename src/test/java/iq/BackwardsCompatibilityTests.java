@@ -38,7 +38,7 @@ public class BackwardsCompatibilityTests extends SparkAnnotationsTestsBase {
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
             .configureDebug(d -> d.printIteratorTree(true))
-            .configureRuntime(r -> r.materializationCap(200).shouldApplyUpdates(true))
+            .configureRuntime(r -> r.materializationCap(200).resultsSizeCap(0).shouldApplyUpdates(true))
             .build();
     }
 
