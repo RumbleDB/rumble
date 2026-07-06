@@ -360,7 +360,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
-        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
+        this.configuration = kryo.readObject(input, RumbleConfiguration.class);
         this.nestedQuery = true;
     }
 
