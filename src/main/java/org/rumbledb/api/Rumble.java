@@ -89,7 +89,7 @@ public class Rumble {
      * @param bindings the internal external bindings to apply
      * @return the resulting sequence
      */
-    private SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
+    public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
             configuration,
@@ -129,7 +129,7 @@ public class Rumble {
      * @return the resulting sequence
      * @throws IOException if the module cannot be read
      */
-    private SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
+    public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
             configuration,
