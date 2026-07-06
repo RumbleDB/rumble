@@ -8,7 +8,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.cli.JsoniqQueryExecutor;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
@@ -39,43 +39,21 @@ public class UpdatesForRumbleBenchmark {
 
     public List<FileTuple> benchmarkFiles;
 
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--variable:externalUnparsedString",
-                "unparsed string",
-                "--escape-backticks",
-                "yes",
-                "--dates-with-timezone",
-                "yes",
-                "--print-iterator-tree",
-                "yes",
-                "--apply-updates",
-                "yes",
-                "--show-error-info",
-                "yes",
-                "--materialization-cap",
-                "900000",
-                "--result-size",
-                "900000"
-            }
-    );
+    protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
+        .configureDebug(debug -> debug.printIteratorTree(true).showErrorInfo(true))
+        .configureRuntime(
+            runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
+        )
+        .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+        .build();
 
-    protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--print-iterator-tree",
-                "yes",
-                "--output-format",
-                "delta",
-                "--show-error-info",
-                "yes",
-                "--apply-updates",
-                "yes",
-                "--materialization-cap",
-                "900000",
-                "--result-size",
-                "900000"
-            }
-    );
+    protected static final RumbleConfiguration createDeltaConfiguration = RumbleConfiguration.builder()
+        .configureDebug(debug -> debug.printIteratorTree(true).showErrorInfo(true))
+        .configureOutput(output -> output.outputFormat("delta"))
+        .configureRuntime(
+            runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
+        )
+        .build();
 
     public UpdatesForRumbleBenchmark() {
         this.benchmarkFiles = new ArrayList<>();
@@ -400,7 +378,7 @@ public class UpdatesForRumbleBenchmark {
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
         SequenceOfItems sequence = rumble.runQuery(uri);
         List<Item> res = new ArrayList<>();
-        sequence.populateList(res, configuration.getResultSizeCap());
+        sequence.populateList(res, configuration.runtime().resultsSizeCap());
         return res;
     }
 
@@ -560,18 +538,20 @@ public class UpdatesForRumbleBenchmark {
     public void createTable(String path, String query) throws IOException {
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             path,
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            UpdatesForRumbleBenchmark.createDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
         URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             query,
-            DeltaUpdateRuntimeTests.createDeltaConfiguration,
+            UpdatesForRumbleBenchmark.createDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
 
-        UpdatesForRumbleBenchmark.createDeltaConfiguration.setOutputPath(tableURI.getPath());
-        UpdatesForRumbleBenchmark.createDeltaConfiguration.setQueryPath(queryURI.getPath());
-        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(UpdatesForRumbleBenchmark.createDeltaConfiguration);
+        RumbleConfiguration executionConfiguration = UpdatesForRumbleBenchmark.createDeltaConfiguration.toBuilder()
+            .configureInput(input -> input.queryPath(queryURI.getPath()))
+            .configureOutput(output -> output.outputPath(tableURI.getPath()))
+            .build();
+        JsoniqQueryExecutor executor = new JsoniqQueryExecutor(executionConfiguration);
         executor.runQuery();
     }
 

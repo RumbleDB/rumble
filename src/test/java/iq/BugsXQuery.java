@@ -22,7 +22,7 @@ package iq;
 
 import iq.base.SparkAnnotationsTestsBase;
 import iq.base.TestFileDiscovery;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,18 +37,12 @@ public class BugsXQuery extends SparkAnnotationsTestsBase {
     );
 
     @Override
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--apply-updates",
-                    "yes",
-                    "--default-language",
-                    "xquery31" }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureDebug(debug -> debug.printIteratorTree(true))
+            .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
+            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+            .build();
     }
 
     @Override

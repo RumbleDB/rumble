@@ -20,22 +20,16 @@
 
 package iq;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 import java.io.File;
 
 public class NativeFLWORRuntimeTests extends RuntimeTests {
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--result-size",
-                    "200" }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(runtime -> runtime.resultsSizeCap(200))
+            .build();
     }
 
     public static final File nativeFlworRuntimeTestsDirectory = new File(

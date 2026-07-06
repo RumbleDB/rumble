@@ -22,7 +22,7 @@ package iq;
 
 import java.io.File;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 public class MLTests extends RuntimeTests {
 
@@ -32,21 +32,10 @@ public class MLTests extends RuntimeTests {
                 "/src/test/resources/test_files/RumbleML"
     );
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--native-execution",
-                    "no",
-                    "--result-size",
-                    "200",
-                    "--materialization-cap",
-                    "200"
-                }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(200).useNativeExecution(false))
+            .build();
     }
 
     @Override

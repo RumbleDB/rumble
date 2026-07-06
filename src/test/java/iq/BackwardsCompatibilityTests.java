@@ -22,7 +22,7 @@ package iq;
 
 import iq.base.SparkAnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 import java.io.File;
 
@@ -35,20 +35,11 @@ public class BackwardsCompatibilityTests extends SparkAnnotationsTestsBase {
     );
 
     @Override
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--result-size",
-                    "0",
-                    "--materialization-cap",
-                    "200",
-                    "--apply-updates",
-                    "yes" }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureDebug(d -> d.printIteratorTree(true))
+            .configureRuntime(r -> r.materializationCap(200).shouldApplyUpdates(true))
+            .build();
     }
 
     @Override

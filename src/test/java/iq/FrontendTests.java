@@ -33,7 +33,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
@@ -43,7 +43,7 @@ import java.util.List;
 
 public class FrontendTests {
 
-    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
+    private static final RumbleConfiguration configuration = TestConfigurations.defaultConfiguration();
 
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
