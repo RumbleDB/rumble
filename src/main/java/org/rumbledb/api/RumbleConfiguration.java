@@ -49,4 +49,14 @@ public class RumbleConfiguration {
     public <T> T get(String path, Class<T> valueType) {
         return RumbleConfigurationResolver.get(this.configuration, path, valueType);
     }
+
+    /**
+     * Returns the internal configuration object. This method is not meant to be used by the user (only for internal
+     * purposes).
+     * 
+     * @return the internal configuration object
+     */
+    org.rumbledb.config.RumbleConfiguration getInternalConfiguration() {
+        return this.configuration;
+    }
 }
