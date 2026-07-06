@@ -23,7 +23,7 @@ package org.rumbledb.cli;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
@@ -39,15 +39,15 @@ import java.util.stream.Collectors;
 
 
 public class JsoniqQueryExecutor {
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
 
-    public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
+    public JsoniqQueryExecutor(RumbleConfiguration configuration) {
         this.configuration = configuration;
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
         if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
-            if (!this.configuration.getOverwrite()) {
+            if (!this.configuration.output().allowOverwrite()) {
                 throw new CliException(
                         "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
                 );
@@ -58,7 +58,7 @@ public class JsoniqQueryExecutor {
     }
 
     public List<Item> runQuery() throws IOException {
-        String queryFile = this.configuration.getQueryPath();
+        String queryFile = this.configuration.input().queryPath();
         URI queryUri = null;
         if (queryFile != null) {
             queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
@@ -67,7 +67,7 @@ public class JsoniqQueryExecutor {
                 ExceptionMetadata.EMPTY_METADATA
             );
         }
-        String outputPath = this.configuration.getOutputPath();
+        String outputPath = this.configuration.output().outputPath();
         URI outputUri = null;
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
@@ -78,7 +78,7 @@ public class JsoniqQueryExecutor {
             checkOutputFile(outputUri);
         }
 
-        String logPath = this.configuration.getLogPath();
+        String logPath = this.configuration.output().logPath();
         URI logUri = null;
         if (logPath != null) {
             logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
@@ -96,13 +96,13 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = null;
-        if (this.configuration.getQuery() != null) {
-            if (this.configuration.getQueryPath() != null) {
+        if (this.configuration.input().query() != null) {
+            if (this.configuration.input().queryPath() != null) {
                 throw new CliException(
                         "It is not possible to specify both a --query and a --query-path. It is either or."
                 );
             }
-            sequence = rumble.runQuery(this.configuration.getQuery());
+            sequence = rumble.runQuery(this.configuration.input().query());
         } else {
             sequence = rumble.runQuery(queryUri);
         }
@@ -112,7 +112,10 @@ public class JsoniqQueryExecutor {
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateList(outputList, this.configuration.getResultSizeCap());
+            long materializationCount = sequence.populateList(
+                outputList,
+                this.configuration.runtime().resultsSizeCap()
+            );
 
             Serializer serializer = sequence.write().mode(org.apache.spark.sql.SaveMode.ErrorIfExists).getSerializer();
 
@@ -121,14 +124,14 @@ public class JsoniqQueryExecutor {
                 .collect(Collectors.toList());
             System.out.println(String.join("\n", lines));
             if (materializationCount != -1) {
-                issueMaterializationWarning(materializationCount, this.configuration.getResultSizeCap());
+                issueMaterializationWarning(materializationCount, this.configuration.runtime().resultsSizeCap());
                 System.err.println(
                     "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
                 );
             }
         }
 
-        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
 
@@ -170,10 +173,10 @@ public class JsoniqQueryExecutor {
         resultList.clear();
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query);
-        if (this.configuration.applyUpdates() && sequence.availableAsPUL()) {
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
-        return sequence.populateList(resultList, this.configuration.getResultSizeCap());
+        return sequence.populateList(resultList, this.configuration.runtime().resultsSizeCap());
     }
 
 }
