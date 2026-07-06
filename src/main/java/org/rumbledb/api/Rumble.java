@@ -68,7 +68,7 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
-        return runQuery(query, new ExternalBindings());
+        return runQuery(query, ExternalBindings.empty());
     }
 
     /**
@@ -85,7 +85,8 @@ public class Rumble {
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            configuration
+            configuration,
+            bindings.getInternalBindings()
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
@@ -103,7 +104,7 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
-        return runQuery(location, new ExternalBindings());
+        return runQuery(location, ExternalBindings.empty());
     }
 
     /**
@@ -121,7 +122,8 @@ public class Rumble {
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            configuration
+            configuration,
+            bindings.getInternalBindings()
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
