@@ -16,6 +16,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.config.RumbleConfiguration;
 
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
@@ -46,6 +47,10 @@ public class SequenceOfItems {
     /**
      * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
      * query.
+     * 
+     * TODO: because this constructor should not be used directly, I have changed it to receive the internal
+     * RumbleConfiguration
+     * I think we should mark this constructor as package-private
      * 
      * @param iterator The top-level iterator of the query.
      * @param dynamicContext An initialized dynamic context.
@@ -278,7 +283,7 @@ public class SequenceOfItems {
      */
     public List<Item> getAsList() {
         List<Item> result = new ArrayList<Item>();
-        int materializationCap = this.configuration.getInternalConfiguration().runtime().materializationCap();
+        int materializationCap = this.configuration.runtime().materializationCap();
         long num = populateList(result, materializationCap);
         if (num != -1) {
             throw new CannotMaterializeException(

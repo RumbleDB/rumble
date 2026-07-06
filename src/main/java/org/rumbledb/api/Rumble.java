@@ -21,8 +21,7 @@ import java.net.URI;
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
-
-    private final RumbleConfiguration configuration;
+    private final org.rumbledb.config.RumbleConfiguration configuration;
 
     /**
      * Creates a new Rumble instance. This initializes a brand new Spark session.
@@ -30,7 +29,7 @@ public class Rumble {
      * @param configuration a RumbleConfiguration object containing the configuration.
      */
     public Rumble(RumbleConfiguration configuration) {
-        this.configuration = configuration;
+        this.configuration = configuration.getInternalConfiguration();
         SparkSessionManager.getInstance().getOrCreateSession();
     }
 
@@ -49,7 +48,7 @@ public class Rumble {
      *
      */
     public Rumble(SparkSession session) {
-        this.configuration = new RumbleConfiguration();
+        this.configuration = new RumbleConfiguration().getInternalConfiguration();
         SparkSessionManager.getInstance(session);
     }
 
@@ -59,7 +58,7 @@ public class Rumble {
      * @return the configuration
      */
     public RumbleConfiguration getConfiguration() {
-        return this.configuration;
+        return new RumbleConfiguration(this.configuration);
     }
 
     /**
@@ -82,15 +81,15 @@ public class Rumble {
     public SequenceOfItems runQuery(String query, ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration.getInternalConfiguration()
+            configuration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            configuration.getInternalConfiguration()
+            configuration
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            configuration.getInternalConfiguration()
+            configuration
         );
 
         return new SequenceOfItems(iterator, dynamicContext, configuration);
@@ -118,15 +117,15 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            configuration.getInternalConfiguration()
+            configuration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            configuration.getInternalConfiguration()
+            configuration
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            configuration.getInternalConfiguration()
+            configuration
         );
 
         return new SequenceOfItems(iterator, dynamicContext, configuration);
@@ -141,7 +140,7 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration.getInternalConfiguration()
+            configuration
         );
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
