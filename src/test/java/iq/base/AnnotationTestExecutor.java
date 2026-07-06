@@ -19,6 +19,7 @@ package iq.base;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
+import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleConfiguration;
@@ -63,9 +64,20 @@ public final class AnnotationTestExecutor {
             boolean checkOutput
     )
             throws IOException {
+        run(testFile, configuration, ExternalBindings.empty(), checkOutput);
+    }
+
+    public static void run(
+            File testFile,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
+            boolean checkOutput
+    )
+            throws IOException {
         run(
             testFile.getAbsolutePath(),
             configuration,
+            externalBindings,
             checkOutput,
             configuration.runtime().shouldApplyUpdates(),
             configuration.runtime().resultsSizeCap()
@@ -75,13 +87,14 @@ public final class AnnotationTestExecutor {
     static void run(
             String path,
             RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
     )
             throws IOException {
         AnnotationProcessor.TestAnnotation annotation = readAnnotation(path);
-        QueryExecutionResult executionResult = executeQuery(path, configuration);
+        QueryExecutionResult executionResult = executeQuery(path, configuration, externalBindings);
 
         if (executionResult.failed()) {
             assertExpectedFailure(annotation, executionResult);
@@ -118,7 +131,11 @@ public final class AnnotationTestExecutor {
         }
     }
 
-    private static QueryExecutionResult executeQuery(String path, RumbleConfiguration configuration) {
+    private static QueryExecutionResult executeQuery(
+            String path,
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings
+    ) {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
@@ -126,7 +143,7 @@ public final class AnnotationTestExecutor {
                 ExceptionMetadata.EMPTY_METADATA
             );
             Rumble rumble = new Rumble(configuration);
-            return QueryExecutionResult.success(rumble.runQuery(uri));
+            return QueryExecutionResult.success(rumble.runQuery(uri, externalBindings));
         } catch (ParsingException exception) {
             return QueryExecutionResult.failure(TestStage.PARSING, exception.getMessage());
         } catch (SemanticException exception) {

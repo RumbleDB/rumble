@@ -24,6 +24,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import utils.annotations.AnnotationParseException;
 
@@ -35,6 +36,10 @@ import java.util.List;
 public abstract class AnnotationsTestsBase {
     public RumbleConfiguration getConfiguration() {
         return TestConfigurations.defaultConfiguration();
+    }
+
+    public ExternalBindings getExternalBindings() {
+        return TestConfigurations.defaultExternalBindings();
     }
 
     protected abstract File testDirectory();
@@ -53,6 +58,6 @@ public abstract class AnnotationsTestsBase {
     @Timeout(1000)
     final void testAnnotation(File testFile) throws IOException {
         System.err.println(testFile);
-        AnnotationTestExecutor.run(testFile, getConfiguration(), checkOutput());
+        AnnotationTestExecutor.run(testFile, getConfiguration(), getExternalBindings(), checkOutput());
     }
 }
