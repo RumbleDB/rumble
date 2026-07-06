@@ -46,6 +46,12 @@ public final class ExternalBindings {
         return Optional.ofNullable(this.variables.get(Objects.requireNonNull(name, "name")));
     }
 
+    public <T extends Binding> Optional<T> get(Name name, Class<T> bindingClass) {
+        return this.get(name)
+            .filter(bindingClass::isInstance)
+            .map(bindingClass::cast);
+    }
+
     public Set<Name> names() {
         return Collections.unmodifiableSet(new LinkedHashSet<>(this.variables.keySet()));
     }
