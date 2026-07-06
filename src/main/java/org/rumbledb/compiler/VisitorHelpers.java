@@ -64,52 +64,31 @@ public class VisitorHelpers {
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleConfiguration conf) {
         MainModule result = module;
-        boolean printTree = conf.debug().printIteratorTree() || conf.debug().logging();
 
-        if (printTree) {
-            System.err.println("***************************************");
-            System.err.println("Builtin Partial Application Rewrite Visitor");
-            System.err.println("***************************************");
-        }
+        debugPrintHeader(conf, "Builtin Partial Application Rewrite Visitor");
         result = (MainModule) new BuiltinPartialApplicationRewriteVisitor().visit(result, null);
         debugPrintTree(result, conf);
 
         // Annotate recursive functions as such
-        if (printTree) {
-            System.err.println("***************************************");
-            System.err.println("Function dependencies visitor");
-            System.err.println("***************************************");
-        }
+        debugPrintHeader(conf, "Function dependencies visitor");
         new FunctionDependenciesVisitor().visit(result, null);
         debugPrintTree(module, conf);
 
         // Inline non-recursive functions
         if (conf.optimization().useFunctionInlining()) {
-            if (printTree) {
-                System.err.println("***************************************");
-                System.err.println("Function inlining");
-                System.err.println("***************************************");
-            }
+            debugPrintHeader(conf, "Function inlining");
             result = (MainModule) new FunctionInliningVisitor().visit(result, null);
             debugPrintTree(result, conf);
         }
 
         // Apply tail call optimization
         if (conf.optimization().useTailCallOptimization()) {
-            if (printTree) {
-                System.err.println("***************************************");
-                System.err.println("Tail call optimization");
-                System.err.println("***************************************");
-            }
+            debugPrintHeader(conf, "Tail call optimization");
             result = (MainModule) new TailCallOptimizationVisitor().visit(result, null);
             debugPrintTree(result, conf);
         }
 
-        if (printTree) {
-            System.err.println("***************************************");
-            System.err.println("Projection pushdown");
-            System.err.println("***************************************");
-        }
+        debugPrintHeader(conf, "Projection pushdown");
         result = (MainModule) new ProjectionPushdownVisitor().visit(result, null);
         debugPrintTree(result, conf);
 
@@ -130,7 +109,7 @@ public class VisitorHelpers {
      * @param conf the configuration object
      */
     private static void debugPrintTree(Module node, RumbleConfiguration conf) {
-        if (conf.debug().printIteratorTree()) {
+        if (conf.debug().printIteratorTree() || conf.debug().logging()) {
             System.err.println("***************");
             System.err.println("Expression tree");
             System.err.println("***************");
@@ -138,6 +117,14 @@ public class VisitorHelpers {
             System.err.println(node);
             System.err.println();
             System.err.println(node.getStaticContext());
+        }
+    }
+
+    private static void debugPrintHeader(RumbleConfiguration conf, String header) {
+        if (conf.debug().printIteratorTree() || conf.debug().logging()) {
+            System.err.println("*".repeat(header.length()));
+            System.err.println(header);
+            System.err.println("*".repeat(header.length()));
         }
     }
 
@@ -226,88 +213,40 @@ public class VisitorHelpers {
 
             boolean logging = configuration.debug().logging();
 
-            if (logging) {
-                System.err.println("***************");
-                System.err.println("Parsing program");
-                System.err.println("***************");
-            }
+            debugPrintHeader(configuration, "Parsing program");
             MainModule mainModule = (MainModule) visitor.visit(modulectx);
 
-            if (logging) {
-                System.err.println("***************");
-                System.err.println("Pruning modules");
-                System.err.println("***************");
-            }
+            debugPrintHeader(configuration, "Pruning modules");
             pruneModules(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("**********************");
-                System.err.println("Resolving dependencies");
-                System.err.println("**********************");
-            }
+            debugPrintHeader(configuration, "Resolving dependencies");
             resolveDependencies(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("*************************************");
-                System.err.println("Populating sequential classifications");
-                System.err.println("*************************************");
-            }
+            debugPrintHeader(configuration, "Populating sequential classifications");
             populateSequentialClassifications(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("***************************************");
-                System.err.println("Applying type independent optimizations");
-                System.err.println("***************************************");
-            }
+            debugPrintHeader(configuration, "Applying type independent optimizations");
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("*************************");
-                System.err.println("Populating static context");
-                System.err.println("*************************");
-            }
+            debugPrintHeader(configuration, "Populating static context");
             populateStaticContext(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("*************************************");
-                System.err.println("Populating expression classifications");
-                System.err.println("*************************************");
-            }
+            debugPrintHeader(configuration, "Populating expression classifications");
             populateExpressionClassifications(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("********************************");
-                System.err.println("Verify composability constraints");
-                System.err.println("********************************");
-            }
+            debugPrintHeader(configuration, "Verifying composability constraints");
             verifyComposabilityConstraints(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("**************");
-                System.err.println("Infering types");
-                System.err.println("**************");
-            }
+            debugPrintHeader(configuration, "Infering types");
             inferTypes(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("************************");
-                System.err.println("Applying type dependent optimizations");
-                System.err.println("************************");
-            }
+            debugPrintHeader(configuration, "Applying type dependent optimizations");
             mainModule = applyTypeDependentOptimizations(mainModule);
 
-            if (logging) {
-                System.err.println("***************************************");
-                System.err.println("Populating execution modes");
-                System.err.println("***************************************");
-            }
+            debugPrintHeader(configuration, "Populating execution modes");
             populateExecutionModes(mainModule, configuration);
 
-            if (logging) {
-                System.err.println("*************************************");
-                System.err.println("Populating expression classifications");
-                System.err.println("*************************************");
-            }
+            debugPrintHeader(configuration, "Populating expression classifications");
             populateExpressionClassifications(mainModule, configuration);
 
             debugPrintTree(mainModule, configuration);
