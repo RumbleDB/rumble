@@ -924,7 +924,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         // END eq optimization
         expression.setHighestExecutionMode(expression.getMainExpression().getHighestExecutionMode(this.visitorConfig));
-        if (!expression.getStaticContext().getRumbleConfiguration().getNativeSQLPredicates()) {
+        if (!expression.getStaticContext().getRumbleConfiguration().runtime().useNativeSQLPredicates()) {
             if (expression.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
                 expression.setHighestExecutionMode(ExecutionMode.RDD);
             }
