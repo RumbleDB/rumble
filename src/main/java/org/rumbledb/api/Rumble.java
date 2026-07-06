@@ -79,22 +79,23 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query, ExternalBindings bindings) {
+        return runQuery(query, bindings.getInternalBindings());
+    }
+
+    /**
+     * Internal entry point used by command-line integrations whose bindings may include lexical and file sources.
+     *
+     * @param query the content of the JSONiq main module
+     * @param bindings the internal external bindings to apply
+     * @return the resulting sequence
+     */
+    private SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
             configuration,
-            bindings.getInternalBindings()
+            bindings
         );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
-            mainModule,
-            configuration,
-            bindings.getInternalBindings()
-        );
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
-            mainModule,
-            configuration
-        );
-
-        return new SequenceOfItems(iterator, dynamicContext, configuration);
+        return createSequence(mainModule, bindings);
     }
 
     /**
@@ -117,22 +118,41 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location, ExternalBindings bindings) throws IOException {
+        return runQuery(location, bindings.getInternalBindings());
+    }
+
+    /**
+     * Internal entry point used by command-line integrations whose bindings may include lexical and file sources.
+     *
+     * @param location the JSONiq main module location
+     * @param bindings the internal external bindings to apply
+     * @return the resulting sequence
+     * @throws IOException if the module cannot be read
+     */
+    private SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
             configuration,
-            bindings.getInternalBindings()
+            bindings
         );
+        return createSequence(mainModule, bindings);
+    }
+
+    private SequenceOfItems createSequence(
+            MainModule mainModule,
+            org.rumbledb.bindings.ExternalBindings bindings
+    ) {
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            configuration,
-            bindings.getInternalBindings()
+            this.configuration,
+            bindings
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            configuration
+            this.configuration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, configuration);
+        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 
     /**
