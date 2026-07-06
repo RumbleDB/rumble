@@ -54,10 +54,10 @@ public class DocumentNodeItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
+        if (!(other instanceof ItemType itemType) || !itemType.isNodeItemType()) {
             return false;
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -67,10 +67,9 @@ public class DocumentNodeItemType implements ItemType {
 
     @Override
     public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof DocumentNodeItemType)) {
+        if (!(otherType instanceof DocumentNodeItemType other)) {
             return false;
         }
-        DocumentNodeItemType other = (DocumentNodeItemType) otherType;
         return Objects.equals(this.catalogueName, other.catalogueName)
             && Objects.equals(this.elementTestType, other.elementTestType);
     }
@@ -109,10 +108,9 @@ public class DocumentNodeItemType implements ItemType {
         ) {
             return true;
         }
-        if (!(superType instanceof DocumentNodeItemType)) {
+        if (!(superType instanceof DocumentNodeItemType other)) {
             return false;
         }
-        DocumentNodeItemType other = (DocumentNodeItemType) superType;
         if (other.isWildcardDocument()) {
             return true;
         }
@@ -124,8 +122,7 @@ public class DocumentNodeItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
-        if (other instanceof DocumentNodeItemType) {
-            DocumentNodeItemType otherDocument = (DocumentNodeItemType) other;
+        if (other instanceof DocumentNodeItemType otherDocument) {
             if (this.isWildcardDocument() || otherDocument.isWildcardDocument()) {
                 return BuiltinTypesCatalogue.documentNode;
             }

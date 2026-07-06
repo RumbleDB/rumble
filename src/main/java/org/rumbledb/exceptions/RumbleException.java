@@ -79,7 +79,7 @@ public class RumbleException extends RuntimeException {
     }
 
     private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
-        if (metadata.getTokenLineNumber() == 0) {
+        if (metadata.getStart().line() == 0) {
             return "There was an error."
                 + "\nCode: ["
                 + errorCode
@@ -88,12 +88,12 @@ public class RumbleException extends RuntimeException {
                 + message
                 + "\n"
                 + "Metadata: "
-                + ((metadata != null) ? metadata.toString() : null)
+                + metadata
                 + "\n"
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
         }
         return "There was an error on line "
-            + metadata.getTokenLineNumber()
+            + metadata.getStart().line()
             + " in "
             + metadata.getLocation()
             + ":\n\n"
@@ -105,7 +105,7 @@ public class RumbleException extends RuntimeException {
             + message
             + "\n"
             + "Metadata: "
-            + ((metadata != null) ? metadata.toString() : null)
+            + metadata
             + "\n"
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
@@ -134,8 +134,8 @@ public class RumbleException extends RuntimeException {
         if (ex instanceof SparkException) {
             Throwable sparkExceptionCause = ex.getCause();
             return unnestException(sparkExceptionCause);
-        } else if (ex instanceof RumbleException) {
-            return (RumbleException) ex;
+        } else if (ex instanceof RumbleException rumbleException) {
+            return rumbleException;
         } else {
             RumbleException e2 = new OurBadException("Unanticipated exception!");
             e2.initCause(ex);

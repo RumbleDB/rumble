@@ -72,20 +72,19 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
             List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = o.getSequenceAt(i);
+            List<Item> otherMember = otherItem.getSequenceAt(i);
             if (thisMember.size() != otherMember.size()) {
                 return false;
             }
@@ -123,11 +122,6 @@ public class SequenceArrayItem implements Item {
     @Override
     public int getSize() {
         return this.memberSequences.size();
-    }
-
-    @Override
-    public List<Item> getItems() {
-        return this.getItemMembers();
     }
 
     @Override
@@ -180,11 +174,6 @@ public class SequenceArrayItem implements Item {
         }
         List<Item> member = this.memberSequences.get(position);
         return member;
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -273,12 +262,12 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
             List<Item> member = this.memberSequences.get(i);
+            result = 31 * result + member.size();
             for (Item item : member) {
-                result += item.hashCode();
+                result = 31 * result + item.hashCode();
             }
         }
         return result;

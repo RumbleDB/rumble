@@ -240,10 +240,9 @@ public class SequenceType implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof SequenceType)) {
+        if (!(other instanceof SequenceType sequenceType)) {
             return false;
         }
-        SequenceType sequenceType = (SequenceType) other;
         if (isEmptySequence()) {
             return sequenceType.isEmptySequence();
         }
@@ -422,6 +421,18 @@ public class SequenceType implements Serializable {
                 break;
             case "anyAtomicType*":
                 st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore);
+                break;
+            case "error":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.One);
+                break;
+            case "error+":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, Arity.OneOrMore);
+                break;
+            case "error?":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.OneOrZero);
+                break;
+            case "error*":
+                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.ZeroOrMore);
                 break;
             case "string":
                 st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One);

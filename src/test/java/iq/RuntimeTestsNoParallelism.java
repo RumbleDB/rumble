@@ -20,26 +20,15 @@
 
 package iq;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 
-import iq.base.AnnotationsTestsBase;
-
-@RunWith(Parameterized.class)
 public class RuntimeTestsNoParallelism extends RuntimeTests {
-
-    public RuntimeTestsNoParallelism(File testFile) {
-        super(testFile);
-    }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -72,15 +61,4 @@ public class RuntimeTestsNoParallelism extends RuntimeTests {
             );
     }
 
-    @Test(timeout = 1000000)
-    public final void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(
-            this.testFile.getAbsolutePath(),
-            getConfiguration(),
-            true,
-            getConfiguration().applyUpdates(),
-            getConfiguration().getResultSizeCap()
-        );
-    }
 }

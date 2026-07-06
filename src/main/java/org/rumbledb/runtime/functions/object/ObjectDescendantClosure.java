@@ -19,10 +19,10 @@ public class ObjectDescendantClosure implements FlatMapFunction<Item, Item> {
         List<Item> innerValues;
 
         if (arg0.isArray()) {
-            innerValues = arg0.getItems();
+            innerValues = arg0.getItemMembers();
         } else if (arg0.isObject()) {
             results.add(arg0);
-            innerValues = arg0.getValues();
+            innerValues = arg0.getItemValues();
         } else {
             // for atomic types: do nothing
             return results.iterator();

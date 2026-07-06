@@ -49,9 +49,9 @@ public class FunctionIdentifier implements Serializable {
 
     @Override
     public boolean equals(Object instance) {
-        return instance instanceof FunctionIdentifier
-            && this.name.equals(((FunctionIdentifier) instance).getName())
-            && this.arity == ((FunctionIdentifier) instance).getArity();
+        return instance instanceof FunctionIdentifier functionIdentifier
+            && this.name.equals(functionIdentifier.getName())
+            && this.arity == functionIdentifier.getArity();
     }
 
     @Override

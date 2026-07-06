@@ -35,8 +35,6 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
-import java.time.DateTimeException;
-import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -543,21 +541,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             } catch (Exception e) {
                 CliException ex = new CliException(
                         "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-        if (this.arguments.containsKey("default-formatting-place")) {
-            String defaultPlace = this.arguments.get("default-formatting-place").trim();
-
-            try {
-                setDefaultFormattingPlace(ZoneId.of(defaultPlace));
-            } catch (DateTimeException e) {
-                CliException ex = new CliException(
-                        "Argument --default-formatting-place must be a valid timezone ID, e.g. \"Europe/Zurich\" (was: "
-                            + defaultPlace
-                            + ")."
                 );
                 ex.initCause(e);
                 throw ex;
@@ -1227,7 +1210,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(
             "App name: "
                 + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")
@@ -1341,42 +1324,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.xmlVersion = version;
     }
 
-    private ZoneId defaultFormattingPlace = ZoneId.of("UTC");
-
-    /**
-     * Returns the default place used for formatting date and time values.
-     *
-     * <p>
-     * The default place is used by date/time formatting functions when no explicit
-     * place is supplied. This implementation represents the place as a Java
-     * {@link ZoneId}. The initial default is {@code UTC}.
-     * </p>
-     *
-     * @return the default formatting place as a time zone
-     */
-    public ZoneId getDefaultFormattingPlace() {
-        return this.defaultFormattingPlace;
-    }
-
-    /**
-     * Sets the default place used for formatting date and time values.
-     *
-     * <p>
-     * This implementation represents the XQuery/XPath default place as a Java
-     * {@link ZoneId}. When configured from the command line, the value must be a
-     * valid Java time-zone ID, such as {@code Europe/Zurich}, {@code America/New_York},
-     * or {@code UTC}. ISO country codes such as {@code CH}, {@code DE}, or
-     * {@code US} are not resolved specially.
-     * </p>
-     *
-     * @param defaultFormattingPlace the default formatting place as a time zone;
-     *        must not be {@code null}
-     * @throws NullPointerException if {@code defaultFormattingPlace} is {@code null}
-     */
-    public void setDefaultFormattingPlace(ZoneId defaultFormattingPlace) {
-        this.defaultFormattingPlace = Objects.requireNonNull(defaultFormattingPlace, "defaultPlace");
-    }
-
 
     private String defaultFormattingCalendar = FormattingCalendarModeSupport.DEFAULT;
 
@@ -1400,15 +1347,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      *
      * <p>
      * The calendar value is used by date/time formatting functions when no explicit
-     * calendar is supplied. The calendar must be supported by
-     * {@link FormattingCalendarModeSupport}, and a
-     * corresponding formatter must be registered in
-     * {@link org.rumbledb.runtime.functions.util.formatting.calendar.CalendarRegistry}.
+     * calendar is supplied. Calendar data is resolved by the ICU formatting backend;
+     * valid but unsupported designators fall back at render time.
      * </p>
      *
      * @param calendar the default formatting calendar; must not be {@code null}
      * @throws NullPointerException if {@code calendar} is {@code null}
-     * @throws IllegalArgumentException if {@code calendar} is not supported
+     * @throws IllegalArgumentException if {@code calendar} is syntactically invalid
      */
     private void setDefaultFormattingCalendar(String calendar) {
         Objects.requireNonNull(calendar, "calendar");
@@ -1438,7 +1383,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @return the default formatting language
      */
     public String getDefaultFormattingLanguage() {
-        return defaultFormattingLanguage;
+        return this.defaultFormattingLanguage;
     }
 
     /**
@@ -1447,30 +1392,27 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * <p>
      * The value is a language code as defined by the type xs:language. This value is used by
      * date/time formatting functions when no explicit language is supplied. The
-     * language must be supported by {@link FormattingLanguageSupport}, and a
-     * corresponding formatter must be registered in
-     * {@link org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry}.
+     * language must be accepted by {@link FormattingLanguageSupport}. Locale data is
+     * resolved by the ICU formatting backend.
      * </p>
      *
      * @param language the default formatting language as an ISO 639-1 language code;
      *        must not be {@code null}
      * @throws NullPointerException if {@code language} is {@code null}
-     * @throws IllegalArgumentException if {@code language} is not supported
+     * @throws IllegalArgumentException if {@code language} is syntactically invalid
      */
-    private void setDefaultFormattingLanguage(String language) {
+    public void setDefaultFormattingLanguage(String language) {
         Objects.requireNonNull(language, "language");
 
         String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
             language
         );
-        String primary = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport
-            .getPrimaryLanguageSubtag(normalized);
 
-        if (!FormattingLanguageSupport.isValidFormattingLanguage(primary)) {
+        if (!FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
             throw new IllegalArgumentException("Unsupported default formatting language: " + language);
         }
 
-        this.defaultFormattingLanguage = primary;
+        this.defaultFormattingLanguage = normalized;
     }
 
     /**

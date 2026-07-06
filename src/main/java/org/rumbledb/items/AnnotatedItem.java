@@ -59,12 +59,12 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            if (((Item) otherItem).isAtomic()) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
+            if (otherItem.isAtomic()) {
                 long c = ComparisonIterator.compareItems(
                     this,
-                    (Item) otherItem,
+                    otherItem,
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
@@ -300,11 +300,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.itemToAnnotate.getKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.itemToAnnotate.getStringKeys();
     }
@@ -312,11 +307,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getItemKeys() {
         return this.itemToAnnotate.getItemKeys();
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.itemToAnnotate.getValues();
     }
 
     @Override
@@ -414,11 +404,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<Item> getItems() {
-        return this.itemToAnnotate.getItems();
-    }
-
-    @Override
     public List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
         return this.itemToAnnotate.getItemMembers();
     }
@@ -436,11 +421,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
         return this.itemToAnnotate.getSequenceAt(position);
-    }
-
-    @Override
-    public void append(Item item) throws UnsupportedOperationException {
-        this.itemToAnnotate.append(item);
     }
 
     @Override
@@ -709,8 +689,8 @@ public class AnnotatedItem implements Item {
 
     @Override
     public boolean physicalEquals(Object other) {
-        if (other instanceof AnnotatedItem) {
-            return this.itemToAnnotate.physicalEquals(((AnnotatedItem) other).itemToAnnotate);
+        if (other instanceof AnnotatedItem annotatedItem) {
+            return this.itemToAnnotate.physicalEquals(annotatedItem.itemToAnnotate);
         }
         return this.itemToAnnotate.physicalEquals(other);
     }

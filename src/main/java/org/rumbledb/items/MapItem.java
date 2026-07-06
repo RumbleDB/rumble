@@ -188,11 +188,6 @@ public class MapItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.getStringKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         List<String> result = new ArrayList<>(this.keys.size());
         for (Item key : this.keys) {
@@ -223,11 +218,6 @@ public class MapItem implements Item {
 
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         return this.keyToIndex.containsKey(key);
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.getItemValues();
     }
 
     @Override
@@ -346,9 +336,10 @@ public class MapItem implements Item {
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
+        this.keys = (List<Item>) kryo.readObject(input, ArrayList.class);
+        this.values = (List<List<Item>>) kryo.readObject(input, ArrayList.class);
         this.mutabilityLevel = input.readInt();
         this.topLevelID = input.readLong();
         this.pathIn = kryo.readObject(input, String.class);
@@ -454,8 +445,8 @@ public class MapItem implements Item {
     public String getSparkSQLValue() {
         StringBuilder sb = new StringBuilder();
         sb.append("named_struct(");
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             sb.append("\"");
             sb.append(keysAsStrings.get(i));
@@ -502,8 +493,8 @@ public class MapItem implements Item {
     public String getSparkSQLType() {
         StringBuilder sb = new StringBuilder();
         sb.append("STRUCT<");
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             sb.append(keysAsStrings.get(i));
             sb.append(": ");
@@ -532,8 +523,8 @@ public class MapItem implements Item {
     @Override
     public Object getVariantValue() {
         Map<String, Object> resultMap = new HashMap<>();
-        List<String> keysAsStrings = getKeys();
-        List<Item> values = getValues();
+        List<String> keysAsStrings = getStringKeys();
+        List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
             resultMap.put(keysAsStrings.get(i), values.get(i).getVariantValue());
         }
@@ -556,17 +547,16 @@ public class MapItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item other = (Item) otherItem;
-        if (!other.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
         for (Item key : this.keys) {
             List<Item> thisSequence = getSequenceByKey(key);
-            List<Item> otherSequence = other.getSequenceByKey(key);
+            List<Item> otherSequence = otherItem.getSequenceByKey(key);
             if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
                 return false;
             }
@@ -576,7 +566,7 @@ public class MapItem implements Item {
                 }
             }
         }
-        for (Item key : other.getItemKeys()) {
+        for (Item key : otherItem.getItemKeys()) {
             if (getSequenceByKey(key) == null) {
                 return false;
             }

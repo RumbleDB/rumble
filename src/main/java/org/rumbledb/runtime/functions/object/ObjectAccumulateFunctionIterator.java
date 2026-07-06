@@ -58,7 +58,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                 for (Item item : items) {
                     // ignore non-object items
                     if (item.isObject()) {
-                        for (String key : item.getKeys()) {
+                        for (String key : item.getStringKeys()) {
                             Item value = item.getItemByKey(key);
                             if (!keyValuePairs.containsKey(key)) {
                                 List<Item> valueList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                     }
                 }
 
-                Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
+                Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
 
                 this.hasNext = false;
                 return result;

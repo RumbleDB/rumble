@@ -1,51 +1,86 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
-import org.rumbledb.runtime.functions.util.formatting.language.formatter.LanguageFormatter;
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageRegistry;
-
-import java.math.BigInteger;
 import java.util.*;
 
+/**
+ * Locale-independent digit formatting: grouping, Roman and alphabetic. Locale-sensitive words live in
+ * {@link NumberWords}.
+ */
 public final class NumericFormattingSupport {
 
     private NumericFormattingSupport() {
     }
 
     public static String applyGrouping(String digits, NumericPicture picture) {
-        if (picture.getGroupingPositions().isEmpty()) {
+        Integer repeatingInterval = picture.isRepeatingGrouping()
+            ? picture.getRepeatingGroupingInterval()
+            : null;
+        return applyGrouping(digits, picture.getGroupingPositions(), repeatingInterval, true);
+    }
+
+    /**
+     * Inserts grouping separators into a run of digits. With {@code groupFromRight} the positions are counted from the
+     * right (integer part); otherwise from the left (fractional part). A non-null {@code repeatingInterval} groups at a
+     * fixed periodic interval instead of at the explicit positions.
+     */
+    public static String applyGrouping(
+            String digits,
+            List<GroupingPos> groupingPositions,
+            Integer repeatingInterval,
+            boolean groupFromRight
+    ) {
+        if (groupingPositions == null || groupingPositions.isEmpty()) {
             return digits;
         }
 
-        String reversedDigits = new StringBuilder(digits).reverse().toString();
+        String working = groupFromRight ? new StringBuilder(digits).reverse().toString() : digits;
 
-        if (picture.isRepeatingGrouping()) {
-            int interval = picture.getRepeatingGroupingInterval();
-            String separator = picture.getGroupingPositions().get(0).separator;
-
+        if (repeatingInterval != null) {
+            // Repeating grouping uses a single separator across all positions.
+            String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP()));
             StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < reversedDigits.length(); i++) {
-                if (i > 0 && i % interval == 0) {
+            for (int i = 0; i < working.length(); i++) {
+                if (i > 0 && i % repeatingInterval == 0) {
                     sb.append(separator);
                 }
-                sb.append(reversedDigits.charAt(i));
+                sb.append(working.charAt(i));
             }
-            return sb.reverse().toString();
+            return groupFromRight ? sb.reverse().toString() : sb.toString();
         }
 
-        List<GroupingPos> gps = new ArrayList<>(picture.getGroupingPositions());
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
+        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
+        gps.sort(Comparator.comparingInt(GroupingPos::distanceFromAnchor));
 
-        StringBuilder sb = new StringBuilder(reversedDigits);
-
+        StringBuilder sb = new StringBuilder(working);
         for (int i = gps.size() - 1; i >= 0; i--) {
             GroupingPos gp = gps.get(i);
-            int insertPos = gp.distanceFromRight;
+            int insertPos = gp.distanceFromAnchor();
             if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, gp.separator);
+                sb.insert(insertPos, new String(Character.toChars(gp.separatorCP())));
             }
         }
 
-        return sb.reverse().toString();
+        return groupFromRight ? sb.reverse().toString() : sb.toString();
+    }
+
+    /**
+     * Maps the ASCII digits of {@code s} into the Unicode digit family whose zero is {@code zeroDigit}, leaving every
+     * other character unchanged.
+     */
+    public static String mapAsciiDigits(String s, int zeroDigit) {
+        if (zeroDigit == '0') {
+            return s;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char ch = s.charAt(i);
+            if (ch >= '0' && ch <= '9') {
+                sb.appendCodePoint(zeroDigit + (ch - '0'));
+            } else {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
 
     public static String integerToRoman(int number) {
@@ -79,27 +114,5 @@ public final class NumericFormattingSupport {
             value /= 26;
         }
         return sb.toString();
-    }
-
-    public static String toCardinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        return formatter.toCardinal(value);
-    }
-
-    public static String toOrdinal(int value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        return formatter.toOrdinal(value);
-    }
-
-    public static String ordinalSuffix(int value, String language) {
-        return NumericFormattingSupport.ordinalSuffix(BigInteger.valueOf(value), language);
-    }
-
-    public static String ordinalSuffix(BigInteger value, String language) {
-        LanguageFormatter formatter = LanguageRegistry.forLanguage(language);
-        if (!formatter.supportsOrdinalSuffix()) {
-            return "";
-        }
-        return formatter.ordinalSuffix(value);
     }
 }

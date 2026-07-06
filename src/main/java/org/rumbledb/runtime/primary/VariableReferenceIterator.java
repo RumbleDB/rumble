@@ -81,11 +81,10 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         Name name = nativeClauseContext.getVariable(this.variableName);
         DataType schema = nativeClauseContext.getSchema();
-        if (!(schema instanceof StructType)) {
+        if (!(schema instanceof StructType structSchema)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
-        StructType structSchema = (StructType) schema;
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
             List<Item> items = nativeClauseContext.getContext()
                 .getVariableValues()
@@ -112,8 +111,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType) {
-            if (((ArrayType) fieldType).elementType().equals(DataTypes.BinaryType)) {
+        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType arrayType) {
+            if (arrayType.elementType().equals(DataTypes.BinaryType)) {
                 return NativeClauseContext.NoNativeQuery;
             }
             variableType = variableType.getArrayContentFacet();

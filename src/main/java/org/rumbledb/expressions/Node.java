@@ -167,7 +167,7 @@ public abstract class Node {
      * @param buffer a string buffer to write to
      * @param indent the current level of indentation
      */
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -186,14 +186,14 @@ public abstract class Node {
 
     @Override
     public final String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         this.print(sb, 0);
         return sb.toString();
     }
 
-    public abstract void serializeToJSONiq(StringBuffer sb, int indent);
+    public abstract void serializeToJSONiq(StringBuilder sb, int indent);
 
-    protected void indentIt(StringBuffer buffer, int indent) {
+    protected void indentIt(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }

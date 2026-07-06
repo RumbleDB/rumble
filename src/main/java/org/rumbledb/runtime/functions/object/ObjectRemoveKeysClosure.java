@@ -30,7 +30,7 @@ public class ObjectRemoveKeysClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        for (String key : arg0.getKeys()) {
+        for (String key : arg0.getStringKeys()) {
             if (!this.removalKeys.contains(key)) {
                 keys.add(key);
                 values.add(arg0.getItemByKey(key));

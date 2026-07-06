@@ -60,10 +60,10 @@ public final class ErrorCode implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ErrorCode)) {
+        if (!(other instanceof ErrorCode errorCode)) {
             return false;
         }
-        return this.name.equals(((ErrorCode) other).name);
+        return this.name.equals(errorCode.name);
     }
 
     @Override
@@ -95,11 +95,13 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidDecimalFormatName = registerBuiltIn("FODF1280");
 
     public static final ErrorCode CastErrorCode = registerBuiltIn("FORG0001");
+    public static final ErrorCode InvalidArgumentValue = registerBuiltIn("FORG0002");
     public static final ErrorCode ZeroOrOneErrorCode = registerBuiltIn("FORG0003");
     public static final ErrorCode OneOrMoreErrorCode = registerBuiltIn("FORG0004");
     public static final ErrorCode ExactlyOneErrorCode = registerBuiltIn("FORG0005");
     public static final ErrorCode InvalidArgumentType = registerBuiltIn("FORG0006");
     public static final ErrorCode InconsistentTimezones = registerBuiltIn("FORG0008");
+    public static final ErrorCode InvalidRegexFlagsErrorCode = registerBuiltIn("FORX0001");
     public static final ErrorCode InvalidRegexPatternErrorCode = registerBuiltIn("FORX0002");
     public static final ErrorCode MatchesEmptyStringErrorCode = registerBuiltIn("FORX0003");
     public static final ErrorCode InvalidReplacementStringErrorCode = registerBuiltIn("FORX0004");
@@ -112,6 +114,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidJSONErrorCode = registerBuiltIn("FOJS0001");
     public static final ErrorCode DuplicateJSONKeyErrorCode = registerBuiltIn("FOJS0003");
     public static final ErrorCode InvalidOptionErrorCode = registerBuiltIn("FOJS0005");
+    public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
+    public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
@@ -183,6 +187,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
+    public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");

@@ -257,7 +257,7 @@ public class NativeClauseContext {
     }
 
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append("Native clause context.\n");
         sb.append("======================\n");
         sb.append("Query: " + this.resultingQuery + "\n");

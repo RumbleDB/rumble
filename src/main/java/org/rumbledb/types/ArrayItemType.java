@@ -75,14 +75,14 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isXQueryArrayItemType()) {
+        if (itemType.isXQueryArrayItemType()) {
             // delegate to the XQuery array item type equality check
             return other.equals(this);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -179,13 +179,12 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ArrayItemType)) {
+        if (!(other instanceof ArrayItemType otherArray)) {
             if (other.isArrayItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ArrayItemType otherArray = (ArrayItemType) other;
         if (!this.isResolved() || !otherArray.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }

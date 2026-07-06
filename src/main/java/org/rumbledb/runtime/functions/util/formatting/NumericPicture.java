@@ -3,7 +3,6 @@ package org.rumbledb.runtime.functions.util.formatting;
 import java.util.List;
 
 public final class NumericPicture {
-    private final String raw;
     private final int zeroDigit;
     private final int mandatoryDigitCount;
     private final int activeDigitCount;
@@ -12,7 +11,6 @@ public final class NumericPicture {
     private final int repeatingGroupingInterval;
 
     NumericPicture(
-            String raw,
             int zeroDigit,
             int mandatoryDigitCount,
             int activeDigitCount,
@@ -20,17 +18,12 @@ public final class NumericPicture {
             boolean repeatingGrouping,
             int repeatingGroupingInterval
     ) {
-        this.raw = raw;
         this.zeroDigit = zeroDigit;
         this.mandatoryDigitCount = mandatoryDigitCount;
         this.activeDigitCount = activeDigitCount;
         this.groupingPositions = List.copyOf(groupingPositions);
         this.repeatingGrouping = repeatingGrouping;
         this.repeatingGroupingInterval = repeatingGroupingInterval;
-    }
-
-    public String getRaw() {
-        return this.raw;
     }
 
     public int getZeroDigit() {

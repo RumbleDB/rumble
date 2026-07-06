@@ -86,19 +86,19 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<Item> inputItems = this.inputIterator.materialize(context);
-        List<Item> foundMembers = new ArrayList<>();
+        List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
         this.resultItem = ItemFactory.getInstance()
-            .createArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
+            .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private void scanItems(List<Item> items, Item lookupKey, List<Item> foundMembers) {
+    private void scanItems(List<Item> items, Item lookupKey, List<List<Item>> foundMembers) {
         for (Item item : items) {
             scanItem(item, lookupKey, foundMembers);
         }
     }
 
-    private void scanItem(Item item, Item lookupKey, List<Item> foundMembers) {
+    private void scanItem(Item item, Item lookupKey, List<List<Item>> foundMembers) {
         if (item == null) {
             return;
         }
@@ -110,20 +110,9 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
                 List<Item> valueSequence = valueSequences.get(i);
                 if (MapAtomicSameKey.sameKey(keys.get(i), lookupKey)) {
                     if (valueSequence == null || valueSequence.isEmpty()) {
-                        foundMembers.add(
-                            ItemFactory.getInstance()
-                                .createArrayItem(this.getRuntimeStaticContext().isQuerySideEffecting())
-                        );
-                    } else if (valueSequence.size() == 1) {
-                        foundMembers.add(valueSequence.get(0));
+                        foundMembers.add(new ArrayList<>());
                     } else {
-                        foundMembers.add(
-                            ItemFactory.getInstance()
-                                .createArrayItem(
-                                    new ArrayList<>(valueSequence),
-                                    this.getRuntimeStaticContext().isQuerySideEffecting()
-                                )
-                        );
+                        foundMembers.add(new ArrayList<>(valueSequence));
                     }
                 }
                 if (valueSequence != null && !valueSequence.isEmpty()) {
@@ -134,7 +123,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (item.isArray()) {
-            scanItems(item.getItems(), lookupKey, foundMembers);
+            scanItems(item.getItemMembers(), lookupKey, foundMembers);
         }
     }
 

@@ -327,12 +327,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public abstract boolean containsClause(FLWOR_CLAUSES kind);
 
     public String toString() {
-        StringBuffer stringBuffer = new StringBuffer();
-        print(stringBuffer, 0);
-        return stringBuffer.toString();
+        StringBuilder sb = new StringBuilder();
+        print(sb, 0);
+        return sb.toString();
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }

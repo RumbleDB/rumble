@@ -140,10 +140,9 @@ public class DocumentItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof DocumentItem)) {
+        if (!(other instanceof DocumentItem otherDocumentItem)) {
             return false;
         }
-        DocumentItem otherDocumentItem = (DocumentItem) other;
         return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
@@ -305,7 +304,7 @@ public class DocumentItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override
