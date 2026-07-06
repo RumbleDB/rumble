@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -150,19 +150,19 @@ import org.apache.spark.sql.SparkSession;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private RumbleConfiguration configuration;
 
     /**
      * Builds a new visitor.
      *
-     * @param rumbleRuntimeConfiguration the configuration.
+     * @param configuration the configuration.
      */
-    InferTypeVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
-        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+    InferTypeVisitor(RumbleConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     private void throwStaticTypeException(String message, ErrorCode code) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.configuration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code
@@ -171,7 +171,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ExceptionMetadata metadata) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.configuration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     metadata
@@ -180,7 +180,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void throwStaticTypeException(String message, ErrorCode code, ExceptionMetadata metadata) {
-        if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
+        if (this.configuration.analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     message,
                     code,
@@ -666,7 +666,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+            if (!FileSystemUtil.exists(uri, this.configuration, expression.getMetadata())) {
                 return false;
             }
             try {
@@ -692,7 +692,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+            if (!FileSystemUtil.exists(uri, this.configuration, expression.getMetadata())) {
                 return false;
             }
             StructType s = SparkSessionManager.getInstance()
