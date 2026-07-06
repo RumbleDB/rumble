@@ -28,7 +28,9 @@ public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000).useNativeExecution(false))
+            .configureRuntime(
+                runtime -> runtime.resultsSizeCap(200).materializationCap(100000).useNativeExecution(false)
+            )
             .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
             .build();
     }

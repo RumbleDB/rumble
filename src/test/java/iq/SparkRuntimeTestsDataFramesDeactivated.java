@@ -28,7 +28,9 @@ public class SparkRuntimeTestsDataFramesDeactivated extends RuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000).useDataFrameExecution(false))
+            .configureRuntime(
+                runtime -> runtime.resultsSizeCap(200).materializationCap(100000).useDataFrameExecution(false)
+            )
             .build();
     }
 
