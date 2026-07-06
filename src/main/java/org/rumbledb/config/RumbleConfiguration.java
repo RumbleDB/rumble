@@ -20,9 +20,14 @@ package org.rumbledb.config;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
@@ -48,28 +53,40 @@ import java.util.function.Consumer;
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = RumbleConfiguration.RumbleConfigurationBuilder.class)
-public class RumbleConfiguration implements Serializable {
+public class RumbleConfiguration implements Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * Application execution mode.
      */
+    @NonFinal
     private RumbleMode mode;
 
+    @NonFinal
     private AccessConfig access;
 
+    @NonFinal
     private InputConfig input;
 
+    @NonFinal
     private OutputConfig output;
 
+    @NonFinal
     private RuntimeConfig runtime;
 
+    @NonFinal
     private DebugConfig debug;
 
+    @NonFinal
     private AnalysisConfig analysis;
 
+    @NonFinal
     private OptimizationConfig optimization;
 
+    @NonFinal
     private SemanticsConfig semantics;
 
+    @NonFinal
     private FormattingConfig formatting;
 
     public static RumbleConfiguration defaultConfiguration() {
@@ -99,6 +116,34 @@ public class RumbleConfiguration implements Serializable {
         this.optimization = Objects.requireNonNullElseGet(optimization, () -> OptimizationConfig.builder().build());
         this.semantics = Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
         this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.mode);
+        kryo.writeClassAndObject(output, this.access);
+        kryo.writeClassAndObject(output, this.input);
+        kryo.writeClassAndObject(output, this.output);
+        kryo.writeClassAndObject(output, this.runtime);
+        kryo.writeClassAndObject(output, this.debug);
+        kryo.writeClassAndObject(output, this.analysis);
+        kryo.writeClassAndObject(output, this.optimization);
+        kryo.writeClassAndObject(output, this.semantics);
+        kryo.writeClassAndObject(output, this.formatting);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.mode = (RumbleMode) kryo.readClassAndObject(input);
+        this.access = (AccessConfig) kryo.readClassAndObject(input);
+        this.input = (InputConfig) kryo.readClassAndObject(input);
+        this.output = (OutputConfig) kryo.readClassAndObject(input);
+        this.runtime = (RuntimeConfig) kryo.readClassAndObject(input);
+        this.debug = (DebugConfig) kryo.readClassAndObject(input);
+        this.analysis = (AnalysisConfig) kryo.readClassAndObject(input);
+        this.optimization = (OptimizationConfig) kryo.readClassAndObject(input);
+        this.semantics = (SemanticsConfig) kryo.readClassAndObject(input);
+        this.formatting = (FormattingConfig) kryo.readClassAndObject(input);
     }
 
     @JsonPOJOBuilder(withPrefix = "")
