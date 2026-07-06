@@ -72,12 +72,15 @@ public class Rumble {
     public SequenceOfItems runQuery(String query, ExternalBindings bindings) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration
+            configuration.getInternalConfiguration()
         );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, configuration);
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
+            mainModule,
+            configuration.getInternalConfiguration()
+        );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            configuration
+            configuration.getInternalConfiguration()
         );
 
         return new SequenceOfItems(iterator, dynamicContext, configuration);
@@ -105,12 +108,15 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, ExternalBindings bindings) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            configuration
+            configuration.getInternalConfiguration()
         );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, configuration);
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
+            mainModule,
+            configuration.getInternalConfiguration()
+        );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            configuration
+            configuration.getInternalConfiguration()
         );
 
         return new SequenceOfItems(iterator, dynamicContext, configuration);
@@ -125,7 +131,7 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            configuration
+            configuration.getInternalConfiguration()
         );
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
