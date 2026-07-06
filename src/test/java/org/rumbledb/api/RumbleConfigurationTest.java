@@ -44,14 +44,18 @@ public class RumbleConfigurationTest {
     }
 
     @Test
-    public void getConvertsValueToRequestedType() {
+    public void typedGettersConvertValues() {
         RumbleConfiguration configuration = configuration(
             org.rumbledb.config.RumbleConfiguration.builder()
                 .mode(RumbleMode.REPL)
+                .configureRuntime(runtime -> runtime.resultsSizeCap(100))
+                .configureDebug(debug -> debug.showErrorInfo(true))
                 .build()
         );
 
-        Assertions.assertEquals(RumbleMode.REPL, configuration.get("mode"));
+        Assertions.assertEquals("REPL", configuration.getString("mode"));
+        Assertions.assertEquals(100, configuration.getInt("runtime.resultsSizeCap"));
+        Assertions.assertTrue(configuration.getBoolean("debug.showErrorInfo"));
     }
 
     @Test
