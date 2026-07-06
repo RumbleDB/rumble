@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -91,7 +91,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         // defaultBindings.put("an", Name.AN_NS);
     }
 
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
 
     public StaticContext() {
         this.parent = null;
@@ -110,12 +110,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.isQuerySideEffecting = false;
     }
 
-    public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
+    public StaticContext(URI staticBaseURI, RumbleConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
-        this.queryLanguage = configuration.getQueryLanguage() != null
-            ? configuration.getQueryLanguage()
-            : this.queryLanguage;
+        this.queryLanguage = configuration.semantics().queryLanguage();
         this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
@@ -124,7 +122,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = configuration.getSerializationParameters();
+        this.serializationParameters = configuration.output().serializationParameters();
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
@@ -150,7 +148,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this.parent;
     }
 
-    public RumbleRuntimeConfiguration getRumbleConfiguration() {
+    public RumbleConfiguration getRumbleConfiguration() {
         if (this.configuration != null) {
             return this.configuration;
         }
