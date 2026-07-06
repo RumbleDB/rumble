@@ -68,13 +68,13 @@ public class RumbleConfigurationTest {
     public void withEntriesApplyNestedOverrides() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
             .configureRuntime(runtime -> runtime.materializationCap(42))
-            .with("executionMode", "RUN")
+            .with("mode", "RUN")
             .with("input.queryPath", "queries/main.jq")
             .with("runtime.resultsSizeCap", 100)
             .with("debug.showErrorInfo", true)
             .build();
 
-        Assert.assertEquals(RumbleMode.RUN, configuration.executionMode());
+        Assert.assertEquals(RumbleMode.RUN, configuration.mode());
         Assert.assertEquals("queries/main.jq", configuration.input().queryPath());
         Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
         Assert.assertEquals(42, configuration.runtime().materializationCap());
@@ -84,13 +84,13 @@ public class RumbleConfigurationTest {
     @Test
     public void withEntriesOverrideTypedBuilderValues() {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
-            .executionMode(RumbleMode.RUN)
+            .mode(RumbleMode.RUN)
             .configureRuntime(runtime -> runtime.resultsSizeCap(25))
-            .with("executionMode", "REPL")
+            .with("mode", "REPL")
             .with("runtime.resultsSizeCap", 100)
             .build();
 
-        Assert.assertEquals(RumbleMode.REPL, configuration.executionMode());
+        Assert.assertEquals(RumbleMode.REPL, configuration.mode());
         Assert.assertEquals(100, configuration.runtime().resultsSizeCap());
     }
 

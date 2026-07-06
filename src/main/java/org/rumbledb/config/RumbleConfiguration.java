@@ -51,7 +51,7 @@ public class RumbleConfiguration {
     /**
      * Application execution mode.
      */
-    private RumbleMode executionMode;
+    private RumbleMode mode;
 
     private AccessConfig access;
 
@@ -73,7 +73,7 @@ public class RumbleConfiguration {
 
     @Builder(toBuilder = true)
     private RumbleConfiguration(
-            RumbleMode executionMode,
+            RumbleMode mode,
             AccessConfig access,
             InputConfig input,
             OutputConfig output,
@@ -84,7 +84,7 @@ public class RumbleConfiguration {
             SemanticsConfig semantics,
             FormattingConfig formatting
     ) {
-        this.executionMode = Objects.requireNonNullElse(executionMode, RumbleMode.RUN);
+        this.mode = Objects.requireNonNullElse(mode, RumbleMode.RUN);
         this.access = Objects.requireNonNullElseGet(access, () -> AccessConfig.builder().build());
         this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
         this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
@@ -107,7 +107,7 @@ public class RumbleConfiguration {
 
         public RumbleConfiguration build() {
             RumbleConfiguration baseConfiguration = new RumbleConfiguration(
-                    this.executionMode,
+                    this.mode,
                     this.access,
                     this.input,
                     this.output,

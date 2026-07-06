@@ -64,7 +64,7 @@ public abstract class BaseCommand implements Callable<CLIInvocation> {
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
         return RumbleConfiguration.builder()
-            .executionMode(mode)
+            .mode(mode)
             .access(this.access.toConfig())
             .runtime(this.runtime.toConfig())
             .debug(this.debug.toConfig())
