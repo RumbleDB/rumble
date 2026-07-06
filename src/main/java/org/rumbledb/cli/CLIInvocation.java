@@ -13,29 +13,19 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.rumbledb.cli.commands;
+package org.rumbledb.cli;
 
-import org.rumbledb.cli.CLIInvocation;
-import org.rumbledb.cli.arguments.OutputArguments;
-import org.rumbledb.config.model.RumbleMode;
 
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 
-@Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
-public final class Repl extends BaseCommand {
-    @Mixin
-    OutputArguments output;
-
-    @Override
-    public CLIInvocation call() {
-        return this.invocation(
-            this.baseConfiguration(RumbleMode.REPL)
-                .output(this.output.toConfig())
-                .build()
-        );
-    }
+/**
+ * Parsed command-line inputs, kept separate because bindings are query inputs
+ * rather than engine configuration.
+ */
+public record CLIInvocation(
+        RumbleConfiguration configuration,
+        ExternalBindings bindings) {
 }

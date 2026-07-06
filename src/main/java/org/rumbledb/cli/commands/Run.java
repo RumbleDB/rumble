@@ -18,8 +18,10 @@
 
 package org.rumbledb.cli.commands;
 
+import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.InputArguments;
 import org.rumbledb.cli.arguments.OutputArguments;
+import org.rumbledb.config.model.RumbleMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -40,4 +42,14 @@ public final class Run extends BaseCommand {
         description = "A JSONiq query file to read from (from any file system, even the Web!)."
     )
     String queryPath;
+
+    @Override
+    public CLIInvocation call() {
+        return this.invocation(
+            this.baseConfiguration(RumbleMode.RUN)
+                .input(this.input.toConfig(this.queryPath))
+                .output(this.output.toConfig())
+                .build()
+        );
+    }
 }

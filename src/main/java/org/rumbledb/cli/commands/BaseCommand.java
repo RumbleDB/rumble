@@ -18,6 +18,9 @@
 
 package org.rumbledb.cli.commands;
 
+import java.util.concurrent.Callable;
+
+import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.AccessArguments;
 import org.rumbledb.cli.arguments.AnalysisArguments;
 import org.rumbledb.cli.arguments.BindingsArguments;
@@ -26,13 +29,15 @@ import org.rumbledb.cli.arguments.FormattingArguments;
 import org.rumbledb.cli.arguments.OptimizationArguments;
 import org.rumbledb.cli.arguments.RuntimeArguments;
 import org.rumbledb.cli.arguments.SemanticsArguments;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.RumbleMode;
 
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
 
 @Command
-public abstract class BaseCommand {
+public abstract class BaseCommand implements Callable<CLIInvocation> {
     @Mixin
     AccessArguments access;
 
@@ -56,4 +61,20 @@ public abstract class BaseCommand {
 
     @Mixin
     BindingsArguments bindings;
+
+    protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
+        return RumbleConfiguration.builder()
+            .mode(mode)
+            .access(this.access.toConfig())
+            .runtime(this.runtime.toConfig())
+            .debug(this.debug.toConfig())
+            .analysis(this.analysis.toConfig())
+            .optimization(this.optimization.toConfig())
+            .semantics(this.semantics.toConfig())
+            .formatting(this.formatting.toConfig());
+    }
+
+    protected final CLIInvocation invocation(RumbleConfiguration configuration) {
+        return new CLIInvocation(configuration, this.bindings.toExternalBindings());
+    }
 }

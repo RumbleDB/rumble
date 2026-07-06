@@ -1,5 +1,7 @@
 package org.rumbledb.cli.arguments;
 
+import org.rumbledb.config.model.RuntimeConfig;
+
 import picocli.CommandLine.Option;
 
 public final class RuntimeArguments {
@@ -58,4 +60,20 @@ public final class RuntimeArguments {
         description = "Applies the pending update list returned by the query."
     )
     private Boolean applyUpdates;
+
+    public RuntimeConfig toConfig() {
+        RuntimeConfig.RuntimeConfigBuilder builder = RuntimeConfig.builder();
+        OptionConversion.applyIntIfPresent(this.resultSize, builder::resultsSizeCap);
+        OptionConversion.applyIntIfPresent(this.materializationCap, builder::materializationCap);
+        OptionConversion.applyBooleanIfPresent(this.nativeSQLPredicates, builder::useNativeSQLPredicates);
+        OptionConversion.applyBooleanIfPresent(
+            this.dataFrameExecutionModeDetection,
+            builder::detectDataFrameExecutionMode
+        );
+        OptionConversion.applyBooleanIfPresent(this.parallelExecution, builder::useParallelExecution);
+        OptionConversion.applyBooleanIfPresent(this.dataFrameExecution, builder::useDataFrameExecution);
+        OptionConversion.applyBooleanIfPresent(this.nativeExecution, builder::useNativeExecution);
+        OptionConversion.applyBooleanIfPresent(this.applyUpdates, builder::shouldApplyUpdates);
+        return builder.build();
+    }
 }
