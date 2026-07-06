@@ -35,7 +35,7 @@ import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -276,7 +276,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.staticContext.getStaticType();
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
     }
 
@@ -391,7 +391,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 getMetadata(),
                 TypeInferrenceUtils.TypeMergeMode.LAX
             );
-            if (this.getConfiguration().printInferredTypes()) {
+            if (this.getConfiguration().analysis().printInferredTypes()) {
                 System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
             }
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
