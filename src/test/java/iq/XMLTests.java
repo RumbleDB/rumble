@@ -20,43 +20,21 @@
 
 package iq;
 
-import iq.base.AnnotationsTestsBase;
+import iq.base.SparkAnnotationsTestsBase;
 import org.apache.spark.SparkConf;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
-import org.junit.jupiter.params.Parameter;
-import org.junit.jupiter.params.ParameterizedClass;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import scala.Function0;
-import scala.util.Properties;
-import sparksoniq.spark.SparkSessionManager;
 
-import java.util.List;
 import java.io.File;
 
-@ParameterizedClass
-@MethodSource("testFiles")
-public class XMLTests extends AnnotationsTestsBase {
+public class XMLTests extends SparkAnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/xml"
     );
-    public static final String javaVersion =
-        System.getProperty("java.version");
-    public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", new Function0<String>() {
-            @Override
-            public String apply() {
-                return "unknown";
-            }
-        });
-    @Parameter
-    File testFile;
 
+    @Override
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
@@ -73,34 +51,14 @@ public class XMLTests extends AnnotationsTestsBase {
         );
     }
 
-    public static List<File> testFiles() {
-        return loadTestFiles(runtimeTestsDirectory);
+    @Override
+    protected File testDirectory() {
+        return runtimeTestsDirectory;
     }
 
-    @BeforeAll
-    public static void setupSparkSession() {
-        SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
-        SparkConf sparkConfiguration = new SparkConf();
-        sparkConfiguration.setMaster("local[*]");
-        sparkConfiguration.set("spark.submit.deployMode", "client");
-        sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
-        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+    @Override
+    protected void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
         sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
-
-        // prevents spark from failing to start on MacOS when disconnected from the internet
-        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
-
-        SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
-    }
-
-    @Test
-    @Timeout(1000)
-    public void testRuntimeIterators() throws Throwable {
-        runAnnotationTest(this.testFile, true);
     }
 }
