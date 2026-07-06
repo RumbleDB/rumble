@@ -21,7 +21,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
@@ -59,7 +59,7 @@ public final class AnnotationTestExecutor {
 
     public static void run(
             File testFile,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             boolean checkOutput
     )
             throws IOException {
@@ -67,14 +67,14 @@ public final class AnnotationTestExecutor {
             testFile.getAbsolutePath(),
             configuration,
             checkOutput,
-            configuration.applyUpdates(),
-            configuration.getResultSizeCap()
+            configuration.runtime().shouldApplyUpdates(),
+            configuration.runtime().resultsSizeCap()
         );
     }
 
     static void run(
             String path,
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap
@@ -118,7 +118,7 @@ public final class AnnotationTestExecutor {
         }
     }
 
-    private static QueryExecutionResult executeQuery(String path, RumbleRuntimeConfiguration configuration) {
+    private static QueryExecutionResult executeQuery(String path, RumbleConfiguration configuration) {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
