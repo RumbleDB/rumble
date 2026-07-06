@@ -11,7 +11,7 @@ import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -45,7 +45,7 @@ public class SequenceWriter {
     private static final int SINGLE_PARTITION_CAP = 1000000000;
 
     private final SequenceOfItems sequence;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private final DataFrameWriter<Row> dataFrameWriter;
     private SaveMode mode;
     private final SerializationParameters serializationParameters;
@@ -64,7 +64,7 @@ public class SequenceWriter {
             DataFrameWriter<Row> dataFrameWriter,
             SaveMode mode,
             SerializationParameters serializationParameters,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         this.sequence = sequence;
         this.configuration = configuration;
@@ -110,7 +110,7 @@ public class SequenceWriter {
         } else {
             try {
                 Dataset<Row> dataFrame = sequence.getAsDataFrame();
-                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+                int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
                 }
@@ -167,7 +167,7 @@ public class SequenceWriter {
         if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             try {
                 Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
-                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+                int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
                 if (requestedPartitions > 0) {
                     dataFrame = dataFrame.repartition(requestedPartitions);
                 }
@@ -327,7 +327,7 @@ public class SequenceWriter {
         JavaRDD<Item> rdd = this.sequence.getAsRDD();
         Serializer serializer = getSerializer();
         JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
-        int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+        int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
         if (requestedPartitions == 1) {
             List<String> lines = outputRDD.take(SINGLE_PARTITION_CAP);
             FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
