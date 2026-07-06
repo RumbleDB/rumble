@@ -60,7 +60,9 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 return ItemParser.getItemFromXML(
                     xmlDocument,
                     uri.toString(),
-                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration().optimization().optimizeParentPointers()
+                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
+                        .optimization()
+                        .optimizeParentPointers()
                 );
             } catch (ParserConfigurationException e) {
                 throw new OurBadException("Document builder creation failed with: " + e);
