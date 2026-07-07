@@ -1,15 +1,23 @@
 package org.rumbledb.bindings;
 
 import org.rumbledb.api.Item;
-import lombok.Value;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-@Value
 public final class ItemSequenceBinding implements Binding {
-    List<Item> items;
+    private List<Item> items;
+
+    public ItemSequenceBinding() {
+        this.items = new ArrayList<>();
+    }
 
     public ItemSequenceBinding(List<Item> items) {
-        this.items = List.copyOf(Objects.requireNonNull(items, "items"));
+        this.items = new ArrayList<>(Objects.requireNonNull(items, "items"));
+    }
+
+    public List<Item> getItems() {
+        return Collections.unmodifiableList(this.items);
     }
 }
