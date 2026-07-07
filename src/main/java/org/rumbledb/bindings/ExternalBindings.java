@@ -7,9 +7,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -64,7 +62,7 @@ public final class ExternalBindings implements Serializable, KryoSerializable {
     }
 
     public Set<Name> names() {
-        return Collections.unmodifiableSet(new LinkedHashSet<>(this.variables.keySet()));
+        return this.variables.keySet();
     }
 
     public ExternalBindings snapshot() {

@@ -6,7 +6,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -22,7 +21,7 @@ public final class ItemSequenceBinding implements Binding {
     }
 
     public List<Item> getItems() {
-        return Collections.unmodifiableList(this.items);
+        return this.items;
     }
 
     @Override
