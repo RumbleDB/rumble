@@ -124,6 +124,67 @@ public class FrontendTests {
         }
     }
 
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForReverseAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/parent::node()",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+        Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationKeepsParentPointerOptimizationForForwardChildAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/child::title",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertTrue(effectiveConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForFollowingAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/following::node()",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+    }
+
     /*
      * private void testAstGeneration(File testFile, JsoniqExpressionTreeVisitor visitor,
      * JsoniqParser.MainModuleContext context) {
