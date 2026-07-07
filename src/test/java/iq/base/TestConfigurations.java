@@ -53,9 +53,9 @@ public final class TestConfigurations {
                 ItemFactory.getInstance().createIntItem(5)
             )
         );
-        externalBindings.bindItem(
+        externalBindings.bindLiteral(
             "externalUnparsedString",
-            ItemFactory.getInstance().createStringItem("unparsed string")
+            "unparsed string"
         );
         return externalBindings;
     }
