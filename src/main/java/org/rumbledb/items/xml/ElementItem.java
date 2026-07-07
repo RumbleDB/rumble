@@ -258,6 +258,9 @@ public class ElementItem implements Item {
         // Step 2: Current element's own declared namespaces override all inherited ones.
         inScope.putAll(this.namespaces);
 
+        // Step 2b: The xml prefix is implicitly in-scope on every element.
+        inScope.putIfAbsent("xml", Name.XML_NS);
+
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
@@ -357,6 +360,7 @@ public class ElementItem implements Item {
         return this.atomizedValue();
     }
 
+    @Override
     public void addOrReplaceNamespace(Item namespaceItem) {
         if (!(namespaceItem instanceof NamespaceItem namespace)) {
             return;
