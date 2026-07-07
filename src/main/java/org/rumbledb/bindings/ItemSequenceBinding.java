@@ -1,6 +1,10 @@
 package org.rumbledb.bindings;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -19,5 +23,16 @@ public final class ItemSequenceBinding implements Binding {
 
     public List<Item> getItems() {
         return Collections.unmodifiableList(this.items);
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeClassAndObject(output, this.items);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.items = (List<Item>) kryo.readClassAndObject(input);
     }
 }
