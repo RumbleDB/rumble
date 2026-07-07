@@ -37,8 +37,8 @@ public class XMLTests extends SparkAnnotationsTestsBase {
 
     @Override
     public RumbleConfiguration getConfiguration() {
-        return TestConfigurations.defaultConfigurationBuilder()
-            .configureRuntime(runtime -> runtime.materializationCap(200).shouldApplyUpdates(true))
+        return RumbleConfiguration.builder()
+            .configureRuntime(r -> r.resultsSizeCap(200).materializationCap(200).shouldApplyUpdates(true))
             .build();
     }
 
