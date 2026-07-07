@@ -142,17 +142,21 @@ public class Rumble {
             MainModule mainModule,
             org.rumbledb.bindings.ExternalBindings bindings
     ) {
+        var effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            this.configuration.toBuilder()
+        );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
-            this.configuration,
+            effectiveConfiguration,
             bindings
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            this.configuration
+            effectiveConfiguration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(iterator, dynamicContext, effectiveConfiguration);
     }
 
     /**

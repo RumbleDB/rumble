@@ -50,6 +50,13 @@ public class VisitorHelpers {
         return result;
     }
 
+    public static RumbleConfiguration getEffectiveConfiguration(
+            Node node,
+            RumbleConfiguration.RumbleConfigurationBuilder builder
+    ) {
+        return new EffectiveConfigurationVisitor().getEffectiveConfiguration(node, builder);
+    }
+
     private static void resolveDependencies(Node node, RumbleConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
