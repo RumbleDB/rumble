@@ -18,6 +18,7 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -44,7 +45,9 @@ import lombok.extern.jackson.Jacksonized;
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = FormattingConfig.FormattingConfigBuilder.class)
-public class FormattingConfig implements KryoSerializable {
+public class FormattingConfig implements Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * The default place used for formatting date and time values.
      *

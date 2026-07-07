@@ -19,6 +19,8 @@
 package org.rumbledb.config.model;
 
 
+import java.io.Serializable;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -39,7 +41,9 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class RuntimeConfig implements KryoSerializable {
+public class RuntimeConfig implements Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
+
     public static final int DEFAULT_RESULTS_SIZE_CAP = 10;
     public static final int DEFAULT_MATERIALIZATION_CAP = 100000;
 

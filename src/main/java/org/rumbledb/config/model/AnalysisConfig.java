@@ -19,6 +19,8 @@
 package org.rumbledb.config.model;
 
 
+import java.io.Serializable;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -39,7 +41,9 @@ import lombok.extern.jackson.Jacksonized;
 @Builder(toBuilder = true)
 @Jacksonized
 @Accessors(fluent = true)
-public class AnalysisConfig implements KryoSerializable {
+public class AnalysisConfig implements Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
+
     /**
      * Whether static analysis should be performed at compile time.
      */
