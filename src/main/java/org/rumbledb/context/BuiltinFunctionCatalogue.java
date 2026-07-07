@@ -4092,7 +4092,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction has_children_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "has-children"),
-        List.of("item?"),
+        List.of("node()?"),
         "boolean",
         HasChildrenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4172,7 +4172,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction generate_id_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "generate-id"),
-        List.of("item?"),
+        List.of("node()?"),
         "string",
         GenerateIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
