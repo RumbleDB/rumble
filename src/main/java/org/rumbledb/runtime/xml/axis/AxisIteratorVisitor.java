@@ -29,13 +29,10 @@ public class AxisIteratorVisitor {
             case ATTRIBUTE:
                 return new AttributeAxisIterator(staticContext);
             case FOLLOWING:
-                // staticContext.getConfiguration().setOptimizeParentPointers(false);
                 return new FollowingAxisIterator(staticContext);
             case DESCENDANT:
                 return new DescendantAxisIterator(staticContext);
             case FOLLOWING_SIBLING:
-                // TODO: I believe this is a misuse as we are mutating the configuration in the middle of the execution.
-                // staticContext.getConfiguration().setOptimizeParentPointers(false);
                 return new FollowingSiblingAxisIterator(staticContext);
             case DESCENDANT_OR_SELF:
                 return new DescendantOrSelfAxisIterator(staticContext);
@@ -48,8 +45,6 @@ public class AxisIteratorVisitor {
     }
 
     public AxisIterator visit(ReverseStepExpr reverseStep, RuntimeStaticContext staticContext) {
-        // TODO: I believe this is a misuse as we are mutating the configuration in the middle of the execution.
-        // staticContext.getConfiguration().setOptimizeParentPointers(false);
         switch (reverseStep.getReverseAxis()) {
             case PARENT:
                 return new ParentAxisIterator(staticContext);
