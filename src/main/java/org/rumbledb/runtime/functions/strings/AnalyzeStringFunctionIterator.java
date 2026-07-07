@@ -6,7 +6,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -67,7 +66,9 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
         int currentPosition = 0;
         while (matcher.find()) {
             if (currentPosition < matcher.start()) {
-                resultChildren.add(createTextContainer(factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start())));
+                resultChildren.add(
+                    createTextContainer(factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start()))
+                );
             }
             resultChildren.add(createMatchElement(factory, input, matcher));
             currentPosition = matcher.end();
@@ -76,12 +77,11 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
             resultChildren.add(createTextContainer(factory, NON_MATCH_NAME, input.substring(currentPosition)));
         }
 
-        ElementItem root = (ElementItem) factory.createXmlElementNode(
+        Item root = factory.createXmlElementNode(
             ANALYZE_STRING_RESULT_NAME,
             resultChildren,
             Collections.emptyList()
         );
-        root.addOrReplaceNamespace(factory.createXmlNamespaceNode("", Name.FN_NS));
         assignParentsRecursively(root);
         root.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
         return root;
