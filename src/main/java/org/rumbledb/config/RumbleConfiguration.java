@@ -42,7 +42,6 @@ import org.rumbledb.config.model.OutputConfig;
 import org.rumbledb.config.model.RuntimeConfig;
 import org.rumbledb.config.model.SemanticsConfig;
 
-import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -55,8 +54,7 @@ import java.util.function.Consumer;
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = RumbleConfiguration.RumbleConfigurationBuilder.class)
-public class RumbleConfiguration implements Serializable, KryoSerializable {
-    private static final long serialVersionUID = 1L;
+public class RumbleConfiguration implements KryoSerializable {
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**

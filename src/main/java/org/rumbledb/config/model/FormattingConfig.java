@@ -18,11 +18,14 @@
 
 package org.rumbledb.config.model;
 
-import java.io.Serializable;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.config.FormattingCalendarModeSupport;
 import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.CliException;
@@ -30,15 +33,18 @@ import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import lombok.Builder;
+import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
+import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 
 @Value
+@NoArgsConstructor
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = FormattingConfig.FormattingConfigBuilder.class)
-public class FormattingConfig implements Serializable {
+public class FormattingConfig implements KryoSerializable {
     /**
      * The default place used for formatting date and time values.
      *
@@ -47,6 +53,7 @@ public class FormattingConfig implements Serializable {
      * place is supplied. The initial default is {@code UTC}.
      * </p>
      */
+    @NonFinal
     private String defaultFormattingPlace;
 
     /**
@@ -59,6 +66,7 @@ public class FormattingConfig implements Serializable {
      * </p>
      *
      */
+    @NonFinal
     private String defaultFormattingCalendar;
 
     /**
@@ -71,6 +79,7 @@ public class FormattingConfig implements Serializable {
      * </p>
      *
      */
+    @NonFinal
     private String defaultFormattingLanguage;
 
     @Builder(toBuilder = true)
@@ -88,6 +97,20 @@ public class FormattingConfig implements Serializable {
             defaultFormattingLanguage,
             FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
         );
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.defaultFormattingPlace);
+        output.writeString(this.defaultFormattingCalendar);
+        output.writeString(this.defaultFormattingLanguage);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.defaultFormattingPlace = input.readString();
+        this.defaultFormattingCalendar = input.readString();
+        this.defaultFormattingLanguage = input.readString();
     }
 
     private static String normalizeFormattingCalendar(String calendar) {
