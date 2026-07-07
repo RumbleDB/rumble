@@ -40,7 +40,7 @@ public class UpdatesForRumbleBenchmark {
     public List<FileTuple> benchmarkFiles;
 
     protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
-        .configureDebug(debug -> debug.printIteratorTree(true).showErrorInfo(true))
+        .configureDebug(debug -> debug.showErrorInfo(true))
         .configureRuntime(
             runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
         )
@@ -48,7 +48,7 @@ public class UpdatesForRumbleBenchmark {
         .build();
 
     protected static final RumbleConfiguration createDeltaConfiguration = RumbleConfiguration.builder()
-        .configureDebug(debug -> debug.printIteratorTree(true).showErrorInfo(true))
+        .configureDebug(debug -> debug.showErrorInfo(true))
         .configureOutput(output -> output.outputFormat("delta"))
         .configureRuntime(
             runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)

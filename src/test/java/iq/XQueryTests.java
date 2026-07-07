@@ -40,7 +40,6 @@ public class XQueryTests extends SparkAnnotationsTestsBase {
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureDebug(debug -> debug.printIteratorTree(true))
             .configureRuntime(runtime -> runtime.shouldApplyUpdates(true))
             .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
             .build();

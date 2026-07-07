@@ -8,7 +8,6 @@ import java.io.File;
 public class StaticTypeTests extends SparkAnnotationsTestsBase {
 
     protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
-        .configureDebug(debug -> debug.printIteratorTree(true))
         .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
         .build();
 

@@ -30,7 +30,6 @@ public final class TestConfigurations {
 
     public static RumbleConfiguration.RumbleConfigurationBuilder defaultConfigurationBuilder() {
         return RumbleConfiguration.builder()
-            .configureDebug(d -> d.printIteratorTree(true))
             .configureRuntime(r -> r.materializationCap(200));
     }
 

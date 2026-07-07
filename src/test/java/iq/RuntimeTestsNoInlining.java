@@ -27,7 +27,6 @@ public class RuntimeTestsNoInlining extends RuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureDebug(debug -> debug.printIteratorTree(true))
             .configureRuntime(runtime -> runtime.resultsSizeCap(200).shouldApplyUpdates(true))
             .configureSemantics(semantics -> semantics.laxJSONNullValidation(false))
             .configureOptimization(optimization -> optimization.useFunctionInlining(false))

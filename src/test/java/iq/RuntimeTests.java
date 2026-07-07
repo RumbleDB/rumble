@@ -37,7 +37,6 @@ public class RuntimeTests extends SparkAnnotationsTestsBase {
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureDebug(d -> d.printIteratorTree(true))
             .configureRuntime(
                 runtime -> runtime.resultsSizeCap(200).materializationCap(100000).shouldApplyUpdates(true)
             )
