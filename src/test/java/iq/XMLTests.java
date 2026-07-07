@@ -21,7 +21,6 @@
 package iq;
 
 import iq.base.SparkAnnotationsTestsBase;
-import iq.base.TestConfigurations;
 import org.apache.spark.SparkConf;
 import org.rumbledb.config.RumbleConfiguration;
 
