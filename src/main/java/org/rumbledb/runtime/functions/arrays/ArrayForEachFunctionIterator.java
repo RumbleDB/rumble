@@ -24,7 +24,6 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -32,11 +31,13 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.types.SequenceType;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}:
@@ -111,19 +112,17 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         Item action = actionItems.get(0);
-        if (!action.isFunction()) {
+        if (!isCallableWithSingleArgument(action)) {
             throw new UnexpectedTypeException(
-                    "Type error; second argument to array:for-each must be a function item "
-                        + "(function(item()*) as item()*).",
+                    "Type error; second argument to array:for-each must be a function item, map, or array.",
                     getMetadata()
             );
         }
-        FunctionItem functionItem = (FunctionItem) action;
 
         boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(memberSequences.size());
         for (List<Item> memberSequence : memberSequences) {
-            List<Item> result = applyAction(functionItem, memberSequence, context);
+            List<Item> result = applyAction(action, memberSequence, context);
             if (allSingleton && result.size() != 1) {
                 allSingleton = false;
             }
@@ -186,7 +185,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
      * Invokes {@code $action} with the array member as {@code item()*} (one argument, sequence type).
      */
     private List<Item> applyAction(
-            FunctionItem functionItem,
+            Item action,
             List<Item> memberSequence,
             DynamicContext context
     ) {
@@ -195,14 +194,25 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
+        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
+                getConfiguration(),
+                SequenceType.createSequenceType("item*"),
+                ExecutionMode.LOCAL,
+                getMetadata()
+        );
+        RuntimeIterator functionCall = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(action, functionItemContext),
+                arguments,
+                functionItemContext
         );
         return functionCall.materialize(context);
+    }
+
+    private static boolean isCallableWithSingleArgument(Item item) {
+        if (item.isMap() || item.isArray()) {
+            return true;
+        }
+        return item.isFunction() && item.getIdentifier().getArity() == 1;
     }
 
     @Override
