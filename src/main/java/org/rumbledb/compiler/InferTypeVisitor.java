@@ -953,7 +953,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (
             !expressionSequenceType.getItemType().isAtomicItemType()
-                || !expressionSequenceType.getItemType().isStaticallyCastableAs(castedSequenceType.getItemType())
+                || (!castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.errorItem)
+                    && !expressionSequenceType.getItemType()
+                        .isStaticallyCastableAs(
+                            castedSequenceType.getItemType()
+                        ))
         ) {
             throwStaticTypeException(
                 "It is never possible to cast a "
