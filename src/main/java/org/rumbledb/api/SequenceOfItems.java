@@ -48,10 +48,6 @@ public class SequenceOfItems {
      * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
      * query.
      * 
-     * TODO: because this constructor should not be used directly, I have changed it to receive the internal
-     * RumbleConfiguration
-     * I think we should mark this constructor as package-private
-     * 
      * @param iterator The top-level iterator of the query.
      * @param dynamicContext An initialized dynamic context.
      * @param configuration A RumbleDB configuration.
