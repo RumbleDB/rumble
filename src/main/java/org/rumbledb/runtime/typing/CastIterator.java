@@ -168,6 +168,11 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             return castToUnionType(item, targetType, metadata, namespaceResolver);
         }
 
+        // xs:error has an empty value space, so every cast to it must fail dynamically.
+        if (targetType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return null;
+        }
+
         if (!item.getDynamicType().isStaticallyCastableAs(targetType)) {
             String message = String.format(
                 "\"%s\": a value of type %s is not castable to type %s",
@@ -1162,4 +1167,3 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         return NativeClauseContext.NoNativeQuery;
     }
 }
-
