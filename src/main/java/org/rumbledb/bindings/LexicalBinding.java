@@ -12,6 +12,8 @@ import lombok.experimental.NonFinal;
 @Value
 @NoArgsConstructor
 public final class LexicalBinding implements Binding {
+    private static final long serialVersionUID = 1L;
+
     @NonFinal
     String value;
 

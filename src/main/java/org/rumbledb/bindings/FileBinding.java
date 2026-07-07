@@ -12,6 +12,8 @@ import java.util.Objects;
 @Value
 @NoArgsConstructor
 public final class FileBinding implements Binding {
+    private static final long serialVersionUID = 1L;
+
     @NonFinal
     String location;
     @NonFinal

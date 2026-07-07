@@ -14,6 +14,8 @@ import java.util.Objects;
 @Value
 @NoArgsConstructor
 public final class DataFrameBinding implements Binding {
+    private static final long serialVersionUID = 1L;
+
     @NonFinal
     Dataset<Row> dataFrame;
 

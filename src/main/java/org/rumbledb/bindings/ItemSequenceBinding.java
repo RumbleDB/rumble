@@ -10,6 +10,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class ItemSequenceBinding implements Binding {
+    private static final long serialVersionUID = 1L;
+
     private List<Item> items;
 
     public ItemSequenceBinding() {
