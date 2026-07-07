@@ -18,6 +18,8 @@
 
 package org.rumbledb.config;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import com.esotericsoftware.kryo.Kryo;
@@ -55,6 +57,7 @@ import java.util.function.Consumer;
 @JsonDeserialize(builder = RumbleConfiguration.RumbleConfigurationBuilder.class)
 public class RumbleConfiguration implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     /**
      * Application execution mode.
@@ -120,30 +123,30 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.mode);
-        kryo.writeClassAndObject(output, this.access);
-        kryo.writeClassAndObject(output, this.input);
-        kryo.writeClassAndObject(output, this.output);
-        kryo.writeClassAndObject(output, this.runtime);
-        kryo.writeClassAndObject(output, this.debug);
-        kryo.writeClassAndObject(output, this.analysis);
-        kryo.writeClassAndObject(output, this.optimization);
-        kryo.writeClassAndObject(output, this.semantics);
-        kryo.writeClassAndObject(output, this.formatting);
+        try {
+            output.writeString(MAPPER.writeValueAsString(this));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not serialize RumbleConfiguration.", e);
+        }
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.mode = (RumbleMode) kryo.readClassAndObject(input);
-        this.access = (AccessConfig) kryo.readClassAndObject(input);
-        this.input = (InputConfig) kryo.readClassAndObject(input);
-        this.output = (OutputConfig) kryo.readClassAndObject(input);
-        this.runtime = (RuntimeConfig) kryo.readClassAndObject(input);
-        this.debug = (DebugConfig) kryo.readClassAndObject(input);
-        this.analysis = (AnalysisConfig) kryo.readClassAndObject(input);
-        this.optimization = (OptimizationConfig) kryo.readClassAndObject(input);
-        this.semantics = (SemanticsConfig) kryo.readClassAndObject(input);
-        this.formatting = (FormattingConfig) kryo.readClassAndObject(input);
+        try {
+            RumbleConfiguration deserialized = MAPPER.readValue(input.readString(), RumbleConfiguration.class);
+            this.mode = deserialized.mode;
+            this.access = deserialized.access;
+            this.input = deserialized.input;
+            this.output = deserialized.output;
+            this.runtime = deserialized.runtime;
+            this.debug = deserialized.debug;
+            this.analysis = deserialized.analysis;
+            this.optimization = deserialized.optimization;
+            this.semantics = deserialized.semantics;
+            this.formatting = deserialized.formatting;
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Could not deserialize RumbleConfiguration.", e);
+        }
     }
 
     @JsonPOJOBuilder(withPrefix = "")
