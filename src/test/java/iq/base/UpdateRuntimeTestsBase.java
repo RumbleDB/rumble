@@ -34,7 +34,7 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     @Override
     public RumbleConfiguration getConfiguration() {
-        return TestConfigurations.defaultConfigurationBuilder()
+        return RumbleConfiguration.builder()
             .configureDebug(debug -> debug.showErrorInfo(true))
             .configureRuntime(
                 runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
