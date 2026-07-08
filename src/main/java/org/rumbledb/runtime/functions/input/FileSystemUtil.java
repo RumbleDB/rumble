@@ -69,7 +69,6 @@ public class FileSystemUtil {
 
     public static URI resolveURIAgainstWorkingDirectory(
             String url,
-            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         // TODO: conf is not used here, maybe we can remove it from the signature of this method and all its callers.
@@ -98,7 +97,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean exists(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
+    public static boolean exists(URI locator, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
             throw new OurBadException("Unresolved uri passed to exists()");
         }
@@ -113,7 +112,7 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean delete(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
+    public static boolean delete(URI locator, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
@@ -133,12 +132,11 @@ public class FileSystemUtil {
 
     public static InputStream getDataInputStream(
             URI locator,
-            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
-            return getDataInputStreamHTML(locator, conf, metadata);
+            return getDataInputStreamHTML(locator, metadata);
         }
         try {
             FileContext fileContext = FileContext.getFileContext();
@@ -155,7 +153,6 @@ public class FileSystemUtil {
 
     public static InputStream getDataInputStreamHTML(
             URI locator,
-            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         CloseableHttpClient httpclient = HttpClients.createDefault();
@@ -179,10 +176,10 @@ public class FileSystemUtil {
         return null;
     }
 
-    public static String readContent(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
+    public static String readContent(URI locator, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
 
-        InputStream inputStream = getDataInputStream(locator, conf, metadata);
+        InputStream inputStream = getDataInputStream(locator, metadata);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder sb = new StringBuilder();
         String line;
