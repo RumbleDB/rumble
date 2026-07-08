@@ -72,7 +72,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         );
         this.is = FileSystemUtil.getDataInputStream(
             uri,
-            this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
             getMetadata()
         );
         InputStreamReader r = new InputStreamReader(this.is);
@@ -106,7 +105,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         );
         this.is = FileSystemUtil.getDataInputStream(
             uri,
-            this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
             getMetadata()
         );
         InputStreamReader r = new InputStreamReader(this.is);

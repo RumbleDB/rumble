@@ -143,8 +143,6 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.apache.spark.sql.SparkSession;
 
-
-
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
@@ -666,7 +664,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.configuration, expression.getMetadata())) {
+            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }
             try {
@@ -692,7 +690,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, this.configuration, expression.getMetadata())) {
+            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }
             StructType s = SparkSessionManager.getInstance()

@@ -99,7 +99,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
             URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
-            if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);

@@ -36,7 +36,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
         }
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         // DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();

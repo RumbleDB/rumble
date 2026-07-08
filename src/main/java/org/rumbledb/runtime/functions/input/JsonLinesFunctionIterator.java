@@ -78,7 +78,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                context.getRumbleConfiguration(),
                 getMetadata()
             );
             BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -104,7 +103,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
@@ -137,7 +136,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             );
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                 getMetadata()
             );
             this.reader = new BufferedReader(new InputStreamReader(is));

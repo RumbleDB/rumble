@@ -110,7 +110,6 @@ public class FrontendTests {
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
-                    configuration,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(

@@ -43,7 +43,6 @@ public class SequentialClassificationTests {
     private MainModule parseAndCompile(String filePath) throws IOException {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             filePath,
-            configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         return VisitorHelpers.parseMainModuleFromLocation(

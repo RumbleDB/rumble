@@ -41,7 +41,7 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
         try {
             String href = hrefItem.getStringValue();
             URI uri = href.isEmpty() ? this.staticURI : FileSystemUtil.resolveURI(this.staticURI, href, getMetadata());
-            FileSystemUtil.readContent(uri, getConfiguration(), getMetadata());
+            FileSystemUtil.readContent(uri, getMetadata());
             return ItemFactory.getInstance().createBooleanItem(true);
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);

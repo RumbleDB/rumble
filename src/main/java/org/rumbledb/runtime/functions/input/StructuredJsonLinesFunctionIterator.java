@@ -54,7 +54,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         try {
