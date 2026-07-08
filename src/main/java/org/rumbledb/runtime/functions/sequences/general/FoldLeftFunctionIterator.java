@@ -9,13 +9,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,49 +52,33 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
         List<Item> accumulator = this.zeroIterator.materialize(context);
         Item functionItem = this.functionIterator.materialize(context).get(0);
 
-        for (Item inputItem : inputItems) {
-            accumulator = applyFunction(functionItem, accumulator, Collections.singletonList(inputItem), context);
-        }
-
-        this.resultSequence = accumulator;
-    }
-
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
         RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
                 getConfiguration(),
                 SequenceType.createSequenceType("item*"),
                 ExecutionMode.LOCAL,
                 getMetadata()
         );
-        if (items.isEmpty()) {
-            return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
-        }
-
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
-        for (Item item : items) {
-            childIterators.add(new ConstantRuntimeIterator(item, localItemStarContext));
-        }
-        return new CommaExpressionIterator(childIterators, localItemStarContext);
-    }
-
-    private List<Item> applyFunction(
-            Item functionItem,
-            List<Item> accumulator,
-            List<Item> currentItemSequence,
-            DynamicContext context
-    ) {
-        List<RuntimeIterator> arguments = new ArrayList<>(2);
-        arguments.add(createSequenceIterator(accumulator));
-        arguments.add(createSequenceIterator(currentItemSequence));
-
+        MaterializedItemsRuntimeIterator accumulatorArgument = new MaterializedItemsRuntimeIterator(
+                localItemStarContext
+        );
+        MaterializedItemsRuntimeIterator currentItemArgument = new MaterializedItemsRuntimeIterator(
+                localItemStarContext
+        );
         RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
             functionItem,
             this.staticContext,
             ExecutionMode.LOCAL,
-            arguments,
+            Arrays.asList(accumulatorArgument, currentItemArgument),
             false
         );
-        return functionCall.materialize(context);
+
+        for (Item inputItem : inputItems) {
+            accumulatorArgument.setItems(accumulator);
+            currentItemArgument.setItems(Collections.singletonList(inputItem));
+            accumulator = functionCall.materialize(context);
+        }
+
+        this.resultSequence = accumulator;
     }
 
     @Override
