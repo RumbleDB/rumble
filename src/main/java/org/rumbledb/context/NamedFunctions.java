@@ -166,7 +166,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         ) {
             return new AtMostOneItemTypePromotionIterator(
                     functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
+                    sequenceType,
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
@@ -177,7 +177,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         } else {
             return new TypePromotionIterator(
                     functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
+                    sequenceType,
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
