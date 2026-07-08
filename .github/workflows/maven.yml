@@ -14,6 +14,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
+    permissions:
+      checks: write
+      contents: read
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
@@ -101,3 +104,11 @@ jobs:
           path: target
       - name: Run Test ${{ matrix.test_class }}
         run: mvn -Dtest=${{ matrix.test_class }} test
+      - name: Publish Surefire Report ${{ matrix.test_class }}
+        if: always()
+        uses: ScalableCapital/action-surefire-report@v2
+        with:
+          report_paths: target/surefire-reports/TEST-*.xml
+          check_name: Test Report - ${{ matrix.test_class }}
+          fail_on_test_failures: false
+          fail_if_no_tests: false
