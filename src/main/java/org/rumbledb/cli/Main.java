@@ -22,6 +22,7 @@ package org.rumbledb.cli;
 import java.io.IOException;
 import java.net.ConnectException;
 
+
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleConfiguration;
@@ -49,20 +50,23 @@ public class Main {
             );
             System.exit(43);
         }
-        if (args.length == 0) {
-            System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
-            System.out.println();
-            System.out.println(
-                IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
-            );
-            return;
-        }
-        RumbleConfiguration configuration = null;
-        // Parse arguments
-        try {
-            CLIInvocation invocation = CLIArgumentParser.parse(args);
-            configuration = invocation.configuration();
 
+        CLIInvocation invocation = null;
+        RumbleConfiguration configuration = null;
+        try {
+            invocation = CLIArgumentParser.parse(args);
+
+            if (invocation == null) {
+                System.exit(0);
+            } else {
+                configuration = invocation.configuration();
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ CLI Error: " + e.getMessage());
+            System.exit(42);
+        }
+
+        try {
             if (configuration.mode() == RumbleMode.REPL) {
                 launchShell(invocation);
             } else if (configuration.input().query() != null || configuration.input().queryPath() != null) {
