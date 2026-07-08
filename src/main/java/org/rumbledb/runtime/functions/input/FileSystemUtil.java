@@ -12,7 +12,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -198,7 +197,6 @@ public class FileSystemUtil {
     public static void write(
             URI locator,
             List<String> content,
-            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
@@ -222,7 +220,6 @@ public class FileSystemUtil {
     public static void append(
             URI locator,
             List<String> content,
-            RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
