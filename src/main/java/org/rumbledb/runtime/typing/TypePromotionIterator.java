@@ -3,6 +3,7 @@ package org.rumbledb.runtime.typing;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -227,6 +228,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
+        if (
+            this.nextResult.isFunction()
+                && this.nextResult.getIdentifier() != null
+                && this.nextResult.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
+        ) {
+            return;
+        }
         if (
             (this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
                 && this.itemType.isFunctionItemType()
