@@ -608,7 +608,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction name_with_arg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "name"),
-        List.of("item?"),
+        List.of("node()?"),
         "string",
         NodeNameFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL

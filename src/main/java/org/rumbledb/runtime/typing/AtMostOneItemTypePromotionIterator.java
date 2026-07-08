@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -94,6 +95,14 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private Item checkTypePromotion(Item item) {
+        if (
+            item.isFunction()
+                && item.getIdentifier() != null
+                && item.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())
+        ) {
+            return item;
+        }
         if (
             (item.isFunction() || item.isMap() || item.isArray())
                 && this.itemType.isFunctionItemType()
