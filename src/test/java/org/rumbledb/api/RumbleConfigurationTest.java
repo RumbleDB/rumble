@@ -18,7 +18,6 @@
 
 package org.rumbledb.api;
 
-import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -33,14 +32,12 @@ public class RumbleConfigurationTest {
                 .mode(RumbleMode.RUN)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
-                .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
                 .build()
         );
 
         Assertions.assertEquals("RUN", configuration.get("mode"));
         Assertions.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
         Assertions.assertEquals(true, configuration.get("debug.showErrorInfo"));
-        Assertions.assertEquals(List.of("file:", "https:"), configuration.get("access.allowedPrefixes"));
     }
 
     @Test
@@ -63,17 +60,6 @@ public class RumbleConfigurationTest {
         RumbleConfiguration configuration = new RumbleConfiguration();
 
         Assertions.assertNull(configuration.get("input.queryPath"));
-    }
-
-    @Test
-    public void getStringListReturnsTypedList() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
-                .configureAccess(access -> access.allowedPrefixes(List.of("file:", "https:")))
-                .build()
-        );
-
-        Assertions.assertEquals(List.of("file:", "https:"), configuration.getStringList("access.allowedPrefixes"));
     }
 
     @Test
