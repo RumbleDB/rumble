@@ -10,7 +10,7 @@ import org.rumbledb.runtime.functions.util.formatting.calendar.DateNames;
 
 import java.time.OffsetDateTime;
 
-final class ParsedVariableMarker {
+final class VariableMarker {
 
     public static final class Kind {
         private Kind() {
@@ -62,40 +62,7 @@ final class ParsedVariableMarker {
     final String wordCase;
     final String formatSpecifier;
 
-    private ParsedVariableMarker(
-            char component,
-            String presentation,
-            int minWidth,
-            int maxWidth,
-            String kind,
-            char secondPresentationModifier,
-            NumericPicture numericPicture,
-            boolean explicitNumeric,
-            boolean lowerCaseRoman,
-            boolean lowerCaseAlphabetic,
-            ParsedTimezonePicture timezonePicture,
-            String nameForm,
-            String wordCase
-    ) {
-        this(
-            component,
-            presentation,
-            minWidth,
-            maxWidth,
-            kind,
-            secondPresentationModifier,
-            numericPicture,
-            explicitNumeric,
-            lowerCaseRoman,
-            lowerCaseAlphabetic,
-            timezonePicture,
-            nameForm,
-            wordCase,
-            null
-        );
-    }
-
-    private ParsedVariableMarker(
+    private VariableMarker(
             char component,
             String presentation,
             int minWidth,
@@ -125,6 +92,104 @@ final class ParsedVariableMarker {
         this.nameForm = nameForm;
         this.wordCase = wordCase;
         this.formatSpecifier = formatSpecifier;
+    }
+
+    /**
+     * Builds a {@link VariableMarker}. The component, presentation, width, kind, and second presentation
+     * modifier are shared by every marker and required here; the remaining fields are meaningful to only one or two
+     * kinds each and default to "absent" ({@code false}/{@code null}) unless explicitly set.
+     */
+    private static final class Builder {
+        private final char component;
+        private final String presentation;
+        private final int minWidth;
+        private final int maxWidth;
+        private final String kind;
+        private final char secondPresentationModifier;
+
+        private NumericPicture numericPicture = null;
+        private boolean explicitNumeric = false;
+        private boolean lowerCaseRoman = false;
+        private boolean lowerCaseAlphabetic = false;
+        private ParsedTimezonePicture timezonePicture = null;
+        private String nameForm = null;
+        private String wordCase = null;
+        private String formatSpecifier = null;
+
+        Builder(
+                char component,
+                String presentation,
+                int minWidth,
+                int maxWidth,
+                String kind,
+                char secondPresentationModifier
+        ) {
+            this.component = component;
+            this.presentation = presentation;
+            this.minWidth = minWidth;
+            this.maxWidth = maxWidth;
+            this.kind = kind;
+            this.secondPresentationModifier = secondPresentationModifier;
+        }
+
+        Builder numericPicture(NumericPicture value) {
+            this.numericPicture = value;
+            return this;
+        }
+
+        Builder explicitNumeric(boolean value) {
+            this.explicitNumeric = value;
+            return this;
+        }
+
+        Builder lowerCaseRoman(boolean value) {
+            this.lowerCaseRoman = value;
+            return this;
+        }
+
+        Builder lowerCaseAlphabetic(boolean value) {
+            this.lowerCaseAlphabetic = value;
+            return this;
+        }
+
+        Builder timezonePicture(ParsedTimezonePicture value) {
+            this.timezonePicture = value;
+            return this;
+        }
+
+        Builder nameForm(String value) {
+            this.nameForm = value;
+            return this;
+        }
+
+        Builder wordCase(String value) {
+            this.wordCase = value;
+            return this;
+        }
+
+        Builder formatSpecifier(String value) {
+            this.formatSpecifier = value;
+            return this;
+        }
+
+        VariableMarker build() {
+            return new VariableMarker(
+                    this.component,
+                    this.presentation,
+                    this.minWidth,
+                    this.maxWidth,
+                    this.kind,
+                    this.secondPresentationModifier,
+                    this.numericPicture,
+                    this.explicitNumeric,
+                    this.lowerCaseRoman,
+                    this.lowerCaseAlphabetic,
+                    this.timezonePicture,
+                    this.nameForm,
+                    this.wordCase,
+                    this.formatSpecifier
+            );
+        }
     }
 
     boolean isOrdinal() {
@@ -210,25 +275,11 @@ final class ParsedVariableMarker {
         return this.component == 'Y';
     }
 
-    static ParsedVariableMarker forDefault(char c, String p, int min, int max, char secondPresentationModifier) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.DEFAULT,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                null,
-                null,
-                null
-        );
+    static VariableMarker forDefault(char c, String p, int min, int max, char secondPresentationModifier) {
+        return new Builder(c, p, min, max, Kind.DEFAULT, secondPresentationModifier).build();
     }
 
-    static ParsedVariableMarker forNumeric(
+    static VariableMarker forNumeric(
             char c,
             String p,
             int min,
@@ -237,24 +288,13 @@ final class ParsedVariableMarker {
             NumericPicture numericpicture,
             boolean explicit
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.NUMERIC,
-                secondPresentationModifier,
-                numericpicture,
-                explicit,
-                false,
-                false,
-                null,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.NUMERIC, secondPresentationModifier)
+            .numericPicture(numericpicture)
+            .explicitNumeric(explicit)
+            .build();
     }
 
-    static ParsedVariableMarker forRoman(
+    static VariableMarker forRoman(
             char c,
             String p,
             int min,
@@ -262,24 +302,12 @@ final class ParsedVariableMarker {
             char secondPresentationModifier,
             boolean lower
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.ROMAN,
-                secondPresentationModifier,
-                null,
-                false,
-                lower,
-                false,
-                null,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.ROMAN, secondPresentationModifier)
+            .lowerCaseRoman(lower)
+            .build();
     }
 
-    static ParsedVariableMarker forAlphabetic(
+    static VariableMarker forAlphabetic(
             char c,
             String p,
             int min,
@@ -287,24 +315,12 @@ final class ParsedVariableMarker {
             char secondPresentationModifier,
             boolean lower
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.ALPHABETIC,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                lower,
-                null,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.ALPHABETIC, secondPresentationModifier)
+            .lowerCaseAlphabetic(lower)
+            .build();
     }
 
-    static ParsedVariableMarker forName(
+    static VariableMarker forName(
             char c,
             String p,
             int min,
@@ -312,24 +328,12 @@ final class ParsedVariableMarker {
             char secondPresentationModifier,
             String nameForm
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.NAME,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                null,
-                nameForm,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.NAME, secondPresentationModifier)
+            .nameForm(nameForm)
+            .build();
     }
 
-    static ParsedVariableMarker forWords(
+    static VariableMarker forWords(
             char c,
             String p,
             int min,
@@ -338,73 +342,35 @@ final class ParsedVariableMarker {
             String wordCase,
             String formatSpecifier
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.WORDS,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                null,
-                null,
-                wordCase,
-                formatSpecifier
-        );
+        return new Builder(c, p, min, max, Kind.WORDS, secondPresentationModifier)
+            .wordCase(wordCase)
+            .formatSpecifier(formatSpecifier)
+            .build();
     }
 
-    static ParsedVariableMarker forFractionalSeconds(
+    static VariableMarker forFractionalSeconds(
             char c,
             String p,
             int min,
             int max,
             char secondPresentationModifier
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.FRACTIONAL_SECONDS,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                null,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.FRACTIONAL_SECONDS, secondPresentationModifier)
+            .lowerCaseRoman("i".equals(p))
+            .build();
     }
 
-    static ParsedVariableMarker forAmPm(
+    static VariableMarker forAmPm(
             char c,
             String p,
             int min,
             int max,
             char secondPresentationModifier
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.AM_PM,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                null,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.AM_PM, secondPresentationModifier).build();
     }
 
-    static ParsedVariableMarker forTimezone(
+    static VariableMarker forTimezone(
             char c,
             String p,
             int min,
@@ -412,21 +378,9 @@ final class ParsedVariableMarker {
             char secondPresentationModifier,
             ParsedTimezonePicture tz
     ) {
-        return new ParsedVariableMarker(
-                c,
-                p,
-                min,
-                max,
-                Kind.TIMEZONE,
-                secondPresentationModifier,
-                null,
-                false,
-                false,
-                false,
-                tz,
-                null,
-                null
-        );
+        return new Builder(c, p, min, max, Kind.TIMEZONE, secondPresentationModifier)
+            .timezonePicture(tz)
+            .build();
     }
 
     private static int hour12(int hour24) {

@@ -18,7 +18,7 @@ final class TemporalComponentRenderer {
 
     static String render(
             OffsetDateTime value,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             boolean hasExplicitTimezone,
             FormattingContext formattingContext,
             TemporalPictureFormatter.ComponentSupport componentSupport,
@@ -35,16 +35,16 @@ final class TemporalComponentRenderer {
         }
 
         switch (variableMarker.kind) {
-            case ParsedVariableMarker.Kind.ROMAN:
+            case VariableMarker.Kind.ROMAN:
                 return formatRoman(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case ParsedVariableMarker.Kind.ALPHABETIC:
+            case VariableMarker.Kind.ALPHABETIC:
                 return formatAlphabetic(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case ParsedVariableMarker.Kind.NUMERIC:
+            case VariableMarker.Kind.NUMERIC:
                 return formatNumericComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case ParsedVariableMarker.Kind.FRACTIONAL_SECONDS:
+            case VariableMarker.Kind.FRACTIONAL_SECONDS:
                 return FractionalSecondsFormatter.format(
                     value,
                     variableMarker,
@@ -53,16 +53,16 @@ final class TemporalComponentRenderer {
                     metadata
                 );
 
-            case ParsedVariableMarker.Kind.NAME:
+            case VariableMarker.Kind.NAME:
                 return formatNamedComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case ParsedVariableMarker.Kind.AM_PM:
+            case VariableMarker.Kind.AM_PM:
                 return value.getHour() < 12 ? "am" : "pm";
 
-            case ParsedVariableMarker.Kind.WORDS:
+            case VariableMarker.Kind.WORDS:
                 return formatWordsComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
-            case ParsedVariableMarker.Kind.TIMEZONE:
+            case VariableMarker.Kind.TIMEZONE:
                 return TemporalFormattingSupport.formatTimezone(
                     value,
                     variableMarker.timezonePicture,
@@ -70,7 +70,7 @@ final class TemporalComponentRenderer {
                     formattingContext
                 );
 
-            case ParsedVariableMarker.Kind.DEFAULT:
+            case VariableMarker.Kind.DEFAULT:
             default:
                 throw unsupported(pictureString, metadata, variableMarker.presentation);
         }
@@ -78,7 +78,7 @@ final class TemporalComponentRenderer {
 
     private static String formatRoman(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
@@ -87,16 +87,17 @@ final class TemporalComponentRenderer {
 
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
-        String roman = NumericFormattingSupport.integerToRoman(numericValue); // TODO user NumberWords class
+        String roman = numericValue >= 1 && numericValue <= 3999
+            ? NumberWords.roman(numericValue, variableMarker.lowerCaseRoman)
+            : Integer.toString(numericValue);
         roman = maybeAppendOrdinal(roman, numericValue, variableMarker, formattingContext);
-        roman = variableMarker.lowerCaseRoman ? roman.toLowerCase(formattingContext.locale) : roman;
 
         return padRightWithSpaces(roman, variableMarker.minWidth);
     }
 
     private static String formatAlphabetic(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
@@ -113,7 +114,7 @@ final class TemporalComponentRenderer {
 
     private static String formatNamedComponent(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
@@ -125,7 +126,7 @@ final class TemporalComponentRenderer {
 
     private static String formatWordsComponent(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
@@ -144,7 +145,7 @@ final class TemporalComponentRenderer {
     private static String maybeAppendOrdinal(
             String base,
             int numericValue,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext
     ) {
         if (!variableMarker.isOrdinal()) {
@@ -160,7 +161,7 @@ final class TemporalComponentRenderer {
 
     private static String formatNumericComponent(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
@@ -210,7 +211,7 @@ final class TemporalComponentRenderer {
         return maybeAppendOrdinal(digits, value, variableMarker, formattingContext);
     }
 
-    private static int applyYearMaximumWidthRule(int value, ParsedVariableMarker variableMarker) {
+    private static int applyYearMaximumWidthRule(int value, VariableMarker variableMarker) {
         if (variableMarker.appliesYearMaximumWidthRule() && variableMarker.maxWidth > 0) {
             String digits = Integer.toString(Math.abs(value));
 
