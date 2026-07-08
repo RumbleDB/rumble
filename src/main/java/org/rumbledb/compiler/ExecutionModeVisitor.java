@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
@@ -95,6 +95,8 @@ import java.util.Map.Entry;
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
+
+@Log4j2
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
@@ -659,12 +661,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     targetType.getItemType().isObjectItemType()
                         && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    LogManager.getLogger("ExecutionModeVisitor")
-                        .info(
-                            "Validation against "
-                                + expression.getSequenceType().getItemType().getName()
-                                + " compatible with data frames."
-                        );
+                    log.info(
+                        "Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
                     expression.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
                 } else {
                     if (
@@ -683,12 +684,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     targetType.getItemType().isObjectItemType()
                         && targetType.getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
-                    LogManager.getLogger("ExecutionModeVisitor")
-                        .info(
-                            "Validation against "
-                                + expression.getSequenceType().getItemType().getName()
-                                + " compatible with data frames."
-                        );
+                    log.info(
+                        "Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
                     expression.setHighestExecutionMode(DATAFRAMEifConfigurationAllows());
                 } else {
                     if (

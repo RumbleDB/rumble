@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -38,6 +38,8 @@ import scala.Tuple2;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Log4j2
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
@@ -71,17 +73,16 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
-        LogManager.getLogger("ReverseFunctioniterator")
-            .info(
-                String.format(
-                    "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
-                    selectSQL,
-                    selectSQL,
-                    "foo",
-                    viewName,
-                    "foo"
-                )
-            );
+        log.info(
+            String.format(
+                "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
+                selectSQL,
+                selectSQL,
+                "foo",
+                viewName,
+                "foo"
+            )
+        );
         String tempName = SparkSessionManager.temporaryColumnName;
         JSoundDataFrame result = childDataFrame.evaluateSQL(
             String.format(

@@ -22,7 +22,7 @@ package org.rumbledb.spark;
 
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -66,6 +66,8 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+
+@Log4j2
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
@@ -160,11 +162,10 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
-                LogManager.getLogger("SparkSessionManager")
-                    .warn(
-                        "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                            + APP_NAME
-                    );
+                log.warn(
+                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                        + APP_NAME
+                );
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");

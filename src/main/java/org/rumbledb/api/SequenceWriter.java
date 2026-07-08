@@ -4,8 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
@@ -40,6 +39,8 @@ import org.rumbledb.serialization.Serializers;
  * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
  * format.
  */
+
+@Log4j2
 public class SequenceWriter {
 
     private static final int SINGLE_PARTITION_CAP = 1000000000;
@@ -274,11 +275,10 @@ public class SequenceWriter {
         // DataFrame mode: delegate to Spark's DataFrameWriter, using the serialization method
         // as the Spark output format (json/csv/parquet/other).
         if (this.dataFrameWriter != null) {
-            Logger logger = LogManager.getLogger(SequenceWriter.class);
             for (Map.Entry<String, String> option : this.serializationParameters.getSparkOptions().entrySet()) {
-                logger.info("Writing with option " + option.getKey() + " : " + option.getValue());
+                log.info("Writing with option " + option.getKey() + " : " + option.getValue());
             }
-            logger.info("Writing to format " + method);
+            log.info("Writing to format " + method);
             DataFrameWriter<Row> writerWithOptions = applyStoredSparkOptions(this.dataFrameWriter);
             String target = FileSystemUtil.convertURIToStringForSpark(outputUri);
             if (method.equalsIgnoreCase("json")) {

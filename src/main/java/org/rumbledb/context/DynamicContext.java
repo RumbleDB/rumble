@@ -25,7 +25,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
@@ -40,6 +40,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+@Log4j2
 public class DynamicContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
@@ -277,9 +279,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public static void printDependencies(Map<Name, VariableDependency> exprDependency) {
-        LogManager.getLogger("DynamicContext").debug("System.err Variable dependencies:");
+        log.debug("System.err Variable dependencies:");
         for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
-            LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
+            log.debug(e.getKey() + " : " + e.getValue());
         }
     }
 

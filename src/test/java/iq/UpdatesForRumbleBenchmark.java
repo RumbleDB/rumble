@@ -1,7 +1,7 @@
 package iq;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.Item;
@@ -24,6 +24,8 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 
+
+@Log4j2
 public class UpdatesForRumbleBenchmark {
 
     private static final String APP_NAME = "Rumble application";
@@ -344,11 +346,10 @@ public class UpdatesForRumbleBenchmark {
         System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         if (sparkConfiguration.get("spark.app.name", "<none>").equals("<none")) {
-            LogManager.getLogger("SparkSessionManager")
-                .warn(
-                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                        + APP_NAME
-                );
+            log.warn(
+                "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                    + APP_NAME
+            );
             sparkConfiguration.setAppName(APP_NAME);
         }
         sparkConfiguration.set("spark.master", "local[*]");

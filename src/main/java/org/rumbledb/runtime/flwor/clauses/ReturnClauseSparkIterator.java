@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -63,6 +63,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+
+@Log4j2
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
@@ -396,11 +398,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 SparkSessionManager.nonObjectJSONiqItemColumnName
             );
         }
-        LogManager.getLogger("ReturnClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a return clause to a native SQL query: "
-                    + queryString
-            );
+        log.info(
+            "Rumble was able to optimize a return clause to a native SQL query: "
+                + queryString
+        );
         return dataFrame.sparkSession().sql(queryString);
     }
 
