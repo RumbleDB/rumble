@@ -3375,7 +3375,7 @@ public class BuiltinFunctionCatalogue {
                 "array",
                 "filter"
         ),
-        List.of("array", "item"),
+        List.of("array", "function(item*) as boolean"),
         "array",
         ArrayFilterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3956,7 +3956,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction filter = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "filter"),
-        List.of("item*", "function(item) as item*"),
+        List.of("item*", "function(item) as boolean"),
         "item*",
         FilterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
