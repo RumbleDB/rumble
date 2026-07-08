@@ -37,6 +37,11 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         this.item = item;
     }
 
+    // Only for reuse as a cached argument iterator; call only while closed.
+    public void setItemForReuse(Item item) {
+        this.item = item;
+    }
+
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         return this.item;
