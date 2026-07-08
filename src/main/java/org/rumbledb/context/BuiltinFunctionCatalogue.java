@@ -3104,7 +3104,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "for-each"
         ),
-        List.of("map", "function"),
+        List.of("map", "function(item()*) as item()*"),
         "item*",
         MapForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3956,7 +3956,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction filter = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "filter"),
-        List.of("item*", "function"),
+        List.of("item*", "function(item) as item*"),
         "item*",
         FilterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3964,7 +3964,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction fold_left = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "fold-left"),
-        List.of("item*", "item*", "function"),
+        List.of("item*", "item*", "function(item*, item) as item*"),
         "item*",
         FoldLeftFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3972,7 +3972,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction fold_right = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "fold-right"),
-        List.of("item*", "item*", "function"),
+        List.of("item*", "item*", "function(item, item*) as item*"),
         "item*",
         FoldRightFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -3980,7 +3980,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction for_each = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "for-each"),
-        List.of("item*", "function"),
+        List.of("item*", "function(item) as item*"),
         "item*",
         ForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -3988,7 +3988,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction for_each_pair = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "for-each-pair"),
-        List.of("item*", "item*", "function"),
+        List.of("item*", "item*", "function(item, item) as item*"),
         "item*",
         ForEachPairFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -4012,7 +4012,7 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction sort3 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "sort"),
-        List.of("item*", "string?", "function"),
+        List.of("item*", "string?", "function(item) as anyAtomicType*"),
         "item*",
         SortFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
