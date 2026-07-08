@@ -28,23 +28,6 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class FileSystemUtil {
-
-    public static void checkAllowed(URI uri, RumbleConfiguration conf, ExceptionMetadata metadata) {
-        List<String> prefixes = conf.access().allowedPrefixes();
-        if (prefixes.isEmpty()) {
-            return;
-        }
-        for (String prefix : prefixes) {
-            if (uri.toString().startsWith(prefix)) {
-                return;
-            }
-        }
-        throw new CannotRetrieveResourceException(
-                "URI disallowed: " + uri,
-                metadata
-        );
-    }
-
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
         if (!base.isAbsolute()) {
             throw new OurBadException(
@@ -119,7 +102,6 @@ public class FileSystemUtil {
         if (!locator.isAbsolute()) {
             throw new OurBadException("Unresolved uri passed to exists()");
         }
-        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -133,7 +115,6 @@ public class FileSystemUtil {
 
     public static boolean delete(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -156,7 +137,6 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, conf, metadata);
         if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
             return getDataInputStreamHTML(locator, conf, metadata);
         }
@@ -178,7 +158,6 @@ public class FileSystemUtil {
             RumbleConfiguration conf,
             ExceptionMetadata metadata
     ) {
-        checkAllowed(locator, conf, metadata);
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(locator);
         try {
@@ -202,7 +181,7 @@ public class FileSystemUtil {
 
     public static String readContent(URI locator, RumbleConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, conf, metadata);
+
         InputStream inputStream = getDataInputStream(locator, conf, metadata);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuilder sb = new StringBuilder();
@@ -226,7 +205,6 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -251,7 +229,7 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, conf, metadata);
+
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
