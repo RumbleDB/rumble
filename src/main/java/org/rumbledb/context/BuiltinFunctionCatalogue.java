@@ -3104,7 +3104,7 @@ public class BuiltinFunctionCatalogue {
                 "map",
                 "for-each"
         ),
-        List.of("map", "function(item()*) as item()*"),
+        List.of("map", "function(anyAtomicType, item*) as item*"),
         "item*",
         MapForEachFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
