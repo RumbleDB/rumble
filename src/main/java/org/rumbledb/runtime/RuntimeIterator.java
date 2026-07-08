@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -66,6 +68,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@Log4j2
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
@@ -167,10 +170,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                     }
                 } else {
                     if (item.isObject() || item.isArray()) {
-                        System.err.println(
-                            "Note: effective boolean value of "
-                                + (item.isObject() ? "Object " : "Array ")
-                                + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                        log.warn(
+                            """
+                                    Note: effective boolean value of {} accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.
+                                    If you want to revert to the old functionality use the --default-language jsoniq10 command line option\
+                                    """,
+                            item.isObject() ? "Object" : "Array"
                         );
                     }
                 }
@@ -392,7 +397,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 TypeInferrenceUtils.TypeMergeMode.LAX
             );
             if (this.getConfiguration().analysis().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
+                log.debug(
+                    """
+                            Inferred DataFrame type:
+                            {}\
+                            """,
+                    this.getStaticType().getItemType()
+                );
             }
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
@@ -530,7 +541,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     public void printToStandardError() {
         StringBuilder sb = new StringBuilder();
         this.print(sb, 0);
-        System.err.println(sb);
+        log.debug(sb);
     }
 
     public void print(StringBuilder buffer, int indent) {

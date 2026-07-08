@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -40,6 +42,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
+@Log4j2
 public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
 
     private static final long serialVersionUID = 1L;
@@ -180,10 +183,12 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
             }
         } else {
             if (item.isObject() || item.isArray()) {
-                System.err.println(
-                    "Note: effective boolean value of "
-                        + (item.isObject() ? "Object " : "Array ")
-                        + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                log.warn(
+                    """
+                            Note: effective boolean value of {} accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.
+                            If you want to revert to the old functionality use the --default-language jsoniq10 command line option\
+                            """,
+                    item.isObject() ? "Object" : "Array"
                 );
             }
         }

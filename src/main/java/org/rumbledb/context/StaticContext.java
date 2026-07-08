@@ -20,6 +20,8 @@
 
 package org.rumbledb.context;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
@@ -45,6 +47,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+@Log4j2
 public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
@@ -297,7 +300,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public void show() {
-        System.err.println(this);
+        log.debug(this);
     }
 
     @Override

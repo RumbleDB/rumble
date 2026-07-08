@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleConfiguration;
@@ -38,6 +39,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
  *
  * Clauses, unlike expressions, return tuple streams.
  */
+@Log4j2
 public abstract class Clause extends Node {
 
     /* Clauses are organized in doubly-linked lists */
@@ -125,18 +127,7 @@ public abstract class Clause extends Node {
         for (Clause c = newFirstClause; c != null; c = c.nextClause) {
             if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
                 // No optimization possible if there is a group by.
-                System.err.println(
-                    "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses."
-                );
-                System.err.println("For example:");
-                System.err.println();
-                System.err.println("let $x := 1");
-                System.err.println("let $y := $x + 1");
-                System.err.println("let $z := $x + $y");
-                System.err.println("return");
-                System.err.println("  for $t in 1 to $z");
-                System.err.println("  group by $m := $t mod 2");
-                System.err.println("  return $m + $x");
+                logInitialLetGroupByWarning();
 
                 return returnClause;
             }
@@ -190,18 +181,7 @@ public abstract class Clause extends Node {
         for (Clause c = newFirstClause; c != null; c = c.nextClause) {
             if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
                 // No optimization possible if there is a group by.
-                System.err.println(
-                    "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses."
-                );
-                System.err.println("For example:");
-                System.err.println();
-                System.err.println("let $x := 1");
-                System.err.println("let $y := $x + 1");
-                System.err.println("let $z := $x + $y");
-                System.err.println("return");
-                System.err.println("  for $t in 1 to $z");
-                System.err.println("  group by $m := $t mod 2");
-                System.err.println("  return $m + $x");
+                logInitialLetGroupByWarning();
 
                 return returnClause;
             }
@@ -220,6 +200,23 @@ public abstract class Clause extends Node {
         lastLetClause.chainWith(returnClause);
 
         return returnClause;
+    }
+
+    private static void logInitialLetGroupByWarning() {
+        log.warn(
+            """
+                    It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses.
+                    For example:
+
+                    let $x := 1
+                    let $y := $x + 1
+                    let $z := $x + $y
+                    return
+                      for $t in 1 to $z
+                      group by $m := $t mod 2
+                      return $m + $x\
+                    """
+        );
     }
 
 

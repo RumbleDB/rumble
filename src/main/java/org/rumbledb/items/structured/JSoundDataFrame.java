@@ -1,5 +1,7 @@
 package org.rumbledb.items.structured;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,6 +25,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
+@Log4j2
 public class JSoundDataFrame implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -128,7 +131,7 @@ public class JSoundDataFrame implements Serializable {
     }
 
     public void show() {
-        System.out.println("Item type: " + this.itemType);
+        log.debug("Item type: {}", this.itemType);
         this.dataFrame.show();
     }
 

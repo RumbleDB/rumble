@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.flwor;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +17,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.SequenceType;
 
+@Log4j2
 public class FlworDataFrame implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -117,16 +120,18 @@ public class FlworDataFrame implements Serializable {
     }
 
     public void show() {
-        System.err.println("FLWOR DataFrame");
-        System.err.println("Columns");
+        StringBuilder sb = new StringBuilder();
+        sb.append("FLWOR DataFrame\n");
+        sb.append("Columns\n");
         for (FlworDataFrameColumn c : this.columns) {
-            System.err.println(c.toString());
+            sb.append(c).append('\n');
         }
-        System.err.println("Column types");
+        sb.append("Column types\n");
         for (Name n : this.columnTypes.keySet()) {
-            System.err.println(n + " " + this.columnTypes.get(n));
+            sb.append(n).append(' ').append(this.columnTypes.get(n)).append('\n');
         }
-        System.err.println("Data Frame");
+        sb.append("Data Frame");
+        log.debug(sb);
         this.dataFrame.show();
     }
 

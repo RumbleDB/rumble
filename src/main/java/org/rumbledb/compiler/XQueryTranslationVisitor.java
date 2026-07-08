@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import lombok.extern.log4j.Log4j2;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -188,6 +189,7 @@ import java.util.stream.Collectors;
  *
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
+@Log4j2
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
@@ -271,7 +273,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // We override with a context item declaration if not present already.
         Program program = (Program) this.visitProgram(ctx.program());
         if (!prolog.hasContextItemDeclaration() && getExternalVariableType(Name.CONTEXT_ITEM) != null) {
-            System.err.println("[WARNING] Adding context item declaration.");
+            log.warn("Adding context item declaration.");
             prolog.addDeclaration(
                 new VariableDeclaration(
                         Name.CONTEXT_ITEM,
