@@ -3,6 +3,7 @@ package org.rumbledb.runtime.typing;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -13,6 +14,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -226,7 +228,25 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
-        if (this.nextResult.isFunction()) {
+        if (
+            this.nextResult.isFunction()
+                && this.nextResult.getIdentifier() != null
+                && this.nextResult.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
+        ) {
+            return;
+        }
+        if (
+            (this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
+                && this.itemType.isFunctionItemType()
+                && this.itemType.getSignature() != null
+        ) {
+            this.nextResult = FunctionCoercion.coerceToFunctionItem(
+                this.nextResult,
+                this.itemType,
+                getRuntimeStaticContext(),
+                this.exceptionMessage
+            );
             return;
         }
         if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {

@@ -26,6 +26,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.functions.FunctionCoercion;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -132,7 +133,9 @@ public class SequenceType implements Serializable {
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
                 ||
-                (this.itemType.canBePromotedTo(superType.itemType)));
+                (this.itemType.canBePromotedTo(superType.itemType))
+                ||
+                FunctionCoercion.canItemTypeBeFunctionCoercedTo(this.itemType, superType.itemType));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence

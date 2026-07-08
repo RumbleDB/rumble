@@ -266,6 +266,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             }
             return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, getConfiguration());
         }
+        if (this.functionItem.getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getWrappedCallableExecutionMode();
+        }
         return this.functionItem.getBodyIterator().getHighestExecutionMode();
     }
 
