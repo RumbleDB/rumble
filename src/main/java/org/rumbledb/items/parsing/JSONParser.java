@@ -7,6 +7,7 @@ import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.XMLUtils;
 
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -59,28 +60,22 @@ import java.util.Collections;
  */
 public final class JSONParser {
 
-    private final String input;
+    private final JSONCharSource source;
     private final ExceptionMetadata metadata;
     private final JSONParsingOptions options;
     private final String xmlVersion;
     private final boolean isJSONiq10;
-    private int position;
 
     private JSONParser(
-            String input,
+            JSONCharSource source,
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
             ExceptionMetadata metadata
     ) {
-        if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
-            this.input = input.substring(1);
-        } else {
-            this.input = input;
-        }
+        this.source = source;
         this.options = options == null ? JSONParsingOptions.defaultInstance(isJSONiq10) : options;
         this.metadata = metadata;
-        this.position = 0;
         this.xmlVersion = xmlVersion;
         this.isJSONiq10 = isJSONiq10;
     }
@@ -96,7 +91,22 @@ public final class JSONParser {
         if (jsonText == null) {
             return null;
         }
-        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, isJSONiq10, metadata);
+        JSONParser parser = new JSONParser(new StringCharSource(jsonText), options, xmlVersion, isJSONiq10, metadata);
+        return parser.parseDocument();
+    }
+
+    // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
+    public static Item parse(
+            Reader reader,
+            JSONParsingOptions options,
+            String xmlVersion,
+            boolean isJSONiq10,
+            ExceptionMetadata metadata
+    ) {
+        if (reader == null) {
+            return null;
+        }
+        JSONParser parser = new JSONParser(new ReaderCharSource(reader), options, xmlVersion, isJSONiq10, metadata);
         return parser.parseDocument();
     }
 
@@ -108,7 +118,7 @@ public final class JSONParser {
         if (!isEnd()) {
             throw new InvalidJSONException(
                     "Extra content found after the end of the JSON value. JSON is not well-formed! [position "
-                        + this.position
+                        + position()
                         + "]",
                     this.metadata
             );
@@ -122,7 +132,7 @@ public final class JSONParser {
 
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing JSON value. [position " + this.position + "]",
+                    "Unexpected end of input while parsing JSON value. [position " + position() + "]",
                     this.metadata
             );
         }
@@ -141,7 +151,7 @@ public final class JSONParser {
                 }
                 throw new InvalidJSONException(
                         "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
-                            + this.position
+                            + position()
                             + "]",
                         this.metadata
                 );
@@ -164,7 +174,7 @@ public final class JSONParser {
                         "Unexpected character '"
                             + printable(c)
                             + "' while parsing JSON value. [position "
-                            + this.position
+                            + position()
                             + "]",
                         this.metadata
                 );
@@ -195,7 +205,7 @@ public final class JSONParser {
                 key = parseUnquotedKey();
             } else {
                 throw new InvalidJSONException(
-                        "Expected object key string. [position " + this.position + "]",
+                        "Expected object key string. [position " + position() + "]",
                         this.metadata
                 );
             }
@@ -327,74 +337,75 @@ public final class JSONParser {
     }
 
     private Item parseNumber() {
-        int start = this.position;
+        int start = position();
+        StringBuilder digits = new StringBuilder();
 
         if (peek() == '+' && this.options.isLiberal()) {
-            advance();
+            digits.append(advance());
         } else if (peek() == '-') {
-            advance();
+            digits.append(advance());
         }
 
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing number. [position " + this.position + "]",
+                    "Unexpected end of input while parsing number. [position " + position() + "]",
                     this.metadata
             );
         }
 
         if (peek() == '0') {
-            advance();
+            digits.append(advance());
             if (!isEnd() && isDigit(peek()) && !this.options.isLiberal()) {
                 throw new InvalidJSONException(
-                        "Leading zeroes are not allowed in JSON numbers. [position " + this.position + "]",
+                        "Leading zeroes are not allowed in JSON numbers. [position " + position() + "]",
                         this.metadata
                 );
             }
             while (this.options.isLiberal() && !isEnd() && isDigit(peek())) {
-                advance();
+                digits.append(advance());
             }
         } else {
             if (!isDigit19(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit. [position " + this.position + "]",
+                        "Invalid number: expected digit. [position " + position() + "]",
                         this.metadata
                 );
             }
             while (!isEnd() && isDigit(peek())) {
-                advance();
+                digits.append(advance());
             }
         }
 
         if (!isEnd() && peek() == '.') {
-            advance();
+            digits.append(advance());
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit after decimal point. [position " + this.position + "]",
+                        "Invalid number: expected digit after decimal point. [position " + position() + "]",
                         this.metadata
                 );
             }
             while (!isEnd() && isDigit(peek())) {
-                advance();
+                digits.append(advance());
             }
         }
 
         if (!isEnd() && (peek() == 'e' || peek() == 'E')) {
-            advance();
+            digits.append(advance());
             if (!isEnd() && (peek() == '+' || peek() == '-')) {
-                advance();
+                digits.append(advance());
             }
             if (isEnd() || !isDigit(peek())) {
                 throw new InvalidJSONException(
-                        "Invalid number: expected digit in exponent. [position " + this.position + "]",
+                        "Invalid number: expected digit in exponent. [position " + position() + "]",
                         this.metadata
                 );
             }
             while (!isEnd() && isDigit(peek())) {
-                advance();
+                digits.append(advance());
             }
         }
 
-        String number = this.input.substring(start, this.position);
+        String number = digits.toString();
         try {
             return JSONLiteralParsingUtils.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
@@ -445,7 +456,7 @@ public final class JSONParser {
     private ParsedString parseString() {
         if (isEnd()) {
             throw new InvalidJSONException(
-                    "Unexpected end of input while parsing string. [position " + this.position + "]",
+                    "Unexpected end of input while parsing string. [position " + position() + "]",
                     this.metadata
             );
         }
@@ -453,7 +464,7 @@ public final class JSONParser {
         char quote = peek();
         if (quote != '"' && !(this.options.isLiberal() && quote == '\'')) {
             throw new InvalidJSONException(
-                    "Expected string literal. [position " + this.position + "]",
+                    "Expected string literal. [position " + position() + "]",
                     this.metadata
             );
         }
@@ -475,7 +486,7 @@ public final class JSONParser {
             if (c == '\\') {
                 if (isEnd()) {
                     throw new InvalidJSONException(
-                            "Unterminated escape sequence in string. [position " + this.position + "]",
+                            "Unterminated escape sequence in string. [position " + position() + "]",
                             this.metadata
                     );
                 }
@@ -488,8 +499,7 @@ public final class JSONParser {
 
                 try {
                     JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                        JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
-                    this.position = decodedEscape.getNextIndex();
+                        JSONLiteralParsingUtils.decodeEscapeSequence(this.source);
                     appendDecodedEscape(
                         resultValue,
                         keyComparisonValue,
@@ -498,7 +508,7 @@ public final class JSONParser {
                     );
                 } catch (IllegalArgumentException e) {
                     throw new InvalidJSONException(
-                            e.getMessage() + " [position " + this.position + "]",
+                            e.getMessage() + " [position " + position() + "]",
                             this.metadata
                     );
                 }
@@ -511,7 +521,7 @@ public final class JSONParser {
                             "Unescaped control character U+"
                                 + hex4(c)
                                 + " is not allowed in JSON strings. [position "
-                                + this.position
+                                + position()
                                 + "]",
                             this.metadata
                     );
@@ -529,7 +539,7 @@ public final class JSONParser {
         }
 
         throw new InvalidJSONException(
-                "Unterminated string literal. [position " + this.position + "]",
+                "Unterminated string literal. [position " + position() + "]",
                 this.metadata
         );
     }
@@ -661,35 +671,35 @@ public final class JSONParser {
         if (!this.options.isLiberal()) {
             throw new InvalidJSONException(
                     "Unquoted object keys are not allowed unless option 'liberal' is true. [position "
-                        + this.position
+                        + position()
                         + "]",
                     this.metadata
             );
         }
 
-        int start = this.position;
         char first = peek();
         if (!isIdentifierStart(first)) {
             throw new InvalidJSONException(
-                    "Invalid unquoted object key. [position " + this.position + "]",
+                    "Invalid unquoted object key. [position " + position() + "]",
                     this.metadata
             );
         }
 
-        advance();
+        StringBuilder key = new StringBuilder();
+        key.append(advance());
         while (!isEnd() && isIdentifierPart(peek())) {
-            advance();
+            key.append(advance());
         }
 
-        String key = this.input.substring(start, this.position);
-        return new ParsedString(key, key);
+        String keyText = key.toString();
+        return new ParsedString(keyText, keyText);
     }
 
     private void parseLiteral(String literal) {
         for (int i = 0; i < literal.length(); i++) {
             if (isEnd() || advance() != literal.charAt(i)) {
                 throw new InvalidJSONException(
-                        "Expected literal '" + literal + "'. [position " + this.position + "]",
+                        "Expected literal '" + literal + "'. [position " + position() + "]",
                         this.metadata
                 );
             }
@@ -710,11 +720,12 @@ public final class JSONParser {
             }
 
             if (this.options.isLiberal() && c == '/') {
-                if (this.position + 1 < this.input.length()) {
-                    char next = this.input.charAt(this.position + 1);
+                if (hasCharsAhead(2)) {
+                    char next = peek(1);
 
                     if (next == '/') {
-                        this.position += 2;
+                        advance();
+                        advance();
                         while (!isEnd() && peek() != '\n' && peek() != '\r') {
                             advance();
                         }
@@ -722,20 +733,22 @@ public final class JSONParser {
                     }
 
                     if (next == '*') {
-                        this.position += 2;
+                        advance();
+                        advance();
                         while (true) {
                             if (isEnd()) {
                                 throw new InvalidJSONException(
-                                        "Unterminated block comment. [position " + this.position + "]",
+                                        "Unterminated block comment. [position " + position() + "]",
                                         this.metadata
                                 );
                             }
                             if (
                                 peek() == '*'
-                                    && this.position + 1 < this.input.length()
-                                    && this.input.charAt(this.position + 1) == '/'
+                                    && hasCharsAhead(2)
+                                    && peek(1) == '/'
                             ) {
-                                this.position += 2;
+                                advance();
+                                advance();
                                 break;
                             }
                             advance();
@@ -762,7 +775,7 @@ public final class JSONParser {
                         + "', but found "
                         + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
                         + ". [position "
-                        + this.position
+                        + position()
                         + "]",
                     this.metadata
             );
@@ -786,14 +799,28 @@ public final class JSONParser {
      * @return true if parser position has reached EOF
      */
     private boolean isEnd() {
-        return this.position >= this.input.length();
+        return this.source.isEnd();
     }
 
     /**
      * @return next consumable character
      */
     private char peek() {
-        return this.input.charAt(this.position);
+        return this.source.peek();
+    }
+
+    /**
+     * @return the character `offset` positions ahead of the current one, without consuming it
+     */
+    private char peek(int offset) {
+        return this.source.peek(offset);
+    }
+
+    /**
+     * @return true if at least `count` more characters are available from the current position
+     */
+    private boolean hasCharsAhead(int count) {
+        return this.source.hasCharsAhead(count);
     }
 
     /**
@@ -802,7 +829,14 @@ public final class JSONParser {
      * @return new current character
      */
     private char advance() {
-        return this.input.charAt(this.position++);
+        return this.source.advance();
+    }
+
+    /**
+     * @return number of characters consumed so far, for error messages
+     */
+    private int position() {
+        return this.source.position();
     }
 
     /**

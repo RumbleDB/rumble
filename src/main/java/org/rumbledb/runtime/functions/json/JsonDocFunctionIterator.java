@@ -1,18 +1,24 @@
 package org.rumbledb.runtime.functions.json;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.PushbackInputStream;
+import java.io.Reader;
 import java.io.Serial;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
@@ -60,11 +66,10 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
 
-        String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
-
-        return ItemParser.getItemFromJSONString(
-            jsonText,
+        return parseJsonResource(
+            uri,
             options,
+            context.getRumbleRuntimeConfiguration(),
             getConfiguration().getXmlVersion(),
             isJSONiq10,
             getMetadata()
@@ -105,7 +110,23 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
 
-    private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    /**
+     * Opens the resource, detects its encoding from a small leading-byte peek, and
+     * parses it directly from the stream, without buffering the whole resource into
+     * memory first. The stream, and therefore the parser reading from it, must stay
+     * open for the duration of the parse, so JSON syntax errors (which today
+     * propagate unmodified as InvalidJSONException/DuplicateJSONKeyException) now
+     * also pass through this try-with-resources block and must not be rewrapped as
+     * UnavailableResourceException like genuine I/O failures are.
+     */
+    private static Item parseJsonResource(
+            URI uri,
+            JSONParsingOptions options,
+            RumbleRuntimeConfiguration conf,
+            String xmlVersion,
+            boolean isJSONiq10,
+            ExceptionMetadata metadata
+    ) {
         try (
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
@@ -113,7 +134,14 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 metadata
             )
         ) {
-            return readAll(is, metadata);
+            PushbackInputStream pushback = new PushbackInputStream(is, 4);
+            Charset charset = detectEncoding(peekLeadingBytes(pushback, 4));
+            // The InputStreamReader holds no resource beyond the InputStream it wraps,
+            // so closing `is` above is sufficient; it does not need its own close().
+            Reader reader = new InputStreamReader(pushback, charset);
+            return ItemParser.getItemFromJSONReader(reader, options, xmlVersion, isJSONiq10, metadata);
+        } catch (InvalidJSONException | DuplicateJSONKeyException e) {
+            throw e;
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
@@ -130,24 +158,25 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private static String readAll(InputStream is, ExceptionMetadata metadata) {
-        try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] data = new byte[8192];
-            int nRead;
-            while ((nRead = is.read(data, 0, data.length)) != -1) {
-                buffer.write(data, 0, nRead);
+    /**
+     * Reads up to `maxBytes` from the front of `stream` and pushes them back, so the
+     * stream can still be read from the beginning afterward. Used to peek enough
+     * bytes for detectEncoding() without buffering the whole resource.
+     */
+    private static byte[] peekLeadingBytes(PushbackInputStream stream, int maxBytes) throws IOException {
+        byte[] buffer = new byte[maxBytes];
+        int totalRead = 0;
+        while (totalRead < maxBytes) {
+            int n = stream.read(buffer, totalRead, maxBytes - totalRead);
+            if (n == -1) {
+                break;
             }
-            byte[] bytes = buffer.toByteArray();
-            return new String(bytes, detectEncoding(bytes));
-        } catch (Exception e) {
-            UnavailableResourceException ex = new UnavailableResourceException(
-                    "Unable to read or decode the resource supplied to fn:json-doc().",
-                    metadata
-            );
-            ex.initCause(e);
-            throw ex;
+            totalRead += n;
         }
+        if (totalRead > 0) {
+            stream.unread(buffer, 0, totalRead);
+        }
+        return totalRead == maxBytes ? buffer : Arrays.copyOf(buffer, totalRead);
     }
 
     /**

@@ -58,6 +58,7 @@ import org.w3c.dom.NodeList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigDecimal;
@@ -104,6 +105,27 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata
     ) {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
+    }
+
+    /**
+     * Parses JSON text streamed from a Reader to an item, without requiring the
+     * whole text to be materialized in memory first. Used by fn:json-doc().
+     *
+     * @param reader the JSON text source.
+     * @param options the resolved parse-json options.
+     * @param xmlVersion the configured XML version, for character validity checks.
+     * @param isJSONiq10 whether the query is running in JSONiq 1.0 mode.
+     * @param metadata exception metadata if an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromJSONReader(
+            Reader reader,
+            JSONParsingOptions options,
+            String xmlVersion,
+            boolean isJSONiq10,
+            ExceptionMetadata metadata
+    ) {
+        return JSONParser.parse(reader, options, xmlVersion, isJSONiq10, metadata);
     }
 
     /**
