@@ -494,21 +494,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         }
         if (itemType.isAtomicItemType()) {
-            if (!item.isAtomic()) {
-                throw new InvalidInstanceException(
-                        "Expected an atomic item for type " + itemType.getIdentifierString()
-                );
-            }
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
             try {
-                Item castType = CastIterator.castItemToType(
-                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                    itemType,
-                    metadata,
-                    staticContext
-                );
+                Item castType = CastIterator.castItemToType(item, itemType, metadata, staticContext);
                 if (castType == null) {
                     throw new InvalidInstanceException(
                             "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
