@@ -26,7 +26,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
@@ -350,8 +349,11 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
-        // return getItems();
+        List<Item> result = new ArrayList<>();
+        for (Item member : this.arrayItems) {
+            result.addAll(member.atomizedValue());
+        }
+        return result;
     }
 
     @Override
