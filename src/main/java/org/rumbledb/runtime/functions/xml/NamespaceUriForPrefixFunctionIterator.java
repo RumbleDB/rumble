@@ -2,8 +2,9 @@ package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -21,6 +22,16 @@ public class NamespaceUriForPrefixFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:namespace-uri-for-prefix", getMetadata());
+        Item prefixItem = this.children.get(0).materializeFirstItemOrNull(context);
+        String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
+        Item element = this.children.get(1).materializeFirstItemOrNull(context);
+        for (Item namespaceNode : element.namespaceNodes()) {
+            Name name = namespaceNode.nodeName();
+            String namespacePrefix = name == null ? "" : name.getLocalName();
+            if (namespacePrefix.equals(prefix)) {
+                return ItemFactory.getInstance().createAnyURIItem(namespaceNode.getStringValue());
+            }
+        }
+        return null;
     }
 }
