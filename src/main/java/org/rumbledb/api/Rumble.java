@@ -83,7 +83,7 @@ public class Rumble {
     }
 
     /**
-     * Internal entry point used by command-line integrations whose bindings may include lexical and file sources.
+     * Internal entry point used by command-line integrations.
      *
      * @param query the content of the JSONiq main module
      * @param bindings the internal external bindings to apply
@@ -122,7 +122,7 @@ public class Rumble {
     }
 
     /**
-     * Internal entry point used by command-line integrations whose bindings may include lexical and file sources.
+     * Internal entry point used by command-line integrations.
      *
      * @param location the JSONiq main module location
      * @param bindings the internal external bindings to apply
