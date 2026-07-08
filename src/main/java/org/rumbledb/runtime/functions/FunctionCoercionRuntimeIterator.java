@@ -10,14 +10,12 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -103,19 +101,20 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator buildDelegate(DynamicContext context) {
         List<RuntimeIterator> arguments = new ArrayList<>(this.parameterNames.size());
-        RuntimeStaticContext localItemStarContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL);
         for (Name parameterName : this.parameterNames) {
-            List<Item> argumentItems = context.getVariableValues().getLocalVariableValue(parameterName, getMetadata());
-            arguments.add(buildArgumentIterator(argumentItems, localItemStarContext));
+            arguments.add(buildArgumentIterator(parameterName, context));
         }
 
+        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
+        RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(wrappedCallableExecutionMode);
+
         if (this.callableItem.isArray()) {
-            return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), localItemStarContext);
+            return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
         }
         if (this.callableItem.isMap()) {
-            return new MapFunctionCallIterator(this.callableItem, arguments.get(0), localItemStarContext);
+            return new MapFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
         }
         if (!this.callableItem.isFunction()) {
             throw new OurBadException(
@@ -125,43 +124,43 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         }
         return NamedFunctions.buildFunctionItemCallIterator(
             this.callableItem,
-            getRuntimeStaticContext(),
-            ExecutionMode.LOCAL,
+            callStaticContext,
+            wrappedCallableExecutionMode,
             arguments,
             false
         );
     }
 
-    private RuntimeIterator buildArgumentIterator(
-            List<Item> memberSequence,
-            RuntimeStaticContext localItemStarContext
-    ) {
-        if (memberSequence.isEmpty()) {
-            return new EmptySequenceIterator(localItemStarContext);
+    private RuntimeIterator buildArgumentIterator(Name parameterName, DynamicContext context) {
+        ExecutionMode parameterExecutionMode = ExecutionMode.LOCAL;
+        if (context.getVariableValues().contains(parameterName)) {
+            if (context.getVariableValues().isDataFrame(parameterName, getMetadata())) {
+                parameterExecutionMode = ExecutionMode.DATAFRAME;
+            } else if (context.getVariableValues().isRDD(parameterName, getMetadata())) {
+                parameterExecutionMode = ExecutionMode.RDD;
+            }
         }
-        if (memberSequence.size() == 1) {
-            return new ConstantRuntimeIterator(memberSequence.get(0), localItemStarContext);
-        }
-        List<RuntimeIterator> sequenceItems = new ArrayList<>(memberSequence.size());
-        for (Item item : memberSequence) {
-            sequenceItems.add(new ConstantRuntimeIterator(item, localItemStarContext));
-        }
-        return new CommaExpressionIterator(sequenceItems, localItemStarContext);
+        RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(parameterExecutionMode);
+        return new VariableReferenceIterator(parameterName, parameterStaticContext);
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("Function coercion is currently supported only in local execution mode.");
+        RuntimeIterator call = buildDelegate(context);
+        return call.getRDD(context);
     }
 
     @Override
     protected boolean implementsDataFrames() {
-        return false;
+        return true;
     }
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("Function coercion is currently supported only in local execution mode.");
+        RuntimeIterator call = buildDelegate(dynamicContext);
+        return call.getDataFrame(dynamicContext);
     }
 
     @Override
