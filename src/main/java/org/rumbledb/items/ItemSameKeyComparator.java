@@ -21,6 +21,7 @@
 package org.rumbledb.items;
 
 import java.math.BigDecimal;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -32,7 +33,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
  * This class implements the same key comparison as defined in XQuery &amp;XPath Functions 3.1, section 17.1.1.
  * It is used for map lookups.
  */
-public class ItemSameKeyComparator implements Comparator<Item> {
+public class ItemSameKeyComparator implements Comparator<Item>, Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @Override
     public int compare(Item o1, Item o2) {

@@ -73,6 +73,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode DivisionByZero = registerBuiltIn("FOAR0001");
     public static final ErrorCode NumericOverflowOrUnderflow = registerBuiltIn("FOAR0002");
+    public static final ErrorCode ApplyFunctionArityMismatch = registerBuiltIn("FOAP0001");
 
     public static final ErrorCode ArrayIndexOutOfBoundsErrorCode = registerBuiltIn("FOAY0001");
     public static final ErrorCode ArrayInvalidSubarrayLengthErrorCode = registerBuiltIn("FOAY0002");

@@ -40,11 +40,14 @@ import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -105,7 +108,23 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             boolean isTailOptimization
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
+        boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
+        if (isPartialApplication) {
+            List<SequenceType> partialParamTypes = new ArrayList<>();
+            List<SequenceType> paramTypes = functionItem.getSignature().getParameterTypes();
+            for (int i = 0; i < arguments.size(); i++) {
+                if (arguments.get(i) == null) {
+                    partialParamTypes.add(paramTypes.get(i));
+                }
+            }
+            FunctionSignature partialSignature = new FunctionSignature(
+                    partialParamTypes,
+                    functionItem.getSignature().getReturnType(),
+                    functionItem.getSignature().isUpdating()
+            );
+            sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
+        }
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
         RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticType(
             sequenceType
@@ -137,6 +156,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     isTailOptimization
             );
         }
+        if (isTailOptimization) {
+            return functionCallIterator;
+        }
         if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
             return functionCallIterator;
         }
@@ -147,7 +169,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         ) {
             return new AtMostOneItemTypePromotionIterator(
                     functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
+                    sequenceType,
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
@@ -158,7 +180,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         } else {
             return new TypePromotionIterator(
                     functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
+                    sequenceType,
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
