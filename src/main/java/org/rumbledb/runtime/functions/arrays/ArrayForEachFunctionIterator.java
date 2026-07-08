@@ -112,12 +112,6 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         Item action = actionItems.get(0);
-        if (!isCallableWithSingleArgument(action)) {
-            throw new UnexpectedTypeException(
-                    "Type error; second argument to array:for-each must be a function item, map, or array.",
-                    getMetadata()
-            );
-        }
 
         boolean allSingleton = true;
         List<List<Item>> resultMemberSequences = new ArrayList<>(memberSequences.size());
@@ -206,13 +200,6 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
                 functionItemContext
         );
         return functionCall.materialize(context);
-    }
-
-    private static boolean isCallableWithSingleArgument(Item item) {
-        if (item.isMap() || item.isArray()) {
-            return true;
-        }
-        return item.isFunction() && item.getIdentifier().getArity() == 1;
     }
 
     @Override
