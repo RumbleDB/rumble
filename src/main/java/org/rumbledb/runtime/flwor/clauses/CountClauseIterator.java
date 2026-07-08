@@ -50,14 +50,14 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class CountClauseSparkIterator extends RuntimeTupleIterator {
+public class CountClauseIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
 
-    public CountClauseSparkIterator(
+    public CountClauseIterator(
             RuntimeTupleIterator child,
             Name variableName,
             RuntimeStaticContext staticContext
