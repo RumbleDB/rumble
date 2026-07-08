@@ -40,13 +40,19 @@ public final class FunctionCoercion {
             !sourceItemType.isFunctionItemType()
                 && !sourceItemType.isMapItemType()
                 && !sourceItemType.isArrayItemType()
+                && !sourceItemType.isXQueryArrayItemType()
                 && !sourceItemType.isObjectItemType()
         ) {
             return false;
         }
         FunctionSignature targetSignature = targetItemType.getSignature();
         int targetArity = targetSignature.getParameterTypes().size();
-        if (sourceItemType.isMapItemType() || sourceItemType.isObjectItemType() || sourceItemType.isArrayItemType()) {
+        if (
+            sourceItemType.isMapItemType()
+                || sourceItemType.isObjectItemType()
+                || sourceItemType.isArrayItemType()
+                || sourceItemType.isXQueryArrayItemType()
+        ) {
             return targetArity == 1;
         }
         FunctionSignature sourceSignature = sourceItemType.getSignature();
