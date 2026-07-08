@@ -112,12 +112,6 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         }
 
         Item predicate = predicateItems.get(0);
-        if (!isCallableWithSingleArgument(predicate)) {
-            throw new UnexpectedTypeException(
-                    "Type error; second argument to array:filter must be a function item, map, or array.",
-                    getMetadata()
-            );
-        }
         boolean allSingleton = true;
         List<List<Item>> kept = new ArrayList<>();
         for (List<Item> memberSequence : memberSequences) {
@@ -163,13 +157,6 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         );
         List<Item> result = functionCall.materialize(context);
         return booleanValueFromFilterResult(result);
-    }
-
-    private static boolean isCallableWithSingleArgument(Item item) {
-        if (item.isMap() || item.isArray()) {
-            return true;
-        }
-        return item.isFunction() && item.getIdentifier().getArity() == 1;
     }
 
     private boolean booleanValueFromFilterResult(List<Item> items) {
