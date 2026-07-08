@@ -770,6 +770,54 @@ public class SequenceType implements Serializable {
                         )
                 );
                 break;
+            case "function(item*) as boolean":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Collections.singletonList(
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.booleanItem)
+                            )
+                        )
+                );
+                break;
+            case "function(item) as item*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Collections.singletonList(
+                                        new SequenceType(BuiltinTypesCatalogue.item)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                            )
+                        )
+                );
+                break;
+            case "function(item) as boolean":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Collections.singletonList(
+                                        new SequenceType(BuiltinTypesCatalogue.item)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.booleanItem)
+                            )
+                        )
+                );
+                break;
+            case "function(item) as anyAtomicType*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Collections.singletonList(
+                                        new SequenceType(BuiltinTypesCatalogue.item)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore)
+                            )
+                        )
+                );
+                break;
             case "function(object*, object) as function(object*, object) as object*":
                 st = new SequenceType(
                         ItemTypeFactory.createFunctionItemType(
@@ -798,6 +846,58 @@ public class SequenceType implements Serializable {
                                                 )
                                             )
                                     )
+                            )
+                        )
+                );
+                break;
+            case "function(anyAtomicType, item*) as item*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(BuiltinTypesCatalogue.atomicItem),
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                            )
+                        )
+                );
+                break;
+            case "function(item, item) as item*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(BuiltinTypesCatalogue.item),
+                                        new SequenceType(BuiltinTypesCatalogue.item)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                            )
+                        )
+                );
+                break;
+            case "function(item*, item) as item*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
+                                        new SequenceType(BuiltinTypesCatalogue.item)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                            )
+                        )
+                );
+                break;
+            case "function(item, item*) as item*":
+                st = new SequenceType(
+                        ItemTypeFactory.createFunctionItemType(
+                            new FunctionSignature(
+                                    Arrays.asList(
+                                        new SequenceType(BuiltinTypesCatalogue.item),
+                                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
+                                    ),
+                                    new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)
                             )
                         )
                 );
