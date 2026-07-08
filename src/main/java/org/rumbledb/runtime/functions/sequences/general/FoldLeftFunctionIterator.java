@@ -7,7 +7,6 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
@@ -53,31 +52,13 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     private void initializeResult(DynamicContext context) {
         List<Item> inputItems = this.sequenceIterator.materialize(context);
         List<Item> accumulator = this.zeroIterator.materialize(context);
-        Item functionItem = materializeBinaryFunctionItem(context, "fn:fold-left");
+        Item functionItem = this.functionIterator.materialize(context).get(0);
 
         for (Item inputItem : inputItems) {
             accumulator = applyFunction(functionItem, accumulator, Collections.singletonList(inputItem), context);
         }
 
         this.resultSequence = accumulator;
-    }
-
-    private Item materializeBinaryFunctionItem(DynamicContext context, String functionName) {
-        List<Item> functionItems = this.functionIterator.materialize(context);
-        if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
-            throw new UnexpectedTypeException(
-                    "The third argument of " + functionName + " must be a single function item [err:XPTY0004].",
-                    getMetadata()
-            );
-        }
-        Item functionItem = functionItems.get(0);
-        if (functionItem.getIdentifier().getArity() != 2) {
-            throw new UnexpectedTypeException(
-                    "The function passed to " + functionName + " must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
-            );
-        }
-        return functionItem;
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
