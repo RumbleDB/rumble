@@ -55,6 +55,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
 import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -398,28 +399,46 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isEstimator() {
-        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
+        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
+            return true;
+        }
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().isEstimator();
+        }
+        return false;
     }
 
     @Override
     public Estimator<?> getEstimator() {
-        if (!(this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator)) {
-            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
+            return estimatorRuntimeIterator.getEstimator();
         }
-        return estimatorRuntimeIterator.getEstimator();
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().getEstimator();
+        }
+        throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public boolean isTransformer() {
-        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator) {
+            return true;
+        }
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().isTransformer();
+        }
+        return false;
     }
 
     @Override
     public Transformer getTransformer() {
-        if (!(this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator)) {
-            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
+            return transformerRuntimeIterator.getTransformer();
         }
-        return transformerRuntimeIterator.getTransformer();
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().getTransformer();
+        }
+        throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
     }
 
 

@@ -42,6 +42,17 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         this.parameterNames = parameterNames;
     }
 
+    public Item getCallableItem() {
+        return this.callableItem;
+    }
+
+    public ExecutionMode getWrappedCallableExecutionMode() {
+        if (!this.callableItem.isFunction()) {
+            return ExecutionMode.LOCAL;
+        }
+        return this.callableItem.getBodyIterator().getHighestExecutionMode();
+    }
+
     @Override
     protected void openLocal() {
         this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
