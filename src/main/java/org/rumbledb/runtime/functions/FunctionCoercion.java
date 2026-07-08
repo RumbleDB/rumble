@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -52,16 +53,24 @@ public final class FunctionCoercion {
         return sourceSignature == null || sourceSignature.getParameterTypes().size() == targetArity;
     }
 
+    private static ItemType getCallableItemType(Item item) {
+        if (item.isFunction()) {
+            return ItemTypeFactory.createFunctionItemType(item.getSignature());
+        }
+        return item.getDynamicType();
+    }
+
     public static Item coerceToFunctionItem(
             Item item,
             ItemType targetItemType,
             RuntimeStaticContext staticContext,
             String exceptionMessage
     ) {
-        if (!canItemTypeBeFunctionCoercedTo(item.getDynamicType(), targetItemType)) {
+        ItemType sourceItemType = getCallableItemType(item);
+        if (!canItemTypeBeFunctionCoercedTo(sourceItemType, targetItemType)) {
             throw new UnexpectedTypeException(
                     exceptionMessage
-                        + item.getDynamicType()
+                        + sourceItemType
                         + " cannot be promoted to type "
                         + new SequenceType(targetItemType)
                         + ".",

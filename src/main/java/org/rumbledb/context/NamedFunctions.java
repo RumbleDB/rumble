@@ -156,6 +156,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     isTailOptimization
             );
         }
+        if (isTailOptimization) {
+            return functionCallIterator;
+        }
         if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
             return functionCallIterator;
         }

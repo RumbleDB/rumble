@@ -44,9 +44,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -354,7 +354,7 @@ public class FunctionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.anyFunctionItem;
+        return ItemTypeFactory.createFunctionItemType(this.signature);
     }
 
     public FunctionItem deepCopy() {
