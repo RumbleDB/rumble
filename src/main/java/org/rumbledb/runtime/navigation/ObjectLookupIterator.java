@@ -297,7 +297,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
                                 + key
@@ -369,7 +369,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     .warn(
                         "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
                     );
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "There is no field with the name "
                                 + key

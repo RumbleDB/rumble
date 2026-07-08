@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
  */
 public class LocalExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    LocalExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
+    LocalExecutionModeVisitor(RumbleConfiguration configuration) {
     }
 
     void setVisitorConfig(VisitorConfig visitorConfig) {

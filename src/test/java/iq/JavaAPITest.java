@@ -31,7 +31,7 @@ import org.junit.jupiter.api.Timeout;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
@@ -63,7 +63,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testLocal() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(!iterator.availableAsRDD());
@@ -89,7 +89,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testCollect() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(iterator.availableAsRDD());
@@ -115,7 +115,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testRDD() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
         Assertions.assertTrue(!iterator.isOpen());
         Assertions.assertTrue(iterator.availableAsRDD());
@@ -137,7 +137,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testGetAsDataFramePreservesArrayMembers() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("({ \"arr\" : [ { \"x\" : 1 }]},{\"arr\":[{\"x\":\"s\"}]})");
 
         Dataset<Row> dataFrame = iterator.getAsDataFrame();

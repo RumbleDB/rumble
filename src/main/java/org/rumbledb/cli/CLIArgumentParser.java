@@ -33,7 +33,8 @@ import picocli.CommandLine.Command;
     subcommands = {
         Run.class,
         Repl.class
-    }
+    },
+    mixinStandardHelpOptions = true
 )
 public final class CLIArgumentParser {
     public static CLIInvocation parse(String... args) {

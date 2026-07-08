@@ -4,6 +4,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.bindings.ItemSequenceBinding;
 import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.LexicalBinding;
 import org.rumbledb.context.Name;
 
 import java.util.List;
@@ -12,7 +13,11 @@ public class ExternalBindings {
     private final org.rumbledb.bindings.ExternalBindings bindings;
 
     public ExternalBindings() {
-        this.bindings = new org.rumbledb.bindings.ExternalBindings();
+        this.bindings = org.rumbledb.bindings.ExternalBindings.empty();
+    }
+
+    public static ExternalBindings empty() {
+        return new ExternalBindings();
     }
 
     public void bindItem(String variableName, Item item) {
@@ -21,6 +26,10 @@ public class ExternalBindings {
 
     public void bindItems(String variableName, List<Item> items) {
         this.bindings.bind(Name.createVariableInNoNamespace(variableName), new ItemSequenceBinding(items));
+    }
+
+    public void bindLiteral(String variableName, String value) {
+        this.bindings.bind(Name.createVariableInNoNamespace(variableName), new LexicalBinding(value));
     }
 
     public void bindDataFrame(String variableName, Dataset<Row> dataFrame) {

@@ -143,7 +143,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                             paramTypes,
                             returnType
                     ),
-                    new DynamicContext(dynamicContext.getRumbleRuntimeConfiguration()),
+                    new DynamicContext(dynamicContext.getRumbleConfiguration()),
                     bodyIterator
             );
 

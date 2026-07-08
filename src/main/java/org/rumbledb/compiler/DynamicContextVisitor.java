@@ -20,10 +20,17 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.bindings.DataFrameBinding;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.bindings.FileBinding;
+import org.rumbledb.bindings.InputFormat;
+import org.rumbledb.bindings.ItemSequenceBinding;
+import org.rumbledb.bindings.LexicalBinding;
+import org.rumbledb.bindings.StandardInputBinding;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
@@ -55,8 +62,10 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,11 +77,13 @@ import java.util.Map;
  */
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
+    private ExternalBindings externalBindings;
     private Map<String, DynamicContext> importedModuleContexts;
 
-    DynamicContextVisitor(RumbleRuntimeConfiguration configuration) {
+    DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
+        this.externalBindings = externalBindings;
         this.importedModuleContexts = new HashMap<>();
     }
 
@@ -85,7 +96,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visit(Node node, DynamicContext argument) {
         if (argument == null) {
-            argument = new DynamicContext(this.configuration);
+            argument = new DynamicContext(this.configuration, this.externalBindings);
         }
         return node.accept(this, argument);
     }
@@ -146,7 +157,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = this.configuration.getExternalVariableValue(name);
+        List<Item> items = this.getItemsBinding(name);
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
                 throw new UnexpectedTypeException(
@@ -212,8 +223,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied unparsed items?
-        String value = this.configuration.getUnparsedExternalVariableValue(name);
+        String value = this.getLexicalValueBinding(name);
         items = new ArrayList<>();
+        if (value == null) {
+            value = this.getFileValueBinding(name, variableDeclaration.getMetadata());
+        }
         if (value != null) {
             SequenceType sequenceType = variableDeclaration.getSequenceType();
             Item item = null;
@@ -276,7 +290,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied DataFrame items?
-        Dataset<Row> df = this.configuration.getExternalVariableValueReadFromDataFrame(name);
+        Dataset<Row> df = this.getDataFrameBinding(name);
         if (df != null) {
             JSoundDataFrame jdf = new JSoundDataFrame(df);
             argument.getVariableValues()
@@ -284,7 +298,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             return argument;
         }
 
-        if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)) {
+        if (name.equals(Name.CONTEXT_ITEM) && this.isReadFromStandardInput(Name.CONTEXT_ITEM)) {
             StringBuilder stringBuilder = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             String l;
@@ -293,7 +307,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     stringBuilder.append(l);
                 }
                 value = stringBuilder.toString();
-                String inputFormat = this.configuration.getInputFormat(Name.CONTEXT_ITEM);
+                String inputFormat = this.getInputFormat(Name.CONTEXT_ITEM);
                 switch (inputFormat) {
                     case "json":
                         items.add(parseJSONItem(value, ExceptionMetadata.EMPTY_METADATA));
@@ -304,7 +318,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     default:
                         throw new AbsentPartOfDynamicContextException(
                                 "Unrecognized input format: "
-                                    + this.configuration.getInputFormat(Name.CONTEXT_ITEM)
+                                    + this.getInputFormat(Name.CONTEXT_ITEM)
                                     + ". Expecting text or json.",
                                 variableDeclaration.getMetadata()
                         );
@@ -355,7 +369,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
-            DynamicContext newContext = new DynamicContext(this.configuration);
+            DynamicContext newContext = new DynamicContext(this.configuration, this.externalBindings);
             newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
@@ -384,9 +398,65 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return ItemParser.getItemFromJSONString(
             value,
             JSONParsingOptions.defaultInstance(true),
-            this.configuration.getXmlVersion(),
+            this.configuration.semantics().xmlVersion(),
             true,
             metadata
         );
+    }
+
+    private List<Item> getItemsBinding(Name name) {
+        return this.externalBindings.get(name, ItemSequenceBinding.class)
+            .map(ItemSequenceBinding::getItems)
+            .orElse(null);
+    }
+
+    private String getLexicalValueBinding(Name name) {
+        return this.externalBindings.get(name, LexicalBinding.class)
+            .map(LexicalBinding::getValue)
+            .orElse(null);
+    }
+
+    private Dataset<Row> getDataFrameBinding(Name name) {
+        return this.externalBindings.get(name, DataFrameBinding.class)
+            .map(DataFrameBinding::getDataFrame)
+            .orElse(null);
+    }
+
+    private String getFileValueBinding(Name name, ExceptionMetadata metadata) {
+        FileBinding fileBinding = this.externalBindings.get(name, FileBinding.class).orElse(null);
+        if (fileBinding == null) {
+            return null;
+        }
+        try {
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                fileBinding.getLocation(),
+                this.configuration,
+                metadata
+            );
+            try (InputStream inputStream = FileSystemUtil.getDataInputStream(uri, this.configuration, metadata)) {
+                return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            }
+        } catch (IOException e) {
+            throw new AbsentPartOfDynamicContextException(
+                    "Could not read external variable value from file.",
+                    metadata
+            );
+        }
+    }
+
+    private boolean isReadFromStandardInput(Name name) {
+        return this.externalBindings.get(name, StandardInputBinding.class).isPresent();
+    }
+
+    private String getInputFormat(Name name) {
+        if (this.externalBindings.get(name, StandardInputBinding.class).isPresent()) {
+            InputFormat format = this.externalBindings.get(name, StandardInputBinding.class).get().getFormat();
+            return format.name().toLowerCase();
+        }
+        if (this.externalBindings.get(name, FileBinding.class).isPresent()) {
+            InputFormat format = this.externalBindings.get(name, FileBinding.class).get().getFormat();
+            return format.name().toLowerCase();
+        }
+        return InputFormat.JSON.name().toLowerCase();
     }
 }

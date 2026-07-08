@@ -230,7 +230,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.expressionsWithIterator,

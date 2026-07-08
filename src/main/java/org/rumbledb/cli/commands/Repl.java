@@ -25,7 +25,7 @@ import org.rumbledb.config.model.RumbleMode;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-@Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = false)
+@Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = true)
 public final class Repl extends BaseCommand {
     @Mixin
     OutputArguments output;

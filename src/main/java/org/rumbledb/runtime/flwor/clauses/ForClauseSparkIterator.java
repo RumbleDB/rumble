@@ -614,7 +614,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         FlworDataFrame nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.variableName,

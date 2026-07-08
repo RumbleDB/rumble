@@ -47,10 +47,10 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
         // Ensures that calls with the 2-arity signature behave the same as calls with the 5-arity signature
         // when the last three arguments are empty sequences.
         if (language == null) {
-            language = getConfiguration().getDefaultFormattingLanguage();
+            language = getConfiguration().formatting().defaultFormattingLanguage();
         }
         if (calendar == null) {
-            calendar = getConfiguration().getDefaultFormattingCalendar();
+            calendar = getConfiguration().formatting().defaultFormattingCalendar();
         }
 
         FormattingContext formattingContext = FormattingContext.fromArguments(

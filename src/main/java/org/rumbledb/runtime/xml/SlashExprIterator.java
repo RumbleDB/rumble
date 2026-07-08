@@ -80,10 +80,10 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         }
 
         if (allNodes) {
-            if (this.getConfiguration().optimizeSteps()) {
+            if (this.getConfiguration().optimization().optimizeSteps()) {
                 if (
-                    this.getConfiguration().optimizeStepExperimental()
-                        && this.getConfiguration().optimizeParentPointers()
+                    this.getConfiguration().optimization().optimizeStepsExperimental()
+                        && this.getConfiguration().optimization().optimizeParentPointers()
                 ) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified

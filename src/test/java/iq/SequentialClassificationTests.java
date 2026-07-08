@@ -5,6 +5,7 @@ import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -28,7 +29,7 @@ import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.File;
@@ -37,7 +38,7 @@ import java.net.URI;
 
 public class SequentialClassificationTests {
 
-    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
+    private static final RumbleConfiguration configuration = TestConfigurations.defaultConfiguration();
 
     private MainModule parseAndCompile(String filePath) throws IOException {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
@@ -47,7 +48,8 @@ public class SequentialClassificationTests {
         );
         return VisitorHelpers.parseMainModuleFromLocation(
             uri,
-            configuration
+            configuration,
+            ExternalBindings.empty()
         );
     }
 

@@ -17,8 +17,8 @@
 
 package iq.base;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
+import org.rumbledb.api.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.List;
@@ -28,28 +28,35 @@ public final class TestConfigurations {
     private TestConfigurations() {
     }
 
-    public static RumbleRuntimeConfiguration defaultConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--print-iterator-tree",
-                    "yes",
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--materialization-cap",
-                    "200" }
-        ).setExternalVariableValue(
-            Name.createVariableInNoNamespace("externalStringItem"),
-            List.of(ItemFactory.getInstance().createStringItem("this is a string"))
-        )
-            .setExternalVariableValue(
-                Name.createVariableInNoNamespace("externalIntegerItems"),
-                List.of(
-                    ItemFactory.getInstance().createIntItem(1),
-                    ItemFactory.getInstance().createIntItem(2),
-                    ItemFactory.getInstance().createIntItem(3),
-                    ItemFactory.getInstance().createIntItem(4),
-                    ItemFactory.getInstance().createIntItem(5)
-                )
-            );
+    public static RumbleConfiguration.RumbleConfigurationBuilder defaultConfigurationBuilder() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(r -> r.materializationCap(200));
+    }
+
+    public static RumbleConfiguration defaultConfiguration() {
+        return defaultConfigurationBuilder().build();
+    }
+
+    public static ExternalBindings defaultExternalBindings() {
+        ExternalBindings externalBindings = ExternalBindings.empty();
+        externalBindings.bindItem(
+            "externalStringItem",
+            ItemFactory.getInstance().createStringItem("this is a string")
+        );
+        externalBindings.bindItems(
+            "externalIntegerItems",
+            List.of(
+                ItemFactory.getInstance().createIntItem(1),
+                ItemFactory.getInstance().createIntItem(2),
+                ItemFactory.getInstance().createIntItem(3),
+                ItemFactory.getInstance().createIntItem(4),
+                ItemFactory.getInstance().createIntItem(5)
+            )
+        );
+        externalBindings.bindLiteral(
+            "externalUnparsedString",
+            "unparsed string"
+        );
+        return externalBindings;
     }
 }

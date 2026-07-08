@@ -212,7 +212,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -230,7 +230,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
             schema = newContext.getSchema();
             if (!(schema instanceof ArrayType arraySchema)) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
                                 + " so that the lookup will always result in the empty sequence no matter what. "
@@ -393,7 +393,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
                         + " so that the lookup will always result in the empty sequence no matter what. "

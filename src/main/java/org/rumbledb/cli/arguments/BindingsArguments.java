@@ -83,7 +83,7 @@ public final class BindingsArguments {
             );
         }
 
-        ExternalBindings binding = new ExternalBindings();
+        ExternalBindings binding = ExternalBindings.empty();
 
         for (Map.Entry<String, String> entry : this.literalVariables.entrySet()) {
             binding.bind(Name.createVariableInNoNamespace(entry.getKey()), new LexicalBinding(entry.getValue()));

@@ -50,7 +50,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -141,7 +141,7 @@ public class FlworDataFrameUtils {
 
         kryo.register(ArrayList.class);
 
-        kryo.register(RumbleRuntimeConfiguration.class);
+        kryo.register(RumbleConfiguration.class);
 
         kryo.register(DocumentItem.class);
         kryo.register(ElementItem.class);

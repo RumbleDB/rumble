@@ -21,7 +21,6 @@
 package iq;
 
 import iq.base.UpdateRuntimeTestsBase;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.apache.spark.SparkConf;
 
 import java.io.File;
@@ -32,31 +31,6 @@ public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/runtime-iceberg-updates"
-    );
-    protected static final RumbleRuntimeConfiguration createIcebergConfiguration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--print-iterator-tree",
-                "yes",
-                "--output-format",
-                "iceberg",
-                "--show-error-info",
-                "yes",
-                "--apply-updates",
-                "yes",
-            }
-    );
-
-    protected static final RumbleRuntimeConfiguration deleteIcebergConfiguration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--print-iterator-tree",
-                "yes",
-                "--output-format",
-                "iceberg",
-                "--show-error-info",
-                "yes",
-                "--apply-updates",
-                "yes",
-            }
     );
 
     @Override

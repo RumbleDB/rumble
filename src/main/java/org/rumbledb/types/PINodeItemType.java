@@ -1,7 +1,7 @@
 package org.rumbledb.types;
 
 import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 
 import java.util.Objects;
@@ -170,7 +170,7 @@ public class PINodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

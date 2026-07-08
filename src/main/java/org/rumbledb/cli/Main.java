@@ -22,9 +22,11 @@ package org.rumbledb.cli;
 import java.io.IOException;
 import java.net.ConnectException;
 
+
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.shell.RumbleJLineShell;
@@ -48,18 +50,27 @@ public class Main {
             );
             System.exit(43);
         }
-        RumbleRuntimeConfiguration sparksoniqConf = null;
-        // Parse arguments
-        try {
-            sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
-            if (sparksoniqConf.isShell()) {
-                launchShell(sparksoniqConf);
-            } else if (sparksoniqConf.isServer()) {
-                // Remove this block when configuration class refactoring is done and `isServer()` is removed
-                System.out.println("⚠️  RumbleDB server mode is deprecated.");
-            } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
-                runQueryExecutor(sparksoniqConf);
+        CLIInvocation invocation = null;
+        RumbleConfiguration configuration = null;
+        try {
+            invocation = CLIArgumentParser.parse(args);
+
+            if (invocation == null) {
+                System.exit(0);
+            } else {
+                configuration = invocation.configuration();
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ CLI Error: " + e.getMessage());
+            System.exit(42);
+        }
+
+        try {
+            if (configuration.mode() == RumbleMode.REPL) {
+                launchShell(invocation);
+            } else if (configuration.input().query() != null || configuration.input().queryPath() != null) {
+                runQueryExecutor(invocation);
             } else {
                 System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
                 System.out.println();
@@ -70,14 +81,14 @@ public class Main {
             System.exit(0);
         } catch (Exception ex) {
             boolean showErrorInfo = false;
-            if (sparksoniqConf != null) {
-                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            if (configuration != null) {
+                showErrorInfo = configuration.debug().showErrorInfo();
             }
             handleException(ex, showErrorInfo);
         } catch (OutOfMemoryError ex) {
             boolean showErrorInfo = false;
-            if (sparksoniqConf != null) {
-                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            if (configuration != null) {
+                showErrorInfo = configuration.debug().showErrorInfo();
             }
             handleException(ex, showErrorInfo);
         }
@@ -177,13 +188,16 @@ public class Main {
         }
     }
 
-    private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-        JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
+    private static void runQueryExecutor(CLIInvocation invocation) throws IOException {
+        JsoniqQueryExecutor translator = new JsoniqQueryExecutor(
+                invocation.configuration(),
+                invocation.bindings()
+        );
         translator.runQuery();
     }
 
-    private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-        terminal = new RumbleJLineShell(sparksoniqConf);
+    private static void launchShell(CLIInvocation invocation) throws IOException {
+        terminal = new RumbleJLineShell(invocation.configuration(), invocation.bindings());
         terminal.launch();
     }
 

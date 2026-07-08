@@ -27,7 +27,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -625,7 +625,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash,
-            RumbleRuntimeConfiguration conf
+            RumbleConfiguration conf
     ) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
@@ -644,7 +644,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         if (!hash) {
             Dataset<Row> nativeQueryResult = null;
-            if (conf.nativeExecution()) {
+            if (conf.runtime().useNativeExecution()) {
                 nativeQueryResult = tryNativeQuery(
                     dataFrame,
                     newVariableName,

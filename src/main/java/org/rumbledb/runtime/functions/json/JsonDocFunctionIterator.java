@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -60,12 +60,12 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
 
-        String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
+        String jsonText = readJsonResource(uri, context.getRumbleConfiguration(), getMetadata());
 
         return ItemParser.getItemFromJSONString(
             jsonText,
             options,
-            getConfiguration().getXmlVersion(),
+            getConfiguration().semantics().xmlVersion(),
             isJSONiq10,
             getMetadata()
         );
@@ -105,7 +105,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
 
-    private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+    private static String readJsonResource(URI uri, RumbleConfiguration conf, ExceptionMetadata metadata) {
         try (
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,

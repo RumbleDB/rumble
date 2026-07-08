@@ -21,7 +21,6 @@
 package iq;
 
 import iq.base.UpdateRuntimeTestsBase;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.apache.spark.SparkConf;
 
 import java.io.File;
@@ -32,31 +31,6 @@ public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
             System.getProperty("user.dir")
                 +
                 "/src/test/resources/test_files/runtime-delta-updates"
-    );
-    protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--print-iterator-tree",
-                "yes",
-                "--output-format",
-                "delta",
-                "--show-error-info",
-                "yes",
-                "--apply-updates",
-                "yes",
-            }
-    );
-
-    protected static final RumbleRuntimeConfiguration deleteDeltaConfiguration = new RumbleRuntimeConfiguration(
-            new String[] {
-                "--print-iterator-tree",
-                "yes",
-                "--output-format",
-                "delta",
-                "--show-error-info",
-                "yes",
-                "--apply-updates",
-                "yes",
-            }
     );
 
     @Override

@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import static org.rumbledb.types.BuiltinTypesCatalogue.NOTATIONItem;
 import static org.rumbledb.types.BuiltinTypesCatalogue.QNameItem;
@@ -1155,7 +1155,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         if (this.getPrimitiveType().equals(atomicItem)) {
             return false;
         }
@@ -1163,7 +1163,7 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         if (this.getPrimitiveType().equals(dateItem)) {
-            return !configuration.dateWithTimezone(); // xs:date has a time zone but not in DataFrames.
+            return !configuration.semantics().datesWithTimeZone(); // xs:date has a time zone but not in DataFrames.
         }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;

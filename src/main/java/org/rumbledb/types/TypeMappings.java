@@ -103,7 +103,7 @@ public class TypeMappings {
             List<ItemType> memberTypes = itemType.getTypes();
             ItemType singleNullableType = itemType.getSingleNullableType();
             if (singleNullableType != null) {
-                if (staticContext.getConfiguration().getLaxJSONNullValidation()) {
+                if (staticContext.getConfiguration().semantics().laxJSONNullValidation()) {
                     return getDataFrameDataTypeFromItemType(singleNullableType, staticContext);
                 }
                 return DataTypes.StringType;
@@ -123,7 +123,7 @@ public class TypeMappings {
             if (
                 hasNumeric
                     && !hasStructuredType
-                    && !(!staticContext.getConfiguration().getLaxJSONNullValidation() && hasNull)
+                    && !(!staticContext.getConfiguration().semantics().laxJSONNullValidation() && hasNull)
             ) {
                 return DataTypes.DoubleType;
             }

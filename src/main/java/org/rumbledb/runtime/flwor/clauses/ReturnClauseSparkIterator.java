@@ -195,7 +195,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
         StructType inputSchema = df.schema();
         Dataset<Row> nativeQueryResult = null;
-        if (getConfiguration().nativeExecution()) {
+        if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                 df,
                 this.expression,

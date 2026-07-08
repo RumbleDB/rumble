@@ -79,7 +79,7 @@ public class UnparsedTextFunctionIterator extends LocalFunctionCallIterator {
             );
             String result = FileSystemUtil.readContent(
                 uri,
-                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                 getMetadata()
             );
             this.hasNext = false;

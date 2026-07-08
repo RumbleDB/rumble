@@ -27,7 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -47,7 +47,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
     private LinkedHashMap<Name, List<Item>> localVariables;
     private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
     private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
 
     public FlworTuple() {
         this.localVariables = new LinkedHashMap<>(1, 1);
@@ -55,14 +55,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.dataFrameVariables = new LinkedHashMap<>(1, 1);
     }
 
-    public FlworTuple(RumbleRuntimeConfiguration configuration) {
+    public FlworTuple(RumbleConfiguration configuration) {
         this.localVariables = new LinkedHashMap<>(1, 1);
         this.rddVariables = new LinkedHashMap<>(1, 1);
         this.dataFrameVariables = new LinkedHashMap<>(1, 1);
         this.configuration = configuration;
     }
 
-    public FlworTuple(RumbleRuntimeConfiguration configuration, int nb) {
+    public FlworTuple(RumbleConfiguration configuration, int nb) {
         this.localVariables = new LinkedHashMap<>(nb, 1);
         this.rddVariables = new LinkedHashMap<>(nb, 1);
         this.dataFrameVariables = new LinkedHashMap<>(nb, 1);
@@ -193,7 +193,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.localVariables = kryo.readObject(input, LinkedHashMap.class);
         this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
         this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
+        this.configuration = kryo.readObject(input, RumbleConfiguration.class);
     }
 
     @Override

@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
@@ -17,6 +16,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.config.RumbleConfiguration;
 
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
@@ -41,7 +41,7 @@ public class SequenceOfItems {
 
     private RuntimeIterator iterator;
     private DynamicContext dynamicContext;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
     private boolean isOpen;
 
     /**
@@ -55,7 +55,7 @@ public class SequenceOfItems {
     public SequenceOfItems(
             RuntimeIterator iterator,
             DynamicContext dynamicContext,
-            RumbleRuntimeConfiguration configuration
+            RumbleConfiguration configuration
     ) {
         this.iterator = iterator;
         this.isOpen = false;
@@ -279,13 +279,14 @@ public class SequenceOfItems {
      */
     public List<Item> getAsList() {
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result, this.configuration.getResultSizeCap());
+        int materializationCap = this.configuration.runtime().materializationCap();
+        long num = populateList(result, materializationCap);
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + this.configuration.getResultSizeCap()
+                        + materializationCap
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
@@ -407,5 +408,4 @@ public class SequenceOfItems {
     public SequenceWriter write() {
         return new SequenceWriter(this);
     }
-
 }

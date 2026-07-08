@@ -20,7 +20,7 @@
 
 package iq;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 
 import java.io.File;
 
@@ -32,21 +32,11 @@ public class SparkRuntimeTests extends RuntimeTests {
                 "/src/test/resources/test_files/runtime-spark"
     );
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--dates-with-timezone",
-                    "yes",
-                    "--materialization-cap",
-                    "100000",
-                    "--result-size",
-                    "200"
-                }
-        );
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+            .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000))
+            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+            .build();
     }
 
     @Override

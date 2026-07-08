@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -15,7 +15,7 @@ public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String queryLanguage;
-    private RumbleRuntimeConfiguration configuration;
+    private RumbleConfiguration configuration;
     private SequenceType staticType;
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
@@ -63,7 +63,7 @@ public class RuntimeStaticContext implements Serializable {
      * context.
      */
     public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             SequenceType staticType,
             ExecutionMode executionMode,
             ExceptionMetadata metadata
@@ -72,7 +72,7 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
+            RumbleConfiguration configuration,
             SequenceType staticType,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
@@ -99,7 +99,7 @@ public class RuntimeStaticContext implements Serializable {
      * @return the runtime configuration associated with this context, which is used for error reporting and to
      *         determine limits such as the materialization cap; the returned configuration is never {@code null}
      */
-    public RumbleRuntimeConfiguration getConfiguration() {
+    public RumbleConfiguration getConfiguration() {
         return this.configuration;
     }
 

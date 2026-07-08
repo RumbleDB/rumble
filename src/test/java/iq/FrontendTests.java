@@ -27,13 +27,14 @@ import iq.base.TestFileDiscovery;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
@@ -43,7 +44,7 @@ import java.util.List;
 
 public class FrontendTests {
 
-    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
+    private static final RumbleConfiguration configuration = TestConfigurations.defaultConfiguration();
 
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -114,12 +115,74 @@ public class FrontendTests {
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
                     uri,
-                    configuration
+                    configuration,
+                    ExternalBindings.empty()
                 );
 
                 testVariableTypes(mainModule);
             }
         }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForReverseAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/parent::node()",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+        Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationKeepsParentPointerOptimizationForForwardChildAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/child::title",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertTrue(effectiveConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForFollowingAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+            .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+            .build();
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/following::node()",
+            initialConfiguration,
+            ExternalBindings.empty()
+        );
+
+        RumbleConfiguration effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
+            mainModule,
+            initialConfiguration.toBuilder()
+        );
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
     }
 
     /*

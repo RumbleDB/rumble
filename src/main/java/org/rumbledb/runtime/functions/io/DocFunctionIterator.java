@@ -52,7 +52,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 documentBuilderFactory.setNamespaceAware(true);
                 InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                     uri,
-                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                     getMetadata()
                 );
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -60,7 +60,9 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 return ItemParser.getItemFromXML(
                     xmlDocument,
                     uri.toString(),
-                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration().optimizeParentPointers()
+                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
+                        .optimization()
+                        .optimizeParentPointers()
                 );
             } catch (ParserConfigurationException e) {
                 throw new OurBadException("Document builder creation failed with: " + e);
