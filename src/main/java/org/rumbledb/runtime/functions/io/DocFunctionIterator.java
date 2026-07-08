@@ -52,7 +52,6 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 documentBuilderFactory.setNamespaceAware(true);
                 InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
                     uri,
-                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                     getMetadata()
                 );
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();

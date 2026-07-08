@@ -268,7 +268,6 @@ public class SequenceWriter {
         URI outputUri = null;
         outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             path,
-            this.configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         String method = this.serializationParameters.getMethod();
@@ -305,10 +304,10 @@ public class SequenceWriter {
                     "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
-        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
             switch (this.mode) {
                 case Overwrite:
-                    FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+                    FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
                     break;
                 case Ignore:
                     return;
@@ -330,7 +329,7 @@ public class SequenceWriter {
         int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
         if (requestedPartitions == 1) {
             List<String> lines = outputRDD.take(SINGLE_PARTITION_CAP);
-            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
             return;
         }
         if (requestedPartitions > 0) {

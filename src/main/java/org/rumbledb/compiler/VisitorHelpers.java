@@ -142,12 +142,11 @@ public class VisitorHelpers {
             ExternalBindings externalBindings
     )
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
+        InputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.semantics().staticBaseUri() != null) {
             location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 configuration.semantics().staticBaseUri(),
-                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
         }
@@ -161,12 +160,11 @@ public class VisitorHelpers {
             ExceptionMetadata metadata
     )
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
+        InputStream in = FileSystemUtil.getDataInputStream(location, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.semantics().staticBaseUri() != null) {
             location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 configuration.semantics().staticBaseUri(),
-                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
         }
@@ -181,7 +179,6 @@ public class VisitorHelpers {
         String url = Objects.requireNonNullElse(configuration.semantics().staticBaseUri(), ".");
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             url,
-            configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         return parseMainModule(query, location, configuration, externalBindings);

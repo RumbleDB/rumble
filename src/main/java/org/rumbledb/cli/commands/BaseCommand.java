@@ -21,7 +21,6 @@ package org.rumbledb.cli.commands;
 import java.util.concurrent.Callable;
 
 import org.rumbledb.cli.CLIInvocation;
-import org.rumbledb.cli.arguments.AccessArguments;
 import org.rumbledb.cli.arguments.AnalysisArguments;
 import org.rumbledb.cli.arguments.BindingsArguments;
 import org.rumbledb.cli.arguments.DebugArguments;
@@ -38,9 +37,6 @@ import picocli.CommandLine.Mixin;
 
 @Command
 public abstract class BaseCommand implements Callable<CLIInvocation> {
-    @Mixin
-    AccessArguments access;
-
     @Mixin
     RuntimeArguments runtime;
 
@@ -65,7 +61,6 @@ public abstract class BaseCommand implements Callable<CLIInvocation> {
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
         return RumbleConfiguration.builder()
             .mode(mode)
-            .access(this.access.toConfig())
             .runtime(this.runtime.toConfig())
             .debug(this.debug.toConfig())
             .analysis(this.analysis.toConfig())

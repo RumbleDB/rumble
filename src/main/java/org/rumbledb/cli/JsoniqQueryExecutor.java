@@ -53,13 +53,13 @@ public class JsoniqQueryExecutor {
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
-        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
             if (!this.configuration.output().allowOverwrite()) {
                 throw new CliException(
                         "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
                 );
             } else {
-                FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
@@ -70,7 +70,6 @@ public class JsoniqQueryExecutor {
         if (queryFile != null) {
             queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 queryFile,
-                this.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
         }
@@ -79,7 +78,6 @@ public class JsoniqQueryExecutor {
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 outputPath,
-                this.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
             checkOutputFile(outputUri);
@@ -90,11 +88,10 @@ public class JsoniqQueryExecutor {
         if (logPath != null) {
             logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 logPath,
-                this.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            if (FileSystemUtil.exists(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
-                FileSystemUtil.delete(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
 
@@ -150,7 +147,6 @@ public class JsoniqQueryExecutor {
             FileSystemUtil.append(
                 logUri,
                 Collections.singletonList(time),
-                this.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
         }

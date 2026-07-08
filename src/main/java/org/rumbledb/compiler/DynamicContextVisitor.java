@@ -237,7 +237,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             ) {
                 URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     value,
-                    this.configuration,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
@@ -430,10 +429,9 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 fileBinding.getLocation(),
-                this.configuration,
                 metadata
             );
-            try (InputStream inputStream = FileSystemUtil.getDataInputStream(uri, this.configuration, metadata)) {
+            try (InputStream inputStream = FileSystemUtil.getDataInputStream(uri, metadata)) {
                 return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             }
         } catch (IOException e) {

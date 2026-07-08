@@ -109,7 +109,6 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         try (
             InputStream is = FileSystemUtil.getDataInputStream(
                 uri,
-                conf,
                 metadata
             )
         ) {

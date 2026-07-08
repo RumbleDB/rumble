@@ -30,7 +30,6 @@ import lombok.Value;
 import lombok.experimental.Accessors;
 import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
-import org.rumbledb.config.model.AccessConfig;
 import org.rumbledb.config.model.AnalysisConfig;
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.config.model.RumbleMode;
@@ -65,9 +64,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
     private RumbleMode mode;
 
     @NonFinal
-    private AccessConfig access;
-
-    @NonFinal
     private InputConfig input;
 
     @NonFinal
@@ -98,7 +94,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
     @Builder(toBuilder = true)
     private RumbleConfiguration(
             RumbleMode mode,
-            AccessConfig access,
             InputConfig input,
             OutputConfig output,
             RuntimeConfig runtime,
@@ -109,7 +104,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
             FormattingConfig formatting
     ) {
         this.mode = Objects.requireNonNullElse(mode, RumbleMode.RUN);
-        this.access = Objects.requireNonNullElseGet(access, () -> AccessConfig.builder().build());
         this.input = Objects.requireNonNullElseGet(input, () -> InputConfig.builder().build());
         this.output = Objects.requireNonNullElseGet(output, () -> OutputConfig.builder().build());
         this.runtime = Objects.requireNonNullElseGet(runtime, () -> RuntimeConfig.builder().build());
@@ -123,7 +117,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.mode, RumbleMode.class);
-        kryo.writeObjectOrNull(output, this.access, AccessConfig.class);
         kryo.writeObjectOrNull(output, this.input, InputConfig.class);
         kryo.writeObjectOrNull(output, this.output, OutputConfig.class);
         kryo.writeObjectOrNull(output, this.runtime, RuntimeConfig.class);
@@ -137,10 +130,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
     @Override
     public void read(Kryo kryo, Input input) {
         this.mode = kryo.readObjectOrNull(input, RumbleMode.class);
-        this.access = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, AccessConfig.class),
-            () -> AccessConfig.builder().build()
-        );
         this.input = Objects.requireNonNullElseGet(
             kryo.readObjectOrNull(input, InputConfig.class),
             () -> InputConfig.builder().build()
@@ -187,7 +176,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
         public RumbleConfiguration build() {
             RumbleConfiguration baseConfiguration = new RumbleConfiguration(
                     this.mode,
-                    this.access,
                     this.input,
                     this.output,
                     this.runtime,
@@ -201,14 +189,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
                 return baseConfiguration;
             }
             return RumbleConfigurationResolver.apply(baseConfiguration, this.withEntries);
-        }
-
-        public RumbleConfigurationBuilder configureAccess(Consumer<AccessConfig.AccessConfigBuilder> customizer) {
-            AccessConfig.AccessConfigBuilder builder = this.access == null
-                ? AccessConfig.builder()
-                : this.access.toBuilder();
-            customizer.accept(builder);
-            return access(builder.build());
         }
 
         public RumbleConfigurationBuilder configureInput(Consumer<InputConfig.InputConfigBuilder> customizer) {

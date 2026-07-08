@@ -96,13 +96,11 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 if (path != null) {
                     URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                         path,
-                        this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                         getMetadata()
                     );
                     FileSystemUtil.append(
                         uri,
                         Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                        this.currentDynamicContextForLocalExecution.getRumbleConfiguration(),
                         getMetadata()
                     );
                 }

@@ -139,7 +139,6 @@ public final class AnnotationTestExecutor {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
             Rumble rumble = new Rumble(configuration);

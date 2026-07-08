@@ -61,10 +61,9 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         if (mode == Mode.DELTA) {
             URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 this.collection.getLogicalName(),
-                this.configuration,
                 this.metadata
             );
-            FileSystemUtil.delete(collectionURI, this.configuration, this.metadata);
+            FileSystemUtil.delete(collectionURI, this.metadata);
             return;
         }
 

@@ -402,7 +402,6 @@ public class UpdatesForRumbleBenchmark {
 
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             queryPath,
-            configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
         Rumble rumble = new Rumble(configuration);
@@ -538,12 +537,10 @@ public class UpdatesForRumbleBenchmark {
     public void createTable(String path, String query) throws IOException {
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             path,
-            UpdatesForRumbleBenchmark.createDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
         URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             query,
-            UpdatesForRumbleBenchmark.createDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
 
@@ -564,7 +561,6 @@ public class UpdatesForRumbleBenchmark {
     public void deleteTable(String path) {
         URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             path,
-            UpdatesForRumbleBenchmark.createDeltaConfiguration,
             ExceptionMetadata.EMPTY_METADATA
         );
 

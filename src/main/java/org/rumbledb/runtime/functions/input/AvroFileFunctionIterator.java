@@ -54,7 +54,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleConfiguration(), getMetadata())) {
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
@@ -75,7 +75,6 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                             );
                             String jsonFormatSchema = FileSystemUtil.readContent(
                                 schemaURI,
-                                context.getRumbleConfiguration(),
                                 getMetadata()
                             );
                             dfr.option(keys.get(i), jsonFormatSchema);
