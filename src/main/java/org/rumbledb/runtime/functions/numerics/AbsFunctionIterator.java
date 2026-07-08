@@ -30,6 +30,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
+import java.math.BigInteger;
 import java.util.List;
 
 public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -56,10 +57,14 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createFloatItem(Math.abs(value.getFloatValue()));
         }
         if (value.isInt()) {
-            if (value.getIntValue() >= 0) {
+            int intValue = value.getIntValue();
+            if (intValue >= 0) {
                 return value;
             }
-            return ItemFactory.getInstance().createIntItem(-value.getIntValue());
+            if (intValue == Integer.MIN_VALUE) {
+                return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(intValue).negate());
+            }
+            return ItemFactory.getInstance().createIntItem(-intValue);
         }
         if (value.isInteger()) {
             return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue().abs());
