@@ -233,8 +233,11 @@ public class ElementItem implements Item {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * - Insertion order is preserved for stable iteration.
-         * - Later puts for the same prefix override earlier values.
+         * 
+         * <ul>
+         * <li>Insertion order is preserved for stable iteration.</li>
+         * <li>Later puts for the same prefix override earlier values.</li>
+         * </ul>
          */
         LinkedHashMap<String, String> inScope = new LinkedHashMap<>();
 
