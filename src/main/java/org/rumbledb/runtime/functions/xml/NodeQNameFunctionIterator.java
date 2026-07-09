@@ -43,16 +43,22 @@ import java.util.List;
  * sequence if the node does not have a name."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:node-name}):
- * - fn:node-name() as xs:QName?
- * - fn:node-name($arg as node()?) as xs:QName?
+ * 
+ * <ul>
+ * <li>fn:node-name() as xs:QName?</li>
+ * <li>fn:node-name($arg as node()?) as xs:QName?</li>
+ * </ul>
  *
  * Rules:
- * - "If the argument is omitted, it defaults to the context item."
- * - "If the argument is supplied and is the empty sequence, the function returns the empty sequence."
- * - "Otherwise, the function returns the result of applying the dm:node-name accessor to the node
+ * 
+ * <ul>
+ * <li>"If the argument is omitted, it defaults to the context item."</li>
+ * <li>"If the argument is supplied and is the empty sequence, the function returns the empty sequence."</li>
+ * <li>"Otherwise, the function returns the result of applying the dm:node-name accessor to the node
  * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
- * function returns the empty sequence."
- *
+ * function returns the empty sequence."</li>
+ * </ul>
+ * 
  * The optional {@code xs:QName} result wraps the expanded {@link Name} from {@link Item#nodeName()} in a
  * {@link org.rumbledb.items.QNameItem}; otherwise the function returns the empty sequence.
  *
