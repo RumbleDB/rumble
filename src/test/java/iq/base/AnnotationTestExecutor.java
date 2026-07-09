@@ -193,6 +193,9 @@ public final class AnnotationTestExecutor {
         } catch (RumbleException exception) {
             String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
             Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput)));
+        } catch (Throwable exception) {
+            // Catch all other exceptions not given by Rumble
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, exception.getMessage())));
         }
     }
 
@@ -206,7 +209,7 @@ public final class AnnotationTestExecutor {
         try {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
-        } catch (Exception exception) {
+        } catch (Throwable exception) {
             checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
         }
     }
