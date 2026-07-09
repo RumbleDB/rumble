@@ -747,7 +747,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
             );
         }
-        validatedElement.setTypeAnnotation(itemType);
+        validatedElement.setSchemaType(itemType);
         return copiedRoot;
     }
 
