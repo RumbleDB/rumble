@@ -253,10 +253,6 @@ public class SparkSessionManager {
                 DoubleType.class,
                 FloatType.class,
                 IntType.class,
-                BooleanType.class,
-                BooleanType.class,
-                BooleanType.class,
-                BooleanType.class,
             };
 
             this.configuration.registerKryoClasses(serializedClasses);
