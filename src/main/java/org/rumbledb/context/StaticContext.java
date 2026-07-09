@@ -435,9 +435,13 @@ public class StaticContext implements Serializable, KryoSerializable {
      * Returns the default serialization parameters stored in the static context.
      *
      * Spec references:
-     * - XQuery 3.1 Static Context Components (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
-     * - Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * 
+     * <ul>
+     * <li>XQuery 3.1 Static Context Components (link:
+     * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+     * <li>Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+     * </ul>
      */
     public SerializationParameters getSerializationParameters() {
         if (this.serializationParameters != null) {

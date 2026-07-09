@@ -29,12 +29,15 @@ import org.rumbledb.serialization.Serializers;
  * instead of mutating the current one.
  *
  * There are two mutually exclusive internal modes:
- * - DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
+ * 
+ * <ul>
+ * <li>DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
  * In this case, the sequence can be represented as a Spark {@link Dataset} /
- * {@link DataFrameWriter} and is written using Spark's native writers (json/csv/parquet/...).
- * - RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
+ * {@link DataFrameWriter} and is written using Spark's native writers (json/csv/parquet/...).</li>
+ * <li>RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
  * In this case, the sequence is serialized item-by-item via {@link Serializer}
- * and saved as text files.
+ * and saved as text files.</li>
+ * </ul>
  *
  * The serialization method (json, tyson, xml-json-hybrid, yaml, delta, ...) is always taken from
  * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
@@ -54,10 +57,13 @@ public class SequenceWriter {
      * Internal constructor used by all builder-style methods.
      *
      * Invariants:
-     * - Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
-     * - Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
-     * - {@code serializationParameters} is never {@code null}.
-     * - {@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined method.
+     * <ul>
+     * <li>Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.</li>
+     * <li>Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.</li>
+     * <li>{@code serializationParameters} is never {@code null}.</li>
+     * <li>{@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined
+     * method.</li>
+     * </ul>
      */
     private SequenceWriter(
             SequenceOfItems sequence,
@@ -91,10 +97,12 @@ public class SequenceWriter {
      * Public entry-point constructor used by {@link SequenceOfItems#write()}.
      * TODO: update comment here
      * It determines the initial mode:
-     * - If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
-     * fails, the writer is created in RDD mode.
-     * - Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
-     * {@link SequenceOfItems#getAsDataFrame()}.
+     * <ul>
+     * <li>If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
+     * fails, the writer is created in RDD mode.</li>
+     * <li>Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
+     * {@link SequenceOfItems#getAsDataFrame()}.</li>
+     * </ul>
      */
     SequenceWriter(SequenceOfItems sequence) {
         this.sequence = sequence;
@@ -380,10 +388,13 @@ public class SequenceWriter {
      * Parses a string into a Spark SaveMode.
      *
      * Accepted values (case-insensitive):
-     * - overwrite
-     * - append
-     * - ignore
-     * - error, errorifexists, default → ErrorIfExists
+     * 
+     * <ul>
+     * <li>overwrite</li>
+     * <li>append</li>
+     * <li>ignore</li>
+     * <li>error, errorifexists, default → ErrorIfExists</li>
+     * </ul>
      *
      * @param saveMode the string representation of the save mode
      * @return the corresponding SaveMode
