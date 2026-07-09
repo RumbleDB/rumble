@@ -274,12 +274,12 @@ public class AttributeItem implements Item {
         );
     }
 
-    public void setTypeAnnotation(ItemType typeAnnotation) {
+    public void setSchemaType(ItemType typeAnnotation) {
         this.typeAnnotation = typeAnnotation;
     }
 
     @Override
-    public ItemType getTypeAnnotation() {
+    public ItemType getSchemaType() {
         return this.typeAnnotation;
     }
 }
