@@ -493,21 +493,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         }
         if (itemType.isAtomicItemType()) {
-            if (!item.isAtomic()) {
-                throw new InvalidInstanceException(
-                        "Expected an atomic item for type " + itemType.getIdentifierString()
-                );
+            if (item.isElementNode() || item.isDocumentNode()) {
+                return validateXmlNodeAgainstAtomicType(item, itemType, metadata, staticContext);
             }
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
             try {
-                Item castType = CastIterator.castItemToType(
-                    ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                    itemType,
-                    metadata,
-                    staticContext
-                );
+                Item castType = CastIterator.castItemToType(item, itemType, metadata, staticContext);
                 if (castType == null) {
                     throw new InvalidInstanceException(
                             "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
@@ -700,6 +693,123 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             );
         }
         return item;
+    }
+
+    private static Item validateXmlNodeAgainstAtomicType(
+            Item item,
+            ItemType itemType,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext
+    ) {
+        Item copiedRoot;
+        Item validatedElement;
+        if (item.isDocumentNode()) {
+            validateAtomicDocumentShape(item);
+            copiedRoot = item.copy(false);
+            reattachXmlParents(copiedRoot, null);
+            Item copiedDocumentElement = getSingleElementChild(copiedRoot);
+            if (copiedDocumentElement == null) {
+                throw new InvalidInstanceException(
+                        "Document validation requires exactly one element child for atomic type "
+                            + itemType.getIdentifierString(),
+                        metadata
+                );
+            }
+            validatedElement = copiedDocumentElement;
+        } else if (item.isElementNode()) {
+            validateAtomicElementShape(item);
+            copiedRoot = item.copy(false);
+            reattachXmlParents(copiedRoot, null);
+            validatedElement = copiedRoot;
+        } else {
+            throw new InvalidInstanceException(
+                    "Atomic XML validation is only supported for document and element nodes.",
+                    metadata
+            );
+        }
+
+        Item castType;
+        try {
+            castType = CastIterator.castItemToType(
+                ItemFactory.getInstance().createUntypedAtomicItem(validatedElement.getStringValue()),
+                itemType,
+                metadata,
+                staticContext
+            );
+        } catch (Exception e) {
+            throw new InvalidInstanceException(
+                    "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+            );
+        }
+        if (castType == null) {
+            throw new InvalidInstanceException(
+                    "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
+            );
+        }
+        validatedElement.setSchemaType(itemType);
+        return copiedRoot;
+    }
+
+    private static void validateAtomicDocumentShape(Item document) {
+        Item documentElement = getSingleElementChild(document);
+        if (documentElement == null) {
+            throw new InvalidInstanceException(
+                    "Document validation requires exactly one element child for atomic type validation."
+            );
+        }
+        for (Item child : document.children()) {
+            if (
+                !child.isElementNode()
+                    && !child.isCommentNode()
+                    && !child.isProcessingInstructionNode()
+            ) {
+                throw new InvalidInstanceException(
+                        "Document validation for atomic types only supports element, comment, and processing-instruction children."
+                );
+            }
+        }
+        validateAtomicElementShape(documentElement);
+    }
+
+    private static void validateAtomicElementShape(Item element) {
+        if (!element.attributes().isEmpty()) {
+            throw new InvalidInstanceException(
+                    "Element validation for atomic types does not support attributes."
+            );
+        }
+        for (Item child : element.children()) {
+            if (child.isElementNode()) {
+                throw new InvalidInstanceException(
+                        "Element validation for atomic types does not support nested element children."
+                );
+            }
+        }
+    }
+
+    private static Item getSingleElementChild(Item document) {
+        Item elementChild = null;
+        for (Item child : document.children()) {
+            if (!child.isElementNode()) {
+                continue;
+            }
+            if (elementChild != null) {
+                return null;
+            }
+            elementChild = child;
+        }
+        return elementChild;
+    }
+
+    private static void reattachXmlParents(Item node, Item parent) {
+        if (parent != null) {
+            node.setParent(parent);
+        }
+        for (Item attribute : node.attributes()) {
+            attribute.setParent(node);
+        }
+        for (Item child : node.children()) {
+            reattachXmlParents(child, node);
+        }
     }
 
     @Override

@@ -31,8 +31,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.shell.RumbleJLineShell;
 
-import javassist.CannotCompileException;
-
 public class Main {
     public static RumbleJLineShell terminal = null;
 
@@ -137,19 +135,6 @@ public class Main {
                     ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(46);
-            } else if (ex instanceof CannotCompileException) {
-                ConsoleOutput.error(
-                    """
-                            ⚠️  There was a CannotCompileException.
-                            There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library.
-                            We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available.
-                            For more debug info, please try again using --show-error-info yes in your command line.\
-                            """
-                );
-                if (showErrorInfo) {
-                    ConsoleOutput.stackTrace(ex);
-                }
-                System.exit(44);
             } else if (ex instanceof ConnectException) {
                 ConsoleOutput.error(
                     """

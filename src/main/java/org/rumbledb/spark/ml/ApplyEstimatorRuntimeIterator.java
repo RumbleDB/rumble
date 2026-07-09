@@ -13,7 +13,6 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
-import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -222,24 +221,11 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
-
-        if (!context.getVariableValues().contains(estimatorInputVariableName)) {
-            throw new OurBadException("Estimator's input data is not available in the dynamic context");
-        }
-
-        if (context.getVariableValues().isDataFrame(estimatorInputVariableName, getMetadata())) {
-            return context.getVariableValues()
-                .getDataFrameVariableValue(
-                    estimatorInputVariableName,
-                    getMetadata()
-                );
-        }
-
-        throw new MLNotADataFrameException(
-                "Estimators operate on DataFrames. "
-                    +
-                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
-                getMetadata()
+        return RumbleMLUtils.getDataFrameOrInferFromVariable(
+            context,
+            estimatorInputVariableName,
+            this.staticContext,
+            getMetadata()
         );
     }
 

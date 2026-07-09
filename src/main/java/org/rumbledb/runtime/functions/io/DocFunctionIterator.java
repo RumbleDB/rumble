@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.io;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
@@ -50,25 +51,40 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
                 URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
-                InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
-                    uri,
-                    getMetadata()
-                );
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                return ItemParser.getItemFromXML(
-                    xmlDocument,
-                    uri.toString(),
-                    this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
-                        .optimization()
-                        .optimizeParentPointers()
-                );
+                try (
+                    InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
+                        uri,
+                        getMetadata()
+                    )
+                ) {
+                    Document xmlDocument = documentBuilder.parse(xmlFileStream);
+                    return ItemParser.getItemFromXML(
+                        xmlDocument,
+                        uri.toString(),
+                        this.currentDynamicContextForLocalExecution.getRumbleConfiguration()
+                            .optimization()
+                            .optimizeParentPointers()
+                    );
+                }
             } catch (ParserConfigurationException e) {
                 throw new OurBadException("Document builder creation failed with: " + e);
+            } catch (CannotRetrieveResourceException e) {
+                throw e;
             } catch (IOException e) {
-                throw new RuntimeException("IOException while reading XML document." + e);
+                CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
+                        "Unable to read the resource supplied to fn:doc().",
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
             } catch (SAXException e) {
-                throw new RuntimeException("SAXException while reading XML document." + e);
+                CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
+                        "Unable to parse the resource supplied to fn:doc() as well-formed XML.",
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " xml-doc function", getMetadata());

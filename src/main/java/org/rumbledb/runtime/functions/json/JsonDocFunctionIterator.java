@@ -4,7 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -13,6 +17,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.CannotInferEncodingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
@@ -113,6 +118,8 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             )
         ) {
             return readAll(is, metadata);
+        } catch (CannotInferEncodingException e) {
+            throw e;
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
@@ -138,10 +145,31 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 buffer.write(data, 0, nRead);
             }
             byte[] bytes = buffer.toByteArray();
-            return new String(bytes, detectEncoding(bytes));
+            return decode(bytes, detectEncoding(bytes), metadata);
+        } catch (CannotInferEncodingException e) {
+            throw e;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Unable to read or decode the resource supplied to fn:json-doc().",
+                    metadata
+            );
+            ex.initCause(e);
+            throw ex;
+        }
+    }
+
+    private static String decode(byte[] bytes, Charset charset, ExceptionMetadata metadata) {
+        try {
+            CharsetDecoder decoder = charset.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
+            return decoder.decode(ByteBuffer.wrap(bytes)).toString();
+        } catch (CharacterCodingException e) {
+            CannotInferEncodingException ex = new CannotInferEncodingException(
+                    "Unable to infer the encoding of the resource supplied to fn:json-doc(): "
+                        + "the content is not valid "
+                        + charset.name()
+                        + ".",
                     metadata
             );
             ex.initCause(e);
