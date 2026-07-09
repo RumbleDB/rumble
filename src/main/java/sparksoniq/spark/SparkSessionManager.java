@@ -105,26 +105,16 @@ public class SparkSessionManager {
     }
 
     private SparkSessionManager(SparkConf conf) {
-        if (this.configuration == null) {
-            this.configuration = conf;
-        } else {
-            throw new OurBadException("Configuration already exists: new configuration initialization prevented.");
-        }
+        this.configuration = conf;
     }
 
     private SparkSessionManager(SparkSession session) {
-        if (this.session == null) {
-            this.session = session;
-            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
-            if (this.configuration == null) {
-                setDefaultConfiguration();
-            }
-            initializeKryoSerialization();
-            Configurator.setLevel("org", LOG_LEVEL);
-            Configurator.setLevel("akka", LOG_LEVEL);
-        } else {
-            throw new OurBadException("Session already exists: new session initialization prevented.");
-        }
+        this.session = session;
+        this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+        setDefaultConfiguration();
+        initializeKryoSerialization();
+        Configurator.setLevel("org", LOG_LEVEL);
+        Configurator.setLevel("akka", LOG_LEVEL);
     }
 
     public static SparkSessionManager getInstance() {
