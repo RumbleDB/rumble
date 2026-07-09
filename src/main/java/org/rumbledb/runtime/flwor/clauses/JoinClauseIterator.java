@@ -57,7 +57,7 @@ import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
 
 
-public class JoinClauseSparkIterator extends RuntimeTupleIterator {
+public class JoinClauseIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -79,7 +79,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     @SuppressWarnings("unused")
     private transient boolean isFirstItem;
 
-    public JoinClauseSparkIterator(
+    public JoinClauseIterator(
             RuntimeTupleIterator leftChild,
             RuntimeTupleIterator rightChild,
             boolean isLeftOuterJoin,
@@ -237,7 +237,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
         // And we extend the expression and input tuple views with the hashes.
         if (optimizableJoin) {
-            rightInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            rightInputTuple = LetClauseIterator.bindLetVariableInDataFrame(
                 rightInputTuple,
                 Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
                 null,
@@ -248,7 +248,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                 true,
                 staticContext.getConfiguration()
             );
-            leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            leftInputTuple = LetClauseIterator.bindLetVariableInDataFrame(
                 leftInputTuple,
                 Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
                 null,

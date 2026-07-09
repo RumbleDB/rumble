@@ -73,7 +73,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
-public class ForClauseSparkIterator extends RuntimeTupleIterator {
+public class ForClauseIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -92,7 +92,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private transient FlworTuple inputTuple; // tuple received from child, used for tuple creation
     private transient boolean isFirstItem;
 
-    public ForClauseSparkIterator(
+    public ForClauseIterator(
             RuntimeTupleIterator child,
             Name variableName,
             Name positionalVariableName,
@@ -302,7 +302,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         // If the expression depends on this input tuple, we might still recognize an join.
-        if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(this.assignmentIterator, this.child)) {
+        if (!LetClauseIterator.isExpressionIndependentFromInputTuple(this.assignmentIterator, this.child)) {
             return getDataFrameFromJoin(context);
         }
 
@@ -403,7 +403,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
 
         // If the left hand side depends on the input tuple, we do not how to handle it.
-        if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
+        if (!LetClauseIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
                     getMetadata()
@@ -489,7 +489,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
-        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+        return JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
             context,
             this.child.getDataFrame(context).getDataFrame(),
             expressionDF,
@@ -844,7 +844,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return result;
         }
         // Add column for positional variable, similar to count clause.
-        Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
+        Dataset<Row> dfWithIndex = CountClauseIterator.addSerializedCountColumn(
             df,
             outputDependencies,
             positionalVariableName

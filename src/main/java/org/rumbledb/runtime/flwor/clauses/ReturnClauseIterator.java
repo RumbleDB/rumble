@@ -63,7 +63,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
+public class ReturnClauseIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeTupleIterator child;
@@ -71,7 +71,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private RuntimeIterator expression;
     private Item nextResult;
 
-    public ReturnClauseSparkIterator(
+    public ReturnClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             boolean isUpdating,
@@ -84,7 +84,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setInputAndOutputTupleVariableDependencies();
     }
 
-    public ReturnClauseSparkIterator(
+    public ReturnClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             RuntimeStaticContext staticContext

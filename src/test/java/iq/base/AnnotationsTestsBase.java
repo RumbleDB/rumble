@@ -57,7 +57,6 @@ public abstract class AnnotationsTestsBase {
     @MethodSource("testFiles")
     @Timeout(1000)
     final void testAnnotation(File testFile) throws IOException {
-        System.err.println(testFile);
         AnnotationTestExecutor.run(testFile, getConfiguration(), getExternalBindings(), checkOutput());
     }
 }
