@@ -20,7 +20,6 @@
 
 package sparksoniq.spark;
 
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
@@ -113,8 +112,6 @@ public class SparkSessionManager {
         this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
         setDefaultConfiguration();
         initializeKryoSerialization();
-        Configurator.setLevel("org", LOG_LEVEL);
-        Configurator.setLevel("akka", LOG_LEVEL);
     }
 
     public static SparkSessionManager getInstance() {
@@ -169,6 +166,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
+            this.configuration.set("spark.log.level", LOG_LEVEL.name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -188,11 +186,7 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Configurator.setLevel("org.apache.spark", Level.ERROR);
-            Configurator.setLevel("akka", Level.ERROR);
-
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
-            this.session.sparkContext().setLogLevel("WARN");
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
