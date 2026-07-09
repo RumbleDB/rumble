@@ -36,8 +36,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
-import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -240,7 +240,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public void setEvaluationDepthLimit(int limit) {
         this.evaluationDepthLimit = limit;
         if (limit == 0) {
-            if (!(this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator)) {
+            if (!(this instanceof ForClauseIterator || this instanceof LetClauseIterator)) {
                 throw new OurBadException(
                         "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
                 );
@@ -273,7 +273,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      */
     public boolean canSetEvaluationDepthLimit(int limit) {
         if (limit == 0) {
-            return this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator;
+            return this instanceof ForClauseIterator || this instanceof LetClauseIterator;
         }
         if (limit == -1) {
             return true;
