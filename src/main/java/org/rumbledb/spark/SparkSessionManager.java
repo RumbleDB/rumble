@@ -20,7 +20,6 @@
 
 package org.rumbledb.spark;
 
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
 import lombok.extern.log4j.Log4j2;
 import org.apache.parquet.format.IntType;
@@ -72,7 +71,7 @@ public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
     private static SparkSessionManager instance;
-    private static Level LOG_LEVEL = Level.FATAL;
+    private static Level LOG_LEVEL = Level.OFF;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -120,8 +119,6 @@ public class SparkSessionManager {
                 setDefaultConfiguration();
             }
             initializeKryoSerialization();
-            Configurator.setLevel("org", LOG_LEVEL);
-            Configurator.setLevel("akka", LOG_LEVEL);
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
@@ -146,6 +143,16 @@ public class SparkSessionManager {
             instance = new SparkSessionManager(session);
         }
         return instance;
+    }
+
+    public static void setLogLevel(Level level) {
+        LOG_LEVEL = level;
+        if (instance != null && instance.session != null) {
+            instance.session.sparkContext().setLogLevel(level.name());
+        }
+        if (instance != null && instance.configuration != null) {
+            instance.applySparkLogLevelToConfiguration();
+        }
     }
 
     public SparkSession getOrCreateSession() {
@@ -178,6 +185,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
+            applySparkLogLevelToConfiguration();
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -197,14 +205,15 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Configurator.setLevel("org.apache.spark", Level.ERROR);
-            Configurator.setLevel("akka", Level.ERROR);
 
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
-            this.session.sparkContext().setLogLevel("WARN");
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
+    }
+
+    private void applySparkLogLevelToConfiguration() {
+        this.configuration.set("spark.log.level", LOG_LEVEL.name());
     }
 
     private void initializeKryoSerialization() {
@@ -269,6 +278,7 @@ public class SparkSessionManager {
             conf.setAppName(APP_NAME);
         }
         this.configuration = conf;
+        applySparkLogLevelToConfiguration();
         initializeSession();
     }
 

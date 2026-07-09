@@ -25,10 +25,12 @@ import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.spi.StandardLevel;
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.spark.SparkSessionManager;
 
 final class LoggingConfiguration {
     private static final String LOGGER_NAME = "org.rumbledb";
-    private static final Level DEFAULT_LEVEL = Level.WARN;
+    private static final Level DEFAULT_APPLICATION_LEVEL = Level.WARN;
+    private static final Level DEFAULT_SPARK_LEVEL = Level.OFF;
     private static final String VALID_LEVELS = String.join(
         ", ",
         Arrays.stream(StandardLevel.values())
@@ -41,31 +43,43 @@ final class LoggingConfiguration {
     }
 
     static void configure(DebugConfig debugConfig) {
-        Configurator.setLevel(LOGGER_NAME, resolveLevel(debugConfig));
+        Configurator.setLevel(LOGGER_NAME, resolveApplicationLevel(debugConfig));
+        SparkSessionManager.setLogLevel(resolveSparkLevel(debugConfig));
     }
 
-    private static Level resolveLevel(DebugConfig debugConfig) {
-        String configuredLevel = debugConfig.logLevel();
-        if (configuredLevel == null || configuredLevel.isBlank()) {
-            // Backward compatibility: if --log-level is not specified, we use the value of --debug to determine the log
-            // level.
-            return debugConfig.logging()
-                ? Level.DEBUG
-                : DEFAULT_LEVEL;
+    private static Level resolveApplicationLevel(DebugConfig debugConfig) {
+        if (isBlank(debugConfig.logLevel())) {
+            return DEFAULT_APPLICATION_LEVEL;
         }
+        return parseLevel(debugConfig.logLevel(), "--log-level");
+    }
 
-        String normalizedLevel = configuredLevel.trim().toUpperCase(Locale.ROOT);
+    private static Level resolveSparkLevel(DebugConfig debugConfig) {
+        if (isBlank(debugConfig.sparkLogLevel())) {
+            return DEFAULT_SPARK_LEVEL;
+        }
+        return parseLevel(debugConfig.sparkLogLevel(), "--spark-log-level");
+    }
+
+    private static Level parseLevel(String rawLevel, String optionName) {
+        String normalizedLevel = rawLevel.trim().toUpperCase(Locale.ROOT);
         try {
             StandardLevel.valueOf(normalizedLevel);
         } catch (IllegalArgumentException e) {
             throw new CliException(
-                    "Invalid --log-level value: "
-                        + configuredLevel
+                    "Invalid "
+                        + optionName
+                        + " value: "
+                        + rawLevel
                         + ". Valid values are: "
                         + VALID_LEVELS
                         + "."
             );
         }
         return Level.toLevel(normalizedLevel);
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }
