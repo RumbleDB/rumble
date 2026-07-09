@@ -31,6 +31,7 @@ import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.api.Item;
+import org.rumbledb.cli.ConsoleOutput;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -173,7 +174,7 @@ public class RumbleJLineShell {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
                     if (showErrorInfo) {
-                        ex.printStackTrace();
+                        ConsoleOutput.stackTrace(ex);
                     }
                     handleException(
                         new OurBadException(
@@ -184,82 +185,78 @@ public class RumbleJLineShell {
                     );
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
-                System.err.println("⚠️  ️" + ex.getMessage());
+                ConsoleOutput.error("⚠️ " + ex.getMessage());
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof OutOfMemoryError) {
-                System.err.println(
-                    "⚠️  Java went out of memory."
-                );
-                System.err.println(
-                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  Java went out of memory.
+                            If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof IllegalArgumentException) {
-                System.err.println(
-                    "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
-                );
-                System.err.println(
-                    "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
-                );
-                System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
-                System.err.println(
-                    "For more debug info, please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8.
+                            If you have several versions of java installed, you need to set your JAVA_HOME accordingly.
+                            If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.
+                            For more debug info, please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof ConnectException) {
-                System.err.println("⚠️  There was a problem with the connection to the cluster.");
-                System.err.println(
-                    "For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  There was a problem with the connection to the cluster.
+                            For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof NullPointerException) {
-                System.err.println(
-                    "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
-                );
-                System.err.println(
-                    "We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
-                );
-                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                System.err.println(
-                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈
+                            We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query.
+                            Link: https://github.com/RumbleDB/rumble/issues
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             } else if (ex instanceof UserInterruptException) {
-                System.err.println(
+                ConsoleOutput.error(
                     "On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!"
                 );
                 System.exit(0);
             } else {
-                System.err.println(
-                    "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
-                        + ex.getMessage()
-                );
-                System.err.println(
-                    "We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query."
-                );
-                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                System.err.println(
-                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            We are very embarrassed, because an error has occured that we did not anticipate 🙈: %s
+                            We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query.
+                            Link: https://github.com/RumbleDB/rumble/issues
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            """
+                        .formatted(ex.getMessage())
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
             }
         }
     }
 
     public void output(String message) {
-        System.err.println(ANSIColor.YELLOW + message + ANSIColor.RESET);
+        ConsoleOutput.error(ANSIColor.YELLOW + message + ANSIColor.RESET);
     }
 
     private String getPrompt() {
