@@ -14,8 +14,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
-    permissions:
-      contents: read
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
@@ -108,6 +106,8 @@ jobs:
         uses: ScalableCapital/action-surefire-report@v2
         with:
           report_paths: target/surefire-reports/TEST-*.xml
+          create_check: false
+          skip_publishing: true
           fail_on_test_failures: false
           fail_if_no_tests: false
           report_mode: workflow
