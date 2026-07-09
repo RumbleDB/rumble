@@ -70,6 +70,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
+    private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
     private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
@@ -160,7 +161,7 @@ public class SparkSessionManager {
     private void setDefaultConfiguration() {
         try {
             this.configuration = new SparkConf();
-            if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
+            if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
                 LogManager.getLogger("SparkSessionManager")
                     .warn(
                         "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
