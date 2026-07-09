@@ -20,7 +20,6 @@
 
 package org.rumbledb.shell;
 
-import javassist.CannotCompileException;
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.jline.reader.EndOfFileException;
@@ -207,20 +206,6 @@ public class RumbleJLineShell {
                     "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
                 );
                 System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
-                System.err.println(
-                    "For more debug info, please try again using --show-error-info yes in your command line."
-                );
-                if (showErrorInfo) {
-                    ex.printStackTrace();
-                }
-            } else if (ex instanceof CannotCompileException) {
-                System.err.println("⚠️  There was a CannotCompileException.");
-                System.err.println(
-                    "There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
-                );
-                System.err.println(
-                    "We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
-                );
                 System.err.println(
                     "For more debug info, please try again using --show-error-info yes in your command line."
                 );
