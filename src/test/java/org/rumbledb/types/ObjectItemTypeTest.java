@@ -13,9 +13,11 @@ public class ObjectItemTypeTest {
     /**
      * Tests that the lax merge operation includes all fields from both object type operands.
      * Verifies that:
-     * - Fields from both left and right operands are present in the merged result
-     * - Field properties (required, unique) are preserved from their respective sources
-     * - The closed facet is set to false (open) if at least one operand is open
+     * <ul>
+     * <li>Fields from both left and right operands are present in the merged result</li>
+     * <li>Field properties (required, unique) are preserved from their respective sources</li>
+     * <li>The closed facet is set to false (open) if at least one operand is open</li>
+     * </ul>
      */
     @Test
     public void laxMergeIncludesAllFieldsFromBothOperands() {
@@ -44,11 +46,13 @@ public class ObjectItemTypeTest {
     /**
      * Tests that overlapping fields between two object types are merged using lax supertype logic recursively.
      * Verifies that:
-     * - When both operands define a field with the same name but different nested object types, the nested types are
-     * merged recursively using findLeastCommonSuperTypeLax
-     * - The merged nested object contains all fields from both nested types
-     * - The required flag is set to true only if both operands require the field (AND semantics)
-     * - The unique flag is set to true if either operand marks the field as unique (OR semantics)
+     * <ul>
+     * <li>When both operands define a field with the same name but different nested object types, the nested types are
+     * merged recursively using findLeastCommonSuperTypeLax</li>
+     * <li>The merged nested object contains all fields from both nested types</li>
+     * <li>The required flag is set to true only if both operands require the field (AND semantics)</li>
+     * <li>The unique flag is set to true if either operand marks the field as unique (OR semantics)</li>
+     * </ul>
      */
     @Test
     public void overlappingFieldsUseLaxSuperTypesRecursively() {
@@ -87,8 +91,10 @@ public class ObjectItemTypeTest {
     /**
      * Tests that default values are preserved in merged field descriptors only when they are compatible.
      * Verifies that:
-     * - When both operands define the same default value for a field, it is preserved in the merged result
-     * - When operands define conflicting default values, the default is discarded (set to null)
+     * <ul>
+     * <li>When both operands define the same default value for a field, it is preserved in the merged result</li>
+     * <li>When operands define conflicting default values, the default is discarded (set to null)</li>
+     * </ul>
      */
     @Test
     public void defaultValuesArePreservedOnlyWhenCompatible() {

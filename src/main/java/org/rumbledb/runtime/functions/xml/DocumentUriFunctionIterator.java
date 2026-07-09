@@ -42,12 +42,18 @@ import java.util.List;
  * document node, if it has one; otherwise it returns the empty sequence."
  *
  * Function signature (Functions and Operators 3.1, {@code fn:document-uri}):
- * - fn:document-uri($arg as node()?) as xs:anyURI?
+ * 
+ * <ul>
+ * <li>fn:document-uri($arg as node()?) as xs:anyURI?</li>
+ * </ul>
  *
  * Rules:
- * - If the argument is supplied and is the empty sequence, the function returns the empty sequence.
- * - Otherwise, the function returns dm:document-uri($arg).
- *
+ * 
+ * <ul>
+ * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
+ * <li>Otherwise, the function returns dm:document-uri($arg).</li>
+ * </ul>
+ * 
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-document-uri">XPath and XQuery Functions and
  *      Operators 3.1: fn:document-uri</a>
  */

@@ -25,9 +25,12 @@ import org.rumbledb.errorcodes.ErrorCode;
 /**
  * Exception for XQST0070: It is a static error if a namespace declaration attribute attempts to do any of the
  * following:
- * - Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace
- * - Bind the prefix xmlns to any namespace URI
- * - Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/
+ * 
+ * <ul>
+ * <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace</li>
+ * <li>Bind the prefix xmlns to any namespace URI</li>
+ * <li>Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/</li>
+ * </ul>
  *
  * @see <a href="https://www.w3.org/TR/xquery-31/#ERRXQST0070">XQuery 3.1, F: XQST0070</a>
  */
