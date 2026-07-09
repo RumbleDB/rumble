@@ -87,7 +87,6 @@ import org.rumbledb.runtime.functions.input.StructuredJsonLinesFunctionIterator;
 import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
 import org.rumbledb.runtime.functions.input.XmlFilesFunctionIterator;
 import org.rumbledb.runtime.functions.io.CollectionFunctionIterator;
-import org.rumbledb.runtime.functions.io.DebugFunctionIterator;
 import org.rumbledb.runtime.functions.io.DocAvailableFunctionIterator;
 import org.rumbledb.runtime.functions.io.DocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
@@ -3726,18 +3725,6 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
-    static final BuiltinFunction print_variable_values = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "print_vars"
-        ),
-        List.of("item*"),
-        "null?",
-        DebugFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
     /**
      * function that returns a random number
      */
@@ -4657,7 +4644,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(repartition.getIdentifier(), repartition);
         builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
         builtinFunctions.put(binary_classification_metrics2.getIdentifier(), binary_classification_metrics2);
-        builtinFunctions.put(print_variable_values.getIdentifier(), print_variable_values);
         builtinFunctions.put(random.getIdentifier(), random);
         builtinFunctions.put(random_sequence_generator.getIdentifier(), random_sequence_generator);
         builtinFunctions.put(random_sequence_generator_with_seed.getIdentifier(), random_sequence_generator_with_seed);
