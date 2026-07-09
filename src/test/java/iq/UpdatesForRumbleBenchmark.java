@@ -342,8 +342,8 @@ public class UpdatesForRumbleBenchmark {
 
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
+        log.info("Java version: {}", javaVersion);
+        log.info("Scala version: {}", scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         if (sparkConfiguration.get("spark.app.name", "<none>").equals("<none")) {
             log.warn(
@@ -373,7 +373,7 @@ public class UpdatesForRumbleBenchmark {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
+        log.info("Spark version: {}", SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
@@ -568,9 +568,9 @@ public class UpdatesForRumbleBenchmark {
         try {
             File oldTable = new File(tableURI.getPath());
             FileUtils.deleteDirectory(oldTable);
-            System.err.println("Deleted file: " + oldTable.getAbsolutePath());
+            log.info("Deleted file: {}", oldTable.getAbsolutePath());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Could not delete old table.", e);
             Assertions.fail();
         }
     }
@@ -620,9 +620,9 @@ public class UpdatesForRumbleBenchmark {
             }
         }
 
-        System.out.println("##########################################");
-        System.out.println("DONE");
-        System.out.println("##########################################");
+        log.info("##########################################");
+        log.info("DONE");
+        log.info("##########################################");
 
     }
 

@@ -17,6 +17,7 @@
 
 package iq.base;
 
+import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
 import org.rumbledb.api.ExternalBindings;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
 
+@Log4j2
 public final class AnnotationTestExecutor {
 
     private AnnotationTestExecutor() {
@@ -169,7 +171,6 @@ public final class AnnotationTestExecutor {
             annotation.errorCode(),
             annotation.errorMetadata()
         );
-        System.out.println(executionResult.failureMessage());
     }
 
     private static String unexpectedFailureMessage(
@@ -294,7 +295,7 @@ public final class AnnotationTestExecutor {
         output.append(")");
 
         if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
-            System.err.println(
+            log.warn(
                 "Warning! The output sequence contains a large number of items but its materialization was capped at "
                     + resultSizeCap
                     + " items. This value can be configured with the --result-size parameter at startup"
