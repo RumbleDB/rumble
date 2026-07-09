@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
-import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,7 +76,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         }
 
         if (this.nextItem == null) {
-            this.result.add(OrderByClauseSparkIterator.StringFlagForEmptySequence);
+            this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
             return;
         }
         if (this.nextItem.isArray() || this.nextItem.isObject()) {
