@@ -109,6 +109,6 @@ jobs:
         uses: ScalableCapital/action-surefire-report@v2
         with:
           report_paths: target/surefire-reports/TEST-*.xml
-          check_name: Test Report - ${{ matrix.test_class }}
           fail_on_test_failures: false
           fail_if_no_tests: false
+          report_mode: workflow
