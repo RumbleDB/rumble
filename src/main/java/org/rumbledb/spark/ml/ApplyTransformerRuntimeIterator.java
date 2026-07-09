@@ -13,7 +13,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
-import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -177,24 +176,11 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
-
-        if (!context.getVariableValues().contains(transformerInputVariableName)) {
-            throw new OurBadException("Transformer's input data is not available in the dynamic context");
-        }
-
-        if (context.getVariableValues().isDataFrame(transformerInputVariableName, getMetadata())) {
-            return context.getVariableValues()
-                .getDataFrameVariableValue(
-                    transformerInputVariableName,
-                    getMetadata()
-                );
-        }
-
-        throw new MLNotADataFrameException(
-                "Transformers operate on DataFrames. "
-                    +
-                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
-                getMetadata()
+        return RumbleMLUtils.getDataFrameOrInferFromVariable(
+            context,
+            transformerInputVariableName,
+            this.staticContext,
+            getMetadata()
         );
     }
 

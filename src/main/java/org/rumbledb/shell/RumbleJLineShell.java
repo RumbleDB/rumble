@@ -20,7 +20,6 @@
 
 package org.rumbledb.shell;
 
-import javassist.CannotCompileException;
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.jline.reader.EndOfFileException;
@@ -213,18 +212,6 @@ public class RumbleJLineShell {
                             ⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8.
                             If you have several versions of java installed, you need to set your JAVA_HOME accordingly.
                             If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.
-                            For more debug info, please try again using --show-error-info yes in your command line.\
-                            """
-                );
-                if (showErrorInfo) {
-                    ConsoleOutput.stackTrace(ex);
-                }
-            } else if (ex instanceof CannotCompileException) {
-                ConsoleOutput.error(
-                    """
-                            ⚠️  There was a CannotCompileException.
-                            There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library.
-                            We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available.
                             For more debug info, please try again using --show-error-info yes in your command line.\
                             """
                 );

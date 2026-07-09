@@ -16,6 +16,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,13 +55,42 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
         List<Item> accumulator = this.zeroIterator.materialize(context);
         Item functionItem = this.functionIterator.materialize(context).get(0);
 
+        ConstantRuntimeIterator currentItemArgument = null;
+        ConstantRuntimeIterator accumulatorArgument = null;
+        RuntimeIterator reusableFunctionCall = null;
+
         for (int i = inputItems.size() - 1; i >= 0; i--) {
-            accumulator = applyFunction(
-                functionItem,
-                Collections.singletonList(inputItems.get(i)),
-                accumulator,
-                context
-            );
+            Item inputItem = inputItems.get(i);
+            if (accumulator.size() == 1) {
+                if (reusableFunctionCall == null) {
+                    RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
+                            getConfiguration(),
+                            SequenceType.createSequenceType("item*"),
+                            ExecutionMode.LOCAL,
+                            getMetadata()
+                    );
+                    currentItemArgument = new ConstantRuntimeIterator(inputItem, localItemStarContext);
+                    accumulatorArgument = new ConstantRuntimeIterator(accumulator.get(0), localItemStarContext);
+                    reusableFunctionCall = NamedFunctions.buildFunctionItemCallIterator(
+                        functionItem,
+                        this.staticContext,
+                        ExecutionMode.LOCAL,
+                        Arrays.asList(currentItemArgument, accumulatorArgument),
+                        false
+                    );
+                } else {
+                    currentItemArgument.setItemForReuse(inputItem);
+                    accumulatorArgument.setItemForReuse(accumulator.get(0));
+                }
+                accumulator = reusableFunctionCall.materialize(context);
+            } else {
+                accumulator = applyFunction(
+                    functionItem,
+                    Collections.singletonList(inputItem),
+                    accumulator,
+                    context
+                );
+            }
         }
 
         this.resultSequence = accumulator;

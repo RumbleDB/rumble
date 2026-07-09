@@ -1640,6 +1640,14 @@ public interface Item extends Serializable, KryoSerializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
+    default void setSchemaType(ItemType typeAnnotation) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default ItemType getSchemaType() {
+        return null;
+    }
+
 
     /**
      * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
