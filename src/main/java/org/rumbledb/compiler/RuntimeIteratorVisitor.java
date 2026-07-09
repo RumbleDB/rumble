@@ -165,13 +165,13 @@ import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.control.TryCatchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
-import org.rumbledb.runtime.flwor.clauses.CountClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.CountClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.GroupByClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.ReturnClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.WhereClauseIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
@@ -323,7 +323,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             argument
         );
         ReturnClause returnClause = expression.getReturnClause();
-        RuntimeIterator runtimeIterator = new ReturnClauseSparkIterator(
+        RuntimeIterator runtimeIterator = new ReturnClauseIterator(
                 previous,
                 this.visit(
                     returnClause.getReturnExpr(),
@@ -352,7 +352,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         if (clause instanceof ForClause forClause) {
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
-            return new ForClauseSparkIterator(
+            return new ForClauseIterator(
                     previousIterator,
                     forClause.getVariableName(),
                     forClause.getPositionalVariableName(),
@@ -362,7 +362,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof LetClause letClause) {
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
-            return new LetClauseSparkIterator(
+            return new LetClauseIterator(
                     previousIterator,
                     letClause.getVariableName(),
                     letClause.getStaticType(),
@@ -388,7 +388,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            return new GroupByClauseSparkIterator(
+            return new GroupByClauseIterator(
                     previousIterator,
                     groupingExpressions,
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
@@ -413,20 +413,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            return new OrderByClauseSparkIterator(
+            return new OrderByClauseIterator(
                     previousIterator,
                     expressionsWithIterator,
                     orderByClause.isStable(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof WhereClause whereClause) {
-            return new WhereClauseSparkIterator(
+            return new WhereClauseIterator(
                     previousIterator,
                     this.visit(whereClause.getWhereExpression(), argument),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof CountClause countClause) {
-            return new CountClauseSparkIterator(
+            return new CountClauseIterator(
                     previousIterator,
                     countClause.getCountVariableName(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)

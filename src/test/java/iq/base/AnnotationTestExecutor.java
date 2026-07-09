@@ -90,16 +90,17 @@ public final class AnnotationTestExecutor {
 
         switch (annotation.expectation()) {
             case UNPARSABLE, UNCOMPILABLE:
-                Assertions.fail(unexpectedSuccessMessage(annotation.expectation().stage()));
+                Assertions.fail(withTestFile(path, unexpectedSuccessMessage(annotation.expectation().stage())));
                 return;
             case PARSABLE, COMPILABLE:
                 return;
             case RUNNABLE:
-                assertOutput(annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
+                assertOutput(path, annotation, executionResult.sequence(), checkOutput, applyUpdates, resultSizeCap);
                 return;
             case UNRUNNABLE:
                 assertExpectedRuntimeFailureDuringMaterialization(
                     annotation,
+                    path,
                     executionResult.sequence(),
                     applyUpdates,
                     resultSizeCap
@@ -180,6 +181,7 @@ public final class AnnotationTestExecutor {
     }
 
     private static void assertOutput(
+            String path,
             AnnotationProcessor.TestAnnotation annotation,
             SequenceOfItems sequence,
             boolean checkOutput,
@@ -187,28 +189,30 @@ public final class AnnotationTestExecutor {
             int resultSizeCap
     ) {
         try {
-            checkExpectedOutput(annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
+            checkExpectedOutput(path, annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
             String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assertions.fail(unexpectedFailureMessage(TestStage.RUNTIME, errorOutput));
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput)));
         }
     }
 
     private static void assertExpectedRuntimeFailureDuringMaterialization(
             AnnotationProcessor.TestAnnotation annotation,
+            String path,
             SequenceOfItems sequence,
             boolean applyUpdates,
             int resultSizeCap
     ) {
         try {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
-            Assertions.fail(unexpectedSuccessMessage(TestStage.RUNTIME));
+            Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
         } catch (Exception exception) {
             checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
         }
     }
 
     private static void checkExpectedOutput(
+            String path,
             String expectedOutput,
             SequenceOfItems sequence,
             boolean checkOutput,
@@ -217,8 +221,12 @@ public final class AnnotationTestExecutor {
     ) {
         String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
         if (checkOutput) {
-            Assertions.assertEquals(expectedOutput, actualOutput, "Unexpected query output.");
+            Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
         }
+    }
+
+    private static String withTestFile(String path, String message) {
+        return "Test file: " + path + "\n" + message;
     }
 
     private static String materializeSequence(
