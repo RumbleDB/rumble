@@ -42,11 +42,14 @@ public class Main {
             !javaVersion.startsWith("17")
                 && !javaVersion.startsWith("21")
         ) {
-            System.err.println("[Error] RumbleDB requires Java 17 or 21 (17 being the default Spark 4 version).");
-            System.err.println("Your Java version: " + System.getProperty("java.version"));
-            System.err.println("You can download Java 17 or 21 from https://adoptium.net/");
-            System.err.println(
-                "If you do have Java 17 or 21, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 17 or 21."
+            ConsoleOutput.error(
+                """
+                        [Error] RumbleDB requires Java 17 or 21 (17 being the default Spark 4 version).
+                        Your Java version: %s
+                        You can download Java 17 or 21 from https://adoptium.net/
+                        If you do have Java 17 or 21, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 17 or 21.\
+                        """
+                    .formatted(System.getProperty("java.version"))
             );
             System.exit(43);
         }
@@ -72,10 +75,15 @@ public class Main {
             } else if (configuration.input().query() != null || configuration.input().queryPath() != null) {
                 runQueryExecutor(invocation);
             } else {
-                System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
-                System.out.println();
-                System.out.println(
-                    IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
+                ConsoleOutput.out(
+                    """
+                                %s
+                                %s
+                            """.formatted(
+                        IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"),
+                        IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
+
+                    )
                 );
             }
             System.exit(0);
@@ -102,7 +110,7 @@ public class Main {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
                     if (showErrorInfo) {
-                        ex.printStackTrace();
+                        ConsoleOutput.stackTrace(ex);
                     }
                     handleException(
                         new OurBadException(
@@ -113,75 +121,71 @@ public class Main {
                     );
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
-                System.err.println("⚠️ " + ex.getMessage());
+                ConsoleOutput.error("⚠️ " + ex.getMessage());
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(42);
             } else if (ex instanceof OutOfMemoryError) {
-                System.err.println(
-                    "⚠️  Java went out of memory."
-                );
-                System.err.println(
-                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  Java went out of memory.
+                            If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(46);
             } else if (ex instanceof CannotCompileException) {
-                System.err.println("⚠️  There was a CannotCompileException.");
-                System.err.println(
-                    "There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
-                );
-                System.err.println(
-                    "We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
-                );
-                System.err.println(
-                    "For more debug info, please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  There was a CannotCompileException.
+                            There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library.
+                            We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available.
+                            For more debug info, please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(44);
             } else if (ex instanceof ConnectException) {
-                System.err.println("⚠️  There was a problem with the connection to the cluster.");
-                System.err.println(
-                    "For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            ⚠️  There was a problem with the connection to the cluster.
+                            For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(45);
             } else if (ex instanceof NullPointerException) {
-                System.err.println(
-                    "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
-                );
-                System.err.println(
-                    "We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
-                );
-                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                System.err.println(
-                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈
+                            We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query.
+                            Link: https://github.com/RumbleDB/rumble/issues
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            """
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(-42);
             } else {
-                System.err.println(
-                    "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
-                        + ex.getMessage()
-                );
-                System.err.println(
-                    "We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query."
-                );
-                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                System.err.println(
-                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                ConsoleOutput.error(
+                    """
+                            We are very embarrassed, because an error has occured that we did not anticipate 🙈: %s
+                            We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query.
+                            Link: https://github.com/RumbleDB/rumble/issues
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            """
+                        .formatted(ex.getMessage())
                 );
                 if (showErrorInfo) {
-                    ex.printStackTrace();
+                    ConsoleOutput.stackTrace(ex);
                 }
                 System.exit(-42);
             }
@@ -203,7 +207,7 @@ public class Main {
 
     public static void printMessageToLog(String message) {
         if (Main.terminal == null) {
-            System.out.println(message);
+            ConsoleOutput.out(message);
         } else {
             Main.terminal.output(message);
         }

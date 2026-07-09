@@ -52,7 +52,7 @@ import java.util.*;
 
 
 @Log4j2
-public class WhereClauseSparkIterator extends RuntimeTupleIterator {
+public class WhereClauseIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -60,7 +60,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
 
-    public WhereClauseSparkIterator(
+    public WhereClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
             RuntimeStaticContext staticContext
@@ -213,7 +213,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
-        if (!(this.child instanceof CountClauseSparkIterator countClauseIterator)) {
+        if (!(this.child instanceof CountClauseIterator countClauseIterator)) {
             return null;
         }
         Name countVariable = countClauseIterator.getVariableName();
@@ -336,7 +336,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(-1);
 
-            FlworDataFrame result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+            FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
                 leftTuples.getDataFrame(),
                 rightTuples.getDataFrame(),

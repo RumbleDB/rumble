@@ -59,7 +59,7 @@ import java.util.*;
 
 
 @Log4j2
-public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
+public class OrderByClauseIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
@@ -69,7 +69,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     private List<FlworTuple> localTupleResults;
     private int resultIndex;
 
-    public OrderByClauseSparkIterator(
+    public OrderByClauseIterator(
             RuntimeTupleIterator child,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,

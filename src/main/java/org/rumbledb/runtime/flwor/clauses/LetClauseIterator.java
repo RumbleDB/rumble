@@ -68,7 +68,7 @@ import java.util.*;
 
 
 @Log4j2
-public class LetClauseSparkIterator extends RuntimeTupleIterator {
+public class LetClauseIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -78,7 +78,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
 
-    public LetClauseSparkIterator(
+    public LetClauseIterator(
             RuntimeTupleIterator child,
             Name variableName,
             SequenceType sequenceType,
@@ -285,7 +285,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We need to manually adjust the context item with the dependency mode the parent projection.
         Map<Name, VariableDependency> sequenceDependencies = new HashMap<>();
         sequenceDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
-        Dataset<Row> expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+        Dataset<Row> expressionDF = ForClauseIterator.getDataFrameStartingClause(
             sequenceIterator,
             Name.CONTEXT_ITEM,
             null,
@@ -299,7 +299,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             contextItemEqualityCriteria,
             getMetadata()
         );
-        expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+        expressionDF = LetClauseIterator.bindLetVariableInDataFrame(
             expressionDF,
             Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
             this.sequenceType,
@@ -315,7 +315,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             inputTupleEqualityCriteria,
             getMetadata()
         );
-        inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+        inputDF = LetClauseIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
             this.sequenceType,
@@ -428,7 +428,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     .withExecutionMode(ExecutionMode.LOCAL)
                     .withMetadata(getMetadata())
         );
-        inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+        inputDF = LetClauseIterator.bindLetVariableInDataFrame(
             inputDF,
             this.variableName,
             this.sequenceType,

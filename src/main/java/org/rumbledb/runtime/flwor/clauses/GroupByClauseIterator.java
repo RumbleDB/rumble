@@ -69,7 +69,7 @@ import java.util.stream.Collectors;
 
 
 @Log4j2
-public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
+public class GroupByClauseIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private final List<GroupByClauseSparkIteratorExpression> groupingExpressions;
@@ -77,7 +77,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     private int resultIndex;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
-    public GroupByClauseSparkIterator(
+    public GroupByClauseIterator(
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             RuntimeStaticContext staticContext
@@ -348,7 +348,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
-                df = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                df = LetClauseIterator.bindLetVariableInDataFrame(
                     df,
                     expression.getVariableName(),
                     null,
