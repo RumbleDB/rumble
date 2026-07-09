@@ -29,12 +29,20 @@ public final class DebugArguments {
     )
     private Boolean logging;
 
+    @Option(
+        names = "--log-level",
+        paramLabel = "level",
+        description = "Sets the diagnostic logging level. Valid values: off, fatal, error, warn, info, debug, trace, all."
+    )
+    private String logLevel;
+
     public DebugConfig toConfig() {
         DebugConfig.DebugConfigBuilder builder = DebugConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.printIteratorTree, builder::printIteratorTree);
         OptionConversion.applyBooleanIfPresent(this.showErrorInfo, builder::showErrorInfo);
         OptionConversion.applyBooleanIfPresent(this.logging, builder::logging);
+        OptionConversion.applyIfPresent(this.logLevel, builder::logLevel);
 
         return builder.build();
     }
