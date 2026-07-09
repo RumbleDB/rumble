@@ -134,7 +134,7 @@ public final class AnnotationTestExecutor {
             return QueryExecutionResult.failure(TestStage.COMPILATION, exception.getMessage());
         } catch (RumbleException exception) {
             return QueryExecutionResult.failure(TestStage.RUNTIME, exception.getMessage());
-        } catch (IOException exception) {
+        } catch (Throwable exception) {
             throw new AssertionError("Could not execute test query for " + path, exception);
         }
     }
