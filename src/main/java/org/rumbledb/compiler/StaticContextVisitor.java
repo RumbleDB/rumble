@@ -50,6 +50,9 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -254,6 +257,51 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         this.visit(clause.getNextClause(), result);
         return argument;
+    }
+
+    @Override
+    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
+        this.visit(clause.getExpression(), argument);
+        StaticContext result = new StaticContext(argument);
+
+        result.addVariable(clause.getWindowVariable(), clause.getSequenceType(), clause.getMetadata());
+
+        WindowClause.WindowVars start = clause.getStartCondition().variables();
+        WindowClause.WindowVars end = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
+
+        addWindowVars(start, clause.getSequenceType(), result, clause);
+        if (end != null) {
+            addWindowVars(end, clause.getSequenceType(), result, clause);
+        }
+
+        this.visit(clause.getStartCondition().expression(), result);
+        if (clause.getEndCondition() != null) {
+            this.visit(clause.getEndCondition().expression(), result);
+        }
+
+        this.visit(clause.getNextClause(), result);
+        return argument;
+    }
+
+    private void addWindowVars(
+            WindowClause.WindowVars vars,
+            SequenceType itemType,
+            StaticContext context,
+            WindowClause clause
+    ) {
+        SequenceType optionalItem = new SequenceType(itemType.getItemType(), SequenceType.Arity.OneOrZero);
+        if (vars.currentItem() != null)
+            context.addVariable(vars.currentItem(), optionalItem, clause.getMetadata());
+        if (vars.position() != null)
+            context.addVariable(
+                vars.position(),
+                new SequenceType(BuiltinTypesCatalogue.integerItem),
+                clause.getMetadata()
+            );
+        if (vars.previousItem() != null)
+            context.addVariable(vars.previousItem(), optionalItem, clause.getMetadata());
+        if (vars.nextItem() != null)
+            context.addVariable(vars.nextItem(), optionalItem, clause.getMetadata());
     }
 
     @Override
