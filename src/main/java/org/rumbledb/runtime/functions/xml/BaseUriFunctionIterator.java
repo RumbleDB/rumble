@@ -42,13 +42,19 @@ import java.util.List;
  * has one; otherwise it returns the empty sequence."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:base-uri}):
- * - fn:base-uri() as xs:anyURI?
- * - fn:base-uri($arg as node()?) as xs:anyURI?
+ * 
+ * <ul>
+ * <li>fn:base-uri() as xs:anyURI?</li>
+ * <li>fn:base-uri($arg as node()?) as xs:anyURI?</li>
+ * </ul>
  *
  * Rules:
- * - If the argument is omitted, it defaults to the context item (.).
- * - If the argument is supplied and is the empty sequence, the function returns the empty sequence.
- * - Otherwise, the function returns dm:base-uri($arg).
+ * 
+ * <ul>
+ * <li>If the argument is omitted, it defaults to the context item (.).</li>
+ * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
+ * <li>Otherwise, the function returns dm:base-uri($arg).</li>
+ * </ul>
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-base-uri">XPath and XQuery Functions and
  *      Operators 3.1: fn:base-uri</a>

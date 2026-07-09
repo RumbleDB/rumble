@@ -32,10 +32,13 @@ import java.util.Set;
  * Default serialization parameters stored in the XQuery static context.
  *
  * Specification references:
- * - XQuery 3.1 Static Context Components — default serialization parameters (link:
- * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
- * - XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
- * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+ * 
+ * <ul>
+ * <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
+ * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+ * <li>XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+ * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+ * </ul>
  *
  */
 public class SerializationParameters implements Serializable, KryoSerializable {
