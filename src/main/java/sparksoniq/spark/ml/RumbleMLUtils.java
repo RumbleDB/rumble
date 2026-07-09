@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
@@ -7,20 +8,71 @@ import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RumbleMLUtils {
+    public static JSoundDataFrame getDataFrameOrInferFromVariable(
+            DynamicContext context,
+            Name inputVariableName,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata
+    ) {
+        if (!context.getVariableValues().contains(inputVariableName)) {
+            throw new OurBadException("ML input data is not available in the dynamic context", metadata);
+        }
+
+        if (context.getVariableValues().isDataFrame(inputVariableName, metadata)) {
+            return context.getVariableValues().getDataFrameVariableValue(inputVariableName, metadata);
+        }
+
+        if (context.getVariableValues().isRDD(inputVariableName, metadata)) {
+            JavaRDD<Item> rdd = context.getVariableValues().getRDDVariableValue(inputVariableName, metadata);
+            ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                rdd,
+                metadata,
+                TypeInferrenceUtils.TypeMergeMode.LAX
+            );
+            return ValidateTypeIterator.convertRDDToValidDataFrame(
+                rdd,
+                type,
+                context,
+                true,
+                staticContext
+            );
+        }
+
+        List<Item> items = context.getVariableValues().getLocalVariableValue(inputVariableName, metadata);
+        ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+            items,
+            metadata,
+            TypeInferrenceUtils.TypeMergeMode.LAX
+        );
+        return ValidateTypeIterator.convertLocalItemsToDataFrame(
+            items,
+            type,
+            context,
+            true,
+            staticContext
+        );
+    }
+
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
             String transformerShortName,
             Transformer transformer,
