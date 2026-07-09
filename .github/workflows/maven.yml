@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     permissions:
-      checks: write
       contents: read
     steps:
       - name: Checkout the repository
