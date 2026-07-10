@@ -3,6 +3,7 @@ package org.rumbledb.expressions.flowr;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import java.io.Serializable;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -32,7 +33,7 @@ public class WindowClause extends Clause {
             Name currentItem,
             Name position,
             Name previousItem,
-            Name nextItem) {
+            Name nextItem) implements Serializable {
         public List<Name> names() {
             return Stream.of(this.currentItem, this.position, this.previousItem, this.nextItem)
                 .filter(name -> name != null)

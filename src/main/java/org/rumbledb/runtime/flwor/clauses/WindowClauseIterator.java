@@ -35,7 +35,12 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     /**
      * The window clause that this iterator is evaluating.
      */
-    private final WindowClause clause;
+    private final WindowClause.WindowType windowType;
+    private final Name windowVariable;
+    private final SequenceType declaredWindowType;
+    private final WindowClause.WindowVars startVariables;
+    private final WindowClause.WindowVars endVariables;
+    private final boolean endConditionOnly;
 
     /**
      * The iterator that produces the items to be windowed.
@@ -82,7 +87,12 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
-        this.clause = clause;
+        this.windowType = clause.getWindowType();
+        this.windowVariable = clause.getWindowVariable();
+        this.declaredWindowType = clause.getActualSequenceType();
+        this.startVariables = clause.getStartCondition().variables();
+        this.endVariables = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
+        this.endConditionOnly = clause.getEndCondition() != null && clause.getEndCondition().only();
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
@@ -188,7 +198,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         List<Item> items = materializeSource(inputTuple);
 
         if (!items.isEmpty()) {
-            if (this.clause.getWindowType() == WindowClause.WindowType.TUMBLING) {
+            if (this.windowType == WindowClause.WindowType.TUMBLING) {
                 generateTumblingWindows(items, inputTuple);
             } else {
                 generateSlidingWindows(items, inputTuple);
@@ -236,8 +246,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         int start = 0;
         while (start < items.size()) {
             while (
-                start < items.size()
-                    && !matches(this.startCondition, this.clause.getStartCondition(), items, start, start)
+                start < items.size() && !matches(this.startCondition, this.startVariables, false, items, start, start)
             ) {
                 // Skip items until we find a start condition match (fine because tumbling windows do not overlap)
                 start++;
@@ -268,7 +277,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     private void generateSlidingWindows(List<Item> items, FlworTuple inputTuple) {
         for (int start = 0; start < items.size(); start++) {
-            if (!matches(this.startCondition, this.clause.getStartCondition(), items, start, start)) {
+            if (!matches(this.startCondition, this.startVariables, false, items, start, start)) {
                 // This item does not match the start condition, skip it
                 continue;
             }
@@ -281,11 +290,11 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
 
     private int findEnd(List<Item> items, int start) {
         for (int end = start; end < items.size(); end++) {
-            if (matches(this.endCondition, this.clause.getEndCondition(), items, end, start)) {
+            if (matches(this.endCondition, this.endVariables, true, items, end, start)) {
                 return end;
             }
         }
-        return this.clause.getEndCondition().only() ? -1 : items.size() - 1;
+        return this.endConditionOnly ? -1 : items.size() - 1;
     }
 
     /**
@@ -293,7 +302,8 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     private boolean matches(
             RuntimeIterator conditionIterator,
-            WindowClause.WindowCondition condition,
+            WindowClause.WindowVars variables,
+            boolean endCondition,
             List<Item> items,
             int position,
             int startPosition
@@ -308,18 +318,18 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             this.currentDynamicContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, getMetadata());
         }
 
-        if (condition == this.clause.getEndCondition()) {
+        if (endCondition) {
             // Bind the variables from the start condition to the current dynamic context so that the end condition can
             // access them
             bindTupleContext(
                 this.currentDynamicContext,
                 items,
                 startPosition,
-                this.clause.getStartCondition().variables()
+                this.startVariables
             );
         }
 
-        bindTupleContext(this.currentDynamicContext, items, position, condition.variables());
+        bindTupleContext(this.currentDynamicContext, items, position, variables);
         return conditionIterator.getEffectiveBooleanValue(this.currentDynamicContext);
     }
 
@@ -363,12 +373,12 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         validateWindowType(windowItems);
 
         // Window variable will be bound to the list of items in the window
-        result.putValue(this.clause.getWindowVariable(), windowItems);
+        result.putValue(this.windowVariable, windowItems);
 
         // Bind the variables from the start and end conditions to the tuple
-        addBindings(result, items, start, this.clause.getStartCondition().variables());
-        if (this.clause.getEndCondition() != null) {
-            addBindings(result, items, end, this.clause.getEndCondition().variables());
+        addBindings(result, items, start, this.startVariables);
+        if (this.endVariables != null) {
+            addBindings(result, items, end, this.endVariables);
         }
 
         return result;
@@ -385,7 +395,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      *         of the window variable
      */
     private void validateWindowType(List<Item> windowItems) {
-        SequenceType declaredType = this.clause.getActualSequenceType();
+        SequenceType declaredType = this.declaredWindowType;
         if (declaredType == null) {
             return;
         }
@@ -477,10 +487,10 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = this.child == null ? new HashSet<>() : this.child.getOutputTupleVariableNames();
-        result.add(this.clause.getWindowVariable());
-        result.addAll(this.clause.getStartCondition().variables().names());
-        if (this.clause.getEndCondition() != null)
-            result.addAll(this.clause.getEndCondition().variables().names());
+        result.add(this.windowVariable);
+        result.addAll(this.startVariables.names());
+        if (this.endVariables != null)
+            result.addAll(this.endVariables.names());
         return result;
     }
 
