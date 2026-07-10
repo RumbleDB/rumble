@@ -82,6 +82,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         if (this.content != null) {
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
+            boolean previousItemWasAtomic = false;
 
             for (RuntimeIterator iterator : this.content) {
                 iterator.open(contextToUse);
@@ -116,6 +117,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                         // skip empty text content according to XML spec
                         if (textContent.isEmpty()) {
+                            previousItemWasAtomic = item.isAtomic();
                             continue;
                         }
 
@@ -124,9 +126,13 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                             textAccumulator = new StringBuilder();
                         }
 
+                        if (item.isAtomic() && previousItemWasAtomic) {
+                            textAccumulator.append(' ');
+                        }
                         // accumulate the text content
                         textAccumulator.append(textContent);
                         hasSeenNonAttributeNode = true;
+                        previousItemWasAtomic = item.isAtomic();
                     } else {
                         hasSeenNonAttributeNode = true;
                         // non-text node encountered
@@ -143,6 +149,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                         // add the non-text node
                         content.add(item);
+                        previousItemWasAtomic = false;
                     }
                 }
                 iterator.close();
