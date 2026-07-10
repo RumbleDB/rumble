@@ -87,10 +87,8 @@ import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
