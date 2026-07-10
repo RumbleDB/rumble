@@ -3699,13 +3699,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
             Name name = parseEqName(eqNameContext, false, false, true, false);
             Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
+            List<Expression> literals = null;
             if (!annotationContext.literal().isEmpty()) {
-                throw new UnsupportedFeatureException(
-                        "Literals are currently not supported in annotations!",
-                        createMetadataFromContext(annotationContext)
-                );
+                literals = new ArrayList<>();
+                for (XQueryParser.LiteralContext literalContext : annotationContext.literal()) {
+                    literals.add((Expression) this.visitLiteral(literalContext));
+                }
             }
-            parsedAnnotations.add(new Annotation(name, null));
+            parsedAnnotations.add(new Annotation(name, literals));
         }
 
         return parsedAnnotations;
