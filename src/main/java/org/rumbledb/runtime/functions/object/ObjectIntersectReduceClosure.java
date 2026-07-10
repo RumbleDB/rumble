@@ -47,7 +47,7 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
 
         // add all key-value pairs in v1
-        for (String key : v1.getKeys()) {
+        for (String key : v1.getStringKeys()) {
             Item value = v1.getItemByKey(key);
             ArrayList<Item> valueList = new ArrayList<>();
             valueList.add(value);
@@ -59,18 +59,18 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
         while (keyIterator.hasNext()) {
             String key = keyIterator.next();
             // if the new item doesn't contain the same keys
-            if (!v2.getKeys().contains(key)) {
+            if (!v2.getStringKeys().contains(key)) {
                 // remove the key from the map
                 keyIterator.remove();
             } else {
                 // add the matching key's value to the list
                 Item value = v2.getItemByKey(key);
                 Item prevValue = keyValuePairs.get(key).get(0);
-                for (Item elem : value.getItems())
+                for (Item elem : value.getItemMembers())
                     prevValue.appendItem(elem);
             }
         }
 
-        return ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
 };

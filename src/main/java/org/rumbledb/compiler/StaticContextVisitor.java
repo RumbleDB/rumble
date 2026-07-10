@@ -20,6 +20,11 @@
 
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
@@ -84,11 +89,6 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
@@ -114,14 +114,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (argument == null) {
             throw new OurBadException("No static context provided!");
         }
-        if (node instanceof Expression) {
-            ((Expression) node).setStaticContext(argument);
+        if (node instanceof Expression expression) {
+            expression.setStaticContext(argument);
         }
-        if (node instanceof Statement) {
-            ((Statement) node).setStaticContext(argument);
+        if (node instanceof Statement statement) {
+            statement.setStaticContext(argument);
         }
-        if (node instanceof Clause) {
-            ((Clause) node).setStaticContext(argument);
+        if (node instanceof Clause clause) {
+            clause.setStaticContext(argument);
         }
         return node.accept(this, argument);
     }
@@ -691,12 +691,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(catchBlock, catchContext);
         }
 
-        if (statement.getCatchAllStatement() != null) {
-            StaticContext catchAllContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchAllContext, statement.getCatchAllStatement().getMetadata());
-            this.visit(statement.getCatchAllStatement(), catchAllContext);
-        }
-
         return argument;
     }
 
@@ -709,12 +703,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext catchContext = new StaticContext(argument);
             ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
             this.visit(catchExpr, catchContext);
-        }
-
-        if (expression.getExpressionCatchingAll() != null) {
-            StaticContext catchAllContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchAllContext, expression.getExpressionCatchingAll().getMetadata());
-            this.visit(expression.getExpressionCatchingAll(), catchAllContext);
         }
 
         return argument;

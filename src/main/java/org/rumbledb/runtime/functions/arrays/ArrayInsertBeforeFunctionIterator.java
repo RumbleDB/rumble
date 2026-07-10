@@ -1,5 +1,9 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -14,10 +18,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 
 public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
@@ -46,9 +46,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        this.positionIterator.open(this.currentDynamicContextForLocalExecution);
-        this.memberIterator.open(this.currentDynamicContextForLocalExecution);
+        // Do not open child iterators here: materializeExactlyOneItem / materialize open and close them.
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
         this.hasProducedResult = false;
@@ -132,7 +130,8 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             for (int i = insertIndex; i < size; i++) {
                 newItems.add(arrayItem.getItemAt(i));
             }
-            this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(size + 1);
             // add items before the insert index
@@ -145,7 +144,8 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
             for (int i = insertIndex; i < size; i++) {
                 newMemberSequences.add(arrayItem.getSequenceAt(i));
             }
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(newMemberSequences, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
@@ -208,4 +208,3 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-

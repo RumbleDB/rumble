@@ -129,7 +129,7 @@ public class VariableDeclaration extends Node {
         this.variableHighestStorageMode = mode;
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -150,7 +150,7 @@ public class VariableDeclaration extends Node {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("declare variable $" + this.variableName);
         if (this.sequenceType != null)

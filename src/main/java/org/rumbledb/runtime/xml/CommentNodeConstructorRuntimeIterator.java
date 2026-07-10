@@ -25,6 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidCommentContentException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
@@ -71,7 +72,11 @@ public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRun
         }
 
         this.hasNext = false;
-        return ItemFactory.getInstance().createXmlCommentNode(commentContent);
+        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(commentContent);
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            commentItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return commentItem;
     }
 }
-

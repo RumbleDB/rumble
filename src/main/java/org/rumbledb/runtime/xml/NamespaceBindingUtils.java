@@ -390,7 +390,38 @@ public final class NamespaceBindingUtils {
             default:
                 return;
         }
-        // TODO: handle binding a prefix to a zero-length namespace URI
+    }
+
+    /**
+     * Validates a namespace binding coming from parsed XML rather than from an XQuery namespace declaration
+     * attribute. Unlike {@link #validateNamespaceDeclaration(String, String)}, this permits prefixed empty URIs so
+     * that XML 1.1 undeclarations such as {@code xmlns:p=""} can be preserved in the data model.
+     */
+    public static void validateParsedNamespaceBinding(String prefix, String uri) {
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, uri);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind the prefix xml to a non-XML namespace URI."
+                );
+            case XMLNS_PREFIX:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind the prefix xmlns."
+                );
+            case NON_XML_PREFIX_XML_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind a non-xml prefix to the XML namespace URI."
+                );
+            case XMLNS_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind any prefix to the xmlns namespace URI."
+                );
+            default:
+                return;
+        }
     }
 
     /**
@@ -421,4 +452,3 @@ public final class NamespaceBindingUtils {
     }
 
 }
-

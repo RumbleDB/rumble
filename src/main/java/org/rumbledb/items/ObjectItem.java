@@ -20,9 +20,11 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -30,13 +32,14 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.runtime.update.primitives.Collection;
 
-
-import java.util.*;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class ObjectItem implements Item {
 
@@ -81,16 +84,29 @@ public class ObjectItem implements Item {
         this.topLevelOrder = 0.0;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    @Override
+    public Item copy(boolean mutable) {
+        List<String> newKeys = new ArrayList<>(this.keys);
+        List<Item> newValues = new ArrayList<>();
+        for (Item value : this.values) {
+            newValues.add(value.copy(mutable));
+        }
+        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
+        if (mutable) {
+            result.setMutabilityLevel(this.mutabilityLevel);
+        }
+        return result;
+    }
+
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
+        if (!otherItem.isObject()) {
             return false;
         }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
+        for (String s : getStringKeys()) {
+            Item v = otherItem.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -98,12 +114,12 @@ public class ObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : o.getKeys()) {
+        for (String s : otherItem.getStringKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!o.getItemByKey(s).equals(v)) {
+            if (!otherItem.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
@@ -143,8 +159,7 @@ public class ObjectItem implements Item {
                     } else {
                         throw new RuntimeException("Unexpected list size found.");
                     }
-                } else if (keyValuePairs.get(key) instanceof Item) {
-                    Item value = (Item) keyValuePairs.get(key);
+                } else if (keyValuePairs.get(key) instanceof Item value) {
                     valueList.add(value);
                 } else {
                     throw new RuntimeException("Unexpected value type found.");
@@ -192,13 +207,24 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
+    public List<String> getStringKeys() {
         return this.keys;
     }
 
     @Override
-    public List<String> getStringKeys() {
-        return this.keys;
+    public int getSize() {
+        return this.keys.size();
+    }
+
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return this.keyStringToIndex.containsKey(key);
+    }
+
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
+            return false;
+        }
+        return hasKey(key.getStringValue());
     }
 
     @Override
@@ -208,11 +234,6 @@ public class ObjectItem implements Item {
             result.add(ItemFactory.getInstance().createStringItem(key));
         }
         return result;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.values;
     }
 
     @Override
@@ -243,7 +264,7 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -260,7 +281,7 @@ public class ObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -336,7 +357,7 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }
@@ -391,8 +412,8 @@ public class ObjectItem implements Item {
 
     public int hashCode() {
         int result = 0;
-        result += getKeys().size();
-        for (String s : getKeys()) {
+        result += getStringKeys().size();
+        for (String s : getStringKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;
@@ -400,11 +421,7 @@ public class ObjectItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        List<ItemType> itemTypes = new ArrayList<>();
-        for (String key : this.keys) {
-            itemTypes.add(getItemByKey(key).getDynamicType());
-        }
-        return ItemTypeFactory.createAnonymousObjectType(this.keys, itemTypes);
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
@@ -504,14 +521,13 @@ public class ObjectItem implements Item {
     public String getSparkSQLValue(ItemType itemType) {
         StringBuilder sb = new StringBuilder();
 
-        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
-        String[] keys = content.keySet().toArray(new String[0]);
+        List<String> keys = itemType.getObjectKeysFacet();
 
         sb.append("named_struct(");
 
-        for (int i = 0; i < keys.length; i++) {
-            String key = keys[i];
-            FieldDescriptor field = content.get(key);
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            FieldDescriptor field = itemType.getObjectContentFacet(key);
             if (this.keyStringToIndex == null) {
                 rebuildKeyStringIndex();
             }
@@ -531,7 +547,7 @@ public class ObjectItem implements Item {
                 sb.append(this.values.get(keyIndex).getSparkSQLValue(field.getType()));
             }
 
-            if (i + 1 < keys.length) {
+            if (i + 1 < keys.size()) {
                 sb.append(", ");
             }
         }

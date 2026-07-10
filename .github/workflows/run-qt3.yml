@@ -6,67 +6,136 @@ on:
       - master
   pull_request:
 
+env:
+  JAVA_VERSION: "17"
+
 jobs:
-  qt3-jsoniq:
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
-    with:
-      tested_parser: jsoniq
-      mvn_args: ''
-      run_analytics: true
-  qt3-xquery:
-    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
-    with:
-      tested_parser: xquery
-      mvn_args: ''
-      run_analytics: true
-  post-results:
-    if: ${{ github.event_name == 'pull_request' || github.event_name == 'push' }}
-    needs: [qt3-jsoniq, qt3-xquery]
+  resolve-baseline:
+    name: Resolve Baseline
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-      pull-requests: write
       actions: read
+    outputs:
+      baseline_run_id: ${{ steps.find-baseline.outputs.baseline_run_id }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: '3.x'
-      - name: Download JSONiq artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: collected-artifacts-jsoniq
-          path: artifacts/jsoniq
-      - name: Download XQuery artifacts
-        uses: actions/download-artifact@v8
-        with:
-          name: collected-artifacts-xquery
-          path: artifacts/xquery
-      - name: Generate and post comment
+      - name: Find baseline run
+        id: find-baseline
         uses: actions/github-script@v9
         with:
           script: |
-            const { execSync } = require('child_process');
-            const body = execSync(`python .github/scripts/generate_qt3_comment.py --jsoniq artifacts/jsoniq --xquery artifacts/xquery --run-id ${context.runId} --repo-owner ${context.repo.owner} --repo-name ${context.repo.repo}`, { encoding: 'utf8' });
-            
-            if (context.eventName === 'pull_request') {
-              // Post comment to PR
-              const prNumber = context.payload.pull_request.number;
-              await github.rest.issues.createComment({
+            const workflowId = 'run-qt3.yml';
+            const branch = context.eventName === 'pull_request'
+              ? context.payload.pull_request.base.ref
+              : context.ref.replace('refs/heads/', '');
+            const event = 'push';
+
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: workflowId,
+              branch,
+              event,
+              status: 'completed',
+              per_page: 100
+            });
+
+            async function hasBaselineArtifacts(runId) {
+              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: prNumber,
-                body
+                run_id: runId,
+                per_page: 100
               });
-            } else if (context.eventName === 'push') {
-              // Post comment to commit
-              const commitSha = context.sha;
-              await github.rest.repos.createCommitComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                commit_sha: commitSha,
-                body
-              });
+              const available = new Set(
+                artifacts
+                  .filter((artifact) => !artifact.expired)
+                  .map((artifact) => artifact.name)
+              );
+              return (
+                available.has('surefire-all-jsoniq') &&
+                available.has('surefire-all-xquery')
+              );
             }
+
+            let baselineRun = null;
+            for (const run of runs) {
+              if (run.conclusion !== 'success') {
+                continue;
+              }
+              if (run.id === context.runId) {
+                continue;
+              }
+              if (await hasBaselineArtifacts(run.id)) {
+                baselineRun = run;
+                break;
+              }
+            }
+
+            const baselineRunId = baselineRun ? String(baselineRun.id) : '';
+            core.info(
+              baselineRunId
+                ? `Using baseline run ${baselineRunId} from branch ${branch}.`
+                : `No successful baseline run with unexpired QT3 artifacts found for branch ${branch}.`
+            );
+            core.setOutput('baseline_run_id', baselineRunId);
+
+  build:
+    name: Build RumbleDB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller (RumbleDB)
+        uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - name: Build RumbleDB
+        run: mvn -B -q clean compile assembly:single
+
+      - name: Upload RumbleDB target
+        uses: actions/upload-artifact@v7
+        with:
+          name: rumble-build
+          path: target
+          retention-days: 1
+
+  qt3-jsoniq:
+    needs: [resolve-baseline, build]
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    with:
+      tested_parser: jsoniq
+      rumble_artifact_name: rumble-build
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
+
+  qt3-xquery:
+    needs: [resolve-baseline, build]
+    uses: RumbleDB/rumble-test-suite/.github/workflows/qt3-suite.yml@master
+    with:
+      tested_parser: xquery
+      rumble_artifact_name: rumble-build
+      baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
+
+  post-results:
+    name: Post Results
+    needs: [qt3-jsoniq, qt3-xquery]
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Post JSONiq QT3 comment
+        uses: mshick/add-pr-comment@v3
+        with:
+          message-id: qt3-results-jsoniq
+          comment-target: ${{ github.event_name == 'pull_request' && 'pr' || 'commit' }}
+          message: ${{ needs.qt3-jsoniq.outputs.ci_comment }}
+
+      - name: Post XQuery QT3 comment
+        uses: mshick/add-pr-comment@v3
+        with:
+          message-id: qt3-results-xquery
+          comment-target: ${{ github.event_name == 'pull_request' && 'pr' || 'commit' }}
+          message: ${{ needs.qt3-xquery.outputs.ci_comment }}

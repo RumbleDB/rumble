@@ -72,7 +72,7 @@ public final class NumericPictureParser {
                 if (digitsToRight <= 0) {
                     throw invalidPicture(pictureStringForErrors, metadata, kind);
                 }
-                groupings.add(new GroupingPos(digitsToRight, new String(Character.toChars(cp))));
+                groupings.add(new GroupingPos(digitsToRight, cp));
                 lastWasGrouping = true;
                 continue;
             }
@@ -91,7 +91,6 @@ public final class NumericPictureParser {
         RepeatingGroupingInfo repeatingInfo = detectRepeatingGrouping(groupings, runLengths, kind);
 
         return new NumericPicture(
-                picture,
                 zeroDigit,
                 mandatoryCount,
                 activeCount,
@@ -115,19 +114,6 @@ public final class NumericPictureParser {
             ExceptionMetadata metadata
     ) {
         return parse(picture, pictureStringForErrors, metadata, NumericPictureKind.INTEGER);
-    }
-
-    public static String mapAsciiDigits(String s, int zeroDigit) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                sb.appendCodePoint(zeroDigit + (ch - '0'));
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
     }
 
     public static int zeroDigitOf(int cp) {
@@ -202,9 +188,9 @@ public final class NumericPictureParser {
             return new RepeatingGroupingInfo(false, 0);
         }
 
-        String separator = groupings.get(0).separator;
+        int separatorCP = groupings.get(0).separatorCP();
         for (GroupingPos gp : groupings) {
-            if (!separator.equals(gp.separator)) {
+            if (separatorCP != gp.separatorCP()) {
                 return new RepeatingGroupingInfo(false, 0);
             }
         }

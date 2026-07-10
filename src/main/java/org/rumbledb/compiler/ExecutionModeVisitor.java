@@ -53,6 +53,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -247,7 +248,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        if (!BuiltinFunctionCatalogue.exists(identifier)) {
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
+        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {
                 if (parameter == null) {
@@ -266,9 +268,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
         }
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                expression.getFunctionIdentifier()
+                expression.getFunctionIdentifier(),
+                queryLanguage
             );
             expression.setHighestExecutionMode(
                 BuiltinFunctionExecutionModes.resolve(
@@ -708,12 +711,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         Expression left = rangeExpression.getLeftExpression();
         Expression right = rangeExpression.getRightExpression();
         if (
-            left instanceof IntegerLiteralExpression
+            left instanceof IntegerLiteralExpression leftLiteralExpr
                 &&
-                right instanceof IntegerLiteralExpression
+                right instanceof IntegerLiteralExpression rightLiteralExpr
         ) {
-            String leftLiteral = ((IntegerLiteralExpression) left).getLexicalValue();
-            String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
+            String leftLiteral = leftLiteralExpr.getLexicalValue();
+            String rightLiteral = rightLiteralExpr.getLexicalValue();
             BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
             BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
             if (
@@ -874,44 +877,43 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
+        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression intLiteralExpr) {
+            String lexicalValue = intLiteralExpr.getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                 return argument;
             }
         }
 
-
         // START eq optimization
         if (
-            expression.getPredicateExpression() instanceof ComparisonExpression
-                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
+            expression.getPredicateExpression() instanceof ComparisonExpression comparisonExpression
+                && comparisonExpression.getComparisonOperator()
                     .toString()
                     .equals("eq")
         ) {
             Node left = expression.getPredicateExpression().getChildren().get(0);
             Node right = expression.getPredicateExpression().getChildren().get(1);
 
-            Node intLiteral = null;
+            IntegerLiteralExpression intLiteral = null;
             if (
-                left instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+                left instanceof FunctionCallExpression leftFuncExpr
+                    && leftFuncExpr.getFunctionName().getLocalName().equals("position")
             ) {
-                if (right instanceof IntegerLiteralExpression) {
-                    intLiteral = right;
+                if (right instanceof IntegerLiteralExpression rightLiteralExpr) {
+                    intLiteral = rightLiteralExpr;
                 }
             }
             if (
-                right instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+                right instanceof FunctionCallExpression rightFuncExpr
+                    && rightFuncExpr.getFunctionName().getLocalName().equals("position")
             ) {
-                if (left instanceof IntegerLiteralExpression) {
-                    intLiteral = left;
+                if (left instanceof IntegerLiteralExpression leftLiteralExpr) {
+                    intLiteral = leftLiteralExpr;
                 }
             }
             if (intLiteral != null) {
-                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
+                String lexicalValue = intLiteral.getLexicalValue();
                 if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                     expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                     return argument;
@@ -1054,6 +1056,15 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
         visitDescendants(slashExpr, argument);
         slashExpr.setHighestExecutionMode(slashExpr.getLeftExpression().getHighestExecutionMode());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitNodeSetExpr(NodeSetExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        ExecutionMode leftMode = expression.getLeftExpression().getHighestExecutionMode(this.visitorConfig);
+        ExecutionMode rightMode = expression.getRightExpression().getHighestExecutionMode(this.visitorConfig);
+        expression.setHighestExecutionMode(getHighestExecutionMode(leftMode, rightMode));
         return argument;
     }
 

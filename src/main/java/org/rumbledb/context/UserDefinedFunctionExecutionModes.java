@@ -46,11 +46,17 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
     private HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
     private List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    private String queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
         this.userDefinedFunctionsExecutionMode = new HashMap<>();
         this.userDefinedFunctionsParametersStorageMode = new HashMap<>();
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
+        this.queryLanguage = null;
+    }
+
+    public void setQueryLanguage(String queryLanguage) {
+        this.queryLanguage = queryLanguage;
     }
 
     public boolean exists(FunctionIdentifier identifier) {
@@ -79,7 +85,7 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
             ExceptionMetadata metadata
     ) {
         if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier)
+            BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
                 ||
                 (!suppressErrorsForFunctionSignatureCollision
                     && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))

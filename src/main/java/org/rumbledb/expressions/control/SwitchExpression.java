@@ -71,7 +71,7 @@ public class SwitchExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("switch (");
         this.testCondition.serializeToJSONiq(sb, 0);

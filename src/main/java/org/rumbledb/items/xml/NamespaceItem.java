@@ -21,7 +21,6 @@ public class NamespaceItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
-    @SuppressWarnings("unused")
     public NamespaceItem() {
     }
 
@@ -34,6 +33,11 @@ public class NamespaceItem implements Item {
     public NamespaceItem(String prefix, String uri) {
         this.prefix = prefix == null ? "" : prefix;
         this.uri = uri;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new NamespaceItem(this.prefix, this.uri);
     }
 
 
@@ -144,10 +148,9 @@ public class NamespaceItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem)) {
+        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
             return false;
         }
-        NamespaceItem otherNamespaceItem = (NamespaceItem) other;
         return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
     }
 
@@ -261,4 +264,3 @@ public class NamespaceItem implements Item {
         return Collections.emptyList();
     }
 }
-

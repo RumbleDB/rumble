@@ -33,6 +33,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.expressions.control.CatchPattern;
 
 
 public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
@@ -40,28 +41,22 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryExpression;
-    private final Map<String, RuntimeIterator> catchExpressions;
-    private final RuntimeIterator catchAllExpression;
+    private final Map<CatchPattern, RuntimeIterator> catchExpressions;
     private List<Item> results = null;
     private Item nextResult = null;
     private int nextPosition = 0;
 
     public TryCatchRuntimeIterator(
             RuntimeIterator tryExpression,
-            Map<String, RuntimeIterator> catchExpressions,
-            RuntimeIterator catchAllExpression,
+            Map<CatchPattern, RuntimeIterator> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
         this.children.add(tryExpression);
         for (RuntimeIterator value : catchExpressions.values())
             this.children.add(value);
-        if (catchAllExpression != null) {
-            this.children.add(catchAllExpression);
-        }
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
-        this.catchAllExpression = catchAllExpression;
     }
 
     @Override
@@ -109,27 +104,16 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
             } catch (Throwable throwable) {
                 RumbleException exception = RumbleException.unnestException(throwable);
-                String code = exception.getErrorCode().toString();
                 this.results.clear();
-                if (this.catchExpressions.containsKey(code)) {
+                RuntimeIterator catchingExpression = findMatchingCatch(exception);
+                if (catchingExpression != null) {
                     DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
                     ErrorVariables.injectDynamicContext(context, exception);
-
-                    RuntimeIterator catchingExpression = this.catchExpressions.get(code);
                     catchingExpression.open(context);
                     while (catchingExpression.hasNext()) {
                         this.results.add(catchingExpression.next());
                     }
                     catchingExpression.close();
-                } else if (this.catchAllExpression != null) {
-                    DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                    ErrorVariables.injectDynamicContext(context, exception);
-
-                    this.catchAllExpression.open(context);
-                    while (this.catchAllExpression.hasNext()) {
-                        this.results.add(this.catchAllExpression.next());
-                    }
-                    this.catchAllExpression.close();
                 } else {
                     throw throwable;
                 }
@@ -140,5 +124,14 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
         } else {
             this.hasNext = false;
         }
+    }
+
+    private RuntimeIterator findMatchingCatch(RumbleException exception) {
+        for (Map.Entry<CatchPattern, RuntimeIterator> entry : this.catchExpressions.entrySet()) {
+            if (entry.getKey().matches(exception.getErrorCode())) {
+                return entry.getValue();
+            }
+        }
+        return null;
     }
 }

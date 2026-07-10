@@ -57,10 +57,12 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String MAP_NS = "http://www.w3.org/2005/xpath-functions/map";
     public static final String ARRAY_NS = "http://www.w3.org/2005/xpath-functions/array";
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+    public static final String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
     public static final String XML_NS = "http://www.w3.org/XML/1998/namespace";
     public static final String JS_NS = "http://jsoniq.org/types";
+    public static final String JSONIQ_ANNOTATIONS_NS = "http://jsoniq.org/annotations";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
-    public static final String AN_NS = "http://www.w3.org/2012/xquery";
+    public static final String XQUERY_ANNOTATIONS_NS = "http://www.w3.org/2012/xquery";
     public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
 
@@ -128,15 +130,25 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     }
 
     /**
-     * Creates an expanded name that has the default annotations namespace. By default, in Rumble, unprefixed
-     * annotations live in this namespace. This namespace includes
-     * all builtin annotations.
+     * Creates an expanded name that has the default XQuery annotations namespace.
+     * This is used for unprefixed annotations in XQuery.
      * 
      * @param localName the name of the variable
      * @return the expanded name
      */
-    public static Name createVariableInDefaultAnnotationsNamespace(String localName) {
-        return new Name(AN_NS, "", localName);
+    public static Name createNameInDefaultXQueryAnnotationsNamespace(String localName) {
+        return new Name(XQUERY_ANNOTATIONS_NS, "", localName);
+    }
+
+    /**
+     * Creates an expanded name that has the default JSONiq annotations namespace.
+     * This is used for implementation-defined JSONiq annotations in Rumble.
+     *
+     * @param localName the name of the annotation
+     * @return the expanded name
+     */
+    public static Name createNameInJsoniqAnnotationsNamespace(String localName) {
+        return new Name(JSONIQ_ANNOTATIONS_NS, "an", localName);
     }
 
     public static Name createVariableInDefaultBuiltinFunctionNamespace(String localName) {
@@ -253,10 +265,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof Name)) {
+        if (!(o instanceof Name other)) {
             return false;
         }
-        Name other = (Name) o;
         if (this.namespace == null && other.namespace != null) {
             return false;
         }

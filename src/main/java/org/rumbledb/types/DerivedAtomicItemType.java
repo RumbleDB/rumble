@@ -199,11 +199,17 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
+
+    @Override
+    public int hashCode() {
+        return this.name != null ? this.name.hashCode() : super.hashCode();
+    }
+
 
     @Override
     public boolean isAtomicItemType() {

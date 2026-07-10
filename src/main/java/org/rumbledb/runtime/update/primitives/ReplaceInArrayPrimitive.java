@@ -51,7 +51,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         if (index >= 0 || index < this.target.getSize()) {
             this.target.removeItemAt(index);
             if (index == this.target.getSize()) {
-                this.target.append(this.content);
+                this.target.appendItem(this.content);
             } else {
                 this.target.putItemAt(this.content, index);
             }
@@ -85,8 +85,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
             this.applyItem();

@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.InvalidElementNameExpressionException;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -212,10 +213,15 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         // Create and return the attribute item
         // 4: The parent property of the attribute node is set to empty.
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        Item attributeItem = ItemFactory.getInstance()
             .createXmlAttributeNode(
                 attributeName.getQNameValue(),
                 attributeValue
             );
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            attributeItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return attributeItem;
     }
 }

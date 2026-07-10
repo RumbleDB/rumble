@@ -647,18 +647,15 @@ public class FlworDataFrameUtils {
             String newName = inverse
                 ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
                 : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
-            if (field.dataType() instanceof StructType) {
-                StructType castedField = (StructType) field.dataType();
+            if (field.dataType() instanceof StructType castedField) {
                 return new StructField(
                         newName,
                         new StructType(recursiveRename(castedField, inverse)),
                         field.nullable(),
                         field.metadata()
                 );
-            } else if (field.dataType() instanceof ArrayType) {
-                ArrayType castedField = (ArrayType) field.dataType();
-                if (castedField.elementType() instanceof StructType) {
-                    StructType castedElementType = (StructType) castedField.elementType();
+            } else if (field.dataType() instanceof ArrayType castedField) {
+                if (castedField.elementType() instanceof StructType castedElementType) {
                     return new StructField(
                             newName,
                             new ArrayType(
@@ -862,8 +859,8 @@ public class FlworDataFrameUtils {
 
     public static long getCountOfField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
-        if (o instanceof Long) {
-            return ((Long) o).longValue();
+        if (o instanceof Long longValue) {
+            return longValue.longValue();
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }

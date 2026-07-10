@@ -1,18 +1,18 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 
 public class DateTimeStampItem implements Item {
@@ -20,7 +20,6 @@ public class DateTimeStampItem implements Item {
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
-    @SuppressWarnings("unused")
     public DateTimeStampItem() {
         super();
     }
@@ -41,11 +40,16 @@ public class DateTimeStampItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public Item copy(boolean mutable) {
+        return new DateTimeStampItem(this.value.getDateTimeValue(), true);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -159,4 +163,3 @@ public class DateTimeStampItem implements Item {
         return Timestamp.valueOf(this.getDateTimeValue().toLocalDateTime());
     }
 }
-

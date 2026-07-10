@@ -2,8 +2,10 @@ package org.rumbledb.runtime.functions.typing;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -21,6 +23,12 @@ public class LocalNameFromQNameFunctionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:local-name-from-QName", getMetadata());
+        QNameItem qnameItem = (QNameItem) this.children.get(0).materializeFirstItemOrNull(context);
+        if (qnameItem == null) {
+            return null;
+        }
+        Name qname = qnameItem.getQNameValue();
+
+        return ItemFactory.getInstance().createNCNameItem(qname.getLocalName());
     }
 }

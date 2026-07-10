@@ -237,8 +237,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
-        if (outerContextSchema instanceof StructType) {
-            StructType structSchema = (StructType) outerContextSchema;
+        if (outerContextSchema instanceof StructType structSchema) {
             for (Name n : keyDependencies.keySet()) {
                 if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
                     return NativeClauseContext.NoNativeQuery;
@@ -258,7 +257,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 && (this.iterator instanceof ContextExpressionIterator)
         ) {
             leftSchema = (nativeClauseContext.getResultingType() != null)
-                ? TypeMappings.getDataFrameDataTypeFromItemType(nativeClauseContext.getResultingType().getItemType())
+                ? TypeMappings.getDataFrameDataTypeFromItemType(
+                    nativeClauseContext.getResultingType().getItemType(),
+                    this.staticContext
+                )
                 : outerContextSchema;
             if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
@@ -267,8 +269,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         nativeClauseContext.getResultingType()
                 );
             } else {
-                if (leftSchema instanceof ArrayType) {
-                    leftSchema = ((ArrayType) leftSchema).elementType();
+                if (leftSchema instanceof ArrayType arrayType) {
+                    leftSchema = arrayType.elementType();
                 }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
@@ -279,7 +281,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(newContext.getResultingType().getItemType());
+                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
+                    newContext.getResultingType().getItemType(),
+                    this.staticContext
+                );
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -291,7 +296,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
-        if (!(leftSchema instanceof StructType)) {
+        if (!(leftSchema instanceof StructType structSchema)) {
             if (this.children.get(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
@@ -311,7 +316,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             return NativeClauseContext.NoNativeQuery;
         }
-        StructType structSchema = (StructType) leftSchema;
         if (
             Arrays.asList(structSchema.fieldNames()).contains(key)
                 || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
@@ -335,10 +339,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             newContext.setSchema(field.dataType());
         } else if (
             newContext.getResultingType().getItemType().isObjectItemType()
-                && (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)
-                    || newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey))
+                && (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(key)
+                    || newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey))
         ) {
-            if (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey)) {
+            if (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey)) {
                 key = sequenceKey;
             }
             String leftQuery = newContext.getResultingQuery();
@@ -349,8 +353,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             ItemType resultType = newContext.getResultingType()
                 .getItemType()
-                .getObjectContentFacet()
-                .get(key)
+                .getObjectContentFacet(key)
                 .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
@@ -397,7 +400,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         }
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
-            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
+            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
             ItemType type = BuiltinTypesCatalogue.item;
             if (fieldDescriptor != null) {
                 type = fieldDescriptor.getType();

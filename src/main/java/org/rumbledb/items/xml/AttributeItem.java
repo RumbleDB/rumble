@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -20,7 +21,8 @@ public class AttributeItem implements Item {
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    // TODO: add schema-type, typed-value, is-id, is-idrefs
+    private ItemType typeAnnotation;
+    // TODO: add is-id, is-idrefs
 
     // needed for kryo
     public AttributeItem() {
@@ -29,11 +31,20 @@ public class AttributeItem implements Item {
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
+        this.typeAnnotation = null;
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
+        this.typeAnnotation = null;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
+        copy.typeAnnotation = this.typeAnnotation;
+        return copy;
     }
 
     @Override
@@ -54,6 +65,7 @@ public class AttributeItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
+        kryo.writeClassAndObject(output, this.typeAnnotation);
     }
 
     @Override
@@ -62,6 +74,7 @@ public class AttributeItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
+        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
     }
 
     @Override
@@ -150,11 +163,16 @@ public class AttributeItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof AttributeItem)) {
+        if (this == other) {
+            return true;
+        }
+        if (!(other instanceof AttributeItem otherAttributeItem)) {
             return false;
         }
-        AttributeItem otherAttributeItem = (AttributeItem) other;
-        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
+        if (this.documentPos == null || otherAttributeItem.documentPos == null) {
+            return false;
+        }
+        return this.documentPos.equals(otherAttributeItem.documentPos);
     }
 
     @Override
@@ -169,11 +187,22 @@ public class AttributeItem implements Item {
 
     @Override
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 
     @Override
     public List<Item> atomizedValue() {
+        if (this.typeAnnotation != null) {
+            Item typedValue = CastIterator.castItemToType(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                this.typeAnnotation,
+                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
+            );
+            return Collections.singletonList(typedValue);
+        }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
@@ -237,6 +266,20 @@ public class AttributeItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(
+            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+        );
+    }
+
+    public void setSchemaType(ItemType typeAnnotation) {
+        this.typeAnnotation = typeAnnotation;
+    }
+
+    @Override
+    public ItemType getSchemaType() {
+        return this.typeAnnotation;
     }
 }

@@ -20,23 +20,23 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DoubleItem implements Item {
 
@@ -53,11 +53,16 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public Item copy(boolean mutable) {
+        return new DoubleItem(this.value);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -116,6 +121,14 @@ public class DoubleItem implements Item {
             return sb.toString();
         }
         return Double.toString(this.value);
+    }
+
+    @Override
+    public BigDecimal getDecimalValue() {
+        if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
+            throw new IteratorFlowException("NaN and INF cannot be cast to decimal");
+        }
+        return new BigDecimal(getDoubleValue());
     }
 
     @Override

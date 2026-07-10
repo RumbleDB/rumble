@@ -32,9 +32,11 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
 
     private static final long serialVersionUID = 1L;
     private final ExceptionMetadata metadata;
+    boolean mutable = false;
 
-    public JSONSyntaxToItemMapper(ExceptionMetadata metadata) {
+    public JSONSyntaxToItemMapper(ExceptionMetadata metadata, boolean mutable) {
         this.metadata = metadata;
+        this.mutable = mutable;
     }
 
     @Override
@@ -48,7 +50,13 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
             @Override
             public Item next() {
                 JsonReader object = new JsonReader(new StringReader(stringIterator.next()));
-                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
+                return ItemParser.getItemFromObject(
+                    object,
+                    true,
+                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                    JSONSyntaxToItemMapper.this.metadata,
+                    JSONSyntaxToItemMapper.this.mutable
+                );
             }
 
             @Override

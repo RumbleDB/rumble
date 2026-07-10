@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -123,7 +124,9 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        return strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata()));
+        return strings.mapPartitions(
+            new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())
+        );
     }
 
     protected void init() {
@@ -191,7 +194,13 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = (line != null);
             if (this.hasNext) {
                 JsonReader object = new JsonReader(new StringReader(line));
-                this.nextItem = ItemParser.getItemFromObject(object, getMetadata());
+                this.nextItem = ItemParser.getItemFromObject(
+                    object,
+                    true,
+                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
+                    getMetadata(),
+                    this.getRuntimeStaticContext().isQuerySideEffecting()
+                );
             }
         } catch (IOException e) {
             handleException(e);

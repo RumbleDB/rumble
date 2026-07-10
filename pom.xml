@@ -33,25 +33,98 @@
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <antlr4.version>4.13.2</antlr4.version>
+        <junit.version>6.1.1</junit.version>
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
+        <lombok.version>1.18.46</lombok.version>
     </properties>
 
     <build>
         <plugins>
             <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+                <executions>
+                    <execution>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/antlr4</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.15.0</version>
-                <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
-                    <compilerId>eclipse</compilerId>
                     <source>17</source>
                     <target>17</target>
-                    <compilerArgs>
-                        <arg>-properties</arg>
-                        <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
-                    </compilerArgs>
                 </configuration>
+                <executions>
+                    <!-- We skip the default compilation -->
+                    <execution>
+                        <id>default-compile</id>
+                        <configuration>
+                            <skipMain>true</skipMain>
+                        </configuration>
+                    </execution>
+
+                    <!-- 
+                        Compile ANTLR-generated sources without processing
+                        If we don't do this, since parser and lexer classes are very large, Lombok will throw a
+                    StackOverflowError when processing them, and the build will fail.
+                    -->
+                    <execution>
+                        <id>compile-generated-sources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <proc>none</proc>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.build.directory}/generated-sources/antlr4</compileSourceRoot>
+                            </compileSourceRoots>
+                        </configuration>
+                    </execution>
+
+                    <!-- Compile main sources using the normal configuration -->
+                    <execution>
+                        <id>compile-main-sources</id>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <configuration>
+                            <compilerId>eclipse</compilerId>
+                            <compileSourceRoots>
+                                <compileSourceRoot>${project.basedir}/src/main/java</compileSourceRoot>
+                            </compileSourceRoots>
+                            <!-- Holy grail of eclipse configuration: https://stackoverflow.com/a/49599478/10707488 -->
+                            <compilerArgs>
+                                <arg>-properties</arg>
+                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>default-testCompile</id>
+                        <configuration>
+                            <compilerId>eclipse</compilerId>
+                            <compilerArgs>
+                                <arg>-properties</arg>
+                                <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
                 <dependencies>
                     <dependency>
                         <groupId>org.codehaus.plexus</groupId>
@@ -62,6 +135,11 @@
                         <groupId>org.eclipse.jdt</groupId>
                         <artifactId>ecj</artifactId>
                         <version>3.45.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.projectlombok</groupId>
+                        <artifactId>lombok</artifactId>
+                        <version>${lombok.version}</version>
                     </dependency>
                 </dependencies>
             </plugin>
@@ -184,26 +262,13 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <version>3.7.0</version>
                 <configuration>
                     <java>
                         <includes>
                             <!-- include all java files in "java" folders under "src" -->
                             <include>src/**/java/**/*.java</include>
                         </includes>
-
-                        <excludes>
-                            <exclude>src/main/java/org/rumbledb/parser/xquery/*</exclude>
-                            <exclude>src/main/java/org/rumbledb/parser/jsoniq/*</exclude>
-                        </excludes>
                         <eclipse>
                             <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
@@ -212,31 +277,46 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>3.2.0</version>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>${antlr4.version}</version>
                 <executions>
                     <execution>
-                        <id>build-jsoniq-antlr-parser</id>
-                        <phase>generate-sources</phase>
-                        <configuration>
-                            <target>
-                                <ant antfile="build_antlr_parser.xml" target="generate-lexer"/>
-                                <ant antfile="build_antlr_parser.xml" target="generate-parser"/>
-                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-lexer"/>
-                                <ant antfile="build_antlr_parser_xquery.xml" target="generate-parser"/>
-                            </target>
-                        </configuration>
+                        <id>generate-jsoniq-antlr-sources</id>
                         <goals>
-                            <goal>run</goal>
+                            <goal>antlr4</goal>
                         </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/jsoniq</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>generate-xquery-antlr-sources</id>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <sourceDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/xquery</sourceDirectory>
+                            <includes>
+                                <include>*.g4</include>
+                            </includes>
+                            <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
+                            <listener>false</listener>
+                            <visitor>true</visitor>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-            <version>3.5.5</version>
+                <version>3.5.6</version>
                 <configuration>
                     <enableOutErrElements>${surefire.enableOutErrElements}</enableOutErrElements>
                     <!-- arguments needed for unit tests to work with Java 17
@@ -250,6 +330,28 @@
                         --add-opens=java.base/sun.util.calendar=ALL-UNNAMED
                         --add-opens java.base/java.net=ALL-UNNAMED
                     </argLine>
+                    <statelessTestsetReporter
+                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5Xml30StatelessReporter">
+                        <disable>false</disable>
+                        <version>3.0.2</version>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                        <usePhrasedTestSuiteClassName>true</usePhrasedTestSuiteClassName>
+                        <usePhrasedTestCaseClassName>true</usePhrasedTestCaseClassName>
+                        <usePhrasedTestCaseMethodName>true</usePhrasedTestCaseMethodName>
+                    </statelessTestsetReporter>
+                    <consoleOutputReporter
+                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5ConsoleOutputReporter">
+                        <disable>false</disable>
+                        <encoding>UTF-8</encoding>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                    </consoleOutputReporter>
+                    <statelessTestsetInfoReporter
+                        implementation="org.apache.maven.plugin.surefire.extensions.junit5.JUnit5StatelessTestsetInfoReporter">
+                        <disable>false</disable>
+                        <usePhrasedFileName>false</usePhrasedFileName>
+                        <usePhrasedClassNameInRunning>true</usePhrasedClassNameInRunning>
+                        <usePhrasedClassNameInTestCaseSummary>true</usePhrasedClassNameInTestCaseSummary>
+                    </statelessTestsetInfoReporter>
                 </configuration>
             </plugin>
             <plugin>
@@ -313,7 +415,7 @@
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
-            <version>4.13.2</version>
+            <version>${antlr4.version}</version>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
@@ -327,9 +429,9 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13.1</version>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -410,6 +512,16 @@
             <artifactId>log4j-core</artifactId>
             <version>2.24.3</version>
             <scope>compile</scope>
+            <groupId>com.ibm.icu</groupId>
+            <artifactId>icu4j</artifactId>
+            <version>76.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>${lombok.version}</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
 

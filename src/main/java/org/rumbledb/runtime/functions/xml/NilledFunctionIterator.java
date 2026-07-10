@@ -45,11 +45,16 @@ import java.util.List;
  * returned by Item.nilled().
  *
  * Function signature (Functions and Operators 3.1, {@code fn:nilled}):
- * - fn:nilled($arg as node()?) as xs:boolean?
+ * 
+ * <ul>
+ * <li>fn:nilled($arg as node()?) as xs:boolean?</li>
+ * </ul>
  *
  * Rules:
- * - If the argument is supplied and is the empty sequence, the function returns the empty sequence.
- * - Otherwise, the function returns dm:nilled($arg).
+ * <ul>
+ * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
+ * <li>Otherwise, the function returns dm:nilled($arg).</li>
+ * </ul>
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-nilled">XPath and XQuery Functions and
  *      Operators 3.1: fn:nilled</a>

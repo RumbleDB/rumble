@@ -14,7 +14,7 @@ public final class SerializerUtils {
     private SerializerUtils() {
     }
 
-    public static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
+    public static void appendDmNodeNameLexical(StringBuilder sb, Item item) {
         Name n = item.nodeName();
         if (n != null) {
             String p = n.getPrefix();
@@ -35,7 +35,7 @@ public final class SerializerUtils {
             Serializer serializer,
             SerializationParameters params,
             Item mapItem,
-            StringBuffer sb,
+            StringBuilder sb,
             String indent,
             String optionalPrefixBeforeOpenBrace
     ) {
@@ -70,7 +70,7 @@ public final class SerializerUtils {
             SerializationParameters params,
             Item mapItem,
             Item key,
-            StringBuffer sb,
+            StringBuilder sb,
             String indent
     ) {
         List<Item> sequence = mapItem.getSequenceByKey(key);

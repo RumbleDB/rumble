@@ -28,7 +28,6 @@ public class gDayItem implements Item {
         "---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    @SuppressWarnings("unused")
     public gDayItem() {
         super();
     }
@@ -48,6 +47,11 @@ public class gDayItem implements Item {
         getgDayFromString(gDayString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gDayItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgDayFromString(String gDayString) {
         Matcher matcher = this.gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
@@ -64,11 +68,11 @@ public class gDayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

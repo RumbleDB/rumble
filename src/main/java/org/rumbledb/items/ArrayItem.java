@@ -20,23 +20,23 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class ArrayItem implements Item {
 
@@ -69,19 +69,31 @@ public class ArrayItem implements Item {
         this.collection = null;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedItems = new ArrayList<>(this.arrayItems.size());
+        for (Item item : this.arrayItems) {
+            copiedItems.add(item.copy(mutable));
+        }
+        ArrayItem copy = new ArrayItem(copiedItems);
+        if (mutable) {
+            copy.setMutabilityLevel(0);
+        }
+        return copy;
+    }
+
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
+            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
                 return false;
             }
         }
@@ -103,12 +115,6 @@ public class ArrayItem implements Item {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Deprecated
-    @Override
-    public List<Item> getItems() {
-        return this.arrayItems;
     }
 
     @Override
@@ -143,11 +149,6 @@ public class ArrayItem implements Item {
     public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
         Item member = this.getItemAt(position);
         return Collections.singletonList(member);
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -229,10 +230,9 @@ public class ArrayItem implements Item {
     }
 
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
-            result += getItemAt(i).hashCode();
+            result = 31 * result + getItemAt(i).hashCode();
         }
         return result;
     }
@@ -242,13 +242,7 @@ public class ArrayItem implements Item {
         if (this.arrayItems.isEmpty()) {
             return ItemTypeFactory.createEmptyArrayType();
         }
-
-        ItemType result = this.arrayItems.get(0).getDynamicType();
-        for (int i = 1; i < this.arrayItems.size(); i++) {
-            result = result.findLeastCommonSuperTypeLax(this.arrayItems.get(i).getDynamicType());
-        }
-
-        return ItemTypeFactory.createAnonymousArrayType(result);
+        return BuiltinTypesCatalogue.arrayItem;
     }
 
     @Override
@@ -355,8 +349,11 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
-        // return getItems();
+        List<Item> result = new ArrayList<>();
+        for (Item member : this.arrayItems) {
+            result.addAll(member.atomizedValue());
+        }
+        return result;
     }
 
     @Override
@@ -369,7 +366,7 @@ public class ArrayItem implements Item {
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItems();
+        List<Item> arrayItems = this.getItemMembers();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());

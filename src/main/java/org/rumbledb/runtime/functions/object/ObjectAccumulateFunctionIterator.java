@@ -58,7 +58,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                 for (Item item : items) {
                     // ignore non-object items
                     if (item.isObject()) {
-                        for (String key : item.getKeys()) {
+                        for (String key : item.getStringKeys()) {
                             Item value = item.getItemByKey(key);
                             if (!keyValuePairs.containsKey(key)) {
                                 List<Item> valueList = new ArrayList<>();
@@ -73,7 +73,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
                     }
                 }
 
-                Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
+                Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
 
                 this.hasNext = false;
                 return result;
@@ -81,7 +81,9 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         }
 
         JavaRDD<Item> childRDD = iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure();
+        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
+                this.getRuntimeStaticContext().isQuerySideEffecting()
+        );
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         Function2<Item, Item, Item> reductionTransformation = new ObjectIntersectReduceClosure();

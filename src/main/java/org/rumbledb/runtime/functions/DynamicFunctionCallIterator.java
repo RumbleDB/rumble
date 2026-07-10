@@ -252,7 +252,10 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         }
         if (this.functionItem.isBuiltinFunction()) {
             BuiltinFunction builtin =
-                BuiltinFunctionCatalogue.getBuiltinFunction(this.functionItem.getIdentifier());
+                BuiltinFunctionCatalogue.getBuiltinFunction(
+                    this.functionItem.getIdentifier(),
+                    this.staticContext.getQueryLanguage()
+                );
             // assume that the passed builtin function is valid
             ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
             for (RuntimeIterator arg : this.functionArguments) {
@@ -262,6 +265,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 }
             }
             return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, getConfiguration());
+        }
+        if (this.functionItem.getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getWrappedCallableExecutionMode();
         }
         return this.functionItem.getBodyIterator().getHighestExecutionMode();
     }

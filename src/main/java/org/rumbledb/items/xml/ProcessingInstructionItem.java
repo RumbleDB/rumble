@@ -42,6 +42,11 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new ProcessingInstructionItem(this.target, this.content);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -94,10 +99,9 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ProcessingInstructionItem)) {
+        if (!(other instanceof ProcessingInstructionItem otherItem)) {
             return false;
         }
-        ProcessingInstructionItem otherItem = (ProcessingInstructionItem) other;
         return this.getXmlDocumentPosition().equals(otherItem.getXmlDocumentPosition());
     }
 
@@ -231,4 +235,3 @@ public class ProcessingInstructionItem implements Item {
         return Collections.emptyList();
     }
 }
-

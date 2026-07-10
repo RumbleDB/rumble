@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -26,11 +27,11 @@ public class ElementItem implements Item {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    // TODO: add base-uri, schema-type, is-id, is-idrefs
+    private ItemType typeAnnotation;
+    // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
-    @SuppressWarnings("unused")
     public ElementItem() {
     }
 
@@ -42,7 +43,10 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.stringValue = "<" + this.dmNodeName + "/>";
+        this.typeAnnotation = null;
+        StringBuilder sb = new StringBuilder();
+        computeStringValue(children, sb);
+        this.stringValue = sb.toString();
     }
 
     public ElementItem(Node elementNode, List<Item> children, List<Item> attributes) {
@@ -60,6 +64,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
+        this.typeAnnotation = null;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
@@ -67,6 +72,33 @@ public class ElementItem implements Item {
                 );
             }
         }
+    }
+
+    private void computeStringValue(List<Item> items, StringBuilder sb) {
+        for (Item item : items) {
+            if (item.isTextNode()) {
+                sb.append(item.getStringValue());
+            } else if (item.isElementNode() && item.children() != null) {
+                computeStringValue(item.children(), sb);
+            }
+        }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        List<Item> copiedAttributes = new ArrayList<>();
+        for (Item attribute : this.attributes) {
+            copiedAttributes.add(attribute.copy(mutable));
+        }
+        Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
+        ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
+        copy.namespaces = copiedNamespaces;
+        copy.typeAnnotation = this.typeAnnotation;
+        return copy;
     }
 
     @Override
@@ -103,6 +135,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.namespaces);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
+        kryo.writeClassAndObject(output, this.typeAnnotation);
     }
 
     @SuppressWarnings("unchecked")
@@ -115,6 +148,7 @@ public class ElementItem implements Item {
         this.namespaces = kryo.readObject(input, HashMap.class);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
+        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
     }
 
     @Override
@@ -129,10 +163,9 @@ public class ElementItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ElementItem)) {
+        if (!(other instanceof ElementItem otherElementItem)) {
             return false;
         }
-        ElementItem otherElementItem = (ElementItem) other;
         return this.getXmlDocumentPosition().equals(otherElementItem.getXmlDocumentPosition());
     }
 
@@ -207,8 +240,11 @@ public class ElementItem implements Item {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * - Insertion order is preserved for stable iteration.
-         * - Later puts for the same prefix override earlier values.
+         * 
+         * <ul>
+         * <li>Insertion order is preserved for stable iteration.</li>
+         * <li>Later puts for the same prefix override earlier values.</li>
+         * </ul>
          */
         LinkedHashMap<String, String> inScope = new LinkedHashMap<>();
 
@@ -231,6 +267,9 @@ public class ElementItem implements Item {
 
         // Step 2: Current element's own declared namespaces override all inherited ones.
         inScope.putAll(this.namespaces);
+
+        // Step 2b: The xml prefix is implicitly in-scope on every element.
+        inScope.putIfAbsent("xml", Name.XML_NS);
 
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
@@ -313,7 +352,12 @@ public class ElementItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(
+            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+        );
     }
 
     /**
@@ -331,11 +375,20 @@ public class ElementItem implements Item {
         return this.atomizedValue();
     }
 
+    public void setSchemaType(ItemType typeAnnotation) {
+        this.typeAnnotation = typeAnnotation;
+    }
+
+    @Override
+    public ItemType getSchemaType() {
+        return this.typeAnnotation;
+    }
+
+    @Override
     public void addOrReplaceNamespace(Item namespaceItem) {
-        if (!(namespaceItem instanceof NamespaceItem)) {
+        if (!(namespaceItem instanceof NamespaceItem namespace)) {
             return;
         }
-        NamespaceItem namespace = (NamespaceItem) namespaceItem;
         if (this.namespaces == null) {
             this.namespaces = new HashMap<>();
         }
@@ -350,17 +403,24 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        // Reference: https://www.w3.org/TR/xpath-functions-31/#func-data
-        // If the item is a node, the typed value of the node is appended to the result sequence.
-        // The typed value is a sequence of zero or more atomic values: specifically, the result of the dm:typed-value
-        // accessor as defined in [XQuery and XPath Data Model (XDM) 3.1] (See Section 5.14 typed-value Accessor DM31).
-        // TODO: implement this following the spec. Most importantly, implement the dm:typed-value accessor.
-        // This naive implementation is enough for now
+        if (this.typeAnnotation != null) {
+            Item typedValue = CastIterator.castItemToType(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                this.typeAnnotation,
+                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
+            );
+            return Collections.singletonList(typedValue);
+        }
+        // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
+        // We still approximate typed-value by concatenating children for now, but preserve the
+        // untypedAtomic dynamic type instead of collapsing to xs:string.
         StringBuilder stringValueBuilder = new StringBuilder();
         for (Item child : this.children) {
             stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
         }
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(stringValueBuilder.toString()));
+        return Collections.singletonList(
+            ItemFactory.getInstance().createUntypedAtomicItem(stringValueBuilder.toString())
+        );
     }
 
     @Override
@@ -368,5 +428,3 @@ public class ElementItem implements Item {
         return true;
     }
 }
-
-

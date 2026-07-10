@@ -120,6 +120,10 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
         // "For the default namespace, if it exists, the zero-length string is returned."
         for (Item nsNode : element.namespaceNodes()) {
             Name q = nsNode.nodeName();
+            if (q == null && nsNode.getStringValue().isEmpty()) {
+                // An explicit undeclaration xmlns="" is not an in-scope default namespace.
+                continue;
+            }
             result.add(
                 ItemFactory.getInstance().createStringItem(q == null ? "" : q.toString())
             );

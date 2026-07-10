@@ -1,23 +1,26 @@
 package org.rumbledb.items.parsing;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.VariableValues;
+import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public final class JSONParsingOptions implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public static final String DUPLICATES_REJECT = "reject";
@@ -107,15 +110,14 @@ public final class JSONParsingOptions implements Serializable {
             + "]";
     }
 
-    private static String callFallbackFunction(Item functionItem, String escapedSequence, ExceptionMetadata metadata) {
+    private static String callFallbackFunction(
+            Item functionItem,
+            String escapedSequence,
+            DynamicContext dynamicContext,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata
+    ) {
         try {
-            if (functionItem == null || !functionItem.isFunction()) {
-                throw new InvalidJSONException(
-                        "Invalid value for option 'fallback': expected a function item.",
-                        metadata
-                );
-            }
-
             List<Name> parameterNames = functionItem.getParameterNames();
             if (parameterNames == null || parameterNames.size() != 1) {
                 throw new InvalidJSONException(
@@ -124,55 +126,32 @@ public final class JSONParsingOptions implements Serializable {
                 );
             }
 
-            DynamicContext functionContext = new DynamicContext(functionItem.getModuleDynamicContext());
-            VariableValues variableValues = functionContext.getVariableValues();
-
-            Map<Name, List<Item>> localClosure = functionItem.getLocalVariablesInClosure();
-            if (localClosure != null) {
-                for (Map.Entry<Name, List<Item>> entry : localClosure.entrySet()) {
-                    variableValues.addVariableValue(entry.getKey(), entry.getValue());
-                }
-            }
-
-            Map<Name, JavaRDD<Item>> rddClosure = functionItem.getRDDVariablesInClosure();
-            if (rddClosure != null) {
-                for (Map.Entry<Name, JavaRDD<Item>> entry : rddClosure.entrySet()) {
-                    variableValues.addVariableValue(entry.getKey(), entry.getValue());
-                }
-            }
-
-            Map<Name, JSoundDataFrame> dfClosure = functionItem.getDFVariablesInClosure();
-            if (dfClosure != null) {
-                for (Map.Entry<Name, JSoundDataFrame> entry : dfClosure.entrySet()) {
-                    variableValues.addVariableValue(entry.getKey(), entry.getValue());
-                }
-            }
-
-            Item argument = ItemFactory.getInstance().createStringItem(escapedSequence);
-            variableValues.addVariableValue(
-                parameterNames.get(0),
-                Collections.singletonList(argument)
+            RuntimeStaticContext callContext = new RuntimeStaticContext(
+                    staticContext.getConfiguration(),
+                    SequenceType.createSequenceType("item*"),
+                    ExecutionMode.LOCAL,
+                    metadata
             );
 
-            Item result;
-            try {
-                result = functionItem.getBodyIterator().materializeAtMostOneItemOrNull(functionContext);
-                if (result == null || !result.isString()) {
-                    throw new InvalidJSONException(
-                            "Invalid result returned by option 'fallback': expected exactly one xs:string.",
-                            metadata
-                    );
-                }
-            } catch (MoreThanOneItemException e) {
-                InvalidJSONException ex = new InvalidJSONException(
+            List<RuntimeIterator> arguments = new ArrayList<>(1);
+            arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
+            RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem,
+                callContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
+
+            List<Item> results = call.materialize(dynamicContext);
+            if (results.size() != 1 || !results.get(0).isString()) {
+                throw new InvalidJSONException(
                         "Invalid result returned by option 'fallback': expected exactly one xs:string.",
                         metadata
                 );
-                ex.initCause(e);
-                throw ex;
             }
 
-            return result.getStringValue();
+            return results.get(0).getStringValue();
         } catch (RumbleException e) {
             throw e;
         } catch (Exception e) {
@@ -188,6 +167,8 @@ public final class JSONParsingOptions implements Serializable {
     public static JSONParsingOptions resolveOptions(
             Item optionsItem,
             boolean isJSONiq10,
+            DynamicContext dynamicContext,
+            RuntimeStaticContext staticContext,
             ExceptionMetadata metadata
     ) {
         boolean liberal = JSONParsingOptions.DEFAULT_LIBERAL;
@@ -203,13 +184,6 @@ public final class JSONParsingOptions implements Serializable {
 
         if (optionsItem == null) {
             return JSONParsingOptions.defaultInstance(isJSONiq10);
-        }
-
-        if (!optionsItem.isMap()) {
-            throw new UnexpectedTypeException(
-                    "The second argument of fn:json-doc() must be a map.",
-                    metadata
-            );
         }
 
         List<String> keys = optionsItem.getStringKeys();
@@ -256,8 +230,13 @@ public final class JSONParsingOptions implements Serializable {
                         );
                     }
 
-                    final Item capturedFunction = functionItem;
-                    fallback = s -> JSONParsingOptions.callFallbackFunction(capturedFunction, s, metadata);
+                    fallback = s -> JSONParsingOptions.callFallbackFunction(
+                        functionItem,
+                        s,
+                        dynamicContext,
+                        staticContext,
+                        metadata
+                    );
                     fallbackExplicitlySet = true;
                     break;
                 }
@@ -328,13 +307,20 @@ public final class JSONParsingOptions implements Serializable {
             List<Item> sequence,
             ExceptionMetadata metadata
     ) {
-        if (sequence == null || sequence.size() != 1 || sequence.get(0) == null || !sequence.get(0).isString()) {
+        if (sequence == null || sequence.size() != 1 || sequence.get(0) == null) {
             throw new UnexpectedTypeException(
                     "Invalid value for option '" + optionName + "': expected exactly one xs:string.",
                     metadata
             );
         }
-        return sequence.get(0).getStringValue();
+        Item value = sequence.get(0);
+        if (value.isString() || value.isNode()) {
+            return value.getStringValue();
+        }
+        throw new UnexpectedTypeException(
+                "Invalid value for option '" + optionName + "': expected exactly one xs:string.",
+                metadata
+        );
     }
 
     private static Item requireSingleFunctionOption(

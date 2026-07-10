@@ -143,13 +143,19 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
                         .withExecutionMode(executionMode)
                         .withMetadata(this.functionArguments.get(i).getMetadata());
+                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                        this.functionArguments.get(i),
+                        sequenceType,
+                        "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
+                        runtimeStaticContext
+                    );
                     if (
                         sequenceType.isEmptySequence()
                             || sequenceType.getArity().equals(Arity.One)
                             || sequenceType.getArity().equals(Arity.OneOrZero)
                     ) {
                         RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                                this.functionArguments.get(i),
+                                argumentIterator,
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
@@ -157,7 +163,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         this.functionArguments.set(i, typePromotionIterator);
                     } else {
                         RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                                this.functionArguments.get(i),
+                                argumentIterator,
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
@@ -187,8 +193,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     /**
      * Partial application generates a new function:
-     * - Supplied parameters are set as NonLocalVariables
-     * - Argument placeholders form the parameters
+     * 
+     * <ul>
+     * <li>Supplied parameters are set as NonLocalVariables</li>
+     * <li>Argument placeholders form the parameters</li>
+     * </ul>
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */

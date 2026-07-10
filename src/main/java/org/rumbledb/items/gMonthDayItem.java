@@ -30,7 +30,6 @@ public class gMonthDayItem implements Item {
     private int day;
     private ZoneOffset offset;
 
-    @SuppressWarnings("unused")
     public gMonthDayItem() {
         super();
     }
@@ -49,6 +48,11 @@ public class gMonthDayItem implements Item {
 
     gMonthDayItem(String gMonthDayString) {
         getgMonthDayFromString(gMonthDayString);
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new gMonthDayItem(this.getDateTimeValue(), this.hasTimeZone);
     }
 
     private void getgMonthDayFromString(String gMonthDayString) {
@@ -74,11 +78,11 @@ public class gMonthDayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

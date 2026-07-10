@@ -19,6 +19,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "anyAtomicType"),
             Collections.emptySet()
     );
+    public static final ItemType errorItem = new ErrorItemType();
     public static final ItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
@@ -706,7 +707,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,
             false,
-            Collections.emptyMap(),
+            Collections.emptyList(),
+            Collections.emptyList(),
             Collections.emptyList(),
             null
     );
@@ -758,6 +760,7 @@ public class BuiltinTypesCatalogue {
         processingInstructionNode,
         objectItem,
         atomicItem,
+        errorItem,
         stringItem,
         untypedAtomicItem,
         integerItem,
@@ -827,4 +830,3 @@ public class BuiltinTypesCatalogue {
         throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
     }
 }
-

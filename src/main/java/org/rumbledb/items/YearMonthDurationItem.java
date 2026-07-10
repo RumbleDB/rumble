@@ -25,7 +25,6 @@ public class YearMonthDurationItem implements Item {
     private Period value;
     Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
-    @SuppressWarnings("unused")
     public YearMonthDurationItem() {
         super();
     }
@@ -47,6 +46,11 @@ public class YearMonthDurationItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new YearMonthDurationItem(this.value);
     }
 
     @Override
@@ -85,11 +89,11 @@ public class YearMonthDurationItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

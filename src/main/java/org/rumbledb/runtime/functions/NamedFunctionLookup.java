@@ -50,10 +50,13 @@ public final class NamedFunctionLookup {
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
+            identifier,
+            configuration.getQueryLanguage()
+        );
         if (builtin != null) {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
-                identifier,
+                builtin.getIdentifier(),
                 dynamicContext.getModuleContext(),
                 configuration,
                 metadata,

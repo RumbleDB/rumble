@@ -52,7 +52,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         String name = this.selector.getStringValue();
-        if (this.target.getKeys().contains(name)) {
+        if (this.target.getStringKeys().contains(name)) {
             Item item = this.target.getItemByKey(name);
             this.target.removeItemByKey(name);
             this.target.putItemByKey(this.content.getStringValue(), item);

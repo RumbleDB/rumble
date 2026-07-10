@@ -1,5 +1,10 @@
 package org.rumbledb.runtime.functions.maps;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -11,11 +16,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -49,6 +49,16 @@ import java.util.Map;
 public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+
+    private static class AccumulatedEntry {
+        private Item key;
+        private List<Item> values;
+
+        private AccumulatedEntry(Item key, List<Item> values) {
+            this.key = key;
+            this.values = values;
+        }
+    }
 
     private final RuntimeIterator mapsIterator;
     private final RuntimeIterator optionsIterator; // may be null for arity-1
@@ -133,7 +143,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
         // 3. Implement fold-left over maps with a hashed same-key accumulator.
         // Streaming consumption avoids materializing huge sequences of maps.
-        Map<MapSameKeyWrapper, List<Item>> accumulator = new HashMap<>();
+        Map<MapSameKeyWrapper, AccumulatedEntry> accumulator = new HashMap<>();
         boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
@@ -156,9 +166,9 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     }
 
                     MapSameKeyWrapper lookup = new MapSameKeyWrapper(bKey);
-                    List<Item> existingSeq = accumulator.get(lookup);
-                    if (existingSeq == null) {
-                        accumulator.put(lookup, new ArrayList<>(bSeq));
+                    AccumulatedEntry existing = accumulator.get(lookup);
+                    if (existing == null) {
+                        accumulator.put(lookup, new AccumulatedEntry(bKey, new ArrayList<>(bSeq)));
                         if (allKeysString && !bKey.isString()) {
                             allKeysString = false;
                         }
@@ -172,7 +182,8 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         case USE_FIRST:
                             break;
                         case USE_LAST:
-                            accumulator.put(lookup, new ArrayList<>(bSeq));
+                            existing.key = bKey;
+                            existing.values = new ArrayList<>(bSeq);
                             if (allKeysString && !bKey.isString()) {
                                 allKeysString = false;
                             }
@@ -183,14 +194,15 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                         case USE_ANY:
                             break;
                         case COMBINE:
-                            List<Item> combined = new ArrayList<>(existingSeq.size() + bSeq.size());
-                            combined.addAll(existingSeq);
+                            List<Item> combined = new ArrayList<>(existing.values.size() + bSeq.size());
+                            combined.addAll(existing.values);
                             combined.addAll(bSeq);
-                            accumulator.put(lookup, combined);
+                            existing.key = bKey;
+                            existing.values = combined;
                             if (allKeysString && !bKey.isString()) {
                                 allKeysString = false;
                             }
-                            if (allValuesSingletons && bSeq.size() != 1) {
+                            if (allValuesSingletons && combined.size() != 1) {
                                 allValuesSingletons = false;
                             }
                             break;
@@ -217,9 +229,9 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (allKeysString && allValuesSingletons) {
             // fast path: construct an object item
             HashMap<String, Item> newKeyValuePairs = new HashMap<>();
-            for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
-                Item key = entry.getKey().getKey();
-                List<Item> values = entry.getValue();
+            for (AccumulatedEntry entry : accumulator.values()) {
+                Item key = entry.key;
+                List<Item> values = entry.values;
                 newKeyValuePairs.put(key.getStringValue(), values.get(0));
             }
             return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
@@ -227,15 +239,12 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             // construct a map item
             // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
             Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-            for (Map.Entry<MapSameKeyWrapper, List<Item>> entry : accumulator.entrySet()) {
-                Item key = entry.getKey().getKey();
-                List<Item> values = entry.getValue();
-                finalKeyValuePairs.put(key, values);
+            for (AccumulatedEntry entry : accumulator.values()) {
+                finalKeyValuePairs.put(entry.key, entry.values);
             }
             return ItemFactory.getInstance()
-                .createMapItem(finalKeyValuePairs, metadata, false);
+                .createMapItem(finalKeyValuePairs, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
 
     }
 }
-

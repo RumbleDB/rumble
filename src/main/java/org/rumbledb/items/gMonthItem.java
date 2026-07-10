@@ -28,7 +28,6 @@ public class gMonthItem implements Item {
         "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    @SuppressWarnings("unused")
     public gMonthItem() {
         super();
     }
@@ -49,6 +48,11 @@ public class gMonthItem implements Item {
         getgMonthFromString(gMonthString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gMonthItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgMonthFromString(String gMonthString) {
         Matcher matcher = this.gMonthRegex.matcher(gMonthString);
         if (!matcher.matches()) {
@@ -65,11 +69,11 @@ public class gMonthItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

@@ -58,7 +58,7 @@ public class OptionDeclaration extends Node {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         // Option declarations do not contribute to the JSONiq serialization tree.
     }
 }

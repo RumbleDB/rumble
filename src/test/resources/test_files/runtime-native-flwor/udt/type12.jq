@@ -32,21 +32,21 @@ try {
   validate type local:x {
     { "foo" : 2, "nested" : { "foobar" : "AABBCC" } }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     "foo"
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:x {
     [ { "foo" : 1 } ]
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 
@@ -62,13 +62,13 @@ try {
   validate type local:y {
     [ "foo" ]
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:y* {
     [ "foo" ]
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 }

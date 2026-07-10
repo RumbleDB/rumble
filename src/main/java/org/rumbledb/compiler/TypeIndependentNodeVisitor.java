@@ -14,6 +14,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
@@ -23,7 +24,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -426,6 +427,18 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     }
 
     @Override
+    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
+        NodeSetExpression result = new NodeSetExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
+    }
+
+    @Override
     public Node visitStringConcatExpr(StringConcatExpression expression, Node argument) {
         StringConcatExpression result = new StringConcatExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
@@ -582,16 +595,13 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
 
     @Override
     public Node visitTryCatchExpression(TryCatchExpression expression, Node argument) {
-        Map<String, Expression> catchExpressions = new HashMap<>();
-        for (String key : expression.getCatchExpressions().keySet()) {
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
+        for (CatchPattern key : expression.getCatchExpressions().keySet()) {
             catchExpressions.put(key, (Expression) visit(expression.getCatchExpressions().get(key), argument));
         }
         TryCatchExpression result = new TryCatchExpression(
                 (Expression) visit(expression.getTryExpression(), argument),
                 catchExpressions,
-                (expression.getExpressionCatchingAll() == null)
-                    ? expression.getExpressionCatchingAll()
-                    : (Expression) visit(expression.getExpressionCatchingAll(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
