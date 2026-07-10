@@ -2,6 +2,7 @@ package org.rumbledb.expressions.flowr;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,7 +34,7 @@ public class WindowClause extends Clause {
             Name previousItem,
             Name nextItem) {
         public List<Name> names() {
-            return java.util.stream.Stream.of(currentItem, position, previousItem, nextItem)
+            return Stream.of(this.currentItem, this.position, this.previousItem, this.nextItem)
                 .filter(name -> name != null)
                 .toList();
         }
