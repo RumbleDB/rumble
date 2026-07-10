@@ -82,9 +82,9 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         if (this.content != null) {
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
-            boolean previousItemWasAtomic = false;
 
             for (RuntimeIterator iterator : this.content) {
+                boolean previousItemWasAtomic = false;
                 iterator.open(contextToUse);
                 while (iterator.hasNext()) {
                     Item item = iterator.next();
