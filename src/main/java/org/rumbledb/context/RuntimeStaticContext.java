@@ -3,6 +3,7 @@ package org.rumbledb.context;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -20,7 +21,9 @@ public class RuntimeStaticContext implements Serializable {
     private ExecutionMode executionMode;
     private ExceptionMetadata metadata;
     private final Map<String, String> staticallyKnownNamespaces;
+    private final Set<String> staticallyKnownCollations;
     private final SerializationParameters serializationParameters;
+    private final String defaultCollation;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
     private boolean isQuerySideEffecting;
@@ -35,6 +38,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  executionMode: ").append(this.executionMode).append("\n");
         sb.append("  metadata: ").append(this.metadata).append("\n");
         sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
+        sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
+        sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
@@ -52,9 +57,11 @@ public class RuntimeStaticContext implements Serializable {
         this.executionMode = oldContext.executionMode;
         this.metadata = oldContext.metadata;
         this.staticallyKnownNamespaces = oldContext.staticallyKnownNamespaces;
+        this.staticallyKnownCollations = oldContext.staticallyKnownCollations;
         this.decimalFormats = oldContext.decimalFormats;
         this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
         this.serializationParameters = oldContext.serializationParameters;
+        this.defaultCollation = oldContext.defaultCollation;
         this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
     }
 
@@ -85,10 +92,16 @@ public class RuntimeStaticContext implements Serializable {
         this.staticallyKnownNamespaces = staticContext == null
             ? Collections.emptyMap()
             : staticContext.getInScopeNamespaceBindings();
+        this.staticallyKnownCollations = staticContext == null
+            ? CollationCatalogue.defaultStaticallyKnownCollations()
+            : staticContext.getStaticallyKnownCollations();
         this.queryLanguage = staticContext == null ? null : staticContext.getQueryLanguage();
         this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
         this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
         this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
+        this.defaultCollation = staticContext == null
+            ? CollationCatalogue.CODEPOINT_COLLATION
+            : staticContext.getDefaultCollation();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
     }
 
@@ -155,6 +168,20 @@ public class RuntimeStaticContext implements Serializable {
             return Collections.emptyMap();
         }
         return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
+    }
+
+    public Set<String> getStaticallyKnownCollations() {
+        if (this.staticallyKnownCollations == null) {
+            return CollationCatalogue.defaultStaticallyKnownCollations();
+        }
+        return Collections.unmodifiableSet(this.staticallyKnownCollations);
+    }
+
+    public String getDefaultCollation() {
+        if (this.defaultCollation == null) {
+            return CollationCatalogue.CODEPOINT_COLLATION;
+        }
+        return this.defaultCollation;
     }
 
     public SerializationParameters getSerializationParameters() {
