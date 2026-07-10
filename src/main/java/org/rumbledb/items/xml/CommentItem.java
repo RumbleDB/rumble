@@ -32,6 +32,11 @@ public class CommentItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new CommentItem(this.content);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -99,10 +104,9 @@ public class CommentItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof CommentItem)) {
+        if (!(other instanceof CommentItem otherComment)) {
             return false;
         }
-        CommentItem otherComment = (CommentItem) other;
         return this.getXmlDocumentPosition() != null
             && this.getXmlDocumentPosition().equals(otherComment.getXmlDocumentPosition());
     }
@@ -216,4 +220,3 @@ public class CommentItem implements Item {
         return Collections.emptyList();
     }
 }
-

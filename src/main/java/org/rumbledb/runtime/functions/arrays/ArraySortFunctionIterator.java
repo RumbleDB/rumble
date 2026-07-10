@@ -18,10 +18,14 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -40,11 +44,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:sort}:
@@ -118,12 +117,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             rows.add(new SortRow(new ArrayList<>(member), keys));
         }
 
-        RuntimeStaticContext sortStaticContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext sortStaticContext = localStaticContext();
         Comparator<SortRow> cmp = (r1, r2) -> {
             if (SortKeyComparison.sortKeysDeepEqual(r1.keys, r2.keys, collationUri, sortStaticContext)) {
                 return 0;
@@ -146,19 +140,21 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : sortedMembers) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance().createArrayItem(items, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(sortedMembers, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
-            return Name.DEFAULT_COLLATION_NS;
+            return getRuntimeStaticContext().getDefaultCollation();
         }
         List<Item> c = this.collationIterator.materialize(context);
         if (c.isEmpty()) {
-            return Name.DEFAULT_COLLATION_NS;
+            return getRuntimeStaticContext().getDefaultCollation();
         }
         if (c.size() != 1 || !c.get(0).isString()) {
             throw new UnexpectedTypeException(
@@ -314,12 +310,10 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        return getRuntimeStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(ExecutionMode.LOCAL)
+            .withMetadata(getMetadata());
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {

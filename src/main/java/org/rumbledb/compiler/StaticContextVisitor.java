@@ -20,8 +20,14 @@
 
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -30,6 +36,7 @@ import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -57,6 +64,7 @@ import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
@@ -80,11 +88,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -111,14 +114,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (argument == null) {
             throw new OurBadException("No static context provided!");
         }
-        if (node instanceof Expression) {
-            ((Expression) node).setStaticContext(argument);
+        if (node instanceof Expression expression) {
+            expression.setStaticContext(argument);
         }
-        if (node instanceof Statement) {
-            ((Statement) node).setStaticContext(argument);
+        if (node instanceof Statement statement) {
+            statement.setStaticContext(argument);
         }
-        if (node instanceof Clause) {
-            ((Clause) node).setStaticContext(argument);
+        if (node instanceof Clause clause) {
+            clause.setStaticContext(argument);
         }
         return node.accept(this, argument);
     }
@@ -674,6 +677,34 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
         this.visit(clause.getReturnStatement(), argument);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
+        StaticContext tryContext = new StaticContext(argument);
+        this.visit(statement.getTryStatement(), tryContext);
+
+        for (BlockStatement catchBlock : statement.getCatchStatements().values()) {
+            StaticContext catchContext = new StaticContext(argument);
+            ErrorVariables.injectStaticContext(catchContext, catchBlock.getMetadata());
+            this.visit(catchBlock, catchContext);
+        }
+
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTryCatchExpression(TryCatchExpression expression, StaticContext argument) {
+        StaticContext tryContext = new StaticContext(argument);
+        this.visit(expression.getTryExpression(), tryContext);
+
+        for (Expression catchExpr : expression.getCatchExpressions().values()) {
+            StaticContext catchContext = new StaticContext(argument);
+            ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
+            this.visit(catchExpr, catchContext);
+        }
+
         return argument;
     }
 }

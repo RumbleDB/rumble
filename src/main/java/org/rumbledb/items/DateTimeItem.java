@@ -1,11 +1,10 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
@@ -14,9 +13,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class DateTimeItem implements Item {
 
@@ -27,7 +30,6 @@ public class DateTimeItem implements Item {
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    @SuppressWarnings("unused")
     public DateTimeItem() {
         super();
     }
@@ -40,6 +42,11 @@ public class DateTimeItem implements Item {
 
     public DateTimeItem(String dateTimeString) {
         getDateTimeFromString(dateTimeString);
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DateTimeItem(this.value, this.hasTimeZone);
     }
 
     private void getDateTimeFromString(String dateTimeString) {
@@ -90,11 +97,11 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

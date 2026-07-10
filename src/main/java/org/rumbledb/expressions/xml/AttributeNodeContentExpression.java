@@ -60,7 +60,7 @@ public class AttributeNodeContentExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         // just append the content as is
         // this is not a string literal, but it's only used in the context of computed attribute nodes

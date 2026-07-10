@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -8,6 +9,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -93,8 +95,25 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private Item checkTypePromotion(Item item) {
-        if (item.isFunction()) {
+        if (
+            item.isFunction()
+                && item.getIdentifier() != null
+                && item.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())
+        ) {
             return item;
+        }
+        if (
+            (item.isFunction() || item.isMap() || item.isArray())
+                && this.itemType.isFunctionItemType()
+                && this.itemType.getSignature() != null
+        ) {
+            return FunctionCoercion.coerceToFunctionItem(
+                item,
+                this.itemType,
+                getRuntimeStaticContext(),
+                this.exceptionMessage
+            );
         }
         if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());

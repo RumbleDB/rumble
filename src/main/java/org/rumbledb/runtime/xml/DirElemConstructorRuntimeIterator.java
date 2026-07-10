@@ -27,6 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
@@ -203,8 +204,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             // This is the top-level runtime iterator - set XML document positions recursively
-            // Use the hash code of the runtime iterator object as the path to track the identity of constructed objects
-            String documentPath = String.valueOf(this.hashCode());
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             elementItem.setXmlDocumentPosition(documentPath, 0);
         }
 

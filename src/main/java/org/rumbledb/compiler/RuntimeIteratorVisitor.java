@@ -47,6 +47,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
@@ -69,6 +70,7 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -163,13 +165,13 @@ import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.control.TryCatchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
-import org.rumbledb.runtime.flwor.clauses.CountClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.CountClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.GroupByClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.ReturnClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.WhereClauseIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
@@ -184,6 +186,7 @@ import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.misc.NodeSetOperationIterator;
 import org.rumbledb.runtime.misc.StringConcatIterator;
 import org.rumbledb.runtime.navigation.ArrayLookupIterator;
 import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
@@ -320,7 +323,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             argument
         );
         ReturnClause returnClause = expression.getReturnClause();
-        RuntimeIterator runtimeIterator = new ReturnClauseSparkIterator(
+        RuntimeIterator runtimeIterator = new ReturnClauseIterator(
                 previous,
                 this.visit(
                     returnClause.getReturnExpr(),
@@ -347,10 +350,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause.getPreviousClause() != null) {
             previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
-        if (clause instanceof ForClause) {
-            ForClause forClause = (ForClause) clause;
+        if (clause instanceof ForClause forClause) {
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
-            return new ForClauseSparkIterator(
+            return new ForClauseIterator(
                     previousIterator,
                     forClause.getVariableName(),
                     forClause.getPositionalVariableName(),
@@ -358,19 +360,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     assignmentIterator,
                     forClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof LetClause) {
-            LetClause letClause = (LetClause) clause;
+        } else if (clause instanceof LetClause letClause) {
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
-            return new LetClauseSparkIterator(
+            return new LetClauseIterator(
                     previousIterator,
                     letClause.getVariableName(),
                     letClause.getStaticType(),
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof GroupByClause) {
+        } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : groupByClause.getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -387,14 +388,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            return new GroupByClauseSparkIterator(
+            return new GroupByClauseIterator(
                     previousIterator,
                     groupingExpressions,
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof OrderByClause) {
+        } else if (clause instanceof OrderByClause orderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
+            for (OrderByClauseSortingKey orderExpr : orderByClause.getSortingKeys()) {
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
                 if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
                     if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
@@ -412,22 +413,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            return new OrderByClauseSparkIterator(
+            return new OrderByClauseIterator(
                     previousIterator,
                     expressionsWithIterator,
-                    ((OrderByClause) clause).isStable(),
+                    orderByClause.isStable(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof WhereClause) {
-            return new WhereClauseSparkIterator(
+        } else if (clause instanceof WhereClause whereClause) {
+            return new WhereClauseIterator(
                     previousIterator,
-                    this.visit(((WhereClause) clause).getWhereExpression(), argument),
+                    this.visit(whereClause.getWhereExpression(), argument),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
-        } else if (clause instanceof CountClause) {
-            return new CountClauseSparkIterator(
+        } else if (clause instanceof CountClause countClause) {
+            return new CountClauseIterator(
                     previousIterator,
-                    ((CountClause) clause).getCountVariableName(),
+                    countClause.getCountVariableName(),
                     clause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
@@ -551,7 +552,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 modifyIterator,
                 returnIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
-                expression.getMutabilityLevel()
+                expression.getMutabilityLevel(),
+                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
 
@@ -722,22 +724,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Expression predicateExpression = expression.getPredicateExpression();
 
         // if we have a int in the predicate we can optimize to a SequenceLookupIterator
-        if (predicateExpression instanceof IntegerLiteralExpression) {
-            String lexicalValue = ((IntegerLiteralExpression) predicateExpression).getLexicalValue();
+        if (predicateExpression instanceof IntegerLiteralExpression integerLiteral) {
+            String lexicalValue = integerLiteral.getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
                 return getSequenceLookupIterator(expression, mainIterator, n);
             }
         }
 
-        if (predicateExpression instanceof DecimalLiteralExpression) {
-            if (((DecimalLiteralExpression) predicateExpression).isIntValue()) {
-                int n = ((DecimalLiteralExpression) predicateExpression).getValue().intValue();
+        if (predicateExpression instanceof DecimalLiteralExpression decimalLiteral) {
+            if (decimalLiteral.isIntValue()) {
+                int n = decimalLiteral.getValue().intValue();
                 return getSequenceLookupIterator(expression, mainIterator, n);
             }
 
             // if decimal has digits to the right of the decimal point, return empty sequence according to spec
-            if (((DecimalLiteralExpression) predicateExpression).getValue().stripTrailingZeros().scale() > 0) {
+            if (decimalLiteral.getValue().stripTrailingZeros().scale() > 0) {
                 return new EmptySequenceIterator(
                         expression.getStaticContextForRuntime(this.config, this.visitorConfig)
                 );
@@ -745,26 +747,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
 
         if (
-            predicateExpression instanceof ComparisonExpression
-                && ((ComparisonExpression) predicateExpression).getComparisonOperator()
+            predicateExpression instanceof ComparisonExpression comparisonExpression
+                && comparisonExpression.getComparisonOperator()
                     .toString()
                     .equals("eq")
         ) {
-            Node left = predicateExpression.getChildren().get(0);
-            Node right = predicateExpression.getChildren().get(1);
+            Node left = comparisonExpression.getChildren().get(0);
+            Node right = comparisonExpression.getChildren().get(1);
 
             Node intLiteral = null;
             if (
-                left instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
+                left instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")
             ) {
                 if (right instanceof IntegerLiteralExpression) {
                     intLiteral = right;
                 }
             }
             if (
-                right instanceof FunctionCallExpression
-                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
+                right instanceof FunctionCallExpression functionCall
+                    && functionCall.getFunctionName().getLocalName().equals("position")
             ) {
                 if (left instanceof IntegerLiteralExpression) {
                     intLiteral = left;
@@ -911,7 +913,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ArrayRuntimeIterator(
                     memberIterators,
                     true,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         } else {
             RuntimeIterator result = null;
@@ -920,7 +923,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             }
             runtimeIterator = new ArrayRuntimeIterator(
                     result,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
         }
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -936,7 +940,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         .stream()
                         .map(arg -> this.visit(arg, argument))
                         .collect(Collectors.toList()),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
@@ -952,7 +957,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
             );
             runtimeIterator.setStaticContext(expression.getStaticContext());
             return runtimeIterator;
@@ -969,10 +975,36 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             .stream()
             .map(arg -> this.visit(arg, argument))
             .collect(Collectors.toList());
+        List<SequenceType> keyTypes = expression.getKeys()
+            .stream()
+            .map(arg -> arg.getStaticSequenceType())
+            .filter(
+                arg -> !arg.getArity().equals(SequenceType.Arity.One)
+                    || !arg.getItemType().isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+            )
+            .collect(Collectors.toList());
+        List<SequenceType> valueTypes = expression.getValues()
+            .stream()
+            .map(arg -> arg.getStaticSequenceType())
+            .filter(
+                arg -> !arg.getArity().equals(SequenceType.Arity.One)
+            )
+            .collect(Collectors.toList());
+        if (keyTypes.isEmpty() && valueTypes.isEmpty()) {
+            RuntimeIterator runtimeIterator = new ObjectConstructorRuntimeIterator(
+                    keys,
+                    values,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                    expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
+            );
+            runtimeIterator.setStaticContext(expression.getStaticContext());
+            return runtimeIterator;
+        }
         RuntimeIterator runtimeIterator = new MapConstructorRuntimeIterator(
                 keys,
                 values,
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig),
+                expression.isInSequentialBlock() || expression.getStaticContext().isQuerySideEffecting()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -1294,9 +1326,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
+        String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
@@ -1324,9 +1357,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             NamedFunctionReferenceExpression expression,
             RuntimeIterator argument
     ) {
-        FunctionIdentifier identifier = expression.getIdentifier();
         RuntimeIterator runtimeIterator = new NamedFunctionRefRuntimeIterator(
-                identifier,
+                expression.getIdentifier(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
@@ -1544,6 +1576,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitNodeSetExpr(NodeSetExpression expression, RuntimeIterator argument) {
+        RuntimeIterator left = this.visit(expression.getLeftExpression(), argument);
+        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator runtimeIterator = new NodeSetOperationIterator(
+                left,
+                right,
+                expression.getOperator(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
@@ -1745,28 +1791,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
-        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
-        for (String code : expression.getErrorsCaught()) {
+        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (CatchPattern pattern : expression.getCatchPatterns()) {
             cases.put(
-                code,
-                this.visit(expression.getExpressionCatching(code), argument)
+                pattern,
+                this.visit(expression.getExpressionCatching(pattern), argument)
             );
         }
-        if (expression.getExpressionCatchingAll() == null) {
-            return new TryCatchRuntimeIterator(
-                    this.visit(expression.getTryExpression(), argument),
-                    cases,
-                    null,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        } else {
-            return new TryCatchRuntimeIterator(
-                    this.visit(expression.getTryExpression(), argument),
-                    cases,
-                    this.visit(expression.getExpressionCatchingAll(), argument),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        }
+        return new TryCatchRuntimeIterator(
+                this.visit(expression.getTryExpression(), argument),
+                cases,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
     }
 
     @Override
@@ -1850,28 +1886,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTryCatchStatement(TryCatchStatement statement, RuntimeIterator argument) {
-        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
-        for (String code : statement.getErrorsCaught()) {
+        Map<CatchPattern, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (CatchPattern pattern : statement.getCatchPatterns()) {
             cases.put(
-                code,
-                this.visit(statement.getBlockStatementCatching(code), argument)
+                pattern,
+                this.visit(statement.getBlockStatementCatching(pattern), argument)
             );
         }
-        if (statement.getCatchAllStatement() == null) {
-            return new TryCatchStatementIterator(
-                    this.visit(statement.getTryStatement(), argument),
-                    cases,
-                    null,
-                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        } else {
-            return new TryCatchStatementIterator(
-                    this.visit(statement.getTryStatement(), argument),
-                    cases,
-                    this.visit(statement.getCatchAllStatement(), argument),
-                    statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-            );
-        }
+        return new TryCatchStatementIterator(
+                this.visit(statement.getTryStatement(), argument),
+                cases,
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
     }
 
     @Override
@@ -1992,6 +2018,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitProgram(Program program, RuntimeIterator argument) {
+        if (program.isSequential() || program.isUpdating()) {
+            program.getStatementsAndOptionalExpr().getStaticContext().setIsQuerySideEffecting(true);
+        }
         return new ProgramIterator(
                 this.visit(program.getStatementsAndOptionalExpr(), argument),
                 program.getStatementsAndOptionalExpr().getStaticContextForRuntime(this.config, this.visitorConfig)

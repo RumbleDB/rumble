@@ -20,19 +20,19 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.net.URI;
+import java.net.URISyntaxException;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public class AnyURIItem implements Item {
 
@@ -50,11 +50,16 @@ public class AnyURIItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public Item copy(boolean mutable) {
+        return new AnyURIItem(this.value.toString());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -75,17 +80,17 @@ public class AnyURIItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.getValue().toString();
+        return this.value.toString();
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.getStringValue().isEmpty();
+        return !this.value.toString().isEmpty();
     }
 
     @Override
     public int hashCode() {
-        return this.getValue().hashCode();
+        return this.value.hashCode();
     }
 
     public URI getValue() {

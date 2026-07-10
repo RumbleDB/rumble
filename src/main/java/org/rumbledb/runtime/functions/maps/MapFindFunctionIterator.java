@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,9 +34,6 @@ import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
@@ -86,18 +86,19 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
 
         List<Item> inputItems = this.inputIterator.materialize(context);
-        List<Item> foundMembers = new ArrayList<>();
+        List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
-        this.resultItem = ItemFactory.getInstance().createArrayItem(foundMembers, false);
+        this.resultItem = ItemFactory.getInstance()
+            .createSequenceArrayItem(foundMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private void scanItems(List<Item> items, Item lookupKey, List<Item> foundMembers) {
+    private void scanItems(List<Item> items, Item lookupKey, List<List<Item>> foundMembers) {
         for (Item item : items) {
             scanItem(item, lookupKey, foundMembers);
         }
     }
 
-    private void scanItem(Item item, Item lookupKey, List<Item> foundMembers) {
+    private void scanItem(Item item, Item lookupKey, List<List<Item>> foundMembers) {
         if (item == null) {
             return;
         }
@@ -109,13 +110,9 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
                 List<Item> valueSequence = valueSequences.get(i);
                 if (MapAtomicSameKey.sameKey(keys.get(i), lookupKey)) {
                     if (valueSequence == null || valueSequence.isEmpty()) {
-                        foundMembers.add(ItemFactory.getInstance().createArrayItem());
-                    } else if (valueSequence.size() == 1) {
-                        foundMembers.add(valueSequence.get(0));
+                        foundMembers.add(new ArrayList<>());
                     } else {
-                        foundMembers.add(
-                            ItemFactory.getInstance().createArrayItem(new ArrayList<>(valueSequence), false)
-                        );
+                        foundMembers.add(new ArrayList<>(valueSequence));
                     }
                 }
                 if (valueSequence != null && !valueSequence.isEmpty()) {
@@ -126,7 +123,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (item.isArray()) {
-            scanItems(item.getItems(), lookupKey, foundMembers);
+            scanItems(item.getItemMembers(), lookupKey, foundMembers);
         }
     }
 

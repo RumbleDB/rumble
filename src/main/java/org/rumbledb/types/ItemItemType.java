@@ -1,9 +1,9 @@
 package org.rumbledb.types;
 
+import java.util.Set;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
-
-import java.util.Set;
 
 /**
  * Class representing the generic 'item' item type
@@ -37,10 +37,10 @@ public class ItemItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -91,5 +91,10 @@ public class ItemItemType implements ItemType {
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
+    }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
     }
 }

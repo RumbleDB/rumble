@@ -12,7 +12,7 @@ try {
       [ "foo", "bar" ],
       [ "foo", "bar", 1, 2, 3 ]
     }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
     "Success"
 }
 

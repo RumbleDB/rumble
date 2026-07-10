@@ -114,7 +114,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
 
-        for (String objectKey : objItem.getKeys()) {
+        for (String objectKey : objItem.getStringKeys()) {
             if (!removalKeys.contains(objectKey)) {
                 finalKeylist.add(objectKey);
                 finalValueList.add(objItem.getItemByKey(objectKey));

@@ -48,11 +48,15 @@ public class QNameItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new QNameItem(this.name);
+    }
+
+    @Override
     public boolean equals(Object other) {
-        if (!(other instanceof Item)) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item otherItem = (Item) other;
         if (!otherItem.isQName()) {
             return false;
         }

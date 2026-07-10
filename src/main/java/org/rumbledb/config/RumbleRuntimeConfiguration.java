@@ -25,7 +25,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
 import org.rumbledb.serialization.SerializationParameters;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -41,6 +40,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
@@ -307,16 +307,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.checkReturnTypeOfBuiltinFunctions;
     }
 
-    /**
-     * Set whether the return type of built-in functions is checked.
-     * 
-     * @param checkReturnTypeOfBuiltinFunctions whether the return type of built-in functions is checked.
-     */
-    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
-        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
-        return this;
-    }
-
     public void init() {
         Map<String, String> serializationOverrides = new HashMap<>();
         for (Map.Entry<String, String> entry : this.arguments.entrySet()) {
@@ -520,7 +510,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         if (this.arguments.containsKey("default-language")) {
             this.queryLanguage = this.arguments.get("default-language");
         } else {
-            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future // TODO KEEP
         }
 
         if (this.arguments.containsKey("static-base-uri")) {
@@ -546,13 +536,50 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         if (this.arguments.containsKey("xml-version")) {
             String xmlVersion = this.arguments.get("xml-version").trim();
-            if (!(xmlVersion.equals("1.0") || xmlVersion.equals("1.1"))) {
-                throw new CliException(
+            try {
+                setXmlVersion(xmlVersion);
+            } catch (Exception e) {
+                CliException ex = new CliException(
                         "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
                 );
+                ex.initCause(e);
+                throw ex;
             }
-            this.xmlVersion = xmlVersion;
         }
+        if (this.arguments.containsKey("default-formatting-calendar")) {
+            String defaultCalendar = this.arguments.get("default-formatting-calendar").trim();
+            try {
+                setDefaultFormattingCalendar(defaultCalendar);
+            } catch (Exception e) {
+                CliException ex = new CliException(
+                        "Invalid argument supplied for default-formatting-calendar: " + defaultCalendar
+                );
+                ex.initCause(e);
+                throw ex;
+            }
+        }
+        if (this.arguments.containsKey("default-formatting-language")) {
+            String defaultLanguage = this.arguments.get("default-formatting-language").trim();
+            try {
+                setDefaultFormattingLanguage(defaultLanguage);
+            } catch (Exception e) {
+                CliException ex = new CliException(
+                        "Invalid argument supplied for default-formatting-language: " + defaultLanguage
+                );
+                ex.initCause(e);
+                throw ex;
+            }
+        }
+    }
+
+    /**
+     * Set whether the return type of built-in functions is checked.
+     *
+     * @param checkReturnTypeOfBuiltinFunctions whether the return type of built-in functions is checked.
+     */
+    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
+        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
+        return this;
     }
 
     /**
@@ -1086,7 +1113,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     /**
      * Sets the version of the query language to use.
-     * Possible values: jsoniq10, jsoniq31, xquery30, xquery31.
+     * Possible values: jsoniq10, jsoniq40, jsoniq31, xquery30, xquery31.
      *
      * @param version the version of the query language to use.
      */
@@ -1183,7 +1210,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      */
     @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         sb.append(
             "App name: "
                 + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")
@@ -1268,12 +1295,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.arguments = kryo.readObject(input, HashMap.class);
     }
 
-    private String xmlVersion = XMLUtils.defaultXMLVersion();
+    public static final String DEFAULT_XML_VERSION = "1.1";
+
+    private String xmlVersion = DEFAULT_XML_VERSION;
 
     /**
      * Returns the configured XML version.
      *
-     * @return the XML version (e.g., "1.0" or "1.1")
+     * <p>
+     * The default XML version is {@code "1.1"}.
+     * </p>
+     *
+     * @return the XML version, for example {@code "1.0"} or {@code "1.1"}
      */
     public String getXmlVersion() {
         return this.xmlVersion;
@@ -1282,10 +1315,104 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     /**
      * Sets the XML version to use.
      *
-     * @param v the XML version (e.g., "1.0" or "1.1")
+     * @param version the XML version (e.g., "1.0" or "1.1")
      */
-    public void setXmlVersion(String v) {
-        this.xmlVersion = v;
+    public void setXmlVersion(String version) {
+        if (version == null || !(version.equals("1.0") || version.equals("1.1"))) {
+            throw new IllegalArgumentException("Invalid xml-version");
+        }
+        this.xmlVersion = version;
+    }
+
+
+    private String defaultFormattingCalendar = FormattingCalendarModeSupport.DEFAULT;
+
+    /**
+     * Returns the default calendar used for formatting date and time values.
+     *
+     * <p>
+     * The default calendar is used by date/time formatting functions when no explicit
+     * calendar is supplied. The initial default is
+     * {@link FormattingCalendarModeSupport#DEFAULT}.
+     * </p>
+     *
+     * @return the default formatting calendar
+     */
+    public String getDefaultFormattingCalendar() {
+        return this.defaultFormattingCalendar;
+    }
+
+    /**
+     * Sets the default calendar used for formatting date and time values.
+     *
+     * <p>
+     * The calendar value is used by date/time formatting functions when no explicit
+     * calendar is supplied. Calendar data is resolved by the ICU formatting backend;
+     * valid but unsupported designators fall back at render time.
+     * </p>
+     *
+     * @param calendar the default formatting calendar; must not be {@code null}
+     * @throws NullPointerException if {@code calendar} is {@code null}
+     * @throws IllegalArgumentException if {@code calendar} is syntactically invalid
+     */
+    private void setDefaultFormattingCalendar(String calendar) {
+        Objects.requireNonNull(calendar, "calendar");
+
+        String normalized = org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport
+            .normalizeKnownCalendarMode(calendar);
+
+        if (!FormattingCalendarModeSupport.isValidFormattingCalendar(normalized)) {
+            throw new IllegalArgumentException("Unsupported default formatting calendar: " + calendar);
+        }
+
+        this.defaultFormattingCalendar = normalized;
+    }
+
+
+    private String defaultFormattingLanguage = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
+
+    /**
+     * Returns the default language used for formatting date and time values.
+     *
+     * <p>
+     * The default language is used by date/time formatting functions when no explicit
+     * language is supplied. The initial default is
+     * {@link FormattingLanguageSupport#DEFAULT_FORMATTING_LANGUAGE}.
+     * </p>
+     *
+     * @return the default formatting language
+     */
+    public String getDefaultFormattingLanguage() {
+        return this.defaultFormattingLanguage;
+    }
+
+    /**
+     * Sets the default language used for formatting date and time values.
+     *
+     * <p>
+     * The value is a language code as defined by the type xs:language. This value is used by
+     * date/time formatting functions when no explicit language is supplied. The
+     * language must be accepted by {@link FormattingLanguageSupport}. Locale data is
+     * resolved by the ICU formatting backend.
+     * </p>
+     *
+     * @param language the default formatting language as an ISO 639-1 language code;
+     *        must not be {@code null}
+     * @throws NullPointerException if {@code language} is {@code null}
+     * @throws IllegalArgumentException if {@code language} is syntactically invalid
+     */
+    public void setDefaultFormattingLanguage(String language) {
+        Objects.requireNonNull(language, "language");
+
+        String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
+            language
+        );
+
+        if (!FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
+            throw new IllegalArgumentException("Unsupported default formatting language: " + language);
+        }
+
+        this.defaultFormattingLanguage = normalized;
     }
 
     /**

@@ -91,7 +91,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isObject()) {
-                this.nextResults.addAll(item.getValues());
+                this.nextResults.addAll(item.getItemValues());
                 if (!(this.nextResults.isEmpty())) {
                     break;
                 }

@@ -164,7 +164,7 @@ public class PendingUpdateList {
         Map<Item, List<Item>> tempSelSrcListMap;
         Item tempSrc;
 
-        ////// OBJECTS
+        // OBJECTS
 
         // DELETES & REPLACES
         for (Item target : this.delReplaceObjMap.keySet()) {
@@ -200,7 +200,7 @@ public class PendingUpdateList {
             }
         }
 
-        ////// ARRAYS
+        // ARRAYS
 
         // DELETES & REPLACES
 
@@ -242,13 +242,13 @@ public class PendingUpdateList {
             targetArrayPULs.put(target, tempSelPULsMap);
         }
 
-        ////// APPLY OBJECTS
+        // APPLY OBJECTS
 
         for (UpdatePrimitive updatePrimitive : objectPUL) {
             updatePrimitive.apply();
         }
 
-        ////// APPLY ARRAYS
+        // APPLY ARRAYS
         for (Item target : targetArrayPULs.keySet()) {
             tempSelPULsMap = targetArrayPULs.get(target);
             for (Item selector : tempSelPULsMap.keySet()) {
@@ -259,26 +259,26 @@ public class PendingUpdateList {
             }
         }
 
-        ////// APPLY INSERT TUPLE
+        // APPLY INSERT TUPLE
         this.insertBeforeList.forEach(UpdatePrimitive::apply);
         this.insertAfterList.forEach(UpdatePrimitive::apply);
         this.insertFirstList.forEach(UpdatePrimitive::apply);
         this.insertLastList.forEach(UpdatePrimitive::apply);
 
-        ////// APPLY EDIT TUPLE
+        // APPLY EDIT TUPLE
         for (Map<Double, UpdatePrimitive> tables : this.editTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
-        ////// APPLY DELETE TUPLE
+        // APPLY DELETE TUPLE
         for (Map<Double, UpdatePrimitive> tables : this.deleteTupleMap.values()) {
             tables.values().forEach(UpdatePrimitive::apply);
         }
 
-        ////// APPLY CREATE COLLECTION
+        // APPLY CREATE COLLECTION
         this.createCollectionMap.values().forEach(UpdatePrimitive::apply);
 
-        ////// APPLY TRUNCATE COLLECTION
+        // APPLY TRUNCATE COLLECTION
         this.truncateCollectionMap.values().forEach(UpdatePrimitive::apply);
 
     }
@@ -292,7 +292,7 @@ public class PendingUpdateList {
         Item tempSrcRes;
         List<Item> tempSrcList;
 
-        ////// OBJECTS
+        // OBJECTS
 
         // DELETES & REPLACES
         for (Item target : otherPul.delReplaceObjMap.keySet()) {
@@ -312,7 +312,7 @@ public class PendingUpdateList {
                 } else {
                     if (srcResMapHasSel && tempSrcRes != null) {
                         throw new TooManyReplacesOnSameTargetSelectorException(
-                                target.getDynamicType().getName().toString(),
+                                target.getDynamicType().getName(),
                                 selector.getStringValue(),
                                 metadata
                         );
@@ -354,7 +354,7 @@ public class PendingUpdateList {
             this.renameObjMap.put(target, tempSelSrcResMap);
         }
 
-        ////// ARRAYS
+        // ARRAYS
 
         // DELETES & REPLACES
         for (Item target : otherPul.delReplaceArrayMap.keySet()) {
@@ -370,7 +370,7 @@ public class PendingUpdateList {
                         continue;
                     } else {
                         throw new TooManyReplacesOnSameTargetSelectorException(
-                                target.getDynamicType().getName().toString(),
+                                target.getDynamicType().getName(),
                                 Integer.toString(selector.getIntValue()),
                                 metadata
                         );

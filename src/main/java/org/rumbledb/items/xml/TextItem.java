@@ -37,6 +37,11 @@ public class TextItem implements Item {
     }
 
     @Override
+    public Item copy(boolean mutable) {
+        return new TextItem(this.content);
+    }
+
+    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -54,10 +59,9 @@ public class TextItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof TextItem)) {
+        if (!(other instanceof TextItem otherTextItem)) {
             return false;
         }
-        TextItem otherTextItem = (TextItem) other;
         return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
     }
 

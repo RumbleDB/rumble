@@ -161,7 +161,6 @@ public class ComparisonExpression extends Expression {
     private Expression leftExpression;
     private Expression rightExpression;
     private ComparisonOperator comparisonOperator;
-    private ComparisonOperator originalComparisonOperator;
 
     public ComparisonExpression(
             Expression leftExpression,
@@ -173,7 +172,6 @@ public class ComparisonExpression extends Expression {
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
         this.comparisonOperator = comparisonOperator;
-        this.originalComparisonOperator = comparisonOperator;
     }
 
     @Override
@@ -190,15 +188,7 @@ public class ComparisonExpression extends Expression {
         return this.comparisonOperator;
     }
 
-    public ComparisonOperator getOriginalComparisonOperator() {
-        return this.originalComparisonOperator;
-    }
-
-    public void setOriginalComparisonOperator(ComparisonOperator originalComparisonOperator) {
-        this.originalComparisonOperator = originalComparisonOperator;
-    }
-
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -214,7 +204,7 @@ public class ComparisonExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

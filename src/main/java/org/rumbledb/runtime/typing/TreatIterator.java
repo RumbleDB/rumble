@@ -251,11 +251,15 @@ public class TreatIterator extends HybridRuntimeIterator {
      * @param itemType the dynamic type of these values.
      * @return
      */
-    public static JSoundDataFrame convertToDataFrame(JavaRDD<?> rdd, ItemType itemType) {
+    public static JSoundDataFrame convertToDataFrame(
+            JavaRDD<?> rdd,
+            ItemType itemType,
+            RuntimeStaticContext staticContext
+    ) {
         List<StructField> fields = Collections.singletonList(
             DataTypes.createStructField(
                 SparkSessionManager.nonObjectJSONiqItemColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(itemType),
+                TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext),
                 true
             )
         );

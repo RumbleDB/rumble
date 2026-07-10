@@ -289,9 +289,9 @@ additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicat
 
 multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
-unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
+unionExpr: main_expr=intersectExceptExpr ( op+=(KW_UNION | VBAR) rhs+=intersectExceptExpr)* ;
 
-intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
+intersectExceptExpr: main_expr=instanceOfExpr ( op+=(KW_INTERSECT | KW_EXCEPT) rhs+=instanceOfExpr)* ;
 
 instanceOfExpr: main_expr=isStaticallyExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
@@ -838,7 +838,7 @@ stringLiteral : stringLiteralQuot
               ;
 
 stringContentQuot : ContentChar+
-                  | LBRACE expr? RBRACE?
+                  | stringLiteralTokenContent
                   | RBRACE
                   | DOUBLE_LBRACE
                   | DOUBLE_RBRACE
@@ -847,13 +847,63 @@ stringContentQuot : ContentChar+
                   ;
 
 stringContentApos : ContentChar+
-                  | LBRACE expr? RBRACE?
+                  | stringLiteralTokenContent
                   | RBRACE
                   | DOUBLE_LBRACE
                   | DOUBLE_RBRACE
                   | noQuotesNoBracesNoAmpNoLAng                  
                   | stringLiteralQuot
                   ;
+
+stringLiteralTokenContent :
+                   ( keyword
+                   | IntegerLiteral
+                   | DecimalLiteral
+                   | DoubleLiteral
+                   | PRAGMA
+                   | EQUAL
+                   | HASH
+                   | NOT_EQUAL
+                   | LPAREN
+                   | RPAREN
+                   | LBRACKET
+                   | RBRACKET
+                   | LBRACE
+                   | STAR
+                   | PLUS
+                   | MINUS
+                   | TILDE
+                   | COMMA
+                   | ARROW
+                   | MOD
+                   | DOT
+                   | GRAVE
+                   | DDOT
+                   | COLON
+                   | CARAT
+                   | COLON_EQ
+                   | SEMICOLON
+                   | SLASH
+                   | DSLASH
+                   | BACKSLASH
+                   | COMMENT
+                   | XMLDECL
+                   | PI
+                   | CDATA
+                   | VBAR
+                   | LANGLE
+                   | RANGLE
+                   | QUESTION
+                   | AT
+                   | DOLLAR
+                   | BANG
+                   | FullQName
+                   | URIQualifiedName
+                   | NCNameWithLocalWildcard
+                   | NCNameWithPrefixWildcard
+                   | NCName
+                   )+
+ ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

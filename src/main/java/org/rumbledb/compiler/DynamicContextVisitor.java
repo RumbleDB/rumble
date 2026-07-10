@@ -42,6 +42,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -295,7 +296,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 String inputFormat = this.configuration.getInputFormat(Name.CONTEXT_ITEM);
                 switch (inputFormat) {
                     case "json":
-                        items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                        items.add(parseJSONItem(value, ExceptionMetadata.EMPTY_METADATA));
                         break;
                     case "text":
                         items.add(ItemFactory.getInstance().createStringItem(value));
@@ -377,5 +378,15 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
         }
         return generatedContext;
+    }
+
+    private Item parseJSONItem(String value, ExceptionMetadata metadata) {
+        return ItemParser.getItemFromJSONString(
+            value,
+            JSONParsingOptions.defaultInstance(true),
+            this.configuration.getXmlVersion(),
+            true,
+            metadata
+        );
     }
 }

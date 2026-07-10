@@ -199,8 +199,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
-            if (schema instanceof StructType) {
-                structSchema = (StructType) schema;
+            if (schema instanceof StructType structType) {
+                structSchema = structType;
                 if (
                     Arrays.stream(structSchema.fieldNames())
                         .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
@@ -230,7 +230,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
 
             schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
+            if (!(schema instanceof ArrayType arraySchema)) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
@@ -252,7 +252,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         SequenceType.Arity.OneOrZero
                 )
             );
-            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
+            newContext.setSchema(arraySchema.elementType());
             newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
         }
         return newContext;
@@ -265,8 +265,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
+                .getObjectKeysFacet()
+                .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
@@ -338,17 +338,15 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             hasNonObjectJSONiqItem
                 &&
                 childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .containsKey(SparkSessionManager.tableLocationColumnName)
+                    .getObjectKeysFacet()
+                    .contains(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;

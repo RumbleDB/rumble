@@ -41,7 +41,7 @@ public class VisitorHelpers {
     public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
         RuntimeIterator result = new RuntimeIteratorVisitor(conf).visit(node, null);
         if (conf.isPrintIteratorTree() || conf.debug()) {
-            StringBuffer sb = new StringBuffer();
+            StringBuilder sb = new StringBuilder();
             result.print(sb, 0);
             System.err.println(sb);
         }
@@ -65,6 +65,15 @@ public class VisitorHelpers {
 
     private static MainModule applyTypeIndependentOptimizations(MainModule module, RumbleRuntimeConfiguration conf) {
         MainModule result = module;
+        if (conf.debug()) {
+            System.err.println("***************************************");
+            System.err.println("Builtin Partial Application Rewrite Visitor");
+            System.err.println("***************************************");
+        }
+        result = (MainModule) new BuiltinPartialApplicationRewriteVisitor().visit(result, null);
+        if (conf.debug()) {
+            printTree(result, conf);
+        }
         // Annotate recursive functions as such
         if (conf.debug()) {
             System.err.println("***************************************");
@@ -199,11 +208,14 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
-        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
+        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
+        executionModes.setQueryLanguage(configuration.getQueryLanguage());
+        moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext modulectx = parser.moduleAndThisIsIt().module();
@@ -289,11 +301,11 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                    ExceptionMetadata.fromPoint(
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -312,7 +324,9 @@ public class VisitorHelpers {
         XQueryParser parser = new XQueryParser(xQueryTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
-        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
+        UserDefinedFunctionExecutionModes executionModes = new UserDefinedFunctionExecutionModes();
+        executionModes.setQueryLanguage(configuration.getQueryLanguage());
+        moduleContext.setUserDefinedFunctionsExecutionModes(executionModes);
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
                 moduleContext,
                 true,
@@ -329,6 +343,7 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
+            mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
@@ -342,11 +357,11 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                    ExceptionMetadata.fromPoint(
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -386,13 +401,14 @@ public class VisitorHelpers {
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
+        JsoniqParser parser = new JsoniqParser(jsoniqTokens);
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query, jsoniqTokens);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
@@ -403,11 +419,11 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                    ExceptionMetadata.fromPoint(
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);
@@ -447,11 +463,11 @@ public class VisitorHelpers {
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExceptionMetadata(
-                            uri.toString(),
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine(),
-                            query
+                    ExceptionMetadata.fromPoint(
+                        uri.toString(),
+                        lexer.getLine(),
+                        lexer.getCharPositionInLine(),
+                        query
                     )
             );
             e.initCause(ex);

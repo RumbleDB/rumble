@@ -20,6 +20,10 @@
 
 package org.rumbledb.exceptions;
 
+import java.util.Collections;
+import java.util.List;
+
+import org.rumbledb.api.Item;
 import org.rumbledb.errorcodes.ErrorCode;
 
 
@@ -31,12 +35,14 @@ public class RumbleException extends RuntimeException {
     private static final long serialVersionUID = 1L;
     private final ErrorCode errorCode;
     private final String errorMessage;
+    private final List<Item> errorValue;
     private ExceptionMetadata metadata;
 
     RumbleException(String message) {
         super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
+        this.errorValue = Collections.emptyList();
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
@@ -44,15 +50,24 @@ public class RumbleException extends RuntimeException {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.errorMessage = message;
+        this.errorValue = Collections.emptyList();
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
-
-    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(formatMessage(errorCode, metadata, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
         this.metadata = metadata;
         this.errorMessage = message;
+        this.errorValue = Collections.emptyList();
+    }
+
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata, List<Item> errorValue) {
+        super(formatMessage(errorCode, metadata, message));
+        this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;
+        this.metadata = metadata;
+        this.errorMessage = message;
+        this.errorValue = errorValue == null ? Collections.emptyList() : errorValue;
     }
 
     public RumbleException(String message, ExceptionMetadata metadata) {
@@ -60,10 +75,11 @@ public class RumbleException extends RuntimeException {
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.metadata = metadata;
         this.errorMessage = message;
+        this.errorValue = Collections.emptyList();
     }
 
     private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
-        if (metadata.getTokenLineNumber() == 0) {
+        if (metadata.getStart().line() == 0) {
             return "There was an error."
                 + "\nCode: ["
                 + errorCode
@@ -72,12 +88,12 @@ public class RumbleException extends RuntimeException {
                 + message
                 + "\n"
                 + "Metadata: "
-                + ((metadata != null) ? metadata.toString() : null)
+                + metadata
                 + "\n"
                 + "This code can also be looked up in the documentation and specifications for more information.\n";
         }
         return "There was an error on line "
-            + metadata.getTokenLineNumber()
+            + metadata.getStart().line()
             + " in "
             + metadata.getLocation()
             + ":\n\n"
@@ -89,13 +105,13 @@ public class RumbleException extends RuntimeException {
             + message
             + "\n"
             + "Metadata: "
-            + ((metadata != null) ? metadata.toString() : null)
+            + metadata
             + "\n"
             + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
-    public String getErrorCode() {
-        return this.errorCode.toString();
+    public ErrorCode getErrorCode() {
+        return this.errorCode;
     }
 
     public ExceptionMetadata getMetadata() {
@@ -110,12 +126,16 @@ public class RumbleException extends RuntimeException {
         return this.errorMessage;
     }
 
+    public List<Item> getErrorValue() {
+        return this.errorValue;
+    }
+
     public static RumbleException unnestException(Throwable ex) {
         if (ex instanceof SparkException) {
             Throwable sparkExceptionCause = ex.getCause();
             return unnestException(sparkExceptionCause);
-        } else if (ex instanceof RumbleException) {
-            return (RumbleException) ex;
+        } else if (ex instanceof RumbleException rumbleException) {
+            return rumbleException;
         } else {
             RumbleException e2 = new OurBadException("Unanticipated exception!");
             e2.initCause(ex);

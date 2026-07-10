@@ -23,12 +23,11 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.xml.XMLUtils;
+import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.util.List;
 
@@ -44,41 +43,47 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     }
 
     @Override
+
     public Item materializeFirstItemOrNull(DynamicContext context) {
         String xmlVersion = getConfiguration().getXmlVersion();
-        RuntimeIterator argIter = this.children.get(0);
+        RuntimeIterator argumentIterator = this.children.get(0);
 
-        StringBuilder sb = new StringBuilder();
-        argIter.open(context);
+        argumentIterator.open(context);
         try {
-            while (argIter.hasNext()) {
-                Item item = argIter.next();
-
-                if (!item.isInteger()) {
-                    throw new UnexpectedTypeException("Integer item expected", argIter.getMetadata());
-                }
-                int codepoint;
-
-                try {
-                    codepoint = item.getIntegerValue().intValueExact();
-                } catch (ArithmeticException e) {
-                    throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                            this.children.get(0).getMetadata()
-                    );
-                }
-                if (!XMLUtils.isValidCodePoint(codepoint, xmlVersion)) {
-                    throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                            this.children.get(0).getMetadata()
-                    );
-                }
-                sb.appendCodePoint(codepoint);
-            }
+            return ItemFactory.getInstance().createStringItem(buildStringFromCodepoints(argumentIterator, xmlVersion));
         } finally {
-            argIter.close();
+            argumentIterator.close();
         }
+    }
 
-        return ItemFactory.getInstance().createStringItem(sb.toString());
+    private String buildStringFromCodepoints(RuntimeIterator argumentIterator, String xmlVersion) {
+        StringBuilder sb = new StringBuilder();
+        while (argumentIterator.hasNext()) {
+            Item item = argumentIterator.next();
+
+            int codepoint = extractCodePoint(item);
+
+            if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                        this.children.get(0).getMetadata()
+                );
+            }
+            sb.appendCodePoint(codepoint);
+        }
+        return sb.toString();
+    }
+
+    private int extractCodePoint(Item item) {
+        try {
+            return item.getIntegerValue().intValueExact();
+        } catch (ArithmeticException e) {
+            CodepointNotValidException ex = new CodepointNotValidException(
+                    "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                    this.children.get(0).getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
     }
 }

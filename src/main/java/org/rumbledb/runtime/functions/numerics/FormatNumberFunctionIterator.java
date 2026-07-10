@@ -7,7 +7,7 @@ import org.rumbledb.exceptions.InvalidDecimalFormatName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.formatting.pictures.FormatNumber.NumberPictureFormatter;
+import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.util.List;
 import java.util.Map;
@@ -56,7 +56,7 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
         String result = NumberPictureFormatter.format(
             valueItem,
-            pictureItem,
+            pictureItem.getStringValue(),
             decimalFormat,
             getMetadata()
         );

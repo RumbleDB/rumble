@@ -75,14 +75,14 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof ItemType itemType)) {
             return false;
         }
-        if (((ItemType) other).isXQueryArrayItemType()) {
+        if (itemType.isXQueryArrayItemType()) {
             // delegate to the XQuery array item type equality check
             return other.equals(this);
         }
-        return isEqualTo((ItemType) other);
+        return isEqualTo(itemType);
     }
 
     @Override
@@ -179,20 +179,26 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ArrayItemType)) {
+        if (!(other instanceof ArrayItemType otherArray)) {
             if (other.isArrayItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ArrayItemType otherArray = (ArrayItemType) other;
         if (!this.isResolved() || !otherArray.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
         if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ItemType mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        ItemType mergedContent;
+        if (this.maxLength != null && this.maxLength == 0) {
+            mergedContent = otherArray.content;
+        } else if (otherArray.maxLength != null && otherArray.maxLength == 0) {
+            mergedContent = this.content;
+        } else {
+            mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        }
         Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
         Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
         if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
@@ -258,6 +264,17 @@ public class ArrayItemType implements ItemType {
             sb.append("\"treeDepth\": ");
             sb.append(this.typeTreeDepth);
             sb.append(", ");
+
+            if (this.minLength != null) {
+                sb.append("\"minLength\": ");
+                sb.append(this.minLength);
+                sb.append(", ");
+            }
+            if (this.maxLength != null) {
+                sb.append("\"maxLength\": ");
+                sb.append(this.maxLength);
+                sb.append(", ");
+            }
 
             if (isResolved()) {
                 sb.append("\"content\": ");
@@ -417,21 +434,21 @@ public class ArrayItemType implements ItemType {
 
     private Integer mergeMinLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return second;
+            return null;
         }
         if (second == null) {
-            return first;
+            return null;
         }
-        return Math.max(first, second);
+        return Math.min(first, second);
     }
 
     private Integer mergeMaxLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return second;
+            return null;
         }
         if (second == null) {
-            return first;
+            return null;
         }
-        return Math.min(first, second);
+        return Math.max(first, second);
     }
 }

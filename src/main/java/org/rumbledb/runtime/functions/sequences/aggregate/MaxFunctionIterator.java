@@ -478,11 +478,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ItemType maxType;
             if (
                 df.getItemType().isObjectItemType()
-                    && df.getItemType().getObjectContentFacet().containsKey(SparkSessionManager.tableLocationColumnName)
+                    && df.getItemType().getObjectKeysFacet().contains(SparkSessionManager.tableLocationColumnName)
             ) {
                 maxType = df.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType();
             } else {
                 maxType = df.getItemType();
@@ -510,8 +509,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
+        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);

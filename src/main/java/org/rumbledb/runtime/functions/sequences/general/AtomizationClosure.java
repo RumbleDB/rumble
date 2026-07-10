@@ -13,11 +13,6 @@ public class AtomizationClosure implements FlatMapFunction<Item, Item> {
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
-        if (arg0.isArray()) {
-            return arg0.getItems().iterator();
-        } else {
-            return arg0.atomizedValue().iterator();
-        }
-
+        return arg0.atomizedValue().iterator();
     }
 };

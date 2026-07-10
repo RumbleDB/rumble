@@ -47,6 +47,15 @@ public class DocumentItem implements Item {
         this.documentElement = getDocumentElement();
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        return new DocumentItem(copiedChildren);
+    }
+
     /**
      * Recursively computes the string value by concatenating text node descendants in document order.
      */
@@ -131,10 +140,9 @@ public class DocumentItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof DocumentItem)) {
+        if (!(other instanceof DocumentItem otherDocumentItem)) {
             return false;
         }
-        DocumentItem otherDocumentItem = (DocumentItem) other;
         return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
@@ -296,7 +304,10 @@ public class DocumentItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
+        if (this.documentElement != null) {
+            return this.documentElement.typedValue();
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override

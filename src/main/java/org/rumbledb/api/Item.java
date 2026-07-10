@@ -46,6 +46,14 @@ import java.util.Map;
 public interface Item extends Serializable, KryoSerializable {
 
     /**
+     * Makes a copy.
+     * 
+     * @param mutable whether the copy should be mutable (if supported by the item).
+     * @return a copy
+     */
+    Item copy(boolean mutable);
+
+    /**
      * Tests whether the item is a function.
      *
      * @return true if it is a function, false otherwise
@@ -497,8 +505,10 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Tests whether the item is an object.
      * Object items are legacy JSONiq objects, that allow only for
-     * - string keys
-     * - singleton values
+     * <ul>
+     * <li>string keys</li>
+     * <li>singleton values</li>
+     * </ul>
      *
      * @return true if it is an object, false otherwise.
      */
@@ -514,7 +524,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<String> getKeys() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getStringKeys();
     }
 
     /**
@@ -546,7 +556,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<Item> getValues() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getItemValues();
     }
 
     /**
@@ -745,12 +755,32 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the size of the item, if it is an array.
+     * Returns the size of the item, if it is an array, or the number of keys if it is a map.
      *
      * @return the size as an int.
-     * @throws UnsupportedOperationException if the item is not an array.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
      */
     default int getSize() throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(String key) throws UnsupportedOperationException {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Checks whether the item has a key, if it is a map.
+     *
+     * @return true if the item has the key, false otherwise.
+     * @throws UnsupportedOperationException if the item is not an array or a map.
+     */
+    default boolean hasKey(Item key) throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -762,7 +792,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     @Deprecated
     default List<Item> getItems() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        return this.getItemMembers();
     }
 
     /**
@@ -824,7 +854,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @deprecated use {@link #appendItem(Item)} instead
      */
     default void append(Item item) throws UnsupportedOperationException {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        this.appendItem(item);
     }
 
     /**
@@ -1329,10 +1359,9 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean physicalEquals(Object other) {
-        if (!(other instanceof Item)) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item otherItem = (Item) other;
         if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
             return System.identityHashCode(this) == System.identityHashCode(otherItem);
         }
@@ -1649,6 +1678,18 @@ public interface Item extends Serializable, KryoSerializable {
 
     default void setParent(Item parent) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default void addOrReplaceNamespace(Item namespaceItem) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default void setSchemaType(ItemType typeAnnotation) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default ItemType getSchemaType() {
+        return null;
     }
 
 

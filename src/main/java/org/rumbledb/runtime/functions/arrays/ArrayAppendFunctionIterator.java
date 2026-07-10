@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -30,9 +33,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
@@ -97,12 +97,14 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
             List<Item> newItems = new ArrayList<>(arrayItem.getSize() + 1);
             newItems.addAll(arrayItem.getItemMembers());
             newItems.add(appendage.get(0));
-            this.resultItem = ItemFactory.getInstance().createArrayItem(newItems, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createArrayItem(newItems, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> newMemberSequences = new ArrayList<>(arrayItem.getSize() + 1);
             newMemberSequences.addAll(arrayItem.getSequenceMembers());
             newMemberSequences.add(appendage);
-            this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(newMemberSequences, false);
+            this.resultItem = ItemFactory.getInstance()
+                .createSequenceArrayItem(newMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }
 

@@ -1,9 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
@@ -19,6 +15,10 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 public class DayTimeDurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
@@ -29,7 +29,6 @@ public class DayTimeDurationItem implements Item {
     Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
 
-    @SuppressWarnings("unused")
     public DayTimeDurationItem() {
         super();
     }
@@ -52,6 +51,11 @@ public class DayTimeDurationItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new DayTimeDurationItem(this.value);
     }
 
     @Override
@@ -90,11 +94,11 @@ public class DayTimeDurationItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
+    public boolean equals(Object other) {
+        if (other instanceof Item otherItem) {
             long c = ComparisonIterator.compareItems(
                 this,
-                (Item) otherItem,
+                otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );

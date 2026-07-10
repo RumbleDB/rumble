@@ -105,7 +105,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             if (item.isArray()) {
                 if (0 < item.getSize()) {
                     if (item.isArrayOfItems()) {
-                        this.nextResults.addAll(item.getItems());
+                        this.nextResults.addAll(item.getItemMembers());
                     } else {
                         for (java.util.List<Item> member : item.getSequenceMembers()) {
                             this.nextResults.addAll(member);
@@ -196,8 +196,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
+                .getObjectKeysFacet()
+                .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
@@ -275,17 +275,15 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         } else if (
             hasNonObjectJSONiqItem
                 && childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .containsKey(SparkSessionManager.tableLocationColumnName)
+                    .getObjectKeysFacet()
+                    .contains(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;

@@ -42,7 +42,7 @@ public class ObjectValuesClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        for (String key : arg0.getKeys()) {
+        for (String key : arg0.getStringKeys()) {
             results.add(arg0.getItemByKey(key));
         }
         return results.iterator();

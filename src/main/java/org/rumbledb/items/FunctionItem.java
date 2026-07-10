@@ -44,9 +44,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -55,6 +55,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
 import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -189,6 +190,11 @@ public class FunctionItem implements Item {
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
         this.isBuiltin = isBuiltin;
+    }
+
+    @Override
+    public FunctionItem copy(boolean mutable) {
+        return this.deepCopy();
     }
 
     @Override
@@ -348,7 +354,7 @@ public class FunctionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.anyFunctionItem;
+        return ItemTypeFactory.createFunctionItemType(this.signature);
     }
 
     public FunctionItem deepCopy() {
@@ -393,28 +399,46 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isEstimator() {
-        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
+        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
+            return true;
+        }
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().isEstimator();
+        }
+        return false;
     }
 
     @Override
     public Estimator<?> getEstimator() {
-        if (!isEstimator()) {
-            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
+            return estimatorRuntimeIterator.getEstimator();
         }
-        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().getEstimator();
+        }
+        throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public boolean isTransformer() {
-        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator) {
+            return true;
+        }
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().isTransformer();
+        }
+        return false;
     }
 
     @Override
     public Transformer getTransformer() {
-        if (!isTransformer()) {
-            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
+            return transformerRuntimeIterator.getTransformer();
         }
-        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+            return coercionRuntimeIterator.getCallableItem().getTransformer();
+        }
+        throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
     }
 
 

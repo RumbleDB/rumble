@@ -5,7 +5,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -50,20 +49,41 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
+    public Item copy(boolean mutable) {
+        if (mutable) {
+            List<Item> copiedItems = new ArrayList<>(this.getItemMembers().size());
+            for (Item item : this.getItemMembers()) {
+                copiedItems.add(item.copy(mutable));
+            }
+            ArrayItem copy = new ArrayItem(copiedItems);
+            copy.setMutabilityLevel(0);
+            return copy;
+        }
+        List<List<Item>> copiedMemberSequences = new ArrayList<>(this.memberSequences.size());
+        for (List<Item> member : this.memberSequences) {
+            List<Item> copiedMember = new ArrayList<>(member.size());
+            for (Item item : member) {
+                copiedMember.add(item.copy(mutable));
+            }
+            copiedMemberSequences.add(copiedMember);
+        }
+        return new SequenceArrayItem(copiedMemberSequences);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof Item otherItem)) {
             return false;
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
+        if (!otherItem.isArray()) {
             return false;
         }
-        if (getSize() != o.getSize()) {
+        if (getSize() != otherItem.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
             List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = o.getSequenceAt(i);
+            List<Item> otherMember = otherItem.getSequenceAt(i);
             if (thisMember.size() != otherMember.size()) {
                 return false;
             }
@@ -101,11 +121,6 @@ public class SequenceArrayItem implements Item {
     @Override
     public int getSize() {
         return this.memberSequences.size();
-    }
-
-    @Override
-    public List<Item> getItems() {
-        return this.getItemMembers();
     }
 
     @Override
@@ -158,11 +173,6 @@ public class SequenceArrayItem implements Item {
         }
         List<Item> member = this.memberSequences.get(position);
         return member;
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -251,12 +261,12 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public int hashCode() {
-        int result = 0;
-        result += getSize();
+        int result = 1;
         for (int i = 0; i < getSize(); ++i) {
             List<Item> member = this.memberSequences.get(i);
+            result = 31 * result + member.size();
             for (Item item : member) {
-                result += item.hashCode();
+                result = 31 * result + item.hashCode();
             }
         }
         return result;
@@ -390,7 +400,13 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
+        List<Item> result = new ArrayList<>();
+        for (List<Item> memberSequence : this.memberSequences) {
+            for (Item item : memberSequence) {
+                result.addAll(item.atomizedValue());
+            }
+        }
+        return result;
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import java.util.Collections;
@@ -81,9 +82,14 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
 
         // Create and return the text node item
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        Item textItem = ItemFactory.getInstance()
             .createXmlTextNode(
                 textContent.toString()
             );
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+            textItem.setXmlDocumentPosition(documentPath, 0);
+        }
+        return textItem;
     }
 }

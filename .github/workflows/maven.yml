@@ -21,7 +21,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: 17
-          distribution: adopt
+          distribution: temurin
       # Github ubuntu contain Maven, but other testing software use minimal size container
       - name: Check if Maven is Installed
         run: |
@@ -59,6 +59,8 @@ jobs:
       matrix:
         test_class: [
           "FrontendTests",
+          "BackwardsCompatibilityTests",
+          "RegexPatternUtilsTest",
           "RuntimeTests",
           "RuntimeTestsNoParallelism",
           "RuntimeTestsNoInlining",
@@ -86,7 +88,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: 17
-          distribution: adopt
+          distribution: temurin
       - name: Restore Cached Maven Packages
         uses: actions/cache@v5
         with:
@@ -99,3 +101,12 @@ jobs:
           path: target
       - name: Run Test ${{ matrix.test_class }}
         run: mvn -Dtest=${{ matrix.test_class }} test
+      - name: Publish Surefire Report ${{ matrix.test_class }}
+        if: always()
+        uses: ScalableCapital/action-surefire-report@v2
+        with:
+          report_paths: target/surefire-reports/TEST-*.xml
+          create_check: false
+          fail_on_test_failures: false
+          fail_if_no_tests: false
+          report_mode: workflow

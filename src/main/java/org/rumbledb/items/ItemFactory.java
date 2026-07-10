@@ -1,6 +1,13 @@
 package org.rumbledb.items;
 
-import java.time.*;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -12,13 +19,9 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
-
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 public class ItemFactory {
 
@@ -58,6 +61,13 @@ public class ItemFactory {
             return this.emptyStringItem;
         }
         return new StringItem(s);
+    }
+
+    public Item createLanguageItem(String s) {
+        return this.createAnnotatedItem(
+            this.createStringItem(s),
+            BuiltinTypesCatalogue.languageItem
+        );
     }
 
     public Item createUntypedAtomicItem(String s) {
@@ -238,6 +248,13 @@ public class ItemFactory {
         return new QNameItem(name);
     }
 
+    public Item createNCNameItem(String s) {
+        return this.createAnnotatedItem(
+            this.createStringItem(s),
+            BuiltinTypesCatalogue.NCNameItem
+        );
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
@@ -254,8 +271,14 @@ public class ItemFactory {
         return new LazyObjectItem();
     }
 
-    public Item createArrayItem() {
-        return new ArrayItem();
+    public Item createArrayItem(boolean mutable) {
+        Item result = new ArrayItem();
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
     public Item createArrayItem(List<Item> items, boolean mutable) {
@@ -303,6 +326,10 @@ public class ItemFactory {
      */
     @Deprecated
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+        return createObjectItemFromValueLists(keyValuePairs, mutable);
+    }
+
+    public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -323,11 +350,43 @@ public class ItemFactory {
     }
 
     public Item createMapItem(
+            Item onlyKey,
+            List<Item> onlyValue,
+            boolean mutable
+    ) {
+        if (!mutable) {
+            return new MapEntryItem(onlyKey, onlyValue);
+        }
+        List<Item> keys = List.of(onlyKey);
+        List<List<Item>> values = List.of(onlyValue);
+        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public Item createMapItemRemovingKeys(
+            Item original,
+            List<Item> keysToRemove
+    ) {
+        return new MapWithRemovedEntryItem(original, keysToRemove);
+    }
+
+    public Item createMapItemAddingKey(
+            Item original,
+            Item keyToAdd,
+            List<Item> valueToAdd
+    ) {
+        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
+    }
+
+    public Item createMapItem(
             List<Item> keys,
             List<List<Item>> values,
             ExceptionMetadata itemMetadata,
             boolean mutable
     ) {
+        if (!mutable && keys.size() == 1) {
+            Item key = keys.get(0);
+            return new MapEntryItem(key, values.get(0));
+        }
         Item result = new MapItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
@@ -338,6 +397,11 @@ public class ItemFactory {
     }
 
     public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
+        if (!mutable && keyValuePairs.size() == 1) {
+            Item key = keyValuePairs.keySet().iterator().next();
+            List<Item> values = keyValuePairs.get(key);
+            return new MapEntryItem(key, values);
+        }
         Item result = new MapItem(keyValuePairs, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
