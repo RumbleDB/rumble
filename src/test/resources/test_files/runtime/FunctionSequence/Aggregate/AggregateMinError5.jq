@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="FORG0006"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldRun; Output="1" :)
 min((2, 3, [1, 2]))
 
-(: non-numeric error :)
+(: Values are converted into atomic values, so the minimum of 2, 3, and [1, 2] is 1. :)
