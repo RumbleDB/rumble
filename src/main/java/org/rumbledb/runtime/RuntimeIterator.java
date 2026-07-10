@@ -158,6 +158,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = !item.getStringValue().isEmpty();
             } else if (item.isNode()) {
                 // returns true even if sequence has more items according to spec
+                this.close();
                 return true;
             } else {
                 if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
