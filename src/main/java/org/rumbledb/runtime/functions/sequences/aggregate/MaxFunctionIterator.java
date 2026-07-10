@@ -40,6 +40,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -81,7 +82,13 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        // fn:max() applies atomization as part of function conversion. Keep this
+        // explicit here because the aggregate iterator consumes its argument
+        // directly rather than through a typed function-call wrapper.
+        this.iterator = new DataFunctionIterator(
+            List.of(this.children.get(0)),
+            staticContext
+        );
         this.comparator = new ItemComparator(
                 false,
                 new InvalidArgumentTypeException(
@@ -128,6 +135,9 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (candidateItem.isNull()) {
                     this.currentMinIsNullItem = true;
                     continue;
+                }
+                if (candidateItem.isUntypedAtomic()) {
+                    candidateItem = ItemFactory.getInstance().createDoubleItem(candidateItem.castToDoubleValue());
                 }
                 candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
