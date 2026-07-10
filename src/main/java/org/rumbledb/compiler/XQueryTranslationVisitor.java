@@ -2311,6 +2311,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return BuiltinTypesCatalogue.item;
         }
         if (itemTypeContext.functionTest() != null) {
+            processAnnotations(itemTypeContext.functionTest().annotation());
             // we have a function item type
             XQueryParser.TypedFunctionTestContext typedFnCtx = itemTypeContext.functionTest().typedFunctionTest();
             if (typedFnCtx != null) {
@@ -3690,10 +3691,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
+        return processAnnotations(annotations.annotation());
+    }
+
+    private List<Annotation> processAnnotations(List<XQueryParser.AnnotationContext> annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (XQueryParser.AnnotationContext annotationContext : annotations.annotation()) {
+        for (XQueryParser.AnnotationContext annotationContext : annotations) {
             XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
             Name name = parseEqName(eqNameContext, false, false, true, false);
+            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
             if (!annotationContext.literal().isEmpty()) {
                 throw new UnsupportedFeatureException(
                         "Literals are currently not supported in annotations!",

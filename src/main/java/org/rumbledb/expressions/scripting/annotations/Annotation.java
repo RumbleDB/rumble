@@ -3,6 +3,7 @@ package org.rumbledb.expressions.scripting.annotations;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidAnnotationException;
+import org.rumbledb.exceptions.InvalidAnnotationNamespaceException;
 import org.rumbledb.expressions.Expression;
 
 import java.util.List;
@@ -51,5 +52,27 @@ public class Annotation {
             }
         }
         return isAssignable;
+    }
+
+    public static void validateAnnotationName(Name annotationName, ExceptionMetadata metadata) {
+        String namespace = annotationName.getNamespace();
+        if (namespace == null) {
+            return;
+        }
+        if (
+            namespace.equals(Name.XML_NS)
+                || namespace.equals(Name.XS_NS)
+                || namespace.equals(Name.XSI_NS)
+                || namespace.equals(Name.FN_NS)
+                || namespace.equals(Name.MATH_NS)
+                || namespace.equals(Name.MAP_NS)
+                || namespace.equals(Name.ARRAY_NS)
+                || namespace.equals(Name.AN_NS)
+        ) {
+            throw new InvalidAnnotationNamespaceException(
+                    "Annotations cannot be declared in the reserved namespace " + namespace + ".",
+                    metadata
+            );
+        }
     }
 }

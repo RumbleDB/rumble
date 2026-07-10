@@ -2613,6 +2613,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
         if (fnCtx != null) {
+            processAnnotations(fnCtx.annotation());
             // we have a function item type
             JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
             if (typedFnCtx != null) {
@@ -4000,8 +4001,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
+        return processAnnotations(annotations.annotation());
+    }
+
+    private List<Annotation> processAnnotations(List<JsoniqParser.AnnotationContext> annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (JsoniqParser.AnnotationContext annotationContext : annotations.annotation()) {
+        for (JsoniqParser.AnnotationContext annotationContext : annotations) {
             // for backwards compatibility, the specification allows for updating without % sign
             if (annotationContext.updating != null) {
                 Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
@@ -4010,6 +4015,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             }
             JsoniqParser.EqNameContext eqNameContext = annotationContext.eqName();
             Name name = parseEqName(eqNameContext, false, false, true, false);
+            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
             if (!annotationContext.literal().isEmpty()) {
                 throw new UnsupportedFeatureException(
                         "Literals are currently not supported in annotations!",
