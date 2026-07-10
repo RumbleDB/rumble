@@ -4300,8 +4300,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.DecimalFormatDeclContext ctx,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
-            ctx,
+        DecimalFormatDeclarationProcessor.process(
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),

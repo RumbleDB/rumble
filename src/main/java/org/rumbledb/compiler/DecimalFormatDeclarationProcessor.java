@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.context.DecimalFormatDefinition;
@@ -17,13 +16,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public final class DecimalFormatDeclarationHelper {
+public final class DecimalFormatDeclarationProcessor {
 
-    private DecimalFormatDeclarationHelper() {
+    private DecimalFormatDeclarationProcessor() {
     }
 
-    public static void processDecimalFormatDeclaration(
-            ParserRuleContext declarationContext,
+    public static void process(
             boolean isDefaultDecimalFormat,
             ParseTree nameContext,
             List<? extends ParseTree> propertyNames,

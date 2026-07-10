@@ -13,17 +13,17 @@ final class TemporalFormattingSupport {
     private TemporalFormattingSupport() {
     }
 
-    static String applyNameCase(String value, ParsedVariableMarker parsed, Locale locale) {
+    static String applyNameCase(String value, VariableMarker parsed, Locale locale) {
         if (parsed.nameForm == null) {
             return value;
         }
 
         switch (parsed.nameForm) {
-            case ParsedVariableMarker.NameForm.UPPER:
+            case VariableMarker.NameForm.UPPER:
                 return value.toUpperCase(locale);
-            case ParsedVariableMarker.NameForm.LOWER:
+            case VariableMarker.NameForm.LOWER:
                 return value.toLowerCase(locale);
-            case ParsedVariableMarker.NameForm.TITLE:
+            case VariableMarker.NameForm.TITLE:
             default:
                 return toTitleCaseWords(value, locale);
         }
@@ -35,11 +35,11 @@ final class TemporalFormattingSupport {
         }
 
         switch (wordCase) {
-            case ParsedVariableMarker.WordCase.UPPER:
+            case VariableMarker.WordCase.UPPER:
                 return value.toUpperCase(locale);
-            case ParsedVariableMarker.WordCase.LOWER:
+            case VariableMarker.WordCase.LOWER:
                 return value.toLowerCase(locale);
-            case ParsedVariableMarker.WordCase.TITLE:
+            case VariableMarker.WordCase.TITLE:
                 return toTitleCaseWords(value, locale);
             default:
                 return value;
