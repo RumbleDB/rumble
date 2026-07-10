@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
 public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private static final Map<String, Integer> MONTHS = createMonthMap();
-    private static final Map<String, Integer> WEEKDAYS = createWeekdayMap();
     private static final Map<String, Integer> NAMED_ZONE_OFFSETS = createNamedZoneOffsets();
     private static final String S = "[\\t\\n\\r ]+";
     private static final String OPT_S = "[\\t\\n\\r ]*";
@@ -147,7 +146,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
         Matcher dateSpecMatcher = DATE_SPEC_PATTERN.matcher(input);
         if (dateSpecMatcher.matches()) {
             return buildParsedDateTime(
-                dateSpecMatcher.group(1),
                 dateSpecMatcher.group(2),
                 dateSpecMatcher.group(3),
                 dateSpecMatcher.group(4),
@@ -166,7 +164,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
         Matcher asctimeMatcher = ASCTIME_PATTERN.matcher(input);
         if (asctimeMatcher.matches()) {
             return buildParsedDateTime(
-                asctimeMatcher.group(1),
                 asctimeMatcher.group(3),
                 asctimeMatcher.group(2),
                 asctimeMatcher.group(14),
@@ -186,7 +183,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private static ParsedDateTime buildParsedDateTime(
-            String weekday,
             String dayString,
             String monthString,
             String yearString,
@@ -204,7 +200,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
         int month = parseMonth(monthString);
         int year = parseYear(yearString);
         LocalDate date = LocalDate.of(year, month, day);
-        validateWeekday(weekday, date);
         LocalTime time = parseTime(hourString, minuteString, secondString, fractionalSecondString);
         ZoneOffset offset = parseZoneOffset(
             timezoneString,
@@ -213,8 +208,7 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
             timezoneHourString,
             timezoneMinuteString
         );
-        boolean hasTimeZone = timezoneString != null;
-        return new ParsedDateTime(OffsetDateTime.of(date, time, offset), hasTimeZone);
+        return new ParsedDateTime(OffsetDateTime.of(date, time, offset), true);
     }
 
     private static int parseDay(String dayString) {
@@ -232,7 +226,7 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
     private static int parseYear(String yearString) {
         int year = Integer.parseInt(yearString);
         if (yearString.length() == 2) {
-            return year < 50 ? 2000 + year : 1900 + year;
+            return 1900 + year;
         }
         return year;
     }
@@ -255,17 +249,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
             }
         }
         return LocalTime.of(hour, minute, second, nanoseconds);
-    }
-
-    private static void validateWeekday(String weekdayString, LocalDate date) {
-        if (weekdayString == null) {
-            return;
-        }
-        Integer expectedWeekday = WEEKDAYS.get(weekdayString.toLowerCase(Locale.ENGLISH));
-        Integer actualWeekday = WEEKDAYS.get(date.getDayOfWeek().name().toLowerCase(Locale.ENGLISH));
-        if (!expectedWeekday.equals(actualWeekday)) {
-            throw new IllegalArgumentException("Weekday/date mismatch");
-        }
     }
 
     private static ZoneOffset parseZoneOffset(
@@ -306,25 +289,6 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
         months.put("nov", 11);
         months.put("dec", 12);
         return months;
-    }
-
-    private static Map<String, Integer> createWeekdayMap() {
-        Map<String, Integer> weekdays = new HashMap<>();
-        weekdays.put("mon", 1);
-        weekdays.put("monday", 1);
-        weekdays.put("tue", 2);
-        weekdays.put("tuesday", 2);
-        weekdays.put("wed", 3);
-        weekdays.put("wednesday", 3);
-        weekdays.put("thu", 4);
-        weekdays.put("thursday", 4);
-        weekdays.put("fri", 5);
-        weekdays.put("friday", 5);
-        weekdays.put("sat", 6);
-        weekdays.put("saturday", 6);
-        weekdays.put("sun", 7);
-        weekdays.put("sunday", 7);
-        return weekdays;
     }
 
     private static Map<String, Integer> createNamedZoneOffsets() {
