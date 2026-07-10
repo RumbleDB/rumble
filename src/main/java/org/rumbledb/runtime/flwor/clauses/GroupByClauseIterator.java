@@ -223,13 +223,14 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         );
                     }
 
-                    results.addAll(
-                        tupleContext.getVariableValues()
-                            .getLocalVariableValue(
-                                groupVariableName,
-                                getMetadata()
-                            )
-                    );
+                    List<Item> groupVariableValues = tupleContext.getVariableValues()
+                        .getLocalVariableValue(groupVariableName, getMetadata());
+                    List<Item> atomizedGroupValues = new ArrayList<>();
+                    for (Item groupVariableValue : groupVariableValues) {
+                        atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                    }
+                    inputTuple.putValue(groupVariableName, atomizedGroupValues);
+                    results.addAll(atomizedGroupValues);
                 }
             }
             FlworKey key = new FlworKey(results);
