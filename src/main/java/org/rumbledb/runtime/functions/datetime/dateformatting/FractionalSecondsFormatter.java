@@ -3,7 +3,7 @@ package org.rumbledb.runtime.functions.datetime.dateformatting;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
-import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
+import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericPictureParser;
 
 import java.time.OffsetDateTime;
@@ -15,13 +15,13 @@ final class FractionalSecondsFormatter {
 
     static String format(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
+            VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
             ExceptionMetadata metadata
     ) {
         try {
-            return format(dt, variableMarker, formattingContext);
+            return format(dt, variableMarker);
         } catch (IllegalArgumentException e) {
             throw new IncorrectSyntaxFormatDateTimeException(
                     "\"" + pictureString + "\": invalid picture string",
@@ -32,13 +32,13 @@ final class FractionalSecondsFormatter {
 
     private static String format(
             OffsetDateTime dt,
-            ParsedVariableMarker variableMarker,
-            FormattingContext formattingContext
+            VariableMarker variableMarker
     ) {
         if ("I".equals(variableMarker.presentation) || "i".equals(variableMarker.presentation)) {
             int value = fractionAsInteger(dt);
-            String roman = NumericFormattingSupport.integerToRoman(value);
-            return "i".equals(variableMarker.presentation) ? roman.toLowerCase(formattingContext.locale) : roman;
+            return value >= 1 && value <= 3999
+                ? NumberWords.roman(value, variableMarker.lowerCaseRoman)
+                : Integer.toString(value);
         }
         FractionalPattern pattern = FractionalPattern.parse(variableMarker.presentation);
         String fractionDigits = canonicalFractionDigits(dt);

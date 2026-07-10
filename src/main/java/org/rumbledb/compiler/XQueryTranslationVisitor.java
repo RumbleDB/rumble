@@ -1022,22 +1022,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public OrderByClauseSortingKey processOrderByExpr(XQueryParser.OrderByExprContext ctx) {
+        String uri = null;
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
             }
+            uri = collation;
         }
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
-        }
-        String uri = null;
-        if (ctx.uriLiteral() != null) {
-            uri = ctx.uriLiteral().getText();
         }
         OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
@@ -1058,7 +1056,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public GroupByVariableDeclaration processGroupByVar(XQueryParser.GroupByVarContext ctx) {
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
@@ -3629,12 +3627,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
         String uri = processURILiteral(ctx.uriLiteral());
-        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+        if (!this.moduleContext.isStaticallyKnownCollation(uri)) {
             throw new DefaultCollationException(
                     "Unknown collation: " + uri,
                     createMetadataFromContext(ctx.uriLiteral())
             );
         }
+        this.moduleContext.setDefaultCollation(uri);
     }
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
@@ -3991,8 +3990,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.DecimalFormatDeclContext ctx,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
-            ctx,
+        DecimalFormatDeclarationProcessor.process(
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),

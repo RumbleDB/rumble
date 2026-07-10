@@ -3,7 +3,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -96,11 +95,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
-            return Name.DEFAULT_COLLATION_NS;
+            return getRuntimeStaticContext().getDefaultCollation();
         }
         List<Item> collation = this.collationIterator.materialize(context);
         if (collation.isEmpty()) {
-            return Name.DEFAULT_COLLATION_NS;
+            return getRuntimeStaticContext().getDefaultCollation();
         }
         if (collation.size() != 1 || !collation.get(0).isString()) {
             throw new UnexpectedTypeException(
@@ -235,12 +234,10 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        return getRuntimeStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(ExecutionMode.LOCAL)
+            .withMetadata(getMetadata());
     }
 
     @Override

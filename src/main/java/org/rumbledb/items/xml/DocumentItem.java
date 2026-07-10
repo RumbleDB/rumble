@@ -304,6 +304,9 @@ public class DocumentItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
+        if (this.documentElement != null) {
+            return this.documentElement.typedValue();
+        }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
