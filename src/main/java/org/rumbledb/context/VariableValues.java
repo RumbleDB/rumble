@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
@@ -254,6 +255,7 @@ public class VariableValues implements Serializable, KryoSerializable {
 
         throw new RumbleException(
                 "Runtime error retrieving variable " + varName + " value",
+                ErrorCode.UndeclaredVariableErrorCode,
                 metadata
         );
     }
