@@ -21,12 +21,15 @@
 package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.parsing.StringToStringItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.ItemDataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -39,7 +42,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
+public class UnparsedTextLinesFunctionIterator extends ItemDataFrameRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     public static final int MIN_PARTITIONS = 10;
@@ -52,13 +55,16 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Dataset<Row> getItemDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.children.get(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
         if (url == null) {
-            return SparkSessionManager.getInstance()
+            JavaRDD<Row> emptyRows = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .emptyRDD();
+            return SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(emptyRows, getItemDataFrameSchema());
         }
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
         int partitions = -1;
@@ -116,6 +122,9 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 partitionsIterator.close();
             }
         }
-        return strings.mapPartitions(new StringToStringItemMapper());
+        JavaRDD<Row> rows = strings.map(line -> RowFactory.create(ItemFactory.getInstance().createStringItem(line)));
+        return SparkSessionManager.getInstance()
+            .getOrCreateSession()
+            .createDataFrame(rows, getItemDataFrameSchema());
     }
 }
