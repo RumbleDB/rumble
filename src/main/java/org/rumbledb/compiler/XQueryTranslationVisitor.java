@@ -188,6 +188,62 @@ import java.util.stream.Collectors;
  */
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
+    private static final Set<String> RESERVED_UNPREFIXED_FUNCTION_NAMES_XQUERY10 = Set.of(
+        "attribute",
+        "comment",
+        "document-node",
+        "element",
+        "empty-sequence",
+        "if",
+        "item",
+        "node",
+        "processing-instruction",
+        "schema-attribute",
+        "schema-element",
+        "text",
+        "typeswitch"
+    );
+
+    private static final Set<String> RESERVED_UNPREFIXED_FUNCTION_NAMES_XQUERY30 = Set.of(
+        "attribute",
+        "comment",
+        "document-node",
+        "element",
+        "empty-sequence",
+        "function",
+        "if",
+        "item",
+        "namespace-node",
+        "node",
+        "processing-instruction",
+        "schema-attribute",
+        "schema-element",
+        "switch",
+        "text",
+        "typeswitch"
+    );
+
+    private static final Set<String> RESERVED_UNPREFIXED_FUNCTION_NAMES_XQUERY31 = Set.of(
+        "attribute",
+        "comment",
+        "document-node",
+        "element",
+        "empty-sequence",
+        "function",
+        "if",
+        "item",
+        "namespace-node",
+        "node",
+        "processing-instruction",
+        "schema-attribute",
+        "schema-element",
+        "switch",
+        "text",
+        "typeswitch",
+        "array",
+        "map"
+    );
+
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
@@ -574,7 +630,49 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
-        return parseEqName(ctx.eqName(), true, false, false, false);
+        if (ctx.URIQualifiedName() != null) {
+            return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.FullQName() != null) {
+            String fullQNameText = ctx.FullQName().getText();
+            int colonIndex = fullQNameText.indexOf(':');
+            if (colonIndex == -1) {
+                throw new ParsingException(
+                        "Invalid FullQName format: " + fullQNameText,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            String prefix = fullQNameText.substring(0, colonIndex);
+            String localName = fullQNameText.substring(colonIndex + 1);
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
+            }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.prefixedFunctionName() != null) {
+            XQueryParser.PrefixedFunctionNameContext prefixedContext = ctx.prefixedFunctionName();
+            String prefix = prefixedContext.ns.getText();
+            String localName = prefixedContext.local_name.getText();
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
+            }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.keywordOKForFunction() != null) {
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
+        }
+        return nameForUnprefixedFunction(ctx.NCName().getText());
     }
 
     /**

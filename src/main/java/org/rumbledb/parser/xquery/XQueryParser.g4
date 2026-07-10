@@ -659,9 +659,12 @@ qname: FullQName | (ns=ncName COLON)? local_name=ncName ;
 // this includes all the valid characters, including all the keywords
 ncName: NCName | keyword ;
 
-// Accept the full EQName syntax in the grammar and defer any reserved-name constraints
-// to later validation so the parser does not reject legal XQuery test cases prematurely.
-functionName: eqName ;
+// Keep bare reserved names out of function-call syntax so kind tests like node() and text()
+// continue to parse as node tests in path expressions, while still allowing prefixed and
+// URI-qualified reserved local names such as local:node() and Q{...}node().
+functionName: URIQualifiedName | FullQName | prefixedFunctionName | NCName | keywordOKForFunction ;
+
+prefixedFunctionName: ns=ncName COLON local_name=ncName ;
 
 keyword: keywordOKForFunction | keywordNotOKForFunction ;
 

@@ -208,6 +208,27 @@ import java.util.stream.Collectors;
  */
 public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
+    private static final Set<String> RESERVED_UNPREFIXED_FUNCTION_NAMES_JSONIQ = Set.of(
+        "attribute",
+        "comment",
+        "document-node",
+        "element",
+        "empty-sequence",
+        "function",
+        "if",
+        "item",
+        "namespace-node",
+        "node",
+        "processing-instruction",
+        "schema-attribute",
+        "schema-element",
+        "switch",
+        "text",
+        "typeswitch",
+        "array",
+        "map"
+    );
+
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
@@ -587,8 +608,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 ctx.URIQualifiedName().getText(),
                 createMetadataFromContext(ctx)
             );
-        } else if (ctx.FullQName() != null) {
-            // Handle FullQName by parsing its text content
+        }
+        if (ctx.FullQName() != null) {
             String fullQNameText = ctx.FullQName().getText();
             int colonIndex = fullQNameText.indexOf(':');
             if (colonIndex == -1) {
@@ -607,14 +628,24 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     "Cannot expand prefix " + prefix,
                     createMetadataFromContext(ctx)
             );
-        } else if (ctx.keywordOKForFunction() != null) {
-            // if the rule matches a keyword, the prefix is not defined
-            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
-        } else {
-            // Handle NCName case
-            String localName = ctx.NCName().getText();
-            return nameForUnprefixedFunction(localName);
         }
+        if (ctx.prefixedFunctionName() != null) {
+            JsoniqParser.PrefixedFunctionNameContext prefixedContext = ctx.prefixedFunctionName();
+            String prefix = prefixedContext.ns.getText();
+            String localName = prefixedContext.local_name.getText();
+            String namespace = resolvePrefixForDirConstructor(prefix);
+            if (namespace != null) {
+                return new Name(namespace, prefix, localName);
+            }
+            throw new PrefixCannotBeExpandedException(
+                    "Cannot expand prefix " + prefix,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (ctx.keywordOKForFunction() != null) {
+            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
+        }
+        return nameForUnprefixedFunction(ctx.NCName().getText());
     }
 
     /**
