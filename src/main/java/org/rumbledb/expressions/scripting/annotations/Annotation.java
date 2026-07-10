@@ -59,6 +59,17 @@ public class Annotation {
         if (namespace == null) {
             return;
         }
+        if (namespace.equals(Name.XQUERY_ANNOTATIONS_NS)) {
+            String localName = annotationName.getLocalName();
+            if (
+                "updating".equals(localName)
+                    || "simple".equals(localName)
+                    || "public".equals(localName)
+                    || "private".equals(localName)
+            ) {
+                return;
+            }
+        }
         if (
             namespace.equals(Name.XML_NS)
                 || namespace.equals(Name.XS_NS)
@@ -67,7 +78,7 @@ public class Annotation {
                 || namespace.equals(Name.MATH_NS)
                 || namespace.equals(Name.MAP_NS)
                 || namespace.equals(Name.ARRAY_NS)
-                || namespace.equals(Name.AN_NS)
+                || namespace.equals(Name.XQUERY_ANNOTATIONS_NS)
         ) {
             throw new InvalidAnnotationNamespaceException(
                     "Annotations cannot be declared in the reserved namespace " + namespace + ".",

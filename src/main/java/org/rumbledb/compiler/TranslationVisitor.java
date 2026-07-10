@@ -653,7 +653,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
      * {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} (constructor {@code xmlns=""} and/or
      * prolog defaults) when bound; otherwise {@link Name#createVariableInDefaultTypeNamespace}.</li>
      * <li>{@code isAnnotation}: unprefixed annotation EQName; same default-namespace rule as types when a default is
-     * bound; otherwise {@link Name#createVariableInDefaultAnnotationsNamespace}.</li>
+     * bound; otherwise {@link Name#createNameInDefaultXQueryAnnotationsNamespace}.</li>
      * <li>{@code isElementConstructor}: unprefixed name in a direct element start tag or static computed element name;
      * uses default element namespace from {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} if
      * bound, otherwise no namespace ({@link Name#createVariableInNoNamespace}).</li>
@@ -709,7 +709,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 if (defaultAnnotationNs != null) {
                     name = new Name(defaultAnnotationNs, "", localName);
                 } else {
-                    name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                    name = Name.createNameInDefaultXQueryAnnotationsNamespace(localName);
                 }
             } else if (isElementConstructor) {
                 String defaultElementNs = resolvePrefixForDirConstructor("");
@@ -4008,7 +4008,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (JsoniqParser.AnnotationContext annotationContext : annotations) {
             // for backwards compatibility, the specification allows for updating without % sign
             if (annotationContext.updating != null) {
-                Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
+                Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");
                 parsedAnnotations.add(new Annotation(name, null));
                 continue;
             }
