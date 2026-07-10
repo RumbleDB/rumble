@@ -84,8 +84,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         // explicit here because the aggregate iterator consumes its argument
         // directly rather than through a typed function-call wrapper.
         this.iterator = new DataFunctionIterator(
-            List.of(this.children.get(0)),
-            staticContext
+                List.of(this.children.get(0)),
+                staticContext
         );
         this.comparator = new ItemComparator(
                 true,
