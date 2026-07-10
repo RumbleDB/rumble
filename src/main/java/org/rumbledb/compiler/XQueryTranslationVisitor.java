@@ -574,39 +574,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
-        if (ctx.URIQualifiedName() != null) {
-            return URIQualifiedNameParser.parse(
-                ctx.URIQualifiedName().getText(),
-                createMetadataFromContext(ctx)
-            );
-        } else if (ctx.FullQName() != null) {
-            // Handle FullQName by parsing its text content
-            String fullQNameText = ctx.FullQName().getText();
-            int colonIndex = fullQNameText.indexOf(':');
-            if (colonIndex == -1) {
-                throw new ParsingException(
-                        "Invalid FullQName format: " + fullQNameText,
-                        createMetadataFromContext(ctx)
-                );
-            }
-            String prefix = fullQNameText.substring(0, colonIndex);
-            String localName = fullQNameText.substring(colonIndex + 1);
-            String namespace = resolvePrefixForDirConstructor(prefix);
-            if (namespace != null) {
-                return new Name(namespace, prefix, localName);
-            }
-            throw new PrefixCannotBeExpandedException(
-                    "Cannot expand prefix " + prefix,
-                    createMetadataFromContext(ctx)
-            );
-        } else if (ctx.keywordOKForFunction() != null) {
-            // if the rule matches a keyword, the prefix is not defined
-            return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
-        } else {
-            // Handle NCName case
-            String localName = ctx.NCName().getText();
-            return nameForUnprefixedFunction(localName);
-        }
+        return parseEqName(ctx.eqName(), true, false, false, false);
     }
 
     /**

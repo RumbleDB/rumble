@@ -161,7 +161,7 @@ annotations: annotation* ;
 // added the updating keyword to support the out-of-spec updating expressions extension
 annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=eqName value=stringLiteral ;
 
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
@@ -659,11 +659,9 @@ qname: FullQName | (ns=ncName COLON)? local_name=ncName ;
 // this includes all the valid characters, including all the keywords
 ncName: NCName | keyword ;
 
-// function names should be valid NCNames, but limited by the constraint of reserved-function-names
-// as defined in the XQuery 3.1 spec
-// see https://www.w3.org/TR/xquery-31/#parse-note-reserved-function-names
-// replaced with the FullQName production. the FullQName production was removed to prevent ambiguities
-functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
+// Accept the full EQName syntax in the grammar and defer any reserved-name constraints
+// to later validation so the parser does not reject legal XQuery test cases prematurely.
+functionName: eqName ;
 
 keyword: keywordOKForFunction | keywordNotOKForFunction ;
 
