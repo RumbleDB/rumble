@@ -15,6 +15,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.WindowClause;
@@ -22,6 +23,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -356,9 +359,11 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     private FlworTuple createTuple(FlworTuple inputTuple, List<Item> items, int start, int end) {
         FlworTuple result = inputTuple == null ? new FlworTuple(getConfiguration()) : new FlworTuple(inputTuple);
+        List<Item> windowItems = new ArrayList<>(items.subList(start, end + 1));
+        validateWindowType(windowItems);
 
         // Window variable will be bound to the list of items in the window
-        result.putValue(this.clause.getWindowVariable(), new ArrayList<>(items.subList(start, end + 1)));
+        result.putValue(this.clause.getWindowVariable(), windowItems);
 
         // Bind the variables from the start and end conditions to the tuple
         addBindings(result, items, start, this.clause.getStartCondition().variables());
@@ -367,6 +372,48 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         }
 
         return result;
+    }
+
+    /**
+     * Check that the list of items in the window matches the declared sequence type of the window variable.
+     * 
+     * This has to be done at runtime because the size of the window can vary depending on the input data and the window
+     * conditions.
+     * 
+     * @param windowItems the list of items in the window
+     * @throws UnexpectedTypeException if the list of items does not match the declared sequence type
+     *         of the window variable
+     */
+    private void validateWindowType(List<Item> windowItems) {
+        SequenceType declaredType = this.clause.getActualSequenceType();
+        if (declaredType == null) {
+            return;
+        }
+
+        boolean validCardinality = switch (declaredType.getArity()) {
+            case Zero -> windowItems.isEmpty();
+            case One -> windowItems.size() == 1;
+            case OneOrZero -> windowItems.size() <= 1;
+            case OneOrMore -> !windowItems.isEmpty();
+            case ZeroOrMore -> true;
+        };
+        if (!validCardinality) {
+            throw new UnexpectedTypeException(
+                    "The window sequence has cardinality "
+                        + windowItems.size()
+                        + ", but the expected type is "
+                        + declaredType,
+                    getMetadata()
+            );
+        }
+        for (Item item : windowItems) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+                throw new UnexpectedTypeException(
+                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
+                        getMetadata()
+                );
+            }
+        }
     }
 
     /**
