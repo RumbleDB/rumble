@@ -20,7 +20,6 @@
 
 package sparksoniq.spark;
 
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
@@ -70,60 +69,49 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
+    private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
-    private static Level LOG_LEVEL = Level.FATAL;
+    private static final Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
-    public static String nonObjectJSONiqItemColumnName = "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
-    public static String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
-    public static String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
-    public static String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
-    public static String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b";
-    public static String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
-    public static String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
-    public static String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
+    public static final String nonObjectJSONiqItemColumnName = "notObject0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static final String emptyObjectJSONiqItemColumnName = "emptyobja84bc646-05af-4383-8853-2e9f31a710f2";
+    public static final String temporaryColumnName = "tmp0f7b4040-b404-4239-99dd-9b4cf2900594";
+    public static final String countColumnName = "count5af0c0c8-e84c-482a-82ce-1887565cf448";
+    public static final String rightHandSideHashColumnName = "rhsdb273b7d-d927-4c0d-b9c1-665af71faa2b";
+    public static final String leftHandSideHashColumnName = "lhs171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static final String sparkSqlVariableName = "sparksql73706172-6b73-716c-7661-726961626c65";
+    public static final String sequenceColumnName = "sequence56415249-4142-4c45-5345-5155454e4345";
 
     // Temporary column names for insert operations
-    public static String tempMaxRowIdColumnName = "maxRowId_2d8f6a4c0b8a4dd88c782b64e1b93a77";
-    public static String tempMinRowOrderColumnName = "minRowOrder_9f7d9d6a5ee14c8b9d1074f4799c5d30";
-    public static String tempMaxRowOrderColumnName = "maxRowOrder_3e8b7a4c1d2e4f6b8c9d0a1b2c3d4e5f";
-    public static String tempRowNumColumnName = "rowNum_f0a3c5e92a214f0c8cd50d6de3c4f9d9";
-    public static String tempRowNumSeqColumnName = "rowNumSeq_d2f8b4a18e1f4fdb9c54cc5e4a3c23a6";
-    public static String tempRowNumOrderColumnName = "rowNumOrder_b7c6a1f4ff4b4d099ad01f2b76c9a8e1";
+    public static final String tempMaxRowIdColumnName = "maxRowId_2d8f6a4c0b8a4dd88c782b64e1b93a77";
+    public static final String tempMinRowOrderColumnName = "minRowOrder_9f7d9d6a5ee14c8b9d1074f4799c5d30";
+    public static final String tempMaxRowOrderColumnName = "maxRowOrder_3e8b7a4c1d2e4f6b8c9d0a1b2c3d4e5f";
+    public static final String tempRowNumColumnName = "rowNum_f0a3c5e92a214f0c8cd50d6de3c4f9d9";
+    public static final String tempRowNumSeqColumnName = "rowNumSeq_d2f8b4a18e1f4fdb9c54cc5e4a3c23a6";
+    public static final String tempRowNumOrderColumnName = "rowNumOrder_b7c6a1f4ff4b4d099ad01f2b76c9a8e1";
 
     // Special private column names
-    public static String mutabilityLevelColumnName = "__mutabilityLevel";
-    public static String rowIdColumnName = "__rowID";
-    public static String pathInColumnName = "__pathIn";
-    public static String tableLocationColumnName = "__tableLocation";
-    public static String rowOrderColumnName = "__rowOrder";
+    public static final String mutabilityLevelColumnName = "__mutabilityLevel";
+    public static final String rowIdColumnName = "__rowID";
+    public static final String pathInColumnName = "__pathIn";
+    public static final String tableLocationColumnName = "__tableLocation";
+    public static final String rowOrderColumnName = "__rowOrder";
 
     private SparkSessionManager() {
     }
 
     private SparkSessionManager(SparkConf conf) {
-        if (this.configuration == null) {
-            this.configuration = conf;
-        } else {
-            throw new OurBadException("Configuration already exists: new configuration initialization prevented.");
-        }
+        this.configuration = conf;
     }
 
     private SparkSessionManager(SparkSession session) {
-        if (this.session == null) {
-            this.session = session;
-            this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
-            if (this.configuration == null) {
-                setDefaultConfiguration();
-            }
-            initializeKryoSerialization();
-            Configurator.setLevel("org", LOG_LEVEL);
-            Configurator.setLevel("akka", LOG_LEVEL);
-        } else {
-            throw new OurBadException("Session already exists: new session initialization prevented.");
-        }
+        this.session = session;
+        this.javaSparkContext = JavaSparkContext.fromSparkContext(session.sparkContext());
+        setDefaultConfiguration();
+        initializeKryoSerialization();
     }
 
     public static SparkSessionManager getInstance() {
@@ -160,7 +148,7 @@ public class SparkSessionManager {
     private void setDefaultConfiguration() {
         try {
             this.configuration = new SparkConf();
-            if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
+            if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
                 LogManager.getLogger("SparkSessionManager")
                     .warn(
                         "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
@@ -178,6 +166,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
+            this.configuration.set("spark.log.level", LOG_LEVEL.name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -197,11 +186,7 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Configurator.setLevel("org.apache.spark", Level.ERROR);
-            Configurator.setLevel("akka", Level.ERROR);
-
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
-            this.session.sparkContext().setLogLevel("WARN");
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
@@ -253,10 +238,6 @@ public class SparkSessionManager {
                 DoubleType.class,
                 FloatType.class,
                 IntType.class,
-                BooleanType.class,
-                BooleanType.class,
-                BooleanType.class,
-                BooleanType.class,
             };
 
             this.configuration.registerKryoClasses(serializedClasses);

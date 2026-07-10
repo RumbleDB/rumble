@@ -10,7 +10,7 @@ import java.util.Set;
 
 final class TemporalPictureParser {
 
-    static ParsedVariableMarker parse(
+    static VariableMarker parse(
             String rawVariableMarker,
             String pictureString,
             ExceptionMetadata metadata
@@ -33,7 +33,7 @@ final class TemporalPictureParser {
 
         String rest = variableMarker.substring(1);
 
-        ParsedWidthModifier width = ParsedWidthModifier.parse(rest, pictureString, metadata);
+        WidthModifier width = WidthModifier.parse(rest, pictureString, metadata);
 
         ParsedPresentationModifier presentation = ParsedPresentationModifier.parse(
             width.presentationPart
@@ -47,7 +47,7 @@ final class TemporalPictureParser {
                 pictureString,
                 metadata
             );
-            return ParsedVariableMarker.forTimezone(
+            return VariableMarker.forTimezone(
                 component,
                 presentation.firstPresentationModifier,
                 width.minWidth,
@@ -70,7 +70,7 @@ final class TemporalPictureParser {
                 return defaultVariableMarker(component, width, presentation.secondModifier);
             }
 
-            return ParsedVariableMarker.forName(
+            return VariableMarker.forName(
                 component,
                 presentation.firstPresentationModifier,
                 width.minWidth,
@@ -91,7 +91,7 @@ final class TemporalPictureParser {
                 metadata
             );
 
-            return ParsedVariableMarker.forFractionalSeconds(
+            return VariableMarker.forFractionalSeconds(
                 component,
                 presentation.firstPresentationModifier,
                 width.minWidth,
@@ -112,7 +112,7 @@ final class TemporalPictureParser {
 
         switch (primaryFormatToken.getType()) {
             case PrimaryFormatToken.DECIMAL:
-                return ParsedVariableMarker.forNumeric(
+                return VariableMarker.forNumeric(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -123,7 +123,7 @@ final class TemporalPictureParser {
                 );
 
             case PrimaryFormatToken.ROMAN_UPPER:
-                return ParsedVariableMarker.forRoman(
+                return VariableMarker.forRoman(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -133,7 +133,7 @@ final class TemporalPictureParser {
                 );
 
             case PrimaryFormatToken.ROMAN_LOWER:
-                return ParsedVariableMarker.forRoman(
+                return VariableMarker.forRoman(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -143,7 +143,7 @@ final class TemporalPictureParser {
                 );
 
             case PrimaryFormatToken.ALPHABETIC_UPPER:
-                return ParsedVariableMarker.forAlphabetic(
+                return VariableMarker.forAlphabetic(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -153,7 +153,7 @@ final class TemporalPictureParser {
                 );
 
             case PrimaryFormatToken.ALPHABETIC_LOWER:
-                return ParsedVariableMarker.forAlphabetic(
+                return VariableMarker.forAlphabetic(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -165,7 +165,7 @@ final class TemporalPictureParser {
             case PrimaryFormatToken.WORDS_UPPER:
             case PrimaryFormatToken.WORDS_LOWER:
             case PrimaryFormatToken.WORDS_TITLE:
-                return ParsedVariableMarker.forWords(
+                return VariableMarker.forWords(
                     component,
                     presentation.firstPresentationModifier,
                     width.minWidth,
@@ -189,13 +189,13 @@ final class TemporalPictureParser {
         return sb.toString();
     }
 
-    private static ParsedVariableMarker defaultVariableMarker(
+    private static VariableMarker defaultVariableMarker(
             char component,
-            ParsedWidthModifier width,
+            WidthModifier width,
             char secondPresentationModifier
     ) {
         if (component == 'f') {
-            return ParsedVariableMarker.forFractionalSeconds(
+            return VariableMarker.forFractionalSeconds(
                 component,
                 "",
                 width.minWidth,
@@ -205,10 +205,10 @@ final class TemporalPictureParser {
         }
 
         if (component == 'F') {
-            int maxWidth = width.maxWidth == ParsedWidthModifier.UNBOUNDED && width.minWidth == 1
+            int maxWidth = width.maxWidth == WidthModifier.UNBOUNDED && width.minWidth == 1
                 ? 3
                 : width.maxWidth;
-            return ParsedVariableMarker.forName(
+            return VariableMarker.forName(
                 component,
                 "",
                 width.minWidth,
@@ -219,7 +219,7 @@ final class TemporalPictureParser {
         }
 
         if (component == 'P') {
-            return ParsedVariableMarker.forAmPm(
+            return VariableMarker.forAmPm(
                 component,
                 "",
                 width.minWidth,
@@ -229,7 +229,7 @@ final class TemporalPictureParser {
         }
 
         if (isDefaultNumericComponent(component)) {
-            return ParsedVariableMarker.forNumeric(
+            return VariableMarker.forNumeric(
                 component,
                 "1",
                 width.minWidth,
@@ -240,7 +240,7 @@ final class TemporalPictureParser {
             );
         }
 
-        return ParsedVariableMarker.forDefault(
+        return VariableMarker.forDefault(
             component,
             "",
             width.minWidth,
@@ -284,7 +284,6 @@ final class TemporalPictureParser {
         'f',
         'Z',
         'z',
-        'X',
         'C',
         'E'
     );
@@ -353,11 +352,11 @@ final class TemporalPictureParser {
     private static String parseNameForm(String presentation) {
         switch (presentation) {
             case "N":
-                return ParsedVariableMarker.NameForm.UPPER;
+                return VariableMarker.NameForm.UPPER;
             case "n":
-                return ParsedVariableMarker.NameForm.LOWER;
+                return VariableMarker.NameForm.LOWER;
             case "Nn":
-                return ParsedVariableMarker.NameForm.TITLE;
+                return VariableMarker.NameForm.TITLE;
             default:
                 throw new IllegalArgumentException("Unsupported name presentation: " + presentation);
         }
@@ -366,11 +365,11 @@ final class TemporalPictureParser {
     private static String parseWordCase(String presentation) {
         switch (presentation) {
             case "W":
-                return ParsedVariableMarker.WordCase.UPPER;
+                return VariableMarker.WordCase.UPPER;
             case "w":
-                return ParsedVariableMarker.WordCase.LOWER;
+                return VariableMarker.WordCase.LOWER;
             case "Ww":
-                return ParsedVariableMarker.WordCase.TITLE;
+                return VariableMarker.WordCase.TITLE;
             default:
                 throw new IllegalArgumentException("Unsupported word presentation: " + presentation);
         }

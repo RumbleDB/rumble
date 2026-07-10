@@ -3,7 +3,7 @@ package org.rumbledb.runtime.functions.datetime.dateformatting;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 
-final class ParsedWidthModifier {
+final class WidthModifier {
 
     static final int UNBOUNDED = -1;
 
@@ -11,13 +11,13 @@ final class ParsedWidthModifier {
     final int minWidth;
     final int maxWidth;
 
-    private ParsedWidthModifier(String presentationPart, int minWidth, int maxWidth) {
+    private WidthModifier(String presentationPart, int minWidth, int maxWidth) {
         this.presentationPart = presentationPart;
         this.minWidth = minWidth;
         this.maxWidth = maxWidth;
     }
 
-    static ParsedWidthModifier parse(
+    static WidthModifier parse(
             String rest,
             String pictureString,
             ExceptionMetadata metadata
@@ -25,7 +25,7 @@ final class ParsedWidthModifier {
         int comma = rest.lastIndexOf(',');
 
         if (comma < 0) {
-            return new ParsedWidthModifier(rest, 1, UNBOUNDED);
+            return new WidthModifier(rest, 1, UNBOUNDED);
         }
 
         String presentationPart = rest.substring(0, comma);
@@ -33,7 +33,7 @@ final class ParsedWidthModifier {
 
         ParsedWidth width = parseWidth(widthPart, pictureString, metadata);
 
-        return new ParsedWidthModifier(
+        return new WidthModifier(
                 presentationPart,
                 width.minWidth,
                 width.maxWidth

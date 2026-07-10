@@ -42,7 +42,6 @@ public class FormatDateTimeFunctionIterator extends DateFormattingFunctionIterat
             || component == 'f'
             || component == 'Z'
             || component == 'z'
-            || component == 'X'
             || component == 'C'
             || component == 'E';
     }

@@ -19,6 +19,7 @@
 package org.rumbledb.runtime.misc;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,14 +39,11 @@ import java.util.List;
  */
 public final class SortKeyComparison {
 
-    public static final String FOTS_CASEBLIND_COLLATION =
-        "http://www.w3.org/2010/09/qt-fots-catalog/collation/caseblind";
-
     private SortKeyComparison() {
     }
 
     public static void checkCollationSupported(String collationUri, ExceptionMetadata metadata) {
-        if (collationUri.equals(Name.DEFAULT_COLLATION_NS) || collationUri.equals(FOTS_CASEBLIND_COLLATION)) {
+        if (CollationCatalogue.isDefaultStaticallyKnownCollation(collationUri)) {
             return;
         }
         throw new UnsupportedCollationException("Wrong collation parameter", metadata);
