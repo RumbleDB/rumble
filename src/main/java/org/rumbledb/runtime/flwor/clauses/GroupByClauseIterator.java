@@ -229,6 +229,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                     for (Item groupVariableValue : groupVariableValues) {
                         atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
                     }
+                    if (atomizedGroupValues.size() > 1) {
+                        throw new UnexpectedTypeException(
+                                "Keys in a group-by clause must atomize to at most one item.",
+                                getMetadata()
+                        );
+                    }
                     inputTuple.putValue(groupVariableName, atomizedGroupValues);
                     results.addAll(atomizedGroupValues);
                 }
