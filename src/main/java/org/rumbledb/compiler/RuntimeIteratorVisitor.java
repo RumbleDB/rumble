@@ -1456,6 +1456,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new AdditiveOperationIterator(
                 left,
@@ -1479,6 +1491,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new MultiplicativeOperationIterator(
                 left,
