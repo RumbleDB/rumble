@@ -205,11 +205,11 @@ letVar: var_ref=varRef
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 
