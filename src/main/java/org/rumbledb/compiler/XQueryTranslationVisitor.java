@@ -1018,14 +1018,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ? null
             : this.buildWindowEndCondition(ctx.windowEndCondition());
         validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        if (sequenceType != null) {
-            expression = new TreatExpression(
-                    expression,
-                    new SequenceType(sequenceType.getItemType(), SequenceType.Arity.ZeroOrMore),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
-        }
         return new WindowClause(
                 WindowClause.WindowType.TUMBLING,
                 windowVariable,
@@ -1045,14 +1037,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
         WindowClause.WindowCondition end = this.buildWindowEndCondition(ctx.windowEndCondition());
         validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        if (sequenceType != null) {
-            expression = new TreatExpression(
-                    expression,
-                    new SequenceType(sequenceType.getItemType(), SequenceType.Arity.ZeroOrMore),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
-        }
         return new WindowClause(
                 WindowClause.WindowType.SLIDING,
                 windowVariable,

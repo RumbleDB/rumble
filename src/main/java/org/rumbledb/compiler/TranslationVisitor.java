@@ -1101,13 +1101,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             ? null
             : buildWindowEndCondition(ctx.windowEndCondition());
         validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        if (type != null)
-            expression = new TreatExpression(
-                    expression,
-                    new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
         return new WindowClause(
                 WindowClause.WindowType.TUMBLING,
                 windowVariable,
@@ -1127,13 +1120,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
         WindowClause.WindowCondition end = buildWindowEndCondition(ctx.windowEndCondition());
         validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
-        if (type != null)
-            expression = new TreatExpression(
-                    expression,
-                    new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata()
-            );
         return new WindowClause(
                 WindowClause.WindowType.SLIDING,
                 windowVariable,
