@@ -320,29 +320,30 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             int position,
             int startPosition
     ) {
-        // Clear the variable bindings in the current dynamic context before evaluating the condition (to avoid variable
-        // name clashes)
-        this.currentDynamicContext.getVariableValues().removeAllVariables();
+        // Evaluate each condition in a child context so temporary window bindings from one condition do not leak into
+        // the next one, while outer bindings (including external variables) remain visible.
+        DynamicContext conditionContext = new DynamicContext(this.currentDynamicContext);
+        conditionContext.getVariableValues().removeAllVariables();
 
         if (this.currentInputTuple != null) {
             // Bind the variables from the input tuple to the current dynamic context so that the condition iterator can
             // access them
-            this.currentDynamicContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, getMetadata());
+            conditionContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, getMetadata());
         }
 
         if (endCondition) {
             // Bind the variables from the start condition to the current dynamic context so that the end condition can
             // access them
             bindTupleContext(
-                this.currentDynamicContext,
+                conditionContext,
                 items,
                 startPosition,
                 this.startVariables
             );
         }
 
-        bindTupleContext(this.currentDynamicContext, items, position, variables);
-        return conditionIterator.getEffectiveBooleanValue(this.currentDynamicContext);
+        bindTupleContext(conditionContext, items, position, variables);
+        return conditionIterator.getEffectiveBooleanValue(conditionContext);
     }
 
     /**
