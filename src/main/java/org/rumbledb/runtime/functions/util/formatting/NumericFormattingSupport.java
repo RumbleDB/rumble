@@ -3,7 +3,7 @@ package org.rumbledb.runtime.functions.util.formatting;
 import java.util.*;
 
 /**
- * Locale-independent digit formatting: grouping, Roman and alphabetic. Locale-sensitive words live in
+ * Locale-independent digit formatting: grouping and alphabetic. Locale-sensitive words and Roman numerals live in
  * {@link NumberWords}.
  */
 public final class NumericFormattingSupport {
@@ -81,23 +81,6 @@ public final class NumericFormattingSupport {
             }
         }
         return sb.toString();
-    }
-
-    public static String integerToRoman(int number) {
-        if (number <= 0) {
-            return "0";
-        }
-        final int[] values = { 1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1 };
-        final String[] romanLiterals = { "M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I" };
-
-        StringBuilder s = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            while (number >= values[i]) {
-                number -= values[i];
-                s.append(romanLiterals[i]);
-            }
-        }
-        return s.toString();
     }
 
     public static String integerToAlphabetic(int number, boolean lowerCase) {
