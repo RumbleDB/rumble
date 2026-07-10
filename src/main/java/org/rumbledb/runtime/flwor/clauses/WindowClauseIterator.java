@@ -289,6 +289,18 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     private int findEnd(List<Item> items, int start) {
+        if (this.endCondition == null) {
+            // This can only happen for tumbling windows without an explicit end clause
+            // In that case, the end of the window will be the item before the next start condition match, or the last
+            // item in the list if there is no next start condition match
+            for (int nextStart = start + 1; nextStart < items.size(); nextStart++) {
+                if (matches(this.startCondition, this.startVariables, false, items, nextStart, nextStart)) {
+                    return nextStart - 1;
+                }
+            }
+            return items.size() - 1;
+        }
+
         for (int end = start; end < items.size(); end++) {
             if (matches(this.endCondition, this.endVariables, true, items, end, start)) {
                 return end;
