@@ -471,6 +471,23 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
+        DynamicContext.mergeVariableDependencies(result, this.sourceIterator.getVariableDependencies());
+        DynamicContext.mergeVariableDependencies(result, this.startCondition.getVariableDependencies());
+        if (this.endCondition != null) {
+            DynamicContext.mergeVariableDependencies(result, this.endCondition.getVariableDependencies());
+        }
+        if (this.child != null && this.evaluationDepthLimit != 0) {
+            for (Name variable : this.child.getOutputTupleVariableNames()) {
+                result.remove(variable);
+            }
+            DynamicContext.mergeVariableDependencies(result, this.child.getDynamicContextVariableDependencies());
+        }
+        return result;
+    }
+
+    @Override
     protected Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
