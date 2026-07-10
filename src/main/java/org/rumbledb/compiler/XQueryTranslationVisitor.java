@@ -1010,7 +1010,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitTumblingWindowClause(XQueryParser.TumblingWindowClauseContext ctx) {
-        Name windowVariable = parseName(ctx.name, false, false, false, false);
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
         SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
@@ -1031,7 +1031,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitSlidingWindowClause(XQueryParser.SlidingWindowClauseContext ctx) {
-        Name windowVariable = parseName(ctx.name, false, false, false, false);
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
         SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());

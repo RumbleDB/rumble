@@ -1093,7 +1093,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTumblingWindowClause(JsoniqParser.TumblingWindowClauseContext ctx) {
-        Name windowVariable = parseName(ctx.name, false, false, false, false);
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
         SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
@@ -1114,7 +1114,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitSlidingWindowClause(JsoniqParser.SlidingWindowClauseContext ctx) {
-        Name windowVariable = parseName(ctx.name, false, false, false, false);
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
         SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
         Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
         WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
