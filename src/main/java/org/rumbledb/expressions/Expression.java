@@ -160,9 +160,12 @@ public abstract class Expression extends Node {
     /**
      * Sets the sequential property of the expression. An expression can only
      * be one of the following:
-     * - non-updating sequential,
-     * - non-updating non-sequential,
-     * - updating non-sequential.
+     * 
+     * <ul>
+     * <li>non-updating sequential,</li>
+     * <li>non-updating non-sequential,</li>
+     * <li>updating non-sequential.</li>
+     * </ul>
      *
      * @param isSequential a boolean value defining if the expression is
      *        sequential or not.

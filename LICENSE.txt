@@ -88,7 +88,7 @@ For the XQuery 3.1 grammar (Loren Cahlander/xqdoc)
 See license/LICENSE-xqdoc.txt
 
 ========================================================================
-For ICU4J 78.3
+For ICU4J 76.1
 ========================================================================
 
 See license/LICENSE-ICU4J.txt

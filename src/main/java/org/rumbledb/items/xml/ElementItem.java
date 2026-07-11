@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -26,7 +27,8 @@ public class ElementItem implements Item {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    // TODO: add base-uri, schema-type, is-id, is-idrefs
+    private ItemType typeAnnotation;
+    // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
@@ -41,6 +43,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
+        this.typeAnnotation = null;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
@@ -61,6 +64,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
+        this.typeAnnotation = null;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
@@ -93,6 +97,7 @@ public class ElementItem implements Item {
         Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
+        copy.typeAnnotation = this.typeAnnotation;
         return copy;
     }
 
@@ -130,6 +135,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.namespaces);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
+        kryo.writeClassAndObject(output, this.typeAnnotation);
     }
 
     @SuppressWarnings("unchecked")
@@ -142,6 +148,7 @@ public class ElementItem implements Item {
         this.namespaces = kryo.readObject(input, HashMap.class);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
+        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
     }
 
     @Override
@@ -233,8 +240,11 @@ public class ElementItem implements Item {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * - Insertion order is preserved for stable iteration.
-         * - Later puts for the same prefix override earlier values.
+         * 
+         * <ul>
+         * <li>Insertion order is preserved for stable iteration.</li>
+         * <li>Later puts for the same prefix override earlier values.</li>
+         * </ul>
          */
         LinkedHashMap<String, String> inScope = new LinkedHashMap<>();
 
@@ -342,7 +352,12 @@ public class ElementItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(
+            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+        );
     }
 
     /**
@@ -358,6 +373,15 @@ public class ElementItem implements Item {
     @Override
     public List<Item> typedValue() {
         return this.atomizedValue();
+    }
+
+    public void setSchemaType(ItemType typeAnnotation) {
+        this.typeAnnotation = typeAnnotation;
+    }
+
+    @Override
+    public ItemType getSchemaType() {
+        return this.typeAnnotation;
     }
 
     @Override
@@ -379,6 +403,14 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
+        if (this.typeAnnotation != null) {
+            Item typedValue = CastIterator.castItemToType(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                this.typeAnnotation,
+                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
+            );
+            return Collections.singletonList(typedValue);
+        }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
         // We still approximate typed-value by concatenating children for now, but preserve the
         // untypedAtomic dynamic type instead of collapsing to xs:string.

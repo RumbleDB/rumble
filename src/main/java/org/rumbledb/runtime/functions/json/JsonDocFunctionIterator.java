@@ -6,8 +6,12 @@ import java.io.InputStreamReader;
 import java.io.PushbackInputStream;
 import java.io.Reader;
 import java.io.Serial;
+import java.io.UncheckedIOException;
 import java.net.URI;
+import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
@@ -16,6 +20,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotInferEncodingException;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
@@ -108,17 +113,6 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-
-
-    /**
-     * Opens the resource, detects its encoding from a small leading-byte peek, and
-     * parses it directly from the stream, without buffering the whole resource into
-     * memory first. The stream, and therefore the parser reading from it, must stay
-     * open for the duration of the parse, so JSON syntax errors (which today
-     * propagate unmodified as InvalidJSONException/DuplicateJSONKeyException) now
-     * also pass through this try-with-resources block and must not be rewrapped as
-     * UnavailableResourceException like genuine I/O failures are.
-     */
     private static Item parseJsonResource(
             URI uri,
             JSONParsingOptions options,
@@ -136,11 +130,24 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         ) {
             PushbackInputStream pushback = new PushbackInputStream(is, 4);
             Charset charset = detectEncoding(peekLeadingBytes(pushback, 4));
-            // The InputStreamReader holds no resource beyond the InputStream it wraps,
-            // so closing `is` above is sufficient; it does not need its own close().
-            Reader reader = new InputStreamReader(pushback, charset);
-            return ItemParser.getItemFromJSONReader(reader, options, xmlVersion, isJSONiq10, metadata);
-        } catch (InvalidJSONException | DuplicateJSONKeyException e) {
+            Reader reader = new InputStreamReader(pushback, strictDecoder(charset));
+            try {
+                return ItemParser.getItemFromJSONReader(reader, options, xmlVersion, isJSONiq10, metadata);
+            } catch (UncheckedIOException e) {
+                if (e.getCause() instanceof CharacterCodingException) {
+                    CannotInferEncodingException ex = new CannotInferEncodingException(
+                            "Unable to infer the encoding of the resource supplied to fn:json-doc(): "
+                                + "the content is not valid "
+                                + charset.name()
+                                + ".",
+                            metadata
+                    );
+                    ex.initCause(e);
+                    throw ex;
+                }
+                throw e;
+            }
+        } catch (InvalidJSONException | DuplicateJSONKeyException | CannotInferEncodingException e) {
             throw e;
         } catch (UnavailableResourceException e) {
             throw e;
@@ -158,11 +165,12 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    /**
-     * Reads up to `maxBytes` from the front of `stream` and pushes them back, so the
-     * stream can still be read from the beginning afterward. Used to peek enough
-     * bytes for detectEncoding() without buffering the whole resource.
-     */
+    private static CharsetDecoder strictDecoder(Charset charset) {
+        return charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT);
+    }
+
     private static byte[] peekLeadingBytes(PushbackInputStream stream, int maxBytes) throws IOException {
         byte[] buffer = new byte[maxBytes];
         int totalRead = 0;

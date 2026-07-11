@@ -9,8 +9,7 @@ import java.io.UncheckedIOException;
 /**
  * A {@link JSONCharSource} backed by a streaming {@code Reader}, for
  * {@code fn:json-doc}. Maintains a small sliding lookahead buffer sized to
- * {@link JSONCharSource#MAX_ESCAPE_LOOKAHEAD} so the parser never needs to
- * hold the whole resource in memory.
+ * {@link JSONCharSource#MAX_ESCAPE_LOOKAHEAD}
  */
 final class ReaderCharSource implements JSONCharSource {
 
@@ -26,9 +25,6 @@ final class ReaderCharSource implements JSONCharSource {
         this.readerExhausted = false;
         this.position = 0;
 
-        // A decoded leading U+FEFF is a byte-order mark, not part of the
-        // JSON text. Discard it here without counting it towards position(),
-        // matching StringCharSource's substring(1) strip.
         ensureBuffered(1);
         if (this.bufferedCount > 0 && this.buffer[0] == '\uFEFF') {
             discardFirstBufferedChar();

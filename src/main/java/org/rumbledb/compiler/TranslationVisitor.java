@@ -653,7 +653,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
      * {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} (constructor {@code xmlns=""} and/or
      * prolog defaults) when bound; otherwise {@link Name#createVariableInDefaultTypeNamespace}.</li>
      * <li>{@code isAnnotation}: unprefixed annotation EQName; same default-namespace rule as types when a default is
-     * bound; otherwise {@link Name#createVariableInDefaultAnnotationsNamespace}.</li>
+     * bound; otherwise {@link Name#createNameInDefaultXQueryAnnotationsNamespace}.</li>
      * <li>{@code isElementConstructor}: unprefixed name in a direct element start tag or static computed element name;
      * uses default element namespace from {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} if
      * bound, otherwise no namespace ({@link Name#createVariableInNoNamespace}).</li>
@@ -709,7 +709,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 if (defaultAnnotationNs != null) {
                     name = new Name(defaultAnnotationNs, "", localName);
                 } else {
-                    name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                    name = Name.createNameInDefaultXQueryAnnotationsNamespace(localName);
                 }
             } else if (isElementConstructor) {
                 String defaultElementNs = resolvePrefixForDirConstructor("");
@@ -1106,22 +1106,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+        String uri = null;
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
             }
+            uri = collation;
         }
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
-        }
-        String uri = null;
-        if (ctx.uriLiteral() != null) {
-            uri = ctx.uriLiteral().getText();
         }
         OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
@@ -1142,7 +1140,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
@@ -2613,6 +2611,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
         if (fnCtx != null) {
+            processAnnotations(fnCtx.annotation());
             // we have a function item type
             JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
             if (typedFnCtx != null) {
@@ -3938,12 +3937,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
         String uri = processURILiteral(ctx.uriLiteral());
-        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+        if (!this.moduleContext.isStaticallyKnownCollation(uri)) {
             throw new DefaultCollationException(
                     "Unknown collation: " + uri,
                     createMetadataFromContext(ctx.uriLiteral())
             );
         }
+        this.moduleContext.setDefaultCollation(uri);
     }
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
@@ -4000,23 +4000,29 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
+        return processAnnotations(annotations.annotation());
+    }
+
+    private List<Annotation> processAnnotations(List<JsoniqParser.AnnotationContext> annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (JsoniqParser.AnnotationContext annotationContext : annotations.annotation()) {
+        for (JsoniqParser.AnnotationContext annotationContext : annotations) {
             // for backwards compatibility, the specification allows for updating without % sign
             if (annotationContext.updating != null) {
-                Name name = Name.createVariableInDefaultAnnotationsNamespace("updating");
+                Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");
                 parsedAnnotations.add(new Annotation(name, null));
                 continue;
             }
             JsoniqParser.EqNameContext eqNameContext = annotationContext.eqName();
             Name name = parseEqName(eqNameContext, false, false, true, false);
+            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
+            List<Expression> literals = null;
             if (!annotationContext.literal().isEmpty()) {
-                throw new UnsupportedFeatureException(
-                        "Literals are currently not supported in annotations!",
-                        createMetadataFromContext(annotationContext)
-                );
+                literals = new ArrayList<>();
+                for (JsoniqParser.LiteralContext literalContext : annotationContext.literal()) {
+                    literals.add((Expression) this.visitLiteral(literalContext));
+                }
             }
-            parsedAnnotations.add(new Annotation(name, null));
+            parsedAnnotations.add(new Annotation(name, literals));
         }
 
         return parsedAnnotations;
@@ -4301,8 +4307,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.DecimalFormatDeclContext ctx,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
-            ctx,
+        DecimalFormatDeclarationProcessor.process(
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),

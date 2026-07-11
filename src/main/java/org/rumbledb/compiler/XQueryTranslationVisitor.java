@@ -645,7 +645,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
      * {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} (constructor {@code xmlns=""} and/or
      * prolog defaults) when bound; otherwise {@link Name#createVariableInDefaultTypeNamespace}.</li>
      * <li>{@code isAnnotation}: unprefixed annotation EQName; same default-namespace rule as types when a default is
-     * bound; otherwise {@link Name#createVariableInDefaultAnnotationsNamespace}.</li>
+     * bound; otherwise {@link Name#createNameInDefaultXQueryAnnotationsNamespace}.</li>
      * <li>{@code isElementConstructor}: unprefixed name in a direct element start tag or static computed element name;
      * uses default element namespace from {@link #resolvePrefixForDirConstructor(String)} with prefix {@code ""} if
      * bound, otherwise no namespace ({@link Name#createVariableInNoNamespace}).</li>
@@ -701,7 +701,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 if (defaultAnnotationNs != null) {
                     name = new Name(defaultAnnotationNs, "", localName);
                 } else {
-                    name = Name.createVariableInDefaultAnnotationsNamespace(localName);
+                    name = Name.createNameInDefaultXQueryAnnotationsNamespace(localName);
                 }
             } else if (isElementConstructor) {
                 String defaultElementNs = resolvePrefixForDirConstructor("");
@@ -1022,22 +1022,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public OrderByClauseSortingKey processOrderByExpr(XQueryParser.OrderByExprContext ctx) {
+        String uri = null;
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
             }
+            uri = collation;
         }
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
-        }
-        String uri = null;
-        if (ctx.uriLiteral() != null) {
-            uri = ctx.uriLiteral().getText();
         }
         OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
@@ -1058,7 +1056,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public GroupByVariableDeclaration processGroupByVar(XQueryParser.GroupByVarContext ctx) {
         if (ctx.uriLiteral() != null) {
             String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+            if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
                 throw new DefaultCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
@@ -2311,6 +2309,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return BuiltinTypesCatalogue.item;
         }
         if (itemTypeContext.functionTest() != null) {
+            processAnnotations(itemTypeContext.functionTest().annotation());
             // we have a function item type
             XQueryParser.TypedFunctionTestContext typedFnCtx = itemTypeContext.functionTest().typedFunctionTest();
             if (typedFnCtx != null) {
@@ -3628,12 +3627,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
         String uri = processURILiteral(ctx.uriLiteral());
-        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+        if (!this.moduleContext.isStaticallyKnownCollation(uri)) {
             throw new DefaultCollationException(
                     "Unknown collation: " + uri,
                     createMetadataFromContext(ctx.uriLiteral())
             );
         }
+        this.moduleContext.setDefaultCollation(uri);
     }
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
@@ -3690,17 +3690,23 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
+        return processAnnotations(annotations.annotation());
+    }
+
+    private List<Annotation> processAnnotations(List<XQueryParser.AnnotationContext> annotations) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (XQueryParser.AnnotationContext annotationContext : annotations.annotation()) {
+        for (XQueryParser.AnnotationContext annotationContext : annotations) {
             XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
             Name name = parseEqName(eqNameContext, false, false, true, false);
+            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
+            List<Expression> literals = null;
             if (!annotationContext.literal().isEmpty()) {
-                throw new UnsupportedFeatureException(
-                        "Literals are currently not supported in annotations!",
-                        createMetadataFromContext(annotationContext)
-                );
+                literals = new ArrayList<>();
+                for (XQueryParser.LiteralContext literalContext : annotationContext.literal()) {
+                    literals.add((Expression) this.visitLiteral(literalContext));
+                }
             }
-            parsedAnnotations.add(new Annotation(name, null));
+            parsedAnnotations.add(new Annotation(name, literals));
         }
 
         return parsedAnnotations;
@@ -3985,8 +3991,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.DecimalFormatDeclContext ctx,
             ExceptionMetadata metadata
     ) {
-        DecimalFormatDeclarationHelper.processDecimalFormatDeclaration(
-            ctx,
+        DecimalFormatDeclarationProcessor.process(
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),

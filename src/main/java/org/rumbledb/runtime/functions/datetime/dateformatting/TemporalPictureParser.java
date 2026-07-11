@@ -284,7 +284,6 @@ final class TemporalPictureParser {
         'f',
         'Z',
         'z',
-        'X',
         'C',
         'E'
     );

@@ -22,6 +22,6 @@ public class DefaultCollationFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createStringItem("http://www.w3.org/2005/xpath-functions/collation/codepoint");
+        return ItemFactory.getInstance().createStringItem(this.getRuntimeStaticContext().getDefaultCollation());
     }
 }

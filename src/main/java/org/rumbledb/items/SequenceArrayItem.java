@@ -5,7 +5,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -401,7 +400,13 @@ public class SequenceArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
+        List<Item> result = new ArrayList<>();
+        for (List<Item> memberSequence : this.memberSequences) {
+            for (Item item : memberSequence) {
+                result.addAll(item.atomizedValue());
+            }
+        }
+        return result;
     }
 
     @Override

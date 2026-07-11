@@ -59,12 +59,14 @@ import java.util.Collections;
  * </p>
  */
 public final class JSONParser {
+    private static final int MAX_NESTING_DEPTH = 1000;
 
     private final JSONCharSource source;
     private final ExceptionMetadata metadata;
     private final JSONParsingOptions options;
     private final String xmlVersion;
     private final boolean isJSONiq10;
+    private int nestingDepth;
 
     private JSONParser(
             JSONCharSource source,
@@ -80,7 +82,6 @@ public final class JSONParser {
         this.isJSONiq10 = isJSONiq10;
     }
 
-    // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
     public static Item parse(
             String jsonText,
             JSONParsingOptions options,
@@ -95,7 +96,6 @@ public final class JSONParser {
         return parser.parseDocument();
     }
 
-    // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
     public static Item parse(
             Reader reader,
             JSONParsingOptions options,
@@ -110,7 +110,6 @@ public final class JSONParser {
         return parser.parseDocument();
     }
 
-    // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
     private Item parseDocument() {
         skipIgnorable();
         Item result = parseValue();
@@ -126,7 +125,6 @@ public final class JSONParser {
         return result;
     }
 
-    // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
     private Item parseValue() {
         skipIgnorable();
 
@@ -183,6 +181,15 @@ public final class JSONParser {
 
     // NEVER RETURNS A JAVA NULL
     private Item parseObject() {
+        enterContainer();
+        try {
+            return parseObjectBody();
+        } finally {
+            exitContainer();
+        }
+    }
+
+    private Item parseObjectBody() {
         expect('{');
         skipIgnorable();
 
@@ -196,6 +203,13 @@ public final class JSONParser {
 
         while (true) {
             skipIgnorable();
+
+            if (isEnd()) {
+                throw new InvalidJSONException(
+                        "Unexpected end of input while parsing JSON object. [position " + position() + "]",
+                        this.metadata
+                );
+            }
 
             ParsedString key;
             char c = peek();
@@ -280,6 +294,15 @@ public final class JSONParser {
     }
 
     private Item parseArray() {
+        enterContainer();
+        try {
+            return parseArrayBody();
+        } finally {
+            exitContainer();
+        }
+    }
+
+    private Item parseArrayBody() {
         expect('[');
         skipIgnorable();
 
@@ -793,6 +816,24 @@ public final class JSONParser {
             return true;
         }
         return false;
+    }
+
+    private void enterContainer() {
+        this.nestingDepth++;
+        if (this.nestingDepth > MAX_NESTING_DEPTH) {
+            throw new InvalidJSONException(
+                    "JSON nesting depth exceeds the maximum supported depth of "
+                        + MAX_NESTING_DEPTH
+                        + ". [position "
+                        + position()
+                        + "]",
+                    this.metadata
+            );
+        }
+    }
+
+    private void exitContainer() {
+        this.nestingDepth--;
     }
 
     /**

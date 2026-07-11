@@ -388,25 +388,11 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private String decodeEscapedJsonString(String content) {
-        StringBuilder decoded = new StringBuilder();
-        int index = 0;
-        while (index < content.length()) {
-            char current = content.charAt(index);
-            if (current != '\\') {
-                decoded.append(current);
-                index++;
-                continue;
-            }
-            try {
-                JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                    JSONLiteralParsingUtils.decodeEscapeSequence(content, index);
-                decoded.append(decodedEscape.getDecodedText());
-                index = decodedEscape.getNextIndex();
-            } catch (IllegalArgumentException e) {
-                throw invalidEscape(e.getMessage());
-            }
+        try {
+            return JSONLiteralParsingUtils.decodeEscapedJsonString(content);
+        } catch (IllegalArgumentException e) {
+            throw invalidEscape(e.getMessage());
         }
-        return decoded.toString();
     }
 
     private String serializeAsJson(Item value, boolean indent) {

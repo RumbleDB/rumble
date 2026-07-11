@@ -4,19 +4,6 @@ package org.rumbledb.items.parsing;
  * A character source for {@link JSONParser}, abstracting over an in-memory
  * {@code String} ({@link StringCharSource}) or a streaming {@code Reader}
  * ({@link ReaderCharSource}).
- *
- * <p>
- * The parser is LL(1) except when deciding whether a Unicode escape (backslash,
- * u, 4 hex digits) is the high surrogate of a UTF-16 pair: it must speculatively
- * check for a second such escape immediately following the first, without
- * committing to consuming it unless it turns out to be a valid low surrogate.
- * That check needs up to 6 characters of forward peek counted from the
- * position right after the first escape has been fully consumed: the
- * candidate second escape's {@code \}, {@code u}, and 4 hex digits
- * ({@code canReadLowSurrogateEscape} + {@code peekHexQuad} in
- * {@link JSONLiteralParsingUtils}). {@code MAX_ESCAPE_LOOKAHEAD} is that
- * exact bound.
- * </p>
  */
 interface JSONCharSource {
 
@@ -54,8 +41,7 @@ interface JSONCharSource {
     char advance();
 
     /**
-     * Number of characters consumed via {@link #advance()} so far. A
-     * stripped leading byte-order-mark character is not counted.
+     * Number of characters consumed via {@link #advance()} so far.
      */
     int position();
 }

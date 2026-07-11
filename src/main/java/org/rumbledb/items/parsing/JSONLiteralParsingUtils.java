@@ -33,6 +33,25 @@ public final class JSONLiteralParsingUtils {
         throw new OurBadException("Unexpected number-format: " + numberFormat);
     }
 
+    /**
+     * Decodes every JSON escape sequence in {@code content}, copying non-escaped
+     * characters through unchanged.
+     */
+    public static String decodeEscapedJsonString(String content) {
+        StringBuilder decoded = new StringBuilder();
+        JSONCharSource source = new StringCharSource(content, false);
+        while (!source.isEnd()) {
+            char current = source.advance();
+            if (current != '\\') {
+                decoded.append(current);
+                continue;
+            }
+            DecodedEscape escape = decodeEscapeSequence(source);
+            decoded.append(escape.getDecodedText());
+        }
+        return decoded.toString();
+    }
+
     public static DecodedEscape decodeEscapeSequence(JSONCharSource source) {
         // The backslash itself was already consumed by the caller.
         if (source.isEnd()) {

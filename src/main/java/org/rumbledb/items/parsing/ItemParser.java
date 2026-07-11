@@ -110,13 +110,6 @@ public class ItemParser implements Serializable {
     /**
      * Parses JSON text streamed from a Reader to an item, without requiring the
      * whole text to be materialized in memory first. Used by fn:json-doc().
-     *
-     * @param reader the JSON text source.
-     * @param options the resolved parse-json options.
-     * @param xmlVersion the configured XML version, for character validity checks.
-     * @param isJSONiq10 whether the query is running in JSONiq 1.0 mode.
-     * @param metadata exception metadata if an error is thrown.
-     * @return the parsed item.
      */
     public static Item getItemFromJSONReader(
             Reader reader,
@@ -618,9 +611,6 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata,
             ItemType itemType
     ) {
-        if (itemType != null && itemType.getName() == null) {
-            itemType = itemType.getBaseType();
-        }
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
@@ -631,7 +621,11 @@ public class ItemParser implements Serializable {
                 s = (String) o;
             }
             Item item = ItemFactory.getInstance().createStringItem(s);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.stringItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.stringItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -644,7 +638,11 @@ public class ItemParser implements Serializable {
                 b = (Boolean) o;
             }
             Item item = ItemFactory.getInstance().createBooleanItem(b);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.booleanItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -657,7 +655,11 @@ public class ItemParser implements Serializable {
                 value = (Double) o;
             }
             Item item = ItemFactory.getInstance().createDoubleItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.doubleItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -670,7 +672,11 @@ public class ItemParser implements Serializable {
                 value = (Integer) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.intItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.intItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -683,7 +689,11 @@ public class ItemParser implements Serializable {
                 value = (Float) o;
             }
             Item item = ItemFactory.getInstance().createFloatItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.floatItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.floatItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -697,7 +707,11 @@ public class ItemParser implements Serializable {
             }
             BigInteger integerValue = value.toBigIntegerExact();
             Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.integerItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -710,7 +724,11 @@ public class ItemParser implements Serializable {
                 value = (BigDecimal) o;
             }
             Item item = ItemFactory.getInstance().createDecimalItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.decimalItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -723,7 +741,11 @@ public class ItemParser implements Serializable {
                 value = ((Long) o).longValue();
             }
             Item item = ItemFactory.getInstance().createLongItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.longItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -738,6 +760,9 @@ public class ItemParser implements Serializable {
                 value = (Byte) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
+            if (itemType == null || itemType.getName() == null) {
+                return item;
+            }
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
@@ -747,6 +772,9 @@ public class ItemParser implements Serializable {
                 value = (Short) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
+            if (itemType == null || itemType.getName() == null) {
+                return item;
+            }
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
@@ -758,7 +786,11 @@ public class ItemParser implements Serializable {
             Instant instant = value.toInstant();
             OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -773,7 +805,11 @@ public class ItemParser implements Serializable {
             long instant = value.getTime();
             OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.dateItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -786,7 +822,11 @@ public class ItemParser implements Serializable {
                 value = (byte[]) o;
             }
             Item item = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -799,7 +839,11 @@ public class ItemParser implements Serializable {
                 value = (Row) o;
             }
             Item item = getItemFromRow(value, metadata, itemType);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.objectItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -829,7 +873,11 @@ public class ItemParser implements Serializable {
                 }
             }
             Item item = ItemFactory.getInstance().createArrayItem(members, false);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
+            if (
+                itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.arrayItem)
+                    || itemType.getName() == null
+            ) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -848,7 +896,11 @@ public class ItemParser implements Serializable {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
                 Item item = ItemFactory.getInstance().createArrayItem(members, false);
-                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
+                if (
+                    itemType == null
+                        || itemType.equals(BuiltinTypesCatalogue.arrayItem)
+                        || itemType.getName() == null
+                ) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -864,7 +916,11 @@ public class ItemParser implements Serializable {
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
                 Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
-                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
+                if (
+                    itemType == null
+                        || itemType.equals(BuiltinTypesCatalogue.objectItem)
+                        || itemType.getName() == null
+                ) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);

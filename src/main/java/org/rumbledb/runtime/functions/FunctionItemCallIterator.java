@@ -193,8 +193,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     /**
      * Partial application generates a new function:
-     * - Supplied parameters are set as NonLocalVariables
-     * - Argument placeholders form the parameters
+     * 
+     * <ul>
+     * <li>Supplied parameters are set as NonLocalVariables</li>
+     * <li>Argument placeholders form the parameters</li>
+     * </ul>
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */

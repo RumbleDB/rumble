@@ -102,6 +102,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ExactlyOneErrorCode = registerBuiltIn("FORG0005");
     public static final ErrorCode InvalidArgumentType = registerBuiltIn("FORG0006");
     public static final ErrorCode InconsistentTimezones = registerBuiltIn("FORG0008");
+    public static final ErrorCode ParseIetfDateErrorCode = registerBuiltIn("FORG0010");
     public static final ErrorCode InvalidRegexFlagsErrorCode = registerBuiltIn("FORX0001");
     public static final ErrorCode InvalidRegexPatternErrorCode = registerBuiltIn("FORX0002");
     public static final ErrorCode MatchesEmptyStringErrorCode = registerBuiltIn("FORX0003");
@@ -118,6 +119,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
     public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
+    public static final ErrorCode CannotInferEncodingErrorCode = registerBuiltIn("FOUT1200");
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
 
@@ -181,6 +183,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateFunctionIdentifier = registerBuiltIn("XQST0034");
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
+    public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");

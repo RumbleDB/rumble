@@ -505,8 +505,10 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Tests whether the item is an object.
      * Object items are legacy JSONiq objects, that allow only for
-     * - string keys
-     * - singleton values
+     * <ul>
+     * <li>string keys</li>
+     * <li>singleton values</li>
+     * </ul>
      *
      * @return true if it is an object, false otherwise.
      */
@@ -1680,6 +1682,14 @@ public interface Item extends Serializable, KryoSerializable {
 
     default void addOrReplaceNamespace(Item namespaceItem) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default void setSchemaType(ItemType typeAnnotation) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default ItemType getSchemaType() {
+        return null;
     }
 
 

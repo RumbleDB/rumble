@@ -2,8 +2,7 @@ package org.rumbledb.items.parsing;
 
 /**
  * A {@link JSONCharSource} backed by an in-memory {@code String}. Used by
- * {@code fn:parse-json} and the JSONiq-literal callers, which always already
- * hold the JSON text as a materialized string.
+ * {@code fn:parse-json}, which always already holds the JSON text as a materialized string.
  */
 final class StringCharSource implements JSONCharSource {
 
@@ -11,7 +10,11 @@ final class StringCharSource implements JSONCharSource {
     private int index;
 
     StringCharSource(String input) {
-        if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
+        this(input, true);
+    }
+
+    StringCharSource(String input, boolean stripLeadingBom) {
+        if (stripLeadingBom && input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
             this.input = input.substring(1);
         } else {
             this.input = input;

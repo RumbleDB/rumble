@@ -22,6 +22,7 @@ package org.rumbledb.context;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -59,6 +60,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     private boolean emptySequenceOrderLeast;
     private SerializationParameters serializationParameters;
     private boolean isQuerySideEffecting;
+    private transient Set<String> staticallyKnownCollations;
+    private transient String defaultCollation;
 
     /**
      * XQuery {@code declare default function namespace}; when null, unprefixed function names use
@@ -84,11 +87,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         defaultBindings.put("map", Name.MAP_NS);
         defaultBindings.put("array", Name.ARRAY_NS);
         defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("xsi", Name.XSI_NS);
         defaultBindings.put("xml", Name.XML_NS);
         defaultBindings.put("jn", Name.JN_NS);
         defaultBindings.put("js", Name.JS_NS);
         defaultBindings.put("err", Name.ERROR_NS);
-        // defaultBindings.put("an", Name.AN_NS);
+        defaultBindings.put("an", Name.JSONIQ_ANNOTATIONS_NS);
     }
 
     private RumbleRuntimeConfiguration configuration;
@@ -108,6 +112,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.defaultDecimalFormat = null;
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
+        initializeRootCollations();
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -128,6 +133,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
+        initializeRootCollations();
     }
 
     public StaticContext(StaticContext parent) {
@@ -144,6 +150,25 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.defaultDecimalFormat = null;
         this.decimalFormats = null;
         this.isQuerySideEffecting = false;
+        this.staticallyKnownCollations = null;
+        this.defaultCollation = null;
+    }
+
+    private void initializeRootCollations() {
+        this.staticallyKnownCollations = new LinkedHashSet<>(CollationCatalogue.defaultStaticallyKnownCollations());
+        this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+    }
+
+    private void ensureRootCollationsInitialized() {
+        if (this.parent != null) {
+            this.parent.ensureRootCollationsInitialized();
+            return;
+        }
+        if (this.staticallyKnownCollations == null) {
+            initializeRootCollations();
+        } else if (this.defaultCollation == null) {
+            this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+        }
     }
 
     public StaticContext getParent() {
@@ -437,9 +462,13 @@ public class StaticContext implements Serializable, KryoSerializable {
      * Returns the default serialization parameters stored in the static context.
      *
      * Spec references:
-     * - XQuery 3.1 Static Context Components (link: https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)
-     * - Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     * 
+     * <ul>
+     * <li>XQuery 3.1 Static Context Components (link:
+     * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+     * <li>Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+     * </ul>
      */
     public SerializationParameters getSerializationParameters() {
         if (this.serializationParameters != null) {
@@ -541,6 +570,45 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.isEmptySequenceOrderLeast();
         }
         return this.emptySequenceOrderLeast;
+    }
+
+    public void addStaticallyKnownCollation(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Statically known collations can only be set in the root static context.");
+        }
+        ensureRootCollationsInitialized();
+        this.staticallyKnownCollations.add(uri);
+    }
+
+    public boolean isStaticallyKnownCollation(String uri) {
+        return getStaticallyKnownCollations().contains(uri);
+    }
+
+    public Set<String> getStaticallyKnownCollations() {
+        if (this.parent != null) {
+            return this.parent.getStaticallyKnownCollations();
+        }
+        ensureRootCollationsInitialized();
+        return Collections.unmodifiableSet(this.staticallyKnownCollations);
+    }
+
+    public void setDefaultCollation(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default collation can only be set in the root static context.");
+        }
+        ensureRootCollationsInitialized();
+        if (!this.staticallyKnownCollations.contains(uri)) {
+            throw new OurBadException("Default collation must be statically known.");
+        }
+        this.defaultCollation = uri;
+    }
+
+    public String getDefaultCollation() {
+        if (this.parent != null) {
+            return this.parent.getDefaultCollation();
+        }
+        ensureRootCollationsInitialized();
+        return this.defaultCollation;
     }
 
     public StaticContext getModuleContext() {
