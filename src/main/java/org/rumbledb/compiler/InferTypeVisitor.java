@@ -648,6 +648,98 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    private SequenceType validateStrictAggregateInputType(
+            FunctionCallExpression expression,
+            Expression inputExpression,
+            String functionName
+    ) {
+        SequenceType inputType = requireInferredType(
+            inputExpression.getStaticSequenceType(),
+            expression.getClass().getSimpleName()
+        );
+        if (inputType.isEmptySequence()) {
+            return inputType;
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        if (
+            !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
+        ) {
+            throwStaticTypeException(
+                functionName
+                    + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
+                    + inputType,
+                ErrorCode.InvalidArgumentType,
+                expression.getMetadata()
+            );
+        }
+
+        return inputType;
+    }
+
+    private SequenceType inferStrictAggregateReturnType(
+            FunctionCallExpression expression,
+            Expression inputExpression
+    ) {
+        SequenceType inputType = validateStrictAggregateInputType(expression, inputExpression, "fn:avg");
+        if (inputType.isEmptySequence()) {
+            return SequenceType.createSequenceType("anyAtomicType?");
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        ItemType returnItemType = inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+            ? BuiltinTypesCatalogue.numericItem
+            : inputType.getItemType();
+
+        SequenceType.Arity returnArity =
+            (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new SequenceType(returnItemType, returnArity);
+    }
+
+    private SequenceType inferStrictMinMaxReturnType(
+            FunctionCallExpression expression,
+            Expression inputExpression,
+            String functionName
+    ) {
+        SequenceType inputType = requireInferredType(
+            inputExpression.getStaticSequenceType(),
+            expression.getClass().getSimpleName()
+        );
+        if (inputType.isEmptySequence()) {
+            return SequenceType.createSequenceType("anyAtomicType?");
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        if (
+            !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                || inputItemType.equals(BuiltinTypesCatalogue.atomicItem)
+        ) {
+            throwStaticTypeException(
+                functionName
+                    + " requires its inferred input item type to be an atomic type other than xs:anyAtomicType, found "
+                    + inputType,
+                ErrorCode.InvalidArgumentType,
+                expression.getMetadata()
+            );
+        }
+
+        SequenceType.Arity returnArity =
+            (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new SequenceType(inputItemType, returnArity);
+    }
+
+    private boolean isBuiltinFunctionName(Name functionName, String localName) {
+        return functionName.getLocalName().equals(localName)
+            && (functionName.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
+                || functionName.getNamespace().equals(Name.FN_NS));
+    }
+
     /**
      * For specific input functions we read the schema and annotate static type precisely
      * 
@@ -729,14 +821,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // handle 'round' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("round"))) {
+        if (isBuiltinFunctionName(functionName, "round")) {
             // set output type to the same of the first argument (special handling of numeric)
             expression.setStaticSequenceType(args.get(0).getStaticSequenceType());
             return true;
         }
         // handle 'size' function
         if (
-            functionName.equals(Name.createVariableInDefaultFunctionNamespace("size"))
+            isBuiltinFunctionName(functionName, "size")
                 && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
         ) {
             // set output type to 'Integer' if inputType is 'Array'
@@ -746,15 +838,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("sum"))) {
+        if (isBuiltinFunctionName(functionName, "sum")) {
+            SequenceType inputType = validateStrictAggregateInputType(expression, args.get(0), "fn:sum");
             expression.setStaticSequenceType(
                 new SequenceType(
-                        args.get(0).getStaticSequenceType().getItemType(),
-                        args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.OneOrMore
+                        inputType.getItemType(),
+                        inputType.getArity() == SequenceType.Arity.OneOrMore
                             ? SequenceType.Arity.One
                             : SequenceType.Arity.OneOrZero
                 )
             );
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "avg")) {
+            expression.setStaticSequenceType(inferStrictAggregateReturnType(expression, args.get(0)));
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "min")) {
+            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:min"));
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "max")) {
+            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:max"));
             return true;
         }
 
