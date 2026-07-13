@@ -221,7 +221,7 @@ public class InlineFunctionExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        String updating = isUpdating() ? "%an:updating" : "";
+        String updating = isUpdating() ? "%updating " : "";
         if (this.name != null) {
             sb.append("declare " + updating + " function " + this.name.toString() + "(");
         } else {
@@ -263,4 +263,3 @@ public class InlineFunctionExpression extends Expression {
         return this.hasExitStatement;
     }
 }
-
