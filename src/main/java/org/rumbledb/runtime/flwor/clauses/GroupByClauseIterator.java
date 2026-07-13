@@ -223,13 +223,20 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         );
                     }
 
-                    results.addAll(
-                        tupleContext.getVariableValues()
-                            .getLocalVariableValue(
-                                groupVariableName,
+                    List<Item> groupVariableValues = tupleContext.getVariableValues()
+                        .getLocalVariableValue(groupVariableName, getMetadata());
+                    List<Item> atomizedGroupValues = new ArrayList<>();
+                    for (Item groupVariableValue : groupVariableValues) {
+                        atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                    }
+                    if (atomizedGroupValues.size() > 1) {
+                        throw new UnexpectedTypeException(
+                                "Keys in a group-by clause must atomize to at most one item.",
                                 getMetadata()
-                            )
-                    );
+                        );
+                    }
+                    inputTuple.putValue(groupVariableName, atomizedGroupValues);
+                    results.addAll(atomizedGroupValues);
                 }
             }
             FlworKey key = new FlworKey(results);
