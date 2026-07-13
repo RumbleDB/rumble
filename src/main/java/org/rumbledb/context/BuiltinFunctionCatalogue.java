@@ -4087,16 +4087,16 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction innermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "innermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         InnermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction outermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "outermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         OutermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
