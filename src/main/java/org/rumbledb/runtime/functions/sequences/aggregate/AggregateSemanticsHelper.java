@@ -21,14 +21,12 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 final class AggregateSemanticsHelper {
 
@@ -41,27 +39,10 @@ final class AggregateSemanticsHelper {
     private AggregateSemanticsHelper() {
     }
 
-    static List<Item> materializeItemsForSumAndAvg(
-            RuntimeIterator iterator,
-            DynamicContext context,
+    static Item normalizeAggregateItem(
+            Item item,
             ExceptionMetadata metadata
     ) {
-        iterator.open(context);
-        try {
-            List<Item> items = new ArrayList<>();
-            SumDomain domain = null;
-            while (iterator.hasNext()) {
-                Item item = normalizeAggregateItem(iterator.next(), metadata);
-                domain = checkAndRefineSumDomain(domain, item, metadata);
-                items.add(item);
-            }
-            return items;
-        } finally {
-            iterator.close();
-        }
-    }
-
-    private static Item normalizeAggregateItem(Item item, ExceptionMetadata metadata) {
         if (item == null || item.isNull()) {
             throw new InvalidArgumentTypeException(
                     "Aggregate functions require atomic values in a homogeneous numeric or duration domain.",
@@ -78,6 +59,35 @@ final class AggregateSemanticsHelper {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
         return item;
+    }
+
+    static Item addItems(
+            Item left,
+            Item right,
+            ExceptionMetadata metadata
+    ) {
+        Item normalizedLeft = normalizeAggregateItem(left, metadata);
+        Item normalizedRight = normalizeAggregateItem(right, metadata);
+        SumDomain domain = checkAndRefineSumDomain(null, normalizedLeft, metadata);
+        checkAndRefineSumDomain(domain, normalizedRight, metadata);
+        Item result = AdditiveOperationIterator.processItem(normalizedLeft, normalizedRight, false);
+        if (result == null) {
+            throw new InvalidArgumentTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + normalizedLeft.getDynamicType().toString()
+                        + "\" and \""
+                        + normalizedRight.getDynamicType().toString()
+                        + "\"",
+                    metadata
+            );
+        }
+        return result;
+    }
+
+    static boolean canUseNativeDataFrameSum(ItemType itemType) {
+        return itemType.isNumeric()
+            || itemType.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+            || itemType.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
     }
 
     private static SumDomain checkAndRefineSumDomain(
