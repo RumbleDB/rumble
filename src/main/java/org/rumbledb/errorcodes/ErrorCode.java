@@ -80,12 +80,14 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode InvalidLexicalValueErrorCode = registerBuiltIn("FOCA0002");
     public static final ErrorCode NoNamespaceFoundForPrefixErrorCode = registerBuiltIn("FONS0004");
+    public static final ErrorCode StaticBaseURINotSetErrorCode = registerBuiltIn("FONS0005");
     public static final ErrorCode CannotConvertToQNameErrorCode = registerBuiltIn("XPTY0117");
     public static final ErrorCode InvalidNaNOperation = registerBuiltIn("FOCA0005");
     public static final ErrorCode CodepointNotValidErrorCode = registerBuiltIn("FOCH0001");
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode InvalidDocumentURIErrorCode = registerBuiltIn("FODC0005");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
@@ -102,6 +104,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode ExactlyOneErrorCode = registerBuiltIn("FORG0005");
     public static final ErrorCode InvalidArgumentType = registerBuiltIn("FORG0006");
     public static final ErrorCode InconsistentTimezones = registerBuiltIn("FORG0008");
+    public static final ErrorCode URIResolutionErrorCode = registerBuiltIn("FORG0009");
     public static final ErrorCode ParseIetfDateErrorCode = registerBuiltIn("FORG0010");
     public static final ErrorCode InvalidRegexFlagsErrorCode = registerBuiltIn("FORX0001");
     public static final ErrorCode InvalidRegexPatternErrorCode = registerBuiltIn("FORX0002");
