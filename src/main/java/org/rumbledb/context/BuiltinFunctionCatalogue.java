@@ -789,14 +789,14 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.FN_NS, "fn", "unparsed-text-lines"),
         List.of("string?"),
         "string*",
-        org.rumbledb.runtime.functions.io.UnparsedTextLinesFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction unparsed_text_lines2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "unparsed-text-lines"),
         List.of("string?", "string"),
         "string*",
-        org.rumbledb.runtime.functions.io.UnparsedTextLinesFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file1 = createBuiltinFunction(
