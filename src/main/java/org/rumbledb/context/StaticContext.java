@@ -635,7 +635,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 ? value
                 : new InScopeVariable(
                         value.getName(),
-                        value.getSequenceType().incrementArity(),
+                        incrementArity(value.getSequenceType()),
                         value.getMetadata(),
                         value.getStorageMode()
                 )
@@ -648,7 +648,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                         entry.getKey(),
                         varToExclude.contains(entry.getKey())
                             ? entry.getValue().getSequenceType()
-                            : entry.getValue().getSequenceType().incrementArity(),
+                            : incrementArity(entry.getValue().getSequenceType()),
                         entry.getValue().getMetadata(),
                         entry.getValue().isAssignable()
                     );
@@ -656,6 +656,12 @@ public class StaticContext implements Serializable, KryoSerializable {
             }
             current = current.parent;
         }
+    }
+
+    private SequenceType incrementArity(SequenceType sequenceType) {
+        return sequenceType == null
+            ? SequenceType.createSequenceType("item*")
+            : sequenceType.incrementArity();
     }
 
     public void bindDefaultNamespaces() {
