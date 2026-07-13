@@ -129,6 +129,9 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     this.currentMinIsNullItem = true;
                     continue;
                 }
+                if (candidateItem.isUntypedAtomic()) {
+                    candidateItem = ItemFactory.getInstance().createDoubleItem(candidateItem.castToDoubleValue());
+                }
                 candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
                     case 0:
