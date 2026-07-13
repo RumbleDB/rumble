@@ -1090,7 +1090,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "avg"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         AvgFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
