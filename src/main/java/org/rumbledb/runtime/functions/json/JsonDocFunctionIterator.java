@@ -24,6 +24,7 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.URIUtils;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 
@@ -78,11 +79,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
         try {
-            URI uri = FileSystemUtil.resolveURI(
-                staticBaseUri,
-                href,
-                metadata
-            );
+            URI uri = URIUtils.resolveURIReference(staticBaseUri, href);
 
             if (uri.getFragment() != null) {
                 throw new UnavailableResourceException(

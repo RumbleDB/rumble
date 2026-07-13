@@ -6,10 +6,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.URIUtils;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.Serial;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.util.List;
 
@@ -40,7 +42,10 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
         }
         try {
             String href = hrefItem.getStringValue();
-            URI uri = href.isEmpty() ? this.staticURI : FileSystemUtil.resolveURI(this.staticURI, href, getMetadata());
+            URI uri = URIUtils.resolveURIReference(this.staticURI, href);
+            if (uri.getFragment() != null) {
+                throw new URISyntaxException(href, "Fragment identifiers are not allowed");
+            }
             FileSystemUtil.readContent(uri, getConfiguration(), getMetadata());
             return ItemFactory.getInstance().createBooleanItem(true);
         } catch (Exception e) {

@@ -6,6 +6,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.URIUtils;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -30,12 +31,15 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         try {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, uriItem.getStringValue(), getMetadata());
-            InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getConfiguration(), getMetadata());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            documentBuilderFactory.newDocumentBuilder().parse(xmlFileStream);
-            return ItemFactory.getInstance().createBooleanItem(true);
+            URI uri = URIUtils.resolveURIReference(this.staticURI, uriItem.getStringValue());
+            try (
+                InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getConfiguration(), getMetadata())
+            ) {
+                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+                documentBuilderFactory.setNamespaceAware(true);
+                documentBuilderFactory.newDocumentBuilder().parse(xmlFileStream);
+                return ItemFactory.getInstance().createBooleanItem(true);
+            }
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

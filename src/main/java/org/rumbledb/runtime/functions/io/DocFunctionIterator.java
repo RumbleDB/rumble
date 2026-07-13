@@ -4,10 +4,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.InvalidDocumentURIException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.URIUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.w3c.dom.Document;
@@ -19,6 +21,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -48,7 +51,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             Item path = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
+                URI uri = resolveDocumentURI(path.getStringValue());
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
@@ -88,5 +91,37 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " xml-doc function", getMetadata());
+    }
+
+    private URI resolveDocumentURI(String href) {
+        URI reference;
+        try {
+            reference = URIUtils.parseURIReference(href);
+        } catch (URISyntaxException e) {
+            InvalidDocumentURIException ex = new InvalidDocumentURIException(
+                    "Invalid URI supplied to fn:doc(): " + href,
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
+
+        if (!reference.isAbsolute() && (this.staticURI == null || !this.staticURI.isAbsolute())) {
+            throw new CannotRetrieveResourceException(
+                    "The relative URI supplied to fn:doc() cannot be resolved without an absolute static base URI.",
+                    getMetadata()
+            );
+        }
+
+        try {
+            return URIUtils.resolveURIReference(this.staticURI, reference);
+        } catch (URISyntaxException e) {
+            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
+                    "The URI supplied to fn:doc() cannot be resolved.",
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
     }
 }
