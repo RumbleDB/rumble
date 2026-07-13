@@ -19,8 +19,10 @@ package org.rumbledb.parser.jsoniq;
 // Note: string syntax depends on syntactic context, so they are
 // handled by the parser and not the lexer.
 
-// Tokens declared but not defined
-tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
+// INVALID_XML_AMP makes a bare '&' visible to the parser instead of letting
+// the lexer skip it after a token-recognition error.
+// The remaining tokens are declared here and produced by mode-specific rules.
+tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE, INVALID_XML_AMP}
 
 @members {
     ///
@@ -192,9 +194,12 @@ PredefinedEntityRef: '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';' ;
 CharRef: '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';' ;
 
 // Escapes are handled as two Quot or two Apos tokens, to avoid maximal
-// munch lexer ambiguity.
-Quot        : '"' {beginDirectAttributeValueIfExpected('"');} -> pushMode(QUOT_LITERAL_STRING);
-Apos        : '\'' {beginDirectAttributeValueIfExpected('\'');} -> pushMode(APOS_LITERAL_STRING);
+// munch lexer ambiguity. These rules are enabled only after '<e x='; valid
+// ordinary JSONiq strings are consumed by STRING as a single token.
+Quot        : {isDirectAttributeValueExpected()}? '"' {beginDirectAttributeValueIfExpected('"');}
+              -> pushMode(QUOT_LITERAL_STRING);
+Apos        : {isDirectAttributeValueExpected()}? '\'' {beginDirectAttributeValueIfExpected('\'');}
+              -> pushMode(APOS_LITERAL_STRING);
 
 // XML-SPECIFIC
 
@@ -542,7 +547,8 @@ EXIT_STRING         : RBRACKET GRAVE GRAVE -> popMode;
 
 mode QUOT_LITERAL_STRING;
 
-JsonEscape_QuotString           : '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
+// Backslash is deliberately handled by ContentChar in XML attributes. XML
+// attribute values use entity references, not JSON backslash escaping.
 EscapeQuot_QuotString           : '""' -> type(EscapeQuot);
 Quot_QuotString                 : '"' {finishDirectAttributeValueIfActive('"');} -> type(Quot), popMode;
 
@@ -552,11 +558,12 @@ LBRACE_QuotString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_QuotString               : '}' -> type(RBRACE);
 PredefinedEntityRef_QuotString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_QuotString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+InvalidAmp_QuotString           : '&' -> type(INVALID_XML_AMP);
 ContentChar_QuotString          : ~["&{}] -> type(ContentChar);
 
 mode APOS_LITERAL_STRING;
 
-JsonEscape_AposString           : '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
+// As above, backslash is ordinary XML attribute content in this mode.
 EscapeApos_AposString           : '\'\'' -> type(EscapeApos);
 Apos_AposString                 : '\'' {finishDirectAttributeValueIfActive('\'');} -> type(Apos), popMode;
 
@@ -566,14 +573,16 @@ LBRACE_AposString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_AposString               : '}' -> type(RBRACE);
 PredefinedEntityRef_AposString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_AposString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+InvalidAmp_AposString           : '&' -> type(INVALID_XML_AMP);
 ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;
 
 INT_QUOT_JsonEscape: '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
-// A string using the same delimiter as its containing XML attribute must be
-// recognized before the single-quote token that closes the attribute mode.
+// Strings inside an enclosed expression use JSONiq escaping again. Match both
+// delimiters as complete STRING tokens so their braces remain literal.
 INT_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
+INT_QUOT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
 INT_QUOT_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_QUOT_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_QUOT_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
@@ -842,7 +851,9 @@ INT_ContentChar:  ~["'{}<&] -> type(ContentChar);
 mode STRING_INTERPOLATION_MODE_APOS;
 
 INT_APOS_JsonEscape: '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
+// Same handling for expressions enclosed by a single-quoted XML attribute.
 INT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
+INT_APOS_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
 INT_APOS_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_APOS_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_APOS_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
