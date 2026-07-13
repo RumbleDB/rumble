@@ -26,10 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -115,23 +117,38 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata
     ) {
         iterator.open(context);
-        try {
-            Item result = null;
-            while (iterator.hasNext()) {
-                Item nextValue = AggregateSemanticsHelper.normalizeAggregateItem(iterator.next(), metadata);
-                if (result == null) {
-                    result = nextValue;
-                } else {
-                    result = AggregateSemanticsHelper.addItems(result, nextValue, metadata);
-                }
+
+        Item result = null;
+        while (iterator.hasNext()) {
+            Item nextValue = iterator.next();
+            if (nextValue.isUntypedAtomic()) {
+                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
             }
             if (result == null) {
-                result = zeroElement;
+                result = nextValue;
+            } else {
+                if (result.isUntypedAtomic()) {
+                    result = ItemFactory.getInstance().createDoubleItem(result.castToDoubleValue());
+                }
+                Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
+                if (sum == null) {
+                    throw new InvalidArgumentTypeException(
+                            " \"+\": operation not possible with parameters of type \""
+                                + result.getDynamicType().toString()
+                                + "\" and \""
+                                + nextValue.getDynamicType().toString()
+                                + "\"",
+                            metadata
+                    );
+                }
+                result = sum;
             }
-            return result;
-        } finally {
-            iterator.close();
         }
+        if (result == null) {
+            result = zeroElement;
+        }
+        iterator.close();
+        return result;
     }
 
     private static Item computeRDD(
@@ -140,9 +157,8 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        JavaRDD<Item> rdd = iterator.getRDD(context)
-            .map(item -> AggregateSemanticsHelper.normalizeAggregateItem(item, metadata));
-        if (rdd.isEmpty()) {
+        JavaRDD<Item> rdd = iterator.getRDD(context);
+        if (rdd.count() == 0) {
             return zeroElement;
         }
         return rdd.reduce(new SumClosure(metadata));
@@ -158,24 +174,17 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (df.isEmptySequence()) {
             return zeroElement;
         }
-        if (!AggregateSemanticsHelper.canUseNativeDataFrameSum(df.getItemType())) {
-            return computeRDD(zeroElement, iterator, context, metadata);
-        }
-        try {
-            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-            JSoundDataFrame summedDF = df.evaluateSQL(
-                String.format(
-                    "SELECT SUM(`%s`) as `%s` FROM %s",
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    SparkSessionManager.nonObjectJSONiqItemColumnName,
-                    input
-                ),
-                df.getItemType()
-            );
-            return summedDF.getExactlyOneItem();
-        } catch (RuntimeException e) {
-            return computeRDD(zeroElement, iterator, context, metadata);
-        }
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        JSoundDataFrame summedDF = df.evaluateSQL(
+            String.format(
+                "SELECT SUM(`%s`) as `%s` FROM %s",
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                input
+            ),
+            df.getItemType()
+        );
+        return summedDF.getExactlyOneItem();
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
