@@ -24,7 +24,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.InvalidEncodingException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -36,6 +38,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,62 +65,89 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 .getJavaSparkContext()
                 .emptyRDD();
         }
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
-        int partitions = -1;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
-        }
 
-        JavaRDD<String> strings;
-        if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                context.getRumbleRuntimeConfiguration(),
-                getMetadata()
-            );
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            List<String> lines = new ArrayList<>();
-            String line = null;
-            try {
-                while ((line = br.readLine()) != null) {
-                    lines.add(line);
+        try {
+            URI uri = resolveURI(url.getStringValue());
+            Charset charset = getCharset(context);
+            JavaRDD<String> strings;
+            if (this.children.size() == 2 || "http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
+                List<String> lines = new ArrayList<>();
+                try (
+                    InputStream is = FileSystemUtil.getDataInputStream(
+                        uri,
+                        context.getRumbleRuntimeConfiguration(),
+                        getMetadata()
+                    );
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is, charset))
+                ) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        lines.add(line);
+                    }
                 }
-            } catch (IOException e) {
-                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
-            }
-            if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .parallelize(lines);
             } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(
-                        lines,
-                        partitions
-                    );
-            }
-        } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
-            }
-
-            if (this.children.size() == 1) {
+                if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+                    throw new UnavailableResourceException("File " + uri + " not found.", getMetadata());
+                }
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .textFile(FileSystemUtil.convertURIToStringForSpark(uri), MIN_PARTITIONS);
-            } else {
-                RuntimeIterator partitionsIterator = this.children.get(1);
-                partitionsIterator.open(context);
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(
-                        FileSystemUtil.convertURIToStringForSpark(uri),
-                        partitionsIterator.next().getIntValue()
-                    );
-                partitionsIterator.close();
             }
+            return strings.mapPartitions(new StringToStringItemMapper());
+        } catch (InvalidEncodingException | UnavailableResourceException e) {
+            throw e;
+        } catch (RumbleException e) {
+            UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
+            ex.initCause(e);
+            throw ex;
+        } catch (IOException e) {
+            UnavailableResourceException ex = new UnavailableResourceException(
+                    "Unable to read the resource supplied to fn:unparsed-text-lines().",
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
         }
-        return strings.mapPartitions(new StringToStringItemMapper());
+    }
+
+    private URI resolveURI(String href) {
+        try {
+            URI reference = new URI(href);
+            if (reference.getFragment() != null) {
+                throw new URISyntaxException(href, "Fragment identifiers are not allowed");
+            }
+            URI resolvedURI = this.staticURI.resolve(reference);
+            if (!resolvedURI.isAbsolute()) {
+                throw new URISyntaxException(href, "The URI cannot be resolved against an absolute static base URI");
+            }
+            return resolvedURI;
+        } catch (URISyntaxException | IllegalArgumentException | NullPointerException e) {
+            UnavailableResourceException ex = new UnavailableResourceException(
+                    "Invalid URI supplied to fn:unparsed-text-lines(): " + href,
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
+    }
+
+    private Charset getCharset(DynamicContext context) {
+        if (this.children.size() == 1) {
+            return StandardCharsets.UTF_8;
+        }
+        Item encoding = this.children.get(1).materializeFirstItemOrNull(context);
+        try {
+            return Charset.forName(encoding.getStringValue());
+        } catch (Exception e) {
+            InvalidEncodingException ex = new InvalidEncodingException(
+                    "Invalid encoding supplied to fn:unparsed-text-lines(): " + encoding.getStringValue(),
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
     }
 }
