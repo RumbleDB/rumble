@@ -408,8 +408,12 @@ public class ElementItem implements Item {
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
         return name != null
-            && (name.getPrefix() == null ? prefix.isEmpty() : name.getPrefix().equals(prefix))
-            && !uri.equals(name.getNamespace());
+            && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
+            && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+    }
+
+    private String normalizeNamespaceComponent(String value) {
+        return value == null ? "" : value;
     }
 
     private String freshPrefix() {
