@@ -26,6 +26,20 @@ public final class URIUtils {
     }
 
     /**
+     * Parses a URI reference.
+     *
+     * @param reference a URI reference
+     * @return the parsed URI reference
+     * @throws URISyntaxException if the reference is malformed
+     */
+    public static URI parseURIReference(String reference) throws URISyntaxException {
+        if (reference == null) {
+            throw new URISyntaxException("null", "The URI reference cannot be null");
+        }
+        return new URI(reference);
+    }
+
+    /**
      * Parses a URI reference and, when it is relative, resolves it against an absolute base URI.
      *
      * @param baseURI the base URI; it may be {@code null} when {@code reference} is absolute
@@ -34,25 +48,40 @@ public final class URIUtils {
      * @throws URISyntaxException if the reference is malformed or cannot be resolved to an absolute URI
      */
     public static URI resolveURIReference(URI baseURI, String reference) throws URISyntaxException {
-        if (reference == null) {
+        URI referenceURI = parseURIReference(reference);
+        return resolveURIReference(baseURI, referenceURI);
+    }
+
+    /**
+     * Resolves a parsed relative URI reference against an absolute base URI. An absolute reference is returned
+     * unchanged and does not require a base URI.
+     *
+     * @param baseURI the base URI; it may be {@code null} when {@code referenceURI} is absolute
+     * @param referenceURI a parsed URI reference
+     * @return an absolute URI
+     * @throws URISyntaxException if the reference cannot be resolved to an absolute URI
+     */
+    public static URI resolveURIReference(URI baseURI, URI referenceURI) throws URISyntaxException {
+        if (referenceURI == null) {
             throw new URISyntaxException("null", "The URI reference cannot be null");
         }
-
-        URI referenceURI = new URI(reference);
         if (referenceURI.isAbsolute()) {
             return referenceURI;
         }
 
         if (baseURI == null || !baseURI.isAbsolute()) {
             throw new URISyntaxException(
-                    reference,
+                    referenceURI.toString(),
                     "A relative URI reference requires an absolute base URI"
             );
         }
 
         URI resolvedURI = baseURI.resolve(referenceURI);
         if (!resolvedURI.isAbsolute()) {
-            throw new URISyntaxException(reference, "The URI reference could not be resolved to an absolute URI");
+            throw new URISyntaxException(
+                    referenceURI.toString(),
+                    "The URI reference could not be resolved to an absolute URI"
+            );
         }
         return resolvedURI;
     }
