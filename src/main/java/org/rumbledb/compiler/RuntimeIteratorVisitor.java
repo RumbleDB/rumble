@@ -1440,6 +1440,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new AdditiveOperationIterator(
                 left,
@@ -1463,6 +1475,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new MultiplicativeOperationIterator(
                 left,
@@ -1591,12 +1615,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
-        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        if (left instanceof StepExprIterator) {
-            // We potentially need to atomize
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+
+        RuntimeIterator left = this.visit(leftExpression, argument);
+        RuntimeIterator right = this.visit(rightExpression, argument);
+        if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
+            // them in a DataFunctionIterator to atomize them.
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!(rightExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
