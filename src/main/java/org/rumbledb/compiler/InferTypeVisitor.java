@@ -648,6 +648,51 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    private SequenceType inferStrictAggregateReturnType(
+            FunctionCallExpression expression,
+            Expression inputExpression
+    ) {
+        SequenceType inputType = requireInferredType(
+            inputExpression.getStaticSequenceType(),
+            expression.getClass().getSimpleName()
+        );
+        if (inputType.isEmptySequence()) {
+            return SequenceType.createSequenceType("anyAtomicType?");
+        }
+
+        ItemType inputItemType = inputType.getItemType();
+        if (
+            !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
+        ) {
+            throwStaticTypeException(
+                "fn:avg requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
+                    + inputType,
+                ErrorCode.InvalidArgumentType,
+                expression.getMetadata()
+            );
+        }
+
+        ItemType returnItemType = inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+            ? BuiltinTypesCatalogue.numericItem
+            : inputItemType;
+
+        SequenceType.Arity returnArity =
+            (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        return new SequenceType(returnItemType, returnArity);
+    }
+
+    private boolean isBuiltinFunctionName(Name functionName, String localName) {
+        return functionName.getLocalName().equals(localName)
+            && (
+                functionName.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
+                    || functionName.getNamespace().equals(Name.FN_NS)
+            );
+    }
+
     /**
      * For specific input functions we read the schema and annotate static type precisely
      * 
@@ -729,14 +774,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // handle 'round' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("round"))) {
+        if (isBuiltinFunctionName(functionName, "round")) {
             // set output type to the same of the first argument (special handling of numeric)
             expression.setStaticSequenceType(args.get(0).getStaticSequenceType());
             return true;
         }
         // handle 'size' function
         if (
-            functionName.equals(Name.createVariableInDefaultFunctionNamespace("size"))
+            isBuiltinFunctionName(functionName, "size")
                 && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
         ) {
             // set output type to 'Integer' if inputType is 'Array'
@@ -746,7 +791,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("sum"))) {
+        if (isBuiltinFunctionName(functionName, "sum")) {
             expression.setStaticSequenceType(
                 new SequenceType(
                         args.get(0).getStaticSequenceType().getItemType(),
@@ -755,6 +800,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             : SequenceType.Arity.OneOrZero
                 )
             );
+            return true;
+        }
+
+        if (isBuiltinFunctionName(functionName, "avg")) {
+            expression.setStaticSequenceType(inferStrictAggregateReturnType(expression, args.get(0)));
             return true;
         }
 
