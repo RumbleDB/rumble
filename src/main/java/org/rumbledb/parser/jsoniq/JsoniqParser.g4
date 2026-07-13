@@ -161,7 +161,7 @@ annotations: annotation* ;
 // added the updating keyword to support the out-of-spec updating expressions extension
 annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=eqName value=stringLiteral ;
 
 typeDecl                : KW_DECLARE KW_TYPE type_name=qname KW_AS (schema=schemaLanguage)? type_definition=exprSingle;
 
