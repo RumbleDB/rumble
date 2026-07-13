@@ -106,6 +106,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
+        if (this.left.isUntypedAtomic()) {
+            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
+        }
+        if (this.right.isUntypedAtomic()) {
+            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
+        }
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
 
