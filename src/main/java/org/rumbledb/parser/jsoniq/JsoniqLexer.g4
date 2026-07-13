@@ -302,7 +302,10 @@ KW_TRUE:               'true';
 KW_FALSE:              'false';
 KW_STATICALLY:         'statically';
 
-STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
+// Keep simple JSONiq strings as a single token. Braces force quote-mode
+// tokenization so that the parser can interpret them as ordinary string
+// content or as enclosed expressions depending on the surrounding context.
+STRING                  : '"' (ESC | ~ ["\\{}])+ '"' | '\'' (ESCapos | ~ ['\\{}])+ '\'';
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
 fragment ESCapos        : '\\' (['\\/bfnrt] | UNICODE);
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
@@ -404,6 +407,7 @@ EXIT_STRING         : RBRACKET GRAVE GRAVE -> popMode;
 
 mode QUOT_LITERAL_STRING;
 
+JsonEscape_QuotString           : '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
 EscapeQuot_QuotString           : '""' -> type(EscapeQuot);
 Quot_QuotString                 : '"' -> type(Quot), popMode;
 
@@ -417,6 +421,7 @@ ContentChar_QuotString          : ~["&{}] -> type(ContentChar);
 
 mode APOS_LITERAL_STRING;
 
+JsonEscape_AposString           : '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
 EscapeApos_AposString           : '\'\'' -> type(EscapeApos);
 Apos_AposString                 : '\'' -> type(Apos), popMode;
 
@@ -430,6 +435,10 @@ ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;
 
+INT_QUOT_JsonEscape: '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
+// A string using the same delimiter as its containing XML attribute must be
+// recognized before the single-quote token that closes the attribute mode.
+INT_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
 INT_QUOT_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_QUOT_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_QUOT_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
@@ -697,6 +706,8 @@ INT_ContentChar:  ~["'{}<&] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_APOS;
 
+INT_APOS_JsonEscape: '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
+INT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
 INT_APOS_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_APOS_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_APOS_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
