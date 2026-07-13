@@ -862,9 +862,10 @@ stringLiteral : STRING
               | stringLiteralApos
               ;
 
-// Quote-mode tokens are also used for JSONiq strings containing braces.
-// These rules keep balanced and unbalanced braces as literal string content;
-// direct attribute rules interpret the same tokens as enclosed expressions.
+// Quote-mode tokens are also used for JSONiq strings nested inside direct
+// attribute expressions. These rules keep balanced and unbalanced braces as
+// literal string content; direct attribute rules interpret the same tokens as
+// enclosed expressions.
 stringContentQuot : ContentChar+
                   | RBRACE
                   | DOUBLE_LBRACE
