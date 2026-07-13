@@ -84,6 +84,7 @@ import org.rumbledb.runtime.functions.input.PostgreSQLTableFunctionIterator;
 import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonLinesFunctionIterator;
+import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
 import org.rumbledb.runtime.functions.input.XmlFilesFunctionIterator;
 import org.rumbledb.runtime.functions.io.CollectionFunctionIterator;
@@ -803,14 +804,14 @@ public class BuiltinFunctionCatalogue {
         new Name(Name.JN_NS, "jn", "text-file"),
         List.of("string"),
         "item*",
-        UnparsedTextLinesFunctionIterator.class,
+        TextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
         new Name(Name.JN_NS, "jn", "text-file"),
         List.of("string", "integer?"),
         "item*",
-        UnparsedTextLinesFunctionIterator.class,
+        TextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
