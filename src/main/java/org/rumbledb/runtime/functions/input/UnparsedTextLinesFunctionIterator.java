@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.URIUtils;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -115,16 +116,12 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
     private URI resolveURI(String href) {
         try {
-            URI reference = new URI(href);
-            if (reference.getFragment() != null) {
+            URI uri = URIUtils.resolveURIReference(this.staticURI, href);
+            if (uri.getFragment() != null) {
                 throw new URISyntaxException(href, "Fragment identifiers are not allowed");
             }
-            URI resolvedURI = this.staticURI.resolve(reference);
-            if (!resolvedURI.isAbsolute()) {
-                throw new URISyntaxException(href, "The URI cannot be resolved against an absolute static base URI");
-            }
-            return resolvedURI;
-        } catch (URISyntaxException | IllegalArgumentException | NullPointerException e) {
+            return uri;
+        } catch (URISyntaxException e) {
             UnavailableResourceException ex = new UnavailableResourceException(
                     "Invalid URI supplied to fn:unparsed-text-lines(): " + href,
                     getMetadata()
