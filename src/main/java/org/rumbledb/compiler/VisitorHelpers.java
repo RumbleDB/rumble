@@ -136,16 +136,24 @@ public class VisitorHelpers {
         System.err.println(node.getStaticContext());
     }
 
+    private static URI resolveStaticBaseUri(String url, RumbleRuntimeConfiguration configuration) {
+        URI resolved = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+            url,
+            configuration,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        if (url != null && url.endsWith("/") && !resolved.toString().endsWith("/")) {
+            resolved = URI.create(resolved + "/");
+        }
+        return resolved;
+    }
+
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.getStaticBaseUri() != null) {
-            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                configuration.getStaticBaseUri(),
-                configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            location = resolveStaticBaseUri(configuration.getStaticBaseUri(), configuration);
         }
         return parseMainModule(query, location, configuration);
     }
@@ -160,11 +168,7 @@ public class VisitorHelpers {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.getStaticBaseUri() != null) {
-            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                configuration.getStaticBaseUri(),
-                configuration,
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            location = resolveStaticBaseUri(configuration.getStaticBaseUri(), configuration);
         }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
@@ -174,11 +178,7 @@ public class VisitorHelpers {
         if (configuration.getStaticBaseUri() != null) {
             url = configuration.getStaticBaseUri();
         }
-        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            url,
-            configuration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        URI location = resolveStaticBaseUri(url, configuration);
         return parseMainModule(query, location, configuration);
     }
 
