@@ -125,6 +125,9 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (candidateItem.isNull()) {
                     return ItemFactory.getInstance().createNullItem();
                 }
+                if (candidateItem.isUntypedAtomic()) {
+                    candidateItem = ItemFactory.getInstance().createDoubleItem(candidateItem.castToDoubleValue());
+                }
                 candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
                     case 0:
