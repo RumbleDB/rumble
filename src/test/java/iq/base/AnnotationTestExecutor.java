@@ -237,7 +237,7 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String output = getIteratorOutput(sequence, resultSizeCap);
+        String output = sequence.serialize();
         if (applyUpdates && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
@@ -260,11 +260,4 @@ public final class AnnotationTestExecutor {
         );
     }
 
-    private static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {
-        return sequence.serialize();
-    }
-
-    private static boolean isWithinResultSizeCap(int itemCount, int resultSizeCap) {
-        return resultSizeCap == 0 || itemCount < resultSizeCap;
-    }
 }

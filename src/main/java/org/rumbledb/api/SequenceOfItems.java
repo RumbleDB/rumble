@@ -47,6 +47,7 @@ public class SequenceOfItems {
     private DynamicContext dynamicContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
+    private List<Item> cachedItems;
 
     /**
      * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
@@ -65,6 +66,7 @@ public class SequenceOfItems {
         this.isOpen = false;
         this.dynamicContext = dynamicContext;
         this.configuration = configuration;
+        this.cachedItems = null;
     }
 
     /**
@@ -282,6 +284,9 @@ public class SequenceOfItems {
      * @return The list of all items in the sequence.
      */
     public List<Item> getAsList() {
+        if (this.cachedItems != null) {
+            return new ArrayList<Item>(this.cachedItems);
+        }
         List<Item> result = new ArrayList<Item>();
         long num = populateList(result, this.configuration.getResultSizeCap());
         if (num != -1) {
@@ -294,7 +299,8 @@ public class SequenceOfItems {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        return result;
+        this.cachedItems = new ArrayList<Item>(result);
+        return new ArrayList<Item>(this.cachedItems);
     }
 
     /**
@@ -321,31 +327,12 @@ public class SequenceOfItems {
         String itemSeparator = params.getItemSeparator() == null ? "" : params.getItemSeparator();
 
         StringBuilder sb = new StringBuilder();
-        int resultSizeCap = this.configuration.getResultSizeCap();
-        List<Item> items = new ArrayList<>();
-        long materializationCount;
-        if (resultSizeCap == 0) {
-            items = this.getFirstItemsAsList(0);
-            materializationCount = -1;
-        } else {
-            materializationCount = this.populateList(items, resultSizeCap);
-        }
+        List<Item> items = this.getAsList();
         for (int i = 0; i < items.size(); i++) {
             if (i > 0) {
                 sb.append(itemSeparator);
             }
             sb.append(serializer.serialize(items.get(i)));
-        }
-        if (materializationCount != -1) {
-            System.err.println(
-                "Warning! The output sequence contains "
-                    + (materializationCount == Long.MAX_VALUE
-                        ? "a large number of"
-                        : materializationCount)
-                    + " items but its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured with the --result-size parameter at startup"
-            );
         }
         return sb.toString();
     }
