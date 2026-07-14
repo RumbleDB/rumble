@@ -291,7 +291,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private void addWindowVars(
+    private static void addWindowVars(
             WindowClause.WindowVars vars,
             SequenceType itemType,
             StaticContext context,
