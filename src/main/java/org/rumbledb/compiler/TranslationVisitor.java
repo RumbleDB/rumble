@@ -3920,8 +3920,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String processURILiteral(UriLiteralContext ctx) {
-        // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
-        // predefined entity references and character references
+        // URI literals use the ordinary JSONiq string rules. XML entity
+        // expansion is deliberately confined to direct attribute content.
         String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
         return unescapeStringLiteral(rawValue);
     }
@@ -4058,10 +4058,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private DirAttributeProcessingResult getAttributesExpressionsList(JsoniqParser.DirAttributeListContext ctx) {
         DirAttributeProcessingResult result = new DirAttributeProcessingResult();
 
-        // Process each attribute name-value pair
         List<JsoniqParser.QnameContext> attributeNames = ctx.attribute_qname;
         List<JsoniqParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
 
+        // Namespace declarations are in scope for the entire element start tag,
+        // including attributes that occur lexically before the declaration.
         for (int i = 0; i < attributeNames.size(); i++) {
             JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
             String lexical = qnameCtx.getText();
@@ -4072,9 +4073,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx))
                 );
                 bindDirConstructorNamespaceDeclaration(declaredPrefix, uri);
+            }
+        }
+
+        // Translate non-namespace attributes after the complete namespace frame
+        // has been established, while retaining their original source order.
+        for (int i = 0; i < attributeNames.size(); i++) {
+            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
                 continue;
             }
-
             Name attributeName = parseName(qnameCtx, false, false, false, false);
 
             List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
@@ -4103,6 +4112,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.getDirAttributeValueQuotExpressions(
                 dirAttributeValueQuotContext,
                 allowEnclosedExpressions
+            );
+        } else if (
+            child instanceof TerminalNode terminalNode
+                && terminalNode.getSymbol().getType() == JsoniqParser.STRING
+        ) {
+            // A nested direct constructor inside an outer attribute expression
+            // can expose a static attribute value as one STRING token.
+            // For example: <e x="{data(<n value="inside"/>/@value)}"/>
+            String text = terminalNode.getText();
+            return List.of(
+                new AttributeNodeContentExpression(
+                        StringEscapeUtils.unescapeXml(text.substring(1, text.length() - 1)),
+                        createMetadataFromContext(ctx)
+                )
             );
         }
         throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
