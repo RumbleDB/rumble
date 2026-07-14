@@ -35,7 +35,6 @@ options {
   tokenVocab=XQueryLexer;
 }
 
-
 // Mostly taken from http://www.w3.org/TR/xquery/#id-grammar, with some
 // simplifications:
 //
@@ -431,44 +430,45 @@ argument: exprSingle | QUESTION ;
 
 nodeConstructor: directConstructor | computedConstructor ;
 
-directConstructor: dirElemConstructorOpenClose
-                 | dirElemConstructorSingleTag
+directConstructor: LANGLE open_tag_name=qname attributes=dirAttributeList
+                   (open_close=dirElemConstructorOpenClose | single_tag=dirElemConstructorSingleTag)
                  | (COMMENT | PI)
                  ;
 
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: endOpen=RANGLE
                              dirElemContent*
                              startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
-dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
-dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
+dirAttributeValueApos
+    : Quot (PredefinedEntityRef | CharRef | escapedQuot | dirAttributeContentQuot )* Quot ;
+
+dirAttributeValueQuot
+    : Apos (PredefinedEntityRef | CharRef | escapedApos | dirAttributeContentApos )* Apos ;
 
 dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
                      ;
 
-dirAttributeContentQuot : contentChar                     
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
-                        | dirAttributeValueApos
+dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Quot | LBRACE | RBRACE | PredefinedEntityRef | CharRef)
                         ;
 
-dirAttributeContentApos : contentChar                    
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
-                        | dirAttributeValueQuot
+dirAttributeContentApos : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Apos | LBRACE | RBRACE | PredefinedEntityRef | CharRef)
                         ;
 
-// helper rule to match any content character
-contentChar:              ContentChar+ ;
+escapedQuot: Quot Quot;
+escapedApos: Apos Apos;
 
 dirElemContent: directConstructor
               | commonContent
@@ -830,80 +830,12 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | EscapeQuot | stringContentQuot )* Quot ;
-stringLiteralApos : Apos (PredefinedEntityRef | CharRef | EscapeApos | stringContentApos )* Apos ;
+stringLiteralQuot : Quot (Quot Quot | ~Quot)* Quot ;
+stringLiteralApos : Apos (Apos Apos | ~Apos)* Apos ;
 
 stringLiteral : stringLiteralQuot
               | stringLiteralApos
               ;
-
-stringContentQuot : ContentChar+
-                  | stringLiteralTokenContent
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng                  
-                  | stringLiteralApos
-                  ;
-
-stringContentApos : ContentChar+
-                  | stringLiteralTokenContent
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | noQuotesNoBracesNoAmpNoLAng                  
-                  | stringLiteralQuot
-                  ;
-
-stringLiteralTokenContent :
-                   ( keyword
-                   | IntegerLiteral
-                   | DecimalLiteral
-                   | DoubleLiteral
-                   | PRAGMA
-                   | EQUAL
-                   | HASH
-                   | NOT_EQUAL
-                   | LPAREN
-                   | RPAREN
-                   | LBRACKET
-                   | RBRACKET
-                   | LBRACE
-                   | STAR
-                   | PLUS
-                   | MINUS
-                   | TILDE
-                   | COMMA
-                   | ARROW
-                   | MOD
-                   | DOT
-                   | GRAVE
-                   | DDOT
-                   | COLON
-                   | CARAT
-                   | COLON_EQ
-                   | SEMICOLON
-                   | SLASH
-                   | DSLASH
-                   | BACKSLASH
-                   | COMMENT
-                   | XMLDECL
-                   | PI
-                   | CDATA
-                   | VBAR
-                   | LANGLE
-                   | RANGLE
-                   | QUESTION
-                   | AT
-                   | DOLLAR
-                   | BANG
-                   | FullQName
-                   | URIQualifiedName
-                   | NCNameWithLocalWildcard
-                   | NCNameWithPrefixWildcard
-                   | NCName
-                   )+
- ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

@@ -561,8 +561,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        return parseStringLiteral(this.xQueryTokenStream.getText(ctx.getSourceInterval()));
     }
 
     private Name nameForUnprefixedFunction(String localName) {
@@ -1644,9 +1643,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
-            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    processStringLiteral(ctx.lt),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1726,10 +1724,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitLiteral(XQueryParser.LiteralContext ctx) {
         ParseTree child = ctx.children.get(0);
 
-        if (child instanceof XQueryParser.StringLiteralContext) {
-            String rawValue = child.getText().substring(1, child.getText().length() - 1);
+        if (child instanceof XQueryParser.StringLiteralContext stringLiteralContext) {
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    processStringLiteral(stringLiteralContext),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1764,6 +1761,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private String unescapeStringLiteral(String raw) {
         return StringEscapeUtils.unescapeXml(raw);
+    }
+
+    private String parseStringLiteral(String source) {
+        char delimiter = source.charAt(0);
+        String raw = source.substring(1, source.length() - 1);
+        String escapedDelimiter = String.valueOf(delimiter) + delimiter;
+        return unescapeStringLiteral(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
     }
 
     @Override
@@ -1803,7 +1807,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
-        ParseTree child = ctx.children.get(0);
         if (ctx.COMMENT() != null) {
             String commentText = ctx.COMMENT().getText();
             String commentContent = commentText.substring(4, commentText.length() - 3);
@@ -1812,12 +1815,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     createMetadataFromContext(ctx)
             );
         }
-        if (child instanceof XQueryParser.DirElemConstructorOpenCloseContext dirElemConstructorOpenCloseContext) {
-            return this.visitDirElemConstructorOpenClose(dirElemConstructorOpenCloseContext);
-        } else if (
-            child instanceof XQueryParser.DirElemConstructorSingleTagContext dirElemConstructorSingleTagContext
-        ) {
-            return this.visitDirElemConstructorSingleTag(dirElemConstructorSingleTagContext);
+        if (ctx.open_close != null) {
+            return this.visitDirElemConstructorOpenClose(ctx);
+        } else if (ctx.single_tag != null) {
+            return this.visitDirElemConstructorSingleTag(ctx);
         } else if (ctx.PI() != null) {
             return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
         } else if (ctx.COMMENT() != null) {
@@ -1877,10 +1878,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
-    @Override
-    public Node visitDirElemConstructorOpenClose(XQueryParser.DirElemConstructorOpenCloseContext ctx) {
+    private Node visitDirElemConstructorOpenClose(XQueryParser.DirectConstructorContext ctx) {
+        XQueryParser.DirElemConstructorOpenCloseContext openClose = ctx.open_close;
         // check that the start and end tags are the same
-        if (ctx.close_tag_name != null && !ctx.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
+        if (
+            openClose.close_tag_name != null
+                && !openClose.close_tag_name.getText().equals(ctx.open_tag_name.getText())
+        ) {
             throw new DirectElementConstructorTagMismatchException(
                     "The name used in the end tag must exactly match the name used in the corresponding start tag.",
                     createMetadataFromContext(ctx)
@@ -1901,9 +1905,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             List<Expression> content = new ArrayList<>();
             StringBuilder textAccumulator = null;
             ExceptionMetadata firstTextMetadata = null;
-            Token previousToken = ctx.endOpen;
+            Token previousToken = openClose.endOpen;
 
-            for (XQueryParser.DirElemContentContext child : ctx.dirElemContent()) {
+            for (XQueryParser.DirElemContentContext child : openClose.dirElemContent()) {
                 Expression childExpression = (Expression) this.visitDirElemContent(child);
 
                 if (childExpression instanceof TextNodeExpression textNode) {
@@ -1972,8 +1976,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     }
 
-    @Override
-    public Node visitDirElemConstructorSingleTag(XQueryParser.DirElemConstructorSingleTagContext ctx) {
+    private Node visitDirElemConstructorSingleTag(XQueryParser.DirectConstructorContext ctx) {
         this.dirElemNamespaceFrames.push(new HashMap<>());
         try {
             DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
@@ -2432,8 +2435,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return ItemTypeFactory.processingInstructionNodeItemType(piTestContext.ncName().getText());
             }
             if (piTestContext.stringLiteral() != null) {
-                String rawValue = piTestContext.stringLiteral().getText();
-                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                String targetName = processStringLiteral(piTestContext.stringLiteral());
                 return ItemTypeFactory.processingInstructionNodeItemType(targetName);
             }
             return BuiltinTypesCatalogue.processingInstructionNode;
@@ -3540,9 +3542,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return new PITest(piContext.ncName().getText());
             }
             if (piContext.stringLiteral() != null) {
-                String rawValue = piContext.stringLiteral().getText();
-                // Strip surrounding quotes from the string literal
-                String targetName = rawValue.substring(1, rawValue.length() - 1);
+                String targetName = processStringLiteral(piContext.stringLiteral());
                 return new PITest(targetName);
             }
             return new PITest();
@@ -3612,8 +3612,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        return processStringLiteral(ctx.stringLiteral());
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
@@ -3825,11 +3824,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree firstTextTree = null;
         ParseTree lastTextTree = null;
         List<Expression> contentExpressions = new ArrayList<>();
+        Token previousToken = ctx.getStart();
 
         // Process each child between the quotes (skip the first and last quote tokens)
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree child = ctx.getChild(i);
             List<Expression> childExpressions = new ArrayList<>();
+
+            List<Token> hiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(previousToken.getTokenIndex());
+            if (hiddenTokens != null && !hiddenTokens.isEmpty()) {
+                if (textAccumulator == null) {
+                    textAccumulator = new StringBuilder();
+                    firstTextTree = child;
+                }
+                for (Token hiddenToken : hiddenTokens) {
+                    textAccumulator.append(hiddenToken.getText());
+                }
+                lastTextTree = child;
+            }
 
             // Try to process as entity or character reference first
             // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
@@ -3890,6 +3902,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     contentExpressions.add(childExpression);
                 }
             }
+            previousToken = child instanceof ParserRuleContext parserRuleContext
+                ? parserRuleContext.getStop()
+                : ((TerminalNode) child).getSymbol();
+        }
+
+        List<Token> trailingHiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(previousToken.getTokenIndex());
+        if (trailingHiddenTokens != null && !trailingHiddenTokens.isEmpty()) {
+            if (textAccumulator == null) {
+                textAccumulator = new StringBuilder();
+                firstTextTree = ctx;
+            }
+            for (Token hiddenToken : trailingHiddenTokens) {
+                textAccumulator.append(hiddenToken.getText());
+            }
+            lastTextTree = ctx;
         }
 
         // Handle any remaining accumulated text at the end
@@ -3948,7 +3975,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         } else {
             // handle other cases
-            String childText = child.getText();
+            String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
             String processedContent = processTextContentWithEscaping(childText);
             expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
         }

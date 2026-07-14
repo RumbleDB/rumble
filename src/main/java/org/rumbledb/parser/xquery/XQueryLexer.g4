@@ -59,8 +59,8 @@ CharRef: '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';' ;
 
 // Escapes are handled as two Quot or two Apos tokens, to avoid maximal
 // munch lexer ambiguity.
-Quot        : '"' -> pushMode(QUOT_LITERAL_STRING);
-Apos        : '\'' -> pushMode(APOS_LITERAL_STRING);
+Quot        : '"';
+Apos        : '\'';
 
 // XML-SPECIFIC
 
