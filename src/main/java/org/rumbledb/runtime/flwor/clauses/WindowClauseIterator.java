@@ -522,16 +522,24 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
 
         Set<Name> startBoundVariables = new HashSet<>(this.startVariables.names());
+        // The source expression is evaluated before the window binds any variables, so none of its dependencies are
+        // filtered out. In particular, a source reference with the same name as the window variable still refers to an
+        // outer binding.
         mergeDependencies(result, this.sourceIterator.getVariableDependencies(), Collections.emptySet());
+        // Start variables are supplied by the iterator for each candidate start item and are therefore not dynamic
+        // context dependencies. References to all other variables, including an outer variable shadowed later by the
+        // window variable, must be preserved.
         mergeDependencies(result, this.startCondition.getVariableDependencies(), startBoundVariables);
 
         if (this.endCondition != null) {
+            // The end condition receives both the start bindings and its own end bindings from the iterator.
             Set<Name> conditionBoundVariables = new HashSet<>(startBoundVariables);
             conditionBoundVariables.addAll(this.endVariables.names());
             mergeDependencies(result, this.endCondition.getVariableDependencies(), conditionBoundVariables);
         }
 
         if (this.hasActiveChild()) {
+            // Variables produced by preceding FLWOR clauses arrive in the input tuple rather than the dynamic context.
             for (Name variable : this.child.getOutputTupleVariableNames()) {
                 result.remove(variable);
             }
@@ -542,7 +550,9 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * Utility to merge variable dependencies while excluding variables bound locally by the window condition
+     * Merges expression dependencies after filtering variables supplied locally by the relevant window condition.
+     * Only the variables bound in that condition are filtered: the window variable itself is not in scope in either
+     * condition, so a same-named reference may still denote an outer variable and must remain a dependency.
      * 
      * @param target accumulated dependencies for the entire window clause
      * @param dependencies dependencies reported by the source or condition expression
@@ -553,16 +563,13 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> dependencies,
             Set<Name> locallyBoundVariables
     ) {
+        Map<Name, DynamicContext.VariableDependency> filteredDependencies = new TreeMap<>();
         dependencies.forEach((name, dependency) -> {
             if (!locallyBoundVariables.contains(name)) {
-                target.compute(
-                    name,
-                    (k, previousDependency) -> previousDependency == null || previousDependency == dependency
-                        ? dependency
-                        : DynamicContext.VariableDependency.FULL
-                );
+                filteredDependencies.put(name, dependency);
             }
         });
+        DynamicContext.mergeVariableDependencies(target, filteredDependencies);
     }
 
     @Override
@@ -580,6 +587,8 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             ? Collections.emptySet()
             : new HashSet<>(this.endVariables.names());
 
+        // Dependencies requested by following clauses for variables introduced by this window stop here. Dependencies
+        // on same-named outer variables used by the source or conditions are added back below from those expressions.
         this.getWindowVariables().forEach(result::remove);
         this.addDependencies(
             result,
@@ -612,16 +621,15 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             Set<Name> locallyBoundVariables,
             Set<Name> childVariables
     ) {
+        Map<Name, DynamicContext.VariableDependency> filteredDependencies = new TreeMap<>();
         dependencies.forEach((name, dependency) -> {
+            // Forward only genuine input-tuple dependencies: condition-local bindings are produced by this iterator,
+            // and names not produced by the child must instead be obtained from the dynamic context.
             if (!locallyBoundVariables.contains(name) && childVariables.contains(name)) {
-                target.compute(
-                    name,
-                    (k, previousDependency) -> previousDependency == null || previousDependency == dependency
-                        ? dependency
-                        : DynamicContext.VariableDependency.FULL
-                );
+                filteredDependencies.put(name, dependency);
             }
         });
+        DynamicContext.mergeVariableDependencies(target, filteredDependencies);
     }
 
     private Set<Name> getWindowVariables() {
