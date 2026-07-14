@@ -30,7 +30,16 @@ public final class DecimalFormatDeclarationProcessor {
             boolean isJSONiq,
             ExceptionMetadata metadata
     ) {
-        process(isDefaultDecimalFormat, nameContext, propertyNames, stringLiterals, null, moduleContext, isJSONiq, metadata);
+        process(
+            isDefaultDecimalFormat,
+            nameContext,
+            propertyNames,
+            stringLiterals,
+            null,
+            moduleContext,
+            isJSONiq,
+            metadata
+        );
     }
 
     public static void process(
