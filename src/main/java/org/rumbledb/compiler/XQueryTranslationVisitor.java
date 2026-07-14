@@ -3777,14 +3777,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             boolean allowEnclosedExpressions
     ) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions(
-                dirAttributeValueAposContext,
-                allowEnclosedExpressions
-            );
-        } else if (child instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
+        if (child instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
             return this.getDirAttributeValueQuotExpressions(
                 dirAttributeValueQuotContext,
+                allowEnclosedExpressions
+            );
+        } else if (child instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                dirAttributeValueAposContext,
                 allowEnclosedExpressions
             );
         }
@@ -3807,41 +3807,80 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
 
-    /**
-     * Helper method to process quoted attribute values (both single and double quoted).
-     * This method handles the common logic for merging adjacent text content and building expressions.
-     * Returns a list of expressions where adjacent string literals are merged.
-     */
+    private final class AttributeValueBuilder {
+        private final List<Expression> expressions = new ArrayList<>();
+        private StringBuilder text;
+        private ParseTree firstTextTree;
+        private ParseTree lastTextTree;
+
+        private void appendText(String value, ParseTree source) {
+            if (value.isEmpty()) {
+                return;
+            }
+            if (this.text == null) {
+                this.text = new StringBuilder();
+                this.firstTextTree = source;
+            }
+            this.text.append(value);
+            this.lastTextTree = source;
+        }
+
+        private void append(Expression expression, ParseTree source) {
+            if (expression instanceof AttributeNodeContentExpression textExpression) {
+                appendText(textExpression.getContent(), source);
+                return;
+            }
+            flushText();
+            this.expressions.add(expression);
+        }
+
+        private void flushText() {
+            if (this.text == null) {
+                return;
+            }
+            this.expressions.add(
+                new AttributeNodeContentExpression(
+                        this.text.toString(),
+                        createMetadataFromTrees(this.firstTextTree, this.lastTextTree)
+                )
+            );
+            this.text = null;
+            this.firstTextTree = null;
+            this.lastTextTree = null;
+        }
+
+        private List<Expression> finish() {
+            flushText();
+            return this.expressions;
+        }
+    }
+
+    private String getHiddenTextAfter(Token token) {
+        List<Token> hiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(token.getTokenIndex());
+        if (hiddenTokens == null) {
+            return "";
+        }
+        StringBuilder result = new StringBuilder();
+        for (Token hiddenToken : hiddenTokens) {
+            result.append(hiddenToken.getText());
+        }
+        return result.toString();
+    }
+
     private List<Expression> processQuotedAttributeValue(
             ParserRuleContext ctx,
             String escapeSequence,
             String escapedChar,
             boolean allowEnclosedExpressions
     ) {
-
-        // Similar to element content, we need to merge adjacent text content
-        StringBuilder textAccumulator = null;
-        ParseTree firstTextTree = null;
-        ParseTree lastTextTree = null;
-        List<Expression> contentExpressions = new ArrayList<>();
+        AttributeValueBuilder result = new AttributeValueBuilder();
         Token previousToken = ctx.getStart();
 
-        // Process each child between the quotes (skip the first and last quote tokens)
+        // Skip the opening and closing quote tokens.
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree child = ctx.getChild(i);
             List<Expression> childExpressions = new ArrayList<>();
-
-            List<Token> hiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(previousToken.getTokenIndex());
-            if (hiddenTokens != null && !hiddenTokens.isEmpty()) {
-                if (textAccumulator == null) {
-                    textAccumulator = new StringBuilder();
-                    firstTextTree = child;
-                }
-                for (Token hiddenToken : hiddenTokens) {
-                    textAccumulator.append(hiddenToken.getText());
-                }
-                lastTextTree = child;
-            }
+            result.appendText(getHiddenTextAfter(previousToken), child);
 
             // Try to process as entity or character reference first
             // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
@@ -3868,68 +3907,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 }
             }
 
-            // Process each expression returned from the child
             for (Expression childExpression : childExpressions) {
-                if (childExpression instanceof AttributeNodeContentExpression attributeNodeContentExpression) {
-                    // Text content - accumulate it
-                    String content = (attributeNodeContentExpression).getContent();
-
-                    if (textAccumulator == null) {
-                        // Start accumulating text content
-                        textAccumulator = new StringBuilder();
-                        firstTextTree = child;
-                    }
-
-                    // Accumulate the text content
-                    textAccumulator.append(content);
-                    lastTextTree = child;
-                } else {
-                    // Non-text expression encountered (e.g., enclosed expression)
-                    if (textAccumulator != null) {
-                        // Finalize any accumulated text
-                        contentExpressions.add(
-                            new AttributeNodeContentExpression(
-                                    textAccumulator.toString(),
-                                    createMetadataFromTrees(firstTextTree, lastTextTree)
-                            )
-                        );
-                        textAccumulator = null;
-                        firstTextTree = null;
-                        lastTextTree = null;
-                    }
-
-                    // Add the non-text expression
-                    contentExpressions.add(childExpression);
-                }
+                result.append(childExpression, child);
             }
-            previousToken = child instanceof ParserRuleContext parserRuleContext
-                ? parserRuleContext.getStop()
-                : ((TerminalNode) child).getSymbol();
+            previousToken = getStopToken(child);
         }
 
-        List<Token> trailingHiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(previousToken.getTokenIndex());
-        if (trailingHiddenTokens != null && !trailingHiddenTokens.isEmpty()) {
-            if (textAccumulator == null) {
-                textAccumulator = new StringBuilder();
-                firstTextTree = ctx;
-            }
-            for (Token hiddenToken : trailingHiddenTokens) {
-                textAccumulator.append(hiddenToken.getText());
-            }
-            lastTextTree = ctx;
-        }
-
-        // Handle any remaining accumulated text at the end
-        if (textAccumulator != null) {
-            contentExpressions.add(
-                new AttributeNodeContentExpression(
-                        textAccumulator.toString(),
-                        createMetadataFromTrees(firstTextTree, lastTextTree)
-                )
-            );
-        }
-
-        return contentExpressions;
+        result.appendText(getHiddenTextAfter(previousToken), ctx);
+        return result.finish();
     }
 
     /**
@@ -3939,14 +3924,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
         List<Expression> expressions = new ArrayList<>();
 
-        if (ctx instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions(
-                dirAttributeValueAposContext,
-                allowEnclosedExpressions
-            );
-        } else if (ctx instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
+        if (ctx instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
             return this.getDirAttributeValueQuotExpressions(
                 dirAttributeValueQuotContext,
+                allowEnclosedExpressions
+            );
+        } else if (ctx instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
+            return this.getDirAttributeValueAposExpressions(
+                dirAttributeValueAposContext,
                 allowEnclosedExpressions
             );
         } else if (
@@ -3985,24 +3970,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
 
     /**
-     * Process dirAttributeValueApos and return a list of expressions.
+     * Process a double-quoted direct attribute value and return its content expressions.
      * This method deviates from the strict visitor pattern to return multiple expressions.
      */
-    private List<Expression> getDirAttributeValueAposExpressions(
-            XQueryParser.DirAttributeValueAposContext ctx,
+    private List<Expression> getDirAttributeValueQuotExpressions(
+            XQueryParser.DirAttributeValueQuotContext ctx,
             boolean allowEnclosedExpressions
     ) {
         return processQuotedAttributeValue(ctx, "\"\"", "\"", allowEnclosedExpressions);
     }
 
     /**
-     * Process dirAttributeValueQuot and return a list of expressions.
+     * Process a single-quoted direct attribute value and return its content expressions.
      * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
      * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
      * This method deviates from the strict visitor pattern to return multiple expressions.
      */
-    private List<Expression> getDirAttributeValueQuotExpressions(
-            XQueryParser.DirAttributeValueQuotContext ctx,
+    private List<Expression> getDirAttributeValueAposExpressions(
+            XQueryParser.DirAttributeValueAposContext ctx,
             boolean allowEnclosedExpressions
     ) {
         return processQuotedAttributeValue(ctx, "''", "'", allowEnclosedExpressions);

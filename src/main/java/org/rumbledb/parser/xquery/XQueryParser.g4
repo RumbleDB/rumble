@@ -430,10 +430,13 @@ argument: exprSingle | QUESTION ;
 
 nodeConstructor: directConstructor | computedConstructor ;
 
-directConstructor: LANGLE open_tag_name=qname attributes=dirAttributeList
-                   (open_close=dirElemConstructorOpenClose | single_tag=dirElemConstructorSingleTag)
-                 | (COMMENT | PI)
-                 ;
+// Keep the shared start-tag prefix outside the open/close and self-closing alternatives.
+directConstructor
+    : LANGLE open_tag_name=qname attributes=dirAttributeList
+      (open_close=dirElemConstructorOpenClose | single_tag=dirElemConstructorSingleTag)
+    | COMMENT
+    | PI
+    ;
 
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
@@ -447,14 +450,14 @@ dirElemConstructorSingleTag: slashClose=SLASH RANGLE ;
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
-dirAttributeValueApos
-    : Quot (PredefinedEntityRef | CharRef | escapedQuot | dirAttributeContentQuot )* Quot ;
-
 dirAttributeValueQuot
-    : Apos (PredefinedEntityRef | CharRef | escapedApos | dirAttributeContentApos )* Apos ;
+    : Quot (PredefinedEntityRef | CharRef | escapedQuot | dirAttributeContentQuot)* Quot ;
 
-dirAttributeValue    : dirAttributeValueApos
-                     | dirAttributeValueQuot
+dirAttributeValueApos
+    : Apos (PredefinedEntityRef | CharRef | escapedApos | dirAttributeContentApos)* Apos ;
+
+dirAttributeValue    : dirAttributeValueQuot
+                     | dirAttributeValueApos
                      ;
 
 dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
@@ -830,6 +833,7 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
+// Delimiter pairs are escaped delimiters; every other token is literal string content.
 stringLiteralQuot : Quot (Quot Quot | ~Quot)* Quot ;
 stringLiteralApos : Apos (Apos Apos | ~Apos)* Apos ;
 
