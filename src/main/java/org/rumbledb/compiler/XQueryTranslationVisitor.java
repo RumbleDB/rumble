@@ -4008,6 +4008,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ctx.eqName(),
             ctx.DFPropertyName(),
             ctx.stringLiteral(),
+            ctx.stringLiteral().stream()
+                    .map(stringLiteral -> this.xQueryTokenStream.getText(stringLiteral.getSourceInterval()))
+                    .toList(),
             this.moduleContext,
             false,
             metadata

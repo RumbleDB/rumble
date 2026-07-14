@@ -462,12 +462,12 @@ dirAttributeValue    : dirAttributeValueQuot
 
 dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
-                        | ~(Quot | LBRACE | RBRACE | PredefinedEntityRef | CharRef)
+                        | ~(Quot | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef)
                         ;
 
 dirAttributeContentApos : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
-                        | ~(Apos | LBRACE | RBRACE | PredefinedEntityRef | CharRef)
+                        | ~(Apos | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef)
                         ;
 
 escapedQuot: Quot Quot;
@@ -834,8 +834,8 @@ keywordOKForFunction: KW_ANCESTOR
 uriLiteral: stringLiteral ;
 
 // Delimiter pairs are escaped delimiters; every other token is literal string content.
-stringLiteralQuot : Quot (Quot Quot | ~Quot)* Quot ;
-stringLiteralApos : Apos (Apos Apos | ~Apos)* Apos ;
+stringLiteralQuot : Quot (Quot Quot | ~(Quot | Ampersand))* Quot ;
+stringLiteralApos : Apos (Apos Apos | ~(Apos | Ampersand))* Apos ;
 
 stringLiteral : stringLiteralQuot
               | stringLiteralApos

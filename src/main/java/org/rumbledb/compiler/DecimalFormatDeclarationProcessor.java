@@ -30,6 +30,19 @@ public final class DecimalFormatDeclarationProcessor {
             boolean isJSONiq,
             ExceptionMetadata metadata
     ) {
+        process(isDefaultDecimalFormat, nameContext, propertyNames, stringLiterals, null, moduleContext, isJSONiq, metadata);
+    }
+
+    public static void process(
+            boolean isDefaultDecimalFormat,
+            ParseTree nameContext,
+            List<? extends ParseTree> propertyNames,
+            List<? extends ParseTree> stringLiterals,
+            List<String> rawStringLiterals,
+            StaticContext moduleContext,
+            boolean isJSONiq,
+            ExceptionMetadata metadata
+    ) {
         Name name = null;
         if (!isDefaultDecimalFormat) {
             name = processDecimalFormatName(nameContext, moduleContext, metadata);
@@ -53,7 +66,8 @@ public final class DecimalFormatDeclarationProcessor {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral(stringLiterals.get(i).getText(), isJSONiq);
+            String literal = rawStringLiterals == null ? stringLiterals.get(i).getText() : rawStringLiterals.get(i);
+            String value = parseStringLiteral(literal, isJSONiq);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
