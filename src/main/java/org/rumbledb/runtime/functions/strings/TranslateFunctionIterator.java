@@ -60,8 +60,8 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         String transString = transStringItem.getStringValue();
 
         // Java .codePoints() returns an IntStream of Unicode code points
-        // This is better than using charAt() because it handles surrogate pairs correctly because chars are 16 bits and
-        // Unicode code points can be larger.
+        // This is better than using charAt() because it handles surrogate pairs correctly
+        // (Chars are 16 bits and Unicode code points can be larger)
         int[] mapCodePoints = mapString.codePoints().toArray();
         int[] translationCodePoints = transString.codePoints().toArray();
 
