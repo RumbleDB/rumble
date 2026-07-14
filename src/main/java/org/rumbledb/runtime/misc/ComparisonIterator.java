@@ -290,9 +290,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case GC_EQ:
                 case VC_NE:
                 case GC_NE:
-                    Duration l = left.getDurationValue();
-                    Duration r = right.getDurationValue();
-                    return processDuration(l, r);
+                    return processMixedDuration(left, right);
                 default:
             }
         }
@@ -510,6 +508,24 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             Duration r
     ) {
         return l.compareTo(r);
+    }
+
+    /**
+     * Two durations are equal iff their months component and their
+     * day-time (seconds) component are both equal
+     */
+    private static int processMixedDuration(
+            Item left,
+            Item right
+    ) {
+        long leftMonths = left.getPeriodValue().toTotalMonths();
+        long rightMonths = right.getPeriodValue().toTotalMonths();
+        if (leftMonths != rightMonths) {
+            return Long.compare(leftMonths, rightMonths);
+        }
+        Duration leftDayTime = left.getDayTimeDurationComponent();
+        Duration rightDayTime = right.getDayTimeDurationComponent();
+        return leftDayTime.compareTo(rightDayTime);
     }
 
     private static int processPeriod(
