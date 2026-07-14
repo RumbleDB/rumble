@@ -106,47 +106,72 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.child == null || this.evaluationDepthLimit == 0) {
+        this.pendingResults.clear();
+        this.nextResult = null;
+        this.currentInputTuple = null;
+        if (!this.hasActiveChild()) {
             // No upcoming tuple
-            prepareForTuple(null);
-            prepareNextResult();
+            this.prepareForTuple(null);
+            this.prepareNextResult();
         } else {
             this.child.open(this.currentDynamicContext);
-            prepareNextTuple();
+            this.prepareNextTuple();
         }
     }
 
     @Override
     public void reset(DynamicContext context) {
-        super.reset(context);
+        this.closeExpressionIterators();
+        this.hasNext = true;
+        this.currentDynamicContext = context;
         this.pendingResults.clear();
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            prepareForTuple(null);
-            prepareNextResult();
+        this.nextResult = null;
+        this.currentInputTuple = null;
+
+        if (!this.hasActiveChild()) {
+            this.prepareForTuple(null);
+            this.prepareNextResult();
         } else {
             this.child.reset(this.currentDynamicContext);
-            prepareNextTuple();
+            this.prepareNextTuple();
         }
     }
 
     @Override
     public void close() {
+        this.closeExpressionIterators();
+        if (this.hasActiveChild() && this.child.isOpen()) {
+            this.child.close();
+        }
+        this.pendingResults.clear();
+        this.nextResult = null;
+        this.currentInputTuple = null;
+        this.isOpen = false;
+    }
+
+    private boolean hasActiveChild() {
+        return this.child != null && this.evaluationDepthLimit != 0;
+    }
+
+    private void closeExpressionIterators() {
         if (this.sourceIterator.isOpen()) {
             this.sourceIterator.close();
         }
-        if (this.child != null && this.child.isOpen()) {
-            this.child.close();
+        if (this.startCondition.isOpen()) {
+            this.startCondition.close();
         }
-        this.isOpen = false;
+        if (this.endCondition != null && this.endCondition.isOpen()) {
+            this.endCondition.close();
+        }
     }
 
     @Override
     public FlworTuple next() {
         if (!this.hasNext) {
-            throw new IteratorFlowException("Invalid next() call in window clause", getMetadata());
+            throw new IteratorFlowException("Invalid next() call in window clause", this.getMetadata());
         }
         FlworTuple result = this.nextResult;
-        prepareNextResult();
+        this.prepareNextResult();
         return result;
     }
 
@@ -159,20 +184,20 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         }
 
         // In case that the deque is empty, we need to query for more
-        if (this.child == null || this.evaluationDepthLimit == 0) {
+        if (!this.hasActiveChild()) {
             // No upcoming tuple
             this.hasNext = false;
             return;
         }
 
         // Prepare for the next tuple from the child iterator
-        prepareNextTuple();
+        this.prepareNextTuple();
     }
 
     private void prepareNextTuple() {
         while (this.child.hasNext()) {
             FlworTuple inputTuple = this.child.next();
-            prepareForTuple(inputTuple);
+            this.prepareForTuple(inputTuple);
             if (!this.pendingResults.isEmpty()) {
                 // At lease one window has been generated
                 this.nextResult = this.pendingResults.removeFirst();
@@ -195,13 +220,13 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     private void prepareForTuple(FlworTuple inputTuple) {
         this.currentInputTuple = inputTuple;
-        List<Item> items = materializeSource(inputTuple);
+        List<Item> items = this.materializeSource(inputTuple);
 
         if (!items.isEmpty()) {
             if (this.windowType == WindowClause.WindowType.TUMBLING) {
-                generateTumblingWindows(items, inputTuple);
+                this.generateTumblingWindows(items, inputTuple);
             } else {
-                generateSlidingWindows(items, inputTuple);
+                this.generateSlidingWindows(items, inputTuple);
             }
         }
     }
@@ -220,18 +245,23 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             // For example: for $x in ... for sliding window $w in $x
             // Here we have a flwor tuple with $x variable that needs to be bind to the source iterator so it can
             // evaluate
-            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
+            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, this.getMetadata());
         }
         if (this.sourceIterator.isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
+            throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
         }
 
         List<Item> items = new ArrayList<>();
         this.sourceIterator.open(sourceContext);
-        while (this.sourceIterator.hasNext()) {
-            items.add(this.sourceIterator.next());
+        try {
+            while (this.sourceIterator.hasNext()) {
+                items.add(this.sourceIterator.next());
+            }
+        } finally {
+            if (this.sourceIterator.isOpen()) {
+                this.sourceIterator.close();
+            }
         }
-        this.sourceIterator.close();
         return items;
     }
 
@@ -246,7 +276,8 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         int start = 0;
         while (start < items.size()) {
             while (
-                start < items.size() && !matches(this.startCondition, this.startVariables, false, items, start, start)
+                start < items.size()
+                    && !this.matches(this.startCondition, this.startVariables, false, items, start, start)
             ) {
                 // Skip items until we find a start condition match (fine because tumbling windows do not overlap)
                 start++;
@@ -256,14 +287,14 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
                 return;
             }
             // Find the end of the window starting from the current start position
-            int end = findEnd(items, start);
+            int end = this.findEnd(items, start);
             if (end < 0) {
                 // No end condition match found, we are done
                 return;
             }
 
             // Create a new tuple for the window and add it to the pending results deque
-            this.pendingResults.add(createTuple(inputTuple, items, start, end));
+            this.pendingResults.add(this.createTuple(inputTuple, items, start, end));
             start = end + 1;
         }
     }
@@ -277,13 +308,13 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     private void generateSlidingWindows(List<Item> items, FlworTuple inputTuple) {
         for (int start = 0; start < items.size(); start++) {
-            if (!matches(this.startCondition, this.startVariables, false, items, start, start)) {
+            if (!this.matches(this.startCondition, this.startVariables, false, items, start, start)) {
                 // This item does not match the start condition, skip it
                 continue;
             }
-            int end = findEnd(items, start);
+            int end = this.findEnd(items, start);
             if (end >= 0) {
-                this.pendingResults.add(createTuple(inputTuple, items, start, end));
+                this.pendingResults.add(this.createTuple(inputTuple, items, start, end));
             }
         }
     }
@@ -294,7 +325,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             // In that case, the end of the window will be the item before the next start condition match, or the last
             // item in the list if there is no next start condition match
             for (int nextStart = start + 1; nextStart < items.size(); nextStart++) {
-                if (matches(this.startCondition, this.startVariables, false, items, nextStart, nextStart)) {
+                if (this.matches(this.startCondition, this.startVariables, false, items, nextStart, nextStart)) {
                     return nextStart - 1;
                 }
             }
@@ -302,7 +333,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         }
 
         for (int end = start; end < items.size(); end++) {
-            if (matches(this.endCondition, this.endVariables, true, items, end, start)) {
+            if (this.matches(this.endCondition, this.endVariables, true, items, end, start)) {
                 return end;
             }
         }
@@ -320,6 +351,10 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             int position,
             int startPosition
     ) {
+        if (conditionIterator.isRDDOrDataFrame()) {
+            throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
+        }
+
         // Evaluate each condition in a child context so temporary window bindings from one condition do not leak into
         // the next one, while outer bindings (including external variables) remain visible.
         DynamicContext conditionContext = new DynamicContext(this.currentDynamicContext);
@@ -328,7 +363,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         if (this.currentInputTuple != null) {
             // Bind the variables from the input tuple to the current dynamic context so that the condition iterator can
             // access them
-            conditionContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, getMetadata());
+            conditionContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, this.getMetadata());
         }
 
         if (endCondition) {
@@ -343,7 +378,13 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         }
 
         bindTupleContext(conditionContext, items, position, variables);
-        return conditionIterator.getEffectiveBooleanValue(conditionContext);
+        try {
+            return conditionIterator.getEffectiveBooleanValue(conditionContext);
+        } finally {
+            if (conditionIterator.isOpen()) {
+                conditionIterator.close();
+            }
+        }
     }
 
     /**
@@ -351,7 +392,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      * 
      * For each condition, it can have up to 4 variables: current item, previous item, next item, and position.
      */
-    private void bindTupleContext(
+    private static void bindTupleContext(
             DynamicContext context,
             List<Item> items,
             int position,
@@ -363,7 +404,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         putItem(context, variables.position(), ItemFactory.getInstance().createLongItem(position + 1));
     }
 
-    private void putItem(DynamicContext context, Name name, Item item) {
+    private static void putItem(DynamicContext context, Name name, Item item) {
         if (name != null) {
             context.getVariableValues().addVariableValue(name, item == null ? Collections.emptyList() : List.of(item));
         }
@@ -381,9 +422,9 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      * @return a new tuple that includes the window variable and any other variables from the input tuple
      */
     private FlworTuple createTuple(FlworTuple inputTuple, List<Item> items, int start, int end) {
-        FlworTuple result = inputTuple == null ? new FlworTuple(getConfiguration()) : new FlworTuple(inputTuple);
+        FlworTuple result = inputTuple == null ? new FlworTuple(this.getConfiguration()) : new FlworTuple(inputTuple);
         List<Item> windowItems = new ArrayList<>(items.subList(start, end + 1));
-        validateWindowType(windowItems);
+        this.validateWindowType(windowItems);
 
         // Window variable will be bound to the list of items in the window
         result.putValue(this.windowVariable, windowItems);
@@ -426,14 +467,14 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
                         + windowItems.size()
                         + ", but the expected type is "
                         + declaredType,
-                    getMetadata()
+                    this.getMetadata()
             );
         }
         for (Item item : windowItems) {
             if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
                 throw new UnexpectedTypeException(
                         item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
-                        getMetadata()
+                        this.getMetadata()
                 );
             }
         }
@@ -447,7 +488,12 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      * @param position the position of the item in the list of items
      * @param variables the window variables to be added to the tuple
      */
-    private void addBindings(FlworTuple tuple, List<Item> items, int position, WindowClause.WindowVars variables) {
+    private static void addBindings(
+            FlworTuple tuple,
+            List<Item> items,
+            int position,
+            WindowClause.WindowVars variables
+    ) {
         if (variables.currentItem() != null)
             tuple.putValue(variables.currentItem(), items.get(position));
         if (variables.position() != null)
@@ -468,47 +514,124 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public FlworDataFrame getDataFrame(DynamicContext context) {
-        throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
+        throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
-        DynamicContext.mergeVariableDependencies(result, this.sourceIterator.getVariableDependencies());
-        DynamicContext.mergeVariableDependencies(result, this.startCondition.getVariableDependencies());
+
+        Set<Name> startBoundVariables = new HashSet<>(this.startVariables.names());
+        mergeDependencies(result, this.sourceIterator.getVariableDependencies(), Collections.emptySet());
+        mergeDependencies(result, this.startCondition.getVariableDependencies(), startBoundVariables);
+
         if (this.endCondition != null) {
-            DynamicContext.mergeVariableDependencies(result, this.endCondition.getVariableDependencies());
+            Set<Name> conditionBoundVariables = new HashSet<>(startBoundVariables);
+            conditionBoundVariables.addAll(this.endVariables.names());
+            mergeDependencies(result, this.endCondition.getVariableDependencies(), conditionBoundVariables);
         }
-        if (this.child != null && this.evaluationDepthLimit != 0) {
+
+        if (this.hasActiveChild()) {
             for (Name variable : this.child.getOutputTupleVariableNames()) {
                 result.remove(variable);
             }
             DynamicContext.mergeVariableDependencies(result, this.child.getDynamicContextVariableDependencies());
         }
+
         return result;
+    }
+
+    /**
+     * Utility to merge variable dependencies while excluding variables bound locally by the window condition
+     * 
+     * @param target accumulated dependencies for the entire window clause
+     * @param dependencies dependencies reported by the source or condition expression
+     * @param locallyBoundVariables variables supplied by the window iterator, which must not be treated as external
+     */
+    private static void mergeDependencies(
+            Map<Name, DynamicContext.VariableDependency> target,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            Set<Name> locallyBoundVariables
+    ) {
+        dependencies.forEach((name, dependency) -> {
+            if (!locallyBoundVariables.contains(name)) {
+                target.compute(
+                    name,
+                    (k, previousDependency) -> previousDependency == null || previousDependency == dependency
+                        ? dependency
+                        : DynamicContext.VariableDependency.FULL
+                );
+            }
+        });
     }
 
     @Override
     protected Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
+        if (!this.hasActiveChild()) {
+            return Collections.emptyMap();
+        }
+
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(parentProjection);
-        addDependencies(result, this.sourceIterator.getVariableDependencies());
-        addDependencies(result, this.startCondition.getVariableDependencies());
-        if (this.endCondition != null)
-            addDependencies(result, this.endCondition.getVariableDependencies());
+        Set<Name> childVariables = this.child.getOutputTupleVariableNames();
+        Set<Name> startBoundVariables = new HashSet<>(this.startVariables.names());
+        Set<Name> endBoundVariables = this.endVariables == null
+            ? Collections.emptySet()
+            : new HashSet<>(this.endVariables.names());
+
+        this.getWindowVariables().forEach(result::remove);
+        this.addDependencies(
+            result,
+            this.sourceIterator.getVariableDependencies(),
+            Collections.emptySet(),
+            childVariables
+        );
+        this.addDependencies(
+            result,
+            this.startCondition.getVariableDependencies(),
+            startBoundVariables,
+            childVariables
+        );
+        if (this.endCondition != null) {
+            Set<Name> conditionBoundVariables = new HashSet<>(startBoundVariables);
+            conditionBoundVariables.addAll(endBoundVariables);
+            this.addDependencies(
+                result,
+                this.endCondition.getVariableDependencies(),
+                conditionBoundVariables,
+                childVariables
+            );
+        }
         return result;
     }
 
     private void addDependencies(
             Map<Name, DynamicContext.VariableDependency> target,
-            Map<Name, DynamicContext.VariableDependency> dependencies
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            Set<Name> locallyBoundVariables,
+            Set<Name> childVariables
     ) {
         dependencies.forEach((name, dependency) -> {
-            if (this.child != null && this.child.getOutputTupleVariableNames().contains(name)) {
-                target.put(name, dependency);
+            if (!locallyBoundVariables.contains(name) && childVariables.contains(name)) {
+                target.compute(
+                    name,
+                    (k, previousDependency) -> previousDependency == null || previousDependency == dependency
+                        ? dependency
+                        : DynamicContext.VariableDependency.FULL
+                );
             }
         });
+    }
+
+    private Set<Name> getWindowVariables() {
+        Set<Name> result = new HashSet<>();
+        result.add(this.windowVariable);
+        result.addAll(this.startVariables.names());
+        if (this.endVariables != null) {
+            result.addAll(this.endVariables.names());
+        }
+        return result;
     }
 
     /**
@@ -516,11 +639,11 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public Set<Name> getOutputTupleVariableNames() {
-        Set<Name> result = this.child == null ? new HashSet<>() : this.child.getOutputTupleVariableNames();
-        result.add(this.windowVariable);
-        result.addAll(this.startVariables.names());
-        if (this.endVariables != null)
-            result.addAll(this.endVariables.names());
+        Set<Name> result = new HashSet<>();
+        if (this.hasActiveChild()) {
+            result.addAll(this.child.getOutputTupleVariableNames());
+        }
+        result.addAll(this.getWindowVariables());
         return result;
     }
 
@@ -531,6 +654,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public boolean isSparkJobNeeded() {
+        // Currently, only local execution is supported for window clauses
         return false;
     }
 }
