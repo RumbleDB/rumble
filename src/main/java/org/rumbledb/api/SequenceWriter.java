@@ -115,11 +115,9 @@ public class SequenceWriter {
         String method = this.serializationParameters.getMethod();
         if (
             method != null
-                && (
-                    method.equals("adaptive")
-                        || method.equals("xml-json-hybrid")
-                        || method.equals("tyson")
-                )
+                && (method.equals("adaptive")
+                    || method.equals("xml-json-hybrid")
+                    || method.equals("tyson"))
         ) {
             this.mode = SaveMode.ErrorIfExists; // Default save mode
         } else {

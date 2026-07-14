@@ -133,7 +133,12 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             sb.append(item.getBooleanValue() ? "true()" : "false()");
             return;
         }
-        if (item.isString() || item.isUntypedAtomic() || item.isAnyURI() || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
+        if (
+            item.isString()
+                || item.isUntypedAtomic()
+                || item.isAnyURI()
+                || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+        ) {
             sb.append(quoteAsLiteral(item.getStringValue()));
             return;
         }
@@ -156,7 +161,11 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isDateTime()) {
-            appendTypedAtomic(type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTime" : "xs:dateTime", item, sb);
+            appendTypedAtomic(
+                type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTime" : "xs:dateTime",
+                item,
+                sb
+            );
             return;
         }
         if (item.isDate()) {
