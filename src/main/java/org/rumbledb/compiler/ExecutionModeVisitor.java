@@ -413,10 +413,27 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
-        this.visit(clause.getStartCondition().expression(), clause.getStartCondition().expression().getStaticContext());
+
+        StaticContext startContext = clause.getStartCondition().expression().getStaticContext();
+        clause.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> startContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        this.visit(clause.getStartCondition().expression(), startContext);
+
         if (clause.getEndCondition() != null) {
-            this.visit(clause.getEndCondition().expression(), clause.getEndCondition().expression().getStaticContext());
+            StaticContext endContext = clause.getEndCondition().expression().getStaticContext();
+            clause.getStartCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            clause.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            this.visit(clause.getEndCondition().expression(), endContext);
         }
+
         clause.setHighestExecutionMode(ExecutionMode.LOCAL);
         argument.setVariableStorageMode(clause.getWindowVariable(), ExecutionMode.LOCAL);
         clause.getStartCondition()

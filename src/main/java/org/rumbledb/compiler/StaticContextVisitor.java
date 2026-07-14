@@ -260,24 +260,34 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), argument);
-        StaticContext result = new StaticContext(argument);
-
-        result.addVariable(clause.getWindowVariable(), clause.getSequenceType(), clause.getMetadata());
 
         WindowClause.WindowVars start = clause.getStartCondition().variables();
         WindowClause.WindowVars end = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
 
-        addWindowVars(start, clause.getSequenceType(), result, clause);
+        // Three different static contexts are created to avoid situations like start condition seeing end condition
+        // variables.
+        StaticContext startContext = new StaticContext(argument);
+        addWindowVars(start, clause.getSequenceType(), startContext, clause);
+        this.visit(clause.getStartCondition().expression(), startContext);
+
         if (end != null) {
-            addWindowVars(end, clause.getSequenceType(), result, clause);
+            StaticContext endContext = new StaticContext(startContext);
+            addWindowVars(end, clause.getSequenceType(), endContext, clause);
+            this.visit(clause.getEndCondition().expression(), endContext);
         }
 
-        this.visit(clause.getStartCondition().expression(), result);
-        if (clause.getEndCondition() != null) {
-            this.visit(clause.getEndCondition().expression(), result);
+        StaticContext followingClausesContext = new StaticContext(argument);
+        followingClausesContext.addVariable(
+            clause.getWindowVariable(),
+            clause.getSequenceType(),
+            clause.getMetadata()
+        );
+        addWindowVars(start, clause.getSequenceType(), followingClausesContext, clause);
+        if (end != null) {
+            addWindowVars(end, clause.getSequenceType(), followingClausesContext, clause);
         }
 
-        this.visit(clause.getNextClause(), result);
+        this.visit(clause.getNextClause(), followingClausesContext);
         return argument;
     }
 
