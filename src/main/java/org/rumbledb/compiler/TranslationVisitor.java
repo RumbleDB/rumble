@@ -559,6 +559,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return prolog;
     }
 
+    /**
+     * Retrieve the value of a string literal from the parser context using the start and stop offsets.
+     * 
+     * Note: this is different than calling ctx.getText() and then .substring(1, length - 1) to remove the quotes.
+     * Because it reconstructs text from parse-tree tokens. That can omit hidden tokens or differ when one string is
+     * divided into several quote-mode tokens.
+     * 
+     * @param ctx the parser context of the string literal
+     * @return the unescaped string literal value without the surrounding quotes
+     */
     private String getStringLiteralValue(ParserRuleContext ctx) {
         String text = ctx.getStart()
             .getInputStream()
