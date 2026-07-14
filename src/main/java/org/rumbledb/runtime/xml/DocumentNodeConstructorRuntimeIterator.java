@@ -123,8 +123,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
         if (this.contentIterator != null) {
             this.contentIterator.open(dynamicContext);
             while (this.contentIterator.hasNext()) {
-                Item item = this.contentIterator.next();
-                rawContentSequence.add(item);
+                XmlConstructorContentUtils.appendExpandedItem(this.contentIterator.next(), rawContentSequence);
             }
             this.contentIterator.close();
         }
