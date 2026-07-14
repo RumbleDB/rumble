@@ -12,6 +12,9 @@ public final class Serializers {
         if (method == null || method.equalsIgnoreCase("json")) {
             return new JsonSerializer(params != null ? params : SerializationParameters.defaults());
         }
+        if (method.equalsIgnoreCase("adaptive")) {
+            return new AdaptiveSerializer(params);
+        }
         if (method.equalsIgnoreCase("yaml")) {
             return new YamlSerializer(params);
         }
@@ -28,5 +31,4 @@ public final class Serializers {
         throw new OurBadException("Unsupported serialization method: " + method);
     }
 }
-
 
