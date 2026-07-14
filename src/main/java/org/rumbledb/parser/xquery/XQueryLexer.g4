@@ -29,6 +29,117 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
 
     // for counting braces inside string literals
     private int bracesInside = 0;
+
+    // Direct element content follows the XQuery 3.1 grammar:
+    // ElementContentChar ::= Char - [{}<&]
+    // so both apostrophes and quotation marks are valid plain content
+    // characters inside direct element content. We therefore keep a small
+    // lexer-side state to know when we are in direct element content and
+    // should not enter string-literal modes on ' or ".
+    private int lastDefaultTokenType = Token.INVALID_TYPE;
+    private int directTagNameStartOffset = -1;
+    private boolean pendingDirectTag = false;
+    private boolean insideDirectTag = false;
+    private boolean currentDirectTagIsClosing = false;
+    private boolean currentDirectTagIsSelfClosing = false;
+    private boolean insideDirectElementContent = false;
+    private int openDirectElementDepth = 0;
+    private int directTagExpressionDepth = 0;
+    private int directContentExpressionDepth = 0;
+
+    @Override
+    public Token emit() {
+        Token token = super.emit();
+        if (token.getChannel() == Token.DEFAULT_CHANNEL) {
+            this.updateDirectConstructorState(token);
+            this.lastDefaultTokenType = token.getType();
+        }
+        return token;
+    }
+
+    private void updateDirectConstructorState(Token token) {
+        int tokenType = token.getType();
+
+        if (this.pendingDirectTag) {
+            if (tokenType == SLASH && token.getStartIndex() == this.directTagNameStartOffset) {
+                this.insideDirectTag = true;
+                this.currentDirectTagIsClosing = true;
+                this.pendingDirectTag = false;
+            } else if (isDirectTagNameToken(tokenType) && token.getStartIndex() == this.directTagNameStartOffset) {
+                this.insideDirectTag = true;
+                this.currentDirectTagIsClosing = false;
+                this.pendingDirectTag = false;
+            } else {
+                this.pendingDirectTag = false;
+                this.directTagNameStartOffset = -1;
+            }
+        }
+
+        switch (tokenType) {
+            case LANGLE:
+                this.pendingDirectTag = true;
+                this.directTagNameStartOffset = token.getStopIndex() + 1;
+                if (this.insideDirectElementContent && this.directContentExpressionDepth == 0) {
+                    this.insideDirectElementContent = false;
+                }
+                break;
+            case LBRACE:
+                if (this.insideDirectTag) {
+                    this.directTagExpressionDepth++;
+                } else if (this.insideDirectElementContent) {
+                    this.directContentExpressionDepth++;
+                    this.insideDirectElementContent = false;
+                }
+                break;
+            case RBRACE:
+                if (this.insideDirectTag && this.directTagExpressionDepth > 0) {
+                    this.directTagExpressionDepth--;
+                } else if (this.directContentExpressionDepth > 0) {
+                    this.directContentExpressionDepth--;
+                    if (this.directContentExpressionDepth == 0) {
+                        this.insideDirectElementContent = this.openDirectElementDepth > 0;
+                    }
+                }
+                break;
+            case SLASH:
+                if (this.insideDirectTag && this.directTagExpressionDepth == 0) {
+                    this.currentDirectTagIsSelfClosing = true;
+                }
+                break;
+            case RANGLE:
+                if (this.insideDirectTag) {
+                    if (this.currentDirectTagIsClosing) {
+                        if (this.openDirectElementDepth > 0) {
+                            this.openDirectElementDepth--;
+                        }
+                    } else if (!this.currentDirectTagIsSelfClosing) {
+                        this.openDirectElementDepth++;
+                    }
+                    this.insideDirectElementContent =
+                        this.openDirectElementDepth > 0 && this.directContentExpressionDepth == 0;
+                    this.insideDirectTag = false;
+                    this.currentDirectTagIsClosing = false;
+                    this.currentDirectTagIsSelfClosing = false;
+                    this.directTagExpressionDepth = 0;
+                    this.directTagNameStartOffset = -1;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private boolean isDirectTagNameToken(int tokenType) {
+        return (tokenType >= KW_ALLOWING && tokenType <= KW_STATICALLY)
+            || switch (tokenType) {
+            case FullQName,
+                URIQualifiedName,
+                NCNameWithLocalWildcard,
+                NCNameWithPrefixWildcard,
+                NCName -> true;
+            default -> false;
+        };
+    }
 }
 
 IntegerLiteral: Digits ;
@@ -59,8 +170,10 @@ CharRef: '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';' ;
 
 // Escapes are handled as two Quot or two Apos tokens, to avoid maximal
 // munch lexer ambiguity.
-Quot        : '"' -> pushMode(QUOT_LITERAL_STRING);
-Apos        : '\'' -> pushMode(APOS_LITERAL_STRING);
+DirElemContentQuot : {this.insideDirectElementContent}? '"' -> type(Quot);
+DirElemContentApos : {this.insideDirectElementContent}? '\'' -> type(Apos);
+Quot        : '"' {pushMode(QUOT_LITERAL_STRING);};
+Apos        : '\'' {pushMode(APOS_LITERAL_STRING);};
 
 // XML-SPECIFIC
 
