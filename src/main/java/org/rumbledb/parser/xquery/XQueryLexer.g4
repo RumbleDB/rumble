@@ -36,7 +36,6 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
     // characters inside direct element content. We therefore keep a small
     // lexer-side state to know when we are in direct element content and
     // should not enter string-literal modes on ' or ".
-    private int lastDefaultTokenType = Token.INVALID_TYPE;
     private int directTagNameStartOffset = -1;
     private boolean pendingDirectTag = false;
     private boolean insideDirectTag = false;
@@ -52,7 +51,6 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
         Token token = super.emit();
         if (token.getChannel() == Token.DEFAULT_CHANNEL) {
             this.updateDirectConstructorState(token);
-            this.lastDefaultTokenType = token.getType();
         }
         return token;
     }
