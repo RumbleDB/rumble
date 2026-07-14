@@ -261,34 +261,7 @@ public final class AnnotationTestExecutor {
     }
 
     private static String getIteratorOutput(SequenceOfItems sequence, int resultSizeCap) {
-        sequence.open();
-        if (!sequence.hasNext()) {
-            return "";
-        }
-
-        StringBuilder output = new StringBuilder(sequence.next().serialize());
-        if (!sequence.hasNext()) {
-            return output.toString();
-        }
-
-        int itemCount = 1;
-        output.insert(0, "(");
-        while (sequence.hasNext() && isWithinResultSizeCap(itemCount, resultSizeCap)) {
-            output.append(", ");
-            output.append(sequence.next().serialize());
-            itemCount++;
-        }
-        output.append(")");
-
-        if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
-            System.err.println(
-                "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                    + resultSizeCap
-                    + " items. This value can be configured with the --result-size parameter at startup"
-            );
-        }
-
-        return output.toString();
+        return sequence.serialize();
     }
 
     private static boolean isWithinResultSizeCap(int itemCount, int resultSizeCap) {

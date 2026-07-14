@@ -15,6 +15,9 @@ import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -292,6 +295,59 @@ public class SequenceOfItems {
             );
         }
         return result;
+    }
+
+    /**
+     * Serializes the query result to a string using the serialization parameters carried by the
+     * runtime static context.
+     *
+     * This is intended for API and test harness use when the result must be observed exactly as a
+     * serialized sequence rather than as raw {@link Item} objects.
+     *
+     * @return the serialized result.
+     */
+    public String serialize() {
+        if (this.availableAsPUL()) {
+            return "";
+        }
+        if (this.isOpen) {
+            throw new RuntimeException("Cannot serialize a sequence if the iterator is open.");
+        }
+
+        SerializationParameters params = SerializationParameters.copy(
+            this.getRuntimeStaticContext().getSerializationParameters()
+        );
+        Serializer serializer = Serializers.from(params);
+        String itemSeparator = params.getItemSeparator() == null ? "" : params.getItemSeparator();
+
+        StringBuilder sb = new StringBuilder();
+        int resultSizeCap = this.configuration.getResultSizeCap();
+        List<Item> items = new ArrayList<>();
+        long materializationCount;
+        if (resultSizeCap == 0) {
+            items = this.getFirstItemsAsList(0);
+            materializationCount = -1;
+        } else {
+            materializationCount = this.populateList(items, resultSizeCap);
+        }
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) {
+                sb.append(itemSeparator);
+            }
+            sb.append(serializer.serialize(items.get(i)));
+        }
+        if (materializationCount != -1) {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + (materializationCount == Long.MAX_VALUE
+                        ? "a large number of"
+                        : materializationCount)
+                    + " items but its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be configured with the --result-size parameter at startup"
+            );
+        }
+        return sb.toString();
     }
 
     /**
