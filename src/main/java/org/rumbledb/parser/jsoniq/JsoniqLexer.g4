@@ -578,7 +578,6 @@ ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;
 
-INT_QUOT_JsonEscape: '\\' (["\\/bfnrt] | UNICODE) -> type(ContentChar);
 // Strings inside an enclosed expression use JSONiq escaping again. Match both
 // delimiters as complete STRING tokens so their braces remain literal.
 INT_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
@@ -850,7 +849,6 @@ INT_ContentChar:  ~["'{}<&] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_APOS;
 
-INT_APOS_JsonEscape: '\\' (['\\/bfnrt] | UNICODE) -> type(ContentChar);
 // Same handling for expressions enclosed by a single-quoted XML attribute.
 INT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
 INT_APOS_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);

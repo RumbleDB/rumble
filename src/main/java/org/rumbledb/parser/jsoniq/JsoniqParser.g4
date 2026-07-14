@@ -471,6 +471,8 @@ dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAt
 
 dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
+                     // A nested direct constructor inside an outer attribute
+                     // expression can receive an already-tokenized string.
                      | STRING
                      ;
 
@@ -854,39 +856,7 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteralQuot : Quot (PredefinedEntityRef | CharRef | stringContentQuot )* Quot ;
-stringLiteralApos : Apos (PredefinedEntityRef | CharRef | stringContentApos )* Apos ;
-
-stringLiteral : STRING
-              | stringLiteralQuot
-              | stringLiteralApos
-              ;
-
-// Quote-mode tokens are also used for JSONiq strings nested inside direct
-// attribute expressions. These rules keep balanced and unbalanced braces as
-// literal string content; direct attribute rules interpret the same tokens as
-// enclosed expressions.
-stringContentQuot : ContentChar+
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | stringBracedContentQuot
-                  ;
-
-stringContentApos : ContentChar+
-                  | RBRACE
-                  | DOUBLE_LBRACE
-                  | DOUBLE_RBRACE
-                  | stringBracedContentApos
-                  ;
-
-stringBracedContentQuot
-    : LBRACE (stringBracedContentQuot | ~(LBRACE | RBRACE | Quot))* RBRACE?
-    ;
-
-stringBracedContentApos
-    : LBRACE (stringBracedContentApos | ~(LBRACE | RBRACE | Apos))* RBRACE?
-    ;
+stringLiteral: STRING;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 

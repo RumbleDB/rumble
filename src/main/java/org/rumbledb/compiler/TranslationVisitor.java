@@ -23,7 +23,6 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
@@ -246,7 +245,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = getStringLiteralValue(ctx.vers).trim();
+            String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
                 this.moduleContext.setQueryLanguage("jsoniq10");
             } else if (version.equals("3.1")) {
@@ -559,21 +558,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return prolog;
     }
 
-    /**
-     * Retrieve the value of a string literal from the parser context using the start and stop offsets.
-     * 
-     * Note: this is different than calling ctx.getText() and then .substring(1, length - 1) to remove the quotes.
-     * Because it reconstructs text from parse-tree tokens. That can omit hidden tokens or differ when one string is
-     * divided into several quote-mode tokens.
-     * 
-     * @param ctx the parser context of the string literal
-     * @return the unescaped string literal value without the surrounding quotes
-     */
-    private String getStringLiteralValue(ParserRuleContext ctx) {
-        String text = ctx.getStart()
-            .getInputStream()
-            .getText(Interval.of(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex()));
-        String rawValue = text.substring(1, text.length() - 1);
+    private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
         return unescapeStringLiteral(rawValue);
     }
 
@@ -1863,8 +1849,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    getStringLiteralValue(ctx.lt),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1895,8 +1882,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
+            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
             return new StringLiteralExpression(
-                    getStringLiteralValue(ctx.lt),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1983,9 +1971,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitLiteral(JsoniqParser.LiteralContext ctx) {
         ParseTree child = ctx.children.get(0);
 
-        if (child instanceof JsoniqParser.StringLiteralContext stringLiteralContext) {
+        if (child instanceof JsoniqParser.StringLiteralContext) {
+            String rawValue = child.getText().substring(1, child.getText().length() - 1);
             return new StringLiteralExpression(
-                    getStringLiteralValue(stringLiteralContext),
+                    unescapeStringLiteral(rawValue),
                     createMetadataFromContext(ctx)
             );
         }
@@ -3933,7 +3922,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // URI literals use the ordinary JSONiq string rules. XML entity
         // expansion is deliberately confined to direct attribute content.
-        return getStringLiteralValue(ctx);
+        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
+        return unescapeStringLiteral(rawValue);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
@@ -4127,8 +4117,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             child instanceof TerminalNode terminalNode
                 && terminalNode.getSymbol().getType() == JsoniqParser.STRING
         ) {
-            // Handles string attribute values that has no curly braces
-            // Like <html class="1"></html>
+            // A nested direct constructor inside an outer attribute expression
+            // can expose a static attribute value as one STRING token.
+            // For example: <e x="{data(<n value="inside"/>/@value)}"/>
             String text = terminalNode.getText();
             return List.of(
                 new AttributeNodeContentExpression(
