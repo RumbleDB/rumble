@@ -279,7 +279,7 @@ public class SequenceOfItems {
 
     /**
      * Outputs the results as a list. Throws an exception if there are more items than the allowed materialization
-     * limit.
+     * limit. This method is governed only by the materialization cap; the result-size cap is not considered here.
      * 
      * @return The list of all items in the sequence.
      */
@@ -288,13 +288,13 @@ public class SequenceOfItems {
             return new ArrayList<Item>(this.cachedItems);
         }
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result, this.configuration.getResultSizeCap());
+        long num = populateList(result, this.configuration.getMaterializationCap());
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + this.configuration.getResultSizeCap()
+                        + this.configuration.getMaterializationCap()
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
