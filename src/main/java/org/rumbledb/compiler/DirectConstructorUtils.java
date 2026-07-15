@@ -15,10 +15,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
 
-final class DirectAttributeValueUtils {
+final class DirectConstructorUtils {
 
-    private DirectAttributeValueUtils() {
+    private DirectConstructorUtils() {
     }
 
     static List<Expression> processQuotedValue(
@@ -80,6 +81,62 @@ final class DirectAttributeValueUtils {
             result.append(token.getText());
         }
         return result.toString();
+    }
+
+    static <T extends ParserRuleContext> List<Expression> mergeElementContent(
+            CommonTokenStream tokenStream,
+            Token firstContentToken,
+            List<T> children,
+            Function<T, Expression> contentProcessor
+    ) {
+        List<Expression> content = new ArrayList<>();
+        StringBuilder text = null;
+        ExceptionMetadata firstTextMetadata = null;
+        Token previousToken = firstContentToken;
+
+        for (T child : children) {
+            Expression expression = contentProcessor.apply(child);
+            if (expression instanceof TextNodeExpression textNode) {
+                if (textNode.getContent().isEmpty()) {
+                    previousToken = child.getStop();
+                    continue;
+                }
+                if (text == null) {
+                    text = new StringBuilder();
+                    firstTextMetadata = textNode.getMetadata();
+                }
+                text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
+                text.append(textNode.getContent());
+            } else {
+                if (text != null) {
+                    text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
+                    content.add(new TextNodeExpression(text.toString(), firstTextMetadata));
+                    text = null;
+                    firstTextMetadata = null;
+                }
+                content.add(expression);
+            }
+            previousToken = child.getStop();
+        }
+
+        if (text != null) {
+            text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
+            content.add(new TextNodeExpression(text.toString(), firstTextMetadata));
+        }
+        return content;
+    }
+
+    static String processLiteralContent(String content) {
+        if (content.startsWith("&") && content.endsWith(";")) {
+            return StringEscapeUtils.unescapeXml(content);
+        }
+        if (content.equals("{{")) {
+            return "{";
+        }
+        if (content.equals("}}")) {
+            return "}";
+        }
+        return content;
     }
 
     static void validateLiteral(

@@ -149,7 +149,6 @@ import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
@@ -1947,31 +1946,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return -1;
     }
 
-    /**
-     * Whitespace in direct element content is lexed on the HIDDEN channel. Recover hidden tokens that appear
-     * between two adjacent {@code dirElemContent} parse nodes (each node’s own text uses
-     * {@link CommonTokenStream#getText(Interval)} in {@link #visitDirElemContent}).
-     */
-    private static void appendHiddenTokensAfter(
-            CommonTokenStream tokenStream,
-            int previousTokenIndex,
-            StringBuilder destination
-    ) {
-        destination.append(getHiddenTextAfter(tokenStream, previousTokenIndex));
-    }
-
-    private static String getHiddenTextAfter(CommonTokenStream tokenStream, int previousTokenIndex) {
-        List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
-        if (hidden == null) {
-            return "";
-        }
-        StringBuilder result = new StringBuilder();
-        for (Token t : hidden) {
-            result.append(t.getText());
-        }
-        return result.toString();
-    }
-
     private Node visitDirElemConstructorOpenClose(XQueryParser.DirectConstructorContext ctx) {
         XQueryParser.DirElemConstructorOpenCloseContext openClose = ctx.open_close;
         // check that the start and end tags are the same
@@ -1992,70 +1966,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 attributeResult = this.getAttributesExpressionsList(ctx.attributes);
             }
 
-            // Document and Element Nodes impose the constraint that two consecutive Text Nodes can never occur as
-            // adjacent siblings.
-            // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
-            // here, we merge adjacent text nodes into a single text node.
-            List<Expression> content = new ArrayList<>();
-            StringBuilder textAccumulator = null;
-            ExceptionMetadata firstTextMetadata = null;
-            Token previousToken = openClose.endOpen;
-
-            for (XQueryParser.DirElemContentContext child : openClose.dirElemContent()) {
-                Expression childExpression = (Expression) this.visitDirElemContent(child);
-
-                if (childExpression instanceof TextNodeExpression textNode) {
-
-                    // If the parent of a text node is not empty, the Text Node must not contain the zero-length
-                    // string as its content.
-                    // see https://www.w3.org/TR/xpath-datamodel-31/#TextNodeOverview
-                    // skip empty text nodes
-                    if (textNode.getContent().isEmpty()) {
-                        previousToken = child.getStop();
-                        continue;
-                    }
-
-                    if (textAccumulator == null) {
-                        textAccumulator = new StringBuilder();
-                        firstTextMetadata = textNode.getMetadata();
-                    }
-                    appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
-                    textAccumulator.append(textNode.getContent());
-                } else {
-                    // non-text node encountered
-                    if (textAccumulator != null) {
-                        appendHiddenTokensAfter(
-                            this.xQueryTokenStream,
-                            previousToken.getTokenIndex(),
-                            textAccumulator
-                        );
-                        // finalize any accumulated text nodes
-                        content.add(
-                            new TextNodeExpression(
-                                    textAccumulator.toString(),
-                                    firstTextMetadata
-                            )
-                        );
-                        textAccumulator = null;
-                        firstTextMetadata = null;
-                    }
-
-                    // add the non-text node
-                    content.add(childExpression);
-                }
-                previousToken = child.getStop();
-            }
-
-            // handle any remaining accumulated text at the end
-            if (textAccumulator != null) {
-                appendHiddenTokensAfter(this.xQueryTokenStream, previousToken.getTokenIndex(), textAccumulator);
-                content.add(
-                    new TextNodeExpression(
-                            textAccumulator.toString(),
-                            firstTextMetadata
-                    )
-                );
-            }
+            List<Expression> content = DirectConstructorUtils.mergeElementContent(
+                this.xQueryTokenStream,
+                openClose.endOpen,
+                openClose.dirElemContent(),
+                child -> (Expression) this.visitDirElemContent(child)
+            );
 
             return new DirElemConstructorExpression(
                     parseName(ctx.open_tag_name, false, false, false, true),
@@ -2108,38 +2024,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
-    /**
-     * Helper method to process text content that may contain entity/character references or escaped braces.
-     * According to XQuery 3.1 spec, PredefinedEntityRef and CharRef must be expanded.
-     * 
-     * @param content The raw text content to process
-     * @return The processed (unescaped) content
-     */
-    private String processTextContentWithEscaping(String content) {
-        if (content.startsWith("&") && content.endsWith(";")) {
-            // This is a PredefinedEntityRef or CharRef token - expand it
-            return StringEscapeUtils.unescapeXml(content);
-        }
-        // Handle escaped braces: {{ or }}
-        if (content.equals("{{")) {
-            return "{";
-        }
-        if (content.equals("}}")) {
-            return "}";
-        }
-        // Return content as-is if no escaping needed
-        return content;
-    }
-
     @Override
     public Node visitCommonContent(XQueryParser.CommonContentContext ctx) {
         if (ctx.expr() != null) {
             return (Expression) this.visitExpr(ctx.expr());
         }
-        // According to XQuery 3.1 spec, CommonContent can contain PredefinedEntityRef or CharRef
-        // which must be expanded. Check if the content is an entity/character reference.
-        String content = ctx.getText();
-        String processedContent = processTextContentWithEscaping(content);
+        String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
     }
 
@@ -3905,7 +3795,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ParserRuleContext ctx,
             boolean allowEnclosedExpressions
     ) {
-        return DirectAttributeValueUtils.processQuotedValue(
+        return DirectConstructorUtils.processQuotedValue(
             this.xQueryTokenStream,
             ctx,
             allowEnclosedExpressions,
@@ -3944,10 +3834,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return List.of((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         }
 
-        // Preserve literal content after validating XML/XQuery attribute restrictions.
+        // Preserve literal content after validating direct attribute restrictions.
         String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
-        DirectAttributeValueUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
-        String processedContent = processTextContentWithEscaping(childText);
+        DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
+        String processedContent = DirectConstructorUtils.processLiteralContent(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
     }
 
