@@ -466,30 +466,30 @@ dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeL
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
-dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
-dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
+dirAttributeValueQuot
+    : Quot (PredefinedEntityRef | CharRef | escapedQuot | dirAttributeContentQuot)* Quot ;
 
-dirAttributeValue    : dirAttributeValueApos
-                     | dirAttributeValueQuot
-                     // A nested direct constructor inside an outer attribute
-                     // expression can receive an already-tokenized string.
-                     | STRING
+dirAttributeValueApos
+    : Apos (PredefinedEntityRef | CharRef | escapedApos | dirAttributeContentApos)* Apos ;
+
+dirAttributeValue    : dirAttributeValueQuot
+                     | dirAttributeValueApos
                      ;
 
-dirAttributeContentQuot : contentChar                     
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
-                        | dirAttributeValueApos
+dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Quot | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
-dirAttributeContentApos : contentChar                    
-                        | DOUBLE_LBRACE | DOUBLE_RBRACE
-                        | dirAttributeValueQuot
+dirAttributeContentApos : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Apos | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
-// helper rule to match any content character
-contentChar:              ContentChar+ ;
+escapedQuot: Quot Quot;
+escapedApos: Apos Apos;
 
 dirElemContent: directConstructor
               | commonContent
@@ -856,7 +856,14 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteral: STRING;
+jsoniqStringEscape: BACKSLASH . ;
+
+stringLiteralQuot : Quot (jsoniqStringEscape | ~(Quot | BACKSLASH))* Quot ;
+stringLiteralApos : Apos (jsoniqStringEscape | ~(Apos | BACKSLASH))* Apos ;
+
+stringLiteral : stringLiteralQuot
+              | stringLiteralApos
+              ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 
