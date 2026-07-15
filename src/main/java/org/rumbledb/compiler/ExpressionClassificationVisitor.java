@@ -30,6 +30,7 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -184,6 +185,22 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Expression in For Clause cannot be updating",
+                    expression.getMetadata()
+            );
+        }
+        return result;
+    }
+
+    @Override
+    public ExpressionClassification visitWindowClause(WindowClause expression, ExpressionClassification argument) {
+        ExpressionClassification result = this.visit(expression.getExpression(), argument);
+        result = this.visit(expression.getStartCondition().expression(), result);
+        if (expression.getEndCondition() != null) {
+            result = this.visit(expression.getEndCondition().expression(), result);
+        }
+        if (result.isUpdating()) {
+            throw new InvalidUpdatingExpressionPositionException(
+                    "Expressions in Window Clause cannot be updating",
                     expression.getMetadata()
             );
         }

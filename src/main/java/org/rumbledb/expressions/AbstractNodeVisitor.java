@@ -38,6 +38,7 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -169,6 +170,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitForClause(ForClause expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitWindowClause(WindowClause expression, T argument) {
         return defaultAction(expression, argument);
     }
 
