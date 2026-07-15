@@ -559,6 +559,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {
+        // Note: tokenStrem.getText() preserves the original string literal including hidden tokens (e.g., whitespace,
+        // comments)
+        // We need original string literal with delimiters for accurate parsing of escape sequences and delimiters.
         String source = this.jsoniqTokenStream.getText(ctx.getSourceInterval());
         return StringLiteralUtils.parseJsoniq(source, createMetadataFromContext(ctx));
     }
