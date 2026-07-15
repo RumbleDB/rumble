@@ -49,6 +49,7 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -2464,6 +2465,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 } else if (forArities == SequenceType.Arity.OneOrMore) {
                     forArities = SequenceType.Arity.ZeroOrMore;
                 }
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
+                forArities = SequenceType.Arity.ZeroOrMore;
             }
             clause = clause.getNextClause();
         }
@@ -2520,6 +2523,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         );
 
         return argument;
+    }
+
+    @Override
+    public StaticContext visitWindowClause(WindowClause expression, StaticContext argument) {
+        visit(expression.getExpression(), argument);
+        SequenceType sourceType = expression.getActualSequenceType() == null
+            ? expression.getExpression().getStaticSequenceType()
+            : expression.getActualSequenceType();
+        basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        visit(
+            expression.getStartCondition().expression(),
+            expression.getStartCondition().expression().getStaticContext()
+        );
+        checkWindowConditionType(expression.getStartCondition().expression(), expression);
+        if (expression.getEndCondition() != null) {
+            visit(
+                expression.getEndCondition().expression(),
+                expression.getEndCondition().expression().getStaticContext()
+            );
+            checkWindowConditionType(expression.getEndCondition().expression(), expression);
+        }
+        return argument;
+    }
+
+    private void checkWindowConditionType(Expression condition, WindowClause clause) {
+        SequenceType conditionType = condition.getStaticSequenceType();
+        basicChecks(conditionType, clause.getClass().getSimpleName(), true, false, clause.getMetadata());
+        if (!conditionType.hasEffectiveBooleanValue()) {
+            throwStaticTypeException("Window condition has no effective boolean value", clause.getMetadata());
+        }
     }
 
     @Override
