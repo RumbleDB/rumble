@@ -838,8 +838,8 @@ uriLiteral: stringLiteral ;
 // The matching delimiter terminates the string, a doubled delimiter represents
 // one literal delimiter, and a bare ampersand is not allowed. The negated sets
 // below operate on lexer token types, not individual characters.
-stringLiteralQuot : Quot (Quot Quot | ~(Quot | Ampersand))* Quot ;
-stringLiteralApos : Apos (Apos Apos | ~(Apos | Ampersand))* Apos ;
+stringLiteralQuot : Quot (escapedQuot | ~(Quot | Ampersand))* Quot ;
+stringLiteralApos : Apos (escapedApos | ~(Apos | Ampersand))* Apos ;
 
 stringLiteral : stringLiteralQuot
               | stringLiteralApos
