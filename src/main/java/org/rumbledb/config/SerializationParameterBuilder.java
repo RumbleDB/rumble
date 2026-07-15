@@ -86,11 +86,11 @@ public final class SerializationParameterBuilder {
     public static void update(SerializationParameters params, String optionName, String optionValue)
             throws InvalidSerializationParameterValueException {
 
-        if (optionValue == null || optionValue.trim().isEmpty()) {
+        if (optionValue == null) {
             throw new InvalidSerializationParameterValueException(
                     optionName,
-                    optionValue == null ? "null" : "''",
-                    "a non-empty string"
+                    "null",
+                    "a valid value"
             );
         }
 

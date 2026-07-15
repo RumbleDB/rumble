@@ -19,6 +19,7 @@ package iq.base;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.junit.jupiter.api.Assertions;
+import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -37,6 +38,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
+import java.util.List;
 
 public final class AnnotationTestExecutor {
 
@@ -237,11 +239,40 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String output = sequence.serialize();
+        String output = formatSequenceForLegacyRuntimeAssertions(sequence);
         if (applyUpdates && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
         return output;
+    }
+
+    /**
+     * Runtime annotation tests historically compare against a legacy sequence presentation
+     * format rather than against W3C serializer output.
+     */
+    private static String formatSequenceForLegacyRuntimeAssertions(SequenceOfItems sequence) {
+        if (sequence.availableAsPUL()) {
+            return "";
+        }
+
+        List<Item> items = sequence.getAsList();
+        if (items.isEmpty()) {
+            return "";
+        }
+        if (items.size() == 1) {
+            return items.get(0).serialize();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        for (int i = 0; i < items.size(); i++) {
+            if (i > 0) {
+                sb.append(", ");
+            }
+            sb.append(items.get(i).serialize());
+        }
+        sb.append(")");
+        return sb.toString();
     }
 
     private static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {

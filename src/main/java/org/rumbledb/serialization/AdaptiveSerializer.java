@@ -48,7 +48,7 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isNode()) {
-            appendNode(item, sb);
+            appendNode(item, sb, false);
             return;
         }
         if (item.isAtomic()) {
@@ -84,13 +84,16 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
     private void appendMap(Item item, StringBuilder sb) {
         sb.append("map{");
         boolean first = true;
-        for (Item key : item.getItemKeys()) {
+        List<Item> keys = item.getItemKeys();
+        List<List<Item>> values = item.getSequenceValues();
+        for (int i = 0; i < keys.size(); i++) {
             if (!first) {
                 sb.append(",");
             }
+            Item key = keys.get(i);
             appendAtomicKey(key, sb);
             sb.append(":");
-            appendSequence(item.getSequenceByKey(key), sb);
+            appendSequence(values.get(i), sb);
             first = false;
         }
         sb.append("}");
@@ -287,10 +290,10 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
         sb.append(identifier.getArity());
     }
 
-    private void appendNode(Item item, StringBuilder sb) {
+    private void appendNode(Item item, StringBuilder sb, boolean inElementMarkup) {
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                appendNode(child, sb);
+                appendNode(child, sb, false);
             }
             return;
         }
@@ -298,14 +301,14 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             sb.append("<");
             SerializerUtils.appendDmNodeNameLexical(sb, item);
             for (Item attribute : item.attributes()) {
-                appendNode(attribute, sb);
+                appendNode(attribute, sb, true);
             }
             for (Item namespace : item.declaredNamespaceNodes()) {
-                appendNode(namespace, sb);
+                appendNode(namespace, sb, true);
             }
             sb.append(">");
             for (Item child : item.children()) {
-                appendNode(child, sb);
+                appendNode(child, sb, false);
             }
             sb.append("</");
             SerializerUtils.appendDmNodeNameLexical(sb, item);
@@ -313,7 +316,9 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isAttributeNode()) {
-            sb.append(" ");
+            if (inElementMarkup) {
+                sb.append(" ");
+            }
             SerializerUtils.appendDmNodeNameLexical(sb, item);
             sb.append("=\"");
             sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
@@ -322,7 +327,9 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isNamespaceNode()) {
             NamespaceItem ns = (NamespaceItem) item;
-            sb.append(" ");
+            if (inElementMarkup) {
+                sb.append(" ");
+            }
             String nsPrefix = ns.getPrefix();
             if (nsPrefix == null || nsPrefix.isEmpty()) {
                 sb.append("xmlns=\"");

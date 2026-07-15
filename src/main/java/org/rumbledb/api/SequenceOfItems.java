@@ -324,7 +324,10 @@ public class SequenceOfItems {
             this.getRuntimeStaticContext().getSerializationParameters()
         );
         Serializer serializer = Serializers.from(params);
-        String itemSeparator = params.getItemSeparator() == null ? "" : params.getItemSeparator();
+        String itemSeparator = params.getItemSeparator();
+        if (itemSeparator == null) {
+            itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
+        }
 
         StringBuilder sb = new StringBuilder();
         List<Item> items = this.getAsList();

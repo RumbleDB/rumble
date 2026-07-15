@@ -575,8 +575,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        String text = ctx.getText();
+        char delimiter = text.charAt(0);
+        String rawValue = text.substring(1, text.length() - 1);
+        return unescapeStringLiteral(rawValue, delimiter);
     }
 
     private Name nameForUnprefixedFunction(String localName) {
@@ -1658,9 +1660,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
-            String rawValue = ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1);
+            String text = ctx.lt.getText();
+            char delimiter = text.charAt(0);
+            String rawValue = text.substring(1, text.length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    unescapeStringLiteral(rawValue, delimiter),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1741,9 +1745,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         ParseTree child = ctx.children.get(0);
 
         if (child instanceof XQueryParser.StringLiteralContext) {
-            String rawValue = child.getText().substring(1, child.getText().length() - 1);
+            String text = child.getText();
+            char delimiter = text.charAt(0);
+            String rawValue = text.substring(1, text.length() - 1);
             return new StringLiteralExpression(
-                    unescapeStringLiteral(rawValue),
+                    unescapeStringLiteral(rawValue, delimiter),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1776,8 +1782,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return new IntegerLiteralExpression(token, metadataFromContext);
     }
 
-    private String unescapeStringLiteral(String raw) {
-        return StringEscapeUtils.unescapeXml(raw);
+    private String unescapeStringLiteral(String raw, char delimiter) {
+        String result = StringEscapeUtils.unescapeXml(raw);
+        if (delimiter == '"') {
+            return result.replace("\"\"", "\"");
+        }
+        if (delimiter == '\'') {
+            return result.replace("''", "'");
+        }
+        return result;
     }
 
     @Override
@@ -3626,8 +3639,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
         // predefined entity references and character references
-        String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
-        return unescapeStringLiteral(rawValue);
+        String text = ctx.getText();
+        char delimiter = text.charAt(0);
+        String rawValue = text.substring(1, text.length() - 1);
+        return unescapeStringLiteral(rawValue, delimiter);
     }
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
