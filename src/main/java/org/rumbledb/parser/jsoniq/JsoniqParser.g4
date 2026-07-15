@@ -449,19 +449,22 @@ argument: exprSingle | QUESTION ;
 
 nodeConstructor: directConstructor | computedConstructor ;
 
-directConstructor: dirElemConstructorOpenClose
-                 | dirElemConstructorSingleTag
-                 | (COMMENT | PI)
-                 ;
+// Keep the shared start-tag prefix outside the open/close and self-closing alternatives.
+directConstructor
+    : LANGLE open_tag_name=qname attributes=dirAttributeList
+      (open_close=dirElemConstructorOpenClose | single_tag=dirElemConstructorSingleTag)
+    | COMMENT
+    | PI
+    ;
 
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: endOpen=RANGLE
                              dirElemContent*
                              startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
@@ -856,10 +859,10 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-jsoniqStringEscape: BACKSLASH . ;
+escapedJsoniqStringCharacter: BACKSLASH . ;
 
-stringLiteralQuot : Quot (jsoniqStringEscape | ~(Quot | BACKSLASH))* Quot ;
-stringLiteralApos : Apos (jsoniqStringEscape | ~(Apos | BACKSLASH))* Apos ;
+stringLiteralQuot : Quot (escapedJsoniqStringCharacter | ~(Quot | BACKSLASH))* Quot ;
+stringLiteralApos : Apos (escapedJsoniqStringCharacter | ~(Apos | BACKSLASH))* Apos ;
 
 stringLiteral : stringLiteralQuot
               | stringLiteralApos

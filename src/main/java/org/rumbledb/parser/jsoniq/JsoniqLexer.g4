@@ -363,7 +363,7 @@ EXIT_INTERPOLATION  : RBRACE GRAVE -> popMode;
 ContentChar:  ~["'{}<&] ;
 
 
-// Lexical modes to parse Strings
+// Lexical mode for backtick template strings.
 mode STRING_MODE;
 
 BASIC_CHAR          : ( '\t' 
