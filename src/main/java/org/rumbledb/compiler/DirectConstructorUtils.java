@@ -17,11 +17,86 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 
+/** Shared processing for JSONiq and XQuery direct element and attribute constructors. */
 final class DirectConstructorUtils {
 
-    private DirectConstructorUtils() {
+    private static final class AttributeValueBuilder {
+        private final BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory;
+        private final List<Expression> expressions = new ArrayList<>();
+        private StringBuilder text;
+
+        // Used to track the first and last parse-tree nodes of a literal run so that we can assign a source range to
+        // the merged content
+        private ParseTree firstTextTree;
+        private ParseTree lastTextTree;
+
+        /** Creates a builder that can assign a source range to each merged literal fragment. */
+        AttributeValueBuilder(BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory) {
+            this.metadataFactory = metadataFactory;
+        }
+
+        /** Adds literal text to the current run, ignoring empty fragments. */
+        void appendText(String value, ParseTree source) {
+            if (value.isEmpty()) {
+                return;
+            }
+            if (this.text == null) {
+                this.text = new StringBuilder();
+                this.firstTextTree = source;
+            }
+            this.text.append(value);
+            this.lastTextTree = source;
+        }
+
+        /** Adds an expression, merging literal attribute content and preserving non-literal boundaries. */
+        void append(Expression expression, ParseTree source) {
+            if (expression instanceof AttributeNodeContentExpression textExpression) {
+                appendText(textExpression.getContent(), source);
+                return;
+            }
+            flushText();
+            this.expressions.add(expression);
+        }
+
+        /** Flushes the final literal run and returns the normalized expression sequence. */
+        List<Expression> finish() {
+            flushText();
+            return this.expressions;
+        }
+
+        /** Materializes the current literal run as one attribute content expression. */
+        private void flushText() {
+            if (this.text == null) {
+                return;
+            }
+            this.expressions.add(
+                new AttributeNodeContentExpression(
+                        this.text.toString(),
+                        this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)
+                )
+            );
+            this.text = null;
+            this.firstTextTree = null;
+            this.lastTextTree = null;
+        }
     }
 
+    /**
+     * Converts a quoted direct attribute value into its ordered content expressions.
+     *
+     * <p>
+     * This method restores whitespace and comments from the hidden token channel, expands XML references and
+     * doubled delimiters, delegates enclosed expressions and literal fragments to the language-specific visitor,
+     * and merges adjacent literal fragments while preserving their combined source range.
+     *
+     * @param tokenStream token stream used to recover hidden attribute content
+     * @param ctx complete quoted attribute-value context
+     * @param allowEnclosedExpressions whether enclosed expressions are valid in this attribute
+     * @param metadataFactory creates metadata for one parse-tree node
+     * @param rangeMetadataFactory creates metadata spanning two parse-tree nodes
+     * @param contentProcessor processes grammar-specific attribute content
+     * @return the normalized sequence of attribute content expressions
+     */
     static List<Expression> processQuotedValue(
             CommonTokenStream tokenStream,
             ParserRuleContext ctx,
@@ -71,6 +146,11 @@ final class DirectConstructorUtils {
         return result.finish();
     }
 
+    /**
+     * Concatenates hidden-channel tokens immediately following a token.
+     *
+     * @return the hidden text, or an empty string when no hidden tokens follow
+     */
     static String getHiddenTextAfter(CommonTokenStream tokenStream, int previousTokenIndex) {
         List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
         if (hidden == null) {
@@ -83,6 +163,19 @@ final class DirectConstructorUtils {
         return result.toString();
     }
 
+    /**
+     * Processes direct element children and normalizes adjacent text nodes into a single node.
+     *
+     * <p>
+     * Hidden-channel content between parsed children is restored, empty text nodes are omitted, and non-text
+     * expressions delimit text runs. The first text node in each run supplies the resulting metadata.
+     *
+     * @param tokenStream token stream used to recover hidden element content
+     * @param firstContentToken token immediately before the first child
+     * @param children direct element content contexts in source order
+     * @param contentProcessor converts a grammar-specific child context to an expression
+     * @return element content with adjacent text nodes merged
+     */
     static <T extends ParserRuleContext> List<Expression> mergeElementContent(
             CommonTokenStream tokenStream,
             Token firstContentToken,
@@ -126,6 +219,11 @@ final class DirectConstructorUtils {
         return content;
     }
 
+    /**
+     * Expands an XML entity or character reference and collapses an escaped brace pair.
+     *
+     * @return the decoded literal, or the original content when it is not an escape
+     */
     static String processLiteralContent(String content) {
         if (content.startsWith("&") && content.endsWith(";")) {
             return StringEscapeUtils.unescapeXml(content);
@@ -139,6 +237,13 @@ final class DirectConstructorUtils {
         return content;
     }
 
+    /**
+     * Rejects a literal less-than sign in direct attribute content.
+     *
+     * @param source literal source text to validate
+     * @param tree parse-tree node used to locate a validation error
+     * @param metadataFactory creates error metadata for the supplied node
+     */
     static void validateLiteral(
             String source,
             ParseTree tree,
@@ -152,6 +257,7 @@ final class DirectConstructorUtils {
         }
     }
 
+    /** Restores, validates, and appends hidden content following the previous visible token. */
     private static void appendHiddenText(
             CommonTokenStream tokenStream,
             AttributeValueBuilder result,
@@ -164,6 +270,7 @@ final class DirectConstructorUtils {
         result.appendText(hiddenText, tree);
     }
 
+    /** Returns the final token represented by either a rule context or a terminal node. */
     private static Token getStopToken(ParseTree tree) {
         if (tree instanceof ParserRuleContext parserRuleContext) {
             return parserRuleContext.getStop();
@@ -172,58 +279,5 @@ final class DirectConstructorUtils {
             return terminalNode.getSymbol();
         }
         throw new IllegalArgumentException("Cannot get stop token from parse tree: " + tree.getClass().getName());
-    }
-
-    private static final class AttributeValueBuilder {
-        private final BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory;
-        private final List<Expression> expressions = new ArrayList<>();
-        private StringBuilder text;
-        private ParseTree firstTextTree;
-        private ParseTree lastTextTree;
-
-        AttributeValueBuilder(BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory) {
-            this.metadataFactory = metadataFactory;
-        }
-
-        void appendText(String value, ParseTree source) {
-            if (value.isEmpty()) {
-                return;
-            }
-            if (this.text == null) {
-                this.text = new StringBuilder();
-                this.firstTextTree = source;
-            }
-            this.text.append(value);
-            this.lastTextTree = source;
-        }
-
-        void append(Expression expression, ParseTree source) {
-            if (expression instanceof AttributeNodeContentExpression textExpression) {
-                appendText(textExpression.getContent(), source);
-                return;
-            }
-            flushText();
-            this.expressions.add(expression);
-        }
-
-        List<Expression> finish() {
-            flushText();
-            return this.expressions;
-        }
-
-        private void flushText() {
-            if (this.text == null) {
-                return;
-            }
-            this.expressions.add(
-                new AttributeNodeContentExpression(
-                        this.text.toString(),
-                        this.metadataFactory.apply(this.firstTextTree, this.lastTextTree)
-                )
-            );
-            this.text = null;
-            this.firstTextTree = null;
-            this.lastTextTree = null;
-        }
     }
 }
