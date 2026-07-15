@@ -3882,11 +3882,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         } else {
             throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
         }
-        String delimiter = quotedValue.getStart().getText();
         return processQuotedAttributeValue(
             quotedValue,
-            delimiter + delimiter,
-            delimiter,
             allowEnclosedExpressions
         );
     }
@@ -3907,110 +3904,18 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
 
-    private final class AttributeValueBuilder {
-        private final List<Expression> expressions = new ArrayList<>();
-        private StringBuilder text;
-        private ParseTree firstTextTree;
-        private ParseTree lastTextTree;
-
-        private void appendText(String value, ParseTree source) {
-            if (value.isEmpty()) {
-                return;
-            }
-            if (this.text == null) {
-                this.text = new StringBuilder();
-                this.firstTextTree = source;
-            }
-            this.text.append(value);
-            this.lastTextTree = source;
-        }
-
-        private void append(Expression expression, ParseTree source) {
-            if (expression instanceof AttributeNodeContentExpression textExpression) {
-                appendText(textExpression.getContent(), source);
-                return;
-            }
-            flushText();
-            this.expressions.add(expression);
-        }
-
-        private void flushText() {
-            if (this.text == null) {
-                return;
-            }
-            this.expressions.add(
-                new AttributeNodeContentExpression(
-                        this.text.toString(),
-                        createMetadataFromTrees(this.firstTextTree, this.lastTextTree)
-                )
-            );
-            this.text = null;
-            this.firstTextTree = null;
-            this.lastTextTree = null;
-        }
-
-        private List<Expression> finish() {
-            flushText();
-            return this.expressions;
-        }
-    }
-
-    private void validateDirAttributeLiteral(String source, ParseTree tree) {
-        if (source.indexOf('<') >= 0) {
-            throw new ParsingException(
-                    "A direct attribute value must not contain a literal '<' character.",
-                    createMetadataFromTree(tree)
-            );
-        }
-    }
-
-    private void appendHiddenAttributeText(AttributeValueBuilder result, Token token, ParseTree tree) {
-        String hiddenText = getHiddenTextAfter(this.xQueryTokenStream, token.getTokenIndex());
-        validateDirAttributeLiteral(hiddenText, tree);
-        result.appendText(hiddenText, tree);
-    }
-
     private List<Expression> processQuotedAttributeValue(
             ParserRuleContext ctx,
-            String escapeSequence,
-            String escapedChar,
             boolean allowEnclosedExpressions
     ) {
-        AttributeValueBuilder result = new AttributeValueBuilder();
-        Token previousToken = ctx.getStart();
-
-        // Skip the opening and closing quote tokens.
-        for (int i = 1; i < ctx.getChildCount() - 1; i++) {
-            ParseTree child = ctx.getChild(i);
-            appendHiddenAttributeText(result, previousToken, child);
-
-            String childText = child.getText();
-            if (childText.startsWith("&") && childText.endsWith(";")) {
-                // Expand predefined and character references into attribute text.
-                String unescapedValue = StringEscapeUtils.unescapeXml(childText);
-                result.append(
-                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child)),
-                    child
-                );
-            } else if (childText.equals(escapeSequence)) {
-                // Collapse the doubled delimiter used to represent a literal quote or apostrophe.
-                result.append(
-                    new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)),
-                    child
-                );
-            } else {
-                // Translate enclosed expressions or ordinary attribute content.
-                for (
-                    Expression expression : processAttributeContent((ParserRuleContext) child, allowEnclosedExpressions)
-                ) {
-                    result.append(expression, child);
-                }
-            }
-            previousToken = getStopToken(child);
-        }
-
-        appendHiddenAttributeText(result, previousToken, ctx);
-        return result.finish();
+        return DirectAttributeValueUtils.processQuotedValue(
+            this.xQueryTokenStream,
+            ctx,
+            allowEnclosedExpressions,
+            this::createMetadataFromTree,
+            this::createMetadataFromTrees,
+            this::processAttributeContent
+        );
     }
 
     private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
@@ -4044,7 +3949,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         // Preserve literal content after validating XML/XQuery attribute restrictions.
         String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
-        validateDirAttributeLiteral(childText, ctx);
+        DirectAttributeValueUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
         String processedContent = processTextContentWithEscaping(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
     }
