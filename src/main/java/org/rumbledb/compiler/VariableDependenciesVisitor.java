@@ -42,6 +42,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
@@ -247,6 +248,39 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             expression,
             getOutputVariableDependencies(expression.getPreviousClause())
         );
+        return null;
+    }
+
+    @Override
+    public Void visitWindowClause(WindowClause expression, Void argument) {
+        visit(expression.getPreviousClause(), null);
+        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        addOutputVariableDependency(expression, expression.getWindowVariable());
+        expression.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> addOutputVariableDependency(expression, name));
+        if (expression.getEndCondition() != null) {
+            expression.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> addOutputVariableDependency(expression, name));
+        }
+        visit(expression.getExpression(), null);
+        addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
+        visit(expression.getStartCondition().expression(), null);
+        addInputVariableDependencies(
+            expression,
+            getInputVariableDependencies(expression.getStartCondition().expression())
+        );
+        if (expression.getEndCondition() != null) {
+            visit(expression.getEndCondition().expression(), null);
+            addInputVariableDependencies(
+                expression,
+                getInputVariableDependencies(expression.getEndCondition().expression())
+            );
+        }
+        removeInputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
         return null;
     }
 

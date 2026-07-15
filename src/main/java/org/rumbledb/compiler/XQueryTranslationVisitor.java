@@ -60,6 +60,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -885,7 +886,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitFlworExpr(XQueryParser.FlworExprContext ctx) {
         Clause clause;
         // check the start clause, for or let
-        if (ctx.start_for == null) {
+        if (ctx.start_window != null) {
+            clause = (Clause) this.visitWindowClause(ctx.start_window);
+        } else if (ctx.start_for == null) {
             clause = (Clause) this.visitLetClause(ctx.start_let);
         } else {
             clause = (Clause) this.visitForClause(ctx.start_for);
@@ -898,6 +901,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 clause = (Clause) this.visitForClause(forClauseContext);
             } else if (child instanceof XQueryParser.LetClauseContext letClauseContext) {
                 clause = (Clause) this.visitLetClause(letClauseContext);
+            } else if (child instanceof XQueryParser.WindowClauseContext windowClauseContext) {
+                clause = (Clause) this.visitWindowClause(windowClauseContext);
             } else if (child instanceof XQueryParser.WhereClauseContext whereClauseContext) {
                 clause = (Clause) this.visitWhereClause(whereClauseContext);
             } else if (child instanceof XQueryParser.GroupByClauseContext groupByClauseContext) {
@@ -1009,6 +1014,101 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
 
         return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitWindowClause(XQueryParser.WindowClauseContext ctx) {
+        if (ctx.tumblingWindowClause() != null) {
+            return this.visitTumblingWindowClause(ctx.tumblingWindowClause());
+        }
+        return this.visitSlidingWindowClause(ctx.slidingWindowClause());
+    }
+
+    @Override
+    public Node visitTumblingWindowClause(XQueryParser.TumblingWindowClauseContext ctx) {
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
+        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
+        WindowClause.WindowCondition end = ctx.windowEndCondition() == null
+            ? null
+            : this.buildWindowEndCondition(ctx.windowEndCondition());
+        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
+        return new WindowClause(
+                WindowClause.WindowType.TUMBLING,
+                windowVariable,
+                sequenceType,
+                expression,
+                start,
+                end,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitSlidingWindowClause(XQueryParser.SlidingWindowClauseContext ctx) {
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        SequenceType sequenceType = ctx.type == null ? null : this.processSequenceType(ctx.type.sequenceType());
+        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        WindowClause.WindowCondition start = this.buildWindowStartCondition(ctx.windowStartCondition());
+        WindowClause.WindowCondition end = this.buildWindowEndCondition(ctx.windowEndCondition());
+        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
+        return new WindowClause(
+                WindowClause.WindowType.SLIDING,
+                windowVariable,
+                sequenceType,
+                expression,
+                start,
+                end,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private WindowClause.WindowCondition buildWindowStartCondition(XQueryParser.WindowStartConditionContext ctx) {
+        return new WindowClause.WindowCondition(
+                this.buildWindowVars(ctx.windowVars()),
+                (Expression) this.visitExprSingle(ctx.exprSingle()),
+                false
+        );
+    }
+
+    private WindowClause.WindowCondition buildWindowEndCondition(XQueryParser.WindowEndConditionContext ctx) {
+        return new WindowClause.WindowCondition(
+                this.buildWindowVars(ctx.windowVars()),
+                (Expression) this.visitExprSingle(ctx.exprSingle()),
+                ctx.KW_ONLY() != null
+        );
+    }
+
+    private WindowClause.WindowVars buildWindowVars(XQueryParser.WindowVarsContext ctx) {
+        Name current = ctx.currentItem == null ? null : parseEqName(ctx.currentItem, false, false, false, false);
+        Name position = ctx.positionalVar() == null
+            ? null
+            : parseEqName(ctx.positionalVar().pvar.eqName(), false, false, false, false);
+        Name previous = ctx.previousItem == null ? null : parseEqName(ctx.previousItem, false, false, false, false);
+        Name next = ctx.nextItem == null ? null : parseEqName(ctx.nextItem, false, false, false, false);
+        return new WindowClause.WindowVars(current, position, previous, next);
+    }
+
+    private void validateWindowVariables(
+            Name windowVariable,
+            WindowClause.WindowCondition start,
+            WindowClause.WindowCondition end,
+            ExceptionMetadata metadata
+    ) {
+        List<Name> names = new ArrayList<>();
+        names.add(windowVariable);
+        names.addAll(start.variables().names());
+        if (end != null) {
+            names.addAll(end.variables().names());
+        }
+        if (names.size() != names.stream().distinct().count()) {
+            throw new ParsingException(
+                    "All variables in a window clause must have distinct names",
+                    ErrorCode.DuplicatedVariableNameInWindowCode,
+                    metadata
+            );
+        }
     }
 
     @Override
