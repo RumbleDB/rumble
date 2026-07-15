@@ -497,6 +497,15 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             resolvedList.add(typeDeclaration);
         }
+        for (Node declaration : prolog.getDeclarations()) {
+            if (
+                !(declaration instanceof TypeDeclaration)
+                    && !(declaration instanceof VariableDeclaration)
+                    && !(declaration instanceof FunctionDeclaration)
+            ) {
+                resolvedList.add(declaration);
+            }
+        }
         Iterator<Node> iterator = dependencyGraph.iterator();
         while (iterator.hasNext()) {
             Node nextDeclaration = iterator.next();

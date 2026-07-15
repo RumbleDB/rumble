@@ -69,6 +69,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -390,9 +391,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         // bind namespaces
-        for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            this.processNamespaceDecl(namespace);
+        for (int ci = 0; ci < ctx.getChildCount(); ci++) {
+            ParseTree child = ctx.getChild(ci);
+            if (child instanceof JsoniqParser.NamespaceDeclContext namespaceDeclContext) {
+                this.processNamespaceDecl(namespaceDeclContext);
+            }
         }
+        List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         List<SetterContext> setters = ctx.setter();
         boolean emptyOrderSet = false;
         boolean defaultCollationSet = false;
@@ -540,6 +545,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     }
                 }
                 typeDeclarations.add(typeDeclaration);
+            } else if (annotatedDeclaration.optionDecl() != null) {
+                optionDeclarations.add((OptionDeclaration) this.visitOptionDecl(annotatedDeclaration.optionDecl()));
             }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
@@ -555,7 +562,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
+        for (OptionDeclaration optionDeclaration : optionDeclarations) {
+            prolog.addDeclaration(optionDeclaration);
+        }
         return prolog;
+    }
+
+    @Override
+    public Node visitOptionDecl(JsoniqParser.OptionDeclContext ctx) {
+        Name name = parseEqName(ctx.name, false, false, false, false);
+        String value = processStringLiteral(ctx.value);
+        return new OptionDeclaration(name, value, createMetadataFromContext(ctx));
     }
 
     private String processStringLiteral(JsoniqParser.StringLiteralContext ctx) {

@@ -69,6 +69,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -374,6 +375,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
         List<LibraryModule> libraryModules = new ArrayList<>();
+        List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
         PrologPhase1Flags phase1 = new PrologPhase1Flags();
         for (int ci = 0; ci < ctx.getChildCount(); ci++) {
@@ -460,6 +462,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                             createMetadataFromContext(annotatedDeclaration.functionDecl())
                     )
                 );
+            } else if (annotatedDeclaration.optionDecl() != null) {
+                optionDeclarations.add((OptionDeclaration) this.visitOptionDecl(annotatedDeclaration.optionDecl()));
             }
         }
         for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
@@ -475,7 +479,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
+        for (OptionDeclaration optionDeclaration : optionDeclarations) {
+            prolog.addDeclaration(optionDeclaration);
+        }
         return prolog;
+    }
+
+    @Override
+    public Node visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
+        Name name = parseEqName(ctx.name, false, false, false, false);
+        String value = processStringLiteral(ctx.value);
+        return new OptionDeclaration(name, value, createMetadataFromContext(ctx));
     }
 
     private static final class PrologPhase1Flags {
