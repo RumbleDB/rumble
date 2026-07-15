@@ -4431,7 +4431,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),
-            ctx.stringLiteral(),
+            ctx.stringLiteral().stream().map(ParseTree::getText).toList(),
             this.moduleContext,
             true,
             metadata

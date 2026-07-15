@@ -1859,15 +1859,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return new IntegerLiteralExpression(token, metadataFromContext);
     }
 
-    private String unescapeStringLiteral(String raw) {
-        return StringEscapeUtils.unescapeXml(raw);
-    }
-
     private String parseStringLiteral(String source) {
         char delimiter = source.charAt(0);
         String raw = source.substring(1, source.length() - 1);
         String escapedDelimiter = String.valueOf(delimiter) + delimiter;
-        return unescapeStringLiteral(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
+        return StringEscapeUtils.unescapeXml(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
     }
 
     @Override
@@ -1921,11 +1917,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return this.visitDirElemConstructorSingleTag(ctx);
         } else if (ctx.PI() != null) {
             return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
-        } else if (ctx.COMMENT() != null) {
-            throw new UnsupportedFeatureException(
-                    "Direct comment constructor not yet implemented",
-                    createMetadataFromContext(ctx)
-            );
         }
         throw new UnsupportedFeatureException(
                 "Direct constructor not yet implemented",
@@ -3967,6 +3958,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return result.toString();
     }
 
+    private void validateDirAttributeLiteral(String source, ParseTree tree) {
+        if (source.indexOf('<') >= 0) {
+            throw new ParsingException(
+                    "A direct attribute value must not contain a literal '<' character.",
+                    createMetadataFromTree(tree)
+            );
+        }
+    }
+
+    private void appendHiddenAttributeText(AttributeValueBuilder result, Token token, ParseTree tree) {
+        String hiddenText = getHiddenTextAfter(token);
+        validateDirAttributeLiteral(hiddenText, tree);
+        result.appendText(hiddenText, tree);
+    }
+
     private List<Expression> processQuotedAttributeValue(
             ParserRuleContext ctx,
             String escapeSequence,
@@ -3980,7 +3986,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree child = ctx.getChild(i);
             List<Expression> childExpressions = new ArrayList<>();
-            result.appendText(getHiddenTextAfter(previousToken), child);
+            appendHiddenAttributeText(result, previousToken, child);
 
             // Try to process as entity or character reference first
             // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
@@ -4013,7 +4019,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             previousToken = getStopToken(child);
         }
 
-        result.appendText(getHiddenTextAfter(previousToken), ctx);
+        appendHiddenAttributeText(result, previousToken, ctx);
         return result.finish();
     }
 
@@ -4061,6 +4067,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         } else {
             // handle other cases
             String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+            validateDirAttributeLiteral(childText, ctx);
             String processedContent = processTextContentWithEscaping(childText);
             expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
         }
@@ -4107,7 +4114,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ctx.KW_DEFAULT() != null,
             ctx.eqName(),
             ctx.DFPropertyName(),
-            ctx.stringLiteral(),
             ctx.stringLiteral()
                 .stream()
                 .map(stringLiteral -> this.xQueryTokenStream.getText(stringLiteral.getSourceInterval()))

@@ -462,12 +462,14 @@ dirAttributeValue    : dirAttributeValueQuot
 
 dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
-                        | ~(Quot | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef)
+                        | ~(Quot | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
 dirAttributeContentApos : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
-                        | ~(Apos | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef)
+                        | ~(Apos | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
 escapedQuot: Quot Quot;
@@ -833,7 +835,9 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-// Delimiter pairs are escaped delimiters; every other token is literal string content.
+// The matching delimiter terminates the string, a doubled delimiter represents
+// one literal delimiter, and a bare ampersand is not allowed. The negated sets
+// below operate on lexer token types, not individual characters.
 stringLiteralQuot : Quot (Quot Quot | ~(Quot | Ampersand))* Quot ;
 stringLiteralApos : Apos (Apos Apos | ~(Apos | Ampersand))* Apos ;
 

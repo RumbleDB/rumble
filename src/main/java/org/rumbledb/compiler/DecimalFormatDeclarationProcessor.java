@@ -25,29 +25,7 @@ public final class DecimalFormatDeclarationProcessor {
             boolean isDefaultDecimalFormat,
             ParseTree nameContext,
             List<? extends ParseTree> propertyNames,
-            List<? extends ParseTree> stringLiterals,
-            StaticContext moduleContext,
-            boolean isJSONiq,
-            ExceptionMetadata metadata
-    ) {
-        process(
-            isDefaultDecimalFormat,
-            nameContext,
-            propertyNames,
-            stringLiterals,
-            null,
-            moduleContext,
-            isJSONiq,
-            metadata
-        );
-    }
-
-    public static void process(
-            boolean isDefaultDecimalFormat,
-            ParseTree nameContext,
-            List<? extends ParseTree> propertyNames,
-            List<? extends ParseTree> stringLiterals,
-            List<String> rawStringLiterals,
+            List<String> stringLiterals,
             StaticContext moduleContext,
             boolean isJSONiq,
             ExceptionMetadata metadata
@@ -75,8 +53,7 @@ public final class DecimalFormatDeclarationProcessor {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String literal = rawStringLiterals == null ? stringLiterals.get(i).getText() : rawStringLiterals.get(i);
-            String value = parseStringLiteral(literal, isJSONiq);
+            String value = parseStringLiteral(stringLiterals.get(i), isJSONiq);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
@@ -168,7 +145,8 @@ public final class DecimalFormatDeclarationProcessor {
             return StringEscapeUtils.unescapeJson(content);
         }
 
-        return StringEscapeUtils.unescapeXml(content);
+        String escapedDelimiter = String.valueOf(quote) + quote;
+        return StringEscapeUtils.unescapeXml(content.replace(escapedDelimiter, String.valueOf(quote)));
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
