@@ -224,10 +224,15 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
-        if (checkOutput) {
-            Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
+        if (!checkOutput) {
+            if (applyUpdates && sequence.availableAsPUL()) {
+                sequence.applyPUL();
+            }
+            return;
         }
+
+        String actualOutput = materializeSequence(sequence, applyUpdates, resultSizeCap);
+        Assertions.assertEquals(expectedOutput, actualOutput, withTestFile(path, "Unexpected query output."));
     }
 
     private static String withTestFile(String path, String message) {
