@@ -3984,28 +3984,24 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             ParseTree child = ctx.getChild(i);
             appendHiddenAttributeText(result, previousToken, child);
 
-            // Try to process as entity or character reference first
-            // According to XQuery 3.1 spec, PredefinedEntityRef and CharRef are expanded
             String childText = child.getText();
             if (childText.startsWith("&") && childText.endsWith(";")) {
-                // This is a PredefinedEntityRef or CharRef token - expand it
+                // Expand predefined and character references into attribute text.
                 String unescapedValue = StringEscapeUtils.unescapeXml(childText);
                 result.append(
                     new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child)),
                     child
                 );
             } else if (child.getText().equals(escapeSequence)) {
-                // Escaped quote
+                // Collapse the doubled delimiter used to represent a literal quote or apostrophe.
                 result.append(
                     new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)),
                     child
                 );
             } else {
+                // Translate enclosed expressions or ordinary attribute content.
                 for (
-                    Expression expression : processAttributeContent(
-                        (ParserRuleContext) child,
-                        allowEnclosedExpressions
-                    )
+                    Expression expression : processAttributeContent((ParserRuleContext) child, allowEnclosedExpressions)
                 ) {
                     result.append(expression, child);
                 }
@@ -4017,28 +4013,36 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return result.finish();
     }
 
-    /**
-     * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
-     */
     private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
         ParseTree child = ctx.children.get(0);
-        XQueryParser.ExprContext enclosedExpression = null;
-        if (ctx instanceof XQueryParser.DirAttributeContentQuotContext doubleQuotedContent) {
-            enclosedExpression = doubleQuotedContent.expr();
-        } else if (ctx instanceof XQueryParser.DirAttributeContentAposContext singleQuotedContent) {
-            enclosedExpression = singleQuotedContent.expr();
-        }
 
-        if (enclosedExpression != null) {
+        if (
+            ctx instanceof XQueryParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
+                && dirAttributeContentQuotContext.expr() != null
+        ) {
+            // Evaluate an enclosed expression in a double-quoted attribute.
             if (!allowEnclosedExpressions) {
                 throw new NamespaceDeclarationAttributeEnclosedExpressionException(
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         createMetadataFromContext(ctx)
                 );
             }
-            return List.of((Expression) this.visitExpr(enclosedExpression));
+            return List.of((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
+        } else if (
+            ctx instanceof XQueryParser.DirAttributeContentAposContext dirAttributeContentAposContext
+                && dirAttributeContentAposContext.expr() != null
+        ) {
+            // Evaluate an enclosed expression in an apostrophe-quoted attribute.
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            return List.of((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
         }
 
+        // Preserve literal content after validating XML/XQuery attribute restrictions.
         String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
         validateDirAttributeLiteral(childText, ctx);
         String processedContent = processTextContentWithEscaping(childText);
