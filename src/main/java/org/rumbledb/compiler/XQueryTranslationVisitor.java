@@ -3992,7 +3992,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child)),
                     child
                 );
-            } else if (child.getText().equals(escapeSequence)) {
+            } else if (childText.equals(escapeSequence)) {
                 // Collapse the doubled delimiter used to represent a literal quote or apostrophe.
                 result.append(
                     new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)),
@@ -4048,7 +4048,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         String processedContent = processTextContentWithEscaping(childText);
         return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
     }
-
 
     @Override
     public Node visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
