@@ -94,6 +94,12 @@ public class DurationItem implements Item {
     }
 
     @Override
+    public Duration getDayTimeDurationComponent() {
+        Duration days = Duration.ofDays(Objects.isNull(this.periodValue) ? 0 : this.periodValue.getDays());
+        return days.plus(Objects.isNull(this.durationValue) ? Duration.ZERO : this.durationValue);
+    }
+
+    @Override
     public String getStringValue() {
         return normalizeDuration(normalizeMonthsToYears(this.periodValue), this.durationValue);
     }
