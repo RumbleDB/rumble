@@ -38,7 +38,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.net.URI;
-import java.util.List;
 
 public final class AnnotationTestExecutor {
 
@@ -244,7 +243,7 @@ public final class AnnotationTestExecutor {
             boolean applyUpdates,
             int resultSizeCap
     ) {
-        String output = formatSequenceForLegacyRuntimeAssertions(sequence);
+        String output = formatSequenceForLegacyRuntimeAssertions(sequence, resultSizeCap);
         if (applyUpdates && sequence.availableAsPUL()) {
             sequence.applyPUL();
         }
@@ -255,29 +254,53 @@ public final class AnnotationTestExecutor {
      * Runtime annotation tests historically compare against a legacy sequence presentation
      * format rather than against W3C serializer output.
      */
-    private static String formatSequenceForLegacyRuntimeAssertions(SequenceOfItems sequence) {
+    private static String formatSequenceForLegacyRuntimeAssertions(
+            SequenceOfItems sequence,
+            int resultSizeCap
+    ) {
         if (sequence.availableAsPUL()) {
             return "";
         }
 
-        List<Item> items = sequence.getAsList();
-        if (items.isEmpty()) {
-            return "";
-        }
-        if (items.size() == 1) {
-            return items.get(0).serialize();
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(");
-        for (int i = 0; i < items.size(); i++) {
-            if (i > 0) {
-                sb.append(", ");
+        sequence.open();
+        try {
+            if (!sequence.hasNext()) {
+                return "";
             }
-            sb.append(items.get(i).serialize());
+
+            Item firstItem = sequence.next();
+            if (!sequence.hasNext()) {
+                return firstItem.serialize();
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            sb.append(firstItem.serialize());
+
+            int itemCount = 1;
+            while (sequence.hasNext() && isWithinLegacyResultSizeCap(itemCount, resultSizeCap)) {
+                sb.append(", ");
+                sb.append(sequence.next().serialize());
+                itemCount++;
+            }
+            sb.append(")");
+
+            if (sequence.hasNext() && resultSizeCap > 0 && itemCount == resultSizeCap) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + resultSizeCap
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+
+            return sb.toString();
+        } finally {
+            sequence.close();
         }
-        sb.append(")");
-        return sb.toString();
+    }
+
+    private static boolean isWithinLegacyResultSizeCap(int itemCount, int resultSizeCap) {
+        return resultSizeCap <= 0 || itemCount < resultSizeCap;
     }
 
     private static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {
