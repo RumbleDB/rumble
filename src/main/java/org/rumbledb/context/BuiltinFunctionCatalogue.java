@@ -1056,14 +1056,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction min1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction min2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
-        List.of("item*", "string"),
+        List.of("anyAtomicType*", "string"),
         "anyAtomicType?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1073,14 +1073,14 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction max1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction max2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
-        List.of("item*", "string"),
+        List.of("anyAtomicType*", "string"),
         "anyAtomicType?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1090,7 +1090,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction avg = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "avg"),
-        List.of("item*"),
+        List.of("anyAtomicType*"),
         "anyAtomicType?",
         AvgFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -4087,16 +4087,16 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction innermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "innermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         InnermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction outermost = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "outermost"),
-        List.of("item*"),
-        "item*",
+        List.of("node()*"),
+        "node()*",
         OutermostFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );

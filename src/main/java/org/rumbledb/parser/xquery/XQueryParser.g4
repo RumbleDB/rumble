@@ -161,7 +161,7 @@ annotations: annotation* ;
 // added the updating keyword to support the out-of-spec updating expressions extension
 annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=eqName value=stringLiteral ;
 
 
 // EXPRESSIONS /////////////////////////////////////////////////////////////////
@@ -200,11 +200,11 @@ letVar: var_ref=varRef
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 

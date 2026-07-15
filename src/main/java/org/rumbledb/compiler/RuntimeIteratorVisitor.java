@@ -66,6 +66,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -172,6 +173,7 @@ import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.ReturnClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.WhereClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.WindowClauseIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
@@ -368,6 +370,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     letClause.getStaticType(),
                     assignmentIterator,
                     letClause.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else if (clause instanceof WindowClause windowClause) {
+            RuntimeIterator sourceIterator = this.visit(windowClause.getExpression(), argument);
+            RuntimeIterator startIterator = this.visit(windowClause.getStartCondition().expression(), argument);
+            RuntimeIterator endIterator = windowClause.getEndCondition() == null
+                ? null
+                : this.visit(windowClause.getEndCondition().expression(), argument);
+            return new WindowClauseIterator(
+                    previousIterator,
+                    windowClause,
+                    sourceIterator,
+                    startIterator,
+                    endIterator,
+                    windowClause.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         } else if (clause instanceof GroupByClause groupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
@@ -1440,6 +1456,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new AdditiveOperationIterator(
                 left,
@@ -1463,6 +1491,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             rightExpression,
             argument
         );
+        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            left = new DataFunctionIterator(
+                    Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
 
         RuntimeIterator runtimeIterator = new MultiplicativeOperationIterator(
                 left,
@@ -1591,12 +1631,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
-        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        if (left instanceof StepExprIterator) {
-            // We potentially need to atomize
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+
+        RuntimeIterator left = this.visit(leftExpression, argument);
+        RuntimeIterator right = this.visit(rightExpression, argument);
+        if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
+            // them in a DataFunctionIterator to atomize them.
             left = new DataFunctionIterator(
                     Collections.singletonList(left),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        }
+        if (!(rightExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
+            right = new DataFunctionIterator(
+                    Collections.singletonList(right),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }

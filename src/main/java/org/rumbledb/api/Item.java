@@ -1033,6 +1033,18 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Returns the day-time (seconds) component of a duration item, i.e., the value of the
+     * duration excluding its months component. Unlike getDurationValue(), this is not
+     * anchored to any reference date, since days, hours, minutes and seconds have a fixed
+     * length and can be converted to a Duration unambiguously.
+     *
+     * @return the day-time component as a Duration.
+     */
+    default Duration getDayTimeDurationComponent() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the EpochMillis of the item, if it's DateTime or Duration
      * It will collect all the parts of the item and compress it into the EpochMillis
      * 

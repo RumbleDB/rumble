@@ -119,6 +119,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
     public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
+    public static final ErrorCode InvalidEncodingErrorCode = registerBuiltIn("FOUT1190");
     public static final ErrorCode CannotInferEncodingErrorCode = registerBuiltIn("FOUT1200");
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
@@ -169,6 +170,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
+    public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
     /**
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).

@@ -6,11 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.Serial;
-import java.net.URI;
-import java.nio.charset.Charset;
 import java.util.List;
 
 public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -30,18 +27,20 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
         if (hrefItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
+        String encoding = null;
         if (this.children.size() == 2) {
             Item encodingItem = this.children.get(1).materializeFirstItemOrNull(context);
-            try {
-                Charset.forName(encodingItem.getStringValue());
-            } catch (Exception e) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
+            encoding = encodingItem.getStringValue();
         }
         try {
-            String href = hrefItem.getStringValue();
-            URI uri = href.isEmpty() ? this.staticURI : FileSystemUtil.resolveURI(this.staticURI, href, getMetadata());
-            FileSystemUtil.readContent(uri, getConfiguration(), getMetadata());
+            UnparsedTextReader.read(
+                this.staticURI,
+                hrefItem.getStringValue(),
+                encoding,
+                context.getRumbleRuntimeConfiguration(),
+                getConfiguration().getXmlVersion(),
+                getMetadata()
+            );
             return ItemFactory.getInstance().createBooleanItem(true);
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);

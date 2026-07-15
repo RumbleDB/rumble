@@ -60,6 +60,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -953,7 +954,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitFlworExpr(JsoniqParser.FlworExprContext ctx) {
         Clause clause;
         // check the start clause, for or let
-        if (ctx.start_for == null) {
+        if (ctx.start_window != null) {
+            clause = (Clause) this.visitWindowClause(ctx.start_window);
+        } else if (ctx.start_for == null) {
             clause = (Clause) this.visitLetClause(ctx.start_let);
         } else {
             clause = (Clause) this.visitForClause(ctx.start_for);
@@ -966,6 +969,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 clause = (Clause) this.visitForClause(forClauseContext);
             } else if (child instanceof JsoniqParser.LetClauseContext letClauseContext) {
                 clause = (Clause) this.visitLetClause(letClauseContext);
+            } else if (child instanceof JsoniqParser.WindowClauseContext windowClauseContext) {
+                clause = (Clause) this.visitWindowClause(windowClauseContext);
             } else if (child instanceof JsoniqParser.WhereClauseContext whereClauseContext) {
                 clause = (Clause) this.visitWhereClause(whereClauseContext);
             } else if (child instanceof JsoniqParser.GroupByClauseContext groupByClauseContext) {
@@ -1077,6 +1082,98 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
 
         return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitWindowClause(JsoniqParser.WindowClauseContext ctx) {
+        return ctx.tumblingWindowClause() != null
+            ? visitTumblingWindowClause(ctx.tumblingWindowClause())
+            : visitSlidingWindowClause(ctx.slidingWindowClause());
+    }
+
+    @Override
+    public Node visitTumblingWindowClause(JsoniqParser.TumblingWindowClauseContext ctx) {
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
+        Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
+        WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
+        WindowClause.WindowCondition end = ctx.windowEndCondition() == null
+            ? null
+            : buildWindowEndCondition(ctx.windowEndCondition());
+        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
+        return new WindowClause(
+                WindowClause.WindowType.TUMBLING,
+                windowVariable,
+                type,
+                expression,
+                start,
+                end,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitSlidingWindowClause(JsoniqParser.SlidingWindowClauseContext ctx) {
+        Name windowVariable = parseEqName(ctx.varName().eqName(), false, false, false, false);
+        SequenceType type = ctx.type == null ? null : processSequenceType(ctx.type.sequenceType());
+        Expression expression = (Expression) visitExprSingle(ctx.exprSingle());
+        WindowClause.WindowCondition start = buildWindowStartCondition(ctx.windowStartCondition());
+        WindowClause.WindowCondition end = buildWindowEndCondition(ctx.windowEndCondition());
+        validateWindowVariables(windowVariable, start, end, createMetadataFromContext(ctx));
+        return new WindowClause(
+                WindowClause.WindowType.SLIDING,
+                windowVariable,
+                type,
+                expression,
+                start,
+                end,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private WindowClause.WindowCondition buildWindowStartCondition(JsoniqParser.WindowStartConditionContext ctx) {
+        return new WindowClause.WindowCondition(
+                buildWindowVars(ctx.windowVars()),
+                (Expression) visitExprSingle(ctx.exprSingle()),
+                false
+        );
+    }
+
+    private WindowClause.WindowCondition buildWindowEndCondition(JsoniqParser.WindowEndConditionContext ctx) {
+        return new WindowClause.WindowCondition(
+                buildWindowVars(ctx.windowVars()),
+                (Expression) visitExprSingle(ctx.exprSingle()),
+                ctx.KW_ONLY() != null
+        );
+    }
+
+    private WindowClause.WindowVars buildWindowVars(JsoniqParser.WindowVarsContext ctx) {
+        Name current = ctx.currentItem == null ? null : parseEqName(ctx.currentItem, false, false, false, false);
+        Name position = ctx.positionalVar() == null
+            ? null
+            : parseEqName(ctx.positionalVar().pvar.eqName(), false, false, false, false);
+        Name previous = ctx.previousItem == null ? null : parseEqName(ctx.previousItem, false, false, false, false);
+        Name next = ctx.nextItem == null ? null : parseEqName(ctx.nextItem, false, false, false, false);
+        return new WindowClause.WindowVars(current, position, previous, next);
+    }
+
+    private void validateWindowVariables(
+            Name windowVariable,
+            WindowClause.WindowCondition start,
+            WindowClause.WindowCondition end,
+            ExceptionMetadata metadata
+    ) {
+        List<Name> names = new ArrayList<>();
+        names.add(windowVariable);
+        names.addAll(start.variables().names());
+        if (end != null)
+            names.addAll(end.variables().names());
+        if (names.size() != names.stream().distinct().count())
+            throw new ParsingException(
+                    "All variables in a window clause must have distinct names",
+                    ErrorCode.DuplicatedVariableNameInWindowCode,
+                    metadata
+            );
     }
 
     @Override
@@ -3920,8 +4017,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private String processURILiteral(UriLiteralContext ctx) {
-        // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
-        // predefined entity references and character references
+        // URI literals use the ordinary JSONiq string rules. XML entity
+        // expansion is deliberately confined to direct attribute content.
         String rawValue = ctx.getText().substring(1, ctx.getText().length() - 1);
         return unescapeStringLiteral(rawValue);
     }
@@ -4058,10 +4155,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     private DirAttributeProcessingResult getAttributesExpressionsList(JsoniqParser.DirAttributeListContext ctx) {
         DirAttributeProcessingResult result = new DirAttributeProcessingResult();
 
-        // Process each attribute name-value pair
         List<JsoniqParser.QnameContext> attributeNames = ctx.attribute_qname;
         List<JsoniqParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
 
+        // Namespace declarations are in scope for the entire element start tag,
+        // including attributes that occur lexically before the declaration.
         for (int i = 0; i < attributeNames.size(); i++) {
             JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
             String lexical = qnameCtx.getText();
@@ -4072,9 +4170,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx))
                 );
                 bindDirConstructorNamespaceDeclaration(declaredPrefix, uri);
+            }
+        }
+
+        // Translate non-namespace attributes after the complete namespace frame
+        // has been established, while retaining their original source order.
+        for (int i = 0; i < attributeNames.size(); i++) {
+            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
+            String lexical = qnameCtx.getText();
+            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
                 continue;
             }
-
             Name attributeName = parseName(qnameCtx, false, false, false, false);
 
             List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
@@ -4103,6 +4209,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             return this.getDirAttributeValueQuotExpressions(
                 dirAttributeValueQuotContext,
                 allowEnclosedExpressions
+            );
+        } else if (
+            child instanceof TerminalNode terminalNode
+                && terminalNode.getSymbol().getType() == JsoniqParser.STRING
+        ) {
+            // A nested direct constructor inside an outer attribute expression
+            // can expose a static attribute value as one STRING token.
+            // For example: <e x="{data(<n value="inside"/>/@value)}"/>
+            String text = terminalNode.getText();
+            return List.of(
+                new AttributeNodeContentExpression(
+                        StringEscapeUtils.unescapeXml(text.substring(1, text.length() - 1)),
+                        createMetadataFromContext(ctx)
+                )
             );
         }
         throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());

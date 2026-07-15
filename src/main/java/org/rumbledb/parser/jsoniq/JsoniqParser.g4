@@ -161,7 +161,7 @@ annotations: annotation* ;
 // added the updating keyword to support the out-of-spec updating expressions extension
 annotation: MOD name=eqName (LPAREN literal (COMMA literal)* RPAREN)? | updating=KW_UPDATING ;
 
-optionDecl: KW_DECLARE KW_OPTION name=qname value=stringLiteral ;
+optionDecl: KW_DECLARE KW_OPTION name=eqName value=stringLiteral ;
 
 typeDecl                : KW_DECLARE KW_TYPE type_name=qname KW_AS (schema=schemaLanguage)? type_definition=exprSingle;
 
@@ -205,11 +205,11 @@ letVar: var_ref=varRef
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 
@@ -471,14 +471,19 @@ dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAt
 
 dirAttributeValue    : dirAttributeValueApos
                      | dirAttributeValueQuot
+                     // A nested direct constructor inside an outer attribute
+                     // expression can receive an already-tokenized string.
+                     | STRING
                      ;
 
 dirAttributeContentQuot : contentChar                     
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueApos
                         | LBRACE expr? RBRACE
                         ;
 
 dirAttributeContentApos : contentChar                    
+                        | DOUBLE_LBRACE | DOUBLE_RBRACE
                         | dirAttributeValueQuot
                         | LBRACE expr? RBRACE
                         ;

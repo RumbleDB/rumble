@@ -19,8 +19,10 @@ package org.rumbledb.parser.jsoniq;
 // Note: string syntax depends on syntactic context, so they are
 // handled by the parser and not the lexer.
 
-// Tokens declared but not defined
-tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
+// INVALID_XML_AMP makes a bare '&' visible to the parser instead of letting
+// the lexer skip it after a token-recognition error.
+// The remaining tokens are declared here and produced by mode-specific rules.
+tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE, INVALID_XML_AMP}
 
 @members {
     ///
@@ -29,6 +31,140 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
 
     // for counting braces inside string literals
     private int bracesInside = 0;
+
+    // STRING normally consumes a complete JSONiq string, including braces. In
+    // a direct element start tag, however, an attribute delimiter must enter
+    // the XML attribute modes so that { ... } can be parsed as an enclosed
+    // expression. Track just enough of the start-tag prefix to distinguish
+    // these two contexts before the opening quote is tokenized.
+
+    // No direct start-tag prefix is currently being recognized.
+    private static final int OUTSIDE_DIRECT_START_TAG = 0;
+    
+    // The last significant token was '<'; a tag name must follow.
+    private static final int AFTER_DIRECT_TAG_OPEN = 1;
+    
+    // We have recognized '<e'; an attribute name may follow.
+    private static final int AFTER_DIRECT_TAG_NAME = 2;
+    
+    // We have recognized '<e x'; an equals sign must follow.
+    private static final int AFTER_DIRECT_ATTRIBUTE_NAME = 3;
+    
+    // We have recognized '<e x='; the next quote starts an XML attribute value.
+    private static final int BEFORE_DIRECT_ATTRIBUTE_VALUE = 4;
+
+    // Current position in the '<e x=' recognition sequence above.
+    private int directStartTagState = OUTSIDE_DIRECT_START_TAG;
+
+    // True from an XML attribute's opening delimiter through its matching
+    // closing delimiter. While true, tokens inside the value must not alter
+    // the surrounding start-tag state.
+    private boolean inDirectAttributeValue = false;
+
+    // Remembers whether the active XML attribute is delimited by ' or ".
+    private char directAttributeDelimiter = 0;
+
+    // The closing delimiter is emitted after finishDirectAttributeValueIfActive
+    // runs. This flag prevents that delimiter from resetting the restored
+    // AFTER_DIRECT_TAG_NAME state.
+    private boolean justFinishedDirectAttributeValue = false;
+
+    // Used as a semantic predicate by STRING. When true, STRING must not
+    // consume the complete quoted value because the XML quote-mode rules need
+    // to expose enclosed expressions inside braces to the parser.
+    private boolean isDirectAttributeValueExpected() {
+        return this.directStartTagState == BEFORE_DIRECT_ATTRIBUTE_VALUE;
+    }
+
+    // Called by the default-mode quote rules. It marks the delimiter as an XML
+    // attribute delimiter only when the preceding tokens formed '<e x='.
+    private void beginDirectAttributeValueIfExpected(char delimiter) {
+        if (isDirectAttributeValueExpected()) {
+            this.inDirectAttributeValue = true;
+            this.directAttributeDelimiter = delimiter;
+        }
+    }
+
+    // Called by the quote-mode closing rules. A matching delimiter completes
+    // the current attribute and restores the state used to recognize another
+    // attribute in the same start tag.
+    private void finishDirectAttributeValueIfActive(char delimiter) {
+        if (this.inDirectAttributeValue && this.directAttributeDelimiter == delimiter) {
+            this.inDirectAttributeValue = false;
+            this.directAttributeDelimiter = 0;
+            this.directStartTagState = AFTER_DIRECT_TAG_NAME;
+            this.justFinishedDirectAttributeValue = true;
+        }
+    }
+
+    // Direct element and attribute QNames may be ordinary names, prefixed
+    // names, or lexer keywords because the parser permits keywords as NCNames.
+    private boolean isDirectNameToken(int tokenType) {
+        return tokenType == NCName
+            || tokenType == FullQName
+            || (tokenType >= KW_ALLOWING && tokenType <= KW_STATICALLY);
+    }
+
+    // Advances the small recognizer for '<e x='. Any unexpected significant
+    // token abandons the candidate, which prevents comparisons such as
+    // '1 < 2' from affecting a later JSONiq string.
+    private void updateDirectStartTagState(Token token) {
+        // Whitespace and comments do not affect the start-tag prefix.
+        if (token.getChannel() == HIDDEN) {
+            return;
+        }
+
+        int tokenType = token.getType();
+
+        // Every '<' starts a fresh candidate. A following non-name token will
+        // immediately discard it if this is a comparison or a closing tag.
+        if (tokenType == LANGLE) {
+            this.directStartTagState = AFTER_DIRECT_TAG_OPEN;
+            return;
+        }
+
+        switch (this.directStartTagState) {
+            case AFTER_DIRECT_TAG_OPEN:
+                // '<' + QName recognizes the element name.
+                this.directStartTagState = isDirectNameToken(tokenType)
+                    ? AFTER_DIRECT_TAG_NAME
+                    : OUTSIDE_DIRECT_START_TAG;
+                break;
+
+            case AFTER_DIRECT_TAG_NAME:
+                // The next QName, if present, is an attribute name.
+                this.directStartTagState = isDirectNameToken(tokenType)
+                    ? AFTER_DIRECT_ATTRIBUTE_NAME
+                    : OUTSIDE_DIRECT_START_TAG;
+                break;
+
+            case AFTER_DIRECT_ATTRIBUTE_NAME:
+                // Only '=' makes the following quote an attribute delimiter.
+                this.directStartTagState = tokenType == EQUAL
+                    ? BEFORE_DIRECT_ATTRIBUTE_VALUE
+                    : OUTSIDE_DIRECT_START_TAG;
+                break;
+
+            default:
+                // A token outside a candidate cannot contribute to '<e x='.
+                this.directStartTagState = OUTSIDE_DIRECT_START_TAG;
+                break;
+        }
+    }
+
+    // Observe tokens after the generated lexer creates them. Tokens inside an
+    // attribute are ignored by the start-tag recognizer; after its closing
+    // quote, the one-shot flag preserves the state restored above.
+    @Override
+    public Token emit() {
+        Token token = super.emit();
+        if (this.justFinishedDirectAttributeValue) {
+            this.justFinishedDirectAttributeValue = false;
+        } else if (!this.inDirectAttributeValue) {
+            updateDirectStartTagState(token);
+        }
+        return token;
+    }
 }
 
 IntegerLiteral: Digits ;
@@ -58,9 +194,12 @@ PredefinedEntityRef: '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';' ;
 CharRef: '&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';' ;
 
 // Escapes are handled as two Quot or two Apos tokens, to avoid maximal
-// munch lexer ambiguity.
-Quot        : '"' -> pushMode(QUOT_LITERAL_STRING);
-Apos        : '\'' -> pushMode(APOS_LITERAL_STRING);
+// munch lexer ambiguity. These rules are enabled only after '<e x='; valid
+// ordinary JSONiq strings are consumed by STRING as a single token.
+Quot        : {isDirectAttributeValueExpected()}? '"' {beginDirectAttributeValueIfExpected('"');}
+              -> pushMode(QUOT_LITERAL_STRING);
+Apos        : {isDirectAttributeValueExpected()}? '\'' {beginDirectAttributeValueIfExpected('\'');}
+              -> pushMode(APOS_LITERAL_STRING);
 
 // XML-SPECIFIC
 
@@ -302,7 +441,11 @@ KW_TRUE:               'true';
 KW_FALSE:              'false';
 KW_STATICALLY:         'statically';
 
-STRING                  : '"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'';
+// Braces are ordinary characters in JSONiq strings. The predicate only
+// disables this rule for direct XML attribute values, whose delimiters enter
+// the quote modes above to support enclosed expressions.
+STRING                  : {!isDirectAttributeValueExpected()}?
+                          ('"' (ESC | ~ ["\\])* '"' | '\'' (ESCapos | ~ ['\\])* '\'');
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
 fragment ESCapos        : '\\' (['\\/bfnrt] | UNICODE);
 fragment UNICODE        : 'u' HEX HEX HEX HEX;
@@ -404,8 +547,10 @@ EXIT_STRING         : RBRACKET GRAVE GRAVE -> popMode;
 
 mode QUOT_LITERAL_STRING;
 
+// Backslash is deliberately handled by ContentChar in XML attributes. XML
+// attribute values use entity references, not JSON backslash escaping.
 EscapeQuot_QuotString           : '""' -> type(EscapeQuot);
-Quot_QuotString                 : '"' -> type(Quot), popMode;
+Quot_QuotString                 : '"' {finishDirectAttributeValueIfActive('"');} -> type(Quot), popMode;
 
 DOUBLE_LBRACE_QuotString        : '{{' -> type(DOUBLE_LBRACE);
 DOUBLE_RBRACE_QuotString        : '}}' -> type(DOUBLE_RBRACE);
@@ -413,12 +558,14 @@ LBRACE_QuotString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_QuotString               : '}' -> type(RBRACE);
 PredefinedEntityRef_QuotString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_QuotString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+InvalidAmp_QuotString           : '&' -> type(INVALID_XML_AMP);
 ContentChar_QuotString          : ~["&{}] -> type(ContentChar);
 
 mode APOS_LITERAL_STRING;
 
+// As above, backslash is ordinary XML attribute content in this mode.
 EscapeApos_AposString           : '\'\'' -> type(EscapeApos);
-Apos_AposString                 : '\'' -> type(Apos), popMode;
+Apos_AposString                 : '\'' {finishDirectAttributeValueIfActive('\'');} -> type(Apos), popMode;
 
 DOUBLE_LBRACE_AposString        : '{{' -> type(DOUBLE_LBRACE);
 DOUBLE_RBRACE_AposString        : '}}' -> type(DOUBLE_RBRACE) ;
@@ -426,10 +573,15 @@ LBRACE_AposString               : '{' -> type(LBRACE), pushMode(STRING_INTERPOLA
 RBRACE_AposString               : '}' -> type(RBRACE);
 PredefinedEntityRef_AposString  : '&' ('lt'|'gt'|'amp'|'quot'|'apos') ';'  -> type(PredefinedEntityRef);
 CharRef_AposString              : ('&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';') -> type(CharRef);
+InvalidAmp_AposString           : '&' -> type(INVALID_XML_AMP);
 ContentChar_AposString          : ~['&{}] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_QUOT;
 
+// Strings inside an enclosed expression use JSONiq escaping again. Match both
+// delimiters as complete STRING tokens so their braces remain literal.
+INT_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
+INT_QUOT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
 INT_QUOT_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_QUOT_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_QUOT_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);
@@ -697,6 +849,9 @@ INT_ContentChar:  ~["'{}<&] -> type(ContentChar);
 
 mode STRING_INTERPOLATION_MODE_APOS;
 
+// Same handling for expressions enclosed by a single-quoted XML attribute.
+INT_APOS_STRING: '\'' (ESCapos | ~ ['\\])* '\'' -> type(STRING);
+INT_APOS_QUOT_STRING: '"' (ESC | ~ ["\\])* '"' -> type(STRING);
 INT_APOS_IntegerLiteral: Digits -> type(IntegerLiteral);
 INT_APOS_DecimalLiteral: ('.' Digits | Digits '.' [0-9]*) -> type(DecimalLiteral) ;
 INT_APOS_DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits -> type(DoubleLiteral);

@@ -101,7 +101,14 @@ public class ComputedNamespaceConstructorExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        List<Node> result = new ArrayList<>();
+        if (this.prefixExpression != null) {
+            result.add(this.prefixExpression);
+        }
+        if (this.uriExpression != null) {
+            result.add(this.uriExpression);
+        }
+        return result;
     }
 
     @Override
@@ -120,4 +127,3 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
-
