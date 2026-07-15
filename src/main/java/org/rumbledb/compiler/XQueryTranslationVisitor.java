@@ -1860,10 +1860,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private String parseStringLiteral(String source) {
-        char delimiter = source.charAt(0);
-        String raw = source.substring(1, source.length() - 1);
-        String escapedDelimiter = String.valueOf(delimiter) + delimiter;
-        return StringEscapeUtils.unescapeXml(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
+        return StringLiteralUtils.parseXQuery(source);
     }
 
     @Override
