@@ -136,12 +136,7 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             sb.append(item.getBooleanValue() ? "true()" : "false()");
             return;
         }
-        if (
-            item.isString()
-                || item.isUntypedAtomic()
-                || item.isAnyURI()
-                || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-        ) {
+        if (isAdaptiveQuotedLiteralType(item)) {
             sb.append(quoteAsLiteral(item.getStringValue()));
             return;
         }
@@ -204,6 +199,13 @@ public class AdaptiveSerializer implements Serializer, java.io.Serializable {
             return;
         }
         sb.append(item.getStringValue());
+    }
+
+    private boolean isAdaptiveQuotedLiteralType(Item item) {
+        ItemType type = item.getDynamicType();
+        return item.isUntypedAtomic()
+            || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+            || type.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
     }
 
     private String serializeDouble(Item item) {
