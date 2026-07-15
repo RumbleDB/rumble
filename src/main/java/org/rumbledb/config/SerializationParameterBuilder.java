@@ -288,6 +288,9 @@ public final class SerializationParameterBuilder {
         if (trimmed.equals("fully-normalized")) {
             return SerializationParameters.NormalizationForm.FULLY_NORMALIZED;
         }
+        if (trimmed.equals("none")) {
+            return SerializationParameters.NormalizationForm.NONE;
+        }
         // Try direct enum value (case-sensitive)
         try {
             return SerializationParameters.NormalizationForm.valueOf(trimmed);

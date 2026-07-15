@@ -9,10 +9,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.serialization.SerializationParameters;
@@ -331,6 +334,18 @@ public class SequenceOfItems {
 
         StringBuilder sb = new StringBuilder();
         List<Item> items = this.getAsList();
+        if ("json".equalsIgnoreCase(params.getMethod())) {
+            if (items.isEmpty()) {
+                return "null";
+            }
+            if (items.size() > 1) {
+                throw new RumbleException(
+                        "JSON serialization requires the top-level sequence to contain at most one item.",
+                        new ErrorCode(new Name(Name.ERROR_NS, "err", "SERE0023")),
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+        }
         for (int i = 0; i < items.size(); i++) {
             if (i > 0) {
                 sb.append(itemSeparator);

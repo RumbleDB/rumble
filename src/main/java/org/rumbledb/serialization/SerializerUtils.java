@@ -43,7 +43,7 @@ public final class SerializerUtils {
             sb.append(optionalPrefixBeforeOpenBrace);
         }
         sb.append("{");
-        String separator = " ";
+        String separator = "";
         if (params.getIndent()) {
             separator = "\n" + indent + "  ";
         }
@@ -54,13 +54,14 @@ public final class SerializerUtils {
                 separator = "," + separator;
                 firstTime = false;
             }
-            sb.append("\"").append(StringEscapeUtils.escapeJson(key.getStringValue())).append("\"").append(" : ");
+            sb.append("\"").append(StringEscapeUtils.escapeJson(key.getStringValue())).append("\"").append(":");
+            if (params.getIndent()) {
+                sb.append(" ");
+            }
             appendMapValue(serializer, params, mapItem, key, sb, indent);
         }
         if (params.getIndent()) {
             sb.append("\n").append(indent);
-        } else {
-            sb.append(" ");
         }
         sb.append("}");
     }
@@ -75,7 +76,7 @@ public final class SerializerUtils {
     ) {
         List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
-            sb.append("[]");
+            sb.append("null");
             return;
         }
         if (sequence.size() == 1) {
@@ -87,7 +88,7 @@ public final class SerializerUtils {
             return;
         }
         sb.append("[");
-        String separator = " ";
+        String separator = "";
         if (params.getIndent()) {
             separator = "\n" + indent + "    ";
         }
@@ -106,8 +107,6 @@ public final class SerializerUtils {
         }
         if (params.getIndent()) {
             sb.append("\n").append(indent).append("  ");
-        } else {
-            sb.append(" ");
         }
         sb.append("]");
     }
