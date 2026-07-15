@@ -1960,13 +1960,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             int previousTokenIndex,
             StringBuilder destination
     ) {
+        destination.append(getHiddenTextAfter(tokenStream, previousTokenIndex));
+    }
+
+    private static String getHiddenTextAfter(CommonTokenStream tokenStream, int previousTokenIndex) {
         List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
         if (hidden == null) {
-            return;
+            return "";
         }
+        StringBuilder result = new StringBuilder();
         for (Token t : hidden) {
-            destination.append(t.getText());
+            result.append(t.getText());
         }
+        return result.toString();
     }
 
     private Node visitDirElemConstructorOpenClose(XQueryParser.DirectConstructorContext ctx) {
@@ -3868,18 +3874,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             boolean allowEnclosedExpressions
     ) {
         ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
-            return this.getDirAttributeValueQuotExpressions(
-                dirAttributeValueQuotContext,
-                allowEnclosedExpressions
-            );
-        } else if (child instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions(
-                dirAttributeValueAposContext,
-                allowEnclosedExpressions
-            );
+        ParserRuleContext quotedValue;
+        if (child instanceof XQueryParser.DirAttributeValueQuotContext doubleQuotedValue) {
+            quotedValue = doubleQuotedValue;
+        } else if (child instanceof XQueryParser.DirAttributeValueAposContext singleQuotedValue) {
+            quotedValue = singleQuotedValue;
+        } else {
+            throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
         }
-        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
+        String delimiter = quotedValue.getStart().getText();
+        return processQuotedAttributeValue(
+            quotedValue,
+            delimiter + delimiter,
+            delimiter,
+            allowEnclosedExpressions
+        );
     }
 
     private String getNamespaceDeclarationUri(XQueryParser.DirAttributeValueContext ctx) {
@@ -3946,18 +3955,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
     }
 
-    private String getHiddenTextAfter(Token token) {
-        List<Token> hiddenTokens = this.xQueryTokenStream.getHiddenTokensToRight(token.getTokenIndex());
-        if (hiddenTokens == null) {
-            return "";
-        }
-        StringBuilder result = new StringBuilder();
-        for (Token hiddenToken : hiddenTokens) {
-            result.append(hiddenToken.getText());
-        }
-        return result.toString();
-    }
-
     private void validateDirAttributeLiteral(String source, ParseTree tree) {
         if (source.indexOf('<') >= 0) {
             throw new ParsingException(
@@ -3968,7 +3965,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private void appendHiddenAttributeText(AttributeValueBuilder result, Token token, ParseTree tree) {
-        String hiddenText = getHiddenTextAfter(token);
+        String hiddenText = getHiddenTextAfter(this.xQueryTokenStream, token.getTokenIndex());
         validateDirAttributeLiteral(hiddenText, tree);
         result.appendText(hiddenText, tree);
     }
@@ -3985,7 +3982,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         // Skip the opening and closing quote tokens.
         for (int i = 1; i < ctx.getChildCount() - 1; i++) {
             ParseTree child = ctx.getChild(i);
-            List<Expression> childExpressions = new ArrayList<>();
             appendHiddenAttributeText(result, previousToken, child);
 
             // Try to process as entity or character reference first
@@ -3994,27 +3990,25 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             if (childText.startsWith("&") && childText.endsWith(";")) {
                 // This is a PredefinedEntityRef or CharRef token - expand it
                 String unescapedValue = StringEscapeUtils.unescapeXml(childText);
-                childExpressions.add(
-                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child))
+                result.append(
+                    new AttributeNodeContentExpression(unescapedValue, createMetadataFromTree(child)),
+                    child
                 );
             } else if (child.getText().equals(escapeSequence)) {
                 // Escaped quote
-                childExpressions.add(new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)));
-            } else {
-                // Try the content visitor for nested content or text
-                List<Expression> contentResult = processAttributeContent(
-                    (ParserRuleContext) child,
-                    allowEnclosedExpressions
+                result.append(
+                    new AttributeNodeContentExpression(escapedChar, createMetadataFromTree(child)),
+                    child
                 );
-                if (contentResult != null && !contentResult.isEmpty()) {
-                    childExpressions.addAll(contentResult);
-                } else {
-                    throw new UnsupportedOperationException("Unsupported attribute content: " + child.getText());
+            } else {
+                for (
+                    Expression expression : processAttributeContent(
+                        (ParserRuleContext) child,
+                        allowEnclosedExpressions
+                    )
+                ) {
+                    result.append(expression, child);
                 }
-            }
-
-            for (Expression childExpression : childExpressions) {
-                result.append(childExpression, child);
             }
             previousToken = getStopToken(child);
         }
@@ -4028,76 +4022,27 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
      */
     private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
         ParseTree child = ctx.children.get(0);
-        List<Expression> expressions = new ArrayList<>();
-
-        if (ctx instanceof XQueryParser.DirAttributeValueQuotContext dirAttributeValueQuotContext) {
-            return this.getDirAttributeValueQuotExpressions(
-                dirAttributeValueQuotContext,
-                allowEnclosedExpressions
-            );
-        } else if (ctx instanceof XQueryParser.DirAttributeValueAposContext dirAttributeValueAposContext) {
-            return this.getDirAttributeValueAposExpressions(
-                dirAttributeValueAposContext,
-                allowEnclosedExpressions
-            );
-        } else if (
-            ctx instanceof XQueryParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
-                &&
-                dirAttributeContentQuotContext.expr() != null
-        ) {
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx)
-                );
-            }
-            expressions.add((Expression) this.visitExpr(dirAttributeContentQuotContext.expr()));
-        } else if (
-            ctx instanceof XQueryParser.DirAttributeContentAposContext dirAttributeContentAposContext
-                &&
-                dirAttributeContentAposContext.expr() != null
-        ) {
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx)
-                );
-            }
-            expressions.add((Expression) this.visitExpr(dirAttributeContentAposContext.expr()));
-        } else {
-            // handle other cases
-            String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
-            validateDirAttributeLiteral(childText, ctx);
-            String processedContent = processTextContentWithEscaping(childText);
-            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
+        XQueryParser.ExprContext enclosedExpression = null;
+        if (ctx instanceof XQueryParser.DirAttributeContentQuotContext doubleQuotedContent) {
+            enclosedExpression = doubleQuotedContent.expr();
+        } else if (ctx instanceof XQueryParser.DirAttributeContentAposContext singleQuotedContent) {
+            enclosedExpression = singleQuotedContent.expr();
         }
-        return expressions;
-    }
 
+        if (enclosedExpression != null) {
+            if (!allowEnclosedExpressions) {
+                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
+                        "Namespace declaration attributes cannot contain enclosed expressions.",
+                        createMetadataFromContext(ctx)
+                );
+            }
+            return List.of((Expression) this.visitExpr(enclosedExpression));
+        }
 
-
-    /**
-     * Process a double-quoted direct attribute value and return its content expressions.
-     * This method deviates from the strict visitor pattern to return multiple expressions.
-     */
-    private List<Expression> getDirAttributeValueQuotExpressions(
-            XQueryParser.DirAttributeValueQuotContext ctx,
-            boolean allowEnclosedExpressions
-    ) {
-        return processQuotedAttributeValue(ctx, "\"\"", "\"", allowEnclosedExpressions);
-    }
-
-    /**
-     * Process a single-quoted direct attribute value and return its content expressions.
-     * The list of expression is a mixed list of AttributeNodeContentExpression, and EnclosedExpressions
-     * The returned list is already minimal i.e. no adjacent AttributeNodeContentExpression are present.
-     * This method deviates from the strict visitor pattern to return multiple expressions.
-     */
-    private List<Expression> getDirAttributeValueAposExpressions(
-            XQueryParser.DirAttributeValueAposContext ctx,
-            boolean allowEnclosedExpressions
-    ) {
-        return processQuotedAttributeValue(ctx, "''", "'", allowEnclosedExpressions);
+        String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+        validateDirAttributeLiteral(childText, ctx);
+        String processedContent = processTextContentWithEscaping(childText);
+        return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
     }
 
 
