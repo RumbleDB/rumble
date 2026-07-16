@@ -104,6 +104,9 @@ public final class SerializationParameterBuilder {
                     validateEncoding(optionName, optionValue);
                     params.setEncoding(optionValue);
                     break;
+                case "version":
+                    params.setVersion(optionValue);
+                    break;
                 case "omit-xml-declaration":
                     params.setOmitXmlDeclaration(parseBoolean(optionName, optionValue));
                     break;
