@@ -10,7 +10,12 @@ package org.rumbledb.context;
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSTypeDefinition;
 
 /** The XML Schema components compiled for an XQuery module. */
 public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
+
+    public XSTypeDefinition getTypeDefinition(Name name) {
+        return this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace());
+    }
 }
