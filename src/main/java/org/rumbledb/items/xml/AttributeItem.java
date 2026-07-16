@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -21,6 +22,7 @@ public class AttributeItem implements Item {
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
+    private ItemType jsoniqTypeAnnotation;
     private XmlSchemaNodeProperties schemaProperties;
 
     // needed for kryo
@@ -42,6 +44,7 @@ public class AttributeItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
+        copy.jsoniqTypeAnnotation = this.jsoniqTypeAnnotation;
         copy.schemaProperties = this.schemaProperties;
         return copy;
     }
@@ -64,6 +67,7 @@ public class AttributeItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
+        kryo.writeClassAndObject(output, this.jsoniqTypeAnnotation);
         this.schemaProperties.write(kryo, output);
     }
 
@@ -73,6 +77,7 @@ public class AttributeItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
+        this.jsoniqTypeAnnotation = (ItemType) kryo.readClassAndObject(input);
         this.schemaProperties = XmlSchemaNodeProperties.read(kryo, input);
     }
 
@@ -188,11 +193,16 @@ public class AttributeItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
-        if (typeAnnotation != null) {
+        if (this.schemaProperties.hasTypedValue()) {
+            return this.schemaProperties.typedValue();
+        }
+        if (this.schemaProperties.typeAnnotation() != null) {
+            throw new OurBadException("A schema-validated attribute has no typed value.");
+        }
+        if (this.jsoniqTypeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                typeAnnotation,
+                this.jsoniqTypeAnnotation,
                 org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);
@@ -257,23 +267,32 @@ public class AttributeItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
-        if (typeAnnotation == null || !typeAnnotation.hasName()) {
+        Name schemaTypeName = this.schemaProperties.typeAnnotation() == null
+            ? null
+            : this.schemaProperties.typeAnnotation().name();
+        if (
+            schemaTypeName == null
+                && this.jsoniqTypeAnnotation != null
+                && this.jsoniqTypeAnnotation.hasName()
+        ) {
+            schemaTypeName = this.jsoniqTypeAnnotation.getName();
+        }
+        if (schemaTypeName == null) {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(typeAnnotation.getName())
+            ItemFactory.getInstance().createQNameItem(schemaTypeName)
         );
     }
 
     @Override
     public void setSchemaType(ItemType typeAnnotation) {
-        this.schemaProperties = this.schemaProperties.withTypeAnnotation(typeAnnotation);
+        this.jsoniqTypeAnnotation = typeAnnotation;
     }
 
     @Override
     public ItemType getSchemaType() {
-        return this.schemaProperties.typeAnnotation();
+        return this.jsoniqTypeAnnotation;
     }
 
     @Override

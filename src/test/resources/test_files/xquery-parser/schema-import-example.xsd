@@ -10,7 +10,30 @@
             <xs:pattern value="[A-Z]{3}"/>
         </xs:restriction>
     </xs:simpleType>
+    <xs:simpleType name="CodeList">
+        <xs:list itemType="ex:Code"/>
+    </xs:simpleType>
+    <xs:simpleType name="CodeOrInteger">
+        <xs:union memberTypes="ex:Code xs:integer"/>
+    </xs:simpleType>
+    <xs:complexType name="CodeContent">
+        <xs:simpleContent>
+            <xs:extension base="ex:Code"/>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="Record">
+        <xs:sequence>
+            <xs:element name="code" type="ex:Code"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EmptyContent"/>
+    <xs:complexType name="MixedContent" mixed="true">
+        <xs:sequence>
+            <xs:element name="code" type="ex:Code" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
     <xs:attribute name="qualified-status" type="xs:string" default="qualified"/>
+    <xs:element name="nil-root" type="ex:CodeContent" nillable="true"/>
     <xs:element name="root">
         <xs:complexType>
             <xs:simpleContent>

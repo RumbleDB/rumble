@@ -13,27 +13,31 @@ import java.util.Map;
 
 import org.apache.xerces.xs.AttributePSVI;
 import org.apache.xerces.xs.ElementPSVI;
+import org.apache.xerces.xs.ItemPSVI;
 import org.apache.xerces.xs.PSVIProvider;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSObjectList;
-import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSValue;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XmlSchemaNodeProperties;
 import org.xml.sax.Attributes;
 
 /** Converts Xerces SAX and PSVI data into schema-augmented XDM items. */
 final class PsviItemFactory {
 
     private final PSVIProvider psviProvider;
-    private final XmlSchemaAtomicTypeMapper typeMapper;
+    private final XmlSchemaTypeMapper typeMapper;
+    private final XmlSchemaTypedValueFactory typedValueFactory;
 
-    PsviItemFactory(PSVIProvider psviProvider, XmlSchemaAtomicTypeMapper typeMapper) {
+    PsviItemFactory(PSVIProvider psviProvider, XmlSchemaTypeMapper typeMapper) {
         this.psviProvider = psviProvider;
         this.typeMapper = typeMapper;
+        this.typedValueFactory = new XmlSchemaTypedValueFactory(typeMapper);
     }
 
     List<Item> createAttributes(
@@ -63,7 +67,7 @@ final class PsviItemFactory {
                     normalizedValue == null ? attributes.getValue(index) : normalizedValue
                 );
             if (psvi != null) {
-                setTypeAnnotation(attribute, psvi.getTypeDefinition());
+                setSchemaProperties(attribute, psvi);
             }
             result.add(attribute);
         }
@@ -90,7 +94,13 @@ final class PsviItemFactory {
             );
         }
         if (psvi != null) {
-            setTypeAnnotation(element, psvi.getTypeDefinition());
+            setSchemaProperties(element, psvi);
+            element.setXmlSchemaProperties(
+                element.getXmlSchemaProperties()
+                    .withNilled(
+                        psvi.getNil() ? XmlSchemaNodeProperties.Nilled.TRUE : XmlSchemaNodeProperties.Nilled.FALSE
+                    )
+            );
         }
         element.addParentToDescendants();
         return element;
@@ -120,11 +130,13 @@ final class PsviItemFactory {
     ) {
         XSAttributeDeclaration declaration = attributeUse.getAttrDeclaration();
         String constraintValue = attributeUse.getConstraintValue();
+        XSValue schemaValue = attributeUse.getValueConstraintValue();
         if (attributeUse.getConstraintType() == XSConstants.VC_NONE) {
             if (declaration.getConstraintType() == XSConstants.VC_NONE) {
                 return;
             }
             constraintValue = declaration.getConstraintValue();
+            schemaValue = declaration.getValueConstraintValue();
         }
         if (hasAttribute(attributes, declaration)) {
             return;
@@ -137,14 +149,24 @@ final class PsviItemFactory {
                 XmlNameCodec.fromExpandedName(namespace, prefix, declaration.getName()),
                 constraintValue
             );
-        setTypeAnnotation(attribute, declaration.getTypeDefinition());
+        attribute.setXmlSchemaProperties(
+            attribute.getXmlSchemaProperties()
+                .withSchemaType(
+                    this.typeMapper.getTypeAnnotation(declaration.getTypeDefinition()),
+                    this.typedValueFactory.create(schemaValue, declaration.getTypeDefinition())
+                )
+        );
         attributes.add(attribute);
     }
 
-    private void setTypeAnnotation(Item item, XSTypeDefinition schemaType) {
-        this.typeMapper.getAtomicType(schemaType)
-            .map(item.getXmlSchemaProperties()::withTypeAnnotation)
-            .ifPresent(item::setXmlSchemaProperties);
+    private void setSchemaProperties(Item item, ItemPSVI psvi) {
+        XmlSchemaNodeProperties properties = item.getXmlSchemaProperties();
+        var typeAnnotation = this.typeMapper.getTypeAnnotation(psvi.getTypeDefinition());
+        var typedValue = this.typedValueFactory.create(psvi, item.getStringValue());
+        item.setXmlSchemaProperties(
+            typedValue.map(value -> properties.withSchemaType(typeAnnotation, value))
+                .orElseGet(() -> properties.withSchemaTypeWithoutTypedValue(typeAnnotation))
+        );
     }
 
     private static boolean hasAttribute(List<Item> attributes, XSAttributeDeclaration declaration) {

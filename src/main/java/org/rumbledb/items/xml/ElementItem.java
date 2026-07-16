@@ -5,6 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -27,6 +29,7 @@ public class ElementItem implements Item {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
+    private ItemType jsoniqTypeAnnotation;
     private XmlSchemaNodeProperties schemaProperties;
     // TODO: add base-uri
     private XMLDocumentPosition documentPos;
@@ -97,6 +100,7 @@ public class ElementItem implements Item {
         Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
+        copy.jsoniqTypeAnnotation = this.jsoniqTypeAnnotation;
         copy.schemaProperties = this.schemaProperties;
         return copy;
     }
@@ -135,6 +139,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.namespaces);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
+        kryo.writeClassAndObject(output, this.jsoniqTypeAnnotation);
         this.schemaProperties.write(kryo, output);
     }
 
@@ -148,6 +153,7 @@ public class ElementItem implements Item {
         this.namespaces = kryo.readObject(input, HashMap.class);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
+        this.jsoniqTypeAnnotation = (ItemType) kryo.readClassAndObject(input);
         this.schemaProperties = XmlSchemaNodeProperties.read(kryo, input);
     }
 
@@ -350,12 +356,21 @@ public class ElementItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
-        if (typeAnnotation == null || !typeAnnotation.hasName()) {
+        Name schemaTypeName = this.schemaProperties.typeAnnotation() == null
+            ? null
+            : this.schemaProperties.typeAnnotation().name();
+        if (
+            schemaTypeName == null
+                && this.jsoniqTypeAnnotation != null
+                && this.jsoniqTypeAnnotation.hasName()
+        ) {
+            schemaTypeName = this.jsoniqTypeAnnotation.getName();
+        }
+        if (schemaTypeName == null) {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(typeAnnotation.getName())
+            ItemFactory.getInstance().createQNameItem(schemaTypeName)
         );
     }
 
@@ -376,12 +391,12 @@ public class ElementItem implements Item {
 
     @Override
     public void setSchemaType(ItemType typeAnnotation) {
-        this.schemaProperties = this.schemaProperties.withTypeAnnotation(typeAnnotation);
+        this.jsoniqTypeAnnotation = typeAnnotation;
     }
 
     @Override
     public ItemType getSchemaType() {
-        return this.schemaProperties.typeAnnotation();
+        return this.jsoniqTypeAnnotation;
     }
 
     @Override
@@ -443,11 +458,19 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
-        if (typeAnnotation != null) {
+        if (this.schemaProperties.hasTypedValue()) {
+            return this.schemaProperties.typedValue();
+        }
+        if (this.schemaProperties.typeAnnotation() != null) {
+            throw new RumbleException(
+                    "An element with element-only content has no typed value.",
+                    ErrorCode.AtomizationError
+            );
+        }
+        if (this.jsoniqTypeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                typeAnnotation,
+                this.jsoniqTypeAnnotation,
                 org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);

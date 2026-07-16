@@ -31,7 +31,7 @@ final class PsviNodeBuilder extends DefaultHandler {
     private final Map<String, String> pendingNamespaces;
     private Item result;
 
-    PsviNodeBuilder(PSVIProvider psviProvider, XmlSchemaAtomicTypeMapper typeMapper) {
+    PsviNodeBuilder(PSVIProvider psviProvider, XmlSchemaTypeMapper typeMapper) {
         this.psviProvider = psviProvider;
         this.itemFactory = new PsviItemFactory(psviProvider, typeMapper);
         this.elements = new ArrayDeque<>();

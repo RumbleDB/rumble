@@ -29,11 +29,11 @@ public final class XmlSchemaValidator {
     private static final String ROOT_TYPE_DEFINITION =
         "http://apache.org/xml/properties/validation/schema/root-type-definition";
     private final SchemaCatalog schemaCatalog;
-    private final XmlSchemaAtomicTypeMapper typeMapper;
+    private final XmlSchemaTypeMapper typeMapper;
 
     public XmlSchemaValidator(SchemaCatalog schemaCatalog) {
         this.schemaCatalog = schemaCatalog;
-        this.typeMapper = new XmlSchemaAtomicTypeMapper();
+        this.typeMapper = new XmlSchemaTypeMapper();
     }
 
     public Item validateStrict(Item validationRoot, ExceptionMetadata metadata) {
