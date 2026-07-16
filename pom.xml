@@ -274,6 +274,14 @@
                         </eclipse>
                         <removeUnusedImports/>
                     </java>
+                    <antlr4>
+                        <!-- These are the defaults, you can override if you want -->
+                        <includes>
+                            <include>src/main/java/org/rumbledb/parser/*/*.g4</include>
+                        </includes>
+
+                        <antlr4Formatter />
+                    </antlr4>
                 </configuration>
             </plugin>
             <plugin>
