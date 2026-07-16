@@ -116,7 +116,7 @@ schemaPrefix: (KW_NAMESPACE ncName EQUAL | KW_DEFAULT KW_ELEMENT KW_NAMESPACE) ;
 moduleImport: KW_IMPORT KW_MODULE
               (KW_NAMESPACE prefix=ncName EQUAL)?
               targetNamespace=uriLiteral
-              (KW_AT uriLiteral (COMMA uriLiteral)*)? ;
+              (KW_AT locations+=uriLiteral (COMMA locations+=uriLiteral)*)? ;
 
 
 namespaceDecl: KW_DECLARE KW_NAMESPACE ncName EQUAL uriLiteral ;
