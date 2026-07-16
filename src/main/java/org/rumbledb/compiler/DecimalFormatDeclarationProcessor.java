@@ -1,7 +1,6 @@
 package org.rumbledb.compiler;
 
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.context.DecimalFormatDefinition;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -25,7 +24,7 @@ public final class DecimalFormatDeclarationProcessor {
             boolean isDefaultDecimalFormat,
             ParseTree nameContext,
             List<? extends ParseTree> propertyNames,
-            List<? extends ParseTree> stringLiterals,
+            List<String> stringLiterals,
             StaticContext moduleContext,
             boolean isJSONiq,
             ExceptionMetadata metadata
@@ -53,7 +52,7 @@ public final class DecimalFormatDeclarationProcessor {
 
         for (int i = 0; i < propertyNames.size(); i++) {
             String propertyName = propertyNames.get(i).getText();
-            String value = parseStringLiteral(stringLiterals.get(i).getText(), isJSONiq);
+            String value = parseStringLiteral(stringLiterals.get(i), isJSONiq, metadata);
 
             boolean hasSeen = !seenProperties.add(propertyName);
             if (hasSeen) {
@@ -128,24 +127,13 @@ public final class DecimalFormatDeclarationProcessor {
     }
 
     public static String parseStringLiteral(String text, boolean isJSONiq) {
-        if (text == null || text.length() < 2) {
-            throw new OurBadException("Invalid string literal: " + text);
-        }
+        return parseStringLiteral(text, isJSONiq, ExceptionMetadata.EMPTY_METADATA);
+    }
 
-        char quote = text.charAt(0);
-        char last = text.charAt(text.length() - 1);
-
-        if ((quote != '"' && quote != '\'') || quote != last) {
-            throw new OurBadException("Invalid string literal: " + text);
-        }
-
-        String content = text.substring(1, text.length() - 1);
-
-        if (isJSONiq) {
-            return StringEscapeUtils.unescapeJson(content);
-        }
-
-        return StringEscapeUtils.unescapeXml(content);
+    private static String parseStringLiteral(String text, boolean isJSONiq, ExceptionMetadata metadata) {
+        return isJSONiq
+            ? StringLiteralUtils.parseJsoniq(text, metadata)
+            : StringLiteralUtils.parseXQuery(text);
     }
 
     public static int requireSingleCodePoint(String propertyName, String value, ExceptionMetadata metadata) {
