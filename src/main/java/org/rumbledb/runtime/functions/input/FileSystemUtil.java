@@ -53,8 +53,7 @@ public class FileSystemUtil {
             );
         }
         try {
-            Path relativePath = new Path(url);
-            URI relativeURI = relativePath.toUri();
+            URI relativeURI = new URI(url);
             URI resolvedURI = base.resolve(relativeURI);
             if (url.endsWith("/")) {
                 // preserve trailing slash if any for correct resolution against it as a directory in the future.
