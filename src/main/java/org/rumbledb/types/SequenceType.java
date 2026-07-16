@@ -120,6 +120,9 @@ public class SequenceType implements Serializable {
                 || superType.arity == Arity.OneOrZero
                 || superType.arity == Arity.ZeroOrMore;
         }
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return true;
+        }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
             this.isAritySubtypeOf(superType.arity);
@@ -129,6 +132,9 @@ public class SequenceType implements Serializable {
     public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
         if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+        }
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return true;
         }
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
