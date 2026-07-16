@@ -1,0 +1,3 @@
+(:JIQS: ShouldCrash; ErrorCode="XQDY0027" :)
+import schema namespace ex = "urn:example:compiled-schema" at "schema-import-example.xsd";
+validate type ex:Code { <value>invalid</value> }

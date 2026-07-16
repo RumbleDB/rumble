@@ -5,7 +5,9 @@
     xmlns="urn:example:compiled-schema"
     elementFormDefault="qualified">
     <xs:simpleType name="Code">
-        <xs:restriction base="xs:string"/>
+        <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Z]{3}"/>
+        </xs:restriction>
     </xs:simpleType>
     <xs:element name="root" type="Code"/>
 </xs:schema>
