@@ -50,6 +50,9 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -84,10 +87,8 @@ import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -254,6 +255,61 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         this.visit(clause.getNextClause(), result);
         return argument;
+    }
+
+    @Override
+    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
+        this.visit(clause.getExpression(), argument);
+
+        WindowClause.WindowVars start = clause.getStartCondition().variables();
+        WindowClause.WindowVars end = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
+
+        // Three different static contexts are created to avoid situations like start condition seeing end condition
+        // variables.
+        StaticContext startContext = new StaticContext(argument);
+        addWindowVars(start, clause.getSequenceType(), startContext, clause);
+        this.visit(clause.getStartCondition().expression(), startContext);
+
+        if (end != null) {
+            StaticContext endContext = new StaticContext(startContext);
+            addWindowVars(end, clause.getSequenceType(), endContext, clause);
+            this.visit(clause.getEndCondition().expression(), endContext);
+        }
+
+        StaticContext followingClausesContext = new StaticContext(argument);
+        followingClausesContext.addVariable(
+            clause.getWindowVariable(),
+            clause.getSequenceType(),
+            clause.getMetadata()
+        );
+        addWindowVars(start, clause.getSequenceType(), followingClausesContext, clause);
+        if (end != null) {
+            addWindowVars(end, clause.getSequenceType(), followingClausesContext, clause);
+        }
+
+        this.visit(clause.getNextClause(), followingClausesContext);
+        return argument;
+    }
+
+    private static void addWindowVars(
+            WindowClause.WindowVars vars,
+            SequenceType itemType,
+            StaticContext context,
+            WindowClause clause
+    ) {
+        SequenceType optionalItem = new SequenceType(itemType.getItemType(), SequenceType.Arity.OneOrZero);
+        if (vars.currentItem() != null)
+            context.addVariable(vars.currentItem(), optionalItem, clause.getMetadata());
+        if (vars.position() != null)
+            context.addVariable(
+                vars.position(),
+                new SequenceType(BuiltinTypesCatalogue.integerItem),
+                clause.getMetadata()
+            );
+        if (vars.previousItem() != null)
+            context.addVariable(vars.previousItem(), optionalItem, clause.getMetadata());
+        if (vars.nextItem() != null)
+            context.addVariable(vars.nextItem(), optionalItem, clause.getMetadata());
     }
 
     @Override

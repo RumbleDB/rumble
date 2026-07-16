@@ -205,11 +205,11 @@ letVar: var_ref=varRef
 
 windowClause: KW_FOR (tumblingWindowClause | slidingWindowClause) ;
 
-tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=qname
+tumblingWindowClause: KW_TUMBLING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition? ;
 
-slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=qname
+slidingWindowClause: KW_SLIDING KW_WINDOW DOLLAR name=varName
                           type=typeDeclaration? KW_IN exprSingle
                           windowStartCondition windowEndCondition ;
 
@@ -449,42 +449,50 @@ argument: exprSingle | QUESTION ;
 
 nodeConstructor: directConstructor | computedConstructor ;
 
-directConstructor: dirElemConstructorOpenClose
-                 | dirElemConstructorSingleTag
-                 | (COMMENT | PI)
-                 ;
+// Keep the shared start-tag prefix outside the open/close and self-closing alternatives.
+directConstructor
+    : LANGLE open_tag_name=qname attributes=dirAttributeList
+      (open_close=dirElemConstructorOpenClose | single_tag=dirElemConstructorSingleTag)
+    | COMMENT
+    | PI
+    ;
 
 // [96]: we don't check that the closing tag is the same here. It should be
 // done elsewhere, if we really want to know. We've also simplified the rule
 // by removing the S? bits from ws:explicit. Tree walkers could handle this.
-dirElemConstructorOpenClose: LANGLE open_tag_name=qname attributes=dirAttributeList endOpen=RANGLE
+dirElemConstructorOpenClose: endOpen=RANGLE
                              dirElemContent*
                              startClose=LANGLE slashClose=SLASH close_tag_name=qname RANGLE ;
 
-dirElemConstructorSingleTag: LANGLE open_tag_name=qname attributes=dirAttributeList slashClose=SLASH RANGLE ;
+dirElemConstructorSingleTag: slashClose=SLASH RANGLE ;
 
 // [97]: again, ws:explicit is better handled through the walker.
 dirAttributeList: (attribute_qname+=qname EQUAL attribute_value+=dirAttributeValue)* ;
 
-dirAttributeValueApos : Quot (PredefinedEntityRef | CharRef | EscapeQuot | dirAttributeContentQuot )* Quot ;
-dirAttributeValueQuot : Apos (PredefinedEntityRef | CharRef | EscapeApos | dirAttributeContentApos )* Apos ; 
+dirAttributeValueQuot
+    : Quot (PredefinedEntityRef | CharRef | escapedQuot | dirAttributeContentQuot)* Quot ;
 
-dirAttributeValue    : dirAttributeValueApos
-                     | dirAttributeValueQuot
+dirAttributeValueApos
+    : Apos (PredefinedEntityRef | CharRef | escapedApos | dirAttributeContentApos)* Apos ;
+
+dirAttributeValue    : dirAttributeValueQuot
+                     | dirAttributeValueApos
                      ;
 
-dirAttributeContentQuot : contentChar                     
-                        | dirAttributeValueApos
+dirAttributeContentQuot : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Quot | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
-dirAttributeContentApos : contentChar                    
-                        | dirAttributeValueQuot
+dirAttributeContentApos : LBRACE LBRACE | RBRACE RBRACE
                         | LBRACE expr? RBRACE
+                        | ~(Apos | LBRACE | RBRACE | Ampersand | PredefinedEntityRef | CharRef
+                            | LANGLE | COMMENT | XMLDECL | PI | CDATA)
                         ;
 
-// helper rule to match any content character
-contentChar:              ContentChar+ ;
+escapedQuot: Quot Quot;
+escapedApos: Apos Apos;
 
 dirElemContent: directConstructor
               | commonContent
@@ -851,7 +859,14 @@ keywordOKForFunction: KW_ANCESTOR
 
 uriLiteral: stringLiteral ;
 
-stringLiteral: STRING;
+escapedJsoniqStringCharacter: BACKSLASH . ;
+
+stringLiteralQuot : Quot (escapedJsoniqStringCharacter | ~(Quot | BACKSLASH))* Quot ;
+stringLiteralApos : Apos (escapedJsoniqStringCharacter | ~(Apos | BACKSLASH))* Apos ;
+
+stringLiteral : stringLiteralQuot
+              | stringLiteralApos
+              ;
 
 // ~['"{}<&]: a very common (and long!) subexpression in the W3C EBNF grammar //
 
