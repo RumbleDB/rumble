@@ -171,6 +171,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
     public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
+    public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
     /**
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).
