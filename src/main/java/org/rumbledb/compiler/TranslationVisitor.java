@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -185,7 +186,6 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -210,7 +210,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
+    private CompilationConfiguration compilationConfiguration;
     private boolean isMainModule;
+    private String libraryModuleNamespace;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream jsoniqTokenStream;
@@ -218,23 +220,24 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             String code,
             CommonTokenStream jsoniqTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
-        this.configuration = configuration;
+        this.compilationConfiguration = compilationConfiguration;
+        this.configuration = compilationConfiguration.runtimeConfiguration();
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.jsoniqTokenStream = jsoniqTokenStream;
 
-        if (configuration.getQueryLanguage().equals("jsoniq10")) {
+        if (this.configuration.getQueryLanguage().equals("jsoniq10")) {
             this.moduleContext.setQueryLanguage("jsoniq10");
-        } else if (configuration.getQueryLanguage().equals("jsoniq31")) {
+        } else if (this.configuration.getQueryLanguage().equals("jsoniq31")) {
             this.moduleContext.setQueryLanguage("jsoniq31");
-        } else if (configuration.getQueryLanguage().equals("jsoniq40")) {
+        } else if (this.configuration.getQueryLanguage().equals("jsoniq40")) {
             this.moduleContext.setQueryLanguage("jsoniq40");
         }
     }
@@ -375,6 +378,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             namespace,
             createMetadataFromContext(ctx)
         );
+        this.libraryModuleNamespace = resolvedURI.toString();
         bindNamespace(
             prefix,
             resolvedURI.toString(),
@@ -474,16 +478,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     annotatedDeclaration.varDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
+                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Variable "
                                     + variableDeclaration.getVariableName().getLocalName()
                                     + ": namespace "
                                     + variableNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
@@ -499,16 +502,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     annotatedDeclaration.functionDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
+                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Function "
                                     + inlineFunctionExpression.getName().getLocalName()
                                     + ": namespace "
                                     + functionNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
@@ -525,16 +527,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 );
 
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String typeNamespace = typeDeclaration.getDefinition().getName().getNamespace();
-                    if (typeNamespace == null || !typeNamespace.equals(moduleNamespace)) {
+                    if (typeNamespace == null || !typeNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Type "
                                     + typeDeclaration.getDefinition().getName().getLocalName()
                                     + ": namespace "
                                     + typeNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.typeDecl())
                         );
                     }
@@ -3927,47 +3928,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
+        List<String> locationHints = ctx.locations.stream()
+            .map(this::processURILiteral)
+            .collect(Collectors.toList());
+        LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
+            locationHints,
+            this.moduleContext,
+            this.compilationConfiguration,
             createMetadataFromContext(ctx)
         );
-        LibraryModule libraryModule = null;
-        try {
-            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                resolvedURI,
-                this.configuration,
-                this.moduleContext,
-                createMetadataFromContext(ctx)
-            );
-            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
-                throw new ModuleNotFoundException(
-                        "A module with namespace "
-                            + resolvedURI.toString()
-                            + " was not found. The namespace of the module at this location was: "
-                            + libraryModule.getNamespace(),
-                        createMetadataFromContext(ctx)
-                );
-            }
-        } catch (IOException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        } catch (CannotRetrieveResourceException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        }
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                resolvedURI.toString(),
+                libraryModule.getNamespace(),
                 createMetadataFromContext(ctx)
             );
         }
