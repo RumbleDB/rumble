@@ -346,9 +346,6 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
-     *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
-     * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
     public List<Item> typeName() {

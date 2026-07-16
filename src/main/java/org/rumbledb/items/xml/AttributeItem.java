@@ -260,9 +260,6 @@ public class AttributeItem implements Item {
      *
      * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
      * node, or the empty sequence if the node is untyped.
-     *
-     * RumbleDB does not currently support schema-validated attribute types, so this
-     * implementation returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {
