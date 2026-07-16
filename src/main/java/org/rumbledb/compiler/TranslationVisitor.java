@@ -177,7 +177,6 @@ import org.rumbledb.parser.jsoniq.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.SetterContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
@@ -374,7 +373,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = FileSystemUtil.resolveURI(
+        URI resolvedURI = URILiteralUtils.resolve(
             this.moduleContext.getStaticBaseURI(),
             namespace,
             createMetadataFromContext(ctx)
@@ -445,10 +444,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     );
                 }
                 String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-                URI uri = FileSystemUtil.resolveURI(
+                URI uri = URILiteralUtils.resolve(
                     this.moduleContext.getStaticBaseURI(),
                     uriString,
-                    ExceptionMetadata.EMPTY_METADATA
+                    createMetadataFromContext(setterContext.baseURIDecl())
                 );
                 this.moduleContext.setStaticBaseUri(uri);
                 baseURISet = true;

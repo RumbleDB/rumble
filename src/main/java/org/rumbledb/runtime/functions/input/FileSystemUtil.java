@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class FileSystemUtil {
             );
         }
         try {
-            URI relativeURI = new URI(url);
+            URI relativeURI = parseURIReference(url);
             URI resolvedURI = base.resolve(relativeURI);
             if (url.endsWith("/")) {
                 // preserve trailing slash if any for correct resolution against it as a directory in the future.
@@ -72,6 +73,15 @@ public class FileSystemUtil {
             rumbleException.initCause(e);
             throw rumbleException;
         }
+    }
+
+    private static URI parseURIReference(String value) throws URISyntaxException {
+        String escapedValue = value.replace(" ", "%20");
+        URI uri = new URI(escapedValue);
+        if (!value.equals(escapedValue) && uri.isOpaque()) {
+            throw new URISyntaxException(value, "Spaces are not allowed in opaque URIs");
+        }
+        return uri;
     }
 
     /*

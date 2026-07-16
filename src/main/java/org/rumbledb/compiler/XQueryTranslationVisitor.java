@@ -157,7 +157,6 @@ import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -358,7 +357,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = FileSystemUtil.resolveURI(
+        URI resolvedURI = URILiteralUtils.resolve(
             this.moduleContext.getStaticBaseURI(),
             namespace,
             createMetadataFromContext(ctx)
@@ -539,10 +538,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = FileSystemUtil.resolveURI(
+            URI uri = URILiteralUtils.resolve(
                 this.moduleContext.getStaticBaseURI(),
                 uriString,
-                ExceptionMetadata.EMPTY_METADATA
+                createMetadataFromContext(setterContext.baseURIDecl())
             );
             this.moduleContext.setStaticBaseUri(uri);
             flags.baseURISet = true;

@@ -14,7 +14,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.IOException;
 import java.net.URI;
@@ -34,12 +33,12 @@ final class ModuleImportLoader {
             ExceptionMetadata metadata
     ) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
-        URI namespaceURI = FileSystemUtil.resolveURI(baseURI, namespace, metadata);
+        URI namespaceURI = URILiteralUtils.resolve(baseURI, namespace, metadata);
         List<String> candidates = locationHints.isEmpty() ? List.of(namespace) : locationHints;
         Exception lastFailure = null;
 
         for (String candidate : candidates) {
-            URI location = FileSystemUtil.resolveURI(baseURI, candidate, metadata);
+            URI location = URILiteralUtils.resolve(baseURI, candidate, metadata);
             try {
                 LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
                     location,
