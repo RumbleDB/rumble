@@ -111,6 +111,8 @@
                             <compilerArgs>
                                 <arg>-properties</arg>
                                 <arg>${project.basedir}/org.eclipse.jdt.core.prefs</arg>
+                                <arg>--limit-modules</arg>
+                                <arg>java.se</arg>
                             </compilerArgs>
                         </configuration>
                     </execution>
@@ -423,6 +425,17 @@
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
             <version>${antlr4.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>xerces</groupId>
+            <artifactId>xercesImpl</artifactId>
+            <version>2.12.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.jline</groupId>
