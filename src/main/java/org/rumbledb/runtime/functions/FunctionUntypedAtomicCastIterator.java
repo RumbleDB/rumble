@@ -106,8 +106,8 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
             return item;
         }
         if (
-            this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
-                || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem)
+            isQNameLikeTargetType(this.targetType)
+                || isNotationLikeTargetType(this.targetType)
         ) {
             if (usesQNameCoercionErrorSemantics()) {
                 throw new CannotConvertToQNameException(
@@ -140,6 +140,20 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
             );
         }
         return converted;
+    }
+
+    private boolean isQNameLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.QNameItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.QNameItem));
+    }
+
+    private boolean isNotationLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.NOTATIONItem));
     }
 
     private boolean usesQNameCoercionErrorSemantics() {

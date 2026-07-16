@@ -135,7 +135,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return FunctionCallArgumentCoercion.wrapForFunctionConversion(
+        return FunctionCallArgumentConversion.wrapForFunctionConversion(
             callIterator,
             this.expectedReturnType,
             this.exceptionMessage,
