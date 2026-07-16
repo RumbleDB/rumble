@@ -49,25 +49,24 @@ final class SchemaCatalogLoader {
             CompilationConfiguration compilationConfiguration
     ) {
         List<SchemaImport> imports = prolog.getSchemaImports();
-        if (imports.isEmpty()) {
-            return;
-        }
-
-        ExceptionMetadata metadata = imports.get(0).getMetadata();
+        ExceptionMetadata metadata = imports.isEmpty()
+            ? ExceptionMetadata.EMPTY_METADATA
+            : imports.get(0).getMetadata();
         Map<String, List<URI>> locationsByNamespace = resolveLocations(imports, context.getStaticBaseURI());
         List<URI> locations = locationsByNamespace.values().stream().flatMap(List::stream).distinct().toList();
 
         try {
             if (locations.isEmpty()) {
+                context.setSchemaCatalog(SchemaCatalog.builtIn());
                 return;
             }
+            XMLSchemaFactory factory = new XMLSchemaFactory();
             SchemaResourceResolver resolver = new SchemaResourceResolver(
                     context.getStaticBaseURI(),
                     locationsByNamespace,
                     compilationConfiguration,
                     metadata
             );
-            XMLSchemaFactory factory = new XMLSchemaFactory();
             factory.setResourceResolver(resolver);
             Source[] sources = locations.stream().map(resolver::resolveSource).toArray(Source[]::new);
             Schema schema = factory.newSchema(sources);
