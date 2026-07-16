@@ -106,16 +106,12 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      */
     private String mediaType;
 
-    public enum NormalizationForm {
-        NFC, NFD, NFKC, NFKD, FULLY_NORMALIZED, NONE
-    }
-
     /**
      * Normalize characters using a Unicode normalization form.
      * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    private NormalizationForm normalizationForm;
+    private String normalizationForm;
 
     /**
      * Whether to declare namespace undeclarations.
@@ -238,7 +234,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         p.doctypeSystem = null;
         p.doctypePublic = null;
         p.mediaType = null;
-        p.normalizationForm = NormalizationForm.NONE;
+        p.normalizationForm = "none";
         p.undeclarePrefixes = false;
         p.characterMaps = new HashMap<>();
         p.cdataSectionElements = new HashSet<>();
@@ -322,11 +318,11 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.mediaType = mediaType;
     }
 
-    public NormalizationForm getNormalizationForm() {
+    public String getNormalizationForm() {
         return this.normalizationForm;
     }
 
-    public void setNormalizationForm(NormalizationForm normalizationForm) {
+    public void setNormalizationForm(String normalizationForm) {
         this.normalizationForm = normalizationForm;
     }
 
@@ -460,7 +456,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         output.writeString(this.doctypeSystem);
         output.writeString(this.doctypePublic);
         output.writeString(this.mediaType);
-        output.writeString(this.normalizationForm != null ? this.normalizationForm.name() : null);
+        output.writeString(this.normalizationForm);
         output.writeBoolean(this.undeclarePrefixes);
 
         // characterMaps
@@ -535,7 +531,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.doctypePublic = input.readString();
         this.mediaType = input.readString();
         String nfName = input.readString();
-        this.normalizationForm = nfName != null ? NormalizationForm.valueOf(nfName) : NormalizationForm.NONE;
+        this.normalizationForm = nfName != null ? nfName : "none";
         this.undeclarePrefixes = input.readBoolean();
 
         int cmSize = input.readInt();
@@ -624,4 +620,3 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         return copy;
     }
 }
-

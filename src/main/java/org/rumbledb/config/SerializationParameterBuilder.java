@@ -272,10 +272,11 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Parses a NormalizationForm enum value from string.
-     * Accepts: NFC, NFD, NFKC, NFKD, fully-normalized, or none (case-sensitive).
+     * Parses a normalization-form parameter value.
+     * The host language may choose to pass through values that the serializer does not support;
+     * those are then reported by the serializer as SESU0011 rather than being rejected here.
      */
-    private static SerializationParameters.NormalizationForm parseNormalizationForm(
+    private static String parseNormalizationForm(
             String parameterName,
             String value
     ) {
@@ -287,23 +288,14 @@ public final class SerializationParameterBuilder {
             );
         }
         String trimmed = value.trim();
-        // Map "fully-normalized" to "FULLY_NORMALIZED" enum value
-        if (trimmed.equals("fully-normalized")) {
-            return SerializationParameters.NormalizationForm.FULLY_NORMALIZED;
-        }
-        if (trimmed.equals("none")) {
-            return SerializationParameters.NormalizationForm.NONE;
-        }
-        // Try direct enum value (case-sensitive)
-        try {
-            return SerializationParameters.NormalizationForm.valueOf(trimmed);
-        } catch (IllegalArgumentException e) {
+        if (trimmed.isEmpty()) {
             throw new InvalidSerializationParameterValueException(
                     parameterName,
                     value,
                     "'NFC', 'NFD', 'NFKC', 'NFKD', 'fully-normalized', or 'none'"
             );
         }
+        return trimmed;
     }
 
     /**
