@@ -697,7 +697,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void setSchemaCatalog(SchemaCatalog schemaCatalog) {
         if (this.parent != null) {
-            throw new OurBadException("A schema catalog can only be set on a module context.");
+            throw new OurBadException("A schema catalog can only be stored in a module context.");
         }
         this.schemaCatalog = schemaCatalog;
     }

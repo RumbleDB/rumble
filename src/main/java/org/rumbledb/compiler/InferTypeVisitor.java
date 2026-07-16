@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -19,6 +20,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownSchemaTypeException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -2828,6 +2830,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateExpression(ValidateExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
+        if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            Name typeName = expression.getTypeName();
+            boolean isBuiltIn = BuiltinTypesCatalogue.typeExists(typeName);
+            SchemaCatalog schemaCatalog = expression.getStaticContext().getSchemaCatalog();
+            boolean isImported = schemaCatalog != null && schemaCatalog.getTypeDefinition(typeName) != null;
+            if (!isBuiltIn && !isImported) {
+                throw new UnknownSchemaTypeException(
+                        "The schema type " + typeName + " is not in scope.",
+                        expression.getMetadata()
+                );
+            }
+        }
         expression.setStaticSequenceType(expression.getMainExpression().getStaticSequenceType());
         return argument;
     }
