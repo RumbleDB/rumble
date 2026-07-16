@@ -121,7 +121,7 @@ public class SequenceType implements Serializable {
                 || superType.arity == Arity.ZeroOrMore;
         }
         if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
-            return true;
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
@@ -134,7 +134,7 @@ public class SequenceType implements Serializable {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
-            return true;
+            return hasOnlyEmptySequenceAsValue() ? emptySequenceIsSubtypeOf(superType) : true;
         }
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
@@ -148,6 +148,16 @@ public class SequenceType implements Serializable {
     // TODO: consider removing it
     public boolean isAritySubtypeOf(Arity superArity) {
         return this.arity.isSubtypeOf(superArity);
+    }
+
+    private boolean hasOnlyEmptySequenceAsValue() {
+        return this.arity == Arity.Zero || this.arity == Arity.OneOrZero || this.arity == Arity.ZeroOrMore;
+    }
+
+    private boolean emptySequenceIsSubtypeOf(SequenceType superType) {
+        return superType.isEmptySequence()
+            || superType.arity == Arity.OneOrZero
+            || superType.arity == Arity.ZeroOrMore;
     }
 
     public boolean hasEffectiveBooleanValue() {
