@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true)" :)
 let $json := {
     "entity": "&amp;",
     "raw-ampersand": "a & b",
@@ -30,5 +30,9 @@ return (
 
     (: Values flowing from XML to JSONiq and through a nested constructor. :)
     { "value": data($xml/@decoded) }.value eq "&",
-    data(<outer x="{data(<inner y="&amp;"/>/@y)}"/>/@x) eq "&"
+    data(<outer x="{data(<inner y="&amp;"/>/@y)}"/>/@x) eq "&",
+
+    (: Nested interpolated attributes return to each surrounding delimiter. :)
+    data(<outer x="{data(<inner y="{1 + 1}"/>/@y)}"/>/@x) eq "2",
+    data(<outer x='{data(<inner y='{1 + 1}'/>/@y)}'/>/@x) eq "2"
 )
