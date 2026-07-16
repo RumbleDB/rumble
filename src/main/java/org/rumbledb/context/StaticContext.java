@@ -54,6 +54,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
+    private transient SchemaCatalog schemaCatalog;
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
@@ -685,6 +686,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public SchemaCatalog getSchemaCatalog() {
+        if (this.schemaCatalog != null) {
+            return this.schemaCatalog;
+        }
+        return this.parent == null ? null : this.parent.getSchemaCatalog();
+    }
+
+    public void setSchemaCatalog(SchemaCatalog schemaCatalog) {
+        if (this.parent != null) {
+            throw new OurBadException("A schema catalog can only be set on a module context.");
+        }
+        this.schemaCatalog = schemaCatalog;
     }
 
     public int getCurrentMutabilityLevel() {

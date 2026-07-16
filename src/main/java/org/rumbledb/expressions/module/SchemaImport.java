@@ -52,7 +52,9 @@ public class SchemaImport extends Node {
             throw new OurBadException("A schema import cannot contain null components.");
         }
         if ((bindingKind == BindingKind.PREFIX) != (prefix != null)) {
-            throw new OurBadException("A schema import with a prefix binding must have a non-null prefix, and vice versa.");
+            throw new OurBadException(
+                    "A schema import with a prefix binding must have a non-null prefix, and vice versa."
+            );
         }
         this.targetNamespace = targetNamespace;
         this.bindingKind = bindingKind;

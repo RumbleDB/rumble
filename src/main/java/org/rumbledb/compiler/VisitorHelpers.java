@@ -408,6 +408,11 @@ public class VisitorHelpers {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
             MainModule mainModule = (MainModule) visitor.visit(main);
+            SchemaCatalogLoader.load(
+                mainModule.getProlog(),
+                mainModule.getStaticContext(),
+                compilationConfiguration
+            );
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
@@ -521,6 +526,11 @@ public class VisitorHelpers {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            SchemaCatalogLoader.load(
+                libraryModule.getProlog(),
+                libraryModule.getStaticContext(),
+                compilationConfiguration
+            );
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
