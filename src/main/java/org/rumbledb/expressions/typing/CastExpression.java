@@ -23,7 +23,7 @@ public class CastExpression extends Expression {
         }
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
-        if (sequenceType.getArity() != Arity.OneOrZero && sequenceType.getArity() != Arity.One) {
+        if (!(sequenceType.getArity() == Arity.OneOrZero || sequenceType.getArity() == Arity.One)) {
             throw new OurBadException(
                     "Cast expressions cannot have an arity of more than one, something went wrong with the parser."
             );
