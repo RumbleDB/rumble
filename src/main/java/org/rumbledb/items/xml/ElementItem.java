@@ -27,8 +27,8 @@ public class ElementItem implements Item {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    private ItemType typeAnnotation;
-    // TODO: add base-uri, is-id, is-idrefs
+    private XmlSchemaNodeProperties schemaProperties;
+    // TODO: add base-uri
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
@@ -43,7 +43,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
@@ -64,7 +64,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
@@ -97,7 +97,7 @@ public class ElementItem implements Item {
         Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
-        copy.typeAnnotation = this.typeAnnotation;
+        copy.schemaProperties = this.schemaProperties;
         return copy;
     }
 
@@ -135,7 +135,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.namespaces);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
-        kryo.writeClassAndObject(output, this.typeAnnotation);
+        this.schemaProperties.write(kryo, output);
     }
 
     @SuppressWarnings("unchecked")
@@ -148,7 +148,7 @@ public class ElementItem implements Item {
         this.namespaces = kryo.readObject(input, HashMap.class);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
-        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
+        this.schemaProperties = XmlSchemaNodeProperties.read(kryo, input);
     }
 
     @Override
@@ -307,13 +307,14 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
-     *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
-     * returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
-        return Collections.emptyList();
+        return switch (this.schemaProperties.nilled()) {
+            case ABSENT -> Collections.emptyList();
+            case FALSE -> Collections.singletonList(ItemFactory.getInstance().createBooleanItem(false));
+            case TRUE -> Collections.singletonList(ItemFactory.getInstance().createBooleanItem(true));
+        };
     }
 
     @Override
@@ -349,11 +350,12 @@ public class ElementItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
+        if (typeAnnotation == null || !typeAnnotation.hasName()) {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+            ItemFactory.getInstance().createQNameItem(typeAnnotation.getName())
         );
     }
 
@@ -372,13 +374,24 @@ public class ElementItem implements Item {
         return this.atomizedValue();
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
-        this.typeAnnotation = typeAnnotation;
+        this.schemaProperties = this.schemaProperties.withTypeAnnotation(typeAnnotation);
     }
 
     @Override
     public ItemType getSchemaType() {
-        return this.typeAnnotation;
+        return this.schemaProperties.typeAnnotation();
+    }
+
+    @Override
+    public void setXmlSchemaProperties(XmlSchemaNodeProperties properties) {
+        this.schemaProperties = properties;
+    }
+
+    @Override
+    public XmlSchemaNodeProperties getXmlSchemaProperties() {
+        return this.schemaProperties;
     }
 
     @Override
@@ -430,10 +443,11 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
+        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
+        if (typeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
+                typeAnnotation,
                 org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);

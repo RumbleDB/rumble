@@ -21,8 +21,7 @@ public class AttributeItem implements Item {
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    private ItemType typeAnnotation;
-    // TODO: add is-id, is-idrefs
+    private XmlSchemaNodeProperties schemaProperties;
 
     // needed for kryo
     public AttributeItem() {
@@ -31,19 +30,19 @@ public class AttributeItem implements Item {
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
     }
 
     @Override
     public Item copy(boolean mutable) {
         AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
-        copy.typeAnnotation = this.typeAnnotation;
+        copy.schemaProperties = this.schemaProperties;
         return copy;
     }
 
@@ -65,7 +64,7 @@ public class AttributeItem implements Item {
         kryo.writeClassAndObject(output, this.parent);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
-        kryo.writeClassAndObject(output, this.typeAnnotation);
+        this.schemaProperties.write(kryo, output);
     }
 
     @Override
@@ -74,7 +73,7 @@ public class AttributeItem implements Item {
         this.parent = (Item) kryo.readClassAndObject(input);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
-        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
+        this.schemaProperties = XmlSchemaNodeProperties.read(kryo, input);
     }
 
     @Override
@@ -137,13 +136,10 @@ public class AttributeItem implements Item {
      *
      * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
      * is derived by restriction from xs:ID; otherwise it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.schemaProperties.id();
     }
 
     /**
@@ -152,13 +148,10 @@ public class AttributeItem implements Item {
      * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
      * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
      * it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.schemaProperties.idRefs();
     }
 
     @Override
@@ -195,10 +188,11 @@ public class AttributeItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
+        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
+        if (typeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
+                typeAnnotation,
                 org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);
@@ -263,20 +257,32 @@ public class AttributeItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        ItemType typeAnnotation = this.schemaProperties.typeAnnotation();
+        if (typeAnnotation == null || !typeAnnotation.hasName()) {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+            ItemFactory.getInstance().createQNameItem(typeAnnotation.getName())
         );
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
-        this.typeAnnotation = typeAnnotation;
+        this.schemaProperties = this.schemaProperties.withTypeAnnotation(typeAnnotation);
     }
 
     @Override
     public ItemType getSchemaType() {
-        return this.typeAnnotation;
+        return this.schemaProperties.typeAnnotation();
+    }
+
+    @Override
+    public void setXmlSchemaProperties(XmlSchemaNodeProperties properties) {
+        this.schemaProperties = properties;
+    }
+
+    @Override
+    public XmlSchemaNodeProperties getXmlSchemaProperties() {
+        return this.schemaProperties;
     }
 }
