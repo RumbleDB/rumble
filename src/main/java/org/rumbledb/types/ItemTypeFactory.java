@@ -31,6 +31,15 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ItemTypeFactory {
 
+    public static ItemType createXmlSchemaAtomicType(Name name, ItemType baseType) {
+        return new DerivedAtomicItemType(
+                name,
+                baseType,
+                baseType.getPrimitiveType(),
+                Facets.createAtomicTypeFacets(null, null, null, null, null, null, null, null, null, null)
+        );
+    }
+
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();
