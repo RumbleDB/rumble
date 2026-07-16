@@ -61,6 +61,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     private String encoding;
 
     /**
+     * Output version (for example XML 1.0/1.1 or HTML 4.0/5.0 depending on the method).
+     * "version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
+     */
+    private String version;
+
+    /**
      * Whether to omit the XML declaration.
      * "omit-xml-declaration" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
@@ -99,16 +106,12 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      */
     private String mediaType;
 
-    public enum NormalizationForm {
-        NFC, NFD, NFKC, NFKD, FULLY_NORMALIZED, NONE
-    }
-
     /**
      * Normalize characters using a Unicode normalization form.
      * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    private NormalizationForm normalizationForm;
+    private String normalizationForm;
 
     /**
      * Whether to declare namespace undeclarations.
@@ -225,12 +228,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         // Spec-aligned conservative defaults; implementation-defined noted explicitly
         p.method = "xml-json-hybrid"; // implementation defined default
         p.encoding = "UTF-8";
+        p.version = null;
         p.omitXmlDeclaration = false;
         p.standalone = Standalone.OMIT;
         p.doctypeSystem = null;
         p.doctypePublic = null;
         p.mediaType = null;
-        p.normalizationForm = NormalizationForm.NONE;
+        p.normalizationForm = "none";
         p.undeclarePrefixes = false;
         p.characterMaps = new HashMap<>();
         p.cdataSectionElements = new HashSet<>();
@@ -264,6 +268,14 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     public void setEncoding(String encoding) {
         this.encoding = encoding;
+    }
+
+    public String getVersion() {
+        return this.version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 
     public boolean getOmitXmlDeclaration() {
@@ -306,11 +318,11 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.mediaType = mediaType;
     }
 
-    public NormalizationForm getNormalizationForm() {
+    public String getNormalizationForm() {
         return this.normalizationForm;
     }
 
-    public void setNormalizationForm(NormalizationForm normalizationForm) {
+    public void setNormalizationForm(String normalizationForm) {
         this.normalizationForm = normalizationForm;
     }
 
@@ -438,12 +450,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         output.writeString(this.method);
         output.writeString(this.encoding);
+        output.writeString(this.version);
         output.writeBoolean(this.omitXmlDeclaration);
         output.writeString(this.standalone != null ? this.standalone.name() : null);
         output.writeString(this.doctypeSystem);
         output.writeString(this.doctypePublic);
         output.writeString(this.mediaType);
-        output.writeString(this.normalizationForm != null ? this.normalizationForm.name() : null);
+        output.writeString(this.normalizationForm);
         output.writeBoolean(this.undeclarePrefixes);
 
         // characterMaps
@@ -510,6 +523,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.method = input.readString();
         this.encoding = input.readString();
+        this.version = input.readString();
         this.omitXmlDeclaration = input.readBoolean();
         String standaloneName = input.readString();
         this.standalone = standaloneName != null ? Standalone.valueOf(standaloneName) : Standalone.OMIT;
@@ -517,7 +531,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.doctypePublic = input.readString();
         this.mediaType = input.readString();
         String nfName = input.readString();
-        this.normalizationForm = nfName != null ? NormalizationForm.valueOf(nfName) : NormalizationForm.NONE;
+        this.normalizationForm = nfName != null ? nfName : "none";
         this.undeclarePrefixes = input.readBoolean();
 
         int cmSize = input.readInt();
@@ -581,6 +595,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         SerializationParameters copy = new SerializationParameters();
         copy.method = parameters.method;
         copy.encoding = parameters.encoding;
+        copy.version = parameters.version;
         copy.omitXmlDeclaration = parameters.omitXmlDeclaration;
         copy.standalone = parameters.standalone;
         copy.doctypeSystem = parameters.doctypeSystem;
@@ -605,5 +620,3 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         return copy;
     }
 }
-
-

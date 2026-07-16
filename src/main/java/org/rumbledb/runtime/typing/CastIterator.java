@@ -779,6 +779,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             item.getStringValue(),
             targetType.getCastingPrimitiveType()
         );
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null) {
+            return xmlNameValidation;
+        }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
                 return true;
@@ -820,12 +824,29 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             return true;
         }
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), primitive);
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null) {
+            return xmlNameValidation;
+        }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private static Boolean checkXmlSchemaNameFamilyLexicalConstraint(String lexical, ItemType targetType) {
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.NCNameItem)) {
+            return NamespaceBindingUtils.isValidNcName(lexical);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.NameItem)) {
+            return NamespaceBindingUtils.isValidXmlName(lexical);
+        }
+        if (targetType.isSubtypeOf(BuiltinTypesCatalogue.NMTOKENItem)) {
+            return NamespaceBindingUtils.isValidXmlNmToken(lexical);
+        }
+        return null;
     }
 
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {

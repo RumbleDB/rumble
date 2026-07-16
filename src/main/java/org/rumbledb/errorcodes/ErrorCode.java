@@ -247,5 +247,6 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidAnnotation = registerBuiltIn("XQAN0001");
     public static final ErrorCode InvalidVariableDeclaration = registerBuiltIn("SCIN0001");
 
+    public static final ErrorCode UnsupportedNormalizationFormSerialization = registerBuiltIn("SESU0011");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
 }
