@@ -4,5 +4,8 @@
     targetNamespace="urn:example:compiled-schema"
     xmlns="urn:example:compiled-schema"
     elementFormDefault="qualified">
-    <xs:element name="root" type="xs:string"/>
+    <xs:simpleType name="Code">
+        <xs:restriction base="xs:string"/>
+    </xs:simpleType>
+    <xs:element name="root" type="Code"/>
 </xs:schema>
