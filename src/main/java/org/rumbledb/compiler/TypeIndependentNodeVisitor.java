@@ -665,4 +665,14 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 expression.getMetadata()
         );
     }
+
+    @Override
+    public Node visitValidateExpression(ValidateExpression expression, Node argument) {
+        return new ValidateExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getValidationMode(),
+                expression.getTypeName(),
+                expression.getMetadata()
+        );
+    }
 }

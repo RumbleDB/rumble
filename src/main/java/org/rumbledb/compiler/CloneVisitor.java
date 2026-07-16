@@ -90,6 +90,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
@@ -1247,6 +1248,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getMainExpression(), argument),
                 expression.isValidate(),
                 expression.getSequenceType(),
+                expression.getMetadata()
+        );
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitValidateExpression(ValidateExpression expression, Node argument) {
+        Expression result = new ValidateExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getValidationMode(),
+                expression.getTypeName(),
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
