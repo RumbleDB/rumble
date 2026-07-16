@@ -131,7 +131,6 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
@@ -1577,10 +1576,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(XQueryParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
-        // TODO: this is not implemented in XQuery. Throw an unsupported feature exception.
+        throw new UnsupportedFeatureException(
+                "XML Schema validate expressions are not supported yet",
+                createMetadataFromContext(ctx)
+        );
     }
     // endregion
 
