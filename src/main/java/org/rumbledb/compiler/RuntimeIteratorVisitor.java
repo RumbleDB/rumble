@@ -37,7 +37,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.ExecutionMode;
@@ -146,6 +145,7 @@ import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -253,7 +253,9 @@ import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
+import org.rumbledb.runtime.xml.ValidateRuntimeIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
@@ -1240,6 +1242,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        DocumentNodeConstructorRuntimeIterator result = new DocumentNodeConstructorRuntimeIterator(
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
     public RuntimeIterator visitTextNodeConstructor(
             TextNodeConstructorExpression expression,
             RuntimeIterator argument
@@ -1723,10 +1739,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitValidateExpression(ValidateExpression expression, RuntimeIterator argument) {
-        throw new UnsupportedFeatureException(
-                "XML Schema validation is not supported yet",
-                expression.getMetadata()
+        RuntimeIterator operand = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator result = new ValidateRuntimeIterator(
+                operand,
+                expression.getValidationMode(),
+                expression.getTypeName(),
+                expression.getStaticContext().getSchemaCatalog(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
     }
 
     @Override
