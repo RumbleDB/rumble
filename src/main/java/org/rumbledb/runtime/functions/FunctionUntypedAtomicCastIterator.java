@@ -128,7 +128,18 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        return CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        Item converted = CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        if (converted == null) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + item.getDynamicType()
+                        + " cannot be implicitly converted to type "
+                        + this.targetType
+                        + ".",
+                    getMetadata()
+            );
+        }
+        return converted;
     }
 
     private boolean usesQNameCoercionErrorSemantics() {

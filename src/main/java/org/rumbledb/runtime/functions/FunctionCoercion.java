@@ -107,7 +107,13 @@ public final class FunctionCoercion {
                 item.isFunction()
                     ? item.getModuleDynamicContext()
                     : new DynamicContext(staticContext.getConfiguration()),
-                new FunctionCoercionRuntimeIterator(item, parameterNames, staticContext),
+                new FunctionCoercionRuntimeIterator(
+                        item,
+                        parameterNames,
+                        expectedSignature.getReturnType(),
+                        exceptionMessage,
+                        staticContext
+                ),
                 false
         );
     }
