@@ -2,8 +2,14 @@ package org.rumbledb.serialization;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
+
+import java.util.List;
 
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
@@ -33,35 +39,20 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
         if (item.isArray()) {
             sb.append("[");
-
-            String separator = " ";
-            if (this.params.getIndent()) {
-                separator = "\n" + indent + "  ";
-            }
-            boolean firstTime = true;
-            for (Item member : item.getItemMembers()) {
-                sb.append(separator);
-                if (firstTime) {
-                    separator = "," + separator;
-                    firstTime = false;
-                }
-                if (this.params.getIndent()) {
-                    serialize(member, sb, indent + "  ", false);
-                } else {
-                    serialize(member, sb, "", false);
-                }
-            }
-            if (this.params.getIndent()) {
-                sb.append("\n" + indent);
+            if (item.isArrayOfItems()) {
+                appendArrayMembers(item.getItemMembers(), sb, indent);
             } else {
-                sb.append(" ");
+                appendArraySequenceMembers(item.getSequenceMembers(), sb, indent);
+            }
+            if (this.params.getIndent()) {
+                sb.append("\n").append(indent);
             }
             sb.append("]");
             return;
         }
         if (item.isObject()) {
             sb.append("{");
-            String separator = " ";
+            String separator = "";
             if (this.params.getIndent()) {
                 separator = "\n" + indent + "  ";
             }
@@ -73,17 +64,16 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(":");
                 if (this.params.getIndent()) {
+                    sb.append(" ");
                     serialize(value, sb, indent + "  ", false);
                 } else {
                     serialize(value, sb, "", false);
                 }
             }
             if (this.params.getIndent()) {
-                sb.append("\n" + indent);
-            } else {
-                sb.append(" ");
+                sb.append("\n").append(indent);
             }
             sb.append("}");
             return;
@@ -179,15 +169,25 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
     }
 
     private void appendJSONAtomicItem(Item item, StringBuilder sb) {
+        if (item.isNull()) {
+            sb.append("null");
+            return;
+        }
         boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
-                isStringValue = true;
+                throw jsonSerializationError(
+                    "JSON serialization does not allow NaN or infinite xs:double values.",
+                    "SERE0020"
+                );
             }
         }
         if (item.isFloat()) {
             if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
-                isStringValue = true;
+                throw jsonSerializationError(
+                    "JSON serialization does not allow NaN or infinite xs:float values.",
+                    "SERE0020"
+                );
             }
         }
         if (isStringValue) {
@@ -198,6 +198,86 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             sb.append(item.getStringValue());
         }
     }
+
+    private void appendArrayMembers(List<Item> members, StringBuilder sb, String indent) {
+        String separator = "";
+        if (this.params.getIndent()) {
+            separator = "\n" + indent + "  ";
+        }
+        boolean firstTime = true;
+        for (Item member : members) {
+            sb.append(separator);
+            if (firstTime) {
+                separator = "," + separator;
+                firstTime = false;
+            }
+            if (this.params.getIndent()) {
+                serialize(member, sb, indent + "  ", false);
+            } else {
+                serialize(member, sb, "", false);
+            }
+        }
+    }
+
+    private void appendArraySequenceMembers(List<List<Item>> memberSequences, StringBuilder sb, String indent) {
+        String separator = "";
+        if (this.params.getIndent()) {
+            separator = "\n" + indent + "  ";
+        }
+        boolean firstTime = true;
+        for (List<Item> memberSequence : memberSequences) {
+            sb.append(separator);
+            if (firstTime) {
+                separator = "," + separator;
+                firstTime = false;
+            }
+            appendJsonSequenceAsValue(memberSequence, sb, indent + "  ");
+        }
+    }
+
+    private void appendJsonSequenceAsValue(List<Item> sequence, StringBuilder sb, String indent) {
+        if (sequence == null || sequence.isEmpty()) {
+            sb.append("null");
+            return;
+        }
+        if (sequence.size() == 1) {
+            if (this.params.getIndent()) {
+                serialize(sequence.get(0), sb, indent, false);
+            } else {
+                serialize(sequence.get(0), sb, "", false);
+            }
+            return;
+        }
+
+        sb.append("[");
+        String separator = "";
+        if (this.params.getIndent()) {
+            separator = "\n" + indent + "  ";
+        }
+        boolean firstTime = true;
+        for (Item item : sequence) {
+            sb.append(separator);
+            if (firstTime) {
+                separator = "," + separator;
+                firstTime = false;
+            }
+            if (this.params.getIndent()) {
+                serialize(item, sb, indent + "  ", false);
+            } else {
+                serialize(item, sb, "", false);
+            }
+        }
+        if (this.params.getIndent()) {
+            sb.append("\n").append(indent);
+        }
+        sb.append("]");
+    }
+
+    private RumbleException jsonSerializationError(String message, String errorCode) {
+        return new RumbleException(
+                message,
+                new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
+                ExceptionMetadata.EMPTY_METADATA
+        );
+    }
 }
-
-
