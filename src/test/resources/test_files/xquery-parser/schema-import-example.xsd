@@ -2,12 +2,23 @@
 <xs:schema
     xmlns:xs="http://www.w3.org/2001/XMLSchema"
     targetNamespace="urn:example:compiled-schema"
+    xmlns:ex="urn:example:compiled-schema"
     xmlns="urn:example:compiled-schema"
     elementFormDefault="qualified">
     <xs:simpleType name="Code">
-        <xs:restriction base="xs:string">
+        <xs:restriction base="xs:token">
             <xs:pattern value="[A-Z]{3}"/>
         </xs:restriction>
     </xs:simpleType>
-    <xs:element name="root" type="Code"/>
+    <xs:attribute name="qualified-status" type="xs:string" default="qualified"/>
+    <xs:element name="root">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="Code">
+                    <xs:attribute name="status" type="xs:string" default="active"/>
+                    <xs:attribute ref="ex:qualified-status"/>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
 </xs:schema>

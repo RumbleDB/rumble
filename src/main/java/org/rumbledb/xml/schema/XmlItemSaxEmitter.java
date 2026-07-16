@@ -9,6 +9,7 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import javax.xml.validation.ValidatorHandler;
 
@@ -21,9 +22,11 @@ import org.xml.sax.helpers.AttributesImpl;
 final class XmlItemSaxEmitter {
 
     private final ValidatorHandler handler;
+    private final Consumer<String> commentHandler;
 
-    XmlItemSaxEmitter(ValidatorHandler handler) {
+    XmlItemSaxEmitter(ValidatorHandler handler, Consumer<String> commentHandler) {
         this.handler = handler;
+        this.commentHandler = commentHandler;
     }
 
     void emit(Item root) throws SAXException {
@@ -42,8 +45,8 @@ final class XmlItemSaxEmitter {
         }
 
         Name name = element.nodeName();
-        String namespace = namespaceUri(name);
-        String qualifiedName = qualifiedName(name);
+        String namespace = XmlNameCodec.namespaceUri(name);
+        String qualifiedName = XmlNameCodec.qualifiedName(name);
         this.handler.startElement(namespace, name.getLocalName(), qualifiedName, attributes(element));
         for (Item child : element.children()) {
             emitChild(child);
@@ -63,6 +66,8 @@ final class XmlItemSaxEmitter {
             this.handler.characters(text, 0, text.length);
         } else if (child.isProcessingInstructionNode()) {
             this.handler.processingInstruction(child.nodeName().getLocalName(), child.getStringValue());
+        } else if (child.isCommentNode()) {
+            this.commentHandler.accept(child.getStringValue());
         }
     }
 
@@ -71,9 +76,9 @@ final class XmlItemSaxEmitter {
         for (Item attribute : element.attributes()) {
             Name name = attribute.nodeName();
             result.addAttribute(
-                namespaceUri(name),
+                XmlNameCodec.namespaceUri(name),
                 name.getLocalName(),
-                qualifiedName(name),
+                XmlNameCodec.qualifiedName(name),
                 "CDATA",
                 attribute.getStringValue()
             );
@@ -81,12 +86,4 @@ final class XmlItemSaxEmitter {
         return result;
     }
 
-    private static String namespaceUri(Name name) {
-        return name.getNamespace() == null ? "" : name.getNamespace();
-    }
-
-    private static String qualifiedName(Name name) {
-        String prefix = name.getPrefix();
-        return prefix == null || prefix.isEmpty() ? name.getLocalName() : prefix + ":" + name.getLocalName();
-    }
 }

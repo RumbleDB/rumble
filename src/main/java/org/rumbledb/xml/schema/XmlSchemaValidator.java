@@ -9,6 +9,7 @@ package org.rumbledb.xml.schema;
 
 import javax.xml.validation.ValidatorHandler;
 
+import org.apache.xerces.xs.PSVIProvider;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -27,14 +28,15 @@ public final class XmlSchemaValidator {
 
     private static final String ROOT_TYPE_DEFINITION =
         "http://apache.org/xml/properties/validation/schema/root-type-definition";
-
     private final SchemaCatalog schemaCatalog;
+    private final XmlSchemaAtomicTypeMapper typeMapper;
 
     public XmlSchemaValidator(SchemaCatalog schemaCatalog) {
         this.schemaCatalog = schemaCatalog;
+        this.typeMapper = new XmlSchemaAtomicTypeMapper();
     }
 
-    public void validateStrict(Item validationRoot, ExceptionMetadata metadata) {
+    public Item validateStrict(Item validationRoot, ExceptionMetadata metadata) {
         Name rootName = validationRoot.nodeName();
         if (
             this.schemaCatalog.schemaModel()
@@ -46,21 +48,27 @@ public final class XmlSchemaValidator {
                     metadata
             );
         }
-        validate(validationRoot, null, metadata);
+        return validate(validationRoot, null, metadata);
     }
 
-    public void validateType(Item validationRoot, Name typeName, ExceptionMetadata metadata) {
+    public Item validateType(Item validationRoot, Name typeName, ExceptionMetadata metadata) {
         XSTypeDefinition type = this.schemaCatalog.getTypeDefinition(typeName);
         if (type == null) {
             throw new OurBadException("The statically resolved XML Schema type is unavailable at runtime.", metadata);
         }
-        validate(validationRoot, type, metadata);
+        return validate(validationRoot, type, metadata);
     }
 
-    private void validate(Item validationRoot, XSTypeDefinition rootType, ExceptionMetadata metadata) {
+    private Item validate(Item validationRoot, XSTypeDefinition rootType, ExceptionMetadata metadata) {
         ValidatorHandler handler = createHandler(rootType, metadata);
+        if (!(handler instanceof PSVIProvider psviProvider)) {
+            throw new OurBadException("The Xerces validator does not expose PSVI information.", metadata);
+        }
+        PsviNodeBuilder builder = new PsviNodeBuilder(psviProvider, this.typeMapper);
+        handler.setContentHandler(builder);
         try {
-            new XmlItemSaxEmitter(handler).emit(validationRoot);
+            new XmlItemSaxEmitter(handler, builder::comment).emit(validationRoot);
+            return builder.getResult();
         } catch (SAXException exception) {
             throw new InvalidInstanceException(
                     "XML Schema validation failed: " + exception.getMessage(),
@@ -72,7 +80,6 @@ public final class XmlSchemaValidator {
     private ValidatorHandler createHandler(XSTypeDefinition rootType, ExceptionMetadata metadata) {
         ValidatorHandler handler = this.schemaCatalog.validationSchema().newValidatorHandler();
         handler.setErrorHandler(new ThrowingErrorHandler());
-        handler.setContentHandler(new DefaultHandler());
         if (rootType != null) {
             try {
                 handler.setProperty(ROOT_TYPE_DEFINITION, rootType);

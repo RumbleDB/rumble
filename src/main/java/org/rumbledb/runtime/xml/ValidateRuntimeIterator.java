@@ -7,6 +7,7 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -19,6 +20,8 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.ValidateException;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.xml.schema.XmlSchemaValidator;
@@ -51,17 +54,16 @@ public final class ValidateRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         Item operand = materializeOperand(dynamicContext);
         Item validationRoot = requireValidationRoot(operand);
 
-        switch (this.validationMode) {
+        Item validatedRoot = switch (this.validationMode) {
             case STRICT -> this.schemaValidator.validateStrict(validationRoot, getMetadata());
             case TYPE -> this.schemaValidator.validateType(validationRoot, this.typeName, getMetadata());
             case LAX -> throw new UnsupportedFeatureException(
                     "XQuery lax XML Schema validation is not supported yet.",
                     getMetadata()
             );
-        }
-
-        Item result = operand.copy(false);
-        resetAnnotationsAndParents(result, null);
+        };
+        Item result = rebuildOperand(operand, validatedRoot);
+        result.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
         return result;
     }
 
@@ -120,23 +122,16 @@ public final class ValidateRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         );
     }
 
-    private static void resetAnnotationsAndParents(Item item, Item parent) {
-        if (item.isElementNode()) {
-            item.setParent(parent);
-            item.setSchemaType(null);
-            for (Item attribute : item.attributes()) {
-                attribute.setParent(item);
-                attribute.setSchemaType(null);
-            }
-            for (Item child : item.children()) {
-                resetAnnotationsAndParents(child, item);
-            }
-        } else if (item.isDocumentNode()) {
-            for (Item child : item.children()) {
-                resetAnnotationsAndParents(child, item);
-            }
-        } else if (parent != null) {
-            item.setParent(parent);
+    private static Item rebuildOperand(Item operand, Item validatedRoot) {
+        if (operand.isElementNode()) {
+            return validatedRoot;
         }
+        List<Item> children = new ArrayList<>(operand.children().size());
+        for (Item child : operand.children()) {
+            children.add(child.isElementNode() ? validatedRoot : child.copy(false));
+        }
+        Item document = ItemFactory.getInstance().createXmlDocumentNode(children);
+        document.addParentToDescendants();
+        return document;
     }
 }
