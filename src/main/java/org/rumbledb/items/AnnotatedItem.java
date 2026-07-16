@@ -882,7 +882,9 @@ public class AnnotatedItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return this.itemToAnnotate.atomizedValue();
+        // An annotated atomic item atomizes to itself. Delegating to the
+        // wrapped item would discard the annotation and lose its subtype.
+        return this.isAtomic() ? List.of(this) : this.itemToAnnotate.atomizedValue();
     }
 
     @Override

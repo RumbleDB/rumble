@@ -24,21 +24,15 @@ package org.rumbledb.runtime.functions.io;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.net.URI;
 import java.util.List;
 
-public class UnparsedTextFunctionIterator extends LocalFunctionCallIterator {
+public class UnparsedTextFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-
-    private transient Item path;
 
     public UnparsedTextFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,47 +42,24 @@ public class UnparsedTextFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.path = this.iterator.materializeFirstItemOrNull(context);
-        this.hasNext = this.path != null;
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.iterator = this.children.get(0);
-        this.path = this.iterator.materializeFirstItemOrNull(context);
-        this.hasNext = this.path != null;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.path = null;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
-                this.path.getStringValue(),
-                getMetadata()
-            );
-            String result = FileSystemUtil.readContent(
-                uri,
-                getMetadata()
-            );
-            this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(result);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item hrefItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (hrefItem == null) {
+            return null;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " unparsed-text function",
-                getMetadata()
+        String encoding = null;
+        if (this.children.size() == 2) {
+            Item encodingItem = this.children.get(1).materializeFirstItemOrNull(context);
+            encoding = encodingItem.getStringValue();
+        }
+
+        String result = UnparsedTextReader.read(
+            this.staticURI,
+            hrefItem.getStringValue(),
+            encoding,
+            getConfiguration().semantics().xmlVersion(),
+            getMetadata()
         );
+        return ItemFactory.getInstance().createStringItem(result);
     }
-
-
 }

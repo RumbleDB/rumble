@@ -36,7 +36,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class VisitorHelpers {
 
@@ -136,6 +135,17 @@ public class VisitorHelpers {
         }
     }
 
+    private static URI resolveStaticBaseUri(String url) {
+        URI resolved = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+            url,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        if (url != null && url.endsWith("/") && !resolved.toString().endsWith("/")) {
+            resolved = URI.create(resolved + "/");
+        }
+        return resolved;
+    }
+
     public static MainModule parseMainModuleFromLocation(
             URI location,
             RumbleConfiguration configuration,
@@ -145,10 +155,7 @@ public class VisitorHelpers {
         InputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.semantics().staticBaseUri() != null) {
-            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                configuration.semantics().staticBaseUri(),
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            location = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
         }
         return parseMainModule(query, location, configuration, externalBindings);
     }
@@ -163,10 +170,7 @@ public class VisitorHelpers {
         InputStream in = FileSystemUtil.getDataInputStream(location, metadata);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
         if (configuration.semantics().staticBaseUri() != null) {
-            location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                configuration.semantics().staticBaseUri(),
-                ExceptionMetadata.EMPTY_METADATA
-            );
+            location = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
         }
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
@@ -176,11 +180,10 @@ public class VisitorHelpers {
             RumbleConfiguration configuration,
             ExternalBindings externalBindings
     ) {
-        String url = Objects.requireNonNullElse(configuration.semantics().staticBaseUri(), ".");
-        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            url,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        String url = configuration.semantics().staticBaseUri() == null
+            ? "."
+            : configuration.semantics().staticBaseUri();
+        URI location = resolveStaticBaseUri(url);
         return parseMainModule(query, location, configuration, externalBindings);
     }
 

@@ -392,7 +392,37 @@ public class ElementItem implements Item {
         if (this.namespaces == null) {
             this.namespaces = new HashMap<>();
         }
-        this.namespaces.put(namespace.getPrefix(), namespace.getUri());
+        String prefix = namespace.getPrefix();
+        String uri = namespace.getUri();
+
+        // Namespace declarations can conflict with the prefix retained in a
+        // constructed element/attribute QName. Preserve the expanded name by
+        // assigning a fresh prefix and declaring it for the original URI.
+        if (hasConflictingPrefix(this.dmNodeName, prefix, uri)) {
+            String replacement = freshPrefix();
+            this.dmNodeName = new Name(this.dmNodeName.getNamespace(), replacement, this.dmNodeName.getLocalName());
+            this.namespaces.put(replacement, this.dmNodeName.getNamespace());
+        }
+        this.namespaces.put(prefix, uri);
+    }
+
+    private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
+        return name != null
+            && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
+            && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+    }
+
+    private String normalizeNamespaceComponent(String value) {
+        return value == null ? "" : value;
+    }
+
+    private String freshPrefix() {
+        int counter = 0;
+        String candidate;
+        do {
+            candidate = "ns" + counter++;
+        } while (this.namespaces.containsKey(candidate));
+        return candidate;
     }
 
 

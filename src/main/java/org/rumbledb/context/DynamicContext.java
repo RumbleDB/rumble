@@ -162,12 +162,19 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, DynamicContext.class);
         kryo.writeObject(output, this.variableValues);
+        output.writeBoolean(this.currentDateTime != null);
+        if (this.currentDateTime != null) {
+            output.writeString(this.currentDateTime.toString());
+        }
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
         this.variableValues = kryo.readObject(input, VariableValues.class);
+        if (input.readBoolean()) {
+            this.currentDateTime = OffsetDateTime.parse(input.readString());
+        }
     }
 
     public int getCurrentMutabilityLevel() {
