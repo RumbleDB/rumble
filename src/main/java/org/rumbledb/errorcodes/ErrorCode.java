@@ -191,6 +191,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
+    public static final ErrorCode SchemaImportWithoutTargetNamespaceErrorCode = registerBuiltIn("XQST0057");
+    public static final ErrorCode DuplicateSchemaImportErrorCode = registerBuiltIn("XQST0058");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");

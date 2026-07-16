@@ -50,6 +50,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
@@ -157,6 +158,10 @@ public abstract class AbstractNodeVisitor<T> {
 
     public T visitProlog(Prolog expression, T argument) {
         return defaultAction(expression, argument);
+    }
+
+    public T visitSchemaImport(SchemaImport schemaImport, T argument) {
+        return defaultAction(schemaImport, argument);
     }
 
     // endregion
