@@ -24,7 +24,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 public class UpdateTargetIsEmptySeqException extends RumbleException {
 
-    private static final long serialVersionUID = 1L;
+    private static final long SERIAL_VERSION_UID = 1L;
 
     public UpdateTargetIsEmptySeqException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.UpdateTargetIsEmptySeqErrorCode, metadata);
