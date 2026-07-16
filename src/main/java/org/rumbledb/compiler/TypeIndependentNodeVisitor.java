@@ -95,6 +95,27 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     }
 
     @Override
+    public Node visitWindowClause(WindowClause clause, Node argument) {
+        return new WindowClause(
+                clause.getWindowType(),
+                clause.getWindowVariable(),
+                clause.getActualSequenceType(),
+                (Expression) visit(clause.getExpression(), argument),
+                cloneWindowCondition(clause.getStartCondition(), argument),
+                clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
+                clause.getMetadata()
+        );
+    }
+
+    private WindowClause.WindowCondition cloneWindowCondition(WindowClause.WindowCondition condition, Node argument) {
+        return new WindowClause.WindowCondition(
+                condition.variables(),
+                (Expression) visit(condition.expression(), argument),
+                condition.only()
+        );
+    }
+
+    @Override
     public Node visitLetClause(LetClause clause, Node argument) {
         return new LetClause(
                 clause.getVariableName(),

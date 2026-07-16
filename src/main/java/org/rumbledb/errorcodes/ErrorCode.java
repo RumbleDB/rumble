@@ -170,6 +170,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
+    public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
     /**
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).
@@ -246,5 +247,6 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidAnnotation = registerBuiltIn("XQAN0001");
     public static final ErrorCode InvalidVariableDeclaration = registerBuiltIn("SCIN0001");
 
+    public static final ErrorCode UnsupportedNormalizationFormSerialization = registerBuiltIn("SESU0011");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
 }

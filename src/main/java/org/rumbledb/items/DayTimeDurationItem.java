@@ -133,6 +133,11 @@ public class DayTimeDurationItem implements Item {
         return Period.ZERO;
     }
 
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.value;
+    }
+
     public static String normalizeDuration(Duration duration) {
         if (duration.isZero()) {
             return "PT0S"; // Default value for empty dayTimeDuration

@@ -81,6 +81,49 @@ public final class NamespaceBindingUtils {
         return true;
     }
 
+    /**
+     * XML 1.0 Name character checks (colon permitted).
+     */
+    public static boolean isValidXmlName(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        int cp = s.codePointAt(0);
+        if (!isXmlNameStartChar(cp)) {
+            return false;
+        }
+        i += Character.charCount(cp);
+        while (i < len) {
+            cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * XML 1.0 Nmtoken character checks (one or more NameChar code points).
+     */
+    public static boolean isValidXmlNmToken(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        while (i < len) {
+            int cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
     private static boolean isXmlNameStartChar(int c) {
         return c == ':'
             || c == '_'
