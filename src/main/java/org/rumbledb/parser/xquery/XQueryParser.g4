@@ -471,16 +471,9 @@ nodeComp
    | (LANGLE LANGLE)
    | (RANGLE RANGLE)
    ;
-/*
- * replaced with the enclosedExpression production to match the JSONiq grammar
- * TODO: this is out of spec. However, it is currently kept to match the JSONiq grammar
- * TODO: replace with the proper rule, throw excep.
- * validateExpr: KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr? RBRACE ;
- */
-   
-   
+
 validateExpr
-   : KW_VALIDATE (validationMode | (KW_TYPE sequenceType))? LBRACE expr? RBRACE
+   : KW_VALIDATE (validationMode | (KW_TYPE typeName))? LBRACE expr RBRACE
    ;
 
 validationMode
