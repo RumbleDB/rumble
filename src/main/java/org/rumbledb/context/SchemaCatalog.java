@@ -9,6 +9,7 @@ package org.rumbledb.context;
 
 import javax.xml.validation.Schema;
 
+import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSTypeDefinition;
 
@@ -16,6 +17,13 @@ import org.apache.xerces.xs.XSTypeDefinition;
 public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
 
     public XSTypeDefinition getTypeDefinition(Name name) {
-        return this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace());
+        XSTypeDefinition type = this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace());
+        return type == null ? getBuiltInTypeDefinition(name) : type;
+    }
+
+    public static XSTypeDefinition getBuiltInTypeDefinition(Name name) {
+        return Name.XS_NS.equals(name.getNamespace())
+            ? SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(name.getLocalName())
+            : null;
     }
 }
