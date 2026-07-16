@@ -31,7 +31,6 @@ import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -512,16 +511,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             argument.overrideSerializationParameter(localName, declaration.getValue());
-            return argument;
         }
-        throw new UnsupportedFeatureException(
-                "Only serialization option declarations are supported at the moment ("
-                    + optionName
-                    + " = "
-                    + declaration.getValue()
-                    + ").",
-                declaration.getMetadata()
-        );
+        // XQuery 3.1 §4.19: if the namespace part of an option declaration's name is not recognized,
+        // the option declaration is ignored. For recognized namespaces with unrecognized option names,
+        // the effect is implementation-defined; ignoring them is conformant as well.
+        return argument;
     }
 
     @Override
