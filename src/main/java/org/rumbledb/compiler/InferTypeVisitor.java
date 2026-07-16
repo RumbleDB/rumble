@@ -2832,10 +2832,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, expression.getStaticContext());
         if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
             Name typeName = expression.getTypeName();
-            boolean isBuiltIn = BuiltinTypesCatalogue.typeExists(typeName);
             SchemaCatalog schemaCatalog = expression.getStaticContext().getSchemaCatalog();
-            boolean isImported = schemaCatalog != null && schemaCatalog.getTypeDefinition(typeName) != null;
-            if (!isBuiltIn && !isImported) {
+            if (schemaCatalog.getTypeDefinition(typeName) == null) {
                 throw new UnknownSchemaTypeException(
                         "The schema type " + typeName + " is not in scope.",
                         expression.getMetadata()
