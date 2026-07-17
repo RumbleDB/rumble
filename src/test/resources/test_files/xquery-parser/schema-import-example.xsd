@@ -47,8 +47,23 @@
             <xs:element name="code" type="ex:Code" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="IdentityEntry">
+        <xs:sequence>
+            <xs:element name="identifier" type="xs:ID"/>
+            <xs:element name="reference" type="xs:IDREF"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+        <xs:attribute name="refs" type="xs:IDREFS" use="required"/>
+    </xs:complexType>
     <xs:attribute name="qualified-status" type="xs:string" default="qualified"/>
     <xs:element name="nil-root" type="ex:CodeContent" nillable="true"/>
+    <xs:element name="identity-root">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="entry" type="ex:IdentityEntry" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
     <xs:element name="root">
         <xs:complexType>
             <xs:simpleContent>
