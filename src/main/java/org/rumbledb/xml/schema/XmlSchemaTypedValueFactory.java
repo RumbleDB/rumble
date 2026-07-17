@@ -14,15 +14,18 @@ import java.util.Optional;
 import org.apache.xerces.xs.ElementPSVI;
 import org.apache.xerces.xs.ItemPSVI;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSValue;
+import org.apache.xerces.xs.datatypes.XSQName;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /** Builds the XDM typed value contributed by Xerces PSVI information. */
@@ -63,7 +66,11 @@ final class XmlSchemaTypedValueFactory {
         if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION) {
             return Optional.of(
                 List.of(
-                    atomicValue(schemaValue.getNormalizedValue(), selectedMemberType(psvi, schemaValue))
+                    atomicValue(
+                        schemaValue.getNormalizedValue(),
+                        schemaValue.getActualValue(),
+                        selectedMemberType(psvi, schemaValue)
+                    )
                 )
             );
         }
@@ -81,11 +88,15 @@ final class XmlSchemaTypedValueFactory {
         }
         return switch (simpleType.getVariety()) {
             case XSSimpleTypeDefinition.VARIETY_ATOMIC -> List.of(
-                atomicValue(schemaValue.getNormalizedValue(), simpleType)
+                atomicValue(schemaValue.getNormalizedValue(), schemaValue.getActualValue(), simpleType)
             );
             case XSSimpleTypeDefinition.VARIETY_LIST -> listValue(schemaValue, simpleType);
             case XSSimpleTypeDefinition.VARIETY_UNION -> List.of(
-                atomicValue(schemaValue.getNormalizedValue(), schemaValue.getMemberTypeDefinition())
+                atomicValue(
+                    schemaValue.getNormalizedValue(),
+                    schemaValue.getActualValue(),
+                    schemaValue.getMemberTypeDefinition()
+                )
             );
             default -> throw new OurBadException("Xerces returned an unknown simple type variety.");
         };
@@ -100,6 +111,7 @@ final class XmlSchemaTypedValueFactory {
         String[] lexicalItems = normalizedValue.split(" ");
         XSSimpleTypeDefinition itemType = listType.getItemType();
         XSObjectList memberTypes = schemaValue.getMemberTypeDefinitions();
+        List<?> actualValues = listActualValues(schemaValue, lexicalItems.length);
         List<Item> result = new ArrayList<>(lexicalItems.length);
         for (int index = 0; index < lexicalItems.length; index++) {
             XSSimpleTypeDefinition atomicType = itemType;
@@ -109,22 +121,54 @@ final class XmlSchemaTypedValueFactory {
                 }
                 atomicType = (XSSimpleTypeDefinition) memberTypes.item(index);
             }
-            result.add(atomicValue(lexicalItems[index], atomicType));
+            result.add(atomicValue(lexicalItems[index], actualValues.get(index), atomicType));
         }
         return result;
     }
 
-    private Item atomicValue(String lexicalValue, XSSimpleTypeDefinition schemaType) {
+    private Item atomicValue(String lexicalValue, Object actualValue, XSSimpleTypeDefinition schemaType) {
         if (schemaType == null) {
             throw new OurBadException("Xerces did not identify the atomic type of a schema value.");
         }
         ItemType itemType = this.typeMapper.getAtomicType(schemaType)
             .orElseThrow(() -> new OurBadException("Xerces returned a non-atomic schema value."));
+        if (isQNameOrNotation(schemaType)) {
+            return qNameValue(actualValue, itemType);
+        }
         return CastIterator.castItemToType(
             ItemFactory.getInstance().createUntypedAtomicItem(lexicalValue),
             itemType,
             ExceptionMetadata.EMPTY_METADATA
         );
+    }
+
+    private static List<?> listActualValues(XSValue schemaValue, int expectedSize) {
+        if (
+            !(schemaValue.getActualValue() instanceof List<?> actualValues)
+                || actualValues.size() != expectedSize
+        ) {
+            throw new OurBadException("Xerces did not provide the values of an XML Schema list.");
+        }
+        return actualValues;
+    }
+
+    private static Item qNameValue(Object actualValue, ItemType itemType) {
+        if (!(actualValue instanceof XSQName xsQName)) {
+            throw new OurBadException("Xerces did not provide an expanded QName schema value.");
+        }
+        var qName = xsQName.getXNIQName();
+        String namespace = qName.uri == null || qName.uri.isEmpty() ? null : qName.uri;
+        String prefix = qName.prefix == null || qName.prefix.isEmpty() ? null : qName.prefix;
+        Item value = ItemFactory.getInstance()
+            .createQNameItem(new Name(namespace, prefix, qName.localpart));
+        return itemType.equals(BuiltinTypesCatalogue.QNameItem)
+            ? value
+            : ItemFactory.getInstance().createAnnotatedItem(value, itemType);
+    }
+
+    private static boolean isQNameOrNotation(XSSimpleTypeDefinition schemaType) {
+        short builtInKind = schemaType.getPrimitiveType().getBuiltInKind();
+        return builtInKind == XSConstants.QNAME_DT || builtInKind == XSConstants.NOTATION_DT;
     }
 
     private static XSSimpleTypeDefinition selectedMemberType(ItemPSVI psvi, XSValue schemaValue) {

@@ -5,6 +5,7 @@
     xmlns:ex="urn:example:compiled-schema"
     xmlns="urn:example:compiled-schema"
     elementFormDefault="qualified">
+    <xs:notation name="notice" public="urn:example:notice"/>
     <xs:simpleType name="Code">
         <xs:restriction base="xs:token">
             <xs:pattern value="[A-Z]{3}"/>
@@ -15,6 +16,17 @@
     </xs:simpleType>
     <xs:simpleType name="CodeOrInteger">
         <xs:union memberTypes="ex:Code xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameList">
+        <xs:list itemType="xs:QName"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameOrInteger">
+        <xs:union memberTypes="xs:QName xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="Notice">
+        <xs:restriction base="xs:NOTATION">
+            <xs:enumeration value="ex:notice"/>
+        </xs:restriction>
     </xs:simpleType>
     <xs:complexType name="CodeContent">
         <xs:simpleContent>
