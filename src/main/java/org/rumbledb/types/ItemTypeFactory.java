@@ -665,6 +665,10 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
+    public static ItemType elementNodeItemType(Name nodeName, Name schemaTypeName, boolean allowsNilled) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, allowsNilled);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -685,6 +689,10 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
+    }
+
+    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName);
     }
 
     /**

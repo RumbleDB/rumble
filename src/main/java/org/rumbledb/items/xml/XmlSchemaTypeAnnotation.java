@@ -8,13 +8,51 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.xml.schema.XmlSchemaTypeHierarchy;
 
 /** The XML Schema type assigned to an element or attribute by validation. */
-public record XmlSchemaTypeAnnotation(Name name, Variety variety, ContentType contentType) implements Serializable {
+public record XmlSchemaTypeAnnotation(
+        Name name,
+        List<Name> typeHierarchy,
+        Variety variety,
+        ContentType contentType) implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final XmlSchemaTypeAnnotation UNTYPED_ELEMENT = new XmlSchemaTypeAnnotation(
+            xsName("untyped"),
+            XmlSchemaTypeHierarchy.forXdmType(xsName("untyped")),
+            Variety.COMPLEX,
+            ContentType.MIXED
+    );
+    private static final XmlSchemaTypeAnnotation UNTYPED_ATTRIBUTE = new XmlSchemaTypeAnnotation(
+            xsName("untypedAtomic"),
+            XmlSchemaTypeHierarchy.forXdmType(xsName("untypedAtomic")),
+            Variety.ATOMIC,
+            ContentType.NOT_APPLICABLE
+    );
+
+    public XmlSchemaTypeAnnotation {
+        typeHierarchy = List.copyOf(typeHierarchy);
+    }
+
+    public boolean isDerivedFrom(Name typeName) {
+        return this.typeHierarchy.contains(typeName);
+    }
+
+    public static XmlSchemaTypeAnnotation untypedElement() {
+        return UNTYPED_ELEMENT;
+    }
+
+    public static XmlSchemaTypeAnnotation untypedAttribute() {
+        return UNTYPED_ATTRIBUTE;
+    }
+
+    private static Name xsName(String localName) {
+        return new Name(Name.XS_NS, "xs", localName);
+    }
 
     public enum Variety {
         ANY_SIMPLE,

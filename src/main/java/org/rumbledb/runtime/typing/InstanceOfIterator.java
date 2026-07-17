@@ -36,6 +36,9 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ElementNodeItemType;
+import org.rumbledb.types.AttributeNodeItemType;
+import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
@@ -134,6 +137,15 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof ElementNodeItemType elementType) {
+            return elementType.matches(itemToMatch);
+        }
+        if (itemType instanceof AttributeNodeItemType attributeType) {
+            return attributeType.matches(itemToMatch);
+        }
+        if (itemType instanceof DocumentNodeItemType documentType) {
+            return documentType.matches(itemToMatch);
+        }
         if (itemToMatch.isMap()) {
             if (itemToMatch.getSize() == 0) {
                 // empty map: matches

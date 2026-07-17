@@ -1,7 +1,12 @@
 package org.rumbledb.types;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 
 import java.util.Objects;
 import java.util.Set;
@@ -18,10 +23,12 @@ public class AttributeNodeItemType implements ItemType {
 
     private Name catalogueName;
     private Name nodeName;
+    private XmlSchemaTypeConstraint schemaTypeConstraint;
 
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
         this.nodeName = null;
+        this.schemaTypeConstraint = null;
     }
 
     public AttributeNodeItemType(Name nodeName) {
@@ -30,6 +37,13 @@ public class AttributeNodeItemType implements ItemType {
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
+        this.schemaTypeConstraint = null;
+    }
+
+    public AttributeNodeItemType(Name nodeName, Name schemaTypeName) {
+        this.catalogueName = null;
+        this.nodeName = nodeName;
+        this.schemaTypeConstraint = new XmlSchemaTypeConstraint(schemaTypeName);
     }
 
     private boolean isWildcardAttribute() {
@@ -40,12 +54,14 @@ public class AttributeNodeItemType implements ItemType {
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
         kryo.writeObjectOrNull(output, this.nodeName, Name.class);
+        kryo.writeObjectOrNull(output, this.schemaTypeConstraint, XmlSchemaTypeConstraint.class);
     }
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.catalogueName = kryo.readObjectOrNull(input, Name.class);
         this.nodeName = kryo.readObjectOrNull(input, Name.class);
+        this.schemaTypeConstraint = kryo.readObjectOrNull(input, XmlSchemaTypeConstraint.class);
     }
 
     @Override
@@ -58,7 +74,7 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.catalogueName, this.nodeName);
+        return Objects.hash(this.catalogueName, this.nodeName, this.schemaTypeConstraint);
     }
 
     @Override
@@ -67,7 +83,8 @@ public class AttributeNodeItemType implements ItemType {
             return false;
         }
         return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.nodeName, other.nodeName);
+            && Objects.equals(this.nodeName, other.nodeName)
+            && Objects.equals(this.schemaTypeConstraint, other.schemaTypeConstraint);
     }
 
     @Override
@@ -85,6 +102,23 @@ public class AttributeNodeItemType implements ItemType {
 
     public Name getNodeName() {
         return this.nodeName;
+    }
+
+    public Name getSchemaTypeName() {
+        return this.schemaTypeConstraint == null ? null : this.schemaTypeConstraint.getTypeName();
+    }
+
+    public boolean matches(Item item) {
+        if (!item.isAttributeNode() || (this.nodeName != null && !this.nodeName.equals(item.nodeName()))) {
+            return false;
+        }
+        if (this.schemaTypeConstraint == null) {
+            return true;
+        }
+        XmlSchemaTypeAnnotation annotation = item.getXmlSchemaProperties().typeAnnotation() == null
+            ? XmlSchemaTypeAnnotation.untypedAttribute()
+            : item.getXmlSchemaProperties().typeAnnotation();
+        return this.schemaTypeConstraint.matches(annotation);
     }
 
     @Override
@@ -111,10 +145,13 @@ public class AttributeNodeItemType implements ItemType {
         if (!(superType instanceof AttributeNodeItemType other)) {
             return false;
         }
-        if (other.isWildcardAttribute()) {
+        if (other.nodeName != null && !other.nodeName.equals(this.nodeName)) {
+            return false;
+        }
+        if (other.schemaTypeConstraint == null) {
             return true;
         }
-        return this.nodeName != null && this.nodeName.equals(other.nodeName);
+        return this.schemaTypeConstraint != null && this.schemaTypeConstraint.isSubtypeOf(other.schemaTypeConstraint);
     }
 
     @Override
@@ -157,6 +194,13 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public String toString() {
+        if (this.schemaTypeConstraint != null) {
+            return "attribute("
+                + (this.nodeName == null ? "*" : this.nodeName)
+                + ", "
+                + this.schemaTypeConstraint.getTypeName()
+                + ")";
+        }
         if (isWildcardAttribute()) {
             return this.catalogueName.toString();
         }
@@ -165,7 +209,21 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
-        return true;
+        return this.schemaTypeConstraint == null || this.schemaTypeConstraint.isResolved();
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.schemaTypeConstraint != null) {
+            this.schemaTypeConstraint.resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.schemaTypeConstraint != null) {
+            this.schemaTypeConstraint.resolve(context, metadata);
+        }
     }
 
     @Override

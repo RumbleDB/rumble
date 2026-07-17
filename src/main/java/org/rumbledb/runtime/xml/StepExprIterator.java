@@ -201,55 +201,11 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private Item elementKindTest(Item node, ElementTest elementTest) {
-        if (elementTest.isEmptyCheck()) {
-            if (node.isElementNode()) {
-                return node;
-            }
-            return null;
-        }
-        if (elementTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName())
-            ) {
-                return node;
-            }
-            return null;
-        }
-        if (elementTest.isWildcardOnly()) {
-            if (node.isElementNode()) {
-                return node;
-            }
-            return null;
-        }
-        // TODO: add support for type test
-        return null;
+        return elementTest.matches(node) ? node : null;
     }
 
     private Item attributeKindTest(Item node, AttributeTest attributeTest) {
-        if (attributeTest.isEmptyCheck()) {
-            if (node.isAttributeNode()) {
-                return node;
-            }
-            return null;
-        }
-        if (attributeTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName())
-            ) {
-                return node;
-            }
-            return null;
-        }
-        if (attributeTest.isWildcardOnly()) {
-            if (node.isAttributeNode()) {
-                return node;
-            }
-            return null;
-        }
-        // TODO: add support for type test
-        return null;
+        return attributeTest.matches(node) ? node : null;
     }
 
     private Item textKindTest(Item node) {

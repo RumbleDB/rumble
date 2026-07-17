@@ -1,7 +1,13 @@
 package org.rumbledb.types;
 
+import java.util.List;
+
+import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Objects;
 import java.util.Set;
@@ -38,6 +44,18 @@ public class DocumentNodeItemType implements ItemType {
 
     public ItemType getElementTestType() {
         return this.elementTestType;
+    }
+
+    public boolean matches(Item item) {
+        if (!item.isDocumentNode()) {
+            return false;
+        }
+        if (this.elementTestType == null) {
+            return true;
+        }
+        List<Item> elementChildren = item.children().stream().filter(Item::isElementNode).toList();
+        return elementChildren.size() == 1
+            && ((ElementNodeItemType) this.elementTestType).matches(elementChildren.get(0));
     }
 
     @Override
@@ -171,7 +189,21 @@ public class DocumentNodeItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
-        return true;
+        return this.elementTestType == null || this.elementTestType.isResolved();
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.elementTestType != null && !this.elementTestType.isResolved()) {
+            this.elementTestType.resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.elementTestType != null && !this.elementTestType.isResolved()) {
+            this.elementTestType.resolve(context, metadata);
+        }
     }
 
     @Override

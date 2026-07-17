@@ -2480,17 +2480,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (kindTestContext.attributeTest() != null) {
             XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            if (attributeTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed attribute item tests are not supported yet",
-                        createMetadataFromContext(attributeTestContext)
-                );
-            }
+            Name schemaTypeName = attributeTestContext.typeName() == null
+                ? null
+                : parseEqName(attributeTestContext.typeName().eqName(), false, true, false, false);
             if (attributeTestContext.attributeNameOrWildcard() == null) {
                 return BuiltinTypesCatalogue.attributeNode;
             }
             if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
+                return schemaTypeName == null
+                    ? BuiltinTypesCatalogue.attributeNode
+                    : ItemTypeFactory.attributeNodeItemType(null, schemaTypeName);
             }
             Name attributeName = parseEqName(
                 attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
@@ -2499,7 +2498,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 false,
                 false
             );
-            return ItemTypeFactory.attributeNodeItemType(attributeName);
+            return schemaTypeName == null
+                ? ItemTypeFactory.attributeNodeItemType(attributeName)
+                : ItemTypeFactory.attributeNodeItemType(attributeName, schemaTypeName);
         }
         if (kindTestContext.commentTest() != null) {
             return BuiltinTypesCatalogue.commentNode;
@@ -2528,17 +2529,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
-        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-            throw new UnsupportedFeatureException(
-                    "Typed or nillable element item tests are not supported yet",
-                    createMetadataFromContext(elementTestContext)
-            );
-        }
+        Name schemaTypeName = elementTestContext.typeName() == null
+            ? null
+            : parseEqName(elementTestContext.typeName().eqName(), false, true, false, false);
         if (elementTestContext.elementNameOrWildcard() == null) {
             return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
         }
         if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+            return schemaTypeName == null
+                ? (ElementNodeItemType) BuiltinTypesCatalogue.elementNode
+                : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
+                    null,
+                    schemaTypeName,
+                    elementTestContext.optional != null
+                );
         }
         Name elementName = parseEqName(
             elementTestContext.elementNameOrWildcard().elementName().eqName(),
@@ -2547,7 +2551,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             false,
             false
         );
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
+        return schemaTypeName == null
+            ? (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName)
+            : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
+                elementName,
+                schemaTypeName,
+                elementTestContext.optional != null
+            );
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
@@ -3524,14 +3534,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // element(N) matches any element node whose name is N.
             // element(N, T) matches an element node whose name is N and whose type annotation is T.
             // element(*, T) matches any element node whose type annotation is T.
-            // element(N, T?) also matches nillable elements (validation-related, unsupported).
-            // Reject the nillable marker "?" (validation-related feature)
-            if (elementContext.optional != null) {
-                throw new UnsupportedFeatureException(
-                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
-                        createMetadataFromContext((ParserRuleContext) kindTest)
-                );
-            }
+            // element(N, T?) also matches nilled elements.
             Name elementName;
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
@@ -3547,12 +3550,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         return new ElementTest(elementName, null);
                     }
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
-                    return new ElementTest(elementName, typeName);
+                    return new ElementTest(elementName, typeName, elementContext.optional != null);
                 }
                 // Wildcard case: element(*) or element(*, type)
                 if (elementContext.typeName() != null) {
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
-                    return new ElementTest(typeName);
+                    return new ElementTest(null, typeName, elementContext.optional != null);
                 }
                 return new ElementTest(true);
             }

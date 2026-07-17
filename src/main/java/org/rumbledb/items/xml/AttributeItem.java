@@ -5,6 +5,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -67,6 +68,7 @@ public class AttributeItem implements Item {
             .withSchemaType(
                 new XmlSchemaTypeAnnotation(
                         new Name(Name.XS_NS, "xs", "ID"),
+                        SchemaCatalog.builtIn().getTypeHierarchy(new Name(Name.XS_NS, "xs", "ID")),
                         XmlSchemaTypeAnnotation.Variety.ATOMIC,
                         XmlSchemaTypeAnnotation.ContentType.NOT_APPLICABLE
                 ),

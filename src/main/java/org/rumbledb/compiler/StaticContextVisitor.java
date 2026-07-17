@@ -83,6 +83,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
@@ -93,6 +94,13 @@ import org.rumbledb.types.ItemType;
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
+
+    @Override
+    public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
+        stepExpr.getNodeTest().resolve(argument, stepExpr.getMetadata());
+        stepExpr.setStaticContext(argument);
+        return argument;
+    }
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 

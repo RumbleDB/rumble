@@ -99,7 +99,12 @@ public final class XmlSchemaTypeMapper {
                     "anonymousType" + this.nextAnonymousTypeId++
             );
         }
-        return new XmlSchemaTypeAnnotation(name, varietyOf(schemaType), contentTypeOf(schemaType));
+        return new XmlSchemaTypeAnnotation(
+                name,
+                XmlSchemaTypeHierarchy.forSchemaType(schemaType, name),
+                varietyOf(schemaType),
+                contentTypeOf(schemaType)
+        );
     }
 
     private static XmlSchemaTypeAnnotation.Variety varietyOf(XSTypeDefinition schemaType) {

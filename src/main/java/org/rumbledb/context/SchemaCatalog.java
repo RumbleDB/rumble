@@ -7,12 +7,15 @@
 
 package org.rumbledb.context;
 
+import java.util.List;
+
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.rumbledb.xml.schema.XmlSchemaTypeHierarchy;
 import org.xml.sax.SAXException;
 
 /** The XML Schema components compiled for an XQuery module. */
@@ -27,6 +30,18 @@ public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
     public XSTypeDefinition getTypeDefinition(Name name) {
         XSTypeDefinition type = this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace());
         return type == null ? getBuiltInTypeDefinition(name) : type;
+    }
+
+    public List<Name> getTypeHierarchy(Name name) {
+        List<Name> xdmTypeHierarchy = XmlSchemaTypeHierarchy.forXdmType(name);
+        if (!xdmTypeHierarchy.isEmpty()) {
+            return xdmTypeHierarchy;
+        }
+        XSTypeDefinition type = getTypeDefinition(name);
+        if (type == null) {
+            return List.of();
+        }
+        return XmlSchemaTypeHierarchy.forSchemaType(type, name);
     }
 
     private static XSTypeDefinition getBuiltInTypeDefinition(Name name) {
