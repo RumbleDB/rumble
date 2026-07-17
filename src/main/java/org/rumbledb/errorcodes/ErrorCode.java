@@ -160,7 +160,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode PrefixCannotBeExpandedErrorCode = registerBuiltIn("XPST0081");
 
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
-    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XTPY0018");
+    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
@@ -191,6 +191,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
