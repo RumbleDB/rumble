@@ -6,5 +6,5 @@ let $document := document {
 }
 return
   string($document/root/target/@xml:id) eq "target-id"
-  and data($document/root/target/@xml:id) instance of xs:ID
+  and data($document/root/target/@xml:id) instance of xs:untypedAtomic
   and fn:id("target-id", $document) is $document/root/target

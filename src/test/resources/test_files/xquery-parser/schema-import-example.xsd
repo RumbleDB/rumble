@@ -69,6 +69,9 @@
             <xs:element name="code" type="ex:Code" minOccurs="0"/>
         </xs:sequence>
     </xs:complexType>
+    <xs:complexType name="QNameAttributeRecord">
+        <xs:attribute name="value" type="ex:QNameAlias" use="required"/>
+    </xs:complexType>
     <xs:complexType name="IdentityEntry">
         <xs:sequence>
             <xs:element name="identifier" type="xs:ID"/>
@@ -93,6 +96,7 @@
         </xs:complexType>
     </xs:element>
     <xs:element name="nil-root" type="ex:CodeContent" nillable="true"/>
+    <xs:element name="qname-attribute-root" type="ex:QNameAttributeRecord"/>
     <xs:element name="identity-root">
         <xs:complexType>
             <xs:sequence>
