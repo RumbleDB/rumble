@@ -59,6 +59,16 @@ public final class XmlSchemaTypeMapper {
         return getGeneralizedAtomicType(schemaType);
     }
 
+    public Optional<ItemType> getListItemType(XSTypeDefinition schemaType) {
+        if (
+            !(schemaType instanceof XSSimpleTypeDefinition simpleType)
+                || simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_LIST
+        ) {
+            return Optional.empty();
+        }
+        return getGeneralizedAtomicType(simpleType.getItemType());
+    }
+
     private Optional<ItemType> createGeneralizedAtomicType(XSTypeDefinition schemaType) {
         if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
             return Optional.empty();

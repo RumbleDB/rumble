@@ -25,10 +25,16 @@ import org.rumbledb.types.SequenceType;
  */
 public record XmlSchemaConstructorFunction(
         FunctionIdentifier identifier,
-        ItemType targetType,
+        ItemType resultItemType,
+        Variety variety,
         XmlSchemaSimpleTypeValidator validator) implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public enum Variety {
+        GENERALIZED_ATOMIC,
+        LIST
+    }
 
     public static XmlSchemaConstructorFunction resolve(
             FunctionIdentifier identifier,
@@ -74,14 +80,36 @@ public record XmlSchemaConstructorFunction(
         return new XmlSchemaConstructorFunction(
                 identifier,
                 targetType,
+                Variety.GENERALIZED_ATOMIC,
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
+    }
+
+    public static XmlSchemaConstructorFunction createList(
+            FunctionIdentifier identifier,
+            ItemType itemType,
+            SchemaCatalog schemaCatalog,
+            XSTypeDefinition schemaType
+    ) {
+        return new XmlSchemaConstructorFunction(
+                identifier,
+                itemType,
+                Variety.LIST,
+                new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
+        );
+    }
+
+    public boolean isList() {
+        return this.variety == Variety.LIST;
     }
 
     public FunctionSignature signature() {
         return new FunctionSignature(
                 List.of(SequenceType.createSequenceType("anyAtomicType?")),
-                new SequenceType(this.targetType, SequenceType.Arity.OneOrZero)
+                new SequenceType(
+                        this.resultItemType,
+                        isList() ? SequenceType.Arity.ZeroOrMore : SequenceType.Arity.OneOrZero
+                )
         );
     }
 }

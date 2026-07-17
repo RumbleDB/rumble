@@ -18,6 +18,7 @@ import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.ValidatedInfo;
 import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
@@ -51,20 +52,22 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
         this.schemaType = schemaType;
     }
 
-    public void validate(
+    public List<Item> validate(
             Item item,
             RuntimeStaticContext staticContext
     ) {
         XSTypeDefinition schemaType = getSchemaType();
         if (!(schemaType instanceof XSSimpleType simpleType)) {
-            return;
+            throw new OurBadException("An XML Schema constructor must target a simple type.");
         }
         try {
+            ValidatedInfo schemaValue = new ValidatedInfo();
             simpleType.validate(
                 item.getStringValue(),
                 new ConstructorValidationContext(staticContext),
-                new ValidatedInfo()
+                schemaValue
             );
+            return new XmlSchemaTypedValueFactory(new XmlSchemaTypeMapper()).create(schemaValue, simpleType);
         } catch (InvalidDatatypeValueException exception) {
             throw new CastException(
                     "\"" + item.getStringValue() + "\" is not valid for type " + schemaType.getName() + ".",
@@ -76,6 +79,12 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
     private synchronized XSTypeDefinition getSchemaType() {
         if (this.schemaType != null) {
             return this.schemaType;
+        }
+        if (this.documents.isEmpty() && Name.XS_NS.equals(this.typeName.getNamespace())) {
+            this.schemaType = SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(this.typeName.getLocalName());
+            if (this.schemaType != null) {
+                return this.schemaType;
+            }
         }
         try {
             XSImplementation implementation = (XSImplementation) DOMImplementationRegistry.newInstance()

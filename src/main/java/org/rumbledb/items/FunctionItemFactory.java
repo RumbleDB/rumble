@@ -31,6 +31,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
+import org.rumbledb.runtime.functions.XmlSchemaListConstructorIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -90,13 +91,17 @@ public final class FunctionItemFactory {
                 parameterName,
                 referenceContext.withStaticType(parameterType).withExecutionMode(ExecutionMode.LOCAL)
         );
-        ItemType targetType = constructor.targetType();
-        RuntimeIterator body = new ConstructorFunctionIterator(
-                targetType,
-                constructor.validator(),
-                List.of(parameter),
-                referenceContext.withStaticType(returnType).withExecutionMode(ExecutionMode.LOCAL)
-        );
+        RuntimeStaticContext bodyContext = referenceContext.withStaticType(returnType)
+            .withExecutionMode(ExecutionMode.LOCAL);
+        ItemType resultItemType = constructor.resultItemType();
+        RuntimeIterator body = constructor.isList()
+            ? new XmlSchemaListConstructorIterator(List.of(parameter), constructor.validator(), bodyContext)
+            : new ConstructorFunctionIterator(
+                    resultItemType,
+                    constructor.validator(),
+                    List.of(parameter),
+                    bodyContext
+            );
         return new FunctionItem(
                 constructor.identifier(),
                 List.of(parameterName),

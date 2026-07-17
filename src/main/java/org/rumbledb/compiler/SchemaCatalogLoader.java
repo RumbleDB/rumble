@@ -65,7 +65,9 @@ final class SchemaCatalogLoader {
 
         try {
             if (locations.isEmpty()) {
-                context.setSchemaCatalog(SchemaCatalog.builtIn());
+                SchemaCatalog catalog = SchemaCatalog.builtIn();
+                context.setSchemaCatalog(catalog);
+                registerConstructorFunctions(context, catalog.schemaModel(), new XmlSchemaTypeMapper());
                 return;
             }
             XMLSchemaFactory factory = new XMLSchemaFactory();
@@ -82,8 +84,9 @@ final class SchemaCatalogLoader {
             verifyImportedNamespaces(imports, schemaModel);
 
             context.setSchemaCatalog(new SchemaCatalog(schema, schemaModel, resolver.getSchemaDocuments()));
-            registerGeneralizedAtomicTypes(context, schemaModel, metadata);
-            registerConstructorFunctions(context);
+            XmlSchemaTypeMapper typeMapper = new XmlSchemaTypeMapper();
+            registerGeneralizedAtomicTypes(context, schemaModel, metadata, typeMapper);
+            registerConstructorFunctions(context, schemaModel, typeMapper);
         } catch (SAXException exception) {
             throw new SchemaImportException(
                     "Unable to process imported schemas: " + exception.getMessage(),
@@ -93,11 +96,33 @@ final class SchemaCatalogLoader {
         }
     }
 
-    private static void registerConstructorFunctions(StaticContext context) {
+    private static void registerConstructorFunctions(
+            StaticContext context,
+            XSModel schemaModel,
+            XmlSchemaTypeMapper typeMapper
+    ) {
         Map<FunctionIdentifier, XmlSchemaConstructorFunction> constructors = new HashMap<>();
-        for (ItemType type : context.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
-            FunctionIdentifier identifier = new FunctionIdentifier(type.getName(), 1);
+        XSNamedMap schemaTypes = schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
+        for (int index = 0; index < schemaTypes.getLength(); index++) {
+            XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
+            if (schemaType.getName() == null) {
+                continue;
+            }
+            Name name = new Name(schemaType.getNamespace(), null, schemaType.getName());
+            FunctionIdentifier identifier = new FunctionIdentifier(name, 1);
             XmlSchemaConstructorFunction constructor = XmlSchemaConstructorFunction.resolve(identifier, context);
+            if (constructor == null) {
+                constructor = typeMapper.getListItemType(schemaType)
+                    .map(
+                        itemType -> XmlSchemaConstructorFunction.createList(
+                            identifier,
+                            itemType,
+                            context.getSchemaCatalog(),
+                            schemaType
+                        )
+                    )
+                    .orElse(null);
+            }
             if (constructor != null) {
                 constructors.put(identifier, constructor);
             }
@@ -108,10 +133,10 @@ final class SchemaCatalogLoader {
     private static void registerGeneralizedAtomicTypes(
             StaticContext context,
             XSModel schemaModel,
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            XmlSchemaTypeMapper typeMapper
     ) {
         XSNamedMap schemaTypes = schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
-        XmlSchemaTypeMapper typeMapper = new XmlSchemaTypeMapper();
         for (int index = 0; index < schemaTypes.getLength(); index++) {
             XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
             typeMapper.getGeneralizedAtomicType(schemaType)
