@@ -56,6 +56,20 @@
         <xs:attribute name="refs" type="xs:IDREFS" use="required"/>
     </xs:complexType>
     <xs:attribute name="qualified-status" type="xs:string" default="qualified"/>
+    <xs:element name="code-head" type="ex:CodeContent" abstract="true"/>
+    <xs:element name="code-member" type="ex:CodeContent" substitutionGroup="ex:code-head"/>
+    <xs:element
+        name="nillable-code-member"
+        type="ex:CodeContent"
+        substitutionGroup="ex:code-head"
+        nillable="true"/>
+    <xs:element name="anonymous-root">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="value" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
     <xs:element name="nil-root" type="ex:CodeContent" nillable="true"/>
     <xs:element name="identity-root">
         <xs:complexType>
