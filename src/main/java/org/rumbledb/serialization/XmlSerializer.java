@@ -36,11 +36,19 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
+        if (item.isArray()) {
+            for (List<Item> member : item.getSequenceMembers()) {
+                for (Item memberItem : member) {
+                    serialize(memberItem, sb, indent, isTopLevel);
+                }
+            }
+            return;
+        }
         if (item.isAtomic()) {
             sb.append(item.getStringValue());
             return;
         }
-        if (item.isArray() || item.isMap() || item.isObject()) {
+        if (item.isMap() || item.isObject()) {
             throw serializationError("Serialization method does not support arrays or maps.", "SENR0001");
         }
         if (item.isDocumentNode()) {
