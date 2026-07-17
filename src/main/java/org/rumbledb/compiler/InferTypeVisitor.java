@@ -144,6 +144,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 import sparksoniq.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
@@ -631,7 +632,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (function != null) {
             signature = function.getSignature();
         } else {
-            signature = staticContext.getFunctionSignature(identifier);
+            XmlSchemaConstructorFunction constructor = XmlSchemaConstructorFunction.resolve(identifier, staticContext);
+            signature = constructor == null
+                ? staticContext.getFunctionSignature(identifier)
+                : constructor.signature();
         }
         return signature;
     }
@@ -948,16 +952,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     returnType = SequenceType.createSequenceType("item*");
                 }
                 if (
-                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
-                        && parameterExpressions.size() == 1
+                    parameterExpressions.size() == 1
                 ) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
                         expression.getFunctionIdentifier(),
                         queryLanguage
                     );
                     if (
-                        builtinFunction != null
-                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)
+                        (builtinFunction != null
+                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class))
+                            || XmlSchemaConstructorFunction.resolve(
+                                expression.getFunctionIdentifier(),
+                                expression.getStaticContext()
+                            ) != null
                     ) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
                         if (

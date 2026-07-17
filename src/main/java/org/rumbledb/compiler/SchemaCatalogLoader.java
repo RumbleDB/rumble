@@ -28,6 +28,7 @@ import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.context.StaticContext;
@@ -38,6 +39,7 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 import org.rumbledb.xml.schema.XmlSchemaTypeMapper;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.LSInput;
@@ -79,8 +81,9 @@ final class SchemaCatalogLoader {
             XSModel schemaModel = loadSchemaModel(locations, resolver, metadata);
             verifyImportedNamespaces(imports, schemaModel);
 
-            context.setSchemaCatalog(new SchemaCatalog(schema, schemaModel));
+            context.setSchemaCatalog(new SchemaCatalog(schema, schemaModel, resolver.getSchemaDocuments()));
             registerGeneralizedAtomicTypes(context, schemaModel, metadata);
+            registerConstructorFunctions(context);
         } catch (SAXException exception) {
             throw new SchemaImportException(
                     "Unable to process imported schemas: " + exception.getMessage(),
@@ -88,6 +91,18 @@ final class SchemaCatalogLoader {
                     exception
             );
         }
+    }
+
+    private static void registerConstructorFunctions(StaticContext context) {
+        Map<FunctionIdentifier, XmlSchemaConstructorFunction> constructors = new HashMap<>();
+        for (ItemType type : context.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+            FunctionIdentifier identifier = new FunctionIdentifier(type.getName(), 1);
+            XmlSchemaConstructorFunction constructor = XmlSchemaConstructorFunction.resolve(identifier, context);
+            if (constructor != null) {
+                constructors.put(identifier, constructor);
+            }
+        }
+        context.setXmlSchemaConstructors(constructors);
     }
 
     private static void registerGeneralizedAtomicTypes(
@@ -251,6 +266,14 @@ final class SchemaCatalogLoader {
             }
             List<URI> locations = this.locationsByNamespace.get(namespace == null ? "" : namespace);
             return locations == null || locations.isEmpty() ? null : locations.get(0);
+        }
+
+        private List<SchemaCatalog.SchemaDocument> getSchemaDocuments() {
+            return this.sources.values()
+                .stream()
+                .sorted((first, second) -> first.systemId().compareTo(second.systemId()))
+                .map(source -> new SchemaCatalog.SchemaDocument(source.systemId(), source.content()))
+                .toList();
         }
     }
 

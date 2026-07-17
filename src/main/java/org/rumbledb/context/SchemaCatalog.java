@@ -7,6 +7,8 @@
 
 package org.rumbledb.context;
 
+import java.io.Serializable;
+import java.net.URI;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -24,7 +26,10 @@ import org.rumbledb.xml.schema.XmlSchemaTypeHierarchy;
 import org.xml.sax.SAXException;
 
 /** The XML Schema components compiled for an XQuery module. */
-public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
+public record SchemaCatalog(
+        Schema validationSchema,
+        XSModel schemaModel,
+        List<SchemaDocument> documents) {
 
     private static final SchemaCatalog BUILT_IN = createBuiltIn();
 
@@ -103,6 +108,11 @@ public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
     public record Declaration(Name name, Name typeName, boolean allowsNilled) {
     }
 
+    public record SchemaDocument(URI systemId, byte[] content) implements Serializable {
+
+        private static final long serialVersionUID = 1L;
+    }
+
     private static XSTypeDefinition getBuiltInTypeDefinition(Name name) {
         return Name.XS_NS.equals(name.getNamespace())
             ? SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(name.getLocalName())
@@ -113,7 +123,8 @@ public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
         try {
             return new SchemaCatalog(
                     new XMLSchemaFactory().newSchema(),
-                    SchemaGrammar.SG_SchemaNS.toXSModel()
+                    SchemaGrammar.SG_SchemaNS.toXSModel(),
+                    List.of()
             );
         } catch (SAXException exception) {
             throw new ExceptionInInitializerError(exception);

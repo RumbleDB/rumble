@@ -40,6 +40,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -55,6 +56,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
     private transient SchemaCatalog schemaCatalog;
+    private transient Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors;
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
@@ -108,6 +110,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.xmlSchemaConstructors = null;
         this.currentMutabilityLevel = 0;
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
@@ -129,6 +132,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.xmlSchemaConstructors = Collections.emptyMap();
         this.currentMutabilityLevel = 0;
         this.serializationParameters = configuration.getSerializationParameters();
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
@@ -146,6 +150,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.xmlSchemaConstructors = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
@@ -700,6 +705,22 @@ public class StaticContext implements Serializable, KryoSerializable {
             throw new OurBadException("A schema catalog can only be stored in a module context.");
         }
         this.schemaCatalog = schemaCatalog;
+    }
+
+    public Map<FunctionIdentifier, XmlSchemaConstructorFunction> getXmlSchemaConstructors() {
+        if (this.xmlSchemaConstructors != null) {
+            return this.xmlSchemaConstructors;
+        }
+        return this.parent == null ? Collections.emptyMap() : this.parent.getXmlSchemaConstructors();
+    }
+
+    public void setXmlSchemaConstructors(
+            Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors
+    ) {
+        if (this.parent != null) {
+            throw new OurBadException("XML Schema constructors can only be stored in a module context.");
+        }
+        this.xmlSchemaConstructors = Map.copyOf(xmlSchemaConstructors);
     }
 
     public int getCurrentMutabilityLevel() {

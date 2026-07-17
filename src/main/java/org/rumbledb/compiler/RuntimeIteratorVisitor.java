@@ -180,6 +180,7 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
@@ -265,6 +266,7 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
@@ -1363,7 +1365,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            identifier,
+            expression.getStaticContext()
+        );
+        if (schemaConstructor != null) {
+            runtimeIterator = new ConstructorFunctionIterator(
+                    schemaConstructor.targetType(),
+                    schemaConstructor.validator(),
+                    arguments,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,

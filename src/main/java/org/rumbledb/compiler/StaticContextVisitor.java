@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -89,6 +90,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -190,6 +192,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        if (XmlSchemaConstructorFunction.resolve(expression.getFunctionIdentifier(), argument) != null) {
+            throw new DuplicateFunctionIdentifierException(
+                    expression.getFunctionIdentifier(),
+                    declaration.getMetadata()
+            );
+        }
         if (expression.getActualReturnType() != null) {
             expression.getActualReturnType().resolve(argument, declaration.getMetadata());
         }

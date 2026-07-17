@@ -30,7 +30,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
+import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 /**
  * Construction helpers for {@link FunctionItem} values used by the runtime.
@@ -71,6 +75,34 @@ public final class FunctionItemFactory {
                 moduleContext,
                 markerBody,
                 true
+        );
+    }
+
+    public static FunctionItem createXmlSchemaConstructorNamedReference(
+            XmlSchemaConstructorFunction constructor,
+            DynamicContext moduleContext,
+            RuntimeStaticContext referenceContext
+    ) {
+        Name parameterName = Name.createVariableInNoNamespace("p0");
+        SequenceType parameterType = constructor.signature().getParameterTypes().get(0);
+        SequenceType returnType = constructor.signature().getReturnType();
+        RuntimeIterator parameter = new VariableReferenceIterator(
+                parameterName,
+                referenceContext.withStaticType(parameterType).withExecutionMode(ExecutionMode.LOCAL)
+        );
+        ItemType targetType = constructor.targetType();
+        RuntimeIterator body = new ConstructorFunctionIterator(
+                targetType,
+                constructor.validator(),
+                List.of(parameter),
+                referenceContext.withStaticType(returnType).withExecutionMode(ExecutionMode.LOCAL)
+        );
+        return new FunctionItem(
+                constructor.identifier(),
+                List.of(parameterName),
+                constructor.signature(),
+                moduleContext,
+                body
         );
     }
 }

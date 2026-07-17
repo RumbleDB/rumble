@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -27,6 +28,7 @@ public class RuntimeStaticContext implements Serializable {
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
     private boolean isQuerySideEffecting;
+    private Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors;
 
     @Override
     public String toString() {
@@ -63,6 +65,7 @@ public class RuntimeStaticContext implements Serializable {
         this.serializationParameters = oldContext.serializationParameters;
         this.defaultCollation = oldContext.defaultCollation;
         this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
+        this.xmlSchemaConstructors = oldContext.xmlSchemaConstructors;
     }
 
     /*
@@ -103,6 +106,13 @@ public class RuntimeStaticContext implements Serializable {
             ? CollationCatalogue.CODEPOINT_COLLATION
             : staticContext.getDefaultCollation();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
+        this.xmlSchemaConstructors = staticContext == null
+            ? Collections.emptyMap()
+            : staticContext.getXmlSchemaConstructors();
+    }
+
+    public XmlSchemaConstructorFunction getXmlSchemaConstructor(FunctionIdentifier identifier) {
+        return this.xmlSchemaConstructors.get(identifier);
     }
 
     /**

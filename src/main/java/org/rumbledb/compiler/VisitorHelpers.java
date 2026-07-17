@@ -417,6 +417,11 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             mainModule = applyTypeIndependentOptimizations(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            mainModule = (MainModule) new XmlSchemaConstructorPartialApplicationRewriteVisitor().visit(
+                mainModule,
+                null
+            );
+            populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             mainModule = applyTypeDependentOptimizations(mainModule);
             populateExecutionModes(mainModule, configuration);
