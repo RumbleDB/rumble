@@ -27,7 +27,6 @@ import java.util.Comparator;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
 /**
  * This class implements the same key comparison as defined in XQuery &amp;XPath Functions 3.1, section 17.1.1.
@@ -103,7 +102,7 @@ public class ItemSameKeyComparator implements Comparator<Item>, Serializable {
                 case QNAME:
                     return o1.getQNameValue().compareTo(o2.getQNameValue());
                 case NOTATION:
-                    return o1.getStringValue().compareTo(o2.getStringValue());
+                    return o1.getNotationValue().compareTo(o2.getNotationValue());
             }
         }
         return category1.ordinal() < category2.ordinal() ? -1 : 1;
@@ -200,7 +199,7 @@ public class ItemSameKeyComparator implements Comparator<Item>, Serializable {
             return CATEGORY.DURATION;
         } else if (o1.isQName()) {
             return CATEGORY.QNAME;
-        } else if (o1.getDynamicType().getPrimitiveType().equals(BuiltinTypesCatalogue.NOTATIONItem)) {
+        } else if (o1.isNotation()) {
             return CATEGORY.NOTATION;
         } else {
             throw new OurBadException(

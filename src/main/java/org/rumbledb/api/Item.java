@@ -394,6 +394,29 @@ public interface Item extends Serializable, KryoSerializable {
 
     // endregion qnames
 
+    // region notations
+
+    /**
+     * Tests whether the item is an atomic item of type xs:NOTATION.
+     *
+     * @return true if it is an xs:NOTATION item, false otherwise.
+     */
+    default boolean isNotation() {
+        return false;
+    }
+
+    /**
+     * Returns the expanded name of this item when it is an xs:NOTATION.
+     *
+     * @return the expanded name.
+     * @throws UnsupportedOperationException if the item is not an xs:NOTATION.
+     */
+    default Name getNotationValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    // endregion notations
+
     /**
      * Tests whether the item is an atomic item of type base64Binary or hexBinary.
      *

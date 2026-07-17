@@ -111,7 +111,7 @@ final class XmlSchemaTypedValueFactory {
         String[] lexicalItems = normalizedValue.split(" ");
         XSSimpleTypeDefinition itemType = listType.getItemType();
         XSObjectList memberTypes = schemaValue.getMemberTypeDefinitions();
-        List<?> actualValues = listActualValues(schemaValue, lexicalItems.length);
+        List<?> actualValues = null;
         List<Item> result = new ArrayList<>(lexicalItems.length);
         for (int index = 0; index < lexicalItems.length; index++) {
             XSSimpleTypeDefinition atomicType = itemType;
@@ -121,7 +121,14 @@ final class XmlSchemaTypedValueFactory {
                 }
                 atomicType = (XSSimpleTypeDefinition) memberTypes.item(index);
             }
-            result.add(atomicValue(lexicalItems[index], actualValues.get(index), atomicType));
+            Object actualValue = null;
+            if (isQNameOrNotation(atomicType)) {
+                if (actualValues == null) {
+                    actualValues = listActualValues(schemaValue, lexicalItems.length);
+                }
+                actualValue = actualValues.get(index);
+            }
+            result.add(atomicValue(lexicalItems[index], actualValue, atomicType));
         }
         return result;
     }
@@ -133,7 +140,7 @@ final class XmlSchemaTypedValueFactory {
         ItemType itemType = this.typeMapper.getAtomicType(schemaType)
             .orElseThrow(() -> new OurBadException("Xerces returned a non-atomic schema value."));
         if (isQNameOrNotation(schemaType)) {
-            return qNameValue(actualValue, itemType);
+            return qualifiedNameValue(actualValue, itemType, schemaType.getPrimitiveType().getBuiltInKind());
         }
         return CastIterator.castItemToType(
             ItemFactory.getInstance().createUntypedAtomicItem(lexicalValue),
@@ -152,16 +159,24 @@ final class XmlSchemaTypedValueFactory {
         return actualValues;
     }
 
-    private static Item qNameValue(Object actualValue, ItemType itemType) {
+    private static Item qualifiedNameValue(Object actualValue, ItemType itemType, short primitiveKind) {
         if (!(actualValue instanceof XSQName xsQName)) {
             throw new OurBadException("Xerces did not provide an expanded QName schema value.");
         }
         var qName = xsQName.getXNIQName();
         String namespace = qName.uri == null || qName.uri.isEmpty() ? null : qName.uri;
         String prefix = qName.prefix == null || qName.prefix.isEmpty() ? null : qName.prefix;
-        Item value = ItemFactory.getInstance()
-            .createQNameItem(new Name(namespace, prefix, qName.localpart));
-        return itemType.equals(BuiltinTypesCatalogue.QNameItem)
+        Name name = new Name(namespace, prefix, qName.localpart);
+        ItemType primitiveType;
+        Item value;
+        if (primitiveKind == XSConstants.NOTATION_DT) {
+            primitiveType = BuiltinTypesCatalogue.NOTATIONItem;
+            value = ItemFactory.getInstance().createNotationItem(name);
+        } else {
+            primitiveType = BuiltinTypesCatalogue.QNameItem;
+            value = ItemFactory.getInstance().createQNameItem(name);
+        }
+        return itemType.equals(primitiveType)
             ? value
             : ItemFactory.getInstance().createAnnotatedItem(value, itemType);
     }

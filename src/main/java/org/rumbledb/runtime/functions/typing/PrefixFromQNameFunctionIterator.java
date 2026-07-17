@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -22,13 +21,14 @@ public class PrefixFromQNameFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        QNameItem qnameItem = (QNameItem) this.children.get(0).materializeFirstItemOrNull(context);
+        Item qnameItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (qnameItem == null) {
             return null;
         }
         String prefix = qnameItem.getQNameValue().getPrefix();
-        if (prefix == null)
+        if (prefix == null || prefix.isEmpty()) {
             return null;
+        }
 
         return ItemFactory.getInstance().createNCNameItem(prefix);
     }

@@ -248,6 +248,10 @@ public class ItemFactory {
         return new QNameItem(name);
     }
 
+    public Item createNotationItem(Name name) {
+        return new NotationItem(name);
+    }
+
     public Item createNCNameItem(String s) {
         return this.createAnnotatedItem(
             this.createStringItem(s),

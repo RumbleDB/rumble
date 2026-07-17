@@ -228,6 +228,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isNotation() {
+        return this.itemToAnnotate.isNotation();
+    }
+
+    @Override
+    public Name getNotationValue() {
+        return this.itemToAnnotate.getNotationValue();
+    }
+
+    @Override
     public boolean isBinary() {
         return this.itemToAnnotate.isBinary();
     }

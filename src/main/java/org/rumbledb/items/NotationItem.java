@@ -2,7 +2,7 @@
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
  * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
  * (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
  *
@@ -13,7 +13,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package org.rumbledb.items;
@@ -29,38 +28,30 @@ import org.rumbledb.context.Name;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-/**
- * Atomic item representing an {@code xs:QName} value as an expanded name ({@link Name}).
- */
-public class QNameItem implements Item {
+/** Atomic item representing an {@code xs:NOTATION} value as an expanded name. */
+public class NotationItem implements Item {
 
     private static final long serialVersionUID = 1L;
 
     private Name name;
 
-    public QNameItem() {
-        super();
+    public NotationItem() {
     }
 
-    public QNameItem(Name name) {
-        super();
+    public NotationItem(Name name) {
         this.name = Objects.requireNonNull(name, "name");
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new QNameItem(this.name);
+        return new NotationItem(this.name);
     }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isQName()) {
-            return false;
-        }
-        return this.name.equals(otherItem.getQNameValue());
+        return other instanceof Item otherItem
+            && otherItem.isNotation()
+            && this.name.equals(otherItem.getNotationValue());
     }
 
     @Override
@@ -92,18 +83,18 @@ public class QNameItem implements Item {
     }
 
     @Override
-    public boolean isQName() {
+    public boolean isNotation() {
         return true;
     }
 
     @Override
-    public Name getQNameValue() {
+    public Name getNotationValue() {
         return this.name;
     }
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.QNameItem;
+        return BuiltinTypesCatalogue.NOTATIONItem;
     }
 
     @Override

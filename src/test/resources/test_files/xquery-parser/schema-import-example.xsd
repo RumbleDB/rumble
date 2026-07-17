@@ -23,6 +23,9 @@
     <xs:simpleType name="QNameOrInteger">
         <xs:union memberTypes="xs:QName xs:integer"/>
     </xs:simpleType>
+    <xs:simpleType name="QNameAlias">
+        <xs:restriction base="xs:QName"/>
+    </xs:simpleType>
     <xs:simpleType name="Notice">
         <xs:restriction base="xs:NOTATION">
             <xs:enumeration value="ex:notice"/>
