@@ -10,6 +10,7 @@ package org.rumbledb.xml.schema;
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -48,7 +49,7 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
             XSTypeDefinition schemaType
     ) {
         this.typeName = typeName;
-        this.documents = List.copyOf(documents);
+        this.documents = new ArrayList<>(documents);
         this.schemaType = schemaType;
     }
 

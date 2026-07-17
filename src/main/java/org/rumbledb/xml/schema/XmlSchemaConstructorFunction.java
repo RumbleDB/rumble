@@ -9,6 +9,8 @@ package org.rumbledb.xml.schema;
 
 import java.util.List;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.StaticContext;
@@ -31,6 +33,15 @@ public record XmlSchemaConstructorFunction(
         XmlSchemaSimpleTypeValidator validator) implements Serializable {
 
     private static final long serialVersionUID = 1L;
+
+    public XmlSchemaConstructorFunction {
+        unionAtomicMemberTypes = new ArrayList<>(unionAtomicMemberTypes);
+    }
+
+    @Override
+    public List<ItemType> unionAtomicMemberTypes() {
+        return Collections.unmodifiableList(this.unionAtomicMemberTypes);
+    }
 
     public enum Variety {
         GENERALIZED_ATOMIC,
@@ -113,7 +124,7 @@ public record XmlSchemaConstructorFunction(
                 identifier,
                 BuiltinTypesCatalogue.atomicItem,
                 Variety.UNION,
-                List.copyOf(atomicMemberTypes),
+                atomicMemberTypes,
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }

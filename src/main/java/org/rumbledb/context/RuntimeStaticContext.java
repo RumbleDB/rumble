@@ -2,6 +2,7 @@ package org.rumbledb.context;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -107,8 +108,8 @@ public class RuntimeStaticContext implements Serializable {
             : staticContext.getDefaultCollation();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
         this.xmlSchemaConstructors = staticContext == null
-            ? Collections.emptyMap()
-            : staticContext.getXmlSchemaConstructors();
+            ? new HashMap<>()
+            : new HashMap<>(staticContext.getXmlSchemaConstructors());
     }
 
     public XmlSchemaConstructorFunction getXmlSchemaConstructor(FunctionIdentifier identifier) {

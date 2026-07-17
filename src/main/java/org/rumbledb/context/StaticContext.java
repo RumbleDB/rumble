@@ -709,7 +709,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public Map<FunctionIdentifier, XmlSchemaConstructorFunction> getXmlSchemaConstructors() {
         if (this.xmlSchemaConstructors != null) {
-            return this.xmlSchemaConstructors;
+            return Collections.unmodifiableMap(this.xmlSchemaConstructors);
         }
         return this.parent == null ? Collections.emptyMap() : this.parent.getXmlSchemaConstructors();
     }
@@ -720,7 +720,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             throw new OurBadException("XML Schema constructors can only be stored in a module context.");
         }
-        this.xmlSchemaConstructors = Map.copyOf(xmlSchemaConstructors);
+        this.xmlSchemaConstructors = new HashMap<>(xmlSchemaConstructors);
     }
 
     public int getCurrentMutabilityLevel() {
