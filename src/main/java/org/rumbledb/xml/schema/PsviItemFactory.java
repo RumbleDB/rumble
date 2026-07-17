@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XmlSchemaNodeProperties;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.xml.sax.Attributes;
 
 /** Converts Xerces SAX and PSVI data into schema-augmented XDM items. */
@@ -66,7 +67,7 @@ final class PsviItemFactory {
                     name,
                     normalizedValue == null ? attributes.getValue(index) : normalizedValue
                 );
-            if (psvi != null) {
+            if (psvi != null && !isXmlId(name)) {
                 setSchemaProperties(attribute, psvi);
             }
             result.add(attribute);
@@ -150,11 +151,13 @@ final class PsviItemFactory {
                 constraintValue
             );
         attribute.setXmlSchemaProperties(
-            attribute.getXmlSchemaProperties()
-                .withSchemaType(
-                    this.typeMapper.getTypeAnnotation(declaration.getTypeDefinition()),
-                    this.typedValueFactory.create(schemaValue, declaration.getTypeDefinition())
-                )
+            withIdentityProperties(
+                attribute.getXmlSchemaProperties()
+                    .withSchemaType(
+                        this.typeMapper.getTypeAnnotation(declaration.getTypeDefinition()),
+                        this.typedValueFactory.create(schemaValue, declaration.getTypeDefinition())
+                    )
+            )
         );
         attributes.add(attribute);
     }
@@ -163,10 +166,22 @@ final class PsviItemFactory {
         XmlSchemaNodeProperties properties = item.getXmlSchemaProperties();
         var typeAnnotation = this.typeMapper.getTypeAnnotation(psvi.getTypeDefinition());
         var typedValue = this.typedValueFactory.create(psvi, item.getStringValue());
-        item.setXmlSchemaProperties(
+        XmlSchemaNodeProperties typedProperties =
             typedValue.map(value -> properties.withSchemaType(typeAnnotation, value))
-                .orElseGet(() -> properties.withSchemaTypeWithoutTypedValue(typeAnnotation))
-        );
+                .orElseGet(() -> properties.withSchemaTypeWithoutTypedValue(typeAnnotation));
+        item.setXmlSchemaProperties(withIdentityProperties(typedProperties));
+    }
+
+    private static XmlSchemaNodeProperties withIdentityProperties(XmlSchemaNodeProperties properties) {
+        if (!properties.hasTypedValue()) {
+            return properties.withIdentityProperties(false, false);
+        }
+        List<Item> typedValue = properties.typedValue();
+        boolean isId = typedValue.size() == 1
+            && typedValue.get(0).getDynamicType().isSubtypeOf(BuiltinTypesCatalogue.IDItem);
+        boolean isIdRefs = typedValue.stream()
+            .anyMatch(value -> value.getDynamicType().isSubtypeOf(BuiltinTypesCatalogue.IDREFItem));
+        return properties.withIdentityProperties(isId, isIdRefs);
     }
 
     private static boolean hasAttribute(List<Item> attributes, XSAttributeDeclaration declaration) {
@@ -181,6 +196,10 @@ final class PsviItemFactory {
             }
         }
         return false;
+    }
+
+    private static boolean isXmlId(Name name) {
+        return Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName());
     }
 
     private static String attributePrefix(

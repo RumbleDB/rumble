@@ -7,6 +7,9 @@
 
 package org.rumbledb.xml.schema;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.xml.validation.ValidatorHandler;
 
 import org.apache.xerces.xs.PSVIProvider;
@@ -28,6 +31,10 @@ public final class XmlSchemaValidator {
 
     private static final String ROOT_TYPE_DEFINITION =
         "http://apache.org/xml/properties/validation/schema/root-type-definition";
+    private static final String ID_IDREF_CHECKING =
+        "http://apache.org/xml/features/validation/id-idref-checking";
+    private static final String UNPARSED_ENTITY_CHECKING =
+        "http://apache.org/xml/features/validation/unparsed-entity-checking";
     private static final Name ANY_TYPE = new Name(Name.XS_NS, "xs", "anyType");
     private final SchemaCatalog schemaCatalog;
     private final XmlSchemaTypeMapper typeMapper;
@@ -37,7 +44,11 @@ public final class XmlSchemaValidator {
         this.typeMapper = new XmlSchemaTypeMapper();
     }
 
-    public Item validateStrict(Item validationRoot, ExceptionMetadata metadata) {
+    public Item validateStrict(
+            Item validationRoot,
+            boolean documentValidation,
+            ExceptionMetadata metadata
+    ) {
         Name rootName = validationRoot.nodeName();
         if (!hasElementDeclaration(rootName)) {
             throw new ValidateException(
@@ -46,47 +57,45 @@ public final class XmlSchemaValidator {
                     metadata
             );
         }
-        return validate(validationRoot, null, metadata);
+        return validate(validationRoot, null, false, documentValidation, metadata);
     }
 
-    public Item validateLax(Item validationRoot, ExceptionMetadata metadata) {
+    public Item validateLax(
+            Item validationRoot,
+            boolean documentValidation,
+            ExceptionMetadata metadata
+    ) {
         if (hasElementDeclaration(validationRoot.nodeName())) {
-            return validate(validationRoot, null, metadata);
+            return validate(validationRoot, null, false, documentValidation, metadata);
         }
         XSTypeDefinition anyType = this.schemaCatalog.getTypeDefinition(ANY_TYPE);
         if (anyType == null) {
             throw new OurBadException("The built-in xs:anyType definition is unavailable.", metadata);
         }
-        return validateAsLaxWildcard(validationRoot, anyType, metadata);
+        return validate(validationRoot, anyType, true, documentValidation, metadata);
     }
 
-    public Item validateType(Item validationRoot, Name typeName, ExceptionMetadata metadata) {
+    public Item validateType(
+            Item validationRoot,
+            Name typeName,
+            boolean documentValidation,
+            ExceptionMetadata metadata
+    ) {
         XSTypeDefinition type = this.schemaCatalog.getTypeDefinition(typeName);
         if (type == null) {
             throw new OurBadException("The statically resolved XML Schema type is unavailable at runtime.", metadata);
         }
-        return validate(validationRoot, type, metadata);
-    }
-
-    private Item validate(Item validationRoot, XSTypeDefinition rootType, ExceptionMetadata metadata) {
-        return validate(validationRoot, rootType, false, metadata);
-    }
-
-    private Item validateAsLaxWildcard(
-            Item validationRoot,
-            XSTypeDefinition anyType,
-            ExceptionMetadata metadata
-    ) {
-        return validate(validationRoot, anyType, true, metadata);
+        return validate(validationRoot, type, false, documentValidation, metadata);
     }
 
     private Item validate(
             Item validationRoot,
             XSTypeDefinition rootType,
             boolean laxWildcardRoot,
+            boolean documentValidation,
             ExceptionMetadata metadata
     ) {
-        ValidatorHandler handler = createHandler(rootType, metadata);
+        ValidatorHandler handler = createHandler(rootType, documentValidation, metadata);
         if (!(handler instanceof PSVIProvider psviProvider)) {
             throw new OurBadException("The Xerces validator does not expose PSVI information.", metadata);
         }
@@ -98,10 +107,13 @@ public final class XmlSchemaValidator {
                 emitter.emitAsLaxWildcard(validationRoot);
                 Item result = builder.getResult().children().get(0);
                 result.setParent(null);
+                checkUniqueXmlIds(result, new HashSet<>(), metadata);
                 return result;
             }
             emitter.emit(validationRoot);
-            return builder.getResult();
+            Item result = builder.getResult();
+            checkUniqueXmlIds(result, new HashSet<>(), metadata);
+            return result;
         } catch (SAXException exception) {
             throw new InvalidInstanceException(
                     "XML Schema validation failed: " + exception.getMessage(),
@@ -110,18 +122,51 @@ public final class XmlSchemaValidator {
         }
     }
 
-    private ValidatorHandler createHandler(XSTypeDefinition rootType, ExceptionMetadata metadata) {
+    private static void checkUniqueXmlIds(
+            Item node,
+            Set<String> values,
+            ExceptionMetadata metadata
+    ) {
+        if (node.isElementNode()) {
+            for (Item attribute : node.attributes()) {
+                Name name = attribute.nodeName();
+                if (
+                    Name.XML_NS.equals(name.getNamespace())
+                        && "id".equals(name.getLocalName())
+                        && !values.add(attribute.getStringValue())
+                ) {
+                    throw new InvalidInstanceException(
+                            "XML Schema validation failed: duplicate xml:id value "
+                                + attribute.getStringValue()
+                                + ".",
+                            metadata
+                    );
+                }
+            }
+        }
+        for (Item child : node.children()) {
+            checkUniqueXmlIds(child, values, metadata);
+        }
+    }
+
+    private ValidatorHandler createHandler(
+            XSTypeDefinition rootType,
+            boolean documentValidation,
+            ExceptionMetadata metadata
+    ) {
         ValidatorHandler handler = this.schemaCatalog.validationSchema().newValidatorHandler();
         handler.setErrorHandler(new ThrowingErrorHandler());
-        if (rootType != null) {
-            try {
+        try {
+            handler.setFeature(ID_IDREF_CHECKING, documentValidation);
+            handler.setFeature(UNPARSED_ENTITY_CHECKING, false);
+            if (rootType != null) {
                 handler.setProperty(ROOT_TYPE_DEFINITION, rootType);
-            } catch (SAXException exception) {
-                throw new OurBadException(
-                        "Unable to configure the Xerces schema validator: " + exception.getMessage(),
-                        metadata
-                );
             }
+        } catch (SAXException exception) {
+            throw new OurBadException(
+                    "Unable to configure the Xerces schema validator: " + exception.getMessage(),
+                    metadata
+            );
         }
         return handler;
     }

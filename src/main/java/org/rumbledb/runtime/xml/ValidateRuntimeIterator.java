@@ -52,11 +52,17 @@ public final class ValidateRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item operand = materializeOperand(dynamicContext);
         Item validationRoot = requireValidationRoot(operand);
+        boolean documentValidation = operand.isDocumentNode();
 
         Item validatedRoot = switch (this.validationMode) {
-            case STRICT -> this.schemaValidator.validateStrict(validationRoot, getMetadata());
-            case TYPE -> this.schemaValidator.validateType(validationRoot, this.typeName, getMetadata());
-            case LAX -> this.schemaValidator.validateLax(validationRoot, getMetadata());
+            case STRICT -> this.schemaValidator.validateStrict(validationRoot, documentValidation, getMetadata());
+            case TYPE -> this.schemaValidator.validateType(
+                validationRoot,
+                this.typeName,
+                documentValidation,
+                getMetadata()
+            );
+            case LAX -> this.schemaValidator.validateLax(validationRoot, documentValidation, getMetadata());
         };
         Item result = rebuildOperand(operand, validatedRoot);
         result.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
