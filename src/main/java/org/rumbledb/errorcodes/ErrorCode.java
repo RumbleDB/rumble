@@ -86,6 +86,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode IdentifierFunctionDocumentErrorCode = registerBuiltIn("FODC0001");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
@@ -171,6 +172,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
     public static final ErrorCode InvalidProcessingInstructionContentErrorCode = registerBuiltIn("XQDY0026");
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
+    public static final ErrorCode InvalidXmlIdErrorCode = registerBuiltIn("XQDY0091");
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
     public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
