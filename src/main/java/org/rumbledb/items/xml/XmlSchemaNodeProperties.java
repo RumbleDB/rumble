@@ -8,6 +8,8 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -48,7 +50,12 @@ public record XmlSchemaNodeProperties(
         if (nilled == null) {
             throw new IllegalArgumentException("The nilled property must not be null.");
         }
-        typedValue = List.copyOf(typedValue);
+        typedValue = new ArrayList<>(typedValue);
+    }
+
+    @Override
+    public List<Item> typedValue() {
+        return Collections.unmodifiableList(this.typedValue);
     }
 
     public static XmlSchemaNodeProperties none() {
@@ -121,7 +128,10 @@ public record XmlSchemaNodeProperties(
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.typeAnnotation);
         kryo.writeObjectOrNull(output, this.globalDeclarationName, Name.class);
-        kryo.writeClassAndObject(output, this.typedValue);
+        output.writeInt(this.typedValue.size(), true);
+        for (Item item : this.typedValue) {
+            kryo.writeClassAndObject(output, item);
+        }
         output.writeBoolean(this.hasTypedValue);
         output.writeByte(this.nilled.ordinal());
         output.writeBoolean(this.id);
@@ -131,8 +141,11 @@ public record XmlSchemaNodeProperties(
     public static XmlSchemaNodeProperties read(Kryo kryo, Input input) {
         XmlSchemaTypeAnnotation typeAnnotation = (XmlSchemaTypeAnnotation) kryo.readClassAndObject(input);
         Name globalDeclarationName = kryo.readObjectOrNull(input, Name.class);
-        @SuppressWarnings("unchecked")
-        List<Item> typedValue = (List<Item>) kryo.readClassAndObject(input);
+        int typedValueSize = input.readInt(true);
+        List<Item> typedValue = new ArrayList<>(typedValueSize);
+        for (int index = 0; index < typedValueSize; index++) {
+            typedValue.add((Item) kryo.readClassAndObject(input));
+        }
         boolean hasTypedValue = input.readBoolean();
         Nilled nilled = Nilled.values()[input.readByte()];
         return new XmlSchemaNodeProperties(

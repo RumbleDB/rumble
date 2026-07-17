@@ -8,6 +8,8 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.context.Name;
@@ -35,7 +37,12 @@ public record XmlSchemaTypeAnnotation(
     );
 
     public XmlSchemaTypeAnnotation {
-        typeHierarchy = List.copyOf(typeHierarchy);
+        typeHierarchy = new ArrayList<>(typeHierarchy);
+    }
+
+    @Override
+    public List<Name> typeHierarchy() {
+        return Collections.unmodifiableList(this.typeHierarchy);
     }
 
     public boolean isDerivedFrom(Name typeName) {
