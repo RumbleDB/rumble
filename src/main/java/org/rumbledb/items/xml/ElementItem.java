@@ -291,21 +291,23 @@ public class ElementItem implements Item {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
      *
-     * "For an Element Node, dm:is-id returns false."
+     * The property is true when the typed value consists of one xs:ID value (or a value of a
+     * type derived from xs:ID).
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.schemaProperties.id();
     }
 
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
      *
-     * "For an Element Node, dm:is-idrefs returns false."
+     * The property is true when the typed value contains an xs:IDREF value (or a value of a
+     * type derived from xs:IDREF).
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.schemaProperties.idRefs();
     }
 
     /**

@@ -5,12 +5,16 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.w3c.dom.Node;
 
 import java.util.Collections;
@@ -32,13 +36,43 @@ public class AttributeItem implements Item {
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
-        this.schemaProperties = XmlSchemaNodeProperties.none();
+        initializeSchemaProperties();
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
+        initializeSchemaProperties();
+    }
+
+    private void initializeSchemaProperties() {
         this.schemaProperties = XmlSchemaNodeProperties.none();
+        if (!Name.XML_NS.equals(this.dmNodeName.getNamespace()) || !"id".equals(this.dmNodeName.getLocalName())) {
+            return;
+        }
+        this.stringValue = this.stringValue.trim().replaceAll("[\\t\\n\\r ]+", " ");
+        if (!NamespaceBindingUtils.isValidNcName(this.stringValue)) {
+            throw new RumbleException(
+                    "The value of an xml:id attribute must be a valid NCName.",
+                    ErrorCode.InvalidXmlIdErrorCode,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        Item typedValue = CastIterator.castItemToType(
+            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+            BuiltinTypesCatalogue.IDItem,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        this.schemaProperties = this.schemaProperties
+            .withSchemaType(
+                new XmlSchemaTypeAnnotation(
+                        new Name(Name.XS_NS, "xs", "ID"),
+                        XmlSchemaTypeAnnotation.Variety.ATOMIC,
+                        XmlSchemaTypeAnnotation.ContentType.NOT_APPLICABLE
+                ),
+                List.of(typedValue)
+            )
+            .withIdentityProperties(true, false);
     }
 
     @Override
