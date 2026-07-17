@@ -17,7 +17,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.ValidateException;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.items.ItemFactory;
@@ -57,10 +56,7 @@ public final class ValidateRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         Item validatedRoot = switch (this.validationMode) {
             case STRICT -> this.schemaValidator.validateStrict(validationRoot, getMetadata());
             case TYPE -> this.schemaValidator.validateType(validationRoot, this.typeName, getMetadata());
-            case LAX -> throw new UnsupportedFeatureException(
-                    "XQuery lax XML Schema validation is not supported yet.",
-                    getMetadata()
-            );
+            case LAX -> this.schemaValidator.validateLax(validationRoot, getMetadata());
         };
         Item result = rebuildOperand(operand, validatedRoot);
         result.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);

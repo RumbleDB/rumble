@@ -21,6 +21,7 @@ import org.xml.sax.helpers.AttributesImpl;
 /** Emits the XML information represented by an XDM item tree as SAX events. */
 final class XmlItemSaxEmitter {
 
+    private static final String LAX_VALIDATION_WRAPPER = "rumble-lax-validation-wrapper";
     private final ValidatorHandler handler;
     private final Consumer<String> commentHandler;
 
@@ -32,6 +33,15 @@ final class XmlItemSaxEmitter {
     void emit(Item root) throws SAXException {
         this.handler.startDocument();
         emitElement(root, true);
+        this.handler.endDocument();
+    }
+
+    /** Emits the supplied root as the child assessed by an {@code xs:anyType} lax wildcard. */
+    void emitAsLaxWildcard(Item root) throws SAXException {
+        this.handler.startDocument();
+        this.handler.startElement("", LAX_VALIDATION_WRAPPER, LAX_VALIDATION_WRAPPER, new AttributesImpl());
+        emitElement(root, true);
+        this.handler.endElement("", LAX_VALIDATION_WRAPPER, LAX_VALIDATION_WRAPPER);
         this.handler.endDocument();
     }
 

@@ -28,6 +28,7 @@ public final class XmlSchemaValidator {
 
     private static final String ROOT_TYPE_DEFINITION =
         "http://apache.org/xml/properties/validation/schema/root-type-definition";
+    private static final Name ANY_TYPE = new Name(Name.XS_NS, "xs", "anyType");
     private final SchemaCatalog schemaCatalog;
     private final XmlSchemaTypeMapper typeMapper;
 
@@ -38,10 +39,7 @@ public final class XmlSchemaValidator {
 
     public Item validateStrict(Item validationRoot, ExceptionMetadata metadata) {
         Name rootName = validationRoot.nodeName();
-        if (
-            this.schemaCatalog.schemaModel()
-                .getElementDeclaration(rootName.getLocalName(), schemaNamespace(rootName)) == null
-        ) {
+        if (!hasElementDeclaration(rootName)) {
             throw new ValidateException(
                     "No top-level element declaration is available for " + rootName + ".",
                     ErrorCode.ValidateStrictNoDeclarationErrorCode,
@@ -49,6 +47,17 @@ public final class XmlSchemaValidator {
             );
         }
         return validate(validationRoot, null, metadata);
+    }
+
+    public Item validateLax(Item validationRoot, ExceptionMetadata metadata) {
+        if (hasElementDeclaration(validationRoot.nodeName())) {
+            return validate(validationRoot, null, metadata);
+        }
+        XSTypeDefinition anyType = this.schemaCatalog.getTypeDefinition(ANY_TYPE);
+        if (anyType == null) {
+            throw new OurBadException("The built-in xs:anyType definition is unavailable.", metadata);
+        }
+        return validateAsLaxWildcard(validationRoot, anyType, metadata);
     }
 
     public Item validateType(Item validationRoot, Name typeName, ExceptionMetadata metadata) {
@@ -60,6 +69,23 @@ public final class XmlSchemaValidator {
     }
 
     private Item validate(Item validationRoot, XSTypeDefinition rootType, ExceptionMetadata metadata) {
+        return validate(validationRoot, rootType, false, metadata);
+    }
+
+    private Item validateAsLaxWildcard(
+            Item validationRoot,
+            XSTypeDefinition anyType,
+            ExceptionMetadata metadata
+    ) {
+        return validate(validationRoot, anyType, true, metadata);
+    }
+
+    private Item validate(
+            Item validationRoot,
+            XSTypeDefinition rootType,
+            boolean laxWildcardRoot,
+            ExceptionMetadata metadata
+    ) {
         ValidatorHandler handler = createHandler(rootType, metadata);
         if (!(handler instanceof PSVIProvider psviProvider)) {
             throw new OurBadException("The Xerces validator does not expose PSVI information.", metadata);
@@ -67,7 +93,14 @@ public final class XmlSchemaValidator {
         PsviNodeBuilder builder = new PsviNodeBuilder(psviProvider, this.typeMapper);
         handler.setContentHandler(builder);
         try {
-            new XmlItemSaxEmitter(handler, builder::comment).emit(validationRoot);
+            XmlItemSaxEmitter emitter = new XmlItemSaxEmitter(handler, builder::comment);
+            if (laxWildcardRoot) {
+                emitter.emitAsLaxWildcard(validationRoot);
+                Item result = builder.getResult().children().get(0);
+                result.setParent(null);
+                return result;
+            }
+            emitter.emit(validationRoot);
             return builder.getResult();
         } catch (SAXException exception) {
             throw new InvalidInstanceException(
@@ -96,6 +129,11 @@ public final class XmlSchemaValidator {
     private static String schemaNamespace(Name name) {
         String namespace = name.getNamespace();
         return namespace == null || namespace.isEmpty() ? null : namespace;
+    }
+
+    private boolean hasElementDeclaration(Name name) {
+        return this.schemaCatalog.schemaModel()
+            .getElementDeclaration(name.getLocalName(), schemaNamespace(name)) != null;
     }
 
     private static final class ThrowingErrorHandler extends DefaultHandler {
