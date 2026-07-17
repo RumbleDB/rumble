@@ -54,8 +54,7 @@ public final class NamedFunctionLookup {
             return result;
         }
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
-            FunctionItem function = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
-            FunctionItem result = function.deepCopy();
+            FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
             result.populateClosureFromDynamicContext(dynamicContext, staticContext.getMetadata());
             return result;
         }
