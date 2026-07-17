@@ -962,7 +962,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Node visitEnclosedExpression(JsoniqParser.EnclosedExpressionContext ctx) {
         // empty expression
         if (ctx.expr() == null) {
-            return null;
+            return new CommaExpression(createMetadataFromContext(ctx));
         }
         return this.visitExpr(ctx.expr());
     }
