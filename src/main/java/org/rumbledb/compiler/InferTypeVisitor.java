@@ -990,6 +990,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (XmlSchemaConstructorFunction.resolve(expression.getSequenceType(), expression.getStaticContext()) != null) {
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+            return argument;
+        }
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -1024,6 +1028,37 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            castedSequenceType,
+            expression.getStaticContext()
+        );
+        if (schemaConstructor != null) {
+            if (expressionSequenceType.isEmptySequence()) {
+                if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
+                    throwStaticTypeException(
+                        "Empty sequence cannot be cast to a type without the '?' occurrence indicator.",
+                        expression.getMetadata()
+                    );
+                }
+                expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
+                return argument;
+            }
+            if (!expressionSequenceType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
+                throwStaticTypeException(
+                    "A cast expression operand must atomize to at most one item.",
+                    expression.getMetadata()
+                );
+            }
+            SequenceType resultType = schemaConstructor.signature().getReturnType();
+            if (
+                schemaConstructor.isGeneralizedAtomic()
+                    && expressionSequenceType.getArity() == SequenceType.Arity.One
+            ) {
+                resultType = new SequenceType(schemaConstructor.resultItemType(), SequenceType.Arity.One);
+            }
+            expression.setStaticSequenceType(resultType);
+            return argument;
+        }
 
         if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(

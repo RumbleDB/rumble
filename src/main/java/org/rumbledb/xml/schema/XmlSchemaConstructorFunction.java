@@ -47,6 +47,17 @@ public record XmlSchemaConstructorFunction(
         return staticContext.getXmlSchemaConstructors().get(identifier);
     }
 
+    public static XmlSchemaConstructorFunction resolve(
+            SequenceType targetType,
+            StaticContext staticContext
+    ) {
+        ItemType itemType = targetType.getItemType();
+        if (!itemType.hasName()) {
+            return null;
+        }
+        return resolve(new FunctionIdentifier(itemType.getName(), 1), staticContext);
+    }
+
     public static XmlSchemaConstructorFunction createGeneralizedAtomic(
             FunctionIdentifier identifier,
             ItemType resultItemType,

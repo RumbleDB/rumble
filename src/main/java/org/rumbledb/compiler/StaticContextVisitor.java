@@ -28,9 +28,11 @@ import java.util.Map.Entry;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -553,6 +555,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (isXmlSchemaCastTarget(expression.getSequenceType(), argument, expression.getMetadata())) {
+            return argument;
+        }
         expression.getSequenceType().resolve(argument, expression.getMetadata());
         return argument;
     }
@@ -560,8 +565,35 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (isXmlSchemaCastTarget(expression.getSequenceType(), argument, expression.getMetadata())) {
+            return argument;
+        }
         expression.getSequenceType().resolve(argument, expression.getMetadata());
         return argument;
+    }
+
+    private boolean isXmlSchemaCastTarget(
+            SequenceType targetType,
+            StaticContext context,
+            ExceptionMetadata metadata
+    ) {
+        if (XmlSchemaConstructorFunction.resolve(targetType, context) != null) {
+            return true;
+        }
+        ItemType itemType = targetType.getItemType();
+        if (!itemType.hasName() || BuiltinTypesCatalogue.typeExists(itemType.getName())) {
+            return false;
+        }
+        if (
+            context.getSchemaCatalog() != null
+                && context.getSchemaCatalog().getTypeDefinition(itemType.getName()) != null
+        ) {
+            throw new UnknownCastTypeException(
+                    "The XML Schema type " + itemType.getName() + " is not a simple type.",
+                    metadata
+            );
+        }
+        return false;
     }
 
     @Override
