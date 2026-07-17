@@ -872,7 +872,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitEnclosedExpression(XQueryParser.EnclosedExpressionContext ctx) {
         // empty expression
         if (ctx.expr() == null) {
-            return null;
+            return new CommaExpression(createMetadataFromContext(ctx));
         }
         return this.visitExpr(ctx.expr());
     }

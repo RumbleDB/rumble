@@ -36,7 +36,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
-import org.rumbledb.runtime.functions.FunctionCallArgumentCoercion;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
@@ -248,7 +248,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         callerStaticContext.withStaticType(sequenceType)
                             .withExecutionMode(arguments.get(i).getHighestExecutionMode())
                             .withMetadata(arguments.get(i).getMetadata());
-                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         arguments.get(i),
                         sequenceType,
                         "Invalid argument for function " + identifier.getName() + ". ",

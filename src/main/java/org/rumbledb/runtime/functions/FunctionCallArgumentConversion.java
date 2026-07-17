@@ -36,9 +36,9 @@ import java.util.List;
  * Shared argument arity checks and type-promotion wrapping for dynamic calls on
  * {@link org.rumbledb.items.FunctionItem}s.
  */
-public final class FunctionCallArgumentCoercion {
+public final class FunctionCallArgumentConversion {
 
-    private FunctionCallArgumentCoercion() {
+    private FunctionCallArgumentConversion() {
     }
 
     public static void validateArity(
