@@ -420,7 +420,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
         }
-        if (paramType.getItemType().equals(BuiltinTypesCatalogue.errorItem)) {
+        if (BuiltinTypesCatalogue.errorItem.getName().equals(paramType.getItemType().getName())) {
             TreatExpression result = new TreatExpression(
                     expression,
                     paramType,
