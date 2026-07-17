@@ -180,11 +180,13 @@ final class DirectConstructorUtils {
             CommonTokenStream tokenStream,
             Token firstContentToken,
             List<T> children,
+            boolean preserveBoundarySpace,
             Function<T, Expression> contentProcessor
     ) {
         List<Expression> content = new ArrayList<>();
         StringBuilder text = null;
         ExceptionMetadata firstTextMetadata = null;
+        boolean boundaryWhitespaceOnly = true;
         Token previousToken = firstContentToken;
 
         for (T child : children) {
@@ -197,13 +199,27 @@ final class DirectConstructorUtils {
                 if (text == null) {
                     text = new StringBuilder();
                     firstTextMetadata = textNode.getMetadata();
+                    boundaryWhitespaceOnly = true;
                 }
-                text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
+                boundaryWhitespaceOnly = appendBoundarySegment(
+                    text,
+                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                    true,
+                    boundaryWhitespaceOnly
+                );
                 text.append(textNode.getContent());
+                boundaryWhitespaceOnly = boundaryWhitespaceOnly
+                    && textNode.isBoundaryWhitespace()
+                    && isWhitespaceOnly(textNode.getContent());
             } else {
                 if (text != null) {
-                    text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
-                    content.add(new TextNodeExpression(text.toString(), firstTextMetadata));
+                    boundaryWhitespaceOnly = appendBoundarySegment(
+                        text,
+                        getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                        true,
+                        boundaryWhitespaceOnly
+                    );
+                    flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
                     text = null;
                     firstTextMetadata = null;
                 }
@@ -213,10 +229,53 @@ final class DirectConstructorUtils {
         }
 
         if (text != null) {
-            text.append(getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()));
-            content.add(new TextNodeExpression(text.toString(), firstTextMetadata));
+            boundaryWhitespaceOnly = appendBoundarySegment(
+                text,
+                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                true,
+                boundaryWhitespaceOnly
+            );
+            flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
         }
         return content;
+    }
+
+    private static void flushTextNode(
+            List<Expression> content,
+            StringBuilder text,
+            ExceptionMetadata metadata,
+            boolean boundaryWhitespaceOnly,
+            boolean preserveBoundarySpace
+    ) {
+        if (text.length() == 0) {
+            return;
+        }
+        if (!preserveBoundarySpace && boundaryWhitespaceOnly && isWhitespaceOnly(text.toString())) {
+            return;
+        }
+        content.add(new TextNodeExpression(text.toString(), metadata));
+    }
+
+    private static boolean appendBoundarySegment(
+            StringBuilder text,
+            String segment,
+            boolean boundaryCandidate,
+            boolean boundaryWhitespaceOnly
+    ) {
+        if (segment.isEmpty()) {
+            return boundaryWhitespaceOnly;
+        }
+        text.append(segment);
+        return boundaryWhitespaceOnly && boundaryCandidate && isWhitespaceOnly(segment);
+    }
+
+    private static boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     /**

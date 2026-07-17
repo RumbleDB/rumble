@@ -58,6 +58,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private boolean boundarySpacePreserve;
     private SerializationParameters serializationParameters;
     private boolean isQuerySideEffecting;
     private transient Set<String> staticallyKnownCollations;
@@ -104,6 +105,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.boundarySpacePreserve = true;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
@@ -125,6 +127,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.boundarySpacePreserve = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -442,6 +445,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        output.writeBoolean(this.boundarySpacePreserve);
         kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
@@ -450,6 +454,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        this.boundarySpacePreserve = input.readBoolean();
         // Backward compatibility: older serialized artifacts may not contain this field, so it is null
         this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
         // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
@@ -545,6 +550,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = emptySequenceOrderLeast;
     }
 
+    public void setBoundarySpacePreserve(boolean boundarySpacePreserve) {
+        if (this.parent != null) {
+            throw new OurBadException("Boundary-space policy can only be set in the root static context.");
+        }
+        this.boundarySpacePreserve = boundarySpacePreserve;
+    }
+
     /**
      * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
      */
@@ -570,6 +582,13 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.isEmptySequenceOrderLeast();
         }
         return this.emptySequenceOrderLeast;
+    }
+
+    public boolean isBoundarySpacePreserve() {
+        if (this.parent != null) {
+            return this.parent.isBoundarySpacePreserve();
+        }
+        return this.boundarySpacePreserve;
     }
 
     public void addStaticallyKnownCollation(String uri) {
