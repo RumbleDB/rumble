@@ -153,6 +153,8 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.parser.xquery.XQueryParser;
@@ -2464,9 +2466,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (kindTestContext.documentTest() != null) {
             XQueryParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
             if (documentTestContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests (schema-element(...)) are not supported",
-                        createMetadataFromContext(documentTestContext)
+                return ItemTypeFactory.documentNodeItemType(
+                    (ElementNodeItemType) ItemTypeFactory.schemaElementNodeItemType(
+                        schemaElementDeclarationName(documentTestContext.schemaElementTest())
+                    )
                 );
             }
             if (documentTestContext.elementTest() != null) {
@@ -2501,6 +2504,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             return schemaTypeName == null
                 ? ItemTypeFactory.attributeNodeItemType(attributeName)
                 : ItemTypeFactory.attributeNodeItemType(attributeName, schemaTypeName);
+        }
+        if (kindTestContext.schemaElementTest() != null) {
+            return ItemTypeFactory.schemaElementNodeItemType(
+                schemaElementDeclarationName(kindTestContext.schemaElementTest())
+            );
+        }
+        if (kindTestContext.schemaAttributeTest() != null) {
+            return ItemTypeFactory.schemaAttributeNodeItemType(
+                schemaAttributeDeclarationName(kindTestContext.schemaAttributeTest())
+            );
         }
         if (kindTestContext.commentTest() != null) {
             return BuiltinTypesCatalogue.commentNode;
@@ -2558,6 +2571,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 schemaTypeName,
                 elementTestContext.optional != null
             );
+    }
+
+    private Name schemaElementDeclarationName(XQueryParser.SchemaElementTestContext context) {
+        return parseEqName(
+            context.elementDeclaration().elementName().eqName(),
+            false,
+            false,
+            false,
+            true
+        );
+    }
+
+    private Name schemaAttributeDeclarationName(XQueryParser.SchemaAttributeTestContext context) {
+        return parseEqName(
+            context.attributeDeclaration().attributeName().eqName(),
+            false,
+            false,
+            false,
+            false
+        );
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
@@ -3518,9 +3551,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // document-node() matches any document node.
             // document-node(element(...)) matches a document node containing an element matching the ElementTest.
             if (docContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests within document-node() are not supported",
-                        createMetadataFromContext((ParserRuleContext) kindTest)
+                return new DocumentTest(
+                        new SchemaElementTest(schemaElementDeclarationName(docContext.schemaElementTest()))
                 );
             }
             if (docContext.elementTest() == null) {
@@ -3640,18 +3672,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // AnyKindTest ::= "node" "(" ")"
             // node() matches any node.
             return new AnyKindTest();
-        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext) {
-            // XQuery 3.1 Section 2.5.5.4 - Schema Element Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema element tests (schema-element(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest)
-            );
-        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext) {
-            // XQuery 3.1 Section 2.5.5.6 - Schema Attribute Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema attribute tests (schema-attribute(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest)
-            );
+        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext schemaElementContext) {
+            return new SchemaElementTest(schemaElementDeclarationName(schemaElementContext));
+        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext schemaAttributeContext) {
+            return new SchemaAttributeTest(schemaAttributeDeclarationName(schemaAttributeContext));
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported kind test: " + kindTest.getText(),

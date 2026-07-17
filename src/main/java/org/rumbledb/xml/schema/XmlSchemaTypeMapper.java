@@ -64,7 +64,7 @@ public final class XmlSchemaTypeMapper {
             return Optional.empty();
         }
 
-        Name name = declaredNameOf(schemaType);
+        Name name = XmlSchemaTypeHierarchy.declaredNameOf(schemaType);
         if (name != null && BuiltinTypesCatalogue.typeExists(name)) {
             return Optional.of(BuiltinTypesCatalogue.getItemTypeByName(name));
         }
@@ -91,7 +91,7 @@ public final class XmlSchemaTypeMapper {
     }
 
     private XmlSchemaTypeAnnotation createTypeAnnotation(XSTypeDefinition schemaType) {
-        Name name = declaredNameOf(schemaType);
+        Name name = XmlSchemaTypeHierarchy.declaredNameOf(schemaType);
         if (name == null) {
             name = new Name(
                     ANONYMOUS_TYPE_NAMESPACE,
@@ -133,12 +133,4 @@ public final class XmlSchemaTypeMapper {
         };
     }
 
-    private static Name declaredNameOf(XSTypeDefinition schemaType) {
-        if (schemaType.getAnonymous() || schemaType.getName() == null) {
-            return null;
-        }
-        String namespace = schemaType.getNamespace();
-        String prefix = Name.XS_NS.equals(namespace) ? "xs" : null;
-        return new Name(namespace, prefix, schemaType.getName());
-    }
 }

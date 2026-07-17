@@ -19,6 +19,7 @@ import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSAttributeUse;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
+import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSValue;
 import org.rumbledb.api.Item;
@@ -153,6 +154,7 @@ final class PsviItemFactory {
         attribute.setXmlSchemaProperties(
             withIdentityProperties(
                 attribute.getXmlSchemaProperties()
+                    .withGlobalDeclaration(globalDeclarationName(declaration))
                     .withSchemaType(
                         this.typeMapper.getTypeAnnotation(declaration.getTypeDefinition()),
                         this.typedValueFactory.create(schemaValue, declaration.getTypeDefinition())
@@ -163,13 +165,40 @@ final class PsviItemFactory {
     }
 
     private void setSchemaProperties(Item item, ItemPSVI psvi) {
-        XmlSchemaNodeProperties properties = item.getXmlSchemaProperties();
+        XmlSchemaNodeProperties properties = item.getXmlSchemaProperties()
+            .withGlobalDeclaration(globalDeclarationName(psvi));
         var typeAnnotation = this.typeMapper.getTypeAnnotation(psvi.getTypeDefinition());
         var typedValue = this.typedValueFactory.create(psvi, item.getStringValue());
         XmlSchemaNodeProperties typedProperties =
             typedValue.map(value -> properties.withSchemaType(typeAnnotation, value))
                 .orElseGet(() -> properties.withSchemaTypeWithoutTypedValue(typeAnnotation));
         item.setXmlSchemaProperties(withIdentityProperties(typedProperties));
+    }
+
+    private static Name globalDeclarationName(ItemPSVI psvi) {
+        if (psvi instanceof ElementPSVI elementPsvi) {
+            return globalDeclarationName(elementPsvi.getElementDeclaration());
+        }
+        if (psvi instanceof AttributePSVI attributePsvi) {
+            return globalDeclarationName(attributePsvi.getAttributeDeclaration());
+        }
+        return null;
+    }
+
+    private static Name globalDeclarationName(XSElementDeclaration declaration) {
+        return declaration == null || declaration.getScope() != XSConstants.SCOPE_GLOBAL
+            ? null
+            : declarationName(declaration.getNamespace(), declaration.getName());
+    }
+
+    private static Name globalDeclarationName(XSAttributeDeclaration declaration) {
+        return declaration == null || declaration.getScope() != XSConstants.SCOPE_GLOBAL
+            ? null
+            : declarationName(declaration.getNamespace(), declaration.getName());
+    }
+
+    private static Name declarationName(String namespace, String localName) {
+        return new Name(namespace, null, localName);
     }
 
     private static XmlSchemaNodeProperties withIdentityProperties(XmlSchemaNodeProperties properties) {

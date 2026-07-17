@@ -16,6 +16,8 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -107,8 +109,12 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return namespaceNodeKindTest(node);
         } else if (this.nodeTest instanceof AttributeTest attributeTest) {
             return attributeKindTest(node, attributeTest);
+        } else if (this.nodeTest instanceof SchemaAttributeTest schemaAttributeTest) {
+            return schemaAttributeTest.matches(node) ? node : null;
         } else if (this.nodeTest instanceof ElementTest elementTest) {
             return elementKindTest(node, elementTest);
+        } else if (this.nodeTest instanceof SchemaElementTest schemaElementTest) {
+            return schemaElementTest.matches(node) ? node : null;
         } else if (this.nodeTest instanceof NameTest nameTest) {
             return nameKindTest(node, nameTest);
         } else if (this.nodeTest instanceof DocumentTest documentTest) {

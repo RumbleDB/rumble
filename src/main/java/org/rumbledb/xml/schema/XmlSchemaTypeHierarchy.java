@@ -81,6 +81,14 @@ public final class XmlSchemaTypeHierarchy {
         return List.copyOf(result);
     }
 
+    public static Name declaredNameOf(XSTypeDefinition type) {
+        if (type.getAnonymous() || type.getName() == null) {
+            return null;
+        }
+        String namespace = type.getNamespace();
+        return new Name(namespace, Name.XS_NS.equals(namespace) ? "xs" : null, type.getName());
+    }
+
     private static Name xsName(String localName) {
         return new Name(Name.XS_NS, "xs", localName);
     }

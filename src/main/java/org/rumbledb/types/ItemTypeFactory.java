@@ -669,6 +669,10 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName, schemaTypeName, allowsNilled);
     }
 
+    public static ItemType schemaElementNodeItemType(Name declarationName) {
+        return ElementNodeItemType.schemaElement(declarationName);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -693,6 +697,10 @@ public class ItemTypeFactory {
 
     public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName) {
         return new AttributeNodeItemType(nodeName, schemaTypeName);
+    }
+
+    public static ItemType schemaAttributeNodeItemType(Name declarationName) {
+        return AttributeNodeItemType.schemaAttribute(declarationName);
     }
 
     /**

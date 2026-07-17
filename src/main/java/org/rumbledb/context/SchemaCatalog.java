@@ -8,12 +8,17 @@
 package org.rumbledb.context;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSAttributeDeclaration;
+import org.apache.xerces.xs.XSElementDeclaration;
+import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.xml.schema.XmlSchemaTypeHierarchy;
 import org.xml.sax.SAXException;
@@ -42,6 +47,60 @@ public record SchemaCatalog(Schema validationSchema, XSModel schemaModel) {
             return List.of();
         }
         return XmlSchemaTypeHierarchy.forSchemaType(type, name);
+    }
+
+    public Optional<List<Declaration>> getElementDeclarations(Name name) {
+        XSElementDeclaration head = this.schemaModel.getElementDeclaration(
+            name.getLocalName(),
+            schemaNamespace(name)
+        );
+        if (head == null) {
+            return Optional.empty();
+        }
+        List<Declaration> result = new ArrayList<>();
+        addElementDeclaration(result, head);
+        XSObjectList substitutionGroup = this.schemaModel.getSubstitutionGroup(head);
+        for (int index = 0; index < substitutionGroup.getLength(); index++) {
+            addElementDeclaration(result, (XSElementDeclaration) substitutionGroup.item(index));
+        }
+        return Optional.of(List.copyOf(result));
+    }
+
+    public Optional<Declaration> getAttributeDeclaration(Name name) {
+        XSAttributeDeclaration declaration = this.schemaModel.getAttributeDeclaration(
+            name.getLocalName(),
+            schemaNamespace(name)
+        );
+        if (declaration == null) {
+            return Optional.empty();
+        }
+        return Optional.of(
+            new Declaration(
+                    new Name(declaration.getNamespace(), null, declaration.getName()),
+                    XmlSchemaTypeHierarchy.declaredNameOf(declaration.getTypeDefinition()),
+                    false
+            )
+        );
+    }
+
+    private static void addElementDeclaration(List<Declaration> result, XSElementDeclaration declaration) {
+        if (!declaration.getAbstract()) {
+            result.add(
+                new Declaration(
+                        new Name(declaration.getNamespace(), null, declaration.getName()),
+                        XmlSchemaTypeHierarchy.declaredNameOf(declaration.getTypeDefinition()),
+                        declaration.getNillable()
+                )
+            );
+        }
+    }
+
+    private static String schemaNamespace(Name name) {
+        String namespace = name.getNamespace();
+        return namespace == null || namespace.isEmpty() ? null : namespace;
+    }
+
+    public record Declaration(Name name, Name typeName, boolean allowsNilled) {
     }
 
     private static XSTypeDefinition getBuiltInTypeDefinition(Name name) {

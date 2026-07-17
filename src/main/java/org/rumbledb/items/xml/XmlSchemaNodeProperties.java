@@ -11,6 +11,7 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
@@ -19,6 +20,7 @@ import com.esotericsoftware.kryo.io.Output;
 /** Schema-derived XDM properties shared by element and attribute nodes. */
 public record XmlSchemaNodeProperties(
         XmlSchemaTypeAnnotation typeAnnotation,
+        Name globalDeclarationName,
         List<Item> typedValue,
         boolean hasTypedValue,
         Nilled nilled,
@@ -27,6 +29,7 @@ public record XmlSchemaNodeProperties(
 
     private static final long serialVersionUID = 1L;
     private static final XmlSchemaNodeProperties NONE = new XmlSchemaNodeProperties(
+            null,
             null,
             List.of(),
             false,
@@ -56,12 +59,21 @@ public record XmlSchemaNodeProperties(
             XmlSchemaTypeAnnotation typeAnnotation,
             List<Item> typedValue
     ) {
-        return new XmlSchemaNodeProperties(typeAnnotation, typedValue, true, this.nilled, this.id, this.idRefs);
+        return new XmlSchemaNodeProperties(
+                typeAnnotation,
+                this.globalDeclarationName,
+                typedValue,
+                true,
+                this.nilled,
+                this.id,
+                this.idRefs
+        );
     }
 
     public XmlSchemaNodeProperties withSchemaTypeWithoutTypedValue(XmlSchemaTypeAnnotation typeAnnotation) {
         return new XmlSchemaNodeProperties(
                 typeAnnotation,
+                this.globalDeclarationName,
                 List.of(),
                 false,
                 this.nilled,
@@ -73,6 +85,7 @@ public record XmlSchemaNodeProperties(
     public XmlSchemaNodeProperties withNilled(Nilled nilled) {
         return new XmlSchemaNodeProperties(
                 this.typeAnnotation,
+                this.globalDeclarationName,
                 this.typedValue,
                 this.hasTypedValue,
                 nilled,
@@ -84,6 +97,7 @@ public record XmlSchemaNodeProperties(
     public XmlSchemaNodeProperties withIdentityProperties(boolean id, boolean idRefs) {
         return new XmlSchemaNodeProperties(
                 this.typeAnnotation,
+                this.globalDeclarationName,
                 this.typedValue,
                 this.hasTypedValue,
                 this.nilled,
@@ -92,8 +106,21 @@ public record XmlSchemaNodeProperties(
         );
     }
 
+    public XmlSchemaNodeProperties withGlobalDeclaration(Name declarationName) {
+        return new XmlSchemaNodeProperties(
+                this.typeAnnotation,
+                declarationName,
+                this.typedValue,
+                this.hasTypedValue,
+                this.nilled,
+                this.id,
+                this.idRefs
+        );
+    }
+
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.typeAnnotation);
+        kryo.writeObjectOrNull(output, this.globalDeclarationName, Name.class);
         kryo.writeClassAndObject(output, this.typedValue);
         output.writeBoolean(this.hasTypedValue);
         output.writeByte(this.nilled.ordinal());
@@ -103,12 +130,14 @@ public record XmlSchemaNodeProperties(
 
     public static XmlSchemaNodeProperties read(Kryo kryo, Input input) {
         XmlSchemaTypeAnnotation typeAnnotation = (XmlSchemaTypeAnnotation) kryo.readClassAndObject(input);
+        Name globalDeclarationName = kryo.readObjectOrNull(input, Name.class);
         @SuppressWarnings("unchecked")
         List<Item> typedValue = (List<Item>) kryo.readClassAndObject(input);
         boolean hasTypedValue = input.readBoolean();
         Nilled nilled = Nilled.values()[input.readByte()];
         return new XmlSchemaNodeProperties(
                 typeAnnotation,
+                globalDeclarationName,
                 typedValue,
                 hasTypedValue,
                 nilled,
