@@ -7,11 +7,14 @@
 
 package org.rumbledb.xml.schema;
 
+import java.util.ArrayList;
 import java.util.IdentityHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.context.Name;
@@ -22,12 +25,25 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
 /** Maps Xerces type definitions to the XML and atomic type models used by RumbleDB. */
-final class XmlSchemaTypeMapper {
+public final class XmlSchemaTypeMapper {
 
     private static final String ANONYMOUS_TYPE_NAMESPACE = "http://rumbledb.org/anonymous-schema-types";
-    private final Map<XSTypeDefinition, Optional<ItemType>> atomicTypes = new IdentityHashMap<>();
+    private final Map<XSTypeDefinition, Optional<ItemType>> generalizedAtomicTypes = new IdentityHashMap<>();
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> typeAnnotations = new IdentityHashMap<>();
     private int nextAnonymousTypeId;
+
+    public XmlSchemaTypeMapper() {
+    }
+
+    public Optional<ItemType> getGeneralizedAtomicType(XSTypeDefinition schemaType) {
+        Optional<ItemType> existing = this.generalizedAtomicTypes.get(schemaType);
+        if (existing != null) {
+            return existing;
+        }
+        Optional<ItemType> result = createGeneralizedAtomicType(schemaType);
+        this.generalizedAtomicTypes.put(schemaType, result);
+        return result;
+    }
 
     XmlSchemaTypeAnnotation getTypeAnnotation(XSTypeDefinition schemaType) {
         return this.typeAnnotations.computeIfAbsent(schemaType, this::createTypeAnnotation);
@@ -40,16 +56,38 @@ final class XmlSchemaTypeMapper {
         if (simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_ATOMIC) {
             return Optional.empty();
         }
-        return this.atomicTypes.computeIfAbsent(schemaType, this::createAtomicType);
+        return getGeneralizedAtomicType(schemaType);
     }
 
-    private Optional<ItemType> createAtomicType(XSTypeDefinition schemaType) {
+    private Optional<ItemType> createGeneralizedAtomicType(XSTypeDefinition schemaType) {
+        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
+            return Optional.empty();
+        }
+
         Name name = declaredNameOf(schemaType);
         if (name != null && BuiltinTypesCatalogue.typeExists(name)) {
             return Optional.of(BuiltinTypesCatalogue.getItemTypeByName(name));
         }
-        return getAtomicType(schemaType.getBaseType())
-            .map(baseType -> ItemTypeFactory.createXmlSchemaAtomicType(name, baseType));
+        return switch (simpleType.getVariety()) {
+            case XSSimpleTypeDefinition.VARIETY_ATOMIC -> getGeneralizedAtomicType(schemaType.getBaseType())
+                .map(baseType -> ItemTypeFactory.createXmlSchemaAtomicType(name, baseType));
+            case XSSimpleTypeDefinition.VARIETY_UNION -> createUnionType(name, simpleType.getMemberTypes());
+            default -> Optional.empty();
+        };
+    }
+
+    private Optional<ItemType> createUnionType(Name name, XSObjectList schemaMemberTypes) {
+        List<ItemType> memberTypes = new ArrayList<>(schemaMemberTypes.getLength());
+        for (int index = 0; index < schemaMemberTypes.getLength(); index++) {
+            Optional<ItemType> memberType = getGeneralizedAtomicType(
+                (XSTypeDefinition) schemaMemberTypes.item(index)
+            );
+            if (memberType.isEmpty()) {
+                return Optional.empty();
+            }
+            memberTypes.add(memberType.get());
+        }
+        return Optional.of(ItemTypeFactory.createXmlSchemaUnionType(name, memberTypes));
     }
 
     private XmlSchemaTypeAnnotation createTypeAnnotation(XSTypeDefinition schemaType) {

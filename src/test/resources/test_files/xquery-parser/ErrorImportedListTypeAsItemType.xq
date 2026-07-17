@@ -1,0 +1,3 @@
+(:JIQS: ShouldNotCompile; ErrorCode="XPST0051" :)
+import schema namespace ex = "urn:example:compiled-schema" at "schema-import-example.xsd";
+"ABC DEF" instance of ex:CodeList

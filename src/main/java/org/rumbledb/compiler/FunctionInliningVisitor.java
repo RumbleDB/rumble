@@ -424,8 +424,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
     }
 
     private boolean isNamespaceSensitiveFunctionParameter(SequenceType paramType) {
-        return paramType.getItemType().equals(BuiltinTypesCatalogue.QNameItem)
-            || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
+        Name parameterTypeName = paramType.getItemType().getName();
+        return BuiltinTypesCatalogue.QNameItem.getName().equals(parameterTypeName)
+            || BuiltinTypesCatalogue.NOTATIONItem.getName().equals(parameterTypeName);
     }
 
     private boolean usesQNameCoercionErrorSemantics(Expression expression) {

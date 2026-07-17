@@ -40,6 +40,10 @@ public class ItemTypeFactory {
         );
     }
 
+    public static ItemType createXmlSchemaUnionType(Name name, List<ItemType> memberTypes) {
+        return new UnionItemType(name, memberTypes);
+    }
+
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();

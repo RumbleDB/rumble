@@ -24,6 +24,9 @@ import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSConstants;
+import org.apache.xerces.xs.XSNamedMap;
+import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.SchemaCatalog;
@@ -33,6 +36,9 @@ import org.rumbledb.exceptions.SchemaImportException;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.xml.schema.XmlSchemaTypeMapper;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -74,12 +80,29 @@ final class SchemaCatalogLoader {
             verifyImportedNamespaces(imports, schemaModel);
 
             context.setSchemaCatalog(new SchemaCatalog(schema, schemaModel));
+            registerGeneralizedAtomicTypes(context, schemaModel, metadata);
         } catch (SAXException exception) {
             throw new SchemaImportException(
                     "Unable to process imported schemas: " + exception.getMessage(),
                     metadata,
                     exception
             );
+        }
+    }
+
+    private static void registerGeneralizedAtomicTypes(
+            StaticContext context,
+            XSModel schemaModel,
+            ExceptionMetadata metadata
+    ) {
+        XSNamedMap schemaTypes = schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
+        XmlSchemaTypeMapper typeMapper = new XmlSchemaTypeMapper();
+        for (int index = 0; index < schemaTypes.getLength(); index++) {
+            XSTypeDefinition schemaType = (XSTypeDefinition) schemaTypes.item(index);
+            typeMapper.getGeneralizedAtomicType(schemaType)
+                .filter(ItemType::hasName)
+                .filter(type -> !BuiltinTypesCatalogue.typeExists(type.getName()))
+                .ifPresent(type -> context.getInScopeSchemaTypes().addInScopeSchemaType(type, metadata));
         }
     }
 
