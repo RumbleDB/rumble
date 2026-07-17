@@ -644,7 +644,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             );
         } else {
             result = new ComputedAttributeConstructorExpression(
-                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getNameExpression() == null
+                        ? null
+                        : (Expression) visit(expression.getNameExpression(), argument),
                     (Expression) visit(expression.getValueExpression(), argument),
                     expression.getMetadata()
             );

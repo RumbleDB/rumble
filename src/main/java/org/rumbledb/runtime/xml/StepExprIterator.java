@@ -80,6 +80,9 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     private List<Item> applyNodeTest(List<Item> axisResult) {
         List<Item> nodeTestResults = new ArrayList<>();
+        if (axisResult == null) {
+            return nodeTestResults;
+        }
         for (Item node : axisResult) {
             Item nodeTestResult = nodeTestItem(node);
             if (nodeTestResult != null) {
@@ -95,6 +98,9 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private Item nodeTestItem(Item node) {
+        if (node == null) {
+            return null;
+        }
         if (this.nodeTest instanceof AnyKindTest) {
             return anyKindTest(node);
         } else if (this.nodeTest instanceof TextTest) {
@@ -194,6 +200,9 @@ public class StepExprIterator extends LocalRuntimeIterator {
 
     // TODO: Add support for namespace nodes.
     private boolean isPrincipalNodeKind(Item node) {
+        if (node == null) {
+            return false;
+        }
         if (this.axisIterator instanceof AttributeAxisIterator) {
             return node.isAttributeNode();
         }
