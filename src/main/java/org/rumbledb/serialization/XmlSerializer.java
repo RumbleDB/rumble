@@ -121,14 +121,20 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         List<Item> children = item.children();
         boolean containsElementLikeChild = containsElementLikeChild(children);
         boolean preserveWhitespace = mustPreserveWhitespace(item);
-        for (int i = 0; i < children.size(); i++) {
-            Item child = children.get(i);
-            if (indenting && containsElementLikeChild && !preserveWhitespace && shouldIndentBeforeChild(child)) {
+        boolean hasSignificantTextChild = hasSignificantTextChild(children);
+        for (Item child : children) {
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+                    && shouldIndentBeforeChild(child)
+            ) {
                 sb.append("\n").append(childIndent);
             }
             serialize(child, sb, childIndent, false);
         }
-        if (indenting && containsElementLikeChild && !preserveWhitespace) {
+        if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
             sb.append("\n").append(indent);
         }
         sb.append("</");
@@ -196,7 +202,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldEmitXmlDeclaration(Item item) {
-        return !this.params.getOmitXmlDeclaration() && item.isDocumentNode();
+        return !this.params.getOmitXmlDeclaration() && (item.isDocumentNode() || item.isElementNode());
     }
 
     protected void appendXmlDeclaration(StringBuilder sb) {
@@ -252,7 +258,23 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean mustPreserveWhitespace(Item element) {
-        return matchesExpandedQNameEntry(this.params.getSuppressIndentation(), element) || hasXmlSpacePreserve(element);
+        return matchesExpandedQNameEntry(this.params.getSuppressIndentation(), element)
+            || hasXmlSpacePreserve(element)
+            || hasPreserveWhitespaceAncestor(element);
+    }
+
+    private boolean hasPreserveWhitespaceAncestor(Item element) {
+        Item current = element == null ? null : element.parent();
+        while (current != null && current.isElementNode()) {
+            if (
+                matchesExpandedQNameEntry(this.params.getSuppressIndentation(), current)
+                    || hasXmlSpacePreserve(current)
+            ) {
+                return true;
+            }
+            current = current.parent();
+        }
+        return false;
     }
 
     private boolean hasXmlSpacePreserve(Item element) {
@@ -270,7 +292,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean matchesExpandedQNameEntry(java.util.Set<String> entries, Item element) {
-        if (entries == null || entries.isEmpty() || element.nodeName() == null) {
+        if (entries == null || entries.isEmpty() || element == null || element.nodeName() == null) {
             return false;
         }
         String namespace = element.nodeName().getNamespace();
@@ -294,6 +316,15 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     protected boolean containsElementLikeChild(List<Item> children) {
         for (Item child : children) {
             if (child.isElementNode() || child.isCommentNode() || child.isProcessingInstructionNode()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean hasSignificantTextChild(List<Item> children) {
+        for (Item child : children) {
+            if (child.isTextNode() && child.getStringValue() != null && !child.getStringValue().trim().isEmpty()) {
                 return true;
             }
         }

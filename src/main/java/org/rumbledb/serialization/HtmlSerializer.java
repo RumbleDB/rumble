@@ -37,6 +37,24 @@ public class HtmlSerializer extends XmlSerializer {
     }
 
     @Override
+    protected void appendDocTypeIfNeeded(Item element, StringBuilder sb) {
+        if (this.params.getDoctypeSystem() == null && this.params.getDoctypePublic() == null) {
+            return;
+        }
+        sb.append("<!DOCTYPE ");
+        SerializerUtils.appendDmNodeNameLexical(sb, element);
+        if (this.params.getDoctypePublic() != null) {
+            sb.append(" PUBLIC \"").append(this.params.getDoctypePublic()).append("\"");
+            if (this.params.getDoctypeSystem() != null) {
+                sb.append(" \"").append(this.params.getDoctypeSystem()).append("\"");
+            }
+        } else {
+            sb.append(" SYSTEM \"").append(this.params.getDoctypeSystem()).append("\"");
+        }
+        sb.append(">");
+    }
+
+    @Override
     protected String prepareAttributeValue(Item attribute) {
         String value = attribute.getStringValue();
         if (!this.params.getEscapeUriAttributes()) {
