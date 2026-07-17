@@ -1,3 +1,3 @@
-(:JIQS: ShouldRun; Output="true" :)
+(:JIQS: ShouldNotCompile; ErrorCode="XPST0051" :)
 import schema namespace ex = "urn:example:compiled-schema" at "schema-import-example.xsd";
-ex:CodeOrInteger("42") instance of xs:integer
+42 instance of ex:TwoDigitCodeOrInteger

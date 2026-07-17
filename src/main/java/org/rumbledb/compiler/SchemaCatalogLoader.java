@@ -27,6 +27,7 @@ import org.apache.xerces.xs.XSModel;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -122,6 +123,18 @@ final class SchemaCatalogLoader {
                         )
                     )
                     .orElse(null);
+            }
+            if (
+                constructor == null
+                    && schemaType instanceof XSSimpleTypeDefinition simpleType
+                    && simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION
+            ) {
+                constructor = XmlSchemaConstructorFunction.createUnion(
+                    identifier,
+                    typeMapper.getUnionAtomicMemberTypes(schemaType),
+                    context.getSchemaCatalog(),
+                    schemaType
+                );
             }
             if (constructor != null) {
                 constructors.put(identifier, constructor);

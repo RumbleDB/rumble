@@ -64,15 +64,7 @@ final class XmlSchemaTypedValueFactory {
             throw new OurBadException("Xerces did not provide the typed value for a simple schema type.");
         }
         if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION) {
-            return Optional.of(
-                List.of(
-                    atomicValue(
-                        schemaValue.getNormalizedValue(),
-                        schemaValue.getActualValue(),
-                        selectedMemberType(psvi, schemaValue)
-                    )
-                )
-            );
+            return Optional.of(create(schemaValue, selectedMemberType(psvi, schemaValue)));
         }
         return Optional.of(create(schemaValue, simpleType));
     }
@@ -91,12 +83,9 @@ final class XmlSchemaTypedValueFactory {
                 atomicValue(schemaValue.getNormalizedValue(), schemaValue.getActualValue(), simpleType)
             );
             case XSSimpleTypeDefinition.VARIETY_LIST -> listValue(schemaValue, simpleType);
-            case XSSimpleTypeDefinition.VARIETY_UNION -> List.of(
-                atomicValue(
-                    schemaValue.getNormalizedValue(),
-                    schemaValue.getActualValue(),
-                    schemaValue.getMemberTypeDefinition()
-                )
+            case XSSimpleTypeDefinition.VARIETY_UNION -> create(
+                schemaValue,
+                schemaValue.getMemberTypeDefinition()
             );
             default -> throw new OurBadException("Xerces returned an unknown simple type variety.");
         };

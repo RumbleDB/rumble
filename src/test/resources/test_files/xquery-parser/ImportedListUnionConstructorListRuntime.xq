@@ -1,3 +1,3 @@
-(:JIQS: ShouldRun; Output="true" :)
+(:JIQS: ShouldRun; Output="ABC,DEF" :)
 import schema namespace ex = "urn:example:compiled-schema" at "schema-import-example.xsd";
-ex:CodeOrInteger("42") instance of xs:integer
+string-join(ex:CodeListOrInteger("ABC DEF"), ",")

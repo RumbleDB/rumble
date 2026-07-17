@@ -22,11 +22,22 @@
     <xs:simpleType name="CodeOrInteger">
         <xs:union memberTypes="ex:Code xs:integer"/>
     </xs:simpleType>
+    <xs:simpleType name="TwoDigitCodeOrInteger">
+        <xs:restriction base="ex:CodeOrInteger">
+            <xs:pattern value="[A-Z]{3}|[0-9]{2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CodeListOrInteger">
+        <xs:union memberTypes="ex:CodeList xs:integer"/>
+    </xs:simpleType>
     <xs:simpleType name="QNameList">
         <xs:list itemType="xs:QName"/>
     </xs:simpleType>
     <xs:simpleType name="QNameOrInteger">
         <xs:union memberTypes="xs:QName xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameListOrInteger">
+        <xs:union memberTypes="ex:QNameList xs:integer"/>
     </xs:simpleType>
     <xs:simpleType name="QNameAlias">
         <xs:restriction base="xs:QName"/>

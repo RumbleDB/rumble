@@ -27,13 +27,15 @@ public record XmlSchemaConstructorFunction(
         FunctionIdentifier identifier,
         ItemType resultItemType,
         Variety variety,
+        List<ItemType> unionAtomicMemberTypes,
         XmlSchemaSimpleTypeValidator validator) implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     public enum Variety {
         GENERALIZED_ATOMIC,
-        LIST
+        LIST,
+        UNION
     }
 
     public static XmlSchemaConstructorFunction resolve(
@@ -81,6 +83,7 @@ public record XmlSchemaConstructorFunction(
                 identifier,
                 targetType,
                 Variety.GENERALIZED_ATOMIC,
+                List.of(),
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }
@@ -95,12 +98,28 @@ public record XmlSchemaConstructorFunction(
                 identifier,
                 itemType,
                 Variety.LIST,
+                List.of(),
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }
 
-    public boolean isList() {
-        return this.variety == Variety.LIST;
+    public static XmlSchemaConstructorFunction createUnion(
+            FunctionIdentifier identifier,
+            List<ItemType> atomicMemberTypes,
+            SchemaCatalog schemaCatalog,
+            XSTypeDefinition schemaType
+    ) {
+        return new XmlSchemaConstructorFunction(
+                identifier,
+                BuiltinTypesCatalogue.atomicItem,
+                Variety.UNION,
+                List.copyOf(atomicMemberTypes),
+                new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
+        );
+    }
+
+    public boolean isGeneralizedAtomic() {
+        return this.variety == Variety.GENERALIZED_ATOMIC;
     }
 
     public FunctionSignature signature() {
@@ -108,7 +127,7 @@ public record XmlSchemaConstructorFunction(
                 List.of(SequenceType.createSequenceType("anyAtomicType?")),
                 new SequenceType(
                         this.resultItemType,
-                        isList() ? SequenceType.Arity.ZeroOrMore : SequenceType.Arity.OneOrZero
+                        isGeneralizedAtomic() ? SequenceType.Arity.OneOrZero : SequenceType.Arity.ZeroOrMore
                 )
         );
     }

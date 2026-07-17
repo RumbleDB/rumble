@@ -51,7 +51,7 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
         );
         Item result = castIterator.materializeFirstItemOrNull(dynamicContext);
         if (result != null && this.schemaValidator != null) {
-            this.schemaValidator.validate(result, this.staticContext);
+            return this.schemaValidator.validate(result, this.staticContext).get(0);
         }
         return result;
     }

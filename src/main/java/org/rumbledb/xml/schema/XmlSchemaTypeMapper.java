@@ -69,6 +69,12 @@ public final class XmlSchemaTypeMapper {
         return getGeneralizedAtomicType(simpleType.getItemType());
     }
 
+    public List<ItemType> getUnionAtomicMemberTypes(XSTypeDefinition schemaType) {
+        List<ItemType> result = new ArrayList<>();
+        collectUnionAtomicMemberTypes(schemaType, result);
+        return result;
+    }
+
     private Optional<ItemType> createGeneralizedAtomicType(XSTypeDefinition schemaType) {
         if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
             return Optional.empty();
@@ -81,9 +87,52 @@ public final class XmlSchemaTypeMapper {
         return switch (simpleType.getVariety()) {
             case XSSimpleTypeDefinition.VARIETY_ATOMIC -> getGeneralizedAtomicType(schemaType.getBaseType())
                 .map(baseType -> ItemTypeFactory.createXmlSchemaAtomicType(name, baseType));
-            case XSSimpleTypeDefinition.VARIETY_UNION -> createUnionType(name, simpleType.getMemberTypes());
+            case XSSimpleTypeDefinition.VARIETY_UNION -> isPureUnion(simpleType)
+                ? createUnionType(name, simpleType.getMemberTypes())
+                : Optional.empty();
             default -> Optional.empty();
         };
+    }
+
+    private boolean isPureUnion(XSSimpleTypeDefinition unionType) {
+        short constrainingFacets = (short) (unionType.getDefinedFacets() & ~XSSimpleTypeDefinition.FACET_WHITESPACE);
+        if (constrainingFacets != XSSimpleTypeDefinition.FACET_NONE) {
+            return false;
+        }
+        XSObjectList memberTypes = unionType.getMemberTypes();
+        for (int index = 0; index < memberTypes.getLength(); index++) {
+            XSTypeDefinition memberType = (XSTypeDefinition) memberTypes.item(index);
+            if (!(memberType instanceof XSSimpleTypeDefinition simpleMember)) {
+                return false;
+            }
+            if (simpleMember.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST) {
+                return false;
+            }
+            if (
+                simpleMember.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION
+                    && !isPureUnion(simpleMember)
+            ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void collectUnionAtomicMemberTypes(XSTypeDefinition schemaType, List<ItemType> result) {
+        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
+            return;
+        }
+        if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
+            getGeneralizedAtomicType(simpleType).ifPresent(result::add);
+            return;
+        }
+        if (simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_UNION) {
+            return;
+        }
+        XSObjectList memberTypes = simpleType.getMemberTypes();
+        for (int index = 0; index < memberTypes.getLength(); index++) {
+            collectUnionAtomicMemberTypes((XSTypeDefinition) memberTypes.item(index), result);
+        }
     }
 
     private Optional<ItemType> createUnionType(Name name, XSObjectList schemaMemberTypes) {
