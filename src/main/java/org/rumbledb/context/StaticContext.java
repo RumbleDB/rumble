@@ -455,7 +455,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
         this.boundarySpacePreserve = input.readBoolean();
-        // Backward compatibility: older serialized artifacts may not contain this field, so it is null
+        // Backward compatibility: older serialized artifacts may not contain the serialization parameters field.
         this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
         // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
         if (this.serializationParameters == null && this.parent == null) {
