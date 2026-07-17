@@ -30,6 +30,12 @@
     <xs:simpleType name="CodeListOrInteger">
         <xs:union memberTypes="ex:CodeList xs:integer"/>
     </xs:simpleType>
+    <xs:simpleType name="IntegerList">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="IntegerListOrString">
+        <xs:union memberTypes="ex:IntegerList xs:string"/>
+    </xs:simpleType>
     <xs:simpleType name="QNameList">
         <xs:list itemType="xs:QName"/>
     </xs:simpleType>

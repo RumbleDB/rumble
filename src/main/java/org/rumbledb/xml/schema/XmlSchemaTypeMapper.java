@@ -69,12 +69,6 @@ public final class XmlSchemaTypeMapper {
         return getGeneralizedAtomicType(simpleType.getItemType());
     }
 
-    public List<ItemType> getUnionAtomicMemberTypes(XSTypeDefinition schemaType) {
-        List<ItemType> result = new ArrayList<>();
-        collectUnionAtomicMemberTypes(schemaType, result);
-        return result;
-    }
-
     private Optional<ItemType> createGeneralizedAtomicType(XSTypeDefinition schemaType) {
         if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
             return Optional.empty();
@@ -116,23 +110,6 @@ public final class XmlSchemaTypeMapper {
             }
         }
         return true;
-    }
-
-    private void collectUnionAtomicMemberTypes(XSTypeDefinition schemaType, List<ItemType> result) {
-        if (!(schemaType instanceof XSSimpleTypeDefinition simpleType)) {
-            return;
-        }
-        if (simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
-            getGeneralizedAtomicType(simpleType).ifPresent(result::add);
-            return;
-        }
-        if (simpleType.getVariety() != XSSimpleTypeDefinition.VARIETY_UNION) {
-            return;
-        }
-        XSObjectList memberTypes = simpleType.getMemberTypes();
-        for (int index = 0; index < memberTypes.getLength(); index++) {
-            collectUnionAtomicMemberTypes((XSTypeDefinition) memberTypes.item(index), result);
-        }
     }
 
     private Optional<ItemType> createUnionType(Name name, XSObjectList schemaMemberTypes) {

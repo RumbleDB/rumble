@@ -23,13 +23,19 @@ import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.xs.XSImplementation;
 import org.apache.xerces.xs.XSLoader;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSObjectList;
+import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.SchemaCatalog.SchemaDocument;
 import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.ItemType;
 import org.w3c.dom.bootstrap.DOMImplementationRegistry;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -70,11 +76,83 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
             );
             return new XmlSchemaTypedValueFactory(new XmlSchemaTypeMapper()).create(schemaValue, simpleType);
         } catch (InvalidDatatypeValueException exception) {
-            throw new CastException(
-                    "\"" + item.getStringValue() + "\" is not valid for type " + schemaType.getName() + ".",
-                    staticContext.getMetadata()
-            );
+            if ("UndeclaredPrefix".equals(exception.getKey())) {
+                throw new NoNamespaceFoundForPrefixException(exception.getMessage(), staticContext.getMetadata());
+            }
+            throw castException(item, schemaType, staticContext);
         }
+    }
+
+    public List<Item> validateUnionFromNonString(
+            Item item,
+            RuntimeStaticContext staticContext
+    ) {
+        XSTypeDefinition schemaType = getSchemaType();
+        if (
+            !(schemaType instanceof XSSimpleType unionType)
+                || unionType.getVariety() != XSSimpleTypeDefinition.VARIETY_UNION
+        ) {
+            throw new OurBadException("A union constructor must target an XML Schema union type.");
+        }
+
+        ConstructorValidationContext validationContext = new ConstructorValidationContext(staticContext);
+        XmlSchemaTypeMapper typeMapper = new XmlSchemaTypeMapper();
+        List<XSSimpleType> atomicMemberTypes = new ArrayList<>();
+        collectAtomicMemberTypes(unionType, atomicMemberTypes);
+        for (XSSimpleType atomicMemberType : atomicMemberTypes) {
+            ItemType itemType = typeMapper.getAtomicType(atomicMemberType).orElse(null);
+            if (itemType == null) {
+                continue;
+            }
+            Item converted;
+            try {
+                converted = CastIterator.castItemToType(item, itemType, staticContext.getMetadata(), staticContext);
+            } catch (RumbleException exception) {
+                continue;
+            }
+            if (converted == null) {
+                continue;
+            }
+
+            ValidatedInfo schemaValue = new ValidatedInfo();
+            try {
+                atomicMemberType.validate(converted.getStringValue(), validationContext, schemaValue);
+            } catch (InvalidDatatypeValueException exception) {
+                continue;
+            }
+            // Apply facets declared on the union, but retain the selected atomic member's value.
+            // The lexical union result may otherwise be captured by an earlier list member.
+            try {
+                unionType.validate(converted.getStringValue(), validationContext, new ValidatedInfo());
+            } catch (InvalidDatatypeValueException exception) {
+                throw castException(item, schemaType, staticContext);
+            }
+            return new XmlSchemaTypedValueFactory(typeMapper).create(schemaValue, atomicMemberType);
+        }
+        throw castException(item, schemaType, staticContext);
+    }
+
+    private static void collectAtomicMemberTypes(XSSimpleTypeDefinition schemaType, List<XSSimpleType> result) {
+        XSObjectList memberTypes = schemaType.getMemberTypes();
+        for (int index = 0; index < memberTypes.getLength(); index++) {
+            XSSimpleType memberType = (XSSimpleType) memberTypes.item(index);
+            if (memberType.getVariety() == XSSimpleTypeDefinition.VARIETY_ATOMIC) {
+                result.add(memberType);
+            } else if (memberType.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION) {
+                collectAtomicMemberTypes(memberType, result);
+            }
+        }
+    }
+
+    private static CastException castException(
+            Item item,
+            XSTypeDefinition schemaType,
+            RuntimeStaticContext staticContext
+    ) {
+        return new CastException(
+                "\"" + item.getStringValue() + "\" is not valid for type " + schemaType.getName() + ".",
+                staticContext.getMetadata()
+        );
     }
 
     private synchronized XSTypeDefinition getSchemaType() {

@@ -111,7 +111,17 @@ final class SchemaCatalogLoader {
             }
             Name name = new Name(schemaType.getNamespace(), null, schemaType.getName());
             FunctionIdentifier identifier = new FunctionIdentifier(name, 1);
-            XmlSchemaConstructorFunction constructor = XmlSchemaConstructorFunction.resolve(identifier, context);
+            XmlSchemaConstructorFunction constructor = typeMapper.getGeneralizedAtomicType(schemaType)
+                .filter(type -> !BuiltinTypesCatalogue.typeExists(name))
+                .map(
+                    type -> XmlSchemaConstructorFunction.createGeneralizedAtomic(
+                        identifier,
+                        type,
+                        context.getSchemaCatalog(),
+                        schemaType
+                    )
+                )
+                .orElse(null);
             if (constructor == null) {
                 constructor = typeMapper.getListItemType(schemaType)
                     .map(
@@ -131,7 +141,6 @@ final class SchemaCatalogLoader {
             ) {
                 constructor = XmlSchemaConstructorFunction.createUnion(
                     identifier,
-                    typeMapper.getUnionAtomicMemberTypes(schemaType),
                     context.getSchemaCatalog(),
                     schemaType
                 );

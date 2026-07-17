@@ -7,16 +7,13 @@
 
 package org.rumbledb.xml.schema;
 
-import java.util.List;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.StaticContext;
-import org.rumbledb.context.SchemaCatalog;
-import org.rumbledb.context.InScopeSchemaTypes;
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.SchemaCatalog;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -29,19 +26,9 @@ public record XmlSchemaConstructorFunction(
         FunctionIdentifier identifier,
         ItemType resultItemType,
         Variety variety,
-        List<ItemType> unionAtomicMemberTypes,
         XmlSchemaSimpleTypeValidator validator) implements Serializable {
 
     private static final long serialVersionUID = 1L;
-
-    public XmlSchemaConstructorFunction {
-        unionAtomicMemberTypes = new ArrayList<>(unionAtomicMemberTypes);
-    }
-
-    @Override
-    public List<ItemType> unionAtomicMemberTypes() {
-        return Collections.unmodifiableList(this.unionAtomicMemberTypes);
-    }
 
     public enum Variety {
         GENERALIZED_ATOMIC,
@@ -53,48 +40,19 @@ public record XmlSchemaConstructorFunction(
             FunctionIdentifier identifier,
             StaticContext staticContext
     ) {
-        XmlSchemaConstructorFunction registered = staticContext.getXmlSchemaConstructors().get(identifier);
-        if (registered != null) {
-            return registered;
-        }
-        return resolve(
-            identifier,
-            staticContext.getSchemaCatalog(),
-            staticContext.getInScopeSchemaTypes()
-        );
+        return staticContext.getXmlSchemaConstructors().get(identifier);
     }
 
-    public static XmlSchemaConstructorFunction resolve(
+    public static XmlSchemaConstructorFunction createGeneralizedAtomic(
             FunctionIdentifier identifier,
+            ItemType resultItemType,
             SchemaCatalog schemaCatalog,
-            InScopeSchemaTypes schemaTypes
+            XSTypeDefinition schemaType
     ) {
-        if (
-            identifier.getArity() != 1
-                || BuiltinTypesCatalogue.typeExists(identifier.getName())
-                || schemaCatalog == null
-                || schemaTypes == null
-        ) {
-            return null;
-        }
-        XSTypeDefinition schemaType = schemaCatalog.getTypeDefinition(identifier.getName());
-        if (schemaType == null || schemaType.getTypeCategory() != XSTypeDefinition.SIMPLE_TYPE) {
-            return null;
-        }
-        ItemType targetType = schemaTypes.getInScopeSchemaType(identifier.getName());
-        if (
-            targetType == null
-                || !(targetType.isAtomicItemType()
-                    || (targetType.isUnionType()
-                        && targetType.getTypes().stream().allMatch(ItemType::isAtomicItemType)))
-        ) {
-            return null;
-        }
         return new XmlSchemaConstructorFunction(
                 identifier,
-                targetType,
+                resultItemType,
                 Variety.GENERALIZED_ATOMIC,
-                List.of(),
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }
@@ -109,14 +67,12 @@ public record XmlSchemaConstructorFunction(
                 identifier,
                 itemType,
                 Variety.LIST,
-                List.of(),
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }
 
     public static XmlSchemaConstructorFunction createUnion(
             FunctionIdentifier identifier,
-            List<ItemType> atomicMemberTypes,
             SchemaCatalog schemaCatalog,
             XSTypeDefinition schemaType
     ) {
@@ -124,7 +80,6 @@ public record XmlSchemaConstructorFunction(
                 identifier,
                 BuiltinTypesCatalogue.atomicItem,
                 Variety.UNION,
-                atomicMemberTypes,
                 new XmlSchemaSimpleTypeValidator(identifier.getName(), schemaCatalog.documents(), schemaType)
         );
     }

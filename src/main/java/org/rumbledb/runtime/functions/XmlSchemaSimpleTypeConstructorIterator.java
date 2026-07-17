@@ -15,12 +15,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 /** Constructs the atomic sequence represented by an XML Schema list or non-pure union value. */
@@ -103,18 +100,7 @@ public final class XmlSchemaSimpleTypeConstructorIterator extends LocalFunctionC
         if (argument.isString() || argument.isUntypedAtomic()) {
             return this.constructor.validator().validate(argument, this.staticContext);
         }
-        for (ItemType memberType : this.constructor.unionAtomicMemberTypes()) {
-            Item result;
-            try {
-                result = CastIterator.castItemToType(argument, memberType, getMetadata(), this.staticContext);
-            } catch (RumbleException exception) {
-                continue;
-            }
-            if (result != null) {
-                return this.constructor.validator().validate(result, this.staticContext);
-            }
-        }
-        throw castError(argument);
+        return this.constructor.validator().validateUnionFromNonString(argument, this.staticContext);
     }
 
     private CastException castError(Item argument) {
