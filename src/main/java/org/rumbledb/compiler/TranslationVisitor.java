@@ -403,9 +403,23 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         List<SetterContext> setters = ctx.setter();
         boolean emptyOrderSet = false;
+        boolean boundarySpaceSet = false;
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
+            if (setterContext.boundarySpaceDecl() != null) {
+                if (boundarySpaceSet) {
+                    throw new MoreThanOneBoundarySpaceDeclarationException(
+                            "The boundary-space policy was already set.",
+                            createMetadataFromContext(setterContext.boundarySpaceDecl())
+                    );
+                }
+                this.moduleContext.setBoundarySpacePreserve(
+                    setterContext.boundarySpaceDecl().type.getType() == JsoniqParser.KW_PRESERVE
+                );
+                boundarySpaceSet = true;
+                continue;
+            }
             if (setterContext.emptyOrderDecl() != null) {
                 if (emptyOrderSet) {
                     throw new MoreThanOneEmptyOrderDeclarationException(
@@ -2263,6 +2277,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 this.jsoniqTokenStream,
                 openClose.endOpen,
                 openClose.dirElemContent(),
+                this.moduleContext.isBoundarySpacePreserve(),
                 child -> (Expression) this.visitDirElemContent(child)
             );
 
@@ -2313,7 +2328,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
             }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
         }
     }
 
@@ -2324,6 +2339,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    private boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     @Override
