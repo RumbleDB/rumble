@@ -2,11 +2,14 @@ package org.rumbledb.serialization;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
+
+import java.util.List;
 
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
@@ -67,7 +70,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isTextNode()) {
-            sb.append(escapeText(item.getStringValue()));
+            appendTextNode(item, sb);
             return;
         }
         if (item.isCommentNode()) {
@@ -92,6 +95,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         if (isTopLevel) {
             appendDocTypeIfNeeded(item, sb);
         }
+        boolean indenting = shouldIndentElement(item);
+        String childIndent = nextIndent(indent);
         sb.append("<");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
         for (Item namespace : item.declaredNamespaceNodes()) {
@@ -105,12 +110,31 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             return;
         }
         sb.append(">");
-        for (Item child : item.children()) {
-            serialize(child, sb, indent, false);
+        List<Item> children = item.children();
+        boolean containsElementLikeChild = containsElementLikeChild(children);
+        boolean preserveWhitespace = mustPreserveWhitespace(item);
+        for (int i = 0; i < children.size(); i++) {
+            Item child = children.get(i);
+            if (indenting && containsElementLikeChild && !preserveWhitespace && shouldIndentBeforeChild(child)) {
+                sb.append("\n").append(childIndent);
+            }
+            serialize(child, sb, childIndent, false);
+        }
+        if (indenting && containsElementLikeChild && !preserveWhitespace) {
+            sb.append("\n").append(indent);
         }
         sb.append("</");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
         sb.append(">");
+    }
+
+    protected void appendTextNode(Item item, StringBuilder sb) {
+        Item parent = item.parent();
+        if (parent != null && isCDataSectionElement(parent)) {
+            appendCDataText(item.getStringValue(), sb);
+            return;
+        }
+        sb.append(escapeText(item.getStringValue()));
     }
 
     protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb) {
@@ -164,7 +188,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldEmitXmlDeclaration(Item item) {
-        return !this.params.getOmitXmlDeclaration() && (item.isDocumentNode() || item.isElementNode());
+        return !this.params.getOmitXmlDeclaration() && item.isDocumentNode();
     }
 
     protected void appendXmlDeclaration(StringBuilder sb) {
@@ -182,7 +206,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected void appendDocTypeIfNeeded(Item element, StringBuilder sb) {
-        if (this.params.getDoctypeSystem() == null && this.params.getDoctypePublic() == null) {
+        if (this.params.getDoctypeSystem() == null) {
             return;
         }
         sb.append("<!DOCTYPE ");
@@ -206,6 +230,90 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
 
     protected boolean isXml11() {
         return "1.1".equals(this.params.getVersion());
+    }
+
+    protected boolean isCDataSectionElement(Item element) {
+        if (element == null || !element.isElementNode() || element.nodeName() == null) {
+            return false;
+        }
+        return matchesExpandedQNameEntry(this.params.getCdataSectionElements(), element);
+    }
+
+    protected boolean shouldIndentElement(Item item) {
+        return this.params.getIndent() && item.isElementNode();
+    }
+
+    protected boolean mustPreserveWhitespace(Item element) {
+        return matchesExpandedQNameEntry(this.params.getSuppressIndentation(), element) || hasXmlSpacePreserve(element);
+    }
+
+    private boolean hasXmlSpacePreserve(Item element) {
+        for (Item attribute : element.attributes()) {
+            if (
+                attribute.nodeName() != null
+                    && "space".equals(attribute.nodeName().getLocalName())
+                    && Name.XML_NS.equals(attribute.nodeName().getNamespace())
+                    && "preserve".equals(attribute.getStringValue())
+            ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean matchesExpandedQNameEntry(java.util.Set<String> entries, Item element) {
+        if (entries == null || entries.isEmpty() || element.nodeName() == null) {
+            return false;
+        }
+        String namespace = element.nodeName().getNamespace();
+        String localName = element.nodeName().getLocalName();
+        String expandedName = namespace == null
+            ? localName
+            : "Q{" + namespace + "}" + localName;
+        if (entries.contains(expandedName)) {
+            return true;
+        }
+        if (namespace == null) {
+            for (String entry : entries) {
+                if (!entry.startsWith("Q{") && entry.equals(localName)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    protected boolean containsElementLikeChild(List<Item> children) {
+        for (Item child : children) {
+            if (child.isElementNode() || child.isCommentNode() || child.isProcessingInstructionNode()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected boolean shouldIndentBeforeChild(Item child) {
+        return child.isElementNode() || child.isCommentNode() || child.isProcessingInstructionNode();
+    }
+
+    protected String nextIndent(String indent) {
+        int indentWidth = this.params.getIndentSpaces() > 0 ? this.params.getIndentSpaces() : 2;
+        return indent + " ".repeat(indentWidth);
+    }
+
+    protected void appendCDataText(String value, StringBuilder sb) {
+        int start = 0;
+        while (start <= value.length()) {
+            int split = value.indexOf("]]>", start);
+            String segment = split < 0
+                ? value.substring(start)
+                : value.substring(start, split + 2);
+            sb.append("<![CDATA[").append(segment).append("]]>");
+            if (split < 0) {
+                break;
+            }
+            start = split + 2;
+        }
     }
 
     protected RumbleException serializationError(String message, String errorCode) {

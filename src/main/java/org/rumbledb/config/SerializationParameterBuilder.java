@@ -360,7 +360,7 @@ public final class SerializationParameterBuilder {
     private static Set<String> parseStringSet(String parameterName, String value) {
         Set<String> result = new HashSet<>();
         if (value != null && !value.trim().isEmpty()) {
-            String[] parts = value.split(",");
+            String[] parts = value.trim().split("[,\\s]+");
             for (String part : parts) {
                 String trimmed = part.trim();
                 if (!trimmed.isEmpty()) {

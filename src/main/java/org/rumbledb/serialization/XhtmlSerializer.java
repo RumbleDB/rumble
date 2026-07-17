@@ -204,8 +204,14 @@ public class XhtmlSerializer extends XmlSerializer {
 
     @Override
     protected void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        boolean injectContentTypeMeta = shouldInjectContentTypeMeta(item);
+        boolean hasSerializedChildren = !item.children().isEmpty() || injectContentTypeMeta;
         if (isTopLevel) {
-            appendDocTypeIfNeeded(item, sb);
+            if (shouldEmitHtml5Doctype(List.of(item), item)) {
+                appendHtml5Doctype(item, sb);
+            } else {
+                appendDocTypeIfNeeded(item, sb);
+            }
         }
 
         String serializedElementName = getSerializedElementName(item);
@@ -217,7 +223,7 @@ public class XhtmlSerializer extends XmlSerializer {
             appendAttributeOrNamespaceNode(attribute, sb);
         }
 
-        if (item.children().isEmpty()) {
+        if (!hasSerializedChildren) {
             if (isExpectedToBeEmpty(item)) {
                 sb.append(isHtml5Mode() ? "/>" : " />");
             } else {
@@ -229,7 +235,7 @@ public class XhtmlSerializer extends XmlSerializer {
         }
 
         sb.append(">");
-        if (shouldInjectContentTypeMeta(item)) {
+        if (injectContentTypeMeta) {
             appendInjectedMetaElement(item, sb);
         }
         for (Item child : item.children()) {
@@ -264,6 +270,35 @@ public class XhtmlSerializer extends XmlSerializer {
             return escaped;
         }
         return escaped.replace("&apos;", "&#39;");
+    }
+
+    @Override
+    protected boolean shouldEmitXmlDeclaration(Item item) {
+        return !this.params.getOmitXmlDeclaration() && item.isDocumentNode();
+    }
+
+    @Override
+    protected boolean matchesExpandedQNameEntry(Set<String> entries, Item element) {
+        if (super.matchesExpandedQNameEntry(entries, element)) {
+            return true;
+        }
+        if (entries == null || entries.isEmpty() || element.nodeName() == null) {
+            return false;
+        }
+        if (isRecognizedHtmlElement(element) && element.nodeName().getNamespace() == null) {
+            for (String entry : entries) {
+                if (!entry.startsWith("Q{") && entry.equalsIgnoreCase(element.nodeName().getLocalName())) {
+                    return true;
+                }
+                if (
+                    entry.equals("Q{" + XHTML_NAMESPACE + "}" + element.nodeName().getLocalName())
+                        || entry.equals("Q{" + XHTML_NAMESPACE + "}" + element.nodeName().getLocalName().toLowerCase())
+                ) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void appendElementNamespaces(Item item, StringBuilder sb) {
@@ -389,7 +424,6 @@ public class XhtmlSerializer extends XmlSerializer {
         if (
             !isHtml5Mode()
                 || this.params.getDoctypeSystem() != null
-                || this.params.getDoctypePublic() != null
                 || firstElementChild == null
         ) {
             return false;
