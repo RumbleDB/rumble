@@ -494,12 +494,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private static final class PrologPhase1Flags {
         boolean emptyOrderSet;
+        boolean boundarySpaceSet;
         boolean defaultCollationSet;
         boolean baseURISet;
         boolean defaultFunctionNamespaceDeclared;
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.boundarySpaceDecl() != null) {
+            if (flags.boundarySpaceSet) {
+                throw new MoreThanOneBoundarySpaceDeclarationException(
+                        "The boundary-space policy was already set.",
+                        createMetadataFromContext(setterContext.boundarySpaceDecl())
+                );
+            }
+            this.moduleContext.setBoundarySpacePreserve(
+                setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE
+            );
+            flags.boundarySpaceSet = true;
+            return;
+        }
         if (setterContext.emptyOrderDecl() != null) {
             if (flags.emptyOrderSet) {
                 throw new MoreThanOneEmptyOrderDeclarationException(
@@ -1984,6 +1998,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 this.xQueryTokenStream,
                 openClose.endOpen,
                 openClose.dirElemContent(),
+                this.moduleContext.isBoundarySpacePreserve(),
                 child -> (Expression) this.visitDirElemContent(child)
             );
 
@@ -2034,7 +2049,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
             }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
         }
     }
 
@@ -2045,6 +2060,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    private boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     @Override
