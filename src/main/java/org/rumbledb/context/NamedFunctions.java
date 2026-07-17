@@ -81,7 +81,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
-                getUserDefinedFunction(identifier),
+                getUserDefinedFunctionDefinition(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
                 arguments,
@@ -210,6 +210,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
     public boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
         return this.userDefinedFunctions.containsKey(identifier);
+    }
+
+    /**
+     * Returns the registered definition for constructing an internal static call.
+     * {@code FunctionItemCallIterator} creates independent closure maps and
+     * deep-copies the mutable body iterator, so copying the complete function
+     * item is unnecessary here.
+     */
+    private FunctionItem getUserDefinedFunctionDefinition(FunctionIdentifier identifier) {
+        return this.userDefinedFunctions.get(identifier);
     }
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
