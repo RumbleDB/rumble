@@ -92,11 +92,12 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
 
         // Create and return the attribute
         this.hasNext = false;
-        return ItemFactory.getInstance()
+        Item attribute = ItemFactory.getInstance()
             .createXmlAttributeNode(
                 this.attributeName,
                 sb.toString()
             );
+        XmlConstructorNodeCopier.initializeConstructedAttribute(attribute);
+        return attribute;
     }
 }
-

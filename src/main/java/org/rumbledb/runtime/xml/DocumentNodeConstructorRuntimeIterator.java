@@ -132,14 +132,26 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
         // sequence by its children.
         List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);
 
+        List<Item> copiedContentSequence = expandedContentSequence.stream()
+            .map(
+                item -> item.isNode()
+                    ? XmlConstructorNodeCopier.copy(
+                        item,
+                        this.staticContext.getConstructionMode(),
+                        getMetadata()
+                    )
+                    : item
+            )
+            .toList();
+
         // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
         // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
-        validateNoAttributesOrNamespaces(expandedContentSequence);
+        validateNoAttributesOrNamespaces(copiedContentSequence);
 
         // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
         // their contents, with no intervening blanks. After concatenation, any text node whose content
         // is a zero-length string is deleted from the content sequence.
-        List<Item> mergedContentSequence = mergeAdjacentTextNodes(expandedContentSequence);
+        List<Item> mergedContentSequence = mergeAdjacentTextNodes(copiedContentSequence);
 
         return mergedContentSequence;
     }

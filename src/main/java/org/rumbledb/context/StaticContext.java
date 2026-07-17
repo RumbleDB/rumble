@@ -61,6 +61,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private ConstructionMode constructionMode;
     private SerializationParameters serializationParameters;
     private boolean isQuerySideEffecting;
     private transient Set<String> staticallyKnownCollations;
@@ -107,6 +108,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.constructionMode = ConstructionMode.STRIP;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
@@ -129,6 +131,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.constructionMode = ConstructionMode.STRIP;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -149,6 +152,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
+        this.constructionMode = null;
         this.inScopeSchemaTypes = null;
         this.xmlSchemaConstructors = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
@@ -217,6 +221,17 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void setStaticBaseUri(URI staticBaseURI) {
         this.staticBaseURI = staticBaseURI;
+    }
+
+    public ConstructionMode getConstructionMode() {
+        if (this.constructionMode != null) {
+            return this.constructionMode;
+        }
+        return this.parent == null ? ConstructionMode.STRIP : this.parent.getConstructionMode();
+    }
+
+    public void setConstructionMode(ConstructionMode constructionMode) {
+        this.constructionMode = constructionMode;
     }
 
     public boolean isInScope(Name varName) {
@@ -448,6 +463,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        kryo.writeObject(output, getConstructionMode());
         kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
@@ -456,6 +472,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        this.constructionMode = kryo.readObject(input, ConstructionMode.class);
         // Backward compatibility: older serialized artifacts may not contain this field, so it is null
         this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
         // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.

@@ -29,6 +29,12 @@ public record XmlSchemaTypeAnnotation(
             Variety.COMPLEX,
             ContentType.MIXED
     );
+    private static final XmlSchemaTypeAnnotation ANY_TYPE = new XmlSchemaTypeAnnotation(
+            xsName("anyType"),
+            List.of(xsName("anyType")),
+            Variety.COMPLEX,
+            ContentType.MIXED
+    );
     private static final XmlSchemaTypeAnnotation UNTYPED_ATTRIBUTE = new XmlSchemaTypeAnnotation(
             xsName("untypedAtomic"),
             XmlSchemaTypeHierarchy.forXdmType(xsName("untypedAtomic")),
@@ -51,6 +57,10 @@ public record XmlSchemaTypeAnnotation(
 
     public static XmlSchemaTypeAnnotation untypedElement() {
         return UNTYPED_ELEMENT;
+    }
+
+    public static XmlSchemaTypeAnnotation anyType() {
+        return ANY_TYPE;
     }
 
     public static XmlSchemaTypeAnnotation untypedAttribute() {

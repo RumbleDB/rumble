@@ -29,6 +29,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.ConstructionMode;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -567,6 +568,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private static final class PrologPhase1Flags {
+        boolean constructionModeSet;
         boolean emptyOrderSet;
         boolean defaultCollationSet;
         boolean baseURISet;
@@ -574,6 +576,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.constructionDecl() != null) {
+            if (flags.constructionModeSet) {
+                throw new MoreThanOneConstructionDeclarationException(
+                        "The construction mode was already declared.",
+                        createMetadataFromContext(setterContext.constructionDecl())
+                );
+            }
+            this.moduleContext.setConstructionMode(
+                setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE
+                    ? ConstructionMode.PRESERVE
+                    : ConstructionMode.STRIP
+            );
+            flags.constructionModeSet = true;
+            return;
+        }
         if (setterContext.emptyOrderDecl() != null) {
             if (flags.emptyOrderSet) {
                 throw new MoreThanOneEmptyOrderDeclarationException(

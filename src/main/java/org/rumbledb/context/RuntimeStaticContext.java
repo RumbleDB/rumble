@@ -26,6 +26,7 @@ public class RuntimeStaticContext implements Serializable {
     private final Set<String> staticallyKnownCollations;
     private final SerializationParameters serializationParameters;
     private final String defaultCollation;
+    private final ConstructionMode constructionMode;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
     private boolean isQuerySideEffecting;
@@ -65,6 +66,7 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
         this.serializationParameters = oldContext.serializationParameters;
         this.defaultCollation = oldContext.defaultCollation;
+        this.constructionMode = oldContext.constructionMode;
         this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
         this.xmlSchemaConstructors = oldContext.xmlSchemaConstructors;
     }
@@ -106,6 +108,9 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultCollation = staticContext == null
             ? CollationCatalogue.CODEPOINT_COLLATION
             : staticContext.getDefaultCollation();
+        this.constructionMode = staticContext == null
+            ? ConstructionMode.STRIP
+            : staticContext.getConstructionMode();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
         this.xmlSchemaConstructors = staticContext == null
             ? new HashMap<>()
@@ -114,6 +119,10 @@ public class RuntimeStaticContext implements Serializable {
 
     public XmlSchemaConstructorFunction getXmlSchemaConstructor(FunctionIdentifier identifier) {
         return this.xmlSchemaConstructors.get(identifier);
+    }
+
+    public ConstructionMode getConstructionMode() {
+        return this.constructionMode;
     }
 
     /**

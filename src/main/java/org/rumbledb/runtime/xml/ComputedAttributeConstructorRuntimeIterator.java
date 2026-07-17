@@ -218,6 +218,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 attributeName.getQNameValue(),
                 attributeValue
             );
+        XmlConstructorNodeCopier.initializeConstructedAttribute(attributeItem);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
             String documentPath = XMLDocumentPosition.generateConstructedTreePath();
             attributeItem.setXmlDocumentPosition(documentPath, 0);
