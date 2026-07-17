@@ -409,7 +409,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            Item stringValue = ItemFactory.getInstance().createStringItem(item.getStringValue());
+            String normalized = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
+            Item stringValue = ItemFactory.getInstance().createStringItem(normalized);
             return finalizeAtomicBranchValue(stringValue, targetType, BuiltinTypesCatalogue.stringItem);
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
@@ -777,7 +778,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         // representation of the source value (or xs:string cast if no canonical form exists).
         String lexical = normalizeLexicalAccordingToWhitespace(
             item.getStringValue(),
-            targetType.getCastingPrimitiveType()
+            targetType
         );
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
@@ -792,10 +793,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     /**
-     * Normalizes a lexical string according to the whiteSpace facet of the given primitive type.
+     * Normalizes a lexical string according to the whiteSpace facet of the given target type.
      */
-    private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType primitiveType) {
-        WhitespaceFacet facet = primitiveType.getWhitespaceFacet();
+    private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType targetType) {
+        WhitespaceFacet facet = targetType.getWhitespaceFacet();
         if (facet == null) {
             return lexical;
         }
@@ -814,7 +815,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     /**
      * Checks the lexical-space patterns (if any) for the given target type against the lexical form of the item.
-     * Whitespace normalization is applied according to the whiteSpace facet of the target primitive type.
+     * Whitespace normalization is applied according to the whiteSpace facet of the target type.
      * Returns true when either no lexical patterns are modeled or at least one pattern matches; false otherwise.
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
@@ -823,7 +824,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (patterns == null || patterns.isEmpty()) {
             return true;
         }
-        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), primitive);
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
             return xmlNameValidation;

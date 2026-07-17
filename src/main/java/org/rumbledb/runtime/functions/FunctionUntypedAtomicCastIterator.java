@@ -106,8 +106,8 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
             return item;
         }
         if (
-            this.targetType.isSubtypeOf(BuiltinTypesCatalogue.QNameItem)
-                || this.targetType.isSubtypeOf(BuiltinTypesCatalogue.NOTATIONItem)
+            isQNameLikeTargetType(this.targetType)
+                || isNotationLikeTargetType(this.targetType)
         ) {
             if (usesQNameCoercionErrorSemantics()) {
                 throw new CannotConvertToQNameException(
@@ -128,7 +128,32 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        return CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        Item converted = CastIterator.castItemToType(item, this.targetType, getMetadata(), this.staticContext);
+        if (converted == null) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + item.getDynamicType()
+                        + " cannot be implicitly converted to type "
+                        + this.targetType
+                        + ".",
+                    getMetadata()
+            );
+        }
+        return converted;
+    }
+
+    private boolean isQNameLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.QNameItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.QNameItem));
+    }
+
+    private boolean isNotationLikeTargetType(ItemType itemType) {
+        return itemType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+            || (itemType.isAtomicItemType()
+                && !itemType.equals(BuiltinTypesCatalogue.errorItem)
+                && itemType.getCastingPrimitiveType().equals(BuiltinTypesCatalogue.NOTATIONItem));
     }
 
     private boolean usesQNameCoercionErrorSemantics() {

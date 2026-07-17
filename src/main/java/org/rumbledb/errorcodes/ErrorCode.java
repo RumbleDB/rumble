@@ -161,7 +161,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode PrefixCannotBeExpandedErrorCode = registerBuiltIn("XPST0081");
 
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
-    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XTPY0018");
+    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
 
     public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");

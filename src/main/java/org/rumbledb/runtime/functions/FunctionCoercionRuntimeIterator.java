@@ -27,17 +27,23 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
     private final Item callableItem;
     private final List<Name> parameterNames;
+    private final SequenceType expectedReturnType;
+    private final String exceptionMessage;
     private RuntimeIterator delegate;
     private Item nextResult;
 
     public FunctionCoercionRuntimeIterator(
             Item callableItem,
             List<Name> parameterNames,
+            SequenceType expectedReturnType,
+            String exceptionMessage,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);
         this.callableItem = callableItem;
         this.parameterNames = parameterNames;
+        this.expectedReturnType = expectedReturnType;
+        this.exceptionMessage = exceptionMessage;
     }
 
     public Item getCallableItem() {
@@ -122,12 +128,18 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        return NamedFunctions.buildFunctionItemCallIterator(
+        RuntimeIterator callIterator = NamedFunctions.buildFunctionItemCallIterator(
             this.callableItem,
             callStaticContext,
             wrappedCallableExecutionMode,
             arguments,
             false
+        );
+        return FunctionCallArgumentConversion.wrapForFunctionConversion(
+            callIterator,
+            this.expectedReturnType,
+            this.exceptionMessage,
+            callStaticContext.withStaticType(this.expectedReturnType)
         );
     }
 

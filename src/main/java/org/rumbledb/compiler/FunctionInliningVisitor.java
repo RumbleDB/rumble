@@ -420,6 +420,16 @@ public class FunctionInliningVisitor extends CloneVisitor {
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
         }
+        if (paramType.getItemType().equals(BuiltinTypesCatalogue.errorItem)) {
+            TreatExpression result = new TreatExpression(
+                    expression,
+                    paramType,
+                    ErrorCode.UnexpectedTypeErrorCode,
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(paramType);
+            return result;
+        }
         return expression;
     }
 
