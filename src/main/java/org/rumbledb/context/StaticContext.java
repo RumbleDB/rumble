@@ -509,8 +509,44 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.serializationParameters == null) {
             this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
         }
+        if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
+            value = expandSerializationQNames(value);
+        }
         // update the local copy of theserialization parameters with the provided parameter name and value
         SerializationParameterBuilder.update(this.serializationParameters, name, value);
+    }
+
+    private String expandSerializationQNames(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return value;
+        }
+        StringBuilder sb = new StringBuilder();
+        String separator = "";
+        for (String token : value.trim().split("[,\\s]+")) {
+            if (token.isEmpty()) {
+                continue;
+            }
+            sb.append(separator).append(expandSerializationQName(token));
+            separator = " ";
+        }
+        return sb.toString();
+    }
+
+    private String expandSerializationQName(String lexicalQName) {
+        if (lexicalQName.startsWith("Q{")) {
+            return lexicalQName;
+        }
+        int colon = lexicalQName.indexOf(':');
+        if (colon < 0) {
+            return lexicalQName;
+        }
+        String prefix = lexicalQName.substring(0, colon);
+        String localName = lexicalQName.substring(colon + 1);
+        String namespace = getInScopeNamespaceBindings().get(prefix);
+        if (namespace == null) {
+            return lexicalQName;
+        }
+        return "Q{" + namespace + "}" + localName;
     }
 
     public void importModuleContext(StaticContext moduleContext) {

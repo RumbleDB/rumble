@@ -21,6 +21,9 @@ public final class Serializers {
         if (method.equalsIgnoreCase("html")) {
             return new HtmlSerializer(effectiveParams);
         }
+        if (method.equalsIgnoreCase("xhtml")) {
+            return new XhtmlSerializer(effectiveParams);
+        }
         if (method.equalsIgnoreCase("text")) {
             return new TextSerializer(effectiveParams);
         }
