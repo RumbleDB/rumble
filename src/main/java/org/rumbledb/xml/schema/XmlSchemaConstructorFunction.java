@@ -11,9 +11,13 @@ import java.io.Serializable;
 import java.util.List;
 
 import org.apache.xerces.xs.XSTypeDefinition;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.CastException;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -86,6 +90,52 @@ public record XmlSchemaConstructorFunction(
 
     public boolean isGeneralizedAtomic() {
         return this.variety == Variety.GENERALIZED_ATOMIC;
+    }
+
+    public List<Item> construct(Item item, RuntimeStaticContext staticContext) {
+        return switch (this.variety) {
+            case GENERALIZED_ATOMIC -> constructGeneralizedAtomic(item, staticContext);
+            case LIST -> constructList(item, staticContext);
+            case UNION -> constructUnion(item, staticContext);
+        };
+    }
+
+    private List<Item> constructGeneralizedAtomic(Item item, RuntimeStaticContext staticContext) {
+        Item converted = CastIterator.castItemToType(
+            item,
+            this.resultItemType,
+            staticContext.getMetadata(),
+            staticContext
+        );
+        if (converted == null) {
+            throw castError(item, staticContext);
+        }
+        return this.validator.validate(converted, staticContext);
+    }
+
+    private List<Item> constructList(Item item, RuntimeStaticContext staticContext) {
+        if (!item.isString() && !item.isUntypedAtomic()) {
+            throw castError(item, staticContext);
+        }
+        return this.validator.validate(item, staticContext);
+    }
+
+    private List<Item> constructUnion(Item item, RuntimeStaticContext staticContext) {
+        if (item.isString() || item.isUntypedAtomic()) {
+            return this.validator.validate(item, staticContext);
+        }
+        return this.validator.validateUnionFromNonString(item, staticContext);
+    }
+
+    private CastException castError(Item item, RuntimeStaticContext staticContext) {
+        return new CastException(
+                "A value of type "
+                    + item.getDynamicType()
+                    + " cannot be cast to XML Schema type "
+                    + this.identifier.getName()
+                    + ".",
+                staticContext.getMetadata()
+        );
     }
 
     public FunctionSignature signature() {

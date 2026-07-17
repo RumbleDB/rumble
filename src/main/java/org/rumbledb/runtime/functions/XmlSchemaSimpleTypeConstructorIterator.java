@@ -12,7 +12,6 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -20,7 +19,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
-/** Constructs the atomic sequence represented by an XML Schema list or non-pure union value. */
+/** Evaluates the constructor function supplied by an imported XML Schema simple type. */
 public final class XmlSchemaSimpleTypeConstructorIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
@@ -63,10 +62,8 @@ public final class XmlSchemaSimpleTypeConstructorIterator extends LocalFunctionC
         argument = atomize(argument);
         if (argument == null) {
             this.results = List.of();
-        } else if (this.constructor.variety() == XmlSchemaConstructorFunction.Variety.LIST) {
-            this.results = constructList(argument);
         } else {
-            this.results = constructUnion(argument);
+            this.results = this.constructor.construct(argument, this.staticContext);
         }
         this.position = 0;
         this.hasNext = !this.results.isEmpty();
@@ -87,31 +84,6 @@ public final class XmlSchemaSimpleTypeConstructorIterator extends LocalFunctionC
             );
         }
         return atomizedValue.get(0);
-    }
-
-    private List<Item> constructList(Item argument) {
-        if (!argument.isString() && !argument.isUntypedAtomic()) {
-            throw castError(argument);
-        }
-        return this.constructor.validator().validate(argument, this.staticContext);
-    }
-
-    private List<Item> constructUnion(Item argument) {
-        if (argument.isString() || argument.isUntypedAtomic()) {
-            return this.constructor.validator().validate(argument, this.staticContext);
-        }
-        return this.constructor.validator().validateUnionFromNonString(argument, this.staticContext);
-    }
-
-    private CastException castError(Item argument) {
-        return new CastException(
-                "A value of type "
-                    + argument.getDynamicType()
-                    + " cannot be cast to XML Schema type "
-                    + this.constructor.identifier().getName()
-                    + ".",
-                getMetadata()
-        );
     }
 
     @Override

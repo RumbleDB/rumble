@@ -30,10 +30,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
-import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.XmlSchemaSimpleTypeConstructorIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
@@ -93,15 +91,11 @@ public final class FunctionItemFactory {
         );
         RuntimeStaticContext bodyContext = referenceContext.withStaticType(returnType)
             .withExecutionMode(ExecutionMode.LOCAL);
-        ItemType resultItemType = constructor.resultItemType();
-        RuntimeIterator body = !constructor.isGeneralizedAtomic()
-            ? new XmlSchemaSimpleTypeConstructorIterator(List.of(parameter), constructor, bodyContext)
-            : new ConstructorFunctionIterator(
-                    resultItemType,
-                    constructor.validator(),
-                    List.of(parameter),
-                    bodyContext
-            );
+        RuntimeIterator body = new XmlSchemaSimpleTypeConstructorIterator(
+                List.of(parameter),
+                constructor,
+                bodyContext
+        );
         return new FunctionItem(
                 constructor.identifier(),
                 List.of(parameterName),

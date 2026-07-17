@@ -55,7 +55,7 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
             XSTypeDefinition schemaType
     ) {
         this.typeName = typeName;
-        this.documents = new ArrayList<>(documents);
+        this.documents = List.copyOf(documents);
         this.schemaType = schemaType;
     }
 
@@ -65,13 +65,13 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
     ) {
         XSTypeDefinition schemaType = getSchemaType();
         if (!(schemaType instanceof XSSimpleType simpleType)) {
-            throw new OurBadException("An XML Schema constructor must target a simple type.");
+            throw new OurBadException("XML Schema simple-type validation requires a simple type.");
         }
         try {
             ValidatedInfo schemaValue = new ValidatedInfo();
             simpleType.validate(
                 item.getStringValue(),
-                new ConstructorValidationContext(staticContext),
+                new SimpleTypeValidationContext(staticContext),
                 schemaValue
             );
             return new XmlSchemaTypedValueFactory(new XmlSchemaTypeMapper()).create(schemaValue, simpleType);
@@ -92,10 +92,10 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
             !(schemaType instanceof XSSimpleType unionType)
                 || unionType.getVariety() != XSSimpleTypeDefinition.VARIETY_UNION
         ) {
-            throw new OurBadException("A union constructor must target an XML Schema union type.");
+            throw new OurBadException("XML Schema union validation requires a union type.");
         }
 
-        ConstructorValidationContext validationContext = new ConstructorValidationContext(staticContext);
+        SimpleTypeValidationContext validationContext = new SimpleTypeValidationContext(staticContext);
         XmlSchemaTypeMapper typeMapper = new XmlSchemaTypeMapper();
         List<XSSimpleType> atomicMemberTypes = new ArrayList<>();
         collectAtomicMemberTypes(unionType, atomicMemberTypes);
@@ -225,7 +225,7 @@ public final class XmlSchemaSimpleTypeValidator implements Serializable {
         return namespace == null || namespace.isEmpty() ? null : namespace;
     }
 
-    private record ConstructorValidationContext(RuntimeStaticContext staticContext) implements ValidationContext {
+    private record SimpleTypeValidationContext(RuntimeStaticContext staticContext) implements ValidationContext {
 
         @Override
         public boolean needFacetChecking() {

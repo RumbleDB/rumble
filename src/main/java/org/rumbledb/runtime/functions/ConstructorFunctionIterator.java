@@ -12,7 +12,6 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.xml.schema.XmlSchemaSimpleTypeValidator;
 
 public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -20,26 +19,16 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     private final RuntimeIterator argumentIterator;
     private final SequenceType targetSequenceType;
-    private final XmlSchemaSimpleTypeValidator schemaValidator;
 
     public ConstructorFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
-        this(BuiltinTypesCatalogue.getItemTypeByName(identifier.getName()), null, arguments, staticContext);
-    }
-
-    public ConstructorFunctionIterator(
-            ItemType targetType,
-            XmlSchemaSimpleTypeValidator schemaValidator,
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
         super(arguments, staticContext);
         this.argumentIterator = arguments.get(0);
+        ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.targetSequenceType = new SequenceType(targetType, SequenceType.Arity.OneOrZero);
-        this.schemaValidator = schemaValidator;
     }
 
     @Override
@@ -49,10 +38,6 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
                 this.targetSequenceType,
                 this.staticContext.withStaticType(this.targetSequenceType)
         );
-        Item result = castIterator.materializeFirstItemOrNull(dynamicContext);
-        if (result != null && this.schemaValidator != null) {
-            return this.schemaValidator.validate(result, this.staticContext).get(0);
-        }
-        return result;
+        return castIterator.materializeFirstItemOrNull(dynamicContext);
     }
 }
