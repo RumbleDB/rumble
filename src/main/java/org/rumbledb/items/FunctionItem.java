@@ -65,7 +65,7 @@ public class FunctionItem implements Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private transient Supplier<RuntimeIterator> bodyIteratorFactory;
+    private transient FunctionBodyExecutionPlan bodyExecutionPlan;
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -221,14 +221,24 @@ public class FunctionItem implements Item {
     }
 
     public RuntimeIterator createBodyIteratorForExecution() {
-        if (this.bodyIteratorFactory != null) {
-            return this.bodyIteratorFactory.get();
+        if (this.bodyExecutionPlan != null) {
+            return this.bodyExecutionPlan.acquireIterator();
         }
         return this.bodyIterator.deepCopy();
     }
 
+    public void releaseBodyIteratorAfterExecution(RuntimeIterator iterator) {
+        if (this.bodyExecutionPlan != null) {
+            this.bodyExecutionPlan.releaseIterator(iterator);
+        }
+    }
+
     public void setBodyIteratorFactory(Supplier<RuntimeIterator> bodyIteratorFactory) {
-        this.bodyIteratorFactory = bodyIteratorFactory;
+        this.bodyExecutionPlan = new FunctionBodyExecutionPlan(bodyIteratorFactory);
+    }
+
+    public void shareBodyExecutionPlan(FunctionItem functionItem) {
+        this.bodyExecutionPlan = functionItem.bodyExecutionPlan;
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -384,7 +394,7 @@ public class FunctionItem implements Item {
                 new HashMap<>(this.dataFrameVariablesInClosure),
                 this.isBuiltin
         );
-        copy.bodyIteratorFactory = this.bodyIteratorFactory;
+        copy.bodyExecutionPlan = this.bodyExecutionPlan;
         return copy;
     }
 

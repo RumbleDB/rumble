@@ -54,6 +54,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private boolean isPartialApplication;
     private boolean isTailOptimization;
     private RuntimeIterator functionBodyIterator;
+    private transient boolean functionBodyIteratorFromExecutionPlan;
     private Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
 
@@ -123,9 +124,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public void openLocal() {
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
+            this.functionBodyIteratorFromExecutionPlan = false;
         } else {
             if (this.functionBodyIterator == null) {
                 this.functionBodyIterator = ((FunctionItem) this.functionItem).createBodyIteratorForExecution();
+                this.functionBodyIteratorFromExecutionPlan = true;
             }
             this.populateDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
@@ -201,9 +204,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        partiallyAppliedFunction.setBodyIteratorFactory(
-            ((FunctionItem) this.functionItem)::createBodyIteratorForExecution
-        );
+        partiallyAppliedFunction.shareBodyExecutionPlan((FunctionItem) this.functionItem);
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
                 this.staticContext.withStaticType(
@@ -266,6 +267,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             this.functionBodyIterator.close();
         }
+        if (this.functionBodyIterator != null && this.functionBodyIteratorFromExecutionPlan) {
+            ((FunctionItem) this.functionItem).releaseBodyIteratorAfterExecution(this.functionBodyIterator);
+        }
+        this.functionBodyIterator = null;
+        this.functionBodyIteratorFromExecutionPlan = false;
     }
 
     public void setNextResult() {
