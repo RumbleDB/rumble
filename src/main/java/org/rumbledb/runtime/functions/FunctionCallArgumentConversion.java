@@ -17,6 +17,7 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -26,6 +27,7 @@ import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -64,18 +66,32 @@ public final class FunctionCallArgumentConversion {
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext callerStaticContext
     ) {
-        if (functionItem.getSignature().getParameterTypes() == null) {
+        wrapAccordingToSignature(
+            functionItem.getIdentifier(),
+            functionItem.getSignature(),
+            functionArguments,
+            callerStaticContext
+        );
+    }
+
+    public static void wrapAccordingToSignature(
+            FunctionIdentifier functionIdentifier,
+            FunctionSignature signature,
+            List<RuntimeIterator> functionArguments,
+            RuntimeStaticContext callerStaticContext
+    ) {
+        if (signature.getParameterTypes() == null) {
             return;
         }
         for (int i = 0; i < functionArguments.size(); i++) {
             if (
                 functionArguments.get(i) != null
-                    && !functionItem.getSignature()
+                    && !signature
                         .getParameterTypes()
                         .get(i)
                         .equals(SequenceType.createSequenceType("item*"))
             ) {
-                SequenceType sequenceType = functionItem.getSignature().getParameterTypes().get(i);
+                SequenceType sequenceType = signature.getParameterTypes().get(i);
                 ExecutionMode executionMode = functionArguments.get(i).getHighestExecutionMode();
                 if (
                     sequenceType.isEmptySequence()
@@ -91,7 +107,7 @@ public final class FunctionCallArgumentConversion {
                 RuntimeIterator argumentIterator = wrapForFunctionConversion(
                     functionArguments.get(i),
                     sequenceType,
-                    "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                    "Invalid argument for " + functionIdentifier.getName() + " function. ",
                     runtimeStaticContext
                 );
                 if (
@@ -102,7 +118,7 @@ public final class FunctionCallArgumentConversion {
                     RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
                             argumentIterator,
                             sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                            "Invalid argument for " + functionIdentifier.getName() + " function. ",
                             runtimeStaticContext
                     );
                     functionArguments.set(i, typePromotionIterator);
@@ -110,7 +126,7 @@ public final class FunctionCallArgumentConversion {
                     RuntimeIterator typePromotionIterator = new TypePromotionIterator(
                             argumentIterator,
                             sequenceType,
-                            "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ",
+                            "Invalid argument for " + functionIdentifier.getName() + " function. ",
                             runtimeStaticContext
                     );
                     functionArguments.set(i, typePromotionIterator);

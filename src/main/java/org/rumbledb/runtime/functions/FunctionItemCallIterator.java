@@ -33,19 +33,15 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
-import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -68,6 +64,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext,
             boolean isTailOptimization
     ) {
+        this(functionItem, functionArguments, staticContext, isTailOptimization, false);
+    }
+
+    public FunctionItemCallIterator(
+            Item functionItem,
+            List<RuntimeIterator> functionArguments,
+            RuntimeStaticContext staticContext,
+            boolean isTailOptimization,
+            boolean argumentsAlreadyConverted
+    ) {
         super(null, staticContext);
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
@@ -85,8 +91,14 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionBodyIterator = null;
         this.isUpdating = functionItem.getSignature().isUpdating();
 
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+        if (!argumentsAlreadyConverted) {
+            FunctionCallArgumentConversion.validateArity(functionItem, functionArguments, getMetadata());
+            FunctionCallArgumentConversion.wrapAccordingToSignature(
+                functionItem,
+                functionArguments,
+                getRuntimeStaticContext()
+            );
+        }
 
         // Prepopulation of the dynamic context (without the parameters)
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
@@ -105,74 +117,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-    }
-
-    private void validateNumberOfArguments() {
-        if (this.functionItem.getParameterNames().size() != this.functionArguments.size()) {
-            throw new UnexpectedTypeException(
-                    "Dynamic function "
-                        + this.functionItem.getIdentifier().getName()
-                        + " invoked with incorrect number of arguments. Expected: "
-                        + this.functionItem.getParameterNames().size()
-                        + ", Found: "
-                        + this.functionArguments.size(),
-                    getMetadata()
-            );
-        }
-    }
-
-    private void wrapArgumentIteratorsWithTypeCheckingIterators() {
-        if (this.functionItem.getSignature().getParameterTypes() != null) {
-            for (int i = 0; i < this.functionArguments.size(); i++) {
-                if (
-                    this.functionArguments.get(i) != null
-                        && !this.functionItem.getSignature()
-                            .getParameterTypes()
-                            .get(i)
-                            .equals(SequenceType.createSequenceType("item*"))
-                ) {
-                    SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
-                    ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
-                        executionMode = ExecutionMode.LOCAL;
-                    }
-                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
-                        .withExecutionMode(executionMode)
-                        .withMetadata(this.functionArguments.get(i).getMetadata());
-                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
-                        this.functionArguments.get(i),
-                        sequenceType,
-                        "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                        runtimeStaticContext
-                    );
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
-                        RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                                argumentIterator,
-                                sequenceType,
-                                "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                                runtimeStaticContext
-                        );
-                        this.functionArguments.set(i, typePromotionIterator);
-                    } else {
-                        RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                                argumentIterator,
-                                sequenceType,
-                                "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                                runtimeStaticContext
-                        );
-                        this.functionArguments.set(i, typePromotionIterator);
-                    }
-                }
-            }
-        }
     }
 
     @Override

@@ -182,6 +182,7 @@ import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.XmlSchemaSimpleTypeConstructorIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -1389,6 +1390,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 false
             );
         } else {
+            FunctionCallArgumentConversion.wrapAccordingToSignature(
+                identifier,
+                expression.getStaticContext().getFunctionSignature(identifier),
+                arguments,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,

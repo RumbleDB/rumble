@@ -85,7 +85,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
                 arguments,
-                isTailOptimization
+                isTailOptimization,
+                true
             );
         }
         throw new UnknownFunctionCallException(
@@ -106,6 +107,24 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             ExecutionMode executionModeForFunctionCall,
             List<RuntimeIterator> arguments,
             boolean isTailOptimization
+    ) {
+        return buildFunctionItemCallIterator(
+            functionItem,
+            callerRuntimeContext,
+            executionModeForFunctionCall,
+            arguments,
+            isTailOptimization,
+            false
+        );
+    }
+
+    private static RuntimeIterator buildFunctionItemCallIterator(
+            Item functionItem,
+            RuntimeStaticContext callerRuntimeContext,
+            ExecutionMode executionModeForFunctionCall,
+            List<RuntimeIterator> arguments,
+            boolean isTailOptimization,
+            boolean argumentsAlreadyConverted
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
         boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
@@ -153,7 +172,8 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     functionItem,
                     arguments,
                     innerStaticContext,
-                    isTailOptimization
+                    isTailOptimization,
+                    argumentsAlreadyConverted
             );
         }
         if (isTailOptimization) {
