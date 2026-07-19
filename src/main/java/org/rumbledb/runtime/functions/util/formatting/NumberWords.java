@@ -22,7 +22,9 @@ public final class NumberWords {
     // permitted by F&O 3.1 and matches the specification's example outputs.
     private static final String DEFAULT_ORDINAL_WORD_RULE_SET = "%spellout-ordinal-masculine";
 
-    private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE = ThreadLocal.withInitial(HashMap::new);
+    private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE = ThreadLocal.withInitial(
+        HashMap::new
+    );
 
     private static final Map<ULocale, LocalizedNumberFormatter> GROUPING_FORMATTER_CACHE = new ConcurrentHashMap<>();
 
