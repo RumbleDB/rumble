@@ -50,14 +50,14 @@ public final class JSONParsingOptions implements Serializable {
     public static final Function<String, String> DEFAULT_FALLBACK = s -> "\uFFFD";
 
     // RumbleDB-specific extension, not part of the W3C specification.
-    public static final boolean DEFAULT_FAST_PATH = false;
+    public static final boolean DEFAULT_LEGACY = false;
 
     private final boolean liberal;
     private final String duplicates;
     private final boolean escape;
     private final String numberFormat;
     private final Function<String, String> fallback;
-    private final boolean fastPath;
+    private final boolean legacy;
 
     private JSONParsingOptions(
             boolean liberal,
@@ -65,14 +65,14 @@ public final class JSONParsingOptions implements Serializable {
             boolean escape,
             Function<String, String> fallback,
             String numberFormat,
-            boolean fastPath
+            boolean legacy
     ) {
         this.liberal = liberal;
         this.duplicates = duplicates;
         this.escape = escape;
         this.fallback = fallback;
         this.numberFormat = numberFormat;
-        this.fastPath = fastPath;
+        this.legacy = legacy;
     }
 
     public static JSONParsingOptions defaultInstance(boolean isJSONiq10) {
@@ -82,7 +82,7 @@ public final class JSONParsingOptions implements Serializable {
                 DEFAULT_ESCAPE,
                 DEFAULT_FALLBACK,
                 getDefaultNumberFormat(isJSONiq10),
-                DEFAULT_FAST_PATH
+                DEFAULT_LEGACY
         );
     }
 
@@ -96,8 +96,8 @@ public final class JSONParsingOptions implements Serializable {
             + this.escape
             + ", fallback: "
             + this.fallback
-            + ", fast-path: "
-            + this.fastPath
+            + ", legacy: "
+            + this.legacy
             + "]";
     }
 
@@ -173,7 +173,7 @@ public final class JSONParsingOptions implements Serializable {
         Function<String, String> fallback = JSONParsingOptions.DEFAULT_FALLBACK;
         boolean fallbackExplicitlySet = false;
 
-        boolean fastPath = JSONParsingOptions.DEFAULT_FAST_PATH;
+        boolean legacy = JSONParsingOptions.DEFAULT_LEGACY;
 
         if (optionsItem == null) {
             return JSONParsingOptions.defaultInstance(isJSONiq10);
@@ -233,8 +233,8 @@ public final class JSONParsingOptions implements Serializable {
                     fallbackExplicitlySet = true;
                     break;
                 }
-                case "fast-path":
-                    fastPath = requireSingleBooleanOption("fast-path", sequence, metadata);
+                case "legacy":
+                    legacy = requireSingleBooleanOption("legacy", sequence, metadata);
                     break;
                 default:
                     break;
@@ -248,7 +248,7 @@ public final class JSONParsingOptions implements Serializable {
             );
         }
 
-        if (fastPath) {
+        if (legacy) {
             boolean othersAreDefault = liberal == JSONParsingOptions.DEFAULT_LIBERAL
                 && JSONParsingOptions.DEFAULT_DUPLICATES.equals(duplicates)
                 && escape == JSONParsingOptions.DEFAULT_ESCAPE
@@ -256,14 +256,14 @@ public final class JSONParsingOptions implements Serializable {
                 && numberFormat.equals(JSONParsingOptions.getDefaultNumberFormat(isJSONiq10));
             if (!othersAreDefault) {
                 throw new InvalidOptionException(
-                        "Invalid options: option 'fast-path' can only be combined with default values "
+                        "Invalid options: option 'legacy' can only be combined with default values "
                             + "for 'liberal', 'duplicates', 'escape', 'fallback', and 'number-format'.",
                         metadata
                 );
             }
         }
 
-        return new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat, fastPath);
+        return new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat, legacy);
     }
 
     private static String validatedStringOption(

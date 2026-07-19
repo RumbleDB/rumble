@@ -62,10 +62,11 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             this.staticContext,
             getMetadata()
         );
-        if (options.isFastPath()) {
+        if (options.isLegacy()) {
             ConsoleOutput.warn(
-                "Warning: fn:parse-json option 'fast-path' skips spec-conformant JSON parsing for speed "
-                    + "and may produce unexpected results; retry without it if the output looks wrong."
+                "Warning: fn:parse-json option 'legacy' skips spec-conformant JSON parsing in favor of "
+                    + "RumbleDB's previous Gson-based parser and may produce unexpected results; "
+                    + "retry without it if the output looks wrong."
             );
             return ItemParser.getItemFromObject(
                 new JsonReader(new StringReader(stringItem.getStringValue())),
