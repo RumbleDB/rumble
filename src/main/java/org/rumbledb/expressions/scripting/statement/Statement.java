@@ -24,10 +24,12 @@ public abstract class Statement extends Node {
 
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+        invalidateRuntimeStaticContextCache();
     }
 
     public void setStaticSequenceType(SequenceType staticSequenceType) {
         this.staticSequenceType = staticSequenceType;
+        invalidateRuntimeStaticContextCache();
     }
 
     public SequenceType getStaticSequenceType() {
@@ -57,13 +59,7 @@ public abstract class Statement extends Node {
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                getStaticContext()
-        );
+        return getOrCreateRuntimeStaticContext(conf, visitorConfig, getStaticSequenceType(), getStaticContext());
     }
 
     @Override

@@ -241,18 +241,13 @@ public abstract class Clause extends Node {
 
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+        invalidateRuntimeStaticContextCache();
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                null,
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return getOrCreateRuntimeStaticContext(conf, visitorConfig, null, this.staticContext);
     }
 }

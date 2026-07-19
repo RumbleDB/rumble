@@ -72,19 +72,14 @@ public abstract class Expression extends Node {
      */
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+        invalidateRuntimeStaticContextCache();
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                getStaticSequenceType(),
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return getOrCreateRuntimeStaticContext(conf, visitorConfig, getStaticSequenceType(), this.staticContext);
     }
 
     /**
@@ -119,6 +114,7 @@ public abstract class Expression extends Node {
      */
     public void setStaticSequenceType(SequenceType staticSequenceType) {
         this.staticSequenceType = staticSequenceType;
+        invalidateRuntimeStaticContextCache();
     }
 
     /**
