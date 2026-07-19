@@ -181,7 +181,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
             if (this.functionBodyIterator == null) {
-                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+                this.functionBodyIterator = ((FunctionItem) this.functionItem).createBodyIteratorForExecution();
             }
             this.populateDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
@@ -256,6 +256,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues,
                 RDDArgumentValues,
                 DFArgumentValues
+        );
+        partiallyAppliedFunction.setBodyIteratorFactory(
+            ((FunctionItem) this.functionItem)::createBodyIteratorForExecution
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
