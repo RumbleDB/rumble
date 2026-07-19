@@ -23,7 +23,7 @@ public class gYearMonthItem implements Item {
     private Year year;
     private Month month;
     private ZoneOffset offset;
-    private final Pattern gYearMonthRegex = Pattern.compile(
+    private static final Pattern gYearMonthRegex = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 

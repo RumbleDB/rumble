@@ -24,7 +24,7 @@ public class gYearItem implements Item {
     private boolean hasTimeZone;
     private Year year;
     private ZoneOffset offset;
-    private final Pattern gYearRegex = Pattern.compile(
+    private static final Pattern gYearRegex = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 

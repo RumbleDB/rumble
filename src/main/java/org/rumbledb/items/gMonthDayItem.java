@@ -23,7 +23,7 @@ public class gMonthDayItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
-    private final Pattern gMonthDayRegex = Pattern.compile(
+    private static final Pattern gMonthDayRegex = Pattern.compile(
         "--(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
     private Month month;

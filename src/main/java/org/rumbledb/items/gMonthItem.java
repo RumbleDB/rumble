@@ -24,7 +24,7 @@ public class gMonthItem implements Item {
     private boolean hasTimeZone;
     private Month month;
     private ZoneOffset offset;
-    private final Pattern gMonthRegex = Pattern.compile(
+    private static final Pattern gMonthRegex = Pattern.compile(
         "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
