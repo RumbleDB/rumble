@@ -49,7 +49,7 @@ public class DateItem implements Item {
     }
 
     private void getDateFromString(String dateString) {
-        if (!this.dayRegex.matcher(dateString).matches()) {
+        if (!dayRegex.matcher(dateString).matches()) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         }
         int yearIncrement = 0;

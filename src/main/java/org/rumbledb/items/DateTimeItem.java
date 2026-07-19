@@ -50,7 +50,7 @@ public class DateTimeItem implements Item {
     }
 
     private void getDateTimeFromString(String dateTimeString) {
-        if (!this.dateTimePattern.matcher(dateTimeString).matches()) {
+        if (!dateTimePattern.matcher(dateTimeString).matches()) {
             throw new IllegalArgumentException("Invalid date string: " + dateTimeString);
         }
         int yearIncrement = 0;

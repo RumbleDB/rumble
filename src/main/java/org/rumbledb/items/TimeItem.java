@@ -37,7 +37,7 @@ public class TimeItem implements Item {
     }
 
     TimeItem(String timeString) {
-        if (!this.timeRegex.matcher(timeString).matches()) {
+        if (!timeRegex.matcher(timeString).matches()) {
             throw new IllegalArgumentException("Invalid time string: " + timeString);
         }
         getTimeFromString(timeString);

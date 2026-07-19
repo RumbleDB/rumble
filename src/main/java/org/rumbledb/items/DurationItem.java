@@ -46,7 +46,7 @@ public class DurationItem implements Item {
     }
 
     public DurationItem(String value) {
-        if (!this.durationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid duration: " + value);
         }
         getDurationFromString(value);

@@ -53,7 +53,7 @@ public class gYearItem implements Item {
     }
 
     private void getgYearFromString(String gYearString) {
-        Matcher matcher = this.gYearRegex.matcher(gYearString);
+        Matcher matcher = gYearRegex.matcher(gYearString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYear: \"" + gYearString + "\"");
         }

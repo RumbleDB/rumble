@@ -40,7 +40,7 @@ public class DayTimeDurationItem implements Item {
 
     public DayTimeDurationItem(String value) {
         super();
-        if (!this.durationRegex.matcher(value).matches() || !this.dayTimeDurationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches() || !dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         try {

@@ -35,7 +35,7 @@ public class YearMonthDurationItem implements Item {
     }
 
     public YearMonthDurationItem(String value) {
-        if (!this.yearMonthDurationRegex.matcher(value).matches()) {
+        if (!yearMonthDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
         }
         try {

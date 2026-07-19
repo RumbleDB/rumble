@@ -53,7 +53,7 @@ public class gDayItem implements Item {
     }
 
     private void getgDayFromString(String gDayString) {
-        Matcher matcher = this.gDayRegex.matcher(gDayString);
+        Matcher matcher = gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gDay: \"" + gDayString + "\"");
         }

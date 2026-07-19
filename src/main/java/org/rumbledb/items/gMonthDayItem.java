@@ -56,7 +56,7 @@ public class gMonthDayItem implements Item {
     }
 
     private void getgMonthDayFromString(String gMonthDayString) {
-        Matcher matcher = this.gMonthDayRegex.matcher(gMonthDayString);
+        Matcher matcher = gMonthDayRegex.matcher(gMonthDayString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gMonthDay: \"" + gMonthDayString + "\"");
         }
