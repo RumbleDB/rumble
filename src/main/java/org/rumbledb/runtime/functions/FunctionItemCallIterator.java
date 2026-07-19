@@ -58,6 +58,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private boolean isPartialApplication;
     private boolean isTailOptimization;
     private RuntimeIterator functionBodyIterator;
+    private transient boolean borrowedFunctionBodyIterator;
     private Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
 
@@ -179,9 +180,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public void openLocal() {
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
+            this.borrowedFunctionBodyIterator = false;
         } else {
             if (this.functionBodyIterator == null) {
-                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+                this.functionBodyIterator = ((FunctionItem) this.functionItem).acquireBodyIterator();
+                this.borrowedFunctionBodyIterator = true;
             }
             this.populateDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
@@ -240,22 +243,20 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.isTailOptimization) {
             functionItemName = Name.TAIL_CALL_OPTIMIZATION;
         }
-        FunctionItem partiallyAppliedFunction = new FunctionItem(
-                new FunctionIdentifier(
-                        functionItemName,
-                        partialApplicationParamNames.size()
-                ),
-                partialApplicationParamNames,
-                new FunctionSignature(
-                        partialApplicationParamTypes,
-                        this.functionItem.getSignature().getReturnType(),
-                        this.functionItem.getSignature().isUpdating()
-                ),
-                this.functionItem.getModuleDynamicContext(),
-                this.functionItem.getBodyIterator(),
-                localArgumentValues,
-                RDDArgumentValues,
-                DFArgumentValues
+        FunctionItem partiallyAppliedFunction = ((FunctionItem) this.functionItem).createPartialFunction(
+            new FunctionIdentifier(
+                    functionItemName,
+                    partialApplicationParamNames.size()
+            ),
+            partialApplicationParamNames,
+            new FunctionSignature(
+                    partialApplicationParamTypes,
+                    this.functionItem.getSignature().getReturnType(),
+                    this.functionItem.getSignature().isUpdating()
+            ),
+            localArgumentValues,
+            RDDArgumentValues,
+            DFArgumentValues
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
@@ -319,6 +320,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             this.functionBodyIterator.close();
         }
+        if (this.functionBodyIterator != null && this.borrowedFunctionBodyIterator) {
+            ((FunctionItem) this.functionItem).releaseBodyIterator(this.functionBodyIterator);
+        }
+        this.functionBodyIterator = null;
+        this.borrowedFunctionBodyIterator = false;
     }
 
     public void setNextResult() {
