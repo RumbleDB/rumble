@@ -222,6 +222,10 @@ public class FunctionItem implements Item {
         return this.executionPlan.acquireIterator();
     }
 
+    public RuntimeIterator createBodyIteratorForDistributedExecution() {
+        return this.executionPlan.createIterator();
+    }
+
     public void releaseBodyIterator(RuntimeIterator iterator) {
         this.executionPlan.releaseIterator(iterator);
     }

@@ -18,8 +18,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 /**
  * The compiled, closure-independent part of a function item.
  *
- * Function items created from the same declaration share this plan. Each local invocation borrows an iterator because
- * runtime iterators contain mutable execution state and cannot be used concurrently.
+ * Function items created from the same declaration share this plan. Local invocations borrow iterators; distributed
+ * invocations receive fresh copies because their lazy evaluation can outlive the call that created them.
  */
 final class FunctionExecutionPlan implements Serializable {
 
@@ -37,9 +37,13 @@ final class FunctionExecutionPlan implements Serializable {
         return this.bodyIterator;
     }
 
+    RuntimeIterator createIterator() {
+        return this.bodyIterator.deepCopy();
+    }
+
     synchronized RuntimeIterator acquireIterator() {
         RuntimeIterator iterator = this.availableIterators.pollFirst();
-        return iterator == null ? this.bodyIterator.deepCopy() : iterator;
+        return iterator == null ? createIterator() : iterator;
     }
 
     synchronized void releaseIterator(RuntimeIterator iterator) {
