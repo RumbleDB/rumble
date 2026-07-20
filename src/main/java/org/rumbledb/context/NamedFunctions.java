@@ -81,7 +81,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
-                getUserDefinedFunction(identifier),
+                this.userDefinedFunctions.get(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
                 arguments,

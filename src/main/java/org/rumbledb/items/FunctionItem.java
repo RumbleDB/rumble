@@ -63,9 +63,17 @@ public class FunctionItem implements Item {
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;
 
-    // signature contains type information for all parameters and the return value
+    /**
+     * Signature contains type information for all parameters and the return value
+     */
     private FunctionSignature signature;
-    private RuntimeIterator bodyIterator;
+
+    /**
+     * The body iterator is not serialized directly, but through the FunctionBodyIteratorFactory,
+     * which allows for creating new instances of the body iterator when needed.
+     */
+    private FunctionBodyIteratorFactory bodyIteratorFactory;
+
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -101,7 +109,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -146,7 +154,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -184,7 +192,7 @@ public class FunctionItem implements Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType, isUpdating);
-        this.bodyIterator = bodyIterator;
+        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -217,7 +225,11 @@ public class FunctionItem implements Item {
     }
 
     public RuntimeIterator getBodyIterator() {
-        return this.bodyIterator;
+        return this.bodyIteratorFactory.getPrototype();
+    }
+
+    public RuntimeIterator createBodyIterator() {
+        return this.bodyIteratorFactory.createExecutionInstance();
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -268,7 +280,7 @@ public class FunctionItem implements Item {
             sb.append(param + " ");
         }
         sb.append("Signature: " + this.signature + "\n");
-        sb.append("Body:\n" + this.bodyIterator + "\n");
+        sb.append("Body:\n" + getBodyIterator() + "\n");
         sb.append("Closure:\n");
         sb.append("  Local:\n");
         for (Name name : this.localVariablesInClosure.keySet()) {
@@ -311,7 +323,7 @@ public class FunctionItem implements Item {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this.bodyIterator);
+            oos.writeObject(getBodyIterator());
             oos.flush();
             byte[] data = bos.toByteArray();
             output.writeInt(data.length);
@@ -343,7 +355,7 @@ public class FunctionItem implements Item {
             byte[] data = input.readBytes(dataLength);
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator = (RuntimeIterator) ois.readObject();
+            this.bodyIteratorFactory = new FunctionBodyIteratorFactory((RuntimeIterator) ois.readObject());
         } catch (Exception e) {
             throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
@@ -399,10 +411,11 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isEstimator() {
-        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyEstimatorRuntimeIterator) {
             return true;
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().isEstimator();
         }
         return false;
@@ -410,10 +423,11 @@ public class FunctionItem implements Item {
 
     @Override
     public Estimator<?> getEstimator() {
-        if (this.bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyEstimatorRuntimeIterator estimatorRuntimeIterator) {
             return estimatorRuntimeIterator.getEstimator();
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().getEstimator();
         }
         throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
@@ -421,10 +435,11 @@ public class FunctionItem implements Item {
 
     @Override
     public boolean isTransformer() {
-        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyTransformerRuntimeIterator) {
             return true;
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().isTransformer();
         }
         return false;
@@ -432,10 +447,11 @@ public class FunctionItem implements Item {
 
     @Override
     public Transformer getTransformer() {
-        if (this.bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
+        var bodyIterator = getBodyIterator();
+        if (bodyIterator instanceof ApplyTransformerRuntimeIterator transformerRuntimeIterator) {
             return transformerRuntimeIterator.getTransformer();
         }
-        if (this.bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (bodyIterator instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getCallableItem().getTransformer();
         }
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
