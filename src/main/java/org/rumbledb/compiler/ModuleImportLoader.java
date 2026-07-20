@@ -7,6 +7,7 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
