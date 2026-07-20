@@ -109,7 +109,7 @@ public class RumbleJLineShell {
             );
             String shell = this.configuration.getShellFilter();
             if (shell != null) {
-                Process process = Runtime.getRuntime().exec(shell);
+                Process process = new ProcessBuilder(shell.split("\\s+")).start();
                 BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
                 Writer stdin = new OutputStreamWriter(process.getOutputStream());
                 stdin.write(result);

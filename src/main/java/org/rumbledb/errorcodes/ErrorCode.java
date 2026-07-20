@@ -55,7 +55,11 @@ public final class ErrorCode implements Serializable {
 
     @Override
     public String toString() {
-        return this.name.getLocalName();
+        String namespace = this.name.getNamespace();
+        if (Name.ERROR_NS.equals(namespace)) {
+            return this.name.getLocalName();
+        }
+        return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
     @Override
