@@ -190,7 +190,10 @@ public final class SerializationParameterUtils {
             if (value == null) {
                 value = element.getStringValue();
             }
-            if ("cdata-section-elements".equals(name.getLocalName()) || "suppress-indentation".equals(name.getLocalName())) {
+            if (
+                "cdata-section-elements".equals(name.getLocalName())
+                    || "suppress-indentation".equals(name.getLocalName())
+            ) {
                 value = expandLexicalQNames(value, element);
             }
             applyNormalizedParameter(params, name.getLocalName(), value, metadata);
