@@ -41,9 +41,14 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
         return ItemFactory.getInstance().createStringItem(result.toString());
     }
 
+    private static final char[] HEX_DIGITS = "0123456789ABCDEF".toCharArray();
+
     private static void appendPercentEncoded(StringBuilder result, int codePoint) {
         for (byte b : new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8)) {
-            result.append(String.format("%%%02X", b & 0xFF));
+            int unsigned = b & 0xFF;
+            result.append('%');
+            result.append(HEX_DIGITS[(unsigned >>> 4) & 0xF]);
+            result.append(HEX_DIGITS[unsigned & 0xF]);
         }
     }
 }

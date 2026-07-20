@@ -23,7 +23,7 @@ public class YearMonthDurationItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private Period value;
-    Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
+    private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
     public YearMonthDurationItem() {
         super();
@@ -35,7 +35,7 @@ public class YearMonthDurationItem implements Item {
     }
 
     public YearMonthDurationItem(String value) {
-        if (!this.yearMonthDurationRegex.matcher(value).matches()) {
+        if (!yearMonthDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
         }
         try {
