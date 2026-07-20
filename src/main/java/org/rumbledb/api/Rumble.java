@@ -1,5 +1,6 @@
 package org.rumbledb.api;
 
+import lombok.Getter;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.CompilationConfiguration;
@@ -25,6 +26,7 @@ import java.net.URI;
  */
 public class Rumble {
 
+    @Getter
     private RumbleRuntimeConfiguration configuration;
     private CompilationConfiguration compilationConfiguration;
 
@@ -56,15 +58,6 @@ public class Rumble {
         this.configuration = new RumbleRuntimeConfiguration();
         this.compilationConfiguration = new CompilationConfiguration(this.configuration);
         SparkSessionManager.getInstance(session);
-    }
-
-    /**
-     * Gets the configuration
-     * 
-     * @return the configuration
-     */
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.configuration;
     }
 
     /**
