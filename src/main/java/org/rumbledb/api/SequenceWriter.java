@@ -38,7 +38,7 @@ import org.rumbledb.serialization.Serializers;
  * and saved as text files.</li>
  * </ul>
  *
- * The serialization method (json, tyson, xml-json-hybrid, yaml, delta, ...) is always taken from
+ * The serialization method (json, tyson, adaptive, xml-json-hybrid, yaml, delta, ...) is always taken from
  * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
  * format.
  */
@@ -99,7 +99,7 @@ public class SequenceWriter {
      * TODO: update comment here
      * It determines the initial mode:
      * <ul>
-     * <li>If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
+     * <li>If the method is {@code adaptive}, {@code xml-json-hybrid}, or {@code tyson}, or if obtaining a DataFrame
      * fails, the writer is created in RDD mode.</li>
      * <li>Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
      * {@link SequenceOfItems#getAsDataFrame()}.</li>
@@ -114,7 +114,12 @@ public class SequenceWriter {
         this.serializationParameters = SerializationParameters.copy(params);
         DataFrameWriter<Row> w = null;
         String method = this.serializationParameters.getMethod();
-        if (method != null && (method.equals("xml-json-hybrid") || method.equals("tyson"))) {
+        if (
+            method != null
+                && (method.equals("adaptive")
+                    || method.equals("xml-json-hybrid")
+                    || method.equals("tyson"))
+        ) {
             this.mode = SaveMode.ErrorIfExists; // Default save mode
         } else {
             try {
@@ -162,7 +167,7 @@ public class SequenceWriter {
         SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
         params.setMethod(source);
         if (this.dataFrameWriter != null) {
-            if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+            if (!source.equals("adaptive") && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
                 return createNewInstance(
                     this.dataFrameWriter.format(source),
                     null,
@@ -173,7 +178,7 @@ public class SequenceWriter {
                 return createNewInstance(null, newMode, params);
             }
         }
-        if (!source.equals("xml-json-hybrid") && !source.equals("tyson")) {
+        if (!source.equals("adaptive") && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
             try {
                 Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
                 int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
@@ -303,13 +308,14 @@ public class SequenceWriter {
         // RDD mode: serialize each item via Serializer and save as text.
         if (
             !(method.equals("json")
+                || method.equals("adaptive")
                 || method.equals("tyson")
                 || method.equals("xml-json-hybrid")
                 || method.equals("yaml")
                 || method.equals("delta"))
         ) {
             throw new CliException(
-                    "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+                    "Rumble cannot output another format than json or adaptive or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
         if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {

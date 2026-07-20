@@ -76,19 +76,19 @@ final class TemporalPictureFormatter {
 
         String rawVariableMarker = request.pictureString.substring(state.startOfSequence, index);
 
-        ParsedVariableMarker parsedVariableMarker = TemporalPictureParser.parse(
+        VariableMarker variableMarker = TemporalPictureParser.parse(
             rawVariableMarker,
             request.pictureString,
             request.metadata
         );
 
-        state.languageSensitiveOutput = state.languageSensitiveOutput || usesLanguage(parsedVariableMarker);
-        state.calendarSensitiveOutput = state.calendarSensitiveOutput || usesCalendar(parsedVariableMarker);
+        state.languageSensitiveOutput = state.languageSensitiveOutput || usesLanguage(variableMarker);
+        state.calendarSensitiveOutput = state.calendarSensitiveOutput || usesCalendar(variableMarker);
 
         result.append(
             TemporalComponentRenderer.render(
                 request.value,
-                parsedVariableMarker,
+                variableMarker,
                 request.hasExplicitTimezone,
                 request.formattingContext,
                 request.componentSupport,
@@ -250,7 +250,7 @@ final class TemporalPictureFormatter {
     /**
      * Returns true if the marker output depends on calendar-specific formatting.
      */
-    private static boolean usesCalendar(ParsedVariableMarker marker) {
+    private static boolean usesCalendar(VariableMarker marker) {
         switch (marker.component) {
             case 'Y':
             case 'M':
@@ -268,12 +268,12 @@ final class TemporalPictureFormatter {
     /**
      * Returns true if the marker output depends on language-specific formatting.
      */
-    private static boolean usesLanguage(ParsedVariableMarker marker) {
+    private static boolean usesLanguage(VariableMarker marker) {
         switch (marker.kind) {
-            case ParsedVariableMarker.Kind.NAME:
-            case ParsedVariableMarker.Kind.WORDS:
+            case VariableMarker.Kind.NAME:
+            case VariableMarker.Kind.WORDS:
                 return true;
-            case ParsedVariableMarker.Kind.TIMEZONE:
+            case VariableMarker.Kind.TIMEZONE:
                 return marker.timezonePicture.named;
             default:
                 return false;

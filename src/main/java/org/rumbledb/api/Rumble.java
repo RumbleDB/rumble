@@ -99,6 +99,17 @@ public class Rumble {
     }
 
     /**
+     * Runs a query and returns its serialized result using the method and options declared in the
+     * static context.
+     *
+     * @param query the content of the JSONiq main module.
+     * @return the serialized query result.
+     */
+    public String runQueryToString(String query) {
+        return runQuery(query).serialize();
+    }
+
+    /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
@@ -157,6 +168,18 @@ public class Rumble {
         );
 
         return new SequenceOfItems(iterator, dynamicContext, effectiveConfiguration);
+    }
+
+    /**
+     * Runs a query from a location and returns its serialized result using the method and options
+     * declared in the static context.
+     *
+     * @param location the JSONiq main module location.
+     * @throws java.io.IOException if there was an issue reading a module.
+     * @return the serialized query result.
+     */
+    public String runQueryToString(URI location) throws IOException {
+        return runQuery(location).serialize();
     }
 
     /**

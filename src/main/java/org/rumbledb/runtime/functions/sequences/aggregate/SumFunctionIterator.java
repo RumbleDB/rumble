@@ -120,9 +120,15 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
+            if (nextValue.isUntypedAtomic()) {
+                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
+            }
             if (result == null) {
                 result = nextValue;
             } else {
+                if (result.isUntypedAtomic()) {
+                    result = ItemFactory.getInstance().createDoubleItem(result.castToDoubleValue());
+                }
                 Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
                 if (sum == null) {
                     throw new InvalidArgumentTypeException(

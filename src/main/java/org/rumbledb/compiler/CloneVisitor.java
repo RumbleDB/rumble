@@ -34,6 +34,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -261,6 +262,29 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(clause.getStaticContext());
         return result;
+    }
+
+    @Override
+    public Node visitWindowClause(WindowClause clause, Node argument) {
+        WindowClause result = new WindowClause(
+                clause.getWindowType(),
+                clause.getWindowVariable(),
+                clause.getActualSequenceType(),
+                (Expression) visit(clause.getExpression(), argument),
+                cloneWindowCondition(clause.getStartCondition(), argument),
+                clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
+                clause.getMetadata()
+        );
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    private WindowClause.WindowCondition cloneWindowCondition(WindowClause.WindowCondition condition, Node argument) {
+        return new WindowClause.WindowCondition(
+                condition.variables(),
+                (Expression) visit(condition.expression(), argument),
+                condition.only()
+        );
     }
 
     @Override

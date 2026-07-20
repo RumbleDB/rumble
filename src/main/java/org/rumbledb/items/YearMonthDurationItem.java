@@ -124,6 +124,11 @@ public class YearMonthDurationItem implements Item {
     }
 
     @Override
+    public Duration getDayTimeDurationComponent() {
+        return Duration.ZERO;
+    }
+
+    @Override
     public long getEpochMillis() {
         LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime target = anchor.plus(this.value);

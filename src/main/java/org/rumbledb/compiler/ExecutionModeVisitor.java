@@ -55,6 +55,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -408,6 +409,45 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getPositionalVariableName(),
                 ExecutionMode.LOCAL
             );
+        }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
+        this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
+
+        StaticContext startContext = clause.getStartCondition().expression().getStaticContext();
+        clause.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> startContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        this.visit(clause.getStartCondition().expression(), startContext);
+
+        if (clause.getEndCondition() != null) {
+            StaticContext endContext = clause.getEndCondition().expression().getStaticContext();
+            clause.getStartCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            clause.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
+            this.visit(clause.getEndCondition().expression(), endContext);
+        }
+
+        clause.setHighestExecutionMode(ExecutionMode.LOCAL);
+        argument.setVariableStorageMode(clause.getWindowVariable(), ExecutionMode.LOCAL);
+        clause.getStartCondition()
+            .variables()
+            .names()
+            .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
+        if (clause.getEndCondition() != null) {
+            clause.getEndCondition()
+                .variables()
+                .names()
+                .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
         }
         return argument;
     }

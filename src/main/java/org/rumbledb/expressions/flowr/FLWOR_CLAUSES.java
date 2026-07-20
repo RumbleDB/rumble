@@ -22,6 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 public enum FLWOR_CLAUSES {
     FOR,
+    WINDOW,
     LET,
     WHERE,
     GROUP_BY,
