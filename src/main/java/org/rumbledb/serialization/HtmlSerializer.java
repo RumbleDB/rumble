@@ -552,6 +552,9 @@ public class HtmlSerializer extends XmlSerializer {
         if (!item.isElementNode() || item.nodeName() == null) {
             return false;
         }
+        if (!isHtml5Version() && XHTML_NS.equals(item.nodeName().getNamespace())) {
+            return false;
+        }
         String localName = item.nodeName().getLocalName();
         if (localName == null) {
             return false;
