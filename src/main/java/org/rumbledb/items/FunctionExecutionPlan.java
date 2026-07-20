@@ -24,6 +24,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 final class FunctionExecutionPlan implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final int MAX_RETAINED_LOCAL_ITERATORS = 128;
 
     private final RuntimeIterator bodyIterator;
     private transient Deque<RuntimeIterator> availableIterators;
@@ -47,7 +48,9 @@ final class FunctionExecutionPlan implements Serializable {
     }
 
     synchronized void releaseIterator(RuntimeIterator iterator) {
-        this.availableIterators.addFirst(iterator);
+        if (this.availableIterators.size() < MAX_RETAINED_LOCAL_ITERATORS) {
+            this.availableIterators.addFirst(iterator);
+        }
     }
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
