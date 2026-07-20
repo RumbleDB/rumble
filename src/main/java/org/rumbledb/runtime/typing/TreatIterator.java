@@ -17,6 +17,7 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
+import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -182,6 +183,14 @@ public class TreatIterator extends HybridRuntimeIterator {
             return new InvalidInstanceException(
                     "Invalid instance because of arity mismatch. The expected arity is "
                         + this.sequenceType.getArity(),
+                    this.getMetadata()
+            );
+        }
+        if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
+            return new UnexpectedNodeException(
+                    type
+                        + " is not expected here. The expected type is "
+                        + this.sequenceType,
                     this.getMetadata()
             );
         }
