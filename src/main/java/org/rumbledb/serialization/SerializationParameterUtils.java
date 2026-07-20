@@ -34,7 +34,6 @@ public final class SerializationParameterUtils {
 
     public static SerializationParameters defaultsForSerializeFunction(String queryLanguage) {
         SerializationParameters params = SerializationParameters.defaults(queryLanguage);
-        params.setMethod("adaptive");
         params.setItemSeparator(" ");
         params.setOmitXmlDeclaration(true);
         return params;
