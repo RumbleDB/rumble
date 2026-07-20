@@ -143,7 +143,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
                         .withExecutionMode(executionMode)
                         .withMetadata(this.functionArguments.get(i).getMetadata());
-                    RuntimeIterator argumentIterator = FunctionCallArgumentCoercion.wrapForFunctionConversion(
+                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         this.functionArguments.get(i),
                         sequenceType,
                         "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",

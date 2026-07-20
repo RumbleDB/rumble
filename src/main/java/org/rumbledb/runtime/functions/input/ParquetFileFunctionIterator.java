@@ -50,7 +50,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
 
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
 
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }

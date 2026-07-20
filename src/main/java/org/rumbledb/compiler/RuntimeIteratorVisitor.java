@@ -143,6 +143,7 @@ import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
@@ -250,7 +251,9 @@ import org.rumbledb.runtime.xml.ComputedNamespaceConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.PathRootRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
@@ -1095,6 +1098,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
             );
         }
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = expression.getContentExpression() != null
+            ? this.visit(expression.getContentExpression(), argument)
+            : null;
+        RuntimeIterator runtimeIterator = new DocumentNodeConstructorRuntimeIterator(
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
@@ -2128,6 +2147,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             leftExpression,
             argument
         );
+        if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
+            left = new TreatIterator(
+                    left,
+                    new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore),
+                    ErrorCode.UnexpectedNode,
+                    slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            left.setStaticContext(leftExpression.getStaticContext());
+        }
         RuntimeIterator right = this.visit(
             rightExpression,
             argument
@@ -2140,6 +2168,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
         runtimeIterator.setStaticContext(slashExpr.getStaticContext());
         return runtimeIterator;
+    }
+
+    private boolean isStaticallyGuaranteedNodeSequence(Expression expression) {
+        SequenceType staticType = expression.getStaticSequenceType();
+        return staticType != null
+            && staticType.isSubtypeOf(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
     }
 
     @Override
@@ -2157,6 +2191,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         stepExpr.getStaticContext()
                 )
         );
+    }
+
+    @Override
+    public RuntimeIterator visitPathRootExpr(
+            org.rumbledb.expressions.xml.PathRootExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator runtimeIterator = new PathRootRuntimeIterator(
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
 
     private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {

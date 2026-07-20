@@ -6,6 +6,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
+import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -43,6 +44,15 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                         this.metadata
                 );
             }
+            if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
+                throw new UnexpectedNodeException(
+                        input.getDynamicType().toString()
+                            + " is not expected here. The expected type is "
+                            + this.sequenceType.getItemType().getIdentifierString()
+                            + this.sequenceType.getArity().getSymbol(),
+                        this.metadata
+                );
+            }
             throw new OurBadException("Unexpected error code in treat as iterator.", this.metadata);
         }
         if (this.sequenceType.isEmptySequence()) {
@@ -55,6 +65,13 @@ public class TreatAsClosure implements Function<Item, Boolean> {
             }
             if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
                 throw new UnexpectedTypeException(
+                        input.getDynamicType().toString()
+                            + " is not expected here. The expected type is empty-sequence()",
+                        this.metadata
+                );
+            }
+            if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
+                throw new UnexpectedNodeException(
                         input.getDynamicType().toString()
                             + " is not expected here. The expected type is empty-sequence()",
                         this.metadata

@@ -63,10 +63,16 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
+        JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
+        long count = childRDD.count();
 
         // apply right iterator, usually a step
-        FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
-        JavaRDD<Item> result = childRDD.flatMap(transformation);
+        FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SlashExprClosureZipped(
+                this.rightIterator,
+                dynamicContext,
+                count
+        );
+        JavaRDD<Item> result = zippedChildRDD.flatMap(transformation);
 
         boolean allNodes;
         boolean allNonNodes = false;
@@ -171,10 +177,14 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         if (this.results == null) {
             List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
             this.results = new ArrayList<>();
+            long last = left.size();
+            long position = 0;
             for (Item currentItem : left) {
                 DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
                 currentContext.getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
+                currentContext.getVariableValues().setPosition(++position);
+                currentContext.getVariableValues().setLast(last);
                 this.results.addAll(this.rightIterator.materialize(currentContext));
             }
             boolean allNodes = true;
