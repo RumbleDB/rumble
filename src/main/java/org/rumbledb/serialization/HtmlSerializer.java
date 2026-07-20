@@ -399,7 +399,7 @@ public class HtmlSerializer extends XmlSerializer {
         ) {
             return false;
         }
-        return isHtmlElement(element);
+        return isHtml5Version() && isHtmlElement(element);
     }
 
     private boolean shouldInjectContentTypeMeta(Item item) {
