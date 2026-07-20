@@ -3613,6 +3613,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
+        this.configuration.setOptimizeParentPointers(false);
         return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
@@ -3628,6 +3629,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.PathExprContext pathContext,
             JsoniqParser.RelativePathExprContext doubleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
@@ -3649,6 +3651,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.PathExprContext pathContext,
             JsoniqParser.RelativePathExprContext singleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)

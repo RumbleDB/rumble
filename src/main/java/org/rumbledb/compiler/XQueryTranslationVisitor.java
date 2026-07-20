@@ -3304,6 +3304,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
+        this.configuration.setOptimizeParentPointers(false);
         return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
@@ -3319,6 +3320,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext doubleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
@@ -3340,6 +3342,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext singleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
         PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)
