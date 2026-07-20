@@ -136,6 +136,7 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -3303,11 +3304,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        return new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
-                createMetadataFromContext(ctx)
-        );
+        this.configuration.setOptimizeParentPointers(false);
+        return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(XQueryParser.RelativePathExprContext relativeContext) {
@@ -3322,10 +3320,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext doubleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         StepExpr stepExpr = new ForwardStepExpr(
@@ -3345,10 +3342,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext singleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)
         );
         return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);

@@ -154,6 +154,7 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -3612,11 +3613,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        return new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
-                createMetadataFromContext(ctx)
-        );
+        this.configuration.setOptimizeParentPointers(false);
+        return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
@@ -3631,10 +3629,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.PathExprContext pathContext,
             JsoniqParser.RelativePathExprContext doubleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         StepExpr stepExpr = new ForwardStepExpr(
@@ -3654,10 +3651,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             JsoniqParser.PathExprContext pathContext,
             JsoniqParser.RelativePathExprContext singleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)
         );
         return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
