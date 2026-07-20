@@ -30,6 +30,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
+import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
@@ -62,7 +63,16 @@ public class SlashExprIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.leftIterator.getRDD(dynamicContext)
+            .map(item -> {
+                if (!item.isNode()) {
+                    throw new UnexpectedNodeException(
+                            "A slash expression requires node items on its left-hand side.",
+                            getMetadata()
+                    );
+                }
+                return item;
+            });
 
         // apply right iterator, usually a step
         FlatMapFunction<Item, Item> transformation = new SlashExprClosure(this.rightIterator, dynamicContext);
@@ -172,6 +182,12 @@ public class SlashExprIterator extends HybridRuntimeIterator {
             List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
             this.results = new ArrayList<>();
             for (Item currentItem : left) {
+                if (!currentItem.isNode()) {
+                    throw new UnexpectedNodeException(
+                            "A slash expression requires node items on its left-hand side.",
+                            getMetadata()
+                    );
+                }
                 DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
                 currentContext.getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
