@@ -35,8 +35,6 @@ public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
     );
     protected static final RumbleRuntimeConfiguration createIcebergConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--print-iterator-tree",
-                "yes",
                 "--output-format",
                 "iceberg",
                 "--show-error-info",
@@ -48,8 +46,6 @@ public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     protected static final RumbleRuntimeConfiguration deleteIcebergConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--print-iterator-tree",
-                "yes",
                 "--output-format",
                 "iceberg",
                 "--show-error-info",

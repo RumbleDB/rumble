@@ -34,8 +34,6 @@ public class RuntimeTestsNoInlining extends RuntimeTests {
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                    "--print-iterator-tree",
-                    "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--function-inlining",
