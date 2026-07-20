@@ -1478,15 +1478,59 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         }
         for (int i = 0; i < ctx.rhs.size(); ++i) {
             JsoniqParser.UnionExprContext child = ctx.rhs.get(i);
+            Token operator = ctx.op.get(i);
+            validateMultiplicativeOperator(ctx.main_expr, child, operator);
             Expression rightExpression = (Expression) this.visitUnionExpr(child);
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
-                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(operator.getText()),
                     createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
+    }
+
+    private void validateMultiplicativeOperator(
+            ParseTree leftExpression,
+            ParseTree rightExpression,
+            Token operator
+    ) {
+        String operatorText = operator.getText();
+        if (
+            operatorText.equals("*")
+                && (leftExpression.getText().equals("/") || leftExpression.getText().equals("//"))
+        ) {
+            throw new ParsingException(
+                    "Missing path step after leading slash.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (
+            !operatorText.equals("div")
+                && !operatorText.equals("idiv")
+                && !operatorText.equals("mod")
+        ) {
+            return;
+        }
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(
+                this.jsoniqTokenStream,
+                getStopToken(leftExpression).getTokenIndex()
+            )
+                .isEmpty()
+        ) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the left operand.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (DirectConstructorUtils.getHiddenTextAfter(this.jsoniqTokenStream, operator.getTokenIndex()).isEmpty()) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the right operand.",
+                    createMetadataFromRange(operator, getStartToken(rightExpression))
+            );
+        }
     }
 
     @Override
