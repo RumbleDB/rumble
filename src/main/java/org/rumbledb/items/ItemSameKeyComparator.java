@@ -22,6 +22,8 @@ package org.rumbledb.items;
 
 import java.math.BigDecimal;
 import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -70,13 +72,21 @@ public class ItemSameKeyComparator implements Comparator<Item>, Serializable {
                     }
                     return d1.compareTo(d2);
                 case TIME_WITH_TIMEZONE:
+                    return o1.getTimeValue()
+                        .atDate(LocalDate.of(1970, 1, 1))
+                        .toInstant()
+                        .compareTo(
+                            o2.getTimeValue().atDate(LocalDate.of(1970, 1, 1)).toInstant()
+                        );
                 case TIME_WITHOUT_TIMEZONE:
-                    return o1.getTimeValue().compareTo(o2.getTimeValue());
+                    return o1.getTimeValue().toLocalTime().compareTo(o2.getTimeValue().toLocalTime());
                 case DATE_WITH_TIMEZONE:
-                case DATE_WITHOUT_TIMEZONE:
                 case DATETIME_WITH_TIMEZONE:
+                    return o1.getDateTimeValue().toInstant().compareTo(o2.getDateTimeValue().toInstant());
+                case DATE_WITHOUT_TIMEZONE:
                 case DATETIME_WITHOUT_TIMEZONE:
-                    return o1.getDateTimeValue().compareTo(o2.getDateTimeValue());
+                    return LocalDateTime.from(o1.getDateTimeValue())
+                        .compareTo(LocalDateTime.from(o2.getDateTimeValue()));
                 case GYEAR_WITH_TIMEZONE:
                 case GYEAR_WITHOUT_TIMEZONE:
                     return Integer.compare(o1.getYear(), o2.getYear());
