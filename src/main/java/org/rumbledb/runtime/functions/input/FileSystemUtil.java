@@ -54,7 +54,7 @@ public class FileSystemUtil {
             );
         }
         try {
-            URI relativeURI = parseURIReference(url);
+            URI relativeURI = parseURI(url);
             URI resolvedURI = base.resolve(relativeURI);
             if (url.endsWith("/")) {
                 // preserve trailing slash if any for correct resolution against it as a directory in the future.
@@ -75,7 +75,7 @@ public class FileSystemUtil {
         }
     }
 
-    private static URI parseURIReference(String value) throws URISyntaxException {
+    private static URI parseURI(String value) throws URISyntaxException {
         try {
             return new Path(value).toUri();
         } catch (HadoopIllegalArgumentException e) {
