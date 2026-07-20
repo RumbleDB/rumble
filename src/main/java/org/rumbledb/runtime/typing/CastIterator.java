@@ -821,13 +821,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
         java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
-        if (patterns == null || patterns.isEmpty()) {
-            return true;
-        }
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
             return xmlNameValidation;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
         }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
@@ -891,6 +891,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null && !xmlNameValidation) {
             return false;
+        }
+        if (xmlNameValidation != null) {
+            return true;
         }
 
         List<String> patterns;

@@ -15,12 +15,15 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 public class FoldRightFunctionIterator extends HybridRuntimeIterator {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator sequenceIterator;
@@ -55,34 +58,39 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
         List<Item> accumulator = this.zeroIterator.materialize(context);
         Item functionItem = this.functionIterator.materialize(context).get(0);
 
-        ConstantRuntimeIterator currentItemArgument = null;
-        ConstantRuntimeIterator accumulatorArgument = null;
-        RuntimeIterator reusableFunctionCall = null;
+        ReusableFunctionCall reusableCall = null;
 
         for (int i = inputItems.size() - 1; i >= 0; i--) {
             Item inputItem = inputItems.get(i);
             if (accumulator.size() == 1) {
-                if (reusableFunctionCall == null) {
+                if (reusableCall == null) {
                     RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
                             getConfiguration(),
                             SequenceType.createSequenceType("item*"),
                             ExecutionMode.LOCAL,
                             getMetadata()
                     );
-                    currentItemArgument = new ConstantRuntimeIterator(inputItem, localItemStarContext);
-                    accumulatorArgument = new ConstantRuntimeIterator(accumulator.get(0), localItemStarContext);
-                    reusableFunctionCall = NamedFunctions.buildFunctionItemCallIterator(
+                    ConstantRuntimeIterator currentItemArgument = new ConstantRuntimeIterator(
+                            inputItem,
+                            localItemStarContext
+                    );
+                    ConstantRuntimeIterator accumulatorArgument = new ConstantRuntimeIterator(
+                            accumulator.get(0),
+                            localItemStarContext
+                    );
+                    RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
                         functionItem,
                         this.staticContext,
                         ExecutionMode.LOCAL,
                         Arrays.asList(currentItemArgument, accumulatorArgument),
                         false
                     );
+                    reusableCall = new ReusableFunctionCall(currentItemArgument, accumulatorArgument, functionCall);
                 } else {
-                    currentItemArgument.setItemForReuse(inputItem);
-                    accumulatorArgument.setItemForReuse(accumulator.get(0));
+                    reusableCall.currentItemArgument.setItemForReuse(inputItem);
+                    reusableCall.accumulatorArgument.setItemForReuse(accumulator.get(0));
                 }
-                accumulator = reusableFunctionCall.materialize(context);
+                accumulator = reusableCall.functionCall.materialize(context);
             } else {
                 accumulator = applyFunction(
                     functionItem,
@@ -94,6 +102,22 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
         }
 
         this.resultSequence = accumulator;
+    }
+
+    private static final class ReusableFunctionCall {
+        private final ConstantRuntimeIterator currentItemArgument;
+        private final ConstantRuntimeIterator accumulatorArgument;
+        private final RuntimeIterator functionCall;
+
+        private ReusableFunctionCall(
+                ConstantRuntimeIterator currentItemArgument,
+                ConstantRuntimeIterator accumulatorArgument,
+                RuntimeIterator functionCall
+        ) {
+            this.currentItemArgument = currentItemArgument;
+            this.accumulatorArgument = accumulatorArgument;
+            this.functionCall = functionCall;
+        }
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
