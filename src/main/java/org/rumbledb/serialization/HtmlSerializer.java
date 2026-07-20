@@ -366,17 +366,26 @@ public class HtmlSerializer extends XmlSerializer {
         }
         if (XHTML_NS.equals(elementNamespace) && XHTML_NS.equals(uri)) {
             if (
-                prefix.isEmpty() && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty())
+                isHtml5Version()
+                    && prefix.isEmpty()
+                    && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty())
             ) {
                 return true;
             }
-            if (shouldApplyPrefixNormalization(element)) {
-                if (prefix.equals(element.nodeName().getPrefix())) {
-                    return true;
-                }
-                if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
-                    return true;
-                }
+            if (
+                isHtml5Version()
+                    && shouldApplyPrefixNormalization(element)
+                    && prefix.equals(element.nodeName().getPrefix())
+            ) {
+                return true;
+            }
+            if (
+                isHtml5Version()
+                    && shouldApplyPrefixNormalization(element)
+                    && prefix.isEmpty()
+                    && emittedDefaultNamespaceForNormalizedElement
+            ) {
+                return true;
             }
         }
         if (shouldApplyPrefixNormalization(element) && element.nodeName().getNamespace().equals(uri)) {
