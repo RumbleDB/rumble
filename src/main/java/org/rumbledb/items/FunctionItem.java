@@ -215,17 +215,27 @@ public class FunctionItem implements Item {
     }
 
     public RuntimeIterator getBodyIterator() {
+        // The prototype is for inspection and copying; execution must acquire a separate iterator below.
         return this.executionPlan.getBodyIterator();
     }
 
+    /**
+     * Borrows a closed iterator for a local call. Callers must close and return it after execution.
+     */
     public RuntimeIterator acquireBodyIterator() {
         return this.executionPlan.acquireIterator();
     }
 
+    /**
+     * Creates an unpooled iterator for lazy distributed or update execution.
+     */
     public RuntimeIterator createBodyIteratorForDistributedExecution() {
         return this.executionPlan.createIterator();
     }
 
+    /**
+     * Returns a closed local iterator to the bounded execution-plan cache.
+     */
     public void releaseBodyIterator(RuntimeIterator iterator) {
         this.executionPlan.releaseIterator(iterator);
     }
@@ -238,6 +248,7 @@ public class FunctionItem implements Item {
             Map<Name, JavaRDD<Item>> rddVariables,
             Map<Name, JSoundDataFrame> dataFrameVariables
     ) {
+        // A partial application changes the closure and signature, not the compiled body plan.
         FunctionItem result = new FunctionItem();
         result.identifier = identifier;
         result.parameterNames = partialParameterNames;
@@ -389,6 +400,7 @@ public class FunctionItem implements Item {
     }
 
     public FunctionItem deepCopy() {
+        // Function bodies are immutable prototypes; copies isolate closure maps while sharing the execution plan.
         Map<Name, List<Item>> localVariables = new HashMap<>();
         for (Map.Entry<Name, List<Item>> entry : this.localVariablesInClosure.entrySet()) {
             localVariables.put(entry.getKey(), new ArrayList<>(entry.getValue()));

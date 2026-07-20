@@ -48,6 +48,13 @@ final class FunctionExecutionPlan implements Serializable {
     }
 
     synchronized void releaseIterator(RuntimeIterator iterator) {
+        if (iterator == null) {
+            throw new IllegalArgumentException("Cannot return a null function body iterator.");
+        }
+        if (iterator.isOpen()) {
+            throw new IllegalStateException("Only closed function body iterators can be returned for reuse.");
+        }
+        // The deque is a cache: discarding excess iterators is safe.
         if (this.availableIterators.size() < MAX_RETAINED_LOCAL_ITERATORS) {
             this.availableIterators.addFirst(iterator);
         }
