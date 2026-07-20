@@ -98,7 +98,10 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
                 );
             }
             Item atomizedNameItem = atomizedNameItems.get(0);
-            if (!atomizedNameItem.isAtomic()) {
+            if (
+                !atomizedNameItem.isAtomic()
+                    || !(atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic())
+            ) {
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
                 );

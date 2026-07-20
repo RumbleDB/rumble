@@ -308,6 +308,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void init() {
+        if (this.arguments.containsKey("default-language")) {
+            this.queryLanguage = this.arguments.get("default-language");
+        } else {
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future // TODO KEEP
+        }
+
         Map<String, String> serializationOverrides = new HashMap<>();
         for (Map.Entry<String, String> entry : this.arguments.entrySet()) {
             String key = entry.getKey();
@@ -317,7 +323,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
         }
         // this will throw an exception if the serialization parameters are invalid
-        this.serializationParameters = SerializationParameterBuilder.build(serializationOverrides);
+        this.serializationParameters = SerializationParameterBuilder.build(serializationOverrides, this.queryLanguage);
 
         if (this.arguments.containsKey("print-iterator-tree")) {
             this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
@@ -505,12 +511,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             ).equals("yes");
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
-        }
-
-        if (this.arguments.containsKey("default-language")) {
-            this.queryLanguage = this.arguments.get("default-language");
-        } else {
-            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future // TODO KEEP
         }
 
         if (this.arguments.containsKey("static-base-uri")) {

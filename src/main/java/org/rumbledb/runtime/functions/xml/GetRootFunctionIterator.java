@@ -42,11 +42,11 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
                     || node instanceof TextItem
                     || node instanceof CommentItem
             ) {
-                if (node.parent() == null) {
-                    // Node is already the root.
-                    return node;
+                Item current = node;
+                while (current.parent() != null) {
+                    current = current.parent();
                 }
-                return node.parent();
+                return current;
             }
             throw new UnsupportedFeatureException(
                     "The argument must be a reference to a supported XML node type",

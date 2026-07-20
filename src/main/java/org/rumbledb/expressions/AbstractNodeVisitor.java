@@ -116,6 +116,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -313,6 +314,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitAttributeNodeContent(AttributeNodeContentExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitPathRootExpr(PathRootExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

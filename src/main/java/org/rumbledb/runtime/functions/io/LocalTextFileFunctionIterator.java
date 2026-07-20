@@ -65,7 +65,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        URI uri = FileSystemUtil.resolveURI(
+        URI uri = FileSystemUtil.resolveFileSystemURI(
             this.staticURI,
             path.getStringValue(),
             getMetadata()
@@ -99,7 +99,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
-        URI uri = FileSystemUtil.resolveURI(
+        URI uri = FileSystemUtil.resolveFileSystemURI(
             this.staticURI,
             path.getStringValue(),
             getMetadata()

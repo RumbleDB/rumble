@@ -110,7 +110,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
         Mode mode = this.mode;
         // If it is a delta-file() call we need to resolve the path to an absolute path.
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 
