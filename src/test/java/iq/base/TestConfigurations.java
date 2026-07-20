@@ -31,8 +31,6 @@ public final class TestConfigurations {
     public static RumbleRuntimeConfiguration defaultConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                    "--print-iterator-tree",
-                    "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--materialization-cap",

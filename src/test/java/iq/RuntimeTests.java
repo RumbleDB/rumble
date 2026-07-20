@@ -42,8 +42,6 @@ public class RuntimeTests extends SparkAnnotationsTestsBase {
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                    "--print-iterator-tree",
-                    "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--apply-updates",

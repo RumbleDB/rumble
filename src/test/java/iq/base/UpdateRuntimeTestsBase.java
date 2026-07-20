@@ -42,8 +42,6 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
                     "yes",
                     "--dates-with-timezone",
                     "yes",
-                    "--print-iterator-tree",
-                    "yes",
                     "--show-error-info",
                     "yes",
                     "--apply-updates",
