@@ -495,12 +495,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private static final class PrologPhase1Flags {
         boolean emptyOrderSet;
+        boolean boundarySpaceSet;
         boolean defaultCollationSet;
         boolean baseURISet;
         boolean defaultFunctionNamespaceDeclared;
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.boundarySpaceDecl() != null) {
+            if (flags.boundarySpaceSet) {
+                throw new MoreThanOneBoundarySpaceDeclarationException(
+                        "The boundary-space policy was already set.",
+                        createMetadataFromContext(setterContext.boundarySpaceDecl())
+                );
+            }
+            this.moduleContext.setBoundarySpacePreserve(
+                setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE
+            );
+            flags.boundarySpaceSet = true;
+            return;
+        }
         if (setterContext.emptyOrderDecl() != null) {
             if (flags.emptyOrderSet) {
                 throw new MoreThanOneEmptyOrderDeclarationException(
@@ -1380,15 +1394,79 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         for (int i = 0; i < ctx.rhs.size(); ++i) {
             XQueryParser.UnionExprContext child = ctx.rhs.get(i);
+            Token operator = ctx.op.get(i);
+            validateMultiplicativeOperator(ctx.main_expr, child, operator);
             Expression rightExpression = (Expression) this.visitUnionExpr(child);
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
-                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(operator.getText()),
                     createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
+    }
+
+    private void validateMultiplicativeOperator(
+            ParseTree leftExpression,
+            ParseTree rightExpression,
+            Token operator
+    ) {
+        String operatorText = operator.getText();
+        if (
+            operatorText.equals("*")
+                && (leftExpression.getText().equals("/") || leftExpression.getText().equals("//"))
+        ) {
+            throw new ParsingException(
+                    "Missing path step after leading slash.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (
+            !operatorText.equals("div")
+                && !operatorText.equals("idiv")
+                && !operatorText.equals("mod")
+        ) {
+            return;
+        }
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(
+                this.xQueryTokenStream,
+                getStopToken(leftExpression).getTokenIndex()
+            )
+                .isEmpty()
+                && !hasKeywordOperatorBoundary(getStopToken(leftExpression).getText(), false)
+        ) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the left operand.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(this.xQueryTokenStream, operator.getTokenIndex()).isEmpty()
+                && !hasKeywordOperatorBoundary(getStartToken(rightExpression).getText(), true)
+        ) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the right operand.",
+                    createMetadataFromRange(operator, getStartToken(rightExpression))
+            );
+        }
+    }
+
+    private boolean hasKeywordOperatorBoundary(String tokenText, boolean checkStart) {
+        if (tokenText == null || tokenText.isEmpty()) {
+            return false;
+        }
+        char boundaryCharacter = checkStart ? tokenText.charAt(0) : tokenText.charAt(tokenText.length() - 1);
+        return !isPotentialKeywordOperandCharacter(boundaryCharacter);
+    }
+
+    private boolean isPotentialKeywordOperandCharacter(char character) {
+        return Character.isLetterOrDigit(character)
+            || character == '_'
+            || character == '-'
+            || character == '.'
+            || character == ':';
     }
 
     @Override
@@ -1985,6 +2063,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 this.xQueryTokenStream,
                 openClose.endOpen,
                 openClose.dirElemContent(),
+                this.moduleContext.isBoundarySpacePreserve(),
                 child -> (Expression) this.visitDirElemContent(child)
             );
 
@@ -2035,7 +2114,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
             }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
         }
     }
 
@@ -2046,6 +2125,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    private boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     @Override

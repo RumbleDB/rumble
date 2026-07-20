@@ -55,7 +55,11 @@ public final class ErrorCode implements Serializable {
 
     @Override
     public String toString() {
-        return this.name.getLocalName();
+        String namespace = this.name.getNamespace();
+        if (Name.ERROR_NS.equals(namespace)) {
+            return this.name.getLocalName();
+        }
+        return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
     @Override
@@ -192,6 +196,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
