@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -15,6 +16,7 @@ import org.rumbledb.context.Name;
  */
 public class ErrorItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Name name = new Name(Name.XS_NS, "xs", "error");
 
@@ -75,7 +77,7 @@ public class ErrorItemType implements ItemType {
 
     @Override
     public String toString() {
-        return this.name.toString();
+        return name.toString();
     }
 
     @Override
