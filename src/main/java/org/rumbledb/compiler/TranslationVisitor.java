@@ -1519,18 +1519,38 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 getStopToken(leftExpression).getTokenIndex()
             )
                 .isEmpty()
+                && !hasKeywordOperatorBoundary(getStopToken(leftExpression).getText(), false)
         ) {
             throw new ParsingException(
                     "Keyword operator '" + operatorText + "' must be separated from the left operand.",
                     createMetadataFromRange(getStartToken(leftExpression), operator)
             );
         }
-        if (DirectConstructorUtils.getHiddenTextAfter(this.jsoniqTokenStream, operator.getTokenIndex()).isEmpty()) {
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(this.jsoniqTokenStream, operator.getTokenIndex()).isEmpty()
+                && !hasKeywordOperatorBoundary(getStartToken(rightExpression).getText(), true)
+        ) {
             throw new ParsingException(
                     "Keyword operator '" + operatorText + "' must be separated from the right operand.",
                     createMetadataFromRange(operator, getStartToken(rightExpression))
             );
         }
+    }
+
+    private boolean hasKeywordOperatorBoundary(String tokenText, boolean checkStart) {
+        if (tokenText == null || tokenText.isEmpty()) {
+            return false;
+        }
+        char boundaryCharacter = checkStart ? tokenText.charAt(0) : tokenText.charAt(tokenText.length() - 1);
+        return !isPotentialKeywordOperandCharacter(boundaryCharacter);
+    }
+
+    private boolean isPotentialKeywordOperandCharacter(char character) {
+        return Character.isLetterOrDigit(character)
+            || character == '_'
+            || character == '-'
+            || character == '.'
+            || character == ':';
     }
 
     @Override
