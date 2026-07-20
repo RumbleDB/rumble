@@ -6,7 +6,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -36,16 +35,6 @@ public class Rumble {
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this(new CompilationConfiguration(configuration));
-    }
-
-    /**
-     * Creates a new Rumble instance with a custom resolver for imported resources.
-     *
-     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
-     * @param resourceResolver the resolver used for imported modules and schemas.
-     */
-    public Rumble(RumbleRuntimeConfiguration configuration, ResourceResolver resourceResolver) {
-        this(new CompilationConfiguration(configuration, resourceResolver));
     }
 
     /**
