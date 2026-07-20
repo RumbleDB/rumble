@@ -1,11 +1,20 @@
 package org.rumbledb.runtime.functions.util.formatting;
 
+import com.ibm.icu.number.LocalizedNumberFormatter;
 import com.ibm.icu.number.NumberFormatter;
 import com.ibm.icu.text.RuleBasedNumberFormat;
 import com.ibm.icu.util.ULocale;
 
 import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class NumberWords {
     // For plain ordinal word formatting (`Ww;o`) RumbleDB selects the ICU masculine ordinal rule set when available,
@@ -13,26 +22,32 @@ public final class NumberWords {
     // permitted by F&O 3.1 and matches the specification's example outputs.
     private static final String DEFAULT_ORDINAL_WORD_RULE_SET = "%spellout-ordinal-masculine";
 
+    private static final ThreadLocal<Map<RuleFormatKey, CachedRuleFormat>> RULE_FORMAT_CACHE = ThreadLocal.withInitial(
+        HashMap::new
+    );
+
+    private static final Map<ULocale, LocalizedNumberFormatter> GROUPING_FORMATTER_CACHE = new ConcurrentHashMap<>();
+
     private NumberWords() {
     }
 
     public static String cardinal(long value, ULocale locale, String requestedRuleSet) {
-        RuleBasedNumberFormat f = new RuleBasedNumberFormat(locale, RuleBasedNumberFormat.SPELLOUT);
+        CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.SPELLOUT);
         String formatted = formatWithRequestedRuleSet(value, f, requestedRuleSet);
         if (formatted != null) {
             return formatted;
         }
 
-        return f.format(value);
+        return f.format.format(value);
     }
 
     public static String ordinalDigits(long value, ULocale locale) {
-        RuleBasedNumberFormat f = new RuleBasedNumberFormat(locale, RuleBasedNumberFormat.ORDINAL);
-        return f.format(value);
+        CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.ORDINAL);
+        return f.format.format(value);
     }
 
     public static String ordinalWords(long value, ULocale locale, String requestedRuleSet) {
-        RuleBasedNumberFormat f = new RuleBasedNumberFormat(locale, RuleBasedNumberFormat.SPELLOUT);
+        CachedRuleFormat f = ruleFormat(locale, RuleBasedNumberFormat.SPELLOUT);
 
         String formatted = formatWithRequestedRuleSet(value, f, requestedRuleSet);
         if (formatted != null) {
@@ -56,40 +71,95 @@ public final class NumberWords {
 
         String ruleSet = neutralOrdinalRuleSet(f);
         if (ruleSet != null) {
-            return f.format(value, ruleSet);
+            return f.format.format(value, ruleSet);
         }
 
-        return f.format(value);
+        return f.format.format(value);
     }
 
     public static String roman(long value, boolean lowerCase) {
-        RuleBasedNumberFormat f =
-            new RuleBasedNumberFormat(ULocale.ROOT, RuleBasedNumberFormat.NUMBERING_SYSTEM);
-        return f.format(value, lowerCase ? "%roman-lower" : "%roman-upper");
+        CachedRuleFormat f = ruleFormat(ULocale.ROOT, RuleBasedNumberFormat.NUMBERING_SYSTEM);
+        return f.format.format(value, lowerCase ? "%roman-lower" : "%roman-upper");
+    }
+
+    private static LocalizedNumberFormatter groupingFormatter(ULocale locale) {
+        return GROUPING_FORMATTER_CACHE.computeIfAbsent(
+            locale,
+            l -> NumberFormatter.withLocale(l).grouping(NumberFormatter.GroupingStrategy.AUTO)
+        );
+    }
+
+    private static CachedRuleFormat ruleFormat(ULocale locale, int ruleType) {
+        Map<RuleFormatKey, CachedRuleFormat> cache = RULE_FORMAT_CACHE.get();
+        return cache.computeIfAbsent(
+            new RuleFormatKey(locale, ruleType),
+            key -> {
+                RuleBasedNumberFormat f = new RuleBasedNumberFormat(key.locale, key.ruleType);
+                List<String> ruleSetNames = Arrays.asList(f.getRuleSetNames());
+                return new CachedRuleFormat(f, ruleSetNames, new HashSet<>(ruleSetNames));
+            }
+        );
+    }
+
+    private static final class CachedRuleFormat {
+        private final RuleBasedNumberFormat format;
+        private final List<String> ruleSetNamesInOrder;
+        private final Set<String> ruleSetNames;
+
+        private CachedRuleFormat(
+                RuleBasedNumberFormat format,
+                List<String> ruleSetNamesInOrder,
+                Set<String> ruleSetNames
+        ) {
+            this.format = format;
+            this.ruleSetNamesInOrder = ruleSetNamesInOrder;
+            this.ruleSetNames = ruleSetNames;
+        }
+    }
+
+    private static final class RuleFormatKey {
+        private final ULocale locale;
+        private final int ruleType;
+
+        private RuleFormatKey(ULocale locale, int ruleType) {
+            this.locale = locale;
+            this.ruleType = ruleType;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof RuleFormatKey)) {
+                return false;
+            }
+            RuleFormatKey other = (RuleFormatKey) o;
+            return this.ruleType == other.ruleType && this.locale.equals(other.locale);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.locale, this.ruleType);
+        }
     }
 
     private static String formatWithRequestedRuleSet(
             long value,
-            RuleBasedNumberFormat f,
+            CachedRuleFormat f,
             String requestedRuleSet
     ) {
         if (requestedRuleSet == null || !requestedRuleSet.startsWith("%")) {
             return null;
         }
 
-        try {
-            return f.format(value, requestedRuleSet);
-        } catch (IllegalArgumentException e) {
-            // try aliases below
+        if (f.ruleSetNames.contains(requestedRuleSet)) {
+            return f.format.format(value, requestedRuleSet);
         }
 
         String alias = requestedRuleSetAlias(requestedRuleSet);
-        if (alias != null) {
-            try {
-                return f.format(value, alias);
-            } catch (IllegalArgumentException e) {
-                return null;
-            }
+        if (alias != null && f.ruleSetNames.contains(alias)) {
+            return f.format.format(value, alias);
         }
 
         return null;
@@ -117,15 +187,15 @@ public final class NumberWords {
 
     private static String ordinalWordWithSuffix(
             long value,
-            RuleBasedNumberFormat f,
+            CachedRuleFormat f,
             String requestedSuffix
     ) {
-        for (String ruleSet : f.getRuleSetNames()) {
+        for (String ruleSet : f.ruleSetNamesInOrder) {
             if (!ruleSet.contains("spellout-ordinal")) {
                 continue;
             }
 
-            String formatted = f.format(value, ruleSet);
+            String formatted = f.format.format(value, ruleSet);
 
             if (formatted.toLowerCase(Locale.ROOT).endsWith(requestedSuffix)) {
                 return formatted;
@@ -135,7 +205,7 @@ public final class NumberWords {
         return null;
     }
 
-    private static String neutralOrdinalRuleSet(RuleBasedNumberFormat f) {
+    private static String neutralOrdinalRuleSet(CachedRuleFormat f) {
         String ruleSet = findRuleSet(f, "%spellout-ordinal");
         if (ruleSet != null) {
             return ruleSet;
@@ -159,18 +229,12 @@ public final class NumberWords {
         return null;
     }
 
-    private static String findRuleSet(RuleBasedNumberFormat f, String requestedName) {
-        for (String ruleSet : f.getRuleSetNames()) {
-            if (ruleSet.equals(requestedName)) {
-                return ruleSet;
-            }
-        }
-
-        return null;
+    private static String findRuleSet(CachedRuleFormat f, String requestedName) {
+        return f.ruleSetNames.contains(requestedName) ? requestedName : null;
     }
 
-    private static String findOrdinalRuleSetContaining(RuleBasedNumberFormat f, String text) {
-        for (String ruleSet : f.getRuleSetNames()) {
+    private static String findOrdinalRuleSetContaining(CachedRuleFormat f, String text) {
+        for (String ruleSet : f.ruleSetNamesInOrder) {
             String lowerCaseRuleSet = ruleSet.toLowerCase(Locale.ROOT);
 
             if (
@@ -193,15 +257,12 @@ public final class NumberWords {
         long longValue = intValue;
         String ordinal = ordinalDigits(longValue, locale);
 
-        String localizedDigits = NumberFormatter.withLocale(locale)
-            .grouping(NumberFormatter.GroupingStrategy.AUTO)
-            .format(longValue)
-            .toString();
+        String localizedDigits = groupingFormatter(locale).format(longValue).toString();
         if (ordinal.startsWith(localizedDigits)) {
             return ordinal.substring(localizedDigits.length());
         }
 
-        String asciiDigits = value.toString();
+        String asciiDigits = Integer.toString(intValue);
         if (ordinal.startsWith(asciiDigits)) {
             return ordinal.substring(asciiDigits.length());
         }

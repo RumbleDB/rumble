@@ -26,7 +26,7 @@ public class DateTimeItem implements Item {
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = true;
-    Pattern dateTimePattern = Pattern.compile(
+    private static final Pattern dateTimePattern = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
@@ -50,7 +50,7 @@ public class DateTimeItem implements Item {
     }
 
     private void getDateTimeFromString(String dateTimeString) {
-        if (!this.dateTimePattern.matcher(dateTimeString).matches()) {
+        if (!dateTimePattern.matcher(dateTimeString).matches()) {
             throw new IllegalArgumentException("Invalid date string: " + dateTimeString);
         }
         int yearIncrement = 0;

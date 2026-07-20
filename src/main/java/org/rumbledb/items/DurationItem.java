@@ -27,7 +27,7 @@ public class DurationItem implements Item {
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
-    Pattern durationRegex = Pattern.compile(
+    private static final Pattern durationRegex = Pattern.compile(
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
 
@@ -46,7 +46,7 @@ public class DurationItem implements Item {
     }
 
     public DurationItem(String value) {
-        if (!this.durationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid duration: " + value);
         }
         getDurationFromString(value);
