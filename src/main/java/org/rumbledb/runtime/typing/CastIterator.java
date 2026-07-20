@@ -821,13 +821,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
         java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
-        if (patterns == null || patterns.isEmpty()) {
-            return true;
-        }
         String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
             return xmlNameValidation;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
         }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
@@ -875,16 +875,44 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         if (
-            (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
+            (targetType.getLengthFacet() != null && lexical.length() != targetType.getLengthFacet())
                 ||
                 (targetType.getMinLengthFacet() != null
-                    && item.getStringValue().length() < targetType.getMinLengthFacet())
+                    && lexical.length() < targetType.getMinLengthFacet())
                 ||
                 (targetType.getMaxLengthFacet() != null
-                    && item.getStringValue().length() > targetType.getMaxLengthFacet())
+                    && lexical.length() > targetType.getMaxLengthFacet())
         ) {
             return false;
+        }
+
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null && !xmlNameValidation) {
+            return false;
+        }
+        if (xmlNameValidation != null) {
+            return true;
+        }
+
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            patterns = null;
+        }
+        if (patterns != null && !patterns.isEmpty()) {
+            boolean patternMatched = false;
+            for (String regex : patterns) {
+                if (Pattern.matches(regex, lexical)) {
+                    patternMatched = true;
+                    break;
+                }
+            }
+            if (!patternMatched) {
+                return false;
+            }
         }
 
         // If no enumeration facet, can directly return true
