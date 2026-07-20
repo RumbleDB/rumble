@@ -127,6 +127,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -547,6 +548,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext argument
     ) {
         visitDescendants(expression, argument);
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitPathRootExpr(PathRootExpression expression, StaticContext argument) {
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
         return argument;
     }

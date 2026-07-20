@@ -251,6 +251,7 @@ import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.PathRootRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
@@ -2172,6 +2173,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         stepExpr.getStaticContext()
                 )
         );
+    }
+
+    @Override
+    public RuntimeIterator visitPathRootExpr(
+            org.rumbledb.expressions.xml.PathRootExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator runtimeIterator = new PathRootRuntimeIterator(
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
 
     private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
