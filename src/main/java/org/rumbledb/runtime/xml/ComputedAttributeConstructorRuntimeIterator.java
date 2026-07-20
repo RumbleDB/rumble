@@ -160,13 +160,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             }
         }
 
-        // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
-        // following properties:
-        // - Its namespace prefix is xmlns.
-        // - Its namespace URI is http://www.w3.org/2000/xmlns/.
-        // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
-        // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
-        NamespaceBindingUtils.validateConstructedNodeName(attributeName.getQNameValue(), getMetadata());
+        NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
 
         // Process content expression according to XQuery 3.1 spec
         // https://www.w3.org/TR/xquery-31/#id-computedAttributes
