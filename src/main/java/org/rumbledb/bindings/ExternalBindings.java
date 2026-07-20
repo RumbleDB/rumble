@@ -18,7 +18,7 @@ import java.util.Set;
  *
  * This is intentionally separate from {@code RumbleConfiguration}: bindings are execution inputs, not engine
  * configuration. The model is broader than what the current runtime bridge can consume so the public API can settle
- * before the remaining plumbing is migrated away from {@code RumbleRuntimeConfiguration}.
+ * while the remaining binding kinds are connected to the execution pipeline.
  */
 public final class ExternalBindings implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;

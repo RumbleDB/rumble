@@ -8,6 +8,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.commons.io.IOUtils;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -29,9 +30,9 @@ import org.rumbledb.parser.xquery.XQueryLexer;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.resources.ResolvedResource;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -146,33 +147,108 @@ public class VisitorHelpers {
         return resolved;
     }
 
+    private record ModuleSource(String query, URI systemId) {
+    }
+
+    private static ModuleSource readModuleSource(
+            URI location,
+            CompilationConfiguration compilationConfiguration,
+            ExceptionMetadata metadata
+    )
+            throws IOException {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        try (
+            ResolvedResource resource = compilationConfiguration.resourceResolver()
+                .resolve(location, configuration, metadata)
+        ) {
+            String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8.name());
+            URI systemId = resource.getSystemId();
+            if (configuration.semantics().staticBaseUri() != null) {
+                systemId = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
+            }
+            return new ModuleSource(query, systemId);
+        }
+    }
+
+    private static boolean shouldParseAsXQuery(
+            String query,
+            URI uri,
+            RumbleConfiguration configuration
+    ) {
+        if (query.contains("xquery version")) {
+            return true;
+        }
+        if (query.contains("jsoniq version")) {
+            return false;
+        }
+        String location = uri.toString();
+        if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
+            return true;
+        }
+        if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
+            return false;
+        }
+        return configuration.semantics().queryLanguage().startsWith("xquery");
+    }
+
+    public static MainModule parseMainModuleFromLocation(URI location, RumbleConfiguration configuration)
+            throws IOException {
+        return parseMainModuleFromLocation(
+            location,
+            new CompilationConfiguration(configuration),
+            ExternalBindings.empty()
+        );
+    }
+
     public static MainModule parseMainModuleFromLocation(
             URI location,
             RumbleConfiguration configuration,
             ExternalBindings externalBindings
     )
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
-        String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
-        if (configuration.semantics().staticBaseUri() != null) {
-            location = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
-        }
-        return parseMainModule(query, location, configuration, externalBindings);
+        return parseMainModuleFromLocation(
+            location,
+            new CompilationConfiguration(configuration),
+            externalBindings
+        );
     }
 
-    public static LibraryModule parseLibraryModuleFromLocation(
+    public static MainModule parseMainModuleFromLocation(
             URI location,
-            RumbleConfiguration configuration,
+            CompilationConfiguration compilationConfiguration
+    )
+            throws IOException {
+        return parseMainModuleFromLocation(location, compilationConfiguration, ExternalBindings.empty());
+    }
+
+    public static MainModule parseMainModuleFromLocation(
+            URI location,
+            CompilationConfiguration compilationConfiguration,
+            ExternalBindings externalBindings
+    )
+            throws IOException {
+        ModuleSource source = readModuleSource(
+            location,
+            compilationConfiguration,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        return parseMainModule(source.query(), source.systemId(), compilationConfiguration, externalBindings);
+    }
+
+    static LibraryModule parseLibraryModuleFromLocation(
+            URI location,
             StaticContext importingModuleContext,
+            CompilationConfiguration compilationConfiguration,
             ExceptionMetadata metadata
     )
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, metadata);
-        String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
-        if (configuration.semantics().staticBaseUri() != null) {
-            location = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
-        }
-        return parseLibraryModule(query, location, importingModuleContext, configuration);
+        ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
+        return parseLibraryModule(
+            source.query(),
+            source.systemId(),
+            importingModuleContext,
+            compilationConfiguration
+        );
     }
 
     public static MainModule parseMainModuleFromQuery(
@@ -180,11 +256,32 @@ public class VisitorHelpers {
             RumbleConfiguration configuration,
             ExternalBindings externalBindings
     ) {
-        String url = configuration.semantics().staticBaseUri() == null
-            ? "."
-            : configuration.semantics().staticBaseUri();
+        return parseMainModuleFromQuery(
+            query,
+            new CompilationConfiguration(configuration),
+            externalBindings
+        );
+    }
+
+    public static MainModule parseMainModuleFromQuery(
+            String query,
+            CompilationConfiguration compilationConfiguration
+    ) {
+        return parseMainModuleFromQuery(query, compilationConfiguration, ExternalBindings.empty());
+    }
+
+    public static MainModule parseMainModuleFromQuery(
+            String query,
+            CompilationConfiguration compilationConfiguration,
+            ExternalBindings externalBindings
+    ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        String url = ".";
+        if (configuration.semantics().staticBaseUri() != null) {
+            url = configuration.semantics().staticBaseUri();
+        }
         URI location = resolveStaticBaseUri(url);
-        return parseMainModule(query, location, configuration, externalBindings);
+        return parseMainModule(query, location, compilationConfiguration, externalBindings);
     }
 
     public static MainModule parseMainModule(
@@ -193,29 +290,29 @@ public class VisitorHelpers {
             RumbleConfiguration configuration,
             ExternalBindings externalBindings
     ) {
-        if (query.contains("xquery version")) {
-            return parseXQueryMainModule(query, uri, configuration, externalBindings);
-        } else if (query.contains("jsoniq version")) {
-            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
-        }
-        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
-            return parseXQueryMainModule(query, uri, configuration, externalBindings);
-        }
-        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
-            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
-        } else if (configuration.semantics().queryLanguage().startsWith("xquery")) {
-            return parseXQueryMainModule(query, uri, configuration, externalBindings);
-        } else {
-            return parseJSONiqMainModule(query, uri, configuration, externalBindings);
-        }
+        return parseMainModule(query, uri, new CompilationConfiguration(configuration), externalBindings);
     }
 
-    public static MainModule parseJSONiqMainModule(
+    public static MainModule parseMainModule(
             String query,
             URI uri,
-            RumbleConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings
     ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        if (shouldParseAsXQuery(query, uri, configuration)) {
+            return parseXQueryMainModule(query, uri, compilationConfiguration, externalBindings);
+        }
+        return parseJSONiqMainModule(query, uri, compilationConfiguration, externalBindings);
+    }
+
+    private static MainModule parseJSONiqMainModule(
+            String query,
+            URI uri,
+            CompilationConfiguration compilationConfiguration,
+            ExternalBindings externalBindings
+    ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
@@ -228,7 +325,7 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(
                 moduleContext,
                 true,
-                configuration,
+                compilationConfiguration,
                 externalBindings,
                 query,
                 jsoniqTokens
@@ -294,12 +391,13 @@ public class VisitorHelpers {
         }
     }
 
-    public static MainModule parseXQueryMainModule(
+    private static MainModule parseXQueryMainModule(
             String query,
             URI uri,
-            RumbleConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings
     ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
         CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
@@ -312,7 +410,7 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
                 moduleContext,
                 true,
-                configuration,
+                compilationConfiguration,
                 externalBindings,
                 query,
                 xQueryTokens
@@ -352,35 +450,26 @@ public class VisitorHelpers {
         }
     }
 
-    public static LibraryModule parseLibraryModule(
+    private static LibraryModule parseLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            RumbleConfiguration configuration
+            CompilationConfiguration compilationConfiguration
     ) {
-        if (query.contains("xquery version")) {
-            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
-        } else if (query.contains("jsoniq version")) {
-            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        if (shouldParseAsXQuery(query, uri, configuration)) {
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
         }
-        if (uri.toString().endsWith(".xq") || uri.toString().endsWith(".xqy") || uri.toString().endsWith(".xquery")) {
-            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
-        }
-        if (uri.toString().endsWith(".jq") || uri.toString().endsWith(".jsoniq")) {
-            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
-        } else if (configuration.semantics().queryLanguage().startsWith("xquery")) {
-            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
-        } else {
-            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
-        }
+        return parseJSONiqLibraryModule(query, uri, importingModuleContext, compilationConfiguration);
     }
 
-    public static LibraryModule parseJSONiqLibraryModule(
+    private static LibraryModule parseJSONiqLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            RumbleConfiguration configuration
+            CompilationConfiguration compilationConfiguration
     ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         CommonTokenStream jsoniqTokens = new CommonTokenStream(lexer);
@@ -393,7 +482,7 @@ public class VisitorHelpers {
         TranslationVisitor visitor = new TranslationVisitor(
                 moduleContext,
                 false,
-                configuration,
+                compilationConfiguration,
                 ExternalBindings.empty(),
                 query,
                 jsoniqTokens
@@ -420,12 +509,13 @@ public class VisitorHelpers {
         }
     }
 
-    public static LibraryModule parseXQueryLibraryModule(
+    private static LibraryModule parseXQueryLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,
-            RumbleConfiguration configuration
+            CompilationConfiguration compilationConfiguration
     ) {
+        RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
         CommonTokenStream xQueryTokens = new CommonTokenStream(lexer);
@@ -438,7 +528,7 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(
                 moduleContext,
                 false,
-                configuration,
+                compilationConfiguration,
                 ExternalBindings.empty(),
                 query,
                 xQueryTokens

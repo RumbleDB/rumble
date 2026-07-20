@@ -3,6 +3,7 @@ package org.rumbledb.compiler;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
@@ -31,6 +32,15 @@ public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleCon
         if (requiresParentPointers(stepExpr)) {
             builder.configureOptimization(optimization -> optimization.optimizeParentPointers(false));
         }
+        return builder;
+    }
+
+    @Override
+    public RumbleConfiguration.RumbleConfigurationBuilder visitPathRootExpr(
+            PathRootExpression expression,
+            RumbleConfiguration.RumbleConfigurationBuilder builder
+    ) {
+        builder.configureOptimization(optimization -> optimization.optimizeParentPointers(false));
         return builder;
     }
 

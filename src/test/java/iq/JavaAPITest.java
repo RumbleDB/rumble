@@ -29,14 +29,21 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.rumbledb.api.Item;
+import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
 
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 public class JavaAPITest {
 
@@ -84,6 +91,31 @@ public class JavaAPITest {
         }
         iterator.close();
         Assertions.assertTrue(!iterator.isOpen());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testResourceResolverWithExternalBindings() throws Throwable {
+        Path queryFile = Files.createTempFile("rumble-resolved-query-", ".jq");
+        try {
+            Files.writeString(queryFile, "$answer");
+            URI logicalLocation = URI.create("urn:rumble:test:resolved-query");
+            ResourceResolver resolver = new ResourceResolver(Map.of(logicalLocation, queryFile.toUri()));
+            Rumble rumble = new Rumble(
+                    new CompilationConfiguration(RumbleConfiguration.defaultConfiguration(), resolver)
+            );
+            ExternalBindings bindings = ExternalBindings.empty();
+            bindings.bindLiteral("answer", "42");
+
+            SequenceOfItems result = rumble.runQuery(logicalLocation, bindings);
+
+            result.open();
+            Assertions.assertEquals("42", result.next().getStringValue());
+            Assertions.assertFalse(result.hasNext());
+            result.close();
+        } finally {
+            Files.deleteIfExists(queryFile);
+        }
     }
 
     @Test

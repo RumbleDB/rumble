@@ -127,6 +127,7 @@ import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -566,6 +567,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitPathRootExpr(PathRootExpression expression, StaticContext argument) {
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
+        return argument;
+    }
+
+    @Override
     public StaticContext visitCommentNodeConstructor(
             CommentNodeConstructorExpression expression,
             StaticContext argument
@@ -772,7 +779,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
             if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }
@@ -798,7 +809,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
             if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
                 return false;
             }

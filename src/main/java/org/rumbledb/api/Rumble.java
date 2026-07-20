@@ -2,6 +2,7 @@ package org.rumbledb.api;
 
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -21,7 +22,7 @@ import java.net.URI;
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
-    private final org.rumbledb.config.RumbleConfiguration configuration;
+    private final CompilationConfiguration compilationConfiguration;
 
     /**
      * Creates a new Rumble instance. This initializes a brand new Spark session.
@@ -29,7 +30,16 @@ public class Rumble {
      * @param configuration a RumbleConfiguration object containing the configuration.
      */
     public Rumble(RumbleConfiguration configuration) {
-        this.configuration = configuration.getInternalConfiguration();
+        this(new CompilationConfiguration(configuration.getInternalConfiguration()));
+    }
+
+    /**
+     * Creates a new Rumble instance with explicit compilation configuration.
+     *
+     * @param compilationConfiguration the configuration used to compile queries.
+     */
+    public Rumble(CompilationConfiguration compilationConfiguration) {
+        this.compilationConfiguration = compilationConfiguration;
         SparkSessionManager.getInstance().getOrCreateSession();
     }
 
@@ -40,7 +50,7 @@ public class Rumble {
      * @param configuration
      */
     public Rumble(org.rumbledb.config.RumbleConfiguration configuration) {
-        this(new RumbleConfiguration(configuration));
+        this(new CompilationConfiguration(configuration));
     }
 
     /**
@@ -48,7 +58,9 @@ public class Rumble {
      *
      */
     public Rumble(SparkSession session) {
-        this.configuration = new RumbleConfiguration().getInternalConfiguration();
+        this.compilationConfiguration = new CompilationConfiguration(
+                new RumbleConfiguration().getInternalConfiguration()
+        );
         SparkSessionManager.getInstance(session);
     }
 
@@ -58,7 +70,7 @@ public class Rumble {
      * @return the configuration
      */
     public RumbleConfiguration getConfiguration() {
-        return new RumbleConfiguration(this.configuration);
+        return new RumbleConfiguration(this.compilationConfiguration.runtimeConfiguration());
     }
 
     /**
@@ -90,12 +102,13 @@ public class Rumble {
      * @return the resulting sequence
      */
     public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
+        org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            this.configuration,
-            bindings
+            this.compilationConfiguration,
+            snapshot
         );
-        return createSequence(mainModule, bindings);
+        return createSequence(mainModule, snapshot);
     }
 
     /**
@@ -107,6 +120,10 @@ public class Rumble {
      */
     public String runQueryToString(String query) {
         return runQuery(query).serialize();
+    }
+
+    public String runQueryToString(String query, ExternalBindings bindings) {
+        return runQuery(query, bindings).serialize();
     }
 
     /**
@@ -141,12 +158,13 @@ public class Rumble {
      * @throws IOException if the module cannot be read
      */
     public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
+        org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            this.configuration,
-            bindings
+            this.compilationConfiguration,
+            snapshot
         );
-        return createSequence(mainModule, bindings);
+        return createSequence(mainModule, snapshot);
     }
 
     private SequenceOfItems createSequence(
@@ -155,7 +173,7 @@ public class Rumble {
     ) {
         var effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
             mainModule,
-            this.configuration.toBuilder()
+            this.compilationConfiguration.runtimeConfiguration().toBuilder()
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
             mainModule,
@@ -182,6 +200,10 @@ public class Rumble {
         return runQuery(location).serialize();
     }
 
+    public String runQueryToString(URI location, ExternalBindings bindings) throws IOException {
+        return runQuery(location, bindings).serialize();
+    }
+
     /**
      * Creates JSONiq Expression Tree from a query and returns serialization of the Tree.
      *
@@ -191,7 +213,7 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            this.configuration,
+            this.compilationConfiguration,
             ExternalBindings.empty().getInternalBindings()
         );
         StringBuilder sb = new StringBuilder();

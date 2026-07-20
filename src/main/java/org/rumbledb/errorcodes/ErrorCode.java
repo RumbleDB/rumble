@@ -190,6 +190,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
     public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
@@ -223,6 +224,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode UpdatingFunctionHasReturnTypeErrorCode = registerBuiltIn("XUST0028");
 
+    public static final ErrorCode InvalidAttributeNameErrorCode = registerBuiltIn("XQDY0044");
     public static final ErrorCode InvalidElementNameExpressionErrorCode = registerBuiltIn("XQDY0074");
     public static final ErrorCode InvalidCommentContentErrorCode = registerBuiltIn("XQDY0072");
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");

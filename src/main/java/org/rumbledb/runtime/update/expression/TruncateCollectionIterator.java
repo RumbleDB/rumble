@@ -98,7 +98,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = collectionNameItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
             if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
