@@ -451,11 +451,6 @@ public class HtmlSerializer extends XmlSerializer {
             && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty());
     }
 
-    @Override
-    protected boolean matchesElementNamespace(Item element, Item namespace) {
-        return super.matchesElementNamespace(element, namespace);
-    }
-
     private void appendImplicitElementNamespace(
             Item element,
             StringBuilder sb,

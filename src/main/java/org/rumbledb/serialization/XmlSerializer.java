@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
-import org.rumbledb.items.xml.NamespaceItem;
 
 import java.util.List;
 
