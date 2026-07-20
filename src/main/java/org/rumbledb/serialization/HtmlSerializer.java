@@ -297,6 +297,24 @@ public class HtmlSerializer extends XmlSerializer {
         return false;
     }
 
+    @Override
+    protected boolean isCDataSectionElement(Item element) {
+        if (element == null || !element.isElementNode() || element.nodeName() == null) {
+            return false;
+        }
+        if (isHtmlElement(element)) {
+            if (isHtml5Version()) {
+                return false;
+            }
+            String prefix = element.nodeName().getPrefix();
+            if (prefix == null || prefix.isEmpty()) {
+                return false;
+            }
+            return matchesExactExpandedQNameEntry(this.params.getCdataSectionElements(), element);
+        }
+        return matchesExpandedQNameEntry(this.params.getCdataSectionElements(), element);
+    }
+
     private boolean isHtmlFamilyNamespace(String namespace) {
         return namespace == null
             || XHTML_NS.equals(namespace)
@@ -304,31 +322,72 @@ public class HtmlSerializer extends XmlSerializer {
             || MATHML_NS.equals(namespace);
     }
 
+    private boolean matchesExactExpandedQNameEntry(Set<String> entries, Item element) {
+        if (entries == null || entries.isEmpty() || element == null || element.nodeName() == null) {
+            return false;
+        }
+        String namespace = element.nodeName().getNamespace();
+        String localName = element.nodeName().getLocalName();
+        String expandedName = namespace == null
+            ? localName
+            : "Q{" + namespace + "}" + localName;
+        return entries.contains(expandedName);
+    }
+
     private void appendElementNamespaces(Item item, StringBuilder sb) {
+        boolean emittedDefaultNamespaceForNormalizedElement = false;
+        if (shouldApplyPrefixNormalization(item)) {
+            sb.append(" xmlns=\"");
+            sb.append(escapeAttribute(item.nodeName().getNamespace()));
+            sb.append("\"");
+            emittedDefaultNamespaceForNormalizedElement = true;
+        }
         for (Item namespace : item.declaredNamespaceNodes()) {
-            if (shouldSkipNamespaceDeclaration(item, namespace)) {
+            if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
                 continue;
             }
             appendAttributeOrNamespaceNode(namespace, sb);
         }
     }
 
-    private boolean shouldSkipNamespaceDeclaration(Item element, Item namespace) {
+    private boolean shouldSkipNamespaceDeclaration(
+            Item element,
+            Item namespace,
+            boolean emittedDefaultNamespaceForNormalizedElement
+    ) {
         if (!namespace.isNamespaceNode() || element.nodeName() == null) {
             return false;
         }
+        String prefix = namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName();
         String elementNamespace = element.nodeName().getNamespace();
-        if (!XHTML_NS.equals(elementNamespace)) {
-            return false;
-        }
         String uri = namespace.getStringValue();
-        if (!XHTML_NS.equals(uri)) {
+        if (uri == null) {
             return false;
         }
-        return namespace.nodeName() == null
-            || namespace.nodeName().getLocalName() == null
-            || namespace.nodeName().getLocalName().isEmpty()
-            || namespace.nodeName().getLocalName().equals(element.nodeName().getPrefix());
+        if (XHTML_NS.equals(elementNamespace) && XHTML_NS.equals(uri)) {
+            if (
+                prefix.isEmpty() && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty())
+            ) {
+                return true;
+            }
+            if (shouldApplyPrefixNormalization(element)) {
+                if (prefix.equals(element.nodeName().getPrefix())) {
+                    return true;
+                }
+                if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
+                    return true;
+                }
+            }
+        }
+        if (shouldApplyPrefixNormalization(element) && element.nodeName().getNamespace().equals(uri)) {
+            if (prefix.equals(element.nodeName().getPrefix())) {
+                return true;
+            }
+            if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean shouldEmitDefaultHtmlDoctype(Item element) {
@@ -420,7 +479,10 @@ public class HtmlSerializer extends XmlSerializer {
             return "";
         }
         Name name = item.nodeName();
-        if (XHTML_NS.equals(name.getNamespace())) {
+        if (XHTML_NS.equals(name.getNamespace()) && (name.getPrefix() == null || name.getPrefix().isEmpty())) {
+            return name.getLocalName();
+        }
+        if (shouldApplyPrefixNormalization(item)) {
             return name.getLocalName();
         }
         if (name.getPrefix() != null && !name.getPrefix().isEmpty()) {
@@ -437,10 +499,33 @@ public class HtmlSerializer extends XmlSerializer {
         return namespace == null || XHTML_NS.equals(namespace);
     }
 
+    private boolean shouldApplyPrefixNormalization(Item item) {
+        if (!isHtml5Version() || item == null || !item.isElementNode() || item.nodeName() == null) {
+            return false;
+        }
+        String namespace = item.nodeName().getNamespace();
+        if (SVG_NS.equals(namespace) || MATHML_NS.equals(namespace)) {
+            return true;
+        }
+        return XHTML_NS.equals(namespace)
+            && item.nodeName().getPrefix() != null
+            && !item.nodeName().getPrefix().isEmpty();
+    }
+
     private boolean hasLocalName(Item item, String localName) {
         return item != null
             && item.nodeName() != null
             && item.nodeName().getLocalName().equalsIgnoreCase(localName);
+    }
+
+    @Override
+    protected boolean containsElementLikeChild(List<Item> children) {
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String escapeHtmlUriAttribute(String value) {
