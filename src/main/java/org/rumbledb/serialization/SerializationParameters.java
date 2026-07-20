@@ -224,9 +224,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public static SerializationParameters defaults() {
+        return defaults(null);
+    }
+
+    public static SerializationParameters defaults(String queryLanguage) {
         SerializationParameters p = new SerializationParameters();
         // Spec-aligned conservative defaults; implementation-defined noted explicitly
-        p.method = "xml-json-hybrid"; // implementation defined default
+        p.method = defaultMethod(queryLanguage); // implementation defined default
         p.encoding = "UTF-8";
         p.version = null;
         p.omitXmlDeclaration = false;
@@ -251,6 +255,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         p.extensionParameters = new HashMap<>();
         p.sparkOptions = new HashMap<>();
         return p;
+    }
+
+    private static String defaultMethod(String queryLanguage) {
+        if (queryLanguage != null && queryLanguage.startsWith("xquery")) {
+            return "xml";
+        }
+        return "xml-json-hybrid";
     }
 
     // Getters and setters
