@@ -243,12 +243,10 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
     }
 
     private String serializeNodeAsString(Item item) {
-        SerializationParameters nodeParams = SerializationParameters.copy(this.params);
+        SerializationParameters nodeParams = SerializationParameters.defaults();
         nodeParams.setIndent(false);
-        nodeParams.setCharacterMaps(java.util.Collections.emptyMap());
-        nodeParams.setNormalizationForm("none");
-        Serializer serializer;
         SerializationParameters.JsonNodeOutputMethod nodeOutputMethod = this.params.getJsonNodeOutputMethod();
+        Serializer serializer;
         if (
             nodeOutputMethod == null
                 || nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.UNSPECIFIED
@@ -257,6 +255,10 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             nodeParams.setMethod("xml");
             nodeParams.setOmitXmlDeclaration(true);
             serializer = new XmlSerializer(nodeParams);
+        } else if (nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.XHTML) {
+            nodeParams.setMethod("xhtml");
+            nodeParams.setOmitXmlDeclaration(true);
+            serializer = new XhtmlSerializer(nodeParams);
         } else if (nodeOutputMethod == SerializationParameters.JsonNodeOutputMethod.HTML) {
             nodeParams.setMethod("html");
             serializer = new HtmlSerializer(nodeParams);
