@@ -1,7 +1,9 @@
 package org.rumbledb.api;
 
+import lombok.Getter;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
@@ -24,7 +26,9 @@ import java.net.URI;
  */
 public class Rumble {
 
+    @Getter
     private RumbleRuntimeConfiguration configuration;
+    private CompilationConfiguration compilationConfiguration;
 
     /**
      * Creates a new Rumble instance. This initializes a brand new Spark session.
@@ -32,7 +36,17 @@ public class Rumble {
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
+        this(new CompilationConfiguration(configuration));
+    }
+
+    /**
+     * Creates a new Rumble instance with explicit compilation configuration.
+     *
+     * @param compilationConfiguration the configuration used to compile queries.
+     */
+    public Rumble(CompilationConfiguration compilationConfiguration) {
+        this.compilationConfiguration = compilationConfiguration;
+        this.configuration = compilationConfiguration.runtimeConfiguration();
         SparkSessionManager.getInstance().getOrCreateSession();
     }
 
@@ -42,16 +56,8 @@ public class Rumble {
      */
     public Rumble(SparkSession session) {
         this.configuration = new RumbleRuntimeConfiguration();
+        this.compilationConfiguration = new CompilationConfiguration(this.configuration);
         SparkSessionManager.getInstance(session);
-    }
-
-    /**
-     * Gets the configuration
-     * 
-     * @return the configuration
-     */
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.configuration;
     }
 
     /**
@@ -63,7 +69,7 @@ public class Rumble {
     public SequenceOfItems runQuery(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            this.configuration
+            this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
@@ -95,7 +101,7 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
-            this.configuration
+            this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
@@ -127,7 +133,7 @@ public class Rumble {
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            this.configuration
+            this.compilationConfiguration
         );
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
