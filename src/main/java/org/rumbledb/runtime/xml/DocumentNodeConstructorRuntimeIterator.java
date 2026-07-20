@@ -140,15 +140,15 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
                     if (item.isTextNode() || !item.isNode()) {
                         String textContent = item.isTextNode() ? item.getTextValue() : item.getStringValue();
-                        if (textContent.isEmpty()) {
-                            previousItemWasAtomic = item.isAtomic();
-                            continue;
-                        }
                         if (textAccumulator == null) {
                             textAccumulator = new StringBuilder();
                         }
                         if (item.isAtomic() && previousItemWasAtomic) {
                             textAccumulator.append(' ');
+                        }
+                        if (textContent.isEmpty()) {
+                            previousItemWasAtomic = item.isAtomic();
+                            continue;
                         }
                         textAccumulator.append(textContent);
                         previousItemWasAtomic = item.isAtomic();
