@@ -21,25 +21,35 @@ import org.rumbledb.runtime.RuntimeIterator;
 /**
  * Serializable factory for independent executions of one function body.
  *
- * The body is serialized once when the factory is created. Creating an execution only deserializes that immutable
- * snapshot; it never serializes a live or previously executed iterator tree.
+ * Ordinary bodies are serialized once when the factory is created. Creating an execution only deserializes that
+ * immutable snapshot; it never serializes a live or previously executed iterator tree. Bodies that own Spark runtime
+ * state are retained instead.
  */
 final class FunctionBodyIteratorFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private final byte[] serializedBody;
+    /**
+     * Spark ML bodies own runtime state such as broadcasts and datasets. They must not be cloned from a Java
+     * serialization snapshot; retaining the body preserves that state for the lifetime of the function item.
+     */
+    private final RuntimeIterator retainedBody;
     private transient RuntimeIterator prototype;
 
-    FunctionBodyIteratorFactory(RuntimeIterator bodyIterator) {
+    FunctionBodyIteratorFactory(RuntimeIterator bodyIterator, boolean retainBody) {
         this.prototype = bodyIterator;
-        this.serializedBody = serialize(bodyIterator);
+        this.retainedBody = retainBody ? bodyIterator : null;
+        this.serializedBody = retainBody ? null : serialize(bodyIterator);
     }
 
     /**
      * Returns the inspection-only prototype, reconstructing it after factory deserialization when necessary.
      */
     RuntimeIterator getPrototype() {
+        if (this.retainedBody != null) {
+            return this.retainedBody;
+        }
         if (this.prototype == null) {
             this.prototype = deserialize(this.serializedBody);
         }
@@ -47,9 +57,13 @@ final class FunctionBodyIteratorFactory implements Serializable {
     }
 
     /**
-     * Creates mutable state for one independent function invocation from the pristine body snapshot.
+     * Creates mutable state for one independent function invocation from the pristine body snapshot, unless the body
+     * owns Spark runtime state and must therefore be retained.
      */
     RuntimeIterator createExecutionInstance() {
+        if (this.retainedBody != null) {
+            return this.retainedBody;
+        }
         return deserialize(this.serializedBody);
     }
 

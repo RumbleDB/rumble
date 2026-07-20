@@ -109,7 +109,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -154,7 +154,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -192,7 +192,7 @@ public class FunctionItem implements Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType, isUpdating);
-        this.bodyIteratorFactory = new FunctionBodyIteratorFactory(bodyIterator);
+        this.bodyIteratorFactory = createBodyIteratorFactory(bodyIterator);
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -230,6 +230,12 @@ public class FunctionItem implements Item {
 
     public RuntimeIterator createBodyIterator() {
         return this.bodyIteratorFactory.createExecutionInstance();
+    }
+
+    private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
+        boolean retainBody = bodyIterator instanceof ApplyEstimatorRuntimeIterator
+            || bodyIterator instanceof ApplyTransformerRuntimeIterator;
+        return new FunctionBodyIteratorFactory(bodyIterator, retainBody);
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -355,7 +361,7 @@ public class FunctionItem implements Item {
             byte[] data = input.readBytes(dataLength);
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIteratorFactory = new FunctionBodyIteratorFactory((RuntimeIterator) ois.readObject());
+            this.bodyIteratorFactory = createBodyIteratorFactory((RuntimeIterator) ois.readObject());
         } catch (Exception e) {
             throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
