@@ -47,7 +47,17 @@ final class ModuleImportLoader {
                     compilationConfiguration,
                     metadata
                 );
-                validateNamespace(namespaceURI, module, metadata);
+
+                if (!namespaceURI.toString().equals(module.getNamespace())) {
+                    throw new ModuleNotFoundException(
+                            "A module with namespace "
+                                + namespaceURI
+                                + " was not found. The namespace of the module at this location was: "
+                                + module.getNamespace(),
+                            metadata
+                    );
+                }
+
                 return module;
             } catch (IOException | CannotRetrieveResourceException e) {
                 lastFailure = e;
@@ -55,36 +65,15 @@ final class ModuleImportLoader {
         }
 
         RumbleException exception = new ModuleNotFoundException(
-                "Module not found: " + namespace + failureMessage(lastFailure),
+                "Module not found: %s, cause: %s".formatted(
+                    namespaceURI,
+                    lastFailure != null ? lastFailure.getMessage() : "unknown"
+                ),
                 metadata
         );
         if (lastFailure != null) {
             exception.initCause(lastFailure);
         }
         throw exception;
-    }
-
-    private static void validateNamespace(
-            URI expectedNamespace,
-            LibraryModule module,
-            ExceptionMetadata metadata
-    ) {
-        if (expectedNamespace.toString().equals(module.getNamespace())) {
-            return;
-        }
-        throw new ModuleNotFoundException(
-                "A module with namespace "
-                    + expectedNamespace
-                    + " was not found. The namespace of the module at this location was: "
-                    + module.getNamespace(),
-                metadata
-        );
-    }
-
-    private static String failureMessage(Exception failure) {
-        if (failure == null || failure.getMessage() == null) {
-            return "";
-        }
-        return " Cause: " + failure.getMessage();
     }
 }
