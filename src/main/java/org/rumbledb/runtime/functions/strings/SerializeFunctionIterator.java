@@ -21,11 +21,16 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.Serializers;
 
 import java.util.List;
 
@@ -43,17 +48,33 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            Item joinString = ItemFactory.getInstance().createStringItem(" ");
             List<Item> items = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
-
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Item item : items) {
-                stringBuilder.append(item.serialize());
-                stringBuilder.append(joinString.getStringValue());
+            SerializationParameters params = resolveSerializationParameters();
+            Serializer serializer = Serializers.from(params);
+            String itemSeparator = params.getItemSeparator();
+            if (itemSeparator == null) {
+                itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
             }
 
-            if (items.size() > 0) {
-                stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+            StringBuilder stringBuilder = new StringBuilder();
+            if ("json".equalsIgnoreCase(params.getMethod())) {
+                if (items.isEmpty()) {
+                    stringBuilder.append("null");
+                } else if (items.size() == 1) {
+                    stringBuilder.append(serializer.serialize(items.get(0)));
+                } else {
+                    throw new InvalidArgumentTypeException(
+                            "JSON serialization requires the top-level sequence to contain at most one item.",
+                            getMetadata()
+                    );
+                }
+            } else {
+                for (int i = 0; i < items.size(); i++) {
+                    if (i > 0) {
+                        stringBuilder.append(itemSeparator);
+                    }
+                    stringBuilder.append(serializer.serialize(items.get(i)));
+                }
             }
             this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
@@ -63,5 +84,28 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
         }
+    }
+
+    private SerializationParameters resolveSerializationParameters() {
+        SerializationParameters params = SerializationParameters.copy(
+            this.staticContext.getSerializationParameters()
+        );
+        if (this.children.size() < 2) {
+            return params;
+        }
+
+        List<Item> optionsItems = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        if (optionsItems.isEmpty()) {
+            return params;
+        }
+        Item options = optionsItems.get(0);
+        if (!options.isMap() && !options.isObject()) {
+            throw new InvalidArgumentTypeException("The second argument of fn:serialize must be a map.", getMetadata());
+        }
+        for (String key : options.getStringKeys()) {
+            Item value = options.getItemByKey(key);
+            SerializationParameterBuilder.update(params, key, value == null ? "" : value.getStringValue());
+        }
+        return params;
     }
 }

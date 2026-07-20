@@ -54,6 +54,10 @@ public final class SerializationParameterBuilder {
         return build(parameters, SerializationParameters.defaults());
     }
 
+    public static SerializationParameters build(Map<String, String> parameters, String queryLanguage) {
+        return build(parameters, SerializationParameters.defaults(queryLanguage));
+    }
+
     /**
      * Builds a {@link SerializationParameters} instance by copying an existing template and applying overrides.
      * A defensive copy of {@code defaults} is created so that the original instance is never mutated.

@@ -3,6 +3,7 @@ package org.rumbledb.serialization;
 import org.rumbledb.api.Item;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Set;
 
 public class HtmlSerializer extends XmlSerializer {
@@ -29,6 +30,37 @@ public class HtmlSerializer extends XmlSerializer {
         "src",
         "usemap"
     );
+    private static final Set<String> HTML4_EMPTY_ELEMENTS = Set.of(
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "frame",
+        "hr",
+        "img",
+        "input",
+        "isindex",
+        "link",
+        "meta",
+        "param"
+    );
+    private static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
+        "area",
+        "base",
+        "br",
+        "col",
+        "embed",
+        "hr",
+        "img",
+        "input",
+        "link",
+        "meta",
+        "param",
+        "source",
+        "track",
+        "wbr"
+    );
 
     public HtmlSerializer(SerializationParameters params) {
         super(params);
@@ -54,6 +86,56 @@ public class HtmlSerializer extends XmlSerializer {
         } else {
             sb.append(" SYSTEM \"").append(this.params.getDoctypeSystem()).append("\"");
         }
+        sb.append(">");
+    }
+
+    @Override
+    protected void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        if (isTopLevel) {
+            appendDocTypeIfNeeded(item, sb);
+        }
+        sb.append("<");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        for (Item namespace : item.declaredNamespaceNodes()) {
+            appendAttributeOrNamespaceNode(namespace, sb);
+        }
+        for (Item attribute : item.attributes()) {
+            appendAttributeOrNamespaceNode(attribute, sb);
+        }
+        if (item.children().isEmpty() && isHtmlEmptyElement(item)) {
+            sb.append(">");
+            return;
+        }
+        if (item.children().isEmpty()) {
+            sb.append("></");
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
+            sb.append(">");
+            return;
+        }
+        sb.append(">");
+        List<Item> children = item.children();
+        boolean indenting = shouldIndentElement(item);
+        boolean containsElementLikeChild = containsElementLikeChild(children);
+        boolean preserveWhitespace = mustPreserveWhitespace(item);
+        boolean hasSignificantTextChild = hasSignificantTextChild(children);
+        String childIndent = nextIndent(indent);
+        for (Item child : children) {
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+                    && shouldIndentBeforeChild(child)
+            ) {
+                sb.append("\n").append(childIndent);
+            }
+            serialize(child, sb, childIndent, false);
+        }
+        if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
+            sb.append("\n").append(indent);
+        }
+        sb.append("</");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
         sb.append(">");
     }
 
@@ -138,5 +220,25 @@ public class HtmlSerializer extends XmlSerializer {
             result.append(Character.toUpperCase(Character.forDigit((unsigned >>> 4) & 0xF, 16)));
             result.append(Character.toUpperCase(Character.forDigit(unsigned & 0xF, 16)));
         }
+    }
+
+    private boolean isHtmlEmptyElement(Item item) {
+        if (!item.isElementNode() || item.nodeName() == null) {
+            return false;
+        }
+        String localName = item.nodeName().getLocalName();
+        if (localName == null) {
+            return false;
+        }
+        String lower = localName.toLowerCase();
+        if (isHtml5Version()) {
+            return HTML5_VOID_ELEMENTS.contains(lower);
+        }
+        return HTML4_EMPTY_ELEMENTS.contains(lower);
+    }
+
+    private boolean isHtml5Version() {
+        String version = this.params.getVersion();
+        return version != null && version.trim().startsWith("5");
     }
 }

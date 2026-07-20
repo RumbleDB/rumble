@@ -37,9 +37,15 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             throw new FunctionsNonSerializableException();
         }
         if (item.isArray()) {
+            String separator = this.params.getItemSeparator() == null ? "" : this.params.getItemSeparator();
+            boolean first = true;
             for (List<Item> member : item.getSequenceMembers()) {
                 for (Item memberItem : member) {
+                    if (!first) {
+                        sb.append(separator);
+                    }
                     serialize(memberItem, sb, indent, isTopLevel);
+                    first = false;
                 }
             }
             return;

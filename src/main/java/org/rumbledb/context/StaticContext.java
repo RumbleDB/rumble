@@ -132,7 +132,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = configuration.getSerializationParameters();
+        this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
