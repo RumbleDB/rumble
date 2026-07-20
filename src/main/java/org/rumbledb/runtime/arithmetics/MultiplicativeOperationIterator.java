@@ -526,9 +526,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (Double.isNaN(r)) {
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
-        if (Double.isInfinite(r)) {
-            throw new DurationOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
-        }
         switch (multiplicativeOperator) {
             case MUL: {
                 if (Double.isInfinite(r)) {
