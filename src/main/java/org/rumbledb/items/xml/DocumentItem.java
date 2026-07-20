@@ -146,6 +146,9 @@ public class DocumentItem implements Item {
         if (!(other instanceof DocumentItem otherDocumentItem)) {
             return false;
         }
+        if (this.documentPos == null || otherDocumentItem.documentPos == null) {
+            return this == otherDocumentItem;
+        }
         return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
@@ -302,6 +305,9 @@ public class DocumentItem implements Item {
 
     @Override
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 

@@ -39,6 +39,12 @@ final class XmlConstructorContentUtils {
     }
 
     static void appendExpandedItem(Item item, List<Item> result) {
+        if (item.isDocumentNode()) {
+            for (Item child : item.children()) {
+                appendExpandedItem(child, result);
+            }
+            return;
+        }
         if (!item.isArray()) {
             result.add(item);
             return;

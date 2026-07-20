@@ -117,50 +117,73 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
      * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
      */
     private List<Item> processContentExpression(DynamicContext dynamicContext) {
-        List<Item> rawContentSequence = new ArrayList<>();
+        List<Item> contentSequence = new ArrayList<>();
+        StringBuilder textAccumulator = null;
+        boolean previousItemWasAtomic = false;
 
         // Collect all content items
         if (this.contentIterator != null) {
             this.contentIterator.open(dynamicContext);
             while (this.contentIterator.hasNext()) {
-                XmlConstructorContentUtils.appendExpandedItem(this.contentIterator.next(), rawContentSequence);
+                List<Item> expandedItems = new ArrayList<>();
+                XmlConstructorContentUtils.appendExpandedItem(this.contentIterator.next(), expandedItems);
+                for (Item item : expandedItems) {
+                    if (item.isAttributeNode() || item.isNamespaceNode()) {
+                        if (textAccumulator != null) {
+                            flushTextAccumulator(contentSequence, textAccumulator);
+                            textAccumulator = null;
+                        }
+                        contentSequence.add(item);
+                        previousItemWasAtomic = false;
+                        continue;
+                    }
+
+                    if (item.isTextNode() || !item.isNode()) {
+                        String textContent = item.isTextNode() ? item.getTextValue() : item.getStringValue();
+                        if (textAccumulator == null) {
+                            textAccumulator = new StringBuilder();
+                        }
+                        if (item.isAtomic() && previousItemWasAtomic) {
+                            textAccumulator.append(' ');
+                        }
+                        if (textContent.isEmpty()) {
+                            previousItemWasAtomic = item.isAtomic();
+                            continue;
+                        }
+                        textAccumulator.append(textContent);
+                        previousItemWasAtomic = item.isAtomic();
+                        continue;
+                    }
+
+                    if (textAccumulator != null) {
+                        flushTextAccumulator(contentSequence, textAccumulator);
+                        textAccumulator = null;
+                    }
+                    contentSequence.add(item);
+                    previousItemWasAtomic = false;
+                }
             }
             this.contentIterator.close();
         }
-
-        // 1. If the content sequence contains a document node, the document node is replaced in the content
-        // sequence by its children.
-        List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);
+        if (textAccumulator != null) {
+            flushTextAccumulator(contentSequence, textAccumulator);
+        }
 
         // 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
         // 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
-        validateNoAttributesOrNamespaces(expandedContentSequence);
+        validateNoAttributesOrNamespaces(contentSequence);
 
         // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating
         // their contents, with no intervening blanks. After concatenation, any text node whose content
         // is a zero-length string is deleted from the content sequence.
-        List<Item> mergedContentSequence = mergeAdjacentTextNodes(expandedContentSequence);
-
-        return mergedContentSequence;
+        return mergeAdjacentTextNodes(contentSequence);
     }
 
-    /**
-     * Expands document nodes by replacing them with their children.
-     * 1. If the content sequence contains a document node, the document node is replaced in the content
-     * sequence by its children.
-     */
-    private List<Item> expandDocumentNodes(List<Item> contentSequence) {
-        List<Item> expandedSequence = new ArrayList<>();
-        for (Item item : contentSequence) {
-            if (item.isDocumentNode()) {
-                // 1. If the content sequence contains a document node, the document node is replaced in the content
-                // sequence by its children.
-                expandedSequence.addAll(item.children());
-            } else {
-                expandedSequence.add(item);
-            }
+    private void flushTextAccumulator(List<Item> contentSequence, StringBuilder textAccumulator) {
+        String accumulatedText = textAccumulator.toString();
+        if (!accumulatedText.isEmpty()) {
+            contentSequence.add(ItemFactory.getInstance().createXmlTextNode(accumulatedText));
         }
-        return expandedSequence;
     }
 
     /**

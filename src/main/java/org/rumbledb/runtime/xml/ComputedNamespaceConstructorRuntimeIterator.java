@@ -138,7 +138,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
             );
         }
         Item prefixItem = atomizedPrefixItems.get(0);
-        if (!prefixItem.isAtomic()) {
+        if (!prefixItem.isAtomic() || !(prefixItem.isString() || prefixItem.isUntypedAtomic())) {
             throw new UnexpectedStaticTypeException(
                     "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic"
             );
