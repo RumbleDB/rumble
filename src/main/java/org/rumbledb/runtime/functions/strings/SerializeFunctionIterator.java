@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -29,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
 
@@ -87,25 +87,15 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     }
 
     private SerializationParameters resolveSerializationParameters() {
-        SerializationParameters params = SerializationParameters.copy(
-            this.staticContext.getSerializationParameters()
+        SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
+            this.staticContext.getQueryLanguage()
         );
         if (this.children.size() < 2) {
             return params;
         }
 
         List<Item> optionsItems = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
-        if (optionsItems.isEmpty()) {
-            return params;
-        }
-        Item options = optionsItems.get(0);
-        if (!options.isMap() && !options.isObject()) {
-            throw new InvalidArgumentTypeException("The second argument of fn:serialize must be a map.", getMetadata());
-        }
-        for (String key : options.getStringKeys()) {
-            Item value = options.getItemByKey(key);
-            SerializationParameterBuilder.update(params, key, value == null ? "" : value.getStringValue());
-        }
+        SerializationParameterUtils.applyParameterItems(params, optionsItems, getMetadata());
         return params;
     }
 }

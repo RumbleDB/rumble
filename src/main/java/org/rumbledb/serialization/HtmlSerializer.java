@@ -91,6 +91,10 @@ public class HtmlSerializer extends XmlSerializer {
 
     @Override
     protected void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        if (item.nodeName() != null && item.nodeName().getNamespace() != null) {
+            super.serializeElementNode(item, sb, indent, isTopLevel);
+            return;
+        }
         if (isTopLevel) {
             appendDocTypeIfNeeded(item, sb);
         }

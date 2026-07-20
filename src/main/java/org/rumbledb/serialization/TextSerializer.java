@@ -56,12 +56,11 @@ public class TextSerializer implements Serializer, java.io.Serializable {
     }
 
     private void appendArrayMembers(Item array, StringBuilder sb, String indent) {
-        String separator = this.params.getItemSeparator() == null ? "" : this.params.getItemSeparator();
         boolean first = true;
         for (java.util.List<Item> memberSequence : array.getSequenceMembers()) {
             for (Item member : memberSequence) {
                 if (!first) {
-                    sb.append(separator);
+                    sb.append(" ");
                 }
                 serialize(member, sb, indent, false);
                 first = false;
