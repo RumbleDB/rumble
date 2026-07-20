@@ -135,6 +135,9 @@ public class DocumentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
+        if (this.documentElement == null) {
+            return ItemTypeFactory.documentNodeItemType();
+        }
         return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
     }
 
