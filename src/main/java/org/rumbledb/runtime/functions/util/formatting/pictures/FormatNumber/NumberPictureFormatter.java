@@ -7,8 +7,14 @@ import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class NumberPictureFormatter {
+
+    private static final Map<PictureKey, FormatNumberPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
+
     private NumberPictureFormatter() {
     }
 
@@ -18,7 +24,12 @@ public class NumberPictureFormatter {
             DecimalFormatDefinition decimalFormat,
             ExceptionMetadata metadata
     ) {
-        FormatNumberPicture picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
+        PictureKey key = new PictureKey(pictureString, decimalFormat);
+        FormatNumberPicture picture = PICTURE_CACHE.get(key);
+        if (picture == null) {
+            picture = FormatNumberPictureParser.parse(pictureString, decimalFormat, metadata);
+            PICTURE_CACHE.putIfAbsent(key, picture);
+        }
 
         if (valueItem.isDouble()) {
             double value = valueItem.getDoubleValue();
@@ -330,6 +341,33 @@ public class NumberPictureFormatter {
         }
 
         return new MantissaExponentPair(mantissa, exponent);
+    }
+
+    private static final class PictureKey {
+        private final String pictureString;
+        private final DecimalFormatDefinition decimalFormat;
+
+        private PictureKey(String pictureString, DecimalFormatDefinition decimalFormat) {
+            this.pictureString = pictureString;
+            this.decimalFormat = decimalFormat;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof PictureKey)) {
+                return false;
+            }
+            PictureKey other = (PictureKey) o;
+            return this.pictureString.equals(other.pictureString) && this.decimalFormat == other.decimalFormat;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(this.pictureString, System.identityHashCode(this.decimalFormat));
+        }
     }
 
     private static final class AdjustedNumber {

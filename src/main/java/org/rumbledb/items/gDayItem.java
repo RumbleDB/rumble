@@ -24,7 +24,7 @@ public class gDayItem implements Item {
     private boolean hasTimeZone;
     private int day;
     private ZoneOffset offset;
-    private final Pattern gDayRegex = Pattern.compile(
+    private static final Pattern gDayRegex = Pattern.compile(
         "---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
@@ -53,7 +53,7 @@ public class gDayItem implements Item {
     }
 
     private void getgDayFromString(String gDayString) {
-        Matcher matcher = this.gDayRegex.matcher(gDayString);
+        Matcher matcher = gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gDay: \"" + gDayString + "\"");
         }
