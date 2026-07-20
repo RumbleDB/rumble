@@ -37,9 +37,13 @@ final class FunctionExecutionPlan implements Serializable {
         return this.bodyIterator;
     }
 
+    RuntimeIterator createIndependentIterator() {
+        return this.bodyIterator.deepCopy();
+    }
+
     synchronized RuntimeIterator acquireIterator() {
         RuntimeIterator iterator = this.availableIterators.pollFirst();
-        return iterator == null ? this.bodyIterator.deepCopy() : iterator;
+        return iterator == null ? createIndependentIterator() : iterator;
     }
 
     synchronized void releaseIterator(RuntimeIterator iterator) {
