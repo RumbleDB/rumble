@@ -55,6 +55,7 @@ import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
+import java.math.BigDecimal;
 import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
@@ -188,15 +189,31 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 );
             }
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
-            if (fil != null && fil.isInt()) {
-                int index = fil.getIntValue();
-                if (index == this.position) {
-                    this.nextResult = item;
-                    break;
+            if (fil != null && fil.isNumeric()) {
+                BigDecimal numericValue;
+                if (fil.isInt() || fil.isInteger()) {
+                    numericValue = new BigDecimal(fil.getIntegerValue());
+                } else if (fil.isDecimal()) {
+                    numericValue = fil.getDecimalValue();
+                } else if (fil.isDouble()) {
+                    double value = fil.getDoubleValue();
+                    if (Double.isNaN(value) || Double.isInfinite(value)) {
+                        continue;
+                    }
+                    numericValue = BigDecimal.valueOf(value);
+                } else if (fil.isFloat()) {
+                    float value = fil.getFloatValue();
+                    if (Float.isNaN(value) || Float.isInfinite(value)) {
+                        continue;
+                    }
+                    numericValue = new BigDecimal(Float.toString(value));
+                } else {
+                    continue;
                 }
-            } else if (fil != null && fil.isInteger()) {
-                BigInteger index = fil.getIntegerValue();
-                if (index.equals(BigInteger.valueOf(this.position))) {
+                if (
+                    numericValue.stripTrailingZeros().scale() <= 0
+                        && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position))
+                ) {
                     this.nextResult = item;
                     break;
                 }
