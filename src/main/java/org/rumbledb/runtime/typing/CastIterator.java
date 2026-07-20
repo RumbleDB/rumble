@@ -875,16 +875,41 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         if (
-            (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
+            (targetType.getLengthFacet() != null && lexical.length() != targetType.getLengthFacet())
                 ||
                 (targetType.getMinLengthFacet() != null
-                    && item.getStringValue().length() < targetType.getMinLengthFacet())
+                    && lexical.length() < targetType.getMinLengthFacet())
                 ||
                 (targetType.getMaxLengthFacet() != null
-                    && item.getStringValue().length() > targetType.getMaxLengthFacet())
+                    && lexical.length() > targetType.getMaxLengthFacet())
         ) {
             return false;
+        }
+
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null && !xmlNameValidation) {
+            return false;
+        }
+
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            patterns = null;
+        }
+        if (patterns != null && !patterns.isEmpty()) {
+            boolean patternMatched = false;
+            for (String regex : patterns) {
+                if (Pattern.matches(regex, lexical)) {
+                    patternMatched = true;
+                    break;
+                }
+            }
+            if (!patternMatched) {
+                return false;
+            }
         }
 
         // If no enumeration facet, can directly return true
