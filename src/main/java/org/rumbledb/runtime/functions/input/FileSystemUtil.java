@@ -76,6 +76,12 @@ public class FileSystemUtil {
     }
 
     private static URI parseURIReference(String value) throws URISyntaxException {
+        try {
+            return new Path(value).toUri();
+        } catch (HadoopIllegalArgumentException e) {
+            // Fall back to Java URI parsing for URI references Hadoop Path cannot parse.
+            // For example, urn: is a valid URI reference but not a valid Hadoop Path.
+        }
         String escapedValue = value.replace(" ", "%20");
         URI uri = new URI(escapedValue);
         if (!value.equals(escapedValue) && uri.isOpaque()) {
