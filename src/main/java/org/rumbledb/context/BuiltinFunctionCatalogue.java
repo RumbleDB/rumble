@@ -233,6 +233,7 @@ import org.rumbledb.runtime.functions.xml.OutermostFunctionIterator;
 import org.rumbledb.runtime.functions.xml.ParseXMLFragmentFunctionIterator;
 import org.rumbledb.runtime.functions.xml.ParseXMLFunctionIterator;
 import org.rumbledb.runtime.functions.xml.PathFunctionIterator;
+import org.rumbledb.runtime.functions.xml.PathRootFunctionIterator;
 import org.rumbledb.runtime.functions.xml.XMLToJsonFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -602,6 +603,14 @@ public class BuiltinFunctionCatalogue {
         List.of(),
         "item",
         GetRootFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction path_root = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "__path-root"),
+        List.of(),
+        "item",
+        PathRootFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -4665,6 +4674,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(doc.getIdentifier(), doc);
         builtinFunctions.put(root_with_arg.getIdentifier(), root_with_arg);
         builtinFunctions.put(root_without_arg.getIdentifier(), root_without_arg);
+        builtinFunctions.put(path_root.getIdentifier(), path_root);
         builtinFunctions.put(name_with_arg.getIdentifier(), name_with_arg);
         builtinFunctions.put(name_without_arg.getIdentifier(), name_without_arg);
         builtinFunctions.put(in_scope_prefixes.getIdentifier(), in_scope_prefixes);
