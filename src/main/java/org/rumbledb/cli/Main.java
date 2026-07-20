@@ -61,9 +61,10 @@ public class Main {
                 System.exit(0);
             } else {
                 configuration = invocation.configuration();
+                LoggingConfiguration.configure(configuration.debug());
             }
         } catch (Exception e) {
-            System.err.println("⚠️ CLI Error: " + e.getMessage());
+            ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
             System.exit(42);
         }
 

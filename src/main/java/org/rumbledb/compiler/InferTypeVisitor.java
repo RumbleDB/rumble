@@ -1,5 +1,7 @@
 package org.rumbledb.compiler;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,6 +166,7 @@ import org.apache.spark.sql.SparkSession;
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
+@Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private RumbleConfiguration configuration;
@@ -393,8 +396,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
             // we also set variableReference type
             if (variableType == null) {
-                System.err.println(
-                    "[WARNING] Variable reference type was null so we infer it. Please let us know as we would like to look into it."
+                log.warn(
+                    "Variable reference type was null so we infer it. Please let us know as we would like to look into it."
                 );
                 variableType = SequenceType.createSequenceType("item*");
             }

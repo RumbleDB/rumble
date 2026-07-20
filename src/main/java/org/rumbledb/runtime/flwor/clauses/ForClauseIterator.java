@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
@@ -73,6 +73,8 @@ import java.util.Set;
 import java.util.TreeMap;
 
 
+
+@Log4j2
 public class ForClauseIterator extends RuntimeTupleIterator {
 
 
@@ -1022,10 +1024,9 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        LogManager.getLogger("ForClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a for clause to a native SQL query."
-            );
+        log.info(
+            "Rumble was able to optimize a for clause to a native SQL query."
+        );
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String viewName = FlworDataFrameUtils.createTempView(dataFrame);
 

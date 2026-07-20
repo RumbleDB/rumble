@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -57,6 +57,8 @@ import org.rumbledb.types.TypeMappings;
 
 import java.util.*;
 
+
+@Log4j2
 public class OrderByClauseIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
@@ -531,9 +533,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         NativeClauseContext queryContext = createOrderExpression(expressionsWithIterator, orderContext);
         if (queryContext == NativeClauseContext.NoNativeQuery)
             return null;
-
-        LogManager.getLogger("OrderByClauseSparkIterator")
-            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
+        log.info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return new FlworDataFrame(

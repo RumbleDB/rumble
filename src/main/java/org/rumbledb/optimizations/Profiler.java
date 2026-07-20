@@ -1,11 +1,14 @@
 package org.rumbledb.optimizations;
 
+import lombok.extern.log4j.Log4j2;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Log4j2
 public class Profiler {
 
     public static int counter = 0;
@@ -37,12 +40,17 @@ public class Profiler {
             total += stacks.get(key);
             if (stacks.get(key) != max)
                 continue;
-            System.err.println("Occurrences: " + stacks.get(key));
-            System.err.println(key);
-            System.err.println();
+            log.debug(
+                """
+                        Occurrences: {}
+                        {}\
+                        """,
+                stacks.get(key),
+                key
+            );
         }
-        System.err.println("Size: " + stacks.size());
-        System.err.println("Total: " + total);
+        log.debug("Size: {}", stacks.size());
+        log.debug("Total: {}", total);
         return counter;
     }
 

@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -66,6 +66,8 @@ import org.rumbledb.types.TypeMappings;
 import java.math.BigDecimal;
 import java.util.*;
 
+
+@Log4j2
 public class LetClauseIterator extends RuntimeTupleIterator {
 
 
@@ -871,19 +873,18 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             return null;
         }
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        LogManager.getLogger("LetClauseSparkIterator")
-            .info(
-                "Rumble was able to optimize a let clause to a native SQL query: "
-                    + String.format(
-                        "select %s %s as `%s` from (%s)",
-                        selectSQL,
-                        nativeQuery.getResultingQuery(),
-                        SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
-                            ? newVariableName + ".sequence"
-                            : newVariableName,
-                        nativeQuery.getView()
-                    )
-            );
+        log.info(
+            "Rumble was able to optimize a let clause to a native SQL query: "
+                + String.format(
+                    "select %s %s as `%s` from (%s)",
+                    selectSQL,
+                    nativeQuery.getResultingQuery(),
+                    SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
+                        ? newVariableName + ".sequence"
+                        : newVariableName,
+                    nativeQuery.getView()
+                )
+        );
         return dataFrame.sparkSession()
             .sql(
                 String.format(

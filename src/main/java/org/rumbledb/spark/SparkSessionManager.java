@@ -21,7 +21,7 @@
 package org.rumbledb.spark;
 
 import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -65,12 +65,14 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+
+@Log4j2
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
     private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
-    private static final Level LOG_LEVEL = Level.FATAL;
+    private static Level LOG_LEVEL = Level.OFF;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -134,6 +136,16 @@ public class SparkSessionManager {
         return instance;
     }
 
+    public static void setLogLevel(Level level) {
+        LOG_LEVEL = level;
+        if (instance != null && instance.session != null) {
+            instance.session.sparkContext().setLogLevel(level.name());
+        }
+        if (instance != null && instance.configuration != null) {
+            instance.applySparkLogLevelToConfiguration();
+        }
+    }
+
     public SparkSession getOrCreateSession() {
         if (this.configuration == null) {
             setDefaultConfiguration();
@@ -148,11 +160,10 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
-                LogManager.getLogger("SparkSessionManager")
-                    .warn(
-                        "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                            + APP_NAME
-                    );
+                log.warn(
+                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                        + APP_NAME
+                );
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
@@ -165,7 +176,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
-            this.configuration.set("spark.log.level", LOG_LEVEL.name());
+            applySparkLogLevelToConfiguration();
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -185,10 +196,15 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
+
             this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
+    }
+
+    private void applySparkLogLevelToConfiguration() {
+        this.configuration.set("spark.log.level", LOG_LEVEL.name());
     }
 
     private void initializeKryoSerialization() {

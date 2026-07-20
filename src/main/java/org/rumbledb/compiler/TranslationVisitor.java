@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import lombok.extern.log4j.Log4j2;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -210,6 +211,7 @@ import java.util.stream.Collectors;
  *
  * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
  */
+@Log4j2
 public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
@@ -292,7 +294,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         // We override with a context item declaration if not present already.
         Program program = (Program) this.visitProgram(ctx.program());
         if (!prolog.hasContextItemDeclaration() && getExternalVariableType(Name.CONTEXT_ITEM) != null) {
-            System.err.println("[WARNING] Adding context item declaration.");
+            log.warn("Adding context item declaration.");
             prolog.addDeclaration(
                 new VariableDeclaration(
                         Name.CONTEXT_ITEM,
@@ -2606,7 +2608,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(sqCtx)
                 );
             } else {
-                System.err.println("Not concatenating to comma.");
+                log.debug("Not concatenating to comma.");
                 // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
                 for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
                     memberExpressions.add((Expression) this.visitExprSingle(memberCtx));

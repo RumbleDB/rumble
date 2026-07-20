@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.LogManager;
+import lombok.extern.log4j.Log4j2;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.CharType;
@@ -28,6 +28,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
+
+@Log4j2
 public class ItemTypeFactory {
 
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
@@ -242,10 +244,9 @@ public class ItemTypeFactory {
 
                 Item contentItem = item.getItemByKey("content");
                 if (!keys.contains("content")) {
-                    LogManager.getLogger("ItemTypeFactory")
-                        .warn(
-                            "The content facet of an object type is missing. By default, no fields are defined or overriden."
-                        );
+                    log.warn(
+                        "The content facet of an object type is missing. By default, no fields are defined or overriden."
+                    );
                     contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 } else {
                     if (contentItem == null) {
@@ -270,10 +271,9 @@ public class ItemTypeFactory {
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
                 } else {
-                    LogManager.getLogger("ItemTypeFactory")
-                        .warn(
-                            "The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
-                        );
+                    log.warn(
+                        "The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
+                    );
                     closed = true;
                 }
                 List<Item> contents = contentItem.getItemMembers();
