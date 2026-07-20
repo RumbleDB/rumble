@@ -247,6 +247,33 @@ public class HtmlSerializer extends XmlSerializer {
     }
 
     @Override
+    protected String escapeAttribute(String value) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder(value.length());
+        for (int i = 0; i < value.length(); i++) {
+            char current = value.charAt(i);
+            if (current == '&') {
+                if (i + 1 < value.length() && value.charAt(i + 1) == '{') {
+                    result.append('&');
+                } else {
+                    result.append("&amp;");
+                }
+            } else if (current == '<') {
+                result.append("&lt;");
+            } else if (current == '>') {
+                result.append("&gt;");
+            } else if (current == '"') {
+                result.append("&quot;");
+            } else {
+                result.append(current);
+            }
+        }
+        return result.toString();
+    }
+
+    @Override
     public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isProcessingInstructionNode()) {
             sb.append("<?");
@@ -272,7 +299,15 @@ public class HtmlSerializer extends XmlSerializer {
         }
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
+        String prefix = element.nodeName().getPrefix();
         if (!isHtmlFamilyNamespace(namespace)) {
+            if (prefix != null && !prefix.isEmpty()) {
+                for (String entry : entries) {
+                    if (entry.equals(prefix + ":" + localName)) {
+                        return true;
+                    }
+                }
+            }
             return false;
         }
         for (String entry : entries) {
@@ -290,7 +325,15 @@ public class HtmlSerializer extends XmlSerializer {
                 ) {
                     return true;
                 }
-            } else if ((namespace == null || XHTML_NS.equals(namespace)) && localName.equalsIgnoreCase(entry)) {
+            } else if (
+                (namespace == null || XHTML_NS.equals(namespace)) && localName.equalsIgnoreCase(entry)
+            ) {
+                return true;
+            } else if (
+                prefix != null
+                    && !prefix.isEmpty()
+                    && entry.equalsIgnoreCase(prefix + ":" + localName)
+            ) {
                 return true;
             }
         }
@@ -328,10 +371,17 @@ public class HtmlSerializer extends XmlSerializer {
         }
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
+        String prefix = element.nodeName().getPrefix();
         String expandedName = namespace == null
             ? localName
             : "Q{" + namespace + "}" + localName;
-        return entries.contains(expandedName);
+        if (entries.contains(expandedName)) {
+            return true;
+        }
+        if (namespace == null && entries.contains(localName)) {
+            return true;
+        }
+        return prefix != null && !prefix.isEmpty() && entries.contains(prefix + ":" + localName);
     }
 
     private void appendElementNamespaces(Item item, StringBuilder sb) {
@@ -342,12 +392,51 @@ public class HtmlSerializer extends XmlSerializer {
             sb.append("\"");
             emittedDefaultNamespaceForNormalizedElement = true;
         }
+        boolean namespaceAlreadyDeclared = false;
         for (Item namespace : item.declaredNamespaceNodes()) {
             if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
                 continue;
             }
+            if (matchesElementNamespace(item, namespace)) {
+                namespaceAlreadyDeclared = true;
+            }
             appendAttributeOrNamespaceNode(namespace, sb);
         }
+        appendImplicitElementNamespace(item, sb, namespaceAlreadyDeclared, emittedDefaultNamespaceForNormalizedElement);
+    }
+
+    @Override
+    protected boolean matchesElementNamespace(Item element, Item namespace) {
+        return super.matchesElementNamespace(element, namespace);
+    }
+
+    private void appendImplicitElementNamespace(
+            Item element,
+            StringBuilder sb,
+            boolean namespaceAlreadyDeclared,
+            boolean emittedDefaultNamespaceForNormalizedElement
+    ) {
+        if (element == null || element.nodeName() == null || namespaceAlreadyDeclared) {
+            return;
+        }
+        String namespace = element.nodeName().getNamespace();
+        if (namespace == null || namespace.isEmpty()) {
+            return;
+        }
+        String prefix = element.nodeName().getPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            if (!emittedDefaultNamespaceForNormalizedElement) {
+                sb.append(" xmlns=\"");
+                sb.append(escapeAttribute(namespace));
+                sb.append("\"");
+            }
+            return;
+        }
+        sb.append(" xmlns:");
+        sb.append(prefix);
+        sb.append("=\"");
+        sb.append(escapeAttribute(namespace));
+        sb.append("\"");
     }
 
     private boolean shouldSkipNamespaceDeclaration(
@@ -365,13 +454,6 @@ public class HtmlSerializer extends XmlSerializer {
             return false;
         }
         if (XHTML_NS.equals(elementNamespace) && XHTML_NS.equals(uri)) {
-            if (
-                isHtml5Version()
-                    && prefix.isEmpty()
-                    && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty())
-            ) {
-                return true;
-            }
             if (
                 isHtml5Version()
                     && shouldApplyPrefixNormalization(element)

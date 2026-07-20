@@ -15,6 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 
 /** Shared processing for JSONiq and XQuery direct element and attribute constructors. */
@@ -196,17 +197,46 @@ final class DirectConstructorUtils {
                     previousToken = child.getStop();
                     continue;
                 }
+                if (textNode.getContent().contains("<!--") && textNode.getContent().contains("-->")) {
+                    if (text != null) {
+                        flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+                        text = null;
+                        firstTextMetadata = null;
+                    }
+                    appendTextWithEmbeddedComments(
+                        content,
+                        textNode.getContent(),
+                        textNode.getMetadata(),
+                        preserveBoundarySpace
+                    );
+                    previousToken = child.getStop();
+                    continue;
+                }
                 if (text == null) {
                     text = new StringBuilder();
                     firstTextMetadata = textNode.getMetadata();
                     boundaryWhitespaceOnly = true;
                 }
-                boundaryWhitespaceOnly = appendBoundarySegment(
-                    text,
-                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                    true,
-                    boundaryWhitespaceOnly
-                );
+                String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+                if (isDirectCommentLiteral(hiddenText)) {
+                    flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+                    text = new StringBuilder();
+                    firstTextMetadata = textNode.getMetadata();
+                    boundaryWhitespaceOnly = true;
+                    content.add(
+                        new DirectCommentConstructorExpression(
+                                hiddenText.substring(4, hiddenText.length() - 3),
+                                ExceptionMetadata.EMPTY_METADATA
+                        )
+                    );
+                } else {
+                    boundaryWhitespaceOnly = appendBoundarySegment(
+                        text,
+                        hiddenText,
+                        true,
+                        boundaryWhitespaceOnly
+                    );
+                }
                 text.append(textNode.getContent());
                 boundaryWhitespaceOnly = boundaryWhitespaceOnly
                     && textNode.isBoundaryWhitespace()
@@ -254,6 +284,54 @@ final class DirectConstructorUtils {
             return;
         }
         content.add(new TextNodeExpression(text.toString(), metadata));
+    }
+
+    private static boolean isDirectCommentLiteral(String text) {
+        return text != null && text.startsWith("<!--") && text.endsWith("-->");
+    }
+
+    private static void appendTextWithEmbeddedComments(
+            List<Expression> content,
+            String text,
+            ExceptionMetadata metadata,
+            boolean preserveBoundarySpace
+    ) {
+        int position = 0;
+        while (position < text.length()) {
+            int commentStart = text.indexOf("<!--", position);
+            if (commentStart < 0) {
+                appendTrailingText(content, text.substring(position), metadata, preserveBoundarySpace);
+                return;
+            }
+            appendTrailingText(content, text.substring(position, commentStart), metadata, preserveBoundarySpace);
+            int commentEnd = text.indexOf("-->", commentStart);
+            if (commentEnd < 0) {
+                appendTrailingText(content, text.substring(commentStart), metadata, preserveBoundarySpace);
+                return;
+            }
+            content.add(
+                new DirectCommentConstructorExpression(
+                        text.substring(commentStart + 4, commentEnd),
+                        ExceptionMetadata.EMPTY_METADATA
+                )
+            );
+            position = commentEnd + 3;
+        }
+    }
+
+    private static void appendTrailingText(
+            List<Expression> content,
+            String text,
+            ExceptionMetadata metadata,
+            boolean preserveBoundarySpace
+    ) {
+        if (text.isEmpty()) {
+            return;
+        }
+        if (!preserveBoundarySpace && isWhitespaceOnly(text)) {
+            return;
+        }
+        content.add(new TextNodeExpression(text, metadata));
     }
 
     private static boolean appendBoundarySegment(
