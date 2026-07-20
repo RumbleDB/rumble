@@ -133,10 +133,26 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.axis.ForwardAxis;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseAxis;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+import org.rumbledb.expressions.xml.node_test.AnyKindTest;
+import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.CommentTest;
+import org.rumbledb.expressions.xml.node_test.DocumentTest;
+import org.rumbledb.expressions.xml.node_test.ElementTest;
+import org.rumbledb.expressions.xml.node_test.NameTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -3235,16 +3251,226 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
-        visitDescendants(slashExpr, argument);
-        slashExpr.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+        visit(slashExpr.getLeftExpression(), argument);
+        SequenceType leftType = requireInferredType(
+            slashExpr.getLeftExpression().getStaticSequenceType(),
+            "SlashExpr"
+        );
+        basicChecks(leftType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+
+        Expression rightExpression = slashExpr.getRightExpression();
+        rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
+        try {
+            visit(rightExpression, argument);
+        } finally {
+            rightExpression.getStaticContext().setContextItemStaticType(null);
+        }
+        SequenceType rightType = requireInferredType(rightExpression.getStaticSequenceType(), "SlashExpr");
+        basicChecks(rightType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+
+        SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
+        slashExpr.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
         return argument;
     }
 
-    // TODO: Currently, step expressions are marked as string, but this type may differ. Update to relevant type.
     @Override
     public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
-        stepExpr.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+        SequenceType contextType = stepExpr.getStaticContext().getContextItemStaticType();
+        SequenceType inferredType;
+        if (
+            contextType != null
+                && contextType.getItemType().isNodeItemType()
+                && isStaticallyEmptyStep(stepExpr, contextType.getItemType())
+        ) {
+            inferredType = SequenceType.createSequenceType("()");
+        } else {
+            ItemType inferredItemType = inferStepResultItemType(stepExpr);
+            inferredType = new SequenceType(inferredItemType, inferStepResultArity(stepExpr, contextType));
+        }
+
+        stepExpr.setStaticSequenceType(inferredType);
+        basicChecks(inferredType, stepExpr.getClass().getSimpleName(), true, true, stepExpr.getMetadata());
         return argument;
+    }
+
+    private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
+        if (contextType == null || !contextType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)) {
+            return SequenceType.Arity.ZeroOrMore;
+        }
+        if (
+            (stepExpr instanceof ForwardStepExpr forwardStep && forwardStep.getForwardAxis().equals(ForwardAxis.SELF))
+                || (stepExpr instanceof ReverseStepExpr reverseStep
+                    && reverseStep.getReverseAxis().equals(ReverseAxis.PARENT))
+        ) {
+            return SequenceType.Arity.OneOrZero;
+        }
+        return SequenceType.Arity.ZeroOrMore;
+    }
+
+    private ItemType inferStepResultItemType(StepExpr stepExpr) {
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        if (nodeTest instanceof AnyKindTest) {
+            return BuiltinTypesCatalogue.nodeItem;
+        }
+        if (nodeTest instanceof TextTest) {
+            return BuiltinTypesCatalogue.textNode;
+        }
+        if (nodeTest instanceof CommentTest) {
+            return BuiltinTypesCatalogue.commentNode;
+        }
+        if (nodeTest instanceof NamespaceNodeTest) {
+            return BuiltinTypesCatalogue.namespaceNode;
+        }
+        if (nodeTest instanceof PITest piTest) {
+            return piTest.hasTargetName()
+                ? ItemTypeFactory.processingInstructionNodeItemType(piTest.getTargetName())
+                : BuiltinTypesCatalogue.processingInstructionNode;
+        }
+        if (nodeTest instanceof DocumentTest documentTest) {
+            if (documentTest.isEmptyCheck()) {
+                return BuiltinTypesCatalogue.documentNode;
+            }
+            NodeTest innerTest = documentTest.getNodeTest();
+            if (innerTest instanceof ElementTest elementTest && elementTest.isNameWithoutTypeCheck()) {
+                return ItemTypeFactory.documentNodeItemType(
+                    ItemTypeFactory.elementNodeItemType(elementTest.getElementName())
+                );
+            }
+            return BuiltinTypesCatalogue.documentNode;
+        }
+        if (nodeTest instanceof AttributeTest attributeTest) {
+            return attributeTest.isNameWithoutTypeCheck()
+                ? ItemTypeFactory.attributeNodeItemType(attributeTest.getAttributeName())
+                : BuiltinTypesCatalogue.attributeNode;
+        }
+        if (nodeTest instanceof ElementTest elementTest) {
+            return elementTest.isNameWithoutTypeCheck()
+                ? ItemTypeFactory.elementNodeItemType(elementTest.getElementName())
+                : BuiltinTypesCatalogue.elementNode;
+        }
+        if (nodeTest instanceof NameTest nameTest) {
+            boolean attributePrincipalKind = stepExpr instanceof ForwardStepExpr forwardStep
+                && forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
+            if (attributePrincipalKind) {
+                return nameTest.hasQName()
+                    ? ItemTypeFactory.attributeNodeItemType(nameTest.getExpandedName())
+                    : BuiltinTypesCatalogue.attributeNode;
+            }
+            return nameTest.hasQName()
+                ? ItemTypeFactory.elementNodeItemType(nameTest.getExpandedName())
+                : BuiltinTypesCatalogue.elementNode;
+        }
+        return BuiltinTypesCatalogue.nodeItem;
+    }
+
+    private boolean isStaticallyEmptyStep(StepExpr stepExpr, ItemType contextItemType) {
+        if (stepExpr instanceof ForwardStepExpr forwardStep) {
+            ForwardAxis axis = forwardStep.getForwardAxis();
+            if (axis.equals(ForwardAxis.ATTRIBUTE)) {
+                return !contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
+            }
+            if (axis.equals(ForwardAxis.SELF)) {
+                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
+            }
+            if (
+                axis.equals(ForwardAxis.CHILD)
+                    || axis.equals(ForwardAxis.DESCENDANT)
+                    || axis.equals(ForwardAxis.DESCENDANT_OR_SELF)
+            ) {
+                boolean hasNoDescendants = contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
+                    || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+                if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
+                    return hasNoDescendants
+                        && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
+                }
+                return hasNoDescendants;
+            }
+            return false;
+        }
+        if (stepExpr instanceof ReverseStepExpr reverseStep) {
+            ReverseAxis axis = reverseStep.getReverseAxis();
+            if (axis.equals(ReverseAxis.PARENT)) {
+                return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+            }
+            if (axis.equals(ReverseAxis.ANCESTOR_OR_SELF)) {
+                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
+            }
+        }
+        return false;
+    }
+
+    private boolean nodeTestCanMatchContextNode(NodeTest nodeTest, ItemType contextItemType, ForwardAxis axis) {
+        if (nodeTest instanceof AnyKindTest) {
+            return true;
+        }
+        if (nodeTest instanceof TextTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode);
+        }
+        if (nodeTest instanceof CommentTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode);
+        }
+        if (nodeTest instanceof NamespaceNodeTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode);
+        }
+        if (nodeTest instanceof PITest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+        }
+        if (nodeTest instanceof DocumentTest) {
+            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+        }
+        if (nodeTest instanceof AttributeTest attributeTest) {
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+                return false;
+            }
+            if (!attributeTest.isNameWithoutTypeCheck()) {
+                return true;
+            }
+            if (contextItemType instanceof AttributeNodeItemType namedAttributeType) {
+                return attributeTest.getAttributeName().equals(namedAttributeType.getNodeName());
+            }
+            return true;
+        }
+        if (nodeTest instanceof ElementTest elementTest) {
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+                return false;
+            }
+            if (!elementTest.isNameWithoutTypeCheck()) {
+                return true;
+            }
+            if (contextItemType instanceof ElementNodeItemType namedElementType) {
+                return elementTest.getElementName().equals(namedElementType.getNodeName());
+            }
+            return true;
+        }
+        if (nodeTest instanceof NameTest nameTest) {
+            boolean attributePrincipalKind = axis != null && axis.equals(ForwardAxis.ATTRIBUTE);
+            if (attributePrincipalKind) {
+                if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+                    return false;
+                }
+                if (!nameTest.hasQName()) {
+                    return true;
+                }
+                if (contextItemType instanceof AttributeNodeItemType namedAttributeType) {
+                    return nameTest.getExpandedName().equals(namedAttributeType.getNodeName());
+                }
+                return true;
+            }
+            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+                return false;
+            }
+            if (!nameTest.hasQName()) {
+                return true;
+            }
+            if (contextItemType instanceof ElementNodeItemType namedElementType) {
+                return nameTest.getExpandedName().equals(namedElementType.getNodeName());
+            }
+            return true;
+        }
+        return true;
     }
 
     // end xml

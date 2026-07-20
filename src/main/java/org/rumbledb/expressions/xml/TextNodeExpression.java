@@ -38,6 +38,7 @@ public class TextNodeExpression extends Expression {
 
     /** The content of the text node */
     private String content;
+    private boolean boundaryWhitespace;
 
     /**
      * Constructor for a text node.
@@ -46,8 +47,13 @@ public class TextNodeExpression extends Expression {
      * @param metadata The exception metadata
      */
     public TextNodeExpression(String content, ExceptionMetadata metadata) {
+        this(content, metadata, false);
+    }
+
+    public TextNodeExpression(String content, ExceptionMetadata metadata, boolean boundaryWhitespace) {
         super(metadata);
         this.content = content;
+        this.boundaryWhitespace = boundaryWhitespace;
     }
 
     /**
@@ -57,6 +63,10 @@ public class TextNodeExpression extends Expression {
      */
     public String getContent() {
         return this.content;
+    }
+
+    public boolean isBoundaryWhitespace() {
+        return this.boundaryWhitespace;
     }
 
     @Override

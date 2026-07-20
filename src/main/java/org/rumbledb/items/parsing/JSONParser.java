@@ -487,15 +487,16 @@ public final class JSONParser {
         advance();
 
         StringBuilder resultValue = new StringBuilder();
-        StringBuilder keyComparisonValue = new StringBuilder();
+        StringBuilder keyComparisonValue = null;
 
         while (!isEnd()) {
             char c = advance();
 
             if (c == quote) {
+                String result = resultValue.toString();
                 return new ParsedString(
-                        resultValue.toString(),
-                        keyComparisonValue.toString()
+                        result,
+                        keyComparisonValue == null ? result : keyComparisonValue.toString()
                 );
             }
 
@@ -509,7 +510,7 @@ public final class JSONParser {
 
                 if (peek() == '\'' && this.options.isLiberal()) {
                     advance();
-                    handleEscapedCodePoint(resultValue, keyComparisonValue, '\'', "\\'");
+                    keyComparisonValue = handleEscapedCodePoint(resultValue, keyComparisonValue, '\'', "\\'");
                     continue;
                 }
 
@@ -517,7 +518,7 @@ public final class JSONParser {
                     JSONLiteralParsingUtils.DecodedEscape decodedEscape =
                         JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
                     this.position = decodedEscape.getNextIndex();
-                    appendDecodedEscape(
+                    keyComparisonValue = appendDecodedEscape(
                         resultValue,
                         keyComparisonValue,
                         decodedEscape.getDecodedText(),
@@ -548,10 +549,14 @@ public final class JSONParser {
             if (this.options.isEscape() && shouldEscapeInOutput(c)) {
                 String escaped = normalizedEscapeForCodePoint(c);
                 resultValue.append(escaped);
-                keyComparisonValue.append(escaped);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(escaped);
+                }
             } else {
                 resultValue.append(c);
-                keyComparisonValue.append(c);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(c);
+                }
             }
         }
 
@@ -561,22 +566,21 @@ public final class JSONParser {
         );
     }
 
-    private void appendDecodedEscape(
+    private StringBuilder appendDecodedEscape(
             StringBuilder resultValue,
             StringBuilder keyComparisonValue,
             String decodedText,
             String originalEscape
     ) {
         if (decodedText.length() == 2 && Character.isSurrogatePair(decodedText.charAt(0), decodedText.charAt(1))) {
-            handleEscapedCodePoint(
+            return handleEscapedCodePoint(
                 resultValue,
                 keyComparisonValue,
                 Character.toCodePoint(decodedText.charAt(0), decodedText.charAt(1)),
                 originalEscape
             );
-            return;
         }
-        handleEscapedCodePoint(
+        return handleEscapedCodePoint(
             resultValue,
             keyComparisonValue,
             decodedText.charAt(0),
@@ -616,7 +620,7 @@ public final class JSONParser {
      * </li>
      * </ul>
      */
-    private void handleEscapedCodePoint(
+    private StringBuilder handleEscapedCodePoint(
             StringBuilder resultValue,
             StringBuilder keyComparisonValue,
             int codePoint,
@@ -626,21 +630,34 @@ public final class JSONParser {
             if (shouldEscapeInOutput(codePoint)) {
                 String escaped = normalizedEscapeForCodePoint(codePoint);
                 resultValue.append(escaped);
-                keyComparisonValue.append(escaped);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.append(escaped);
+                }
             } else {
                 resultValue.appendCodePoint(codePoint);
-                keyComparisonValue.appendCodePoint(codePoint);
+                if (keyComparisonValue != null) {
+                    keyComparisonValue.appendCodePoint(codePoint);
+                }
             }
-            return;
+            return keyComparisonValue;
         }
 
         if (isValidXMLCodePoint(codePoint)) {
             resultValue.appendCodePoint(codePoint);
-        } else {
-            resultValue.append(this.options.getFallback().apply(originalEscape));
+            if (keyComparisonValue != null) {
+                keyComparisonValue.appendCodePoint(codePoint);
+            }
+            return keyComparisonValue;
         }
 
+        // The only point where resultValue and keyComparisonValue can actually diverge: fork
+        // keyComparisonValue from resultValue's content built so far, the first time this happens.
+        if (keyComparisonValue == null) {
+            keyComparisonValue = new StringBuilder(resultValue);
+        }
+        resultValue.append(this.options.getFallback().apply(originalEscape));
         keyComparisonValue.appendCodePoint(codePoint);
+        return keyComparisonValue;
     }
 
     private String normalizedEscapeForCodePoint(int codePoint) {

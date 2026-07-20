@@ -355,12 +355,12 @@ public final class SerializationParameterBuilder {
     }
 
     /**
-     * Parses a comma-separated string into a Set of strings.
+     * Parses a whitespace- or comma-separated string into a Set of strings.
      */
     private static Set<String> parseStringSet(String parameterName, String value) {
         Set<String> result = new HashSet<>();
         if (value != null && !value.trim().isEmpty()) {
-            String[] parts = value.split(",");
+            String[] parts = value.trim().split("[,\\s]+");
             for (String part : parts) {
                 String trimmed = part.trim();
                 if (!trimmed.isEmpty()) {

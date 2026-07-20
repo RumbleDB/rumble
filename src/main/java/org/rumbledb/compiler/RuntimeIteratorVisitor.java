@@ -2128,6 +2128,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             leftExpression,
             argument
         );
+        if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
+            left = new TreatIterator(
+                    left,
+                    new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore),
+                    ErrorCode.UnexpectedNode,
+                    slashExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+            left.setStaticContext(leftExpression.getStaticContext());
+        }
         RuntimeIterator right = this.visit(
             rightExpression,
             argument
@@ -2140,6 +2149,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
         runtimeIterator.setStaticContext(slashExpr.getStaticContext());
         return runtimeIterator;
+    }
+
+    private boolean isStaticallyGuaranteedNodeSequence(Expression expression) {
+        SequenceType staticType = expression.getStaticSequenceType();
+        return staticType != null
+            && staticType.isSubtypeOf(new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
     }
 
     @Override
