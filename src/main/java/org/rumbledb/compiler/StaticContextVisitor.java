@@ -510,7 +510,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         declaration.getMetadata()
                 );
             }
-            argument.overrideSerializationParameter(localName, declaration.getValue());
+            argument.overrideSerializationParameter(localName, declaration.getValue(), declaration.getMetadata());
         }
         // XQuery 3.1 §4.19: if the namespace part of an option declaration's name is not recognized,
         // the option declaration is ignored. For recognized namespaces with unrecognized option names,

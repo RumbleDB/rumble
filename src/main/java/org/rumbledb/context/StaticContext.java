@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -132,7 +133,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentMutabilityLevel = 0;
-        this.serializationParameters = configuration.getSerializationParameters();
+        this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
@@ -505,9 +506,17 @@ public class StaticContext implements Serializable, KryoSerializable {
      * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
      */
     public void overrideSerializationParameter(String name, String value) {
+        overrideSerializationParameter(name, value, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
         // ensure we have a local copy of the serialization parameters
         if (this.serializationParameters == null) {
             this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
+        }
+        if ("parameter-document".equals(name)) {
+            SerializationParameterUtils.applyParameterDocument(this.serializationParameters, this, value, metadata);
+            return;
         }
         if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
             value = expandSerializationQNames(value);

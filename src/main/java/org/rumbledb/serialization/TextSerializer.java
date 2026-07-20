@@ -9,8 +9,10 @@ import org.rumbledb.exceptions.RumbleException;
 public class TextSerializer implements Serializer, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
+    private final SerializationParameters params;
 
     public TextSerializer(SerializationParameters params) {
+        this.params = params != null ? params : SerializationParameters.defaults();
     }
 
     @Override
