@@ -287,13 +287,14 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         for (int i = 0; i < this.functionArguments.size(); i++) {
             argName = this.functionItem.getParameterNames().get(i);
             argIterator = this.functionArguments.get(i);
+            callContext.getVariableValues().removeVariable(argName);
 
             if (argIterator.isDataFrame()) {
-                callContext.getVariableValues().setVariableValue(argName, argIterator.getDataFrame(callerContext));
+                callContext.getVariableValues().addVariableValue(argName, argIterator.getDataFrame(callerContext));
             } else if (argIterator.isRDDOrDataFrame()) {
-                callContext.getVariableValues().setVariableValue(argName, argIterator.getRDD(callerContext));
+                callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(callerContext));
             } else {
-                callContext.getVariableValues().setVariableValue(argName, argIterator.materialize(callerContext));
+                callContext.getVariableValues().addVariableValue(argName, argIterator.materialize(callerContext));
             }
         }
     }

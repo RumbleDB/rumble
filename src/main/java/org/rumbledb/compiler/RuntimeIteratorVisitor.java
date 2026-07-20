@@ -1340,7 +1340,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
-                () -> new RuntimeIteratorVisitor(this.config).visit(expression.getBody(), null),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.isUpdating()
         );
