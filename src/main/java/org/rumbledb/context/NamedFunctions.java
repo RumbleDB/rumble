@@ -213,10 +213,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     }
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
-        FunctionItem copyFunctionItem = functionItem.copyWithIndependentClosure();
-        copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
-        return copyFunctionItem;
+        return this.userDefinedFunctions.get(identifier);
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
