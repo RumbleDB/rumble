@@ -45,8 +45,7 @@ public final class NamedFunctionLookup {
             ExceptionMetadata metadata
     ) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
-            FunctionItem function = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
-            FunctionItem result = function.deepCopy();
+            FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
             result.populateClosureFromDynamicContext(dynamicContext, metadata);
             return result;
         }

@@ -193,7 +193,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.borrowedLocalBodyIterator = false;
         } else {
             if (this.localBodyIterator == null) {
-                this.localBodyIterator = ((FunctionItem) this.functionItem).acquireBodyIterator();
+                this.localBodyIterator = ((FunctionItem) this.functionItem).borrowBodyIteratorForLocalExecution();
                 this.borrowedLocalBodyIterator = true;
             }
             this.bindArguments(
@@ -330,7 +330,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
         bindArguments(this.currentDynamicContextForLocalExecution, getLocalCallContext());
         if (this.localBodyIterator == null) {
-            this.localBodyIterator = ((FunctionItem) this.functionItem).acquireBodyIterator();
+            this.localBodyIterator = ((FunctionItem) this.functionItem).borrowBodyIteratorForLocalExecution();
             this.borrowedLocalBodyIterator = true;
             this.localBodyIterator.open(getLocalCallContext());
             setNextResult();
@@ -348,7 +348,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.localBodyIterator.close();
         }
         if (this.localBodyIterator != null && this.borrowedLocalBodyIterator) {
-            ((FunctionItem) this.functionItem).releaseBodyIterator(this.localBodyIterator);
+            ((FunctionItem) this.functionItem).returnBodyIteratorAfterLocalExecution(this.localBodyIterator);
         }
         this.localBodyIterator = null;
         this.borrowedLocalBodyIterator = false;

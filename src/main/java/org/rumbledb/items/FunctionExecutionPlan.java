@@ -18,12 +18,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 /**
  * The compiled, closure-independent part of a function item.
  *
- * Function items created from the same declaration share this plan. Each local invocation borrows an iterator because
- * runtime iterators contain mutable execution state and cannot be used concurrently.
+ * Function items created from the same declaration share this plan. The prototype is only inspected and copied; it is
+ * never executed directly. Local invocations may reuse closed iterator copies, while other execution modes receive an
+ * independent copy.
  */
 final class FunctionExecutionPlan implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static final int MAX_RETAINED_LOCAL_ITERATORS = 128;
 
     private final RuntimeIterator bodyIterator;
     private transient Deque<RuntimeIterator> availableIterators;
@@ -41,13 +43,21 @@ final class FunctionExecutionPlan implements Serializable {
         return this.bodyIterator.deepCopy();
     }
 
-    synchronized RuntimeIterator acquireIterator() {
+    synchronized RuntimeIterator borrowLocalIterator() {
         RuntimeIterator iterator = this.availableIterators.pollFirst();
         return iterator == null ? createIndependentIterator() : iterator;
     }
 
-    synchronized void releaseIterator(RuntimeIterator iterator) {
-        this.availableIterators.addFirst(iterator);
+    synchronized void returnLocalIterator(RuntimeIterator iterator) {
+        if (iterator == null) {
+            throw new IllegalArgumentException("Cannot return a null function body iterator.");
+        }
+        if (iterator.isOpen()) {
+            throw new IllegalStateException("Only closed function body iterators can be returned for reuse.");
+        }
+        if (this.availableIterators.size() < MAX_RETAINED_LOCAL_ITERATORS) {
+            this.availableIterators.addFirst(iterator);
+        }
     }
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {

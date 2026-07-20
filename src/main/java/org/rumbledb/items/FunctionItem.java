@@ -78,6 +78,28 @@ public class FunctionItem implements Item {
         super();
     }
 
+    private FunctionItem(
+            FunctionIdentifier identifier,
+            List<Name> parameterNames,
+            FunctionSignature signature,
+            DynamicContext dynamicModuleContext,
+            FunctionExecutionPlan executionPlan,
+            Map<Name, List<Item>> localVariablesInClosure,
+            Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<Name, JSoundDataFrame> dataFrameVariablesInClosure,
+            boolean isBuiltin
+    ) {
+        this.identifier = identifier;
+        this.parameterNames = parameterNames;
+        this.signature = signature;
+        this.executionPlan = executionPlan;
+        this.dynamicModuleContext = dynamicModuleContext;
+        this.localVariablesInClosure = localVariablesInClosure;
+        this.RDDVariablesInClosure = RDDVariablesInClosure;
+        this.dataFrameVariablesInClosure = dataFrameVariablesInClosure;
+        this.isBuiltin = isBuiltin;
+    }
+
     public FunctionItem(
             FunctionIdentifier identifier,
             List<Name> parameterNames,
@@ -96,15 +118,17 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             boolean isBuiltin
     ) {
-        this.identifier = identifier;
-        this.parameterNames = parameterNames;
-        this.signature = signature;
-        this.executionPlan = new FunctionExecutionPlan(bodyIterator);
-        this.dynamicModuleContext = dynamicModuleContext;
-        this.localVariablesInClosure = new HashMap<>();
-        this.RDDVariablesInClosure = new HashMap<>();
-        this.dataFrameVariablesInClosure = new HashMap<>();
-        this.isBuiltin = isBuiltin;
+        this(
+            identifier,
+            parameterNames,
+            signature,
+            dynamicModuleContext,
+            new FunctionExecutionPlan(bodyIterator),
+            new HashMap<>(),
+            new HashMap<>(),
+            new HashMap<>(),
+            isBuiltin
+        );
     }
 
     public FunctionItem(
@@ -141,15 +165,17 @@ public class FunctionItem implements Item {
             Map<Name, JSoundDataFrame> DFVariablesInClosure,
             boolean isBuiltin
     ) {
-        this.identifier = identifier;
-        this.parameterNames = parameterNames;
-        this.signature = signature;
-        this.executionPlan = new FunctionExecutionPlan(bodyIterator);
-        this.dynamicModuleContext = dynamicModuleContext;
-        this.localVariablesInClosure = localVariablesInClosure;
-        this.RDDVariablesInClosure = RDDVariablesInClosure;
-        this.dataFrameVariablesInClosure = DFVariablesInClosure;
-        this.isBuiltin = isBuiltin;
+        this(
+            identifier,
+            parameterNames,
+            signature,
+            dynamicModuleContext,
+            new FunctionExecutionPlan(bodyIterator),
+            localVariablesInClosure,
+            RDDVariablesInClosure,
+            DFVariablesInClosure,
+            isBuiltin
+        );
     }
 
     public FunctionItem(
@@ -192,7 +218,7 @@ public class FunctionItem implements Item {
 
     @Override
     public FunctionItem copy(boolean mutable) {
-        return this.deepCopy();
+        return this.copyWithIndependentClosure();
     }
 
     @Override
@@ -218,16 +244,16 @@ public class FunctionItem implements Item {
         return this.executionPlan.getBodyIterator();
     }
 
-    public RuntimeIterator acquireBodyIterator() {
-        return this.executionPlan.acquireIterator();
+    public RuntimeIterator borrowBodyIteratorForLocalExecution() {
+        return this.executionPlan.borrowLocalIterator();
     }
 
     public RuntimeIterator createIndependentBodyIterator() {
         return this.executionPlan.createIndependentIterator();
     }
 
-    public void releaseBodyIterator(RuntimeIterator iterator) {
-        this.executionPlan.releaseIterator(iterator);
+    public void returnBodyIteratorAfterLocalExecution(RuntimeIterator iterator) {
+        this.executionPlan.returnLocalIterator(iterator);
     }
 
     public FunctionItem createPartialFunction(
@@ -238,17 +264,17 @@ public class FunctionItem implements Item {
             Map<Name, JavaRDD<Item>> rddVariables,
             Map<Name, JSoundDataFrame> dataFrameVariables
     ) {
-        FunctionItem result = new FunctionItem();
-        result.identifier = identifier;
-        result.parameterNames = partialParameterNames;
-        result.signature = partialSignature;
-        result.executionPlan = this.executionPlan;
-        result.dynamicModuleContext = this.dynamicModuleContext;
-        result.localVariablesInClosure = localVariables;
-        result.RDDVariablesInClosure = rddVariables;
-        result.dataFrameVariablesInClosure = dataFrameVariables;
-        result.isBuiltin = this.isBuiltin;
-        return result;
+        return new FunctionItem(
+                identifier,
+                partialParameterNames,
+                partialSignature,
+                this.dynamicModuleContext,
+                this.executionPlan,
+                localVariables,
+                rddVariables,
+                dataFrameVariables,
+                this.isBuiltin
+        );
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -388,22 +414,35 @@ public class FunctionItem implements Item {
         return ItemTypeFactory.createFunctionItemType(this.signature);
     }
 
-    public FunctionItem deepCopy() {
+    public FunctionItem copyWithIndependentClosure() {
         Map<Name, List<Item>> localVariables = new HashMap<>();
         for (Map.Entry<Name, List<Item>> entry : this.localVariablesInClosure.entrySet()) {
             localVariables.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
-        FunctionItem result = new FunctionItem();
-        result.identifier = this.identifier;
-        result.parameterNames = new ArrayList<>(this.parameterNames);
-        result.signature = this.signature;
-        result.executionPlan = this.executionPlan;
-        result.dynamicModuleContext = this.dynamicModuleContext;
-        result.localVariablesInClosure = localVariables;
-        result.RDDVariablesInClosure = new HashMap<>(this.RDDVariablesInClosure);
-        result.dataFrameVariablesInClosure = new HashMap<>(this.dataFrameVariablesInClosure);
-        result.isBuiltin = this.isBuiltin;
-        return result;
+        FunctionSignature copiedSignature = new FunctionSignature(
+                new ArrayList<>(this.signature.getParameterTypes()),
+                this.signature.getReturnType(),
+                this.signature.isUpdating()
+        );
+        return new FunctionItem(
+                new FunctionIdentifier(this.identifier.getName(), this.identifier.getArity()),
+                new ArrayList<>(this.parameterNames),
+                copiedSignature,
+                this.dynamicModuleContext,
+                this.executionPlan,
+                localVariables,
+                new HashMap<>(this.RDDVariablesInClosure),
+                new HashMap<>(this.dataFrameVariablesInClosure),
+                this.isBuiltin
+        );
+    }
+
+    /**
+     * @deprecated use {@link #copyWithIndependentClosure()}; the compiled execution plan is intentionally shared
+     */
+    @Deprecated
+    public FunctionItem deepCopy() {
+        return copyWithIndependentClosure();
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
