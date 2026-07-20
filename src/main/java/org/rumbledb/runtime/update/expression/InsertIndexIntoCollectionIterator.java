@@ -139,7 +139,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = targetItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 

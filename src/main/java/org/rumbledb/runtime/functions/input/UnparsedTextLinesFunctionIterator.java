@@ -60,7 +60,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 .getJavaSparkContext()
                 .emptyRDD();
         }
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url.getStringValue(), getMetadata());
         int partitions = -1;
         if (this.children.size() > 1) {
             partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();

@@ -758,7 +758,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
                 return false;
             }
@@ -784,7 +788,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && args.get(0) instanceof StringLiteralExpression stringLiteralExpr
         ) {
             String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                staticContext.getStaticBaseURI(),
+                path,
+                expression.getMetadata()
+            );
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
                 return false;
             }

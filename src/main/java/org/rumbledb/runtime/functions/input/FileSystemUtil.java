@@ -47,6 +47,14 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
+        return resolve(base, url, metadata, false);
+    }
+
+    public static URI resolveFileSystemURI(URI base, String url, ExceptionMetadata metadata) {
+        return resolve(base, url, metadata, true);
+    }
+
+    private static URI resolve(URI base, String url, ExceptionMetadata metadata, boolean fileSystemPath) {
         if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",
@@ -54,7 +62,7 @@ public class FileSystemUtil {
             );
         }
         try {
-            URI relativeURI = parseURI(url);
+            URI relativeURI = fileSystemPath ? parseFileSystemURI(url) : parseURI(url);
             URI resolvedURI = base.resolve(relativeURI);
             if (url.endsWith("/")) {
                 // preserve trailing slash if any for correct resolution against it as a directory in the future.
@@ -76,18 +84,22 @@ public class FileSystemUtil {
     }
 
     private static URI parseURI(String value) throws URISyntaxException {
-        try {
-            return new Path(value).toUri();
-        } catch (HadoopIllegalArgumentException e) {
-            // Fall back to Java URI parsing for URI references Hadoop Path cannot parse.
-            // For example, urn: is a valid URI reference but not a valid Hadoop Path.
-        }
         String escapedValue = value.replace(" ", "%20");
         URI uri = new URI(escapedValue);
         if (!value.equals(escapedValue) && uri.isOpaque()) {
             throw new URISyntaxException(value, "Spaces are not allowed in opaque URIs");
         }
         return uri;
+    }
+
+    private static URI parseFileSystemURI(String value) throws URISyntaxException {
+        try {
+            return new Path(value).toUri();
+        } catch (HadoopIllegalArgumentException e) {
+            // Fall back to Java URI parsing for URI references Hadoop Path cannot parse.
+            // For example, urn: is a valid URI reference but not a valid Hadoop Path.
+            return parseURI(value);
+        }
     }
 
     /*
