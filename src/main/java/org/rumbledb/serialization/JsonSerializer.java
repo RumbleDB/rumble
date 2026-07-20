@@ -7,9 +7,9 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.xml.NamespaceItem;
-
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
@@ -79,7 +79,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isMap()) {
-            SerializerUtils.serializeMapAsJsonSafeObject(this, this.params, item, sb, indent, null);
+            serializeMapAsJsonObject(item, sb, indent);
             return;
         }
         if (item.isDocumentNode()) {
@@ -117,28 +117,16 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isNamespaceNode()) {
-            NamespaceItem ns = (NamespaceItem) item;
-            sb.append(" ");
-            String nsPrefix = ns.getPrefix();
-            if (nsPrefix == null || nsPrefix.isEmpty()) {
-                sb.append("xmlns=\"");
-            } else {
-                sb.append("xmlns:");
-                sb.append(nsPrefix);
-                sb.append("=\"");
-            }
-            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
-            sb.append("\"");
-            return;
+            throw jsonSerializationError(
+                "JSON serialization does not support attribute or namespace nodes.",
+                "SENR0001"
+            );
         }
         if (item.isAttributeNode()) {
-            sb.append(" ");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append("=");
-            sb.append("\"");
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
-            sb.append("\"");
-            return;
+            throw jsonSerializationError(
+                "JSON serialization does not support attribute or namespace nodes.",
+                "SENR0001"
+            );
         }
         if (item.isProcessingInstructionNode()) {
             sb.append(indent);
@@ -231,6 +219,12 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                 separator = "," + separator;
                 firstTime = false;
             }
+            if (memberSequence != null && memberSequence.size() > 1) {
+                throw jsonSerializationError(
+                    "JSON serialization does not allow sequences of length greater than one inside arrays.",
+                    "SERE0023"
+                );
+            }
             appendJsonSequenceAsValue(memberSequence, sb, indent + "  ");
         }
     }
@@ -248,29 +242,43 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             }
             return;
         }
+        throw jsonSerializationError(
+            "JSON serialization does not allow sequences of length greater than one as a value.",
+            "SERE0023"
+        );
+    }
 
-        sb.append("[");
+    private void serializeMapAsJsonObject(Item mapItem, StringBuilder sb, String indent) {
+        sb.append("{");
         String separator = "";
         if (this.params.getIndent()) {
             separator = "\n" + indent + "  ";
         }
         boolean firstTime = true;
-        for (Item item : sequence) {
+        Set<String> serializedKeys = this.params.getAllowDuplicateNames() ? null : new HashSet<>();
+        for (Item key : mapItem.getItemKeys()) {
+            String keyString = key.getStringValue();
+            if (serializedKeys != null && !serializedKeys.add(keyString)) {
+                throw jsonSerializationError(
+                    "JSON serialization produced duplicate names after key stringification.",
+                    "SERE0022"
+                );
+            }
             sb.append(separator);
             if (firstTime) {
                 separator = "," + separator;
                 firstTime = false;
             }
+            sb.append("\"").append(StringEscapeUtils.escapeJson(keyString)).append("\"").append(":");
             if (this.params.getIndent()) {
-                serialize(item, sb, indent + "  ", false);
-            } else {
-                serialize(item, sb, "", false);
+                sb.append(" ");
             }
+            appendJsonSequenceAsValue(mapItem.getSequenceByKey(key), sb, indent + "  ");
         }
         if (this.params.getIndent()) {
             sb.append("\n").append(indent);
         }
-        sb.append("]");
+        sb.append("}");
     }
 
     private RumbleException jsonSerializationError(String message, String errorCode) {
