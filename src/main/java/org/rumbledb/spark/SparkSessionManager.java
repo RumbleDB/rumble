@@ -72,7 +72,7 @@ public class SparkSessionManager {
     private static final String APP_NAME = "Rumble application";
     private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
-    private static final Level LOG_LEVEL = Level.FATAL;
+    private static Level LOG_LEVEL = Level.OFF;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -136,6 +136,16 @@ public class SparkSessionManager {
         return instance;
     }
 
+    public static void setLogLevel(Level level) {
+        LOG_LEVEL = level;
+        if (instance != null && instance.session != null) {
+            instance.session.sparkContext().setLogLevel(level.name());
+        }
+        if (instance != null && instance.configuration != null) {
+            instance.applySparkLogLevelToConfiguration();
+        }
+    }
+
     public SparkSession getOrCreateSession() {
         if (this.configuration == null) {
             setDefaultConfiguration();
@@ -166,7 +176,7 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
-            this.configuration.set("spark.log.level", LOG_LEVEL.name());
+            applySparkLogLevelToConfiguration();
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
                     "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
@@ -191,6 +201,10 @@ public class SparkSessionManager {
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
+    }
+
+    private void applySparkLogLevelToConfiguration() {
+        this.configuration.set("spark.log.level", LOG_LEVEL.name());
     }
 
     private void initializeKryoSerialization() {
