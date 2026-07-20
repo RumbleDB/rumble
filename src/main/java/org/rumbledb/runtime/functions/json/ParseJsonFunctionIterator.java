@@ -21,7 +21,9 @@
 
 package org.rumbledb.runtime.functions.json;
 
+import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
+import org.rumbledb.cli.ConsoleOutput;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
@@ -30,6 +32,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.Serial;
+import java.io.StringReader;
 import java.util.List;
 
 public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -59,6 +62,20 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             this.staticContext,
             getMetadata()
         );
+        if (options.isLegacy()) {
+            ConsoleOutput.warn(
+                "Warning: fn:parse-json option 'legacy' skips spec-conformant JSON parsing in favor of "
+                    + "RumbleDB's previous Gson-based parser and may produce unexpected results; "
+                    + "retry without it if the output looks wrong."
+            );
+            return ItemParser.getItemFromObject(
+                new JsonReader(new StringReader(stringItem.getStringValue())),
+                isJSONiq10,
+                options.getNumberFormat(),
+                getMetadata(),
+                false
+            );
+        }
         return ItemParser.getItemFromJSONString(
             stringItem.getStringValue(),
             options,
