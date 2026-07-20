@@ -86,7 +86,7 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     @Override
     protected final void configureSpark(SparkConf sparkConfiguration) {
-        sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
+        // sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
         configureUpdateStore(sparkConfiguration);
     }
 
