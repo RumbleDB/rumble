@@ -204,7 +204,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.currentDynamicContextForLocalExecution,
             this.dynamicContextForCalls
         );
-        if (this.functionBodyIterator == null) {
+        boolean reuseBody = this.functionBodyIterator != null;
+        if (reuseBody) {
+            // Reopen through the normal open path so every child receives the context created by its parent.
+            this.functionBodyIterator.closeRecursively();
+        } else {
             // The previous body was discarded, or this is the first invocation at this call site.
             this.functionBodyIterator = createFunctionBodyIterator();
         }
@@ -365,8 +369,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.functionBodyIterator = createFunctionBodyIterator();
                 this.functionBodyIterator.open(this.dynamicContextForCalls);
             } else {
-                // A normally exhausted simple body is owned by this call site and can be reset with the new context.
-                this.functionBodyIterator.reset(this.dynamicContextForCalls);
+                // Reopen through the normal open path so every child receives the context created by its parent.
+                this.functionBodyIterator.closeRecursively();
+                this.functionBodyIterator.open(this.dynamicContextForCalls);
             }
             setNextResult();
         } catch (RuntimeException exception) {

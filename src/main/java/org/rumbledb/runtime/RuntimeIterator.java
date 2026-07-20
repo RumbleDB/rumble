@@ -235,6 +235,16 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isOpen = false;
     }
 
+    /**
+     * Closes this iterator tree so that it can be opened again from its root with a new dynamic context.
+     */
+    public void closeRecursively() {
+        for (RuntimeIterator child : this.children) {
+            child.closeRecursively();
+        }
+        close();
+    }
+
     public void reset(DynamicContext context) {
         this.hasNext = true;
         this.currentDynamicContextForLocalExecution = context;
