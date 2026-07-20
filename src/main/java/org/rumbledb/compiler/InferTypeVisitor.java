@@ -3278,21 +3278,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
         SequenceType contextType = stepExpr.getStaticContext().getContextItemStaticType();
-        ItemType inferredItemType = inferStepResultItemType(stepExpr);
-
+        SequenceType inferredType;
         if (
             contextType != null
                 && contextType.getItemType().isNodeItemType()
                 && isStaticallyEmptyStep(stepExpr, contextType.getItemType())
         ) {
-            throwStaticTypeException(
-                "Axis step is statically inferred to return the empty sequence",
-                ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                stepExpr.getMetadata()
-            );
+            inferredType = SequenceType.createSequenceType("()");
+        } else {
+            ItemType inferredItemType = inferStepResultItemType(stepExpr);
+            inferredType = new SequenceType(inferredItemType, inferStepResultArity(stepExpr, contextType));
         }
 
-        stepExpr.setStaticSequenceType(new SequenceType(inferredItemType, inferStepResultArity(stepExpr, contextType)));
+        stepExpr.setStaticSequenceType(inferredType);
+        basicChecks(inferredType, stepExpr.getClass().getSimpleName(), true, true, stepExpr.getMetadata());
         return argument;
     }
 
