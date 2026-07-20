@@ -29,6 +29,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
+import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 import org.w3c.dom.Node;
@@ -296,6 +297,37 @@ public final class NamespaceBindingUtils {
             return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
         }
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /**
+     * Whitespace-collapsed lexical QName to expanded name for a cast or constructor function.
+     * An unbound prefix is reported as {@code err:FONS0004}.
+     */
+    public static Name parseLexicalQNameForCast(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace is bound to prefix \"" + split.prefix + "\".",
+                    metadata
+            );
+        }
+        if (getReservedNamespaceBindingError(split.prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \""
+                        + split.prefix
+                        + "\".",
+                    metadata
+            );
+        }
+        return new Name(uri, split.prefix, split.local);
     }
 
     /**

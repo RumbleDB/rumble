@@ -5,6 +5,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
@@ -27,8 +29,9 @@ public class ElementItem implements Item {
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    private ItemType typeAnnotation;
-    // TODO: add base-uri, is-id, is-idrefs
+    private ItemType jsoniqTypeAnnotation;
+    private XmlSchemaNodeProperties schemaProperties;
+    // TODO: add base-uri
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
@@ -43,7 +46,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
@@ -64,7 +67,7 @@ public class ElementItem implements Item {
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
-        this.typeAnnotation = null;
+        this.schemaProperties = XmlSchemaNodeProperties.none();
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
@@ -97,7 +100,8 @@ public class ElementItem implements Item {
         Map<String, String> copiedNamespaces = new HashMap<>(this.namespaces);
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
-        copy.typeAnnotation = this.typeAnnotation;
+        copy.jsoniqTypeAnnotation = this.jsoniqTypeAnnotation;
+        copy.schemaProperties = this.schemaProperties;
         return copy;
     }
 
@@ -135,7 +139,8 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.namespaces);
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
-        kryo.writeClassAndObject(output, this.typeAnnotation);
+        kryo.writeClassAndObject(output, this.jsoniqTypeAnnotation);
+        this.schemaProperties.write(kryo, output);
     }
 
     @SuppressWarnings("unchecked")
@@ -148,7 +153,8 @@ public class ElementItem implements Item {
         this.namespaces = kryo.readObject(input, HashMap.class);
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
-        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
+        this.jsoniqTypeAnnotation = (ItemType) kryo.readClassAndObject(input);
+        this.schemaProperties = XmlSchemaNodeProperties.read(kryo, input);
     }
 
     @Override
@@ -285,21 +291,23 @@ public class ElementItem implements Item {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
      *
-     * "For an Element Node, dm:is-id returns false."
+     * The property is true when the typed value consists of one xs:ID value (or a value of a
+     * type derived from xs:ID).
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.schemaProperties.id();
     }
 
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
      *
-     * "For an Element Node, dm:is-idrefs returns false."
+     * The property is true when the typed value contains an xs:IDREF value (or a value of a
+     * type derived from xs:IDREF).
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.schemaProperties.idRefs();
     }
 
     /**
@@ -307,13 +315,14 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
-     *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
-     * returns the empty sequence.
      */
     @Override
     public List<Item> nilled() {
-        return Collections.emptyList();
+        return switch (this.schemaProperties.nilled()) {
+            case ABSENT -> Collections.emptyList();
+            case FALSE -> Collections.singletonList(ItemFactory.getInstance().createBooleanItem(false));
+            case TRUE -> Collections.singletonList(ItemFactory.getInstance().createBooleanItem(true));
+        };
     }
 
     @Override
@@ -346,17 +355,24 @@ public class ElementItem implements Item {
      *
      * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
-     *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
-     * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        Name schemaTypeName = this.schemaProperties.typeAnnotation() == null
+            ? null
+            : this.schemaProperties.typeAnnotation().name();
+        if (
+            schemaTypeName == null
+                && this.jsoniqTypeAnnotation != null
+                && this.jsoniqTypeAnnotation.hasName()
+        ) {
+            schemaTypeName = this.jsoniqTypeAnnotation.getName();
+        }
+        if (schemaTypeName == null) {
             return Collections.emptyList();
         }
         return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
+            ItemFactory.getInstance().createQNameItem(schemaTypeName)
         );
     }
 
@@ -375,13 +391,24 @@ public class ElementItem implements Item {
         return this.atomizedValue();
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
-        this.typeAnnotation = typeAnnotation;
+        this.jsoniqTypeAnnotation = typeAnnotation;
     }
 
     @Override
     public ItemType getSchemaType() {
-        return this.typeAnnotation;
+        return this.jsoniqTypeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaProperties(XmlSchemaNodeProperties properties) {
+        this.schemaProperties = properties;
+    }
+
+    @Override
+    public XmlSchemaNodeProperties getXmlSchemaProperties() {
+        return this.schemaProperties;
     }
 
     @Override
@@ -433,10 +460,19 @@ public class ElementItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
+        if (this.schemaProperties.hasTypedValue()) {
+            return this.schemaProperties.typedValue();
+        }
+        if (this.schemaProperties.typeAnnotation() != null) {
+            throw new RumbleException(
+                    "An element with element-only content has no typed value.",
+                    ErrorCode.AtomizationError
+            );
+        }
+        if (this.jsoniqTypeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
+                this.jsoniqTypeAnnotation,
                 org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
             );
             return Collections.singletonList(typedValue);

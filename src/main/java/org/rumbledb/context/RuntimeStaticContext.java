@@ -2,6 +2,7 @@ package org.rumbledb.context;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -24,9 +26,11 @@ public class RuntimeStaticContext implements Serializable {
     private final Set<String> staticallyKnownCollations;
     private final SerializationParameters serializationParameters;
     private final String defaultCollation;
+    private final ConstructionMode constructionMode;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
     private boolean isQuerySideEffecting;
+    private Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors;
 
     @Override
     public String toString() {
@@ -62,7 +66,9 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
         this.serializationParameters = oldContext.serializationParameters;
         this.defaultCollation = oldContext.defaultCollation;
+        this.constructionMode = oldContext.constructionMode;
         this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
+        this.xmlSchemaConstructors = oldContext.xmlSchemaConstructors;
     }
 
     /*
@@ -102,7 +108,21 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultCollation = staticContext == null
             ? CollationCatalogue.CODEPOINT_COLLATION
             : staticContext.getDefaultCollation();
+        this.constructionMode = staticContext == null
+            ? ConstructionMode.STRIP
+            : staticContext.getConstructionMode();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
+        this.xmlSchemaConstructors = staticContext == null
+            ? new HashMap<>()
+            : new HashMap<>(staticContext.getXmlSchemaConstructors());
+    }
+
+    public XmlSchemaConstructorFunction getXmlSchemaConstructor(FunctionIdentifier identifier) {
+        return this.xmlSchemaConstructors.get(identifier);
+    }
+
+    public ConstructionMode getConstructionMode() {
+        return this.constructionMode;
     }
 
     /**

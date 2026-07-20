@@ -5,7 +5,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -23,7 +22,7 @@ public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        QNameItem qnameItem = (QNameItem) this.children.get(0).materializeFirstItemOrNull(context);
+        Item qnameItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (qnameItem == null) {
             return null;
         }

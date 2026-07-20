@@ -3,10 +3,11 @@ package org.rumbledb.expressions.xml.node_test;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class DocumentTest implements NodeTest {
     private static final long serialVersionUID = 1L;
-    // TODO: schemaElement test unsupported yet.
     private NodeTest nodeTest;
 
     public DocumentTest(NodeTest nodeTest) {
@@ -29,6 +30,13 @@ public class DocumentTest implements NodeTest {
 
     public NodeTest getNodeTest() {
         return this.nodeTest;
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (this.nodeTest != null) {
+            this.nodeTest.resolve(context, metadata);
+        }
     }
 
     @Override

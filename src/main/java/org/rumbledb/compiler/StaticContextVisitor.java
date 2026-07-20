@@ -28,10 +28,13 @@ import java.util.Map.Entry;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -83,16 +86,25 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
+
+    @Override
+    public StaticContext visitStepExpr(StepExpr stepExpr, StaticContext argument) {
+        stepExpr.getNodeTest().resolve(argument, stepExpr.getMetadata());
+        stepExpr.setStaticContext(argument);
+        return argument;
+    }
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
@@ -182,6 +194,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        if (XmlSchemaConstructorFunction.resolve(expression.getFunctionIdentifier(), argument) != null) {
+            throw new DuplicateFunctionIdentifierException(
+                    expression.getFunctionIdentifier(),
+                    declaration.getMetadata()
+            );
+        }
         if (expression.getActualReturnType() != null) {
             expression.getActualReturnType().resolve(argument, declaration.getMetadata());
         }
@@ -537,6 +555,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (isXmlSchemaCastTarget(expression.getSequenceType(), argument, expression.getMetadata())) {
+            return argument;
+        }
         expression.getSequenceType().resolve(argument, expression.getMetadata());
         return argument;
     }
@@ -544,8 +565,35 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (isXmlSchemaCastTarget(expression.getSequenceType(), argument, expression.getMetadata())) {
+            return argument;
+        }
         expression.getSequenceType().resolve(argument, expression.getMetadata());
         return argument;
+    }
+
+    private boolean isXmlSchemaCastTarget(
+            SequenceType targetType,
+            StaticContext context,
+            ExceptionMetadata metadata
+    ) {
+        if (XmlSchemaConstructorFunction.resolve(targetType, context) != null) {
+            return true;
+        }
+        ItemType itemType = targetType.getItemType();
+        if (!itemType.hasName() || BuiltinTypesCatalogue.typeExists(itemType.getName())) {
+            return false;
+        }
+        if (
+            context.getSchemaCatalog() != null
+                && context.getSchemaCatalog().getTypeDefinition(itemType.getName()) != null
+        ) {
+            throw new UnknownCastTypeException(
+                    "The XML Schema type " + itemType.getName() + " is not a simple type.",
+                    metadata
+            );
+        }
+        return false;
     }
 
     @Override

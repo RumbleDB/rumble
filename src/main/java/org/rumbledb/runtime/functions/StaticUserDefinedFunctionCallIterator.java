@@ -55,6 +55,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     private boolean encounteredExitStatement;
     private int nextExitStatementResult;
     private boolean tailCallOptimizationCandidate;
+    private transient boolean reusableCallFrame;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
@@ -87,6 +88,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                         this.functionArguments,
                         this.tailCallOptimizationCandidate
                     );
+                this.reusableCallFrame = true;
             }
             this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
         } catch (ExitStatementException exitStatementException) {
@@ -111,6 +113,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                 Collections.emptyList(),
                 false
             );
+            this.reusableCallFrame = false;
             this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
             setNextResult();
         }
@@ -149,7 +152,11 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
             this.userDefinedFunctionCallIterator.close();
         }
-        this.userDefinedFunctionCallIterator = null;
+        // Keep the call iterator and its dynamic context as this call site's reusable frame.
+        // Its function body is released separately by FunctionItemCallIterator.closeLocal().
+        if (!this.reusableCallFrame) {
+            this.userDefinedFunctionCallIterator = null;
+        }
         this.encounteredExitStatement = false;
         this.nextExitStatementResult = 0;
     }

@@ -120,6 +120,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
@@ -144,6 +145,7 @@ import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -178,7 +180,9 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.functions.XmlSchemaSimpleTypeConstructorIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
@@ -224,6 +228,8 @@ import org.rumbledb.runtime.scripting.mutation.ApplyStatementIterator;
 import org.rumbledb.runtime.scripting.mutation.AssignStatementIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
+import org.rumbledb.runtime.typing.XmlSchemaCastIterator;
+import org.rumbledb.runtime.typing.XmlSchemaCastableIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
@@ -251,7 +257,9 @@ import org.rumbledb.runtime.xml.ComputedPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirElemConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirPIConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.DirectCommentConstructorRuntimeIterator;
+import org.rumbledb.runtime.xml.DocumentNodeConstructorRuntimeIterator;
 import org.rumbledb.runtime.xml.PostfixLookupIterator;
+import org.rumbledb.runtime.xml.ValidateRuntimeIterator;
 import org.rumbledb.runtime.xml.SlashExprIterator;
 import org.rumbledb.runtime.xml.StepExprIterator;
 import org.rumbledb.runtime.xml.TextNodeConstructorRuntimeIterator;
@@ -261,6 +269,7 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
@@ -1238,6 +1247,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitDocumentNodeConstructor(
+            DocumentNodeConstructorExpression expression,
+            RuntimeIterator argument
+    ) {
+        RuntimeIterator contentIterator = visit(expression.getContentExpression(), argument);
+        DocumentNodeConstructorRuntimeIterator result = new DocumentNodeConstructorRuntimeIterator(
+                contentIterator,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
     public RuntimeIterator visitTextNodeConstructor(
             TextNodeConstructorExpression expression,
             RuntimeIterator argument
@@ -1321,6 +1344,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
+                () -> new RuntimeIteratorVisitor(this.config).visit(expression.getBody(), null),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                 expression.isUpdating()
         );
@@ -1345,7 +1369,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
 
         RuntimeIterator runtimeIterator = null;
-        if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            identifier,
+            expression.getStaticContext()
+        );
+        if (schemaConstructor != null) {
+            runtimeIterator = new XmlSchemaSimpleTypeConstructorIterator(
+                    arguments,
+                    schemaConstructor,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
+        } else if (BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
@@ -1356,6 +1390,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 false
             );
         } else {
+            FunctionCallArgumentConversion.wrapAccordingToSignature(
+                identifier,
+                expression.getStaticContext().getFunctionSignature(identifier),
+                arguments,
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
@@ -1720,6 +1760,20 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitValidateExpression(ValidateExpression expression, RuntimeIterator argument) {
+        RuntimeIterator operand = this.visit(expression.getMainExpression(), argument);
+        RuntimeIterator result = new ValidateRuntimeIterator(
+                operand,
+                expression.getValidationMode(),
+                expression.getTypeName(),
+                expression.getStaticContext().getSchemaCatalog(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        );
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
     public RuntimeIterator visitTreatExpression(TreatExpression expression, RuntimeIterator argument) {
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         RuntimeIterator runtimeIterator = new TreatIterator(
@@ -1736,11 +1790,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitCastableExpression(CastableExpression expression, RuntimeIterator argument) {
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new CastableIterator(
-                childExpression,
-                expression.getSequenceType(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            expression.getSequenceType(),
+            expression.getStaticContext()
         );
+        RuntimeIterator runtimeIterator = schemaConstructor == null
+            ? new CastableIterator(
+                    childExpression,
+                    expression.getSequenceType(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            )
+            : new XmlSchemaCastableIterator(
+                    childExpression,
+                    schemaConstructor,
+                    expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
@@ -1748,11 +1813,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitCastExpression(CastExpression expression, RuntimeIterator argument) {
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator runtimeIterator = new CastIterator(
-                childExpression,
-                expression.getSequenceType(),
-                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            expression.getSequenceType(),
+            expression.getStaticContext()
         );
+        RuntimeIterator runtimeIterator = schemaConstructor == null
+            ? new CastIterator(
+                    childExpression,
+                    expression.getSequenceType(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            )
+            : new XmlSchemaCastIterator(
+                    childExpression,
+                    schemaConstructor,
+                    expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+            );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }

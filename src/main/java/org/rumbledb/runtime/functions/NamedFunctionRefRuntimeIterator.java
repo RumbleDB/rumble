@@ -46,8 +46,7 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
         Item resolved = NamedFunctionLookup.lookupOrNull(
             this.functionIdentifier,
             dynamicContext,
-            getConfiguration(),
-            getMetadata()
+            this.staticContext
         );
         if (resolved != null) {
             return resolved;

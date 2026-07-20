@@ -25,8 +25,12 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.SequenceType;
 
 /**
  * This is the top-level class for nodes in the intermediate representation of a
@@ -35,6 +39,9 @@ import org.rumbledb.exceptions.OurBadException;
 public abstract class Node {
 
     private ExceptionMetadata metadata;
+    private transient RumbleRuntimeConfiguration cachedRuntimeConfiguration;
+    private transient VisitorConfig cachedRuntimeVisitorConfiguration;
+    private transient RuntimeStaticContext cachedRuntimeStaticContext;
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
     protected boolean isInSequentialBlock;
 
@@ -53,6 +60,37 @@ public abstract class Node {
      */
     public void setHighestExecutionMode(ExecutionMode newMode) {
         this.highestExecutionMode = newMode;
+        invalidateRuntimeStaticContextCache();
+    }
+
+    protected final RuntimeStaticContext getOrCreateRuntimeStaticContext(
+            RumbleRuntimeConfiguration configuration,
+            VisitorConfig visitorConfig,
+            SequenceType staticType,
+            StaticContext staticContext
+    ) {
+        if (
+            this.cachedRuntimeStaticContext == null
+                || this.cachedRuntimeConfiguration != configuration
+                || this.cachedRuntimeVisitorConfiguration != visitorConfig
+        ) {
+            this.cachedRuntimeStaticContext = new RuntimeStaticContext(
+                    configuration,
+                    staticType,
+                    getHighestExecutionMode(visitorConfig),
+                    getMetadata(),
+                    staticContext
+            );
+            this.cachedRuntimeConfiguration = configuration;
+            this.cachedRuntimeVisitorConfiguration = visitorConfig;
+        }
+        return this.cachedRuntimeStaticContext;
+    }
+
+    protected final void invalidateRuntimeStaticContextCache() {
+        this.cachedRuntimeConfiguration = null;
+        this.cachedRuntimeVisitorConfiguration = null;
+        this.cachedRuntimeStaticContext = null;
     }
 
     /**

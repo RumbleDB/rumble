@@ -90,6 +90,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode IdentifierFunctionDocumentErrorCode = registerBuiltIn("FODC0001");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
@@ -167,14 +168,19 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
 
+    public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
+    public static final ErrorCode ValidateDocumentStructureErrorCode = registerBuiltIn("XQDY0061");
+    public static final ErrorCode ValidateStrictNoDeclarationErrorCode = registerBuiltIn("XQDY0084");
     public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
     public static final ErrorCode InvalidProcessingInstructionContentErrorCode = registerBuiltIn("XQDY0026");
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
+    public static final ErrorCode InvalidXmlIdErrorCode = registerBuiltIn("XQDY0091");
 
     public static final ErrorCode InvalidSchemaErrorCode = registerBuiltIn("XQST0012");
     public static final ErrorCode DuplicatedVariableNameInWindowCode = registerBuiltIn("XQST0103");
+    public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
     /**
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).
@@ -190,15 +196,20 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
     public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
+    public static final ErrorCode SchemaImportWithoutTargetNamespaceErrorCode = registerBuiltIn("XQST0057");
+    public static final ErrorCode DuplicateSchemaImportErrorCode = registerBuiltIn("XQST0058");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode MoreThanOneConstructionDeclarationErrorCode = registerBuiltIn("XQST0067");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
+    public static final ErrorCode NamespaceSensitiveConstructionErrorCode = registerBuiltIn("XQTY0086");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");

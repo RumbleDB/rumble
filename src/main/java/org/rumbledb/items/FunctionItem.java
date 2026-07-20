@@ -22,13 +22,13 @@ package org.rumbledb.items;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
@@ -41,7 +41,6 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -66,6 +65,7 @@ public class FunctionItem implements Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
+    private transient FunctionBodyExecutionPlan bodyExecutionPlan;
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -220,6 +220,27 @@ public class FunctionItem implements Item {
         return this.bodyIterator;
     }
 
+    public RuntimeIterator createBodyIteratorForExecution() {
+        if (this.bodyExecutionPlan != null) {
+            return this.bodyExecutionPlan.acquireIterator();
+        }
+        return this.bodyIterator.deepCopy();
+    }
+
+    public void releaseBodyIteratorAfterExecution(RuntimeIterator iterator) {
+        if (this.bodyExecutionPlan != null) {
+            this.bodyExecutionPlan.releaseIterator(iterator);
+        }
+    }
+
+    public void setBodyIteratorFactory(Supplier<RuntimeIterator> bodyIteratorFactory) {
+        this.bodyExecutionPlan = new FunctionBodyExecutionPlan(bodyIteratorFactory);
+    }
+
+    public void shareBodyExecutionPlan(FunctionItem functionItem) {
+        this.bodyExecutionPlan = functionItem.bodyExecutionPlan;
+    }
+
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
         return this.localVariablesInClosure;
     }
@@ -358,22 +379,23 @@ public class FunctionItem implements Item {
     }
 
     public FunctionItem deepCopy() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (FunctionItem) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            RumbleException rumbleException = new OurBadException(
-                    "Error while deep copying the function body runtimeIterator"
-            );
-            rumbleException.initCause(e);
-            throw rumbleException;
+        Map<Name, List<Item>> localVariables = new HashMap<>();
+        for (Map.Entry<Name, List<Item>> entry : this.localVariablesInClosure.entrySet()) {
+            localVariables.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
+        FunctionItem copy = new FunctionItem(
+                this.identifier,
+                new ArrayList<>(this.parameterNames),
+                this.signature,
+                this.dynamicModuleContext,
+                this.bodyIterator,
+                localVariables,
+                new HashMap<>(this.RDDVariablesInClosure),
+                new HashMap<>(this.dataFrameVariablesInClosure),
+                this.isBuiltin
+        );
+        copy.bodyExecutionPlan = this.bodyExecutionPlan;
+        return copy;
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {

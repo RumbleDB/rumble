@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    targetNamespace="urn:example:compiled-schema"
+    xmlns:ex="urn:example:compiled-schema"
+    xmlns="urn:example:compiled-schema"
+    elementFormDefault="qualified">
+    <xs:notation name="notice" public="urn:example:notice"/>
+    <xs:simpleType name="Code">
+        <xs:restriction base="xs:token">
+            <xs:pattern value="[A-Z]{3}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CodeList">
+        <xs:list itemType="ex:Code"/>
+    </xs:simpleType>
+    <xs:simpleType name="CodePair">
+        <xs:restriction base="ex:CodeList">
+            <xs:length value="2"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CodeOrInteger">
+        <xs:union memberTypes="ex:Code xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="TwoDigitCodeOrInteger">
+        <xs:restriction base="ex:CodeOrInteger">
+            <xs:pattern value="[A-Z]{3}|[0-9]{2}"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="CodeListOrInteger">
+        <xs:union memberTypes="ex:CodeList xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="IntegerList">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="IntegerListOrString">
+        <xs:union memberTypes="ex:IntegerList xs:string"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameList">
+        <xs:list itemType="xs:QName"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameOrInteger">
+        <xs:union memberTypes="xs:QName xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameListOrInteger">
+        <xs:union memberTypes="ex:QNameList xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="QNameAlias">
+        <xs:restriction base="xs:QName"/>
+    </xs:simpleType>
+    <xs:simpleType name="Notice">
+        <xs:restriction base="xs:NOTATION">
+            <xs:enumeration value="ex:notice"/>
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:complexType name="CodeContent">
+        <xs:simpleContent>
+            <xs:extension base="ex:Code"/>
+        </xs:simpleContent>
+    </xs:complexType>
+    <xs:complexType name="Record">
+        <xs:sequence>
+            <xs:element name="code" type="ex:Code"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="EmptyContent"/>
+    <xs:complexType name="MixedContent" mixed="true">
+        <xs:sequence>
+            <xs:element name="code" type="ex:Code" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="QNameAttributeRecord">
+        <xs:attribute name="value" type="ex:QNameAlias" use="required"/>
+    </xs:complexType>
+    <xs:complexType name="IdentityEntry">
+        <xs:sequence>
+            <xs:element name="identifier" type="xs:ID"/>
+            <xs:element name="reference" type="xs:IDREF"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:ID" use="required"/>
+        <xs:attribute name="refs" type="xs:IDREFS" use="required"/>
+    </xs:complexType>
+    <xs:attribute name="qualified-status" type="xs:string" default="qualified"/>
+    <xs:element name="code-head" type="ex:CodeContent" abstract="true"/>
+    <xs:element name="code-member" type="ex:CodeContent" substitutionGroup="ex:code-head"/>
+    <xs:element
+        name="nillable-code-member"
+        type="ex:CodeContent"
+        substitutionGroup="ex:code-head"
+        nillable="true"/>
+    <xs:element name="anonymous-root">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="value" type="xs:string"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="nil-root" type="ex:CodeContent" nillable="true"/>
+    <xs:element name="qname-attribute-root" type="ex:QNameAttributeRecord"/>
+    <xs:element name="identity-root">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="entry" type="ex:IdentityEntry" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="root">
+        <xs:complexType>
+            <xs:simpleContent>
+                <xs:extension base="Code">
+                    <xs:attribute name="status" type="xs:string" default="active"/>
+                    <xs:attribute ref="ex:qualified-status"/>
+                </xs:extension>
+            </xs:simpleContent>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

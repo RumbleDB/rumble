@@ -26,8 +26,8 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.argumentIterator = arguments.get(0);
+        ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(identifier.getName());
         this.targetSequenceType = new SequenceType(targetType, SequenceType.Arity.OneOrZero);
     }
 

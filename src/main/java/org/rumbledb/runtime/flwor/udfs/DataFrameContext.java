@@ -67,11 +67,6 @@ public class DataFrameContext implements Serializable {
      * The only allowed methods are getKryo, getInput and getOutput.
      */
     public DataFrameContext() {
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
     }
 
     /**
@@ -88,11 +83,6 @@ public class DataFrameContext implements Serializable {
 
         this.context = new DynamicContext(context);
 
-        this.kryo = new Kryo();
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
     }
 
     /**
@@ -161,6 +151,7 @@ public class DataFrameContext implements Serializable {
      * @return a Kryo output.
      */
     public Output getOutput() {
+        initializeSerializationHelpers();
         return this.output;
     }
 
@@ -170,6 +161,7 @@ public class DataFrameContext implements Serializable {
      * @return a Kryo.
      */
     public Kryo getKryo() {
+        initializeSerializationHelpers();
         return this.kryo;
     }
 
@@ -179,14 +171,14 @@ public class DataFrameContext implements Serializable {
      * @return a Kryo input.
      */
     public Input getInput() {
+        initializeSerializationHelpers();
         return this.input;
     }
 
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
+    private void initializeSerializationHelpers() {
+        if (this.kryo != null) {
+            return;
+        }
         this.kryo = new Kryo();
         this.kryo.setReferences(true);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
@@ -194,8 +186,15 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException,
+                ClassNotFoundException {
+        in.defaultReadObject();
+    }
+
     @SuppressWarnings("unchecked")
     private List<Item> readColumnAsSequenceOfItems(Row row, ItemType itemType, int columnIndex) {
+        initializeSerializationHelpers();
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:

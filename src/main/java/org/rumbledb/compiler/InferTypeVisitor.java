@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.SchemaCatalog;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -19,6 +20,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownSchemaTypeException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -102,6 +104,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.DeleteExpression;
@@ -141,6 +144,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 import sparksoniq.spark.SparkSessionManager;
 import org.apache.spark.sql.SparkSession;
 
@@ -628,7 +632,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (function != null) {
             signature = function.getSignature();
         } else {
-            signature = staticContext.getFunctionSignature(identifier);
+            XmlSchemaConstructorFunction constructor = XmlSchemaConstructorFunction.resolve(identifier, staticContext);
+            signature = constructor == null
+                ? staticContext.getFunctionSignature(identifier)
+                : constructor.signature();
         }
         return signature;
     }
@@ -945,16 +952,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     returnType = SequenceType.createSequenceType("item*");
                 }
                 if (
-                    BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)
-                        && parameterExpressions.size() == 1
+                    parameterExpressions.size() == 1
                 ) {
                     BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
                         expression.getFunctionIdentifier(),
                         queryLanguage
                     );
                     if (
-                        builtinFunction != null
-                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)
+                        (builtinFunction != null
+                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class))
+                            || XmlSchemaConstructorFunction.resolve(
+                                expression.getFunctionIdentifier(),
+                                expression.getStaticContext()
+                            ) != null
                     ) {
                         SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
                         if (
@@ -980,6 +990,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        if (XmlSchemaConstructorFunction.resolve(expression.getSequenceType(), expression.getStaticContext()) != null) {
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+            return argument;
+        }
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -1014,6 +1028,37 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
+        XmlSchemaConstructorFunction schemaConstructor = XmlSchemaConstructorFunction.resolve(
+            castedSequenceType,
+            expression.getStaticContext()
+        );
+        if (schemaConstructor != null) {
+            if (expressionSequenceType.isEmptySequence()) {
+                if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
+                    throwStaticTypeException(
+                        "Empty sequence cannot be cast to a type without the '?' occurrence indicator.",
+                        expression.getMetadata()
+                    );
+                }
+                expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
+                return argument;
+            }
+            if (!expressionSequenceType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
+                throwStaticTypeException(
+                    "A cast expression operand must atomize to at most one item.",
+                    expression.getMetadata()
+                );
+            }
+            SequenceType resultType = schemaConstructor.signature().getReturnType();
+            if (
+                schemaConstructor.isGeneralizedAtomic()
+                    && expressionSequenceType.getArity() == SequenceType.Arity.One
+            ) {
+                resultType = new SequenceType(schemaConstructor.resultItemType(), SequenceType.Arity.One);
+            }
+            expression.setStaticSequenceType(resultType);
+            return argument;
+        }
 
         if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
             throwStaticTypeException(
@@ -2821,6 +2866,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, expression.getStaticContext());
         SequenceType sourceType = expression.getMainExpression().getStaticSequenceType();
         expression.setStaticSequenceType(expression.getSequenceType().refineArityIfSubtype(sourceType.getArity()));
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitValidateExpression(ValidateExpression expression, StaticContext argument) {
+        visitDescendants(expression, expression.getStaticContext());
+        if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            Name typeName = expression.getTypeName();
+            SchemaCatalog schemaCatalog = expression.getStaticContext().getSchemaCatalog();
+            if (schemaCatalog.getTypeDefinition(typeName) == null) {
+                throw new UnknownSchemaTypeException(
+                        "The schema type " + typeName + " is not in scope.",
+                        expression.getMetadata()
+                );
+            }
+        }
+        expression.setStaticSequenceType(expression.getMainExpression().getStaticSequenceType());
         return argument;
     }
 

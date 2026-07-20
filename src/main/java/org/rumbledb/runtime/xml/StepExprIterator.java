@@ -16,6 +16,8 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -107,8 +109,12 @@ public class StepExprIterator extends LocalRuntimeIterator {
             return namespaceNodeKindTest(node);
         } else if (this.nodeTest instanceof AttributeTest attributeTest) {
             return attributeKindTest(node, attributeTest);
+        } else if (this.nodeTest instanceof SchemaAttributeTest schemaAttributeTest) {
+            return schemaAttributeTest.matches(node) ? node : null;
         } else if (this.nodeTest instanceof ElementTest elementTest) {
             return elementKindTest(node, elementTest);
+        } else if (this.nodeTest instanceof SchemaElementTest schemaElementTest) {
+            return schemaElementTest.matches(node) ? node : null;
         } else if (this.nodeTest instanceof NameTest nameTest) {
             return nameKindTest(node, nameTest);
         } else if (this.nodeTest instanceof DocumentTest documentTest) {
@@ -201,55 +207,11 @@ public class StepExprIterator extends LocalRuntimeIterator {
     }
 
     private Item elementKindTest(Item node, ElementTest elementTest) {
-        if (elementTest.isEmptyCheck()) {
-            if (node.isElementNode()) {
-                return node;
-            }
-            return null;
-        }
-        if (elementTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isElementNode()
-                    && elementTest.getElementName().equals(node.nodeName())
-            ) {
-                return node;
-            }
-            return null;
-        }
-        if (elementTest.isWildcardOnly()) {
-            if (node.isElementNode()) {
-                return node;
-            }
-            return null;
-        }
-        // TODO: add support for type test
-        return null;
+        return elementTest.matches(node) ? node : null;
     }
 
     private Item attributeKindTest(Item node, AttributeTest attributeTest) {
-        if (attributeTest.isEmptyCheck()) {
-            if (node.isAttributeNode()) {
-                return node;
-            }
-            return null;
-        }
-        if (attributeTest.isNameWithoutTypeCheck()) {
-            if (
-                node.isAttributeNode()
-                    && attributeTest.getAttributeName().equals(node.nodeName())
-            ) {
-                return node;
-            }
-            return null;
-        }
-        if (attributeTest.isWildcardOnly()) {
-            if (node.isAttributeNode()) {
-                return node;
-            }
-            return null;
-        }
-        // TODO: add support for type test
-        return null;
+        return attributeTest.matches(node) ? node : null;
     }
 
     private Item textKindTest(Item node) {

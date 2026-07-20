@@ -1,0 +1,2 @@
+(:JIQS: ShouldParse :)
+validate { <a/> }

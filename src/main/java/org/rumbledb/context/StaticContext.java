@@ -40,6 +40,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -54,10 +55,13 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
+    private transient SchemaCatalog schemaCatalog;
+    private transient Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors;
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    private ConstructionMode constructionMode;
     private boolean boundarySpacePreserve;
     private SerializationParameters serializationParameters;
     private boolean isQuerySideEffecting;
@@ -105,10 +109,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.constructionMode = ConstructionMode.STRIP;
         this.boundarySpacePreserve = true;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
+        this.xmlSchemaConstructors = null;
         this.currentMutabilityLevel = 0;
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
@@ -127,10 +133,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.constructionMode = ConstructionMode.STRIP;
         this.boundarySpacePreserve = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.xmlSchemaConstructors = Collections.emptyMap();
         this.currentMutabilityLevel = 0;
         this.serializationParameters = configuration.getSerializationParameters();
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
@@ -147,7 +155,9 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
+        this.constructionMode = null;
         this.inScopeSchemaTypes = null;
+        this.xmlSchemaConstructors = null;
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
         this.serializationParameters = null;
         this.defaultDecimalFormat = null;
@@ -214,6 +224,17 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void setStaticBaseUri(URI staticBaseURI) {
         this.staticBaseURI = staticBaseURI;
+    }
+
+    public ConstructionMode getConstructionMode() {
+        if (this.constructionMode != null) {
+            return this.constructionMode;
+        }
+        return this.parent == null ? ConstructionMode.STRIP : this.parent.getConstructionMode();
+    }
+
+    public void setConstructionMode(ConstructionMode constructionMode) {
+        this.constructionMode = constructionMode;
     }
 
     public boolean isInScope(Name varName) {
@@ -445,6 +466,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
+        kryo.writeObject(output, getConstructionMode());
         output.writeBoolean(this.boundarySpacePreserve);
         kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
@@ -454,6 +476,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
+        this.constructionMode = kryo.readObject(input, ConstructionMode.class);
         this.boundarySpacePreserve = input.readBoolean();
         // Backward compatibility: older serialized artifacts may not contain the serialization parameters field.
         this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
@@ -740,6 +763,36 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public SchemaCatalog getSchemaCatalog() {
+        if (this.schemaCatalog != null) {
+            return this.schemaCatalog;
+        }
+        return this.parent == null ? null : this.parent.getSchemaCatalog();
+    }
+
+    public void setSchemaCatalog(SchemaCatalog schemaCatalog) {
+        if (this.parent != null) {
+            throw new OurBadException("A schema catalog can only be stored in a module context.");
+        }
+        this.schemaCatalog = schemaCatalog;
+    }
+
+    public Map<FunctionIdentifier, XmlSchemaConstructorFunction> getXmlSchemaConstructors() {
+        if (this.xmlSchemaConstructors != null) {
+            return Collections.unmodifiableMap(this.xmlSchemaConstructors);
+        }
+        return this.parent == null ? Collections.emptyMap() : this.parent.getXmlSchemaConstructors();
+    }
+
+    public void setXmlSchemaConstructors(
+            Map<FunctionIdentifier, XmlSchemaConstructorFunction> xmlSchemaConstructors
+    ) {
+        if (this.parent != null) {
+            throw new OurBadException("XML Schema constructors can only be stored in a module context.");
+        }
+        this.xmlSchemaConstructors = new HashMap<>(xmlSchemaConstructors);
     }
 
     public int getCurrentMutabilityLevel() {

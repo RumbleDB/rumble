@@ -90,6 +90,13 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                     List<Item> expandedItems = new ArrayList<>();
                     XmlConstructorContentUtils.appendExpandedItem(iterator.next(), expandedItems);
                     for (Item item : expandedItems) {
+                        if (item.isNode()) {
+                            item = XmlConstructorNodeCopier.copy(
+                                item,
+                                this.staticContext.getConstructionMode(),
+                                getMetadata()
+                            );
+                        }
 
                         if (item.isAttributeNode() || item.isNamespaceNode()) {
                             if (hasSeenNonAttributeNode) {
@@ -204,6 +211,10 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                 content,
                 attributes
             );
+        XmlConstructorNodeCopier.initializeConstructedElement(
+            elementItem,
+            this.staticContext.getConstructionMode()
+        );
         // Only add namespaces explicitly declared on this element
         for (Item namespace : namespaces) {
             elementItem.addOrReplaceNamespace(namespace);

@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.items.xml.XmlSchemaNodeProperties;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -392,6 +393,29 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     // endregion qnames
+
+    // region notations
+
+    /**
+     * Tests whether the item is an atomic item of type xs:NOTATION.
+     *
+     * @return true if it is an xs:NOTATION item, false otherwise.
+     */
+    default boolean isNotation() {
+        return false;
+    }
+
+    /**
+     * Returns the expanded name of this item when it is an xs:NOTATION.
+     *
+     * @return the expanded name.
+     * @throws UnsupportedOperationException if the item is not an xs:NOTATION.
+     */
+    default Name getNotationValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    // endregion notations
 
     /**
      * Tests whether the item is an atomic item of type base64Binary or hexBinary.
@@ -1702,6 +1726,14 @@ public interface Item extends Serializable, KryoSerializable {
 
     default ItemType getSchemaType() {
         return null;
+    }
+
+    default void setXmlSchemaProperties(XmlSchemaNodeProperties properties) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default XmlSchemaNodeProperties getXmlSchemaProperties() {
+        return XmlSchemaNodeProperties.none();
     }
 
 

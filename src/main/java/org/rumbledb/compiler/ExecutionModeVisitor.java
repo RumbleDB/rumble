@@ -85,6 +85,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.xml.schema.XmlSchemaConstructorFunction;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -250,7 +251,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
         String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        boolean isSchemaConstructor = XmlSchemaConstructorFunction.resolve(
+            identifier,
+            expression.getStaticContext()
+        ) != null;
+        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage) && !isSchemaConstructor) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {
                 if (parameter == null) {
@@ -283,6 +288,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     this.configuration
                 )
             );
+        } else if (isSchemaConstructor) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
         } else {
             if (
                 expression.getStaticContext()

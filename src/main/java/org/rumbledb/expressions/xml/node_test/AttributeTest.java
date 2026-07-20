@@ -3,85 +3,72 @@ package org.rumbledb.expressions.xml.node_test;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.AttributeNodeItemType;
 
 public class AttributeTest implements NodeTest {
     private static final long serialVersionUID = 1L;
-    private Name attributeName;
-    private boolean hasWildcard;
-    private Name typeName;
+    private AttributeNodeItemType itemType;
+    private boolean explicitWildcard;
 
     public AttributeTest(Name attributeName, Name typeName) {
-        this.attributeName = attributeName;
-        this.typeName = typeName;
-        this.hasWildcard = false;
+        this.itemType = typeName == null
+            ? new AttributeNodeItemType(attributeName)
+            : new AttributeNodeItemType(attributeName, typeName);
+        this.explicitWildcard = attributeName == null;
     }
 
     public AttributeTest(Name typeName) {
-        this.attributeName = null;
-        this.typeName = typeName;
-        this.hasWildcard = true;
+        this.itemType = new AttributeNodeItemType(null, typeName);
+        this.explicitWildcard = true;
     }
 
-    public AttributeTest(boolean hasWildcard) {
-        this.attributeName = null;
-        this.typeName = null;
-        this.hasWildcard = hasWildcard;
+    public AttributeTest(boolean explicitWildcard) {
+        this.itemType = new AttributeNodeItemType();
+        this.explicitWildcard = explicitWildcard;
     }
 
     public AttributeTest() {
-        this.attributeName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
+        this(false);
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder("attribute(");
-        if (this.hasWildcard) {
+        if (this.explicitWildcard) {
             sb.append("*");
-        } else if (this.attributeName != null) {
-            sb.append(this.attributeName);
+        } else if (this.itemType.getNodeName() != null) {
+            sb.append(this.itemType.getNodeName());
         }
-        if (this.typeName != null) {
-            sb.append(",");
-            sb.append(this.typeName);
+        if (this.itemType.getSchemaTypeName() != null) {
+            sb.append(", ");
+            sb.append(this.itemType.getSchemaTypeName());
         }
         sb.append(")");
         return sb.toString();
     }
 
-    public boolean isEmptyCheck() {
-        return !this.hasWildcard && this.attributeName == null;
+    public boolean matches(Item item) {
+        return this.itemType.matches(item);
     }
 
-    public boolean isNameWithoutTypeCheck() {
-        return this.attributeName != null && this.typeName == null;
-    }
-
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
-    }
-
-    public boolean isWildcardOnly() {
-        return this.attributeName == null && this.typeName == null && this.hasWildcard;
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        this.itemType.resolve(context, metadata);
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.attributeName);
-        kryo.writeObject(output, this.typeName);
-        output.writeBoolean(this.hasWildcard);
+        kryo.writeObject(output, this.itemType);
+        output.writeBoolean(this.explicitWildcard);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.attributeName = kryo.readObject(input, Name.class);
-        this.typeName = kryo.readObject(input, Name.class);
-        this.hasWildcard = input.readBoolean();
+        this.itemType = kryo.readObject(input, AttributeNodeItemType.class);
+        this.explicitWildcard = input.readBoolean();
     }
 }

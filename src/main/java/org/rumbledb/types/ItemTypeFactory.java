@@ -31,6 +31,19 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ItemTypeFactory {
 
+    public static ItemType createXmlSchemaAtomicType(Name name, ItemType baseType) {
+        return new DerivedAtomicItemType(
+                name,
+                baseType,
+                baseType.getPrimitiveType(),
+                Facets.createAtomicTypeFacets(null, null, null, null, null, null, null, null, null, null)
+        );
+    }
+
+    public static ItemType createXmlSchemaUnionType(Name name, List<ItemType> memberTypes) {
+        return new UnionItemType(name, memberTypes);
+    }
+
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();
@@ -652,6 +665,14 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
+    public static ItemType elementNodeItemType(Name nodeName, Name schemaTypeName, boolean allowsNilled) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, allowsNilled);
+    }
+
+    public static ItemType schemaElementNodeItemType(Name declarationName) {
+        return ElementNodeItemType.schemaElement(declarationName);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -672,6 +693,14 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
+    }
+
+    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName);
+    }
+
+    public static ItemType schemaAttributeNodeItemType(Name declarationName) {
+        return AttributeNodeItemType.schemaAttribute(declarationName);
     }
 
     /**

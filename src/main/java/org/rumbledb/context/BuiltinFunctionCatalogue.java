@@ -4104,15 +4104,15 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction id1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "id"),
         List.of("string*"),
-        "item*",
+        "element()*",
         IdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction id2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "id"),
-        List.of("string*", "item"),
-        "item*",
+        List.of("string*", "node()"),
+        "element()*",
         IdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -4120,15 +4120,15 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction element_with_id1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "element-with-id"),
         List.of("string*"),
-        "item*",
+        "element()*",
         ElementWithIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction element_with_id2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "element-with-id"),
-        List.of("string*", "item"),
-        "item*",
+        List.of("string*", "node()"),
+        "element()*",
         ElementWithIdFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -4136,15 +4136,15 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction idref1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "idref"),
         List.of("string*"),
-        "item*",
+        "node()*",
         IdRefFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
     static final BuiltinFunction idref2 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "idref"),
-        List.of("string*", "item"),
-        "item*",
+        List.of("string*", "node()"),
+        "node()*",
         IdRefFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );

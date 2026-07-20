@@ -344,6 +344,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                     return Long.MIN_VALUE;
             }
         }
+        if (left.isNotation() && right.isNotation()) {
+            switch (comparisonOperator) {
+                case VC_EQ:
+                case GC_EQ:
+                case VC_NE:
+                case GC_NE:
+                    return left.getNotationValue().equals(right.getNotationValue()) ? 0 : 1;
+                default:
+                    return Long.MIN_VALUE;
+            }
+        }
         if (left.isString() && right.isString()) {
             String l = left.getStringValue();
             String r = right.getStringValue();

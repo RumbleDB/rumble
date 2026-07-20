@@ -194,6 +194,10 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
                 processedContent.children,
                 processedContent.attributes
             );
+        XmlConstructorNodeCopier.initializeConstructedElement(
+            elementItem,
+            this.staticContext.getConstructionMode()
+        );
 
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {
@@ -246,6 +250,13 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         List<Item> nonAttributeContent = new ArrayList<>();
 
         for (Item item : expandedContentSequence) {
+            if (item.isNode()) {
+                item = XmlConstructorNodeCopier.copy(
+                    item,
+                    this.staticContext.getConstructionMode(),
+                    getMetadata()
+                );
+            }
             if (item.isAttributeNode()) {
                 attributes.add(item);
             } else if (item.isNamespaceNode()) {

@@ -27,7 +27,9 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.ConstructionMode;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -72,6 +74,8 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.module.SchemaImport.BindingKind;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -130,7 +134,8 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
@@ -149,6 +154,8 @@ import org.rumbledb.expressions.xml.node_test.NameTest;
 import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
+import org.rumbledb.expressions.xml.node_test.SchemaAttributeTest;
+import org.rumbledb.expressions.xml.node_test.SchemaElementTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.parser.xquery.XQueryParser;
@@ -156,7 +163,6 @@ import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -167,7 +173,6 @@ import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.types.SequenceType.createSequenceType;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -191,7 +196,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
+    private CompilationConfiguration compilationConfiguration;
     private boolean isMainModule;
+    private String libraryModuleNamespace;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
@@ -199,25 +206,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             String code,
             CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
-        this.configuration = configuration;
+        this.compilationConfiguration = compilationConfiguration;
+        this.configuration = compilationConfiguration.runtimeConfiguration();
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
 
-        if (configuration.getQueryLanguage().equals("xquery10")) {
+        if (this.configuration.getQueryLanguage().equals("xquery10")) {
             this.moduleContext.setQueryLanguage("xquery10");
-        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery30")) {
             this.moduleContext.setQueryLanguage("xquery30");
-        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery31")) {
             this.moduleContext.setQueryLanguage("xquery31");
-        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery40")) {
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -355,11 +363,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = FileSystemUtil.resolveURI(
+        URI resolvedURI = URILiteralUtils.resolve(
             this.moduleContext.getStaticBaseURI(),
             namespace,
             createMetadataFromContext(ctx)
         );
+        this.libraryModuleNamespace = resolvedURI.toString();
         bindNamespace(
             prefix,
             resolvedURI.toString(),
@@ -375,8 +384,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitProlog(XQueryParser.PrologContext ctx) {
         List<LibraryModule> libraryModules = new ArrayList<>();
+        List<SchemaImport> schemaImports = new ArrayList<>();
         List<OptionDeclaration> optionDeclarations = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
+        Set<String> schemaNamespaces = new HashSet<>();
         PrologPhase1Flags phase1 = new PrologPhase1Flags();
         for (int ci = 0; ci < ctx.getChildCount(); ci++) {
             ParseTree child = ctx.getChild(ci);
@@ -392,8 +403,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 processNamespaceDecl(namespaceDeclContext);
             } else if (child instanceof SetterContext setterContext) {
                 processPrologPhase1Setter(setterContext, phase1);
-            } else if (child instanceof XQueryParser.SchemaImportContext) {
-                // Not supported yet; previously skipped as well.
+            } else if (child instanceof XQueryParser.SchemaImportContext schemaImportContext) {
+                SchemaImport schemaImport = translateSchemaImport(schemaImportContext);
+                if (!schemaNamespaces.add(schemaImport.getTargetNamespace())) {
+                    throw new SemanticException(
+                            "The schema namespace "
+                                + schemaImport.getTargetNamespace()
+                                + " is imported more than once.",
+                            ErrorCode.DuplicateSchemaImportErrorCode,
+                            createMetadataFromContext(schemaImportContext)
+                    );
+                }
+                bindSchemaImportNamespace(schemaImport);
+                schemaImports.add(schemaImport);
             } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
                 LibraryModule libraryModule = this.processModuleImport(namespace);
                 libraryModules.add(libraryModule);
@@ -417,16 +439,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.varDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
+                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Variable "
                                     + variableDeclaration.getVariableName().getLocalName()
                                     + ": namespace "
                                     + variableNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
@@ -442,16 +463,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.functionDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
+                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Function "
                                     + inlineFunctionExpression.getName().getLocalName()
                                     + ": namespace "
                                     + functionNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
@@ -479,10 +499,65 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
+        for (SchemaImport schemaImport : schemaImports) {
+            prolog.addSchemaImport(schemaImport);
+        }
         for (OptionDeclaration optionDeclaration : optionDeclarations) {
             prolog.addDeclaration(optionDeclaration);
         }
         return prolog;
+    }
+
+    private SchemaImport translateSchemaImport(XQueryParser.SchemaImportContext ctx) {
+        String namespace = processURILiteral(ctx.nsURI);
+        BindingKind bindingKind = BindingKind.NONE;
+        String prefix = null;
+        if (ctx.schemaPrefix() != null) {
+            if (ctx.schemaPrefix().ncName() != null) {
+                bindingKind = BindingKind.PREFIX;
+                prefix = ctx.schemaPrefix().ncName().getText();
+            } else {
+                bindingKind = BindingKind.DEFAULT_ELEMENT_NAMESPACE;
+            }
+        }
+        List<String> locationHints = ctx.locations
+            .stream()
+            .map(this::processURILiteral)
+            .toList();
+        return new SchemaImport(
+                namespace,
+                bindingKind,
+                prefix,
+                locationHints,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    private void bindSchemaImportNamespace(SchemaImport schemaImport) {
+        if (schemaImport.getBindingKind() == BindingKind.NONE) {
+            return;
+        }
+        String namespace = schemaImport.getTargetNamespace();
+        if (schemaImport.getBindingKind() == BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
+            bindNamespace("", namespace, schemaImport.getMetadata());
+            return;
+        }
+        String prefix = schemaImport.getPrefix();
+        if (namespace.isEmpty()) {
+            throw new SemanticException(
+                    "A schema import cannot bind a prefix to a zero-length target namespace.",
+                    ErrorCode.SchemaImportWithoutTargetNamespaceErrorCode,
+                    schemaImport.getMetadata()
+            );
+        }
+        if (prefix.equals("xml") || prefix.equals("xmlns")) {
+            throw new SemanticException(
+                    "The prefix " + prefix + " is reserved and cannot be bound by a schema import.",
+                    ErrorCode.PredefinedPrefixInNamespaceDeclarationErrorCode,
+                    schemaImport.getMetadata()
+            );
+        }
+        bindNamespace(prefix, namespace, schemaImport.getMetadata());
     }
 
     @Override
@@ -493,6 +568,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private static final class PrologPhase1Flags {
+        boolean constructionModeSet;
         boolean emptyOrderSet;
         boolean boundarySpaceSet;
         boolean defaultCollationSet;
@@ -501,6 +577,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.constructionDecl() != null) {
+            if (flags.constructionModeSet) {
+                throw new MoreThanOneConstructionDeclarationException(
+                        "The construction mode was already declared.",
+                        createMetadataFromContext(setterContext.constructionDecl())
+                );
+            }
+            this.moduleContext.setConstructionMode(
+                setterContext.constructionDecl().type.getType() == XQueryParser.KW_PRESERVE
+                    ? ConstructionMode.PRESERVE
+                    : ConstructionMode.STRIP
+            );
+            flags.constructionModeSet = true;
+            return;
+        }
         if (setterContext.boundarySpaceDecl() != null) {
             if (flags.boundarySpaceSet) {
                 throw new MoreThanOneBoundarySpaceDeclarationException(
@@ -551,10 +642,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = FileSystemUtil.resolveURI(
+            URI uri = URILiteralUtils.resolve(
                 this.moduleContext.getStaticBaseURI(),
                 uriString,
-                ExceptionMetadata.EMPTY_METADATA
+                createMetadataFromContext(setterContext.baseURIDecl())
             );
             this.moduleContext.setStaticBaseUri(uri);
             flags.baseURISet = true;
@@ -1590,10 +1681,21 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitValidateExpr(XQueryParser.ValidateExprContext ctx) {
-        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
-        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
-        return new ValidateTypeExpression(mainExpr, true, sequenceType, createMetadataFromContext(ctx));
-        // TODO: this is not implemented in XQuery. Throw an unsupported feature exception.
+        Expression mainExpression = (Expression) visit(ctx.expr());
+        ValidationMode validationMode = ValidationMode.STRICT;
+        Name typeName = null;
+        if (ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null) {
+            validationMode = ValidationMode.LAX;
+        } else if (ctx.KW_TYPE() != null) {
+            validationMode = ValidationMode.TYPE;
+            typeName = parseEqName(ctx.typeName().eqName(), false, true, false, false);
+        }
+        return new ValidateExpression(
+                mainExpression,
+                validationMode,
+                typeName,
+                createMetadataFromContext(ctx)
+        );
     }
     // endregion
 
@@ -2405,9 +2507,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (kindTestContext.documentTest() != null) {
             XQueryParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
             if (documentTestContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests (schema-element(...)) are not supported",
-                        createMetadataFromContext(documentTestContext)
+                return ItemTypeFactory.documentNodeItemType(
+                    (ElementNodeItemType) ItemTypeFactory.schemaElementNodeItemType(
+                        schemaElementDeclarationName(documentTestContext.schemaElementTest())
+                    )
                 );
             }
             if (documentTestContext.elementTest() != null) {
@@ -2421,17 +2524,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (kindTestContext.attributeTest() != null) {
             XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            if (attributeTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed attribute item tests are not supported yet",
-                        createMetadataFromContext(attributeTestContext)
-                );
-            }
+            Name schemaTypeName = attributeTestContext.typeName() == null
+                ? null
+                : parseEqName(attributeTestContext.typeName().eqName(), false, true, false, false);
             if (attributeTestContext.attributeNameOrWildcard() == null) {
                 return BuiltinTypesCatalogue.attributeNode;
             }
             if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
+                return schemaTypeName == null
+                    ? BuiltinTypesCatalogue.attributeNode
+                    : ItemTypeFactory.attributeNodeItemType(null, schemaTypeName);
             }
             Name attributeName = parseEqName(
                 attributeTestContext.attributeNameOrWildcard().attributeName().eqName(),
@@ -2440,7 +2542,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 false,
                 false
             );
-            return ItemTypeFactory.attributeNodeItemType(attributeName);
+            return schemaTypeName == null
+                ? ItemTypeFactory.attributeNodeItemType(attributeName)
+                : ItemTypeFactory.attributeNodeItemType(attributeName, schemaTypeName);
+        }
+        if (kindTestContext.schemaElementTest() != null) {
+            return ItemTypeFactory.schemaElementNodeItemType(
+                schemaElementDeclarationName(kindTestContext.schemaElementTest())
+            );
+        }
+        if (kindTestContext.schemaAttributeTest() != null) {
+            return ItemTypeFactory.schemaAttributeNodeItemType(
+                schemaAttributeDeclarationName(kindTestContext.schemaAttributeTest())
+            );
         }
         if (kindTestContext.commentTest() != null) {
             return BuiltinTypesCatalogue.commentNode;
@@ -2469,17 +2583,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
-        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-            throw new UnsupportedFeatureException(
-                    "Typed or nillable element item tests are not supported yet",
-                    createMetadataFromContext(elementTestContext)
-            );
-        }
+        Name schemaTypeName = elementTestContext.typeName() == null
+            ? null
+            : parseEqName(elementTestContext.typeName().eqName(), false, true, false, false);
         if (elementTestContext.elementNameOrWildcard() == null) {
             return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
         }
         if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
+            return schemaTypeName == null
+                ? (ElementNodeItemType) BuiltinTypesCatalogue.elementNode
+                : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
+                    null,
+                    schemaTypeName,
+                    elementTestContext.optional != null
+                );
         }
         Name elementName = parseEqName(
             elementTestContext.elementNameOrWildcard().elementName().eqName(),
@@ -2488,7 +2605,33 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             false,
             false
         );
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
+        return schemaTypeName == null
+            ? (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName)
+            : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
+                elementName,
+                schemaTypeName,
+                elementTestContext.optional != null
+            );
+    }
+
+    private Name schemaElementDeclarationName(XQueryParser.SchemaElementTestContext context) {
+        return parseEqName(
+            context.elementDeclaration().elementName().eqName(),
+            false,
+            false,
+            false,
+            true
+        );
+    }
+
+    private Name schemaAttributeDeclarationName(XQueryParser.SchemaAttributeTestContext context) {
+        return parseEqName(
+            context.attributeDeclaration().attributeName().eqName(),
+            false,
+            false,
+            false,
+            false
+        );
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
@@ -3449,9 +3592,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // document-node() matches any document node.
             // document-node(element(...)) matches a document node containing an element matching the ElementTest.
             if (docContext.schemaElementTest() != null) {
-                throw new UnsupportedFeatureException(
-                        "Schema element tests within document-node() are not supported",
-                        createMetadataFromContext((ParserRuleContext) kindTest)
+                return new DocumentTest(
+                        new SchemaElementTest(schemaElementDeclarationName(docContext.schemaElementTest()))
                 );
             }
             if (docContext.elementTest() == null) {
@@ -3465,14 +3607,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // element(N) matches any element node whose name is N.
             // element(N, T) matches an element node whose name is N and whose type annotation is T.
             // element(*, T) matches any element node whose type annotation is T.
-            // element(N, T?) also matches nillable elements (validation-related, unsupported).
-            // Reject the nillable marker "?" (validation-related feature)
-            if (elementContext.optional != null) {
-                throw new UnsupportedFeatureException(
-                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
-                        createMetadataFromContext((ParserRuleContext) kindTest)
-                );
-            }
+            // element(N, T?) also matches nilled elements.
             Name elementName;
             if (elementContext.elementNameOrWildcard() != null) {
                 boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
@@ -3488,12 +3623,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                         return new ElementTest(elementName, null);
                     }
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
-                    return new ElementTest(elementName, typeName);
+                    return new ElementTest(elementName, typeName, elementContext.optional != null);
                 }
                 // Wildcard case: element(*) or element(*, type)
                 if (elementContext.typeName() != null) {
                     Name typeName = parseEqName(elementContext.typeName().eqName(), false, true, false, false);
-                    return new ElementTest(typeName);
+                    return new ElementTest(null, typeName, elementContext.optional != null);
                 }
                 return new ElementTest(true);
             }
@@ -3578,18 +3713,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             // AnyKindTest ::= "node" "(" ")"
             // node() matches any node.
             return new AnyKindTest();
-        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext) {
-            // XQuery 3.1 Section 2.5.5.4 - Schema Element Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema element tests (schema-element(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest)
-            );
-        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext) {
-            // XQuery 3.1 Section 2.5.5.6 - Schema Attribute Test (unsupported, requires schema import)
-            throw new UnsupportedFeatureException(
-                    "Schema attribute tests (schema-attribute(...)) are not supported",
-                    createMetadataFromContext((ParserRuleContext) kindTest)
-            );
+        } else if (kindTest instanceof XQueryParser.SchemaElementTestContext schemaElementContext) {
+            return new SchemaElementTest(schemaElementDeclarationName(schemaElementContext));
+        } else if (kindTest instanceof XQueryParser.SchemaAttributeTestContext schemaAttributeContext) {
+            return new SchemaAttributeTest(schemaAttributeDeclarationName(schemaAttributeContext));
         } else {
             throw new UnsupportedFeatureException(
                     "Unsupported kind test: " + kindTest.getText(),
@@ -3659,47 +3786,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
+        List<String> locationHints = ctx.locations.stream()
+            .map(this::processURILiteral)
+            .collect(Collectors.toList());
+        LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
+            locationHints,
+            this.moduleContext,
+            this.compilationConfiguration,
             createMetadataFromContext(ctx)
         );
-        LibraryModule libraryModule = null;
-        try {
-            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                resolvedURI,
-                this.configuration,
-                this.moduleContext,
-                createMetadataFromContext(ctx)
-            );
-            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
-                throw new ModuleNotFoundException(
-                        "A module with namespace "
-                            + resolvedURI.toString()
-                            + " was not found. The namespace of the module at this location was: "
-                            + libraryModule.getNamespace(),
-                        createMetadataFromContext(ctx)
-                );
-            }
-        } catch (IOException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        } catch (CannotRetrieveResourceException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        }
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                resolvedURI.toString(),
+                libraryModule.getNamespace(),
                 createMetadataFromContext(ctx)
             );
         }
