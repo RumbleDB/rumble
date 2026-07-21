@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -396,6 +397,23 @@ public class SerializationParameters implements Serializable, KryoSerializable {
      */
     public String getRequestedHtmlVersion() {
         return this.htmlVersion != null ? this.htmlVersion : this.version;
+    }
+
+    /**
+     * Whether the requested HTML version is exactly 5.0.
+     *
+     * @return {@code true} if the requested HTML version is a decimal with value 5
+     */
+    public boolean isRequestedHtml5Version() {
+        String requestedHtmlVersion = getRequestedHtmlVersion();
+        if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(requestedHtmlVersion.trim())) == 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public boolean getByteOrderMark() {
