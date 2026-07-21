@@ -193,6 +193,27 @@ public class JavaAPITest {
 
     @Test
     @Timeout(1000)
+    public void testTextSerializationRejectsMapWithErrNamespaceCode() {
+        Rumble rumble = new Rumble(
+                new RumbleRuntimeConfiguration(
+                        new String[] { "--default-language", "xquery31" }
+                )
+        );
+        RumbleException exception = Assertions.assertThrows(
+            RumbleException.class,
+            () -> rumble.runQueryToString(
+                """
+                declare namespace output = "%s";
+                declare option output:method "text";
+                map { "a" : 1 }
+                """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
+            )
+        );
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
+    }
+
+    @Test
+    @Timeout(1000)
     public void testJsonSerializationEscapesSolidusInStrings() {
         Rumble rumble = new Rumble(
                 new RumbleRuntimeConfiguration(

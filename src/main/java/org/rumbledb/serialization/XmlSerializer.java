@@ -442,7 +442,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     protected RumbleException serializationError(String message, String errorCode) {
         return new RumbleException(
                 message,
-                new ErrorCode(org.rumbledb.context.Name.createVariableInNoNamespace(errorCode)),
+                new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
                 ExceptionMetadata.EMPTY_METADATA
         );
     }
