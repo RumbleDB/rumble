@@ -310,7 +310,7 @@ public class XhtmlSerializer extends XmlSerializer {
         if (entries == null || entries.isEmpty() || element.nodeName() == null) {
             return false;
         }
-        if (isRecognizedHtmlElement(element) && element.nodeName().getNamespace() == null) {
+        if (isRecognizedHtmlElement(element) && hasNoNamespace(element.nodeName().getNamespace())) {
             for (String entry : entries) {
                 if (!entry.startsWith("Q{") && entry.equalsIgnoreCase(element.nodeName().getLocalName())) {
                     return true;
@@ -434,7 +434,7 @@ public class XhtmlSerializer extends XmlSerializer {
 
     private String getInjectedMetaElementName(Item headElement) {
         Name headName = headElement.nodeName();
-        if (headName == null || headName.getNamespace() == null || headName.getNamespace().isEmpty()) {
+        if (headName == null || hasNoNamespace(headName.getNamespace())) {
             return "meta";
         }
         if (
@@ -448,7 +448,7 @@ public class XhtmlSerializer extends XmlSerializer {
     }
 
     private boolean isExpectedToBeEmptyMeta(Item headElement) {
-        if (headElement.nodeName() == null || headElement.nodeName().getNamespace() == null) {
+        if (headElement.nodeName() == null || hasNoNamespace(headElement.nodeName().getNamespace())) {
             return isHtml5Mode() ? HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
         }
         return true;
@@ -545,7 +545,7 @@ public class XhtmlSerializer extends XmlSerializer {
             return true;
         }
         return isHtml5Mode()
-            && name.getNamespace() == null
+            && hasNoNamespace(name.getNamespace())
             && HTML5_ELEMENTS.contains(name.getLocalName().toLowerCase());
     }
 
@@ -555,6 +555,10 @@ public class XhtmlSerializer extends XmlSerializer {
 
     private boolean isHtml5Mode() {
         return this.params.isRequestedHtml5Version();
+    }
+
+    private boolean hasNoNamespace(String namespace) {
+        return namespace == null || namespace.isEmpty();
     }
 
     private String escapeUriAttribute(String value) {
