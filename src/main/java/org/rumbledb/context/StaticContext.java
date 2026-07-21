@@ -263,10 +263,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExceptionMetadata getVariableMetadata(Name varName) {
-        return getInScopeVariable(varName).getMetadata();
-    }
-
     public ExecutionMode getVariableStorageMode(Name varName) {
         return getInScopeVariable(varName).getStorageMode();
     }
@@ -346,16 +342,6 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(this.parent.toString());
         }
         return stringBuilder.toString();
-    }
-
-    public boolean hasVariable(Name variableName) {
-        if (this.inScopeVariables.containsKey(variableName)) {
-            return true;
-        }
-        if (this.parent != null) {
-            return this.parent.hasVariable(variableName);
-        }
-        return false;
     }
 
     public boolean hasVariableInScopeOnly(Name variableName) {
@@ -465,17 +451,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this.serializationParameters;
     }
 
-    /**
-     * Override the serialization parameters with the provided parameter name and value.
-     * Throws InvalidSerializationParameterValueException for invalid inputs.
-     *
-     * @param name the name of the parameter to update
-     * @param value the value of the parameter to update
-     * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
-     */
-    public void overrideSerializationParameter(String name, String value) {
-        overrideSerializationParameter(name, value, ExceptionMetadata.EMPTY_METADATA);
-    }
 
     public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
         // ensure we have a local copy of the serialization parameters
