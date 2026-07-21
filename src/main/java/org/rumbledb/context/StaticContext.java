@@ -50,9 +50,9 @@ public class StaticContext {
     @Getter
     private Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
 
-    private Map<String, String> staticallyKnownNamespaces;
+    private Map<String, String> staticallyKnownNamespaces = new HashMap<>();
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
-    private InScopeSchemaTypes inScopeSchemaTypes;
+    private InScopeSchemaTypes inScopeSchemaTypes = new InScopeSchemaTypes();
 
     @Setter
     private String queryLanguage;
@@ -65,9 +65,9 @@ public class StaticContext {
     private boolean boundarySpacePreserve = true;
 
     @Setter
-    private SerializationParameters serializationParameters;
+    private SerializationParameters serializationParameters = SerializationParameters.defaults();
 
-    private Set<String> explicitSerializationParameterNames;
+    private Set<String> explicitSerializationParameterNames = new LinkedHashSet<>();
     private boolean isQuerySideEffecting;
     private Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
     private String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
@@ -98,8 +98,8 @@ public class StaticContext {
         Map.entry("an", Name.JSONIQ_ANNOTATIONS_NS)
     );
 
-    private DecimalFormatDefinition defaultDecimalFormat;
-    private Map<Name, DecimalFormatDefinition> decimalFormats;
+    private DecimalFormatDefinition defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
+    private Map<Name, DecimalFormatDefinition> decimalFormats = new HashMap<>();
 
     @Getter
     @Setter
@@ -114,13 +114,6 @@ public class StaticContext {
             this.queryLanguage = configuration.getQueryLanguage();
             this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
         }
-        this.initializeRootCompilerState();
-    }
-
-    private void initializeRootCompilerState() {
-        this.inScopeSchemaTypes = new InScopeSchemaTypes();
-        this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
-        this.decimalFormats = new HashMap<>();
     }
 
     /**
@@ -131,6 +124,8 @@ public class StaticContext {
     public StaticContext(StaticContext parent) {
         this.parent = Objects.requireNonNull(parent, "parent");
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.inScopeSchemaTypes = parent.inScopeSchemaTypes;
+        this.serializationParameters = SerializationParameters.copy(parent.serializationParameters);
 
         // Local maps are initialized at declaration.
         // Other fields inherit through parent lookup.
@@ -286,15 +281,13 @@ public class StaticContext {
             stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
             stringBuilder.append("\n");
         }
-        if (this.inScopeSchemaTypes != null) {
-            stringBuilder.append("Static context with user-defined types:\n");
-            for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
-                stringBuilder.append(itemType.getName());
-                stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
-                stringBuilder.append("\n");
-            }
+        stringBuilder.append("Static context with user-defined types:\n");
+        for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+            stringBuilder.append(itemType.getName());
+            stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
             stringBuilder.append("\n");
         }
+        stringBuilder.append("\n");
         if (this.userDefinedFunctionExecutionModes != null) {
             stringBuilder.append(this.userDefinedFunctionExecutionModes);
         }
@@ -310,9 +303,6 @@ public class StaticContext {
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
-        if (this.staticallyKnownNamespaces == null) {
-            this.staticallyKnownNamespaces = new HashMap<>();
-        }
         if (this.canBindNamespace(prefix)) {
             this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
@@ -324,9 +314,6 @@ public class StaticContext {
      * Explicitly removes a namespace binding in this context, shadowing any inherited or predeclared binding.
      */
     public boolean unbindNamespace(String prefix) {
-        if (this.staticallyKnownNamespaces == null) {
-            this.staticallyKnownNamespaces = new HashMap<>();
-        }
         if (!this.canBindNamespace(prefix)) {
             return false;
         }
@@ -343,7 +330,7 @@ public class StaticContext {
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+        if (this.staticallyKnownNamespaces.containsKey(prefix)) {
             return this.staticallyKnownNamespaces.get(prefix);
         }
         if (this.parent != null) {
@@ -357,9 +344,7 @@ public class StaticContext {
         if (this.parent != null) {
             bindings.putAll(this.parent.getInScopeNamespaceBindings());
         }
-        if (this.staticallyKnownNamespaces != null) {
-            bindings.putAll(this.staticallyKnownNamespaces);
-        }
+        bindings.putAll(this.staticallyKnownNamespaces);
         return bindings;
     }
 
@@ -375,24 +360,11 @@ public class StaticContext {
      * </ul>
      */
     public SerializationParameters getSerializationParameters() {
-        if (this.serializationParameters != null) {
-            return this.serializationParameters;
-        }
-        // A child without a local value inherits its parent's parameters.
-        if (this.parent != null) {
-            return this.parent.getSerializationParameters();
-        }
-        // A root context without a local value uses the specification defaults.
-        this.serializationParameters = SerializationParameters.defaults();
         return this.serializationParameters;
     }
 
 
     public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
-        // ensure we have a local copy of the serialization parameters
-        if (this.serializationParameters == null) {
-            this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
-        }
         if ("parameter-document".equals(name)) {
             SerializationParameterUtils.applyParameterDocument(
                 this.serializationParameters,
@@ -412,9 +384,6 @@ public class StaticContext {
     }
 
     private Set<String> getExplicitSerializationParameterNames() {
-        if (this.explicitSerializationParameterNames == null) {
-            this.explicitSerializationParameterNames = new LinkedHashSet<>();
-        }
         return this.explicitSerializationParameterNames;
     }
 
@@ -607,13 +576,7 @@ public class StaticContext {
     }
 
     public InScopeSchemaTypes getInScopeSchemaTypes() {
-        if (this.inScopeSchemaTypes != null) {
-            return this.inScopeSchemaTypes;
-        }
-        if (this.parent != null) {
-            return this.parent.getInScopeSchemaTypes();
-        }
-        throw new OurBadException("In-scope schema types are not set up properly in static context.");
+        return this.inScopeSchemaTypes;
     }
 
     public boolean getIsAssignable(Name name) {
@@ -652,9 +615,6 @@ public class StaticContext {
     public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
         if (this.parent != null) {
             return this.parent.getDecimalFormats();
-        }
-        if (this.decimalFormats == null) {
-            return Collections.emptyMap();
         }
         return Collections.unmodifiableMap(this.decimalFormats);
     }
