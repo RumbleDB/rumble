@@ -95,7 +95,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient SequenceType contextItemStaticType;
     private final transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures =
         new HashMap<>();
-    private static final Map<String, String> defaultBindings = Map.ofEntries(
+    private static final Map<String, String> DEFAULT_BINDINGS = Map.ofEntries(
         Map.entry("local", Name.LOCAL_NS),
         Map.entry("fn", Name.FN_NS),
         Map.entry("math", Name.MATH_NS),
@@ -368,8 +368,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
             return true;
         }
-        return defaultBindings.containsKey(prefix)
-            && defaultBindings.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
+        return DEFAULT_BINDINGS.containsKey(prefix)
+            && DEFAULT_BINDINGS.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
     }
 
     public String resolveNamespace(String prefix) {
@@ -651,8 +651,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public void bindDefaultNamespaces() {
-        for (String prefix : defaultBindings.keySet()) {
-            this.bindNamespace(prefix, defaultBindings.get(prefix));
+        for (Map.Entry<String, String> binding : DEFAULT_BINDINGS.entrySet()) {
+            this.bindNamespace(binding.getKey(), binding.getValue());
         }
     }
 
@@ -660,7 +660,7 @@ public class StaticContext implements Serializable, KryoSerializable {
      * Built-in namespace bindings (fn, xs, map, ...) used when resolving QNames without a full static context.
      */
     public static String getBuiltinNamespaceBinding(String prefix) {
-        return defaultBindings.get(prefix);
+        return DEFAULT_BINDINGS.get(prefix);
     }
 
     public InScopeSchemaTypes getInScopeSchemaTypes() {
