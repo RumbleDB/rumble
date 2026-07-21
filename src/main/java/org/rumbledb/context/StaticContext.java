@@ -71,7 +71,10 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast = true;
     private boolean boundarySpacePreserve = true;
+
+    @Setter
     private SerializationParameters serializationParameters;
+
     private transient Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
     private transient Set<String> staticallyKnownCollations;
@@ -457,13 +460,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
         this.serializationParameters = SerializationParameters.defaults();
         return this.serializationParameters;
-    }
-
-    /**
-     * Sets the default serialization parameters at this static context level.
-     */
-    public void setSerializationParameters(SerializationParameters serializationParameters) {
-        this.serializationParameters = serializationParameters;
     }
 
     /**
