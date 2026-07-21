@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -51,6 +52,7 @@ import com.esotericsoftware.kryo.io.Output;
 import lombok.Getter;
 import lombok.Setter;
 
+@NoArgsConstructor // Kryo uses non-arg constructor to deserialize objects
 public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
@@ -115,10 +117,6 @@ public class StaticContext implements Serializable, KryoSerializable {
     private int currentMutabilityLevel;
 
     private RumbleRuntimeConfiguration configuration;
-
-    public StaticContext() {
-        this(null, null);
-    }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.staticBaseURI = staticBaseURI;
