@@ -303,10 +303,13 @@ public class XhtmlSerializer extends XmlSerializer {
     private void appendElementNamespaces(Item item, StringBuilder sb) {
         boolean emittedDefaultNamespaceForNormalizedElement = false;
         if (shouldApplyPrefixNormalization(item)) {
-            sb.append(" xmlns=\"");
-            sb.append(escapeAttribute(item.nodeName().getNamespace()));
-            sb.append("\"");
-            emittedDefaultNamespaceForNormalizedElement = true;
+            String normalizedNamespace = item.nodeName().getNamespace();
+            if (!isNamespaceBindingInScope(item.parent(), "", normalizedNamespace)) {
+                sb.append(" xmlns=\"");
+                sb.append(escapeAttribute(normalizedNamespace));
+                sb.append("\"");
+                emittedDefaultNamespaceForNormalizedElement = true;
+            }
         }
         for (Item namespace : item.declaredNamespaceNodes()) {
             if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {

@@ -1,6 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -268,11 +267,11 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected String escapeAttribute(String value) {
-        return isXml11() ? StringEscapeUtils.escapeXml11(value) : StringEscapeUtils.escapeXml10(value);
+        return escapeXml(value, true);
     }
 
     protected String escapeText(String value) {
-        return isXml11() ? StringEscapeUtils.escapeXml11(value) : StringEscapeUtils.escapeXml10(value);
+        return escapeXml(value, false);
     }
 
     protected boolean shouldSerializeNamespace(String prefix, String uri) {
@@ -290,17 +289,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected void appendXmlDeclaration(StringBuilder sb) {
-        sb.append("<?xml version=\"");
-        sb.append(getEffectiveVersion("1.0"));
-        sb.append("\" encoding=\"");
-        sb.append(this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding());
-        sb.append("\"");
-        if (this.params.getStandalone() == SerializationParameters.Standalone.YES) {
-            sb.append(" standalone=\"yes\"");
-        } else if (this.params.getStandalone() == SerializationParameters.Standalone.NO) {
-            sb.append(" standalone=\"no\"");
-        }
-        sb.append("?>");
+        SerializerUtils.appendXmlDeclaration(sb, this.params);
     }
 
     protected void appendDocTypeIfNeeded(Item element, StringBuilder sb) {
@@ -321,9 +310,8 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected String getEffectiveVersion(String defaultValue) {
-        return this.params.getVersion() == null || this.params.getVersion().isEmpty()
-            ? defaultValue
-            : this.params.getVersion();
+        String effectiveVersion = SerializerUtils.getEffectiveXmlVersion(this.params);
+        return effectiveVersion == null || effectiveVersion.isEmpty() ? defaultValue : effectiveVersion;
     }
 
     protected boolean isXml11() {
@@ -445,5 +433,90 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
                 new ErrorCode(new Name(Name.ERROR_NS, "err", errorCode)),
                 ExceptionMetadata.EMPTY_METADATA
         );
+    }
+
+    private String escapeXml(String value, boolean inAttribute) {
+        if (value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder(value.length());
+        value.codePoints().forEach(codePoint -> appendEscapedXmlCodePoint(result, codePoint, inAttribute));
+        return result.toString();
+    }
+
+    private void appendEscapedXmlCodePoint(StringBuilder result, int codePoint, boolean inAttribute) {
+        switch (codePoint) {
+            case '&':
+                result.append("&amp;");
+                return;
+            case '<':
+                result.append("&lt;");
+                return;
+            case '>':
+                result.append("&gt;");
+                return;
+            case '"':
+                if (inAttribute) {
+                    result.append("&quot;");
+                    return;
+                }
+                break;
+            default:
+                break;
+        }
+
+        if (mustSerializeAsCharacterReference(codePoint, inAttribute)) {
+            appendDecimalCharacterReference(result, codePoint);
+            return;
+        }
+
+        if (!isRepresentableInSelectedXmlVersion(codePoint)) {
+            throw new RumbleException(
+                    "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                    ErrorCode.CodepointNotValidErrorCode,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+
+        result.appendCodePoint(codePoint);
+    }
+
+    private boolean mustSerializeAsCharacterReference(int codePoint, boolean inAttribute) {
+        if (codePoint == 0x85 || codePoint == 0x2028) {
+            return true;
+        }
+        if (inAttribute && (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD)) {
+            return true;
+        }
+        if (!inAttribute && codePoint == 0xD) {
+            return true;
+        }
+        if (codePoint < 0x20) {
+            return codePoint != 0x9 && codePoint != 0xA && codePoint != 0xD;
+        }
+        return codePoint >= 0x7F && codePoint <= 0x9F;
+    }
+
+    private boolean isRepresentableInSelectedXmlVersion(int codePoint) {
+        if (codePoint == 0) {
+            return false;
+        }
+        if (isXml11()) {
+            return codePoint <= 0xD7FF
+                || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+                || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+        }
+        if (codePoint == 0x9 || codePoint == 0xA || codePoint == 0xD) {
+            return true;
+        }
+        return (codePoint >= 0x20 && codePoint <= 0xD7FF)
+            || (codePoint >= 0xE000 && codePoint <= 0xFFFD)
+            || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
+    }
+
+    private void appendDecimalCharacterReference(StringBuilder result, int codePoint) {
+        result.append("&#");
+        result.append(codePoint);
+        result.append(";");
     }
 }

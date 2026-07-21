@@ -189,6 +189,7 @@ public class JavaAPITest {
             )
         );
         Assertions.assertEquals("SENR0001", exception.getErrorCode().getLocalName());
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
     }
 
     @Test

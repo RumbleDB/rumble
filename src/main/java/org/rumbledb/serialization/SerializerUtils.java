@@ -26,6 +26,26 @@ public final class SerializerUtils {
         }
     }
 
+    public static void appendXmlDeclaration(StringBuilder sb, SerializationParameters params) {
+        sb.append("<?xml version=\"");
+        sb.append(getEffectiveXmlVersion(params));
+        sb.append("\" encoding=\"");
+        sb.append(params.getEncoding() == null ? "UTF-8" : params.getEncoding());
+        sb.append("\"");
+        if (params.getStandalone() == SerializationParameters.Standalone.YES) {
+            sb.append(" standalone=\"yes\"");
+        } else if (params.getStandalone() == SerializationParameters.Standalone.NO) {
+            sb.append(" standalone=\"no\"");
+        }
+        sb.append("?>");
+    }
+
+    public static String getEffectiveXmlVersion(SerializationParameters params) {
+        return params.getVersion() == null || params.getVersion().isEmpty()
+            ? "1.0"
+            : params.getVersion();
+    }
+
     /**
      * Serializes a map item as a JSON object shape (with optional TYSON type prefix before "{").
      *
