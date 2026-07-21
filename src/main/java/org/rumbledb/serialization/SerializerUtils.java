@@ -1,9 +1,16 @@
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 
 /**
@@ -74,7 +81,9 @@ public final class SerializerUtils {
                 separator = "," + separator;
                 firstTime = false;
             }
-            sb.append("\"").append(StringEscapeUtils.escapeJson(key.getStringValue())).append("\"").append(":");
+            sb.append("\"");
+            appendJsonEscapedString(sb, key.getStringValue(), params);
+            sb.append("\"").append(":");
             if (params.getIndent()) {
                 sb.append(" ");
             }
@@ -129,5 +138,95 @@ public final class SerializerUtils {
             sb.append("\n").append(indent).append("  ");
         }
         sb.append("]");
+    }
+
+    public static void appendJsonEscapedString(
+            StringBuilder sb,
+            String value,
+            SerializationParameters params
+    ) {
+        CharsetEncoder encoder = getCharsetEncoder(params);
+        for (int i = 0; i < value.length();) {
+            int codePoint = value.codePointAt(i);
+            i += Character.charCount(codePoint);
+            appendJsonEscapedCodePoint(sb, codePoint, encoder);
+        }
+    }
+
+    private static CharsetEncoder getCharsetEncoder(SerializationParameters params) {
+        String encoding = params.getEncoding() == null ? "UTF-8" : params.getEncoding();
+        try {
+            Charset charset = Charset.forName(encoding);
+            return charset.newEncoder();
+        } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
+            throw new RumbleException(
+                    "Unsupported serialization encoding: " + encoding,
+                    new ErrorCode(new Name(Name.ERROR_NS, "err", "SESU0007")),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+    }
+
+    private static void appendJsonEscapedCodePoint(
+            StringBuilder sb,
+            int codePoint,
+            CharsetEncoder encoder
+    ) {
+        switch (codePoint) {
+            case '"':
+                sb.append("\\\"");
+                return;
+            case '\\':
+                sb.append("\\\\");
+                return;
+            case '/':
+                sb.append("\\/");
+                return;
+            case '\b':
+                sb.append("\\b");
+                return;
+            case '\f':
+                sb.append("\\f");
+                return;
+            case '\n':
+                sb.append("\\n");
+                return;
+            case '\r':
+                sb.append("\\r");
+                return;
+            case '\t':
+                sb.append("\\t");
+                return;
+            default:
+                break;
+        }
+
+        if ((codePoint >= 0x00 && codePoint <= 0x1F) || (codePoint >= 0x7F && codePoint <= 0x9F)) {
+            appendJsonUnicodeEscape(sb, codePoint);
+            return;
+        }
+
+        String asString = new String(Character.toChars(codePoint));
+        if (!encoder.canEncode(CharBuffer.wrap(asString))) {
+            if (codePoint <= 0xFFFF) {
+                appendJsonUnicodeEscape(sb, codePoint);
+            } else {
+                for (char surrogate : asString.toCharArray()) {
+                    appendJsonUnicodeEscape(sb, surrogate);
+                }
+            }
+            return;
+        }
+
+        sb.append(asString);
+    }
+
+    private static void appendJsonUnicodeEscape(StringBuilder sb, int codeUnit) {
+        sb.append("\\u");
+        String hex = Integer.toHexString(codeUnit).toUpperCase();
+        for (int i = hex.length(); i < 4; i++) {
+            sb.append('0');
+        }
+        sb.append(hex);
     }
 }
