@@ -27,6 +27,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -37,6 +38,7 @@ import java.util.List;
  */
 public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public QNameFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {

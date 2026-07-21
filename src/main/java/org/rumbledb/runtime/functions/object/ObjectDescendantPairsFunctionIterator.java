@@ -28,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -37,6 +38,7 @@ import java.util.Queue;
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection

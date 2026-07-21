@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.typing;
 
+import java.io.Serial;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -43,6 +44,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ValidateTypeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private ItemType itemType;
@@ -123,6 +125,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType, staticContext);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
+                @Serial
                 private static final long serialVersionUID = 1L;
 
                 @Override
@@ -152,6 +155,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<>() {
+                @Serial
                 private static final long serialVersionUID = 1L;
 
                 @Override

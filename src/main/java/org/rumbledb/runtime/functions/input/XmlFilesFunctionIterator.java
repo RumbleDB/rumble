@@ -40,6 +40,7 @@ import java.util.List;
 
 public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     RuntimeIterator iterator;
     BufferedReader reader;

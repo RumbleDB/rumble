@@ -10,10 +10,12 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class NamespaceItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String prefix;
     private String uri;

@@ -4,12 +4,15 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
+
 /**
  * XQuery 3.1 Section 2.5.5 - SequenceType Matching
  * CommentTest ::= "comment" "(" ")"
  * A CommentTest matches any comment node.
  */
 public class CommentTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

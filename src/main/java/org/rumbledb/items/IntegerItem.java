@@ -32,12 +32,14 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class IntegerItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private BigInteger value;
 

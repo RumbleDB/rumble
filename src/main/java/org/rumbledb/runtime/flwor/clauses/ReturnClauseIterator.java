@@ -55,6 +55,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -66,6 +67,7 @@ import java.util.stream.Collectors;
 
 public class ReturnClauseIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeTupleIterator child;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
@@ -346,11 +348,13 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         this.expression.print(buffer, indent + 1);
     }
 
+    @Serial
     private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
         i.defaultReadObject();
         setInputAndOutputTupleVariableDependencies();
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream i) throws IOException {
         i.defaultWriteObject();
     }

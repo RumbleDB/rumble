@@ -8,11 +8,13 @@ import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 public class TypeswitchRuntimeIteratorCase implements Serializable, KryoSerializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
     private List<SequenceType> sequenceTypeUnion;

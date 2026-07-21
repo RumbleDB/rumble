@@ -33,10 +33,12 @@ import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.serialization.SerializerUtils;
 
+import java.io.Serial;
 import java.util.List;
 
 public class SerializeFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public SerializeFunctionIterator(

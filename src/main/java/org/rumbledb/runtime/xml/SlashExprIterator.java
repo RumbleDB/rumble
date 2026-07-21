@@ -34,10 +34,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.*;
 
 public class SlashExprIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
         Item::getXmlDocumentPosition,

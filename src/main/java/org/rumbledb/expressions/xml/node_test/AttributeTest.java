@@ -5,7 +5,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
+
 public class AttributeTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name attributeName;
     private boolean hasWildcard;

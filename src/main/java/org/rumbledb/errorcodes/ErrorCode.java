@@ -22,6 +22,7 @@ package org.rumbledb.errorcodes;
 
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.Objects;
 
 public final class ErrorCode implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();

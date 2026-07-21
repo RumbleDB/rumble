@@ -10,6 +10,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 
 public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Name ANALYZE_STRING_RESULT_NAME = new Name(Name.FN_NS, "fn", "analyze-string-result");
     private static final Name MATCH_NAME = new Name(Name.FN_NS, "fn", "match");

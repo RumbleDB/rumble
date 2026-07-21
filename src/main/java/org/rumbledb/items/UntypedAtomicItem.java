@@ -10,11 +10,13 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class UntypedAtomicItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private String value;
 

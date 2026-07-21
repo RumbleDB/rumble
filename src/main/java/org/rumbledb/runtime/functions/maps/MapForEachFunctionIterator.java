@@ -32,6 +32,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +42,7 @@ import java.util.List;
  */
 public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
@@ -222,6 +224,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
      */
     private static class MutableKeyArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
 
+        @Serial
         private static final long serialVersionUID = 1L;
         private Item currentKey;
 
@@ -244,6 +247,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
      */
     private static class MutableValueSequenceIterator extends HybridRuntimeIterator {
 
+        @Serial
         private static final long serialVersionUID = 1L;
 
         private final List<Item> items;

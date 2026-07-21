@@ -18,6 +18,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
@@ -26,6 +27,7 @@ import java.util.List;
  * It retrieves and parses an XML document from a given URI.
  */
 public class DocFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator pathIterator;
 

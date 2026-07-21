@@ -8,9 +8,11 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.Serial;
 
 public class YamlSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")

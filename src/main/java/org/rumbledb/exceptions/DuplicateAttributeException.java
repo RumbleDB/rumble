@@ -22,6 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 /**
  * Exception for XQDY0025: It is a dynamic error if any attribute of a constructed element
  * does not have a name that is distinct from the names of all other attributes of the constructed element.
@@ -30,6 +32,7 @@ import org.rumbledb.errorcodes.ErrorCode;
  */
 public class DuplicateAttributeException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DuplicateAttributeException(String attributeName, ExceptionMetadata metadata) {

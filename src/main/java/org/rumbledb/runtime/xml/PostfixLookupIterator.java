@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,7 @@ import java.util.stream.Stream;
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private final RuntimeIterator lookupIterator;

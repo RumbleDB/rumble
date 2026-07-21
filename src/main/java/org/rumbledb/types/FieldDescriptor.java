@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.rumbledb.api.Item;
@@ -16,6 +17,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class FieldDescriptor implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public String name;

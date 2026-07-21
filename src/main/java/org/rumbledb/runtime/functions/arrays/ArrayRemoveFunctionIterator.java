@@ -17,6 +17,7 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -44,6 +45,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;

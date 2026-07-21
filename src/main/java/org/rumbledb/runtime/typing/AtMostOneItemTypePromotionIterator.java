@@ -18,10 +18,12 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
     private RuntimeIterator iterator;

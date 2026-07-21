@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
 
+import java.io.Serial;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     protected final SerializationParameters params;

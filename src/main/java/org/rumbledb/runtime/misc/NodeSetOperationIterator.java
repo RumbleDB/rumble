@@ -28,6 +28,8 @@ import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -36,6 +38,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private RuntimeIterator leftIterator;

@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -64,6 +65,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Item lookupKey;

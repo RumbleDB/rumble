@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -32,6 +33,7 @@ public class Base64BinaryItem implements Item {
     private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private byte[] value;
     private String stringValue;

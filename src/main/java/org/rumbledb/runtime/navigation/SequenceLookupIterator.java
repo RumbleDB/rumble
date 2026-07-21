@@ -38,6 +38,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +47,7 @@ import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private int position;

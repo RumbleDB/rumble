@@ -12,10 +12,12 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class AttributeItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name dmNodeName;
     private String stringValue;
