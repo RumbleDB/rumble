@@ -1,7 +1,9 @@
 package org.rumbledb.serialization;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
@@ -54,6 +56,7 @@ public class HtmlSerializer extends XmlSerializer {
         "hr",
         "img",
         "input",
+        "keygen",
         "link",
         "meta",
         "param",
@@ -61,6 +64,33 @@ public class HtmlSerializer extends XmlSerializer {
         "track",
         "wbr"
     );
+    private static final Set<String> HTML_BOOLEAN_ATTRIBUTES = Set.of(
+        "allowfullscreen",
+        "async",
+        "autofocus",
+        "autoplay",
+        "checked",
+        "controls",
+        "default",
+        "defer",
+        "disabled",
+        "formnovalidate",
+        "hidden",
+        "ismap",
+        "itemscope",
+        "loop",
+        "multiple",
+        "muted",
+        "nomodule",
+        "novalidate",
+        "open",
+        "playsinline",
+        "readonly",
+        "required",
+        "reversed",
+        "selected"
+    );
+    private static final Set<String> RAW_TEXT_ELEMENTS = Set.of("script", "style");
 
     public HtmlSerializer(SerializationParameters params) {
         super(params);
@@ -72,12 +102,27 @@ public class HtmlSerializer extends XmlSerializer {
     }
 
     @Override
+    protected void serializeDocumentNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        Item firstElementChild = findFirstElementChild(item.children());
+        if (firstElementChild != null) {
+            appendDocTypeIfNeeded(firstElementChild, sb);
+        }
+        for (Item child : item.children()) {
+            serialize(child, sb, indent, false);
+        }
+    }
+
+    @Override
     protected void appendDocTypeIfNeeded(Item element, StringBuilder sb) {
+        if (shouldEmitDefaultHtmlDoctype(element)) {
+            sb.append("<!DOCTYPE html>");
+            return;
+        }
         if (this.params.getDoctypeSystem() == null && this.params.getDoctypePublic() == null) {
             return;
         }
         sb.append("<!DOCTYPE ");
-        SerializerUtils.appendDmNodeNameLexical(sb, element);
+        sb.append(getSerializedElementName(element));
         if (this.params.getDoctypePublic() != null) {
             sb.append(" PUBLIC \"").append(this.params.getDoctypePublic()).append("\"");
             if (this.params.getDoctypeSystem() != null) {
@@ -91,20 +136,27 @@ public class HtmlSerializer extends XmlSerializer {
 
     @Override
     protected void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
-        if (item.nodeName() != null && item.nodeName().getNamespace() != null) {
+        if (item.nodeName() != null && !isHtmlElement(item)) {
             super.serializeElementNode(item, sb, indent, isTopLevel);
             return;
         }
+        boolean injectContentTypeMeta = shouldInjectContentTypeMeta(item);
         if (isTopLevel) {
             appendDocTypeIfNeeded(item, sb);
         }
         sb.append("<");
-        SerializerUtils.appendDmNodeNameLexical(sb, item);
-        for (Item namespace : item.declaredNamespaceNodes()) {
-            appendAttributeOrNamespaceNode(namespace, sb);
-        }
+        sb.append(getSerializedElementName(item));
+        appendElementNamespaces(item, sb);
         for (Item attribute : item.attributes()) {
             appendAttributeOrNamespaceNode(attribute, sb);
+        }
+        if (item.children().isEmpty() && injectContentTypeMeta) {
+            sb.append(">");
+            appendInjectedMetaElement(sb);
+            sb.append("</");
+            sb.append(getSerializedElementName(item));
+            sb.append(">");
+            return;
         }
         if (item.children().isEmpty() && isHtmlEmptyElement(item)) {
             sb.append(">");
@@ -112,11 +164,14 @@ public class HtmlSerializer extends XmlSerializer {
         }
         if (item.children().isEmpty()) {
             sb.append("></");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
+            sb.append(getSerializedElementName(item));
             sb.append(">");
             return;
         }
         sb.append(">");
+        if (injectContentTypeMeta) {
+            appendInjectedMetaElement(sb);
+        }
         List<Item> children = item.children();
         boolean indenting = shouldIndentElement(item);
         boolean containsElementLikeChild = containsElementLikeChild(children);
@@ -124,6 +179,9 @@ public class HtmlSerializer extends XmlSerializer {
         boolean hasSignificantTextChild = hasSignificantTextChild(children);
         String childIndent = nextIndent(indent);
         for (Item child : children) {
+            if (shouldSkipExistingContentTypeMeta(item, child)) {
+                continue;
+            }
             if (
                 indenting
                     && containsElementLikeChild
@@ -139,7 +197,7 @@ public class HtmlSerializer extends XmlSerializer {
             sb.append("\n").append(indent);
         }
         sb.append("</");
-        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append(getSerializedElementName(item));
         sb.append(">");
     }
 
@@ -162,6 +220,46 @@ public class HtmlSerializer extends XmlSerializer {
             .replace("&", "&amp;")
             .replace("<", "&lt;")
             .replace(">", "&gt;");
+    }
+
+    @Override
+    protected void appendTextNode(Item item, StringBuilder sb) {
+        Item parent = item.parent();
+        if (parent != null && isRawTextElement(parent)) {
+            sb.append(item.getStringValue());
+            return;
+        }
+        super.appendTextNode(item, sb);
+    }
+
+    @Override
+    protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb) {
+        if (item.isNamespaceNode()) {
+            super.appendAttributeOrNamespaceNode(item, sb);
+            return;
+        }
+        if (shouldMinimizeBooleanAttribute(item)) {
+            sb.append(" ");
+            sb.append(item.nodeName().getLocalName());
+            return;
+        }
+        super.appendAttributeOrNamespaceNode(item, sb);
+    }
+
+    @Override
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        if (item.isProcessingInstructionNode()) {
+            sb.append("<?");
+            SerializerUtils.appendDmNodeNameLexical(sb, item);
+            String content = item.getStringValue();
+            if (content != null && !content.isEmpty()) {
+                sb.append(" ");
+                sb.append(content);
+            }
+            sb.append(">");
+            return;
+        }
+        super.serialize(item, sb, indent, isTopLevel);
     }
 
     @Override
@@ -199,11 +297,244 @@ public class HtmlSerializer extends XmlSerializer {
         return false;
     }
 
+    @Override
+    protected boolean isCDataSectionElement(Item element) {
+        if (element == null || !element.isElementNode() || element.nodeName() == null) {
+            return false;
+        }
+        if (isHtmlElement(element)) {
+            if (isHtml5Version()) {
+                return false;
+            }
+            String prefix = element.nodeName().getPrefix();
+            if (prefix == null || prefix.isEmpty()) {
+                return false;
+            }
+            return matchesExactExpandedQNameEntry(this.params.getCdataSectionElements(), element);
+        }
+        return matchesExpandedQNameEntry(this.params.getCdataSectionElements(), element);
+    }
+
     private boolean isHtmlFamilyNamespace(String namespace) {
         return namespace == null
             || XHTML_NS.equals(namespace)
             || SVG_NS.equals(namespace)
             || MATHML_NS.equals(namespace);
+    }
+
+    private boolean matchesExactExpandedQNameEntry(Set<String> entries, Item element) {
+        if (entries == null || entries.isEmpty() || element == null || element.nodeName() == null) {
+            return false;
+        }
+        String namespace = element.nodeName().getNamespace();
+        String localName = element.nodeName().getLocalName();
+        String expandedName = namespace == null
+            ? localName
+            : "Q{" + namespace + "}" + localName;
+        return entries.contains(expandedName);
+    }
+
+    private void appendElementNamespaces(Item item, StringBuilder sb) {
+        boolean emittedDefaultNamespaceForNormalizedElement = false;
+        if (shouldApplyPrefixNormalization(item)) {
+            sb.append(" xmlns=\"");
+            sb.append(escapeAttribute(item.nodeName().getNamespace()));
+            sb.append("\"");
+            emittedDefaultNamespaceForNormalizedElement = true;
+        }
+        for (Item namespace : item.declaredNamespaceNodes()) {
+            if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
+                continue;
+            }
+            appendAttributeOrNamespaceNode(namespace, sb);
+        }
+    }
+
+    private boolean shouldSkipNamespaceDeclaration(
+            Item element,
+            Item namespace,
+            boolean emittedDefaultNamespaceForNormalizedElement
+    ) {
+        if (!namespace.isNamespaceNode() || element.nodeName() == null) {
+            return false;
+        }
+        String prefix = namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName();
+        String elementNamespace = element.nodeName().getNamespace();
+        String uri = namespace.getStringValue();
+        if (uri == null) {
+            return false;
+        }
+        if (XHTML_NS.equals(elementNamespace) && XHTML_NS.equals(uri)) {
+            if (
+                isHtml5Version()
+                    && prefix.isEmpty()
+                    && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty())
+            ) {
+                return true;
+            }
+            if (
+                isHtml5Version()
+                    && shouldApplyPrefixNormalization(element)
+                    && prefix.equals(element.nodeName().getPrefix())
+            ) {
+                return true;
+            }
+            if (
+                isHtml5Version()
+                    && shouldApplyPrefixNormalization(element)
+                    && prefix.isEmpty()
+                    && emittedDefaultNamespaceForNormalizedElement
+            ) {
+                return true;
+            }
+        }
+        if (shouldApplyPrefixNormalization(element) && element.nodeName().getNamespace().equals(uri)) {
+            if (prefix.equals(element.nodeName().getPrefix())) {
+                return true;
+            }
+            if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean shouldEmitDefaultHtmlDoctype(Item element) {
+        if (
+            element == null
+                || !hasLocalName(element, "html")
+                || this.params.getDoctypeSystem() != null
+                || this.params.getDoctypePublic() != null
+        ) {
+            return false;
+        }
+        return isHtml5Version() && isHtmlElement(element);
+    }
+
+    private boolean shouldInjectContentTypeMeta(Item item) {
+        return this.params.getIncludeContentType() && isHtmlElement(item) && hasLocalName(item, "head");
+    }
+
+    private boolean shouldSkipExistingContentTypeMeta(Item headElement, Item child) {
+        if (!shouldInjectContentTypeMeta(headElement) || !child.isElementNode() || !isHtmlElement(child)) {
+            return false;
+        }
+        if (!hasLocalName(child, "meta")) {
+            return false;
+        }
+        for (Item attribute : child.attributes()) {
+            Name name = attribute.nodeName();
+            if (name == null || name.getNamespace() != null) {
+                continue;
+            }
+            if (!"http-equiv".equalsIgnoreCase(name.getLocalName())) {
+                continue;
+            }
+            if ("content-type".equalsIgnoreCase(attribute.getStringValue().trim())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void appendInjectedMetaElement(StringBuilder sb) {
+        sb.append("<meta http-equiv=\"Content-Type\" content=\"");
+        sb.append(escapeAttribute(getEffectiveMediaType()));
+        sb.append("; charset=");
+        sb.append(this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding());
+        sb.append("\">");
+    }
+
+    private String getEffectiveMediaType() {
+        if (this.params.getMediaType() != null && !this.params.getMediaType().isEmpty()) {
+            return this.params.getMediaType();
+        }
+        return "text/html";
+    }
+
+    private boolean isRawTextElement(Item item) {
+        return isHtmlElement(item)
+            && item.nodeName() != null
+            && RAW_TEXT_ELEMENTS.contains(item.nodeName().getLocalName().toLowerCase());
+    }
+
+    private boolean shouldMinimizeBooleanAttribute(Item attribute) {
+        if (attribute == null || attribute.nodeName() == null || attribute.nodeName().getNamespace() != null) {
+            return false;
+        }
+        Item parent = attribute.parent();
+        if (!isHtmlElement(parent)) {
+            return false;
+        }
+        String localName = attribute.nodeName().getLocalName();
+        if (localName == null || !HTML_BOOLEAN_ATTRIBUTES.contains(localName.toLowerCase())) {
+            return false;
+        }
+        String value = attribute.getStringValue();
+        return value != null && value.equalsIgnoreCase(localName);
+    }
+
+    private Item findFirstElementChild(List<Item> children) {
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                return child;
+            }
+        }
+        return null;
+    }
+
+    private String getSerializedElementName(Item item) {
+        if (item == null || item.nodeName() == null) {
+            return "";
+        }
+        Name name = item.nodeName();
+        if (XHTML_NS.equals(name.getNamespace()) && (name.getPrefix() == null || name.getPrefix().isEmpty())) {
+            return name.getLocalName();
+        }
+        if (shouldApplyPrefixNormalization(item)) {
+            return name.getLocalName();
+        }
+        if (name.getPrefix() != null && !name.getPrefix().isEmpty()) {
+            return name.getPrefix() + ":" + name.getLocalName();
+        }
+        return name.getLocalName();
+    }
+
+    private boolean isHtmlElement(Item item) {
+        if (item == null || !item.isElementNode() || item.nodeName() == null) {
+            return false;
+        }
+        String namespace = item.nodeName().getNamespace();
+        return namespace == null || XHTML_NS.equals(namespace);
+    }
+
+    private boolean shouldApplyPrefixNormalization(Item item) {
+        if (!isHtml5Version() || item == null || !item.isElementNode() || item.nodeName() == null) {
+            return false;
+        }
+        String namespace = item.nodeName().getNamespace();
+        if (SVG_NS.equals(namespace) || MATHML_NS.equals(namespace)) {
+            return true;
+        }
+        return XHTML_NS.equals(namespace)
+            && item.nodeName().getPrefix() != null
+            && !item.nodeName().getPrefix().isEmpty();
+    }
+
+    private boolean hasLocalName(Item item, String localName) {
+        return item != null
+            && item.nodeName() != null
+            && item.nodeName().getLocalName().equalsIgnoreCase(localName);
+    }
+
+    @Override
+    protected boolean containsElementLikeChild(List<Item> children) {
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String escapeHtmlUriAttribute(String value) {
@@ -230,6 +561,9 @@ public class HtmlSerializer extends XmlSerializer {
         if (!item.isElementNode() || item.nodeName() == null) {
             return false;
         }
+        if (!isHtml5Version() && XHTML_NS.equals(item.nodeName().getNamespace())) {
+            return false;
+        }
         String localName = item.nodeName().getLocalName();
         if (localName == null) {
             return false;
@@ -243,6 +577,13 @@ public class HtmlSerializer extends XmlSerializer {
 
     private boolean isHtml5Version() {
         String version = this.params.getVersion();
-        return version != null && version.trim().startsWith("5");
+        if (version == null || version.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(version.trim())) == 0;
+        } catch (NumberFormatException e) {
+            return version.trim().startsWith("5");
+        }
     }
 }
