@@ -161,4 +161,35 @@ public class JavaAPITest {
         Assertions.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
     }
 
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesUnencodableSupplementaryCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        String supplementaryCharacter = new String(Character.toChars(0x10330));
+        String query = String.join(
+            "\n",
+            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+            "declare option output:method \"json\";",
+            "declare option output:encoding \"US-ASCII\";",
+            "\"" + supplementaryCharacter + "\""
+        );
+
+        Assertions.assertEquals("\"\\uD800\\uDF30\"", rumble.runQuery(query).serialize());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesEuroCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        String query = String.join(
+            "\n",
+            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+            "declare option output:method \"json\";",
+            "declare option output:encoding \"US-ASCII\";",
+            "\"€\""
+        );
+
+        Assertions.assertEquals("\"\\u20AC\"", rumble.runQuery(query).serialize());
+    }
+
 }

@@ -1,6 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -64,7 +63,9 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(":");
+                sb.append("\"");
+                SerializerUtils.appendJsonEscapedString(sb, key, this.params);
+                sb.append("\"").append(":");
                 if (this.params.getIndent()) {
                     sb.append(" ");
                     serialize(value, sb, indent + "  ", false);
@@ -127,7 +128,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                 sb.append(nsPrefix);
                 sb.append("=\"");
             }
-            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
+            sb.append(org.apache.commons.text.StringEscapeUtils.escapeXml11(ns.getUri()));
             sb.append("\"");
             return;
         }
@@ -136,7 +137,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             SerializerUtils.appendDmNodeNameLexical(sb, item);
             sb.append("=");
             sb.append("\"");
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
+            sb.append(org.apache.commons.text.StringEscapeUtils.escapeXml11(item.getStringValue()));
             sb.append("\"");
             return;
         }
@@ -192,7 +193,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
         if (isStringValue) {
             sb.append("\"");
-            sb.append(StringEscapeUtils.escapeJson(item.getStringValue()));
+            SerializerUtils.appendJsonEscapedString(sb, item.getStringValue(), this.params);
             sb.append("\"");
         } else {
             sb.append(item.getStringValue());
