@@ -344,53 +344,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         }
         String normalized = applyNormalization(pendingUnmapped.toString());
         pendingUnmapped.setLength(0);
-        for (int index = 0; index < normalized.length();) {
-            int codePoint = normalized.codePointAt(index);
-            switch (codePoint) {
-                case '"':
-                    sb.append("\\\"");
-                    break;
-                case '\\':
-                    sb.append("\\\\");
-                    break;
-                case '/':
-                    sb.append("\\/");
-                    break;
-                case '\b':
-                    sb.append("\\b");
-                    break;
-                case '\f':
-                    sb.append("\\f");
-                    break;
-                case '\n':
-                    sb.append("\\n");
-                    break;
-                case '\r':
-                    sb.append("\\r");
-                    break;
-                case '\t':
-                    sb.append("\\t");
-                    break;
-                default:
-                    if ((codePoint >= 0x01 && codePoint <= 0x1F) || (codePoint >= 0x7F && codePoint <= 0x9F)) {
-                        appendUnicodeEscape(codePoint, sb);
-                    } else {
-                        sb.appendCodePoint(codePoint);
-                    }
-                    break;
-            }
-            index += Character.charCount(codePoint);
-        }
-    }
-
-    private void appendUnicodeEscape(int codePoint, StringBuilder sb) {
-        if (codePoint <= 0xFFFF) {
-            sb.append(String.format("\\u%04X", codePoint));
-            return;
-        }
-        for (char surrogate : Character.toChars(codePoint)) {
-            sb.append(String.format("\\u%04X", (int) surrogate));
-        }
+        SerializerUtils.appendJsonEscapedString(sb, normalized, this.params);
     }
 
     private RumbleException jsonSerializationError(String message, String errorCode) {
