@@ -289,10 +289,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
-    public void show() {
-        System.err.println(this);
-    }
-
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
