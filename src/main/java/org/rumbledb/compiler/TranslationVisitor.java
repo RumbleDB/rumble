@@ -2389,6 +2389,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         } else {
             // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
             String text = this.jsoniqTokenStream.getText(ctx.getSourceInterval());
+            if (text.startsWith("<!--") && text.endsWith("-->")) {
+                return new DirectCommentConstructorExpression(
+                        text.substring(4, text.length() - 3),
+                        createMetadataFromContext(ctx)
+                );
+            }
             if (ctx.CDATA() != null) {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));

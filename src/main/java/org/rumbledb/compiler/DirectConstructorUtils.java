@@ -15,6 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 
 /** Shared processing for JSONiq and XQuery direct element and attribute constructors. */
@@ -78,6 +79,22 @@ final class DirectConstructorUtils {
             this.text = null;
             this.firstTextTree = null;
             this.lastTextTree = null;
+        }
+    }
+
+    private static final class TextRunState {
+        private final StringBuilder text;
+        private final ExceptionMetadata firstTextMetadata;
+        private final boolean boundaryWhitespaceOnly;
+
+        private TextRunState(
+                StringBuilder text,
+                ExceptionMetadata firstTextMetadata,
+                boolean boundaryWhitespaceOnly
+        ) {
+            this.text = text;
+            this.firstTextMetadata = firstTextMetadata;
+            this.boundaryWhitespaceOnly = boundaryWhitespaceOnly;
         }
     }
 
@@ -201,12 +218,61 @@ final class DirectConstructorUtils {
                     firstTextMetadata = textNode.getMetadata();
                     boundaryWhitespaceOnly = true;
                 }
-                boundaryWhitespaceOnly = appendBoundarySegment(
-                    text,
-                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                    true,
-                    boundaryWhitespaceOnly
-                );
+                String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+                if (textNode.getContent().contains("<!--") && textNode.getContent().contains("-->")) {
+                    if (isDirectCommentLiteral(hiddenText)) {
+                        flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+                        text = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                        boundaryWhitespaceOnly = true;
+                        content.add(
+                            new DirectCommentConstructorExpression(
+                                    hiddenText.substring(4, hiddenText.length() - 3),
+                                    ExceptionMetadata.EMPTY_METADATA
+                            )
+                        );
+                    } else {
+                        boundaryWhitespaceOnly = appendBoundarySegment(
+                            text,
+                            hiddenText,
+                            true,
+                            boundaryWhitespaceOnly
+                        );
+                    }
+                    TextRunState state = appendTextWithEmbeddedComments(
+                        content,
+                        text,
+                        textNode.getContent(),
+                        firstTextMetadata,
+                        textNode.getMetadata(),
+                        boundaryWhitespaceOnly,
+                        preserveBoundarySpace
+                    );
+                    text = state.text;
+                    firstTextMetadata = state.firstTextMetadata;
+                    boundaryWhitespaceOnly = state.boundaryWhitespaceOnly;
+                    previousToken = child.getStop();
+                    continue;
+                }
+                if (isDirectCommentLiteral(hiddenText)) {
+                    flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+                    text = new StringBuilder();
+                    firstTextMetadata = textNode.getMetadata();
+                    boundaryWhitespaceOnly = true;
+                    content.add(
+                        new DirectCommentConstructorExpression(
+                                hiddenText.substring(4, hiddenText.length() - 3),
+                                ExceptionMetadata.EMPTY_METADATA
+                        )
+                    );
+                } else {
+                    boundaryWhitespaceOnly = appendBoundarySegment(
+                        text,
+                        hiddenText,
+                        true,
+                        boundaryWhitespaceOnly
+                    );
+                }
                 text.append(textNode.getContent());
                 boundaryWhitespaceOnly = boundaryWhitespaceOnly
                     && textNode.isBoundaryWhitespace()
@@ -254,6 +320,60 @@ final class DirectConstructorUtils {
             return;
         }
         content.add(new TextNodeExpression(text.toString(), metadata));
+    }
+
+    private static boolean isDirectCommentLiteral(String text) {
+        return text != null && text.startsWith("<!--") && text.endsWith("-->");
+    }
+
+    private static TextRunState appendTextWithEmbeddedComments(
+            List<Expression> content,
+            StringBuilder textBuilder,
+            String sourceText,
+            ExceptionMetadata firstTextMetadata,
+            ExceptionMetadata fragmentMetadata,
+            boolean boundaryWhitespaceOnly,
+            boolean preserveBoundarySpace
+    ) {
+        int position = 0;
+        while (position < sourceText.length()) {
+            int commentStart = sourceText.indexOf("<!--", position);
+            if (commentStart < 0) {
+                String trailingText = sourceText.substring(position);
+                textBuilder.append(trailingText);
+                return new TextRunState(
+                        textBuilder,
+                        firstTextMetadata,
+                        boundaryWhitespaceOnly && isWhitespaceOnly(trailingText)
+                );
+            }
+            String prefix = sourceText.substring(position, commentStart);
+            textBuilder.append(prefix);
+            boundaryWhitespaceOnly = boundaryWhitespaceOnly && isWhitespaceOnly(prefix);
+            flushTextNode(content, textBuilder, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+            textBuilder = new StringBuilder();
+            firstTextMetadata = fragmentMetadata;
+            boundaryWhitespaceOnly = true;
+
+            int commentEnd = sourceText.indexOf("-->", commentStart);
+            if (commentEnd < 0) {
+                String trailingText = sourceText.substring(commentStart);
+                textBuilder.append(trailingText);
+                return new TextRunState(
+                        textBuilder,
+                        firstTextMetadata,
+                        boundaryWhitespaceOnly && isWhitespaceOnly(trailingText)
+                );
+            }
+            content.add(
+                new DirectCommentConstructorExpression(
+                        sourceText.substring(commentStart + 4, commentEnd),
+                        ExceptionMetadata.EMPTY_METADATA
+                )
+            );
+            position = commentEnd + 3;
+        }
+        return new TextRunState(textBuilder, firstTextMetadata, boundaryWhitespaceOnly);
     }
 
     private static boolean appendBoundarySegment(
