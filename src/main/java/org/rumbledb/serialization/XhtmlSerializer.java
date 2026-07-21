@@ -234,14 +234,40 @@ public class XhtmlSerializer extends XmlSerializer {
         }
 
         sb.append(">");
+        List<Item> children = item.children();
+        boolean indenting = shouldIndentElement(item);
+        boolean containsElementLikeChild = injectContentTypeMeta || containsElementLikeChild(children);
+        boolean preserveWhitespace = mustPreserveWhitespace(item);
+        boolean hasSignificantTextChild = hasSignificantTextChild(children);
+        String childIndent = nextIndent(indent);
         if (injectContentTypeMeta) {
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+            ) {
+                sb.append("\n").append(childIndent);
+            }
             appendInjectedMetaElement(item, sb);
         }
-        for (Item child : item.children()) {
+        for (Item child : children) {
             if (shouldSkipExistingContentTypeMeta(item, child)) {
                 continue;
             }
-            serialize(child, sb, indent, false);
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+                    && shouldIndentBeforeChild(child)
+            ) {
+                sb.append("\n").append(childIndent);
+            }
+            serialize(child, sb, childIndent, false);
+        }
+        if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
+            sb.append("\n").append(indent);
         }
         sb.append("</");
         sb.append(serializedElementName);

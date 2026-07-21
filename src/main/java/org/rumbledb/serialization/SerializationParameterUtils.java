@@ -327,7 +327,11 @@ public final class SerializationParameterUtils {
         }
         int colon = token.indexOf(':');
         if (colon < 0) {
-            return token;
+            String namespace = resolveNamespace("", contextNode);
+            if (namespace == null || namespace.isEmpty()) {
+                return token;
+            }
+            return "Q{" + namespace + "}" + token;
         }
         String prefix = token.substring(0, colon);
         String localName = token.substring(colon + 1);

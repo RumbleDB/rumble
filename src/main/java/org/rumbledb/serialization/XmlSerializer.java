@@ -8,7 +8,10 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.NamespaceItem;
 
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
 import java.util.List;
+import java.util.Map;
 
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
@@ -413,18 +416,32 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected void appendCDataText(String value, StringBuilder sb) {
-        int start = 0;
-        while (start <= value.length()) {
-            int split = value.indexOf("]]>", start);
-            String segment = split < 0
-                ? value.substring(start)
-                : value.substring(start, split + 2);
-            sb.append("<![CDATA[").append(segment).append("]]>");
-            if (split < 0) {
-                break;
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        StringBuilder cdataSegment = new StringBuilder();
+        for (int index = 0; index < value.length();) {
+            int codePoint = value.codePointAt(index);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                flushCDataSegment(cdataSegment, sb);
+                sb.append(replacement);
+            } else if (
+                mustSerializeAsCharacterReference(codePoint, false) || !isEncodableInSelectedEncoding(codePoint)
+            ) {
+                flushCDataSegment(cdataSegment, sb);
+                appendEscapedXmlCodePoint(sb, codePoint, false);
+            } else if (!isRepresentableInSelectedXmlVersion(codePoint)) {
+                throw new RumbleException(
+                        "Character #" + codePoint + " is not representable in XML " + getEffectiveVersion("1.0") + ".",
+                        ErrorCode.CodepointNotValidErrorCode,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            } else {
+                cdataSegment.appendCodePoint(codePoint);
             }
-            start = split + 2;
+            index += Character.charCount(codePoint);
         }
+        flushCDataSegment(cdataSegment, sb);
     }
 
     protected RumbleException serializationError(String message, String errorCode) {
@@ -440,7 +457,16 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             return value;
         }
         StringBuilder result = new StringBuilder(value.length());
-        value.codePoints().forEach(codePoint -> appendEscapedXmlCodePoint(result, codePoint, inAttribute));
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        value.codePoints().forEach(codePoint -> {
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                result.append(replacement);
+            } else {
+                appendEscapedXmlCodePoint(result, codePoint, inAttribute);
+            }
+        });
         return result.toString();
     }
 
@@ -476,6 +502,11 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
                     ErrorCode.CodepointNotValidErrorCode,
                     ExceptionMetadata.EMPTY_METADATA
             );
+        }
+
+        if (!isEncodableInSelectedEncoding(codePoint)) {
+            appendDecimalCharacterReference(result, codePoint);
+            return;
         }
 
         result.appendCodePoint(codePoint);
@@ -514,9 +545,35 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             || (codePoint >= 0x10000 && codePoint <= 0x10FFFF);
     }
 
+    private boolean isEncodableInSelectedEncoding(int codePoint) {
+        String encoding = this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding();
+        CharsetEncoder encoder = Charset.forName(encoding).newEncoder();
+        return encoder.canEncode(new String(Character.toChars(codePoint)));
+    }
+
     private void appendDecimalCharacterReference(StringBuilder result, int codePoint) {
         result.append("&#");
         result.append(codePoint);
         result.append(";");
+    }
+
+    private void flushCDataSegment(StringBuilder cdataSegment, StringBuilder sb) {
+        if (cdataSegment.isEmpty()) {
+            return;
+        }
+        String value = cdataSegment.toString();
+        int start = 0;
+        while (start <= value.length()) {
+            int split = value.indexOf("]]>", start);
+            String segment = split < 0
+                ? value.substring(start)
+                : value.substring(start, split + 2);
+            sb.append("<![CDATA[").append(segment).append("]]>");
+            if (split < 0) {
+                break;
+            }
+            start = split + 2;
+        }
+        cdataSegment.setLength(0);
     }
 }
