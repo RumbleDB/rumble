@@ -20,6 +20,7 @@
 
 package org.rumbledb.context;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.LinkedHashSet;
@@ -55,6 +56,7 @@ import lombok.Setter;
 @NoArgsConstructor // Kryo uses non-arg constructor to deserialize objects
 public class StaticContext implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Getter
@@ -88,7 +90,6 @@ public class StaticContext implements Serializable, KryoSerializable {
      */
     private transient String defaultFunctionNamespaceUri;
 
-    // TODO: should these be transient?
     @Getter
     @Setter
     private transient SequenceType contextItemStaticType;
@@ -426,7 +427,6 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     /**
      * Returns the default serialization parameters stored in the static context.
-     *
      * Spec references:
      * 
      * <ul>
@@ -625,13 +625,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
         this.ensureRootCollationsInitialized();
         return this.defaultCollation;
-    }
-
-    public StaticContext getModuleContext() {
-        if (this.parent != null) {
-            return this.parent.getModuleContext();
-        }
-        return this;
     }
 
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
