@@ -199,7 +199,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     private boolean allowDuplicateNames;
 
     public enum JsonNodeOutputMethod {
-        UNSPECIFIED, JSON, XML, HTML, TEXT
+        UNSPECIFIED, JSON, XML, XHTML, HTML, TEXT
     }
 
     /**

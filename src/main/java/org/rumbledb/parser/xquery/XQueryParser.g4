@@ -149,7 +149,7 @@ schemaPrefix
    ;
 
 moduleImport
-   : KW_IMPORT KW_MODULE (KW_NAMESPACE prefix = ncName EQUAL)? targetNamespace = uriLiteral (KW_AT uriLiteral (COMMA uriLiteral)*)?
+   : KW_IMPORT KW_MODULE (KW_NAMESPACE prefix = ncName EQUAL)? targetNamespace = uriLiteral (KW_AT locations += uriLiteral (COMMA locations += uriLiteral)*)?
    ;
 
 namespaceDecl
