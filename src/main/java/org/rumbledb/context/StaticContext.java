@@ -116,14 +116,10 @@ public class StaticContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration configuration;
 
     public StaticContext() {
-        initializeRoot(null, null);
+        this(null, null);
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
-        initializeRoot(staticBaseURI, configuration);
-    }
-
-    private void initializeRoot(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.staticBaseURI = staticBaseURI;
         this.configuration = configuration;
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -136,10 +132,17 @@ public class StaticContext implements Serializable, KryoSerializable {
         initializeRootCollations();
     }
 
+    /**
+     * Initialize a child static context
+     * 
+     * @param parent the parent static context
+     */
     public StaticContext(StaticContext parent) {
         this.parent = Objects.requireNonNull(parent, "parent");
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
-        // All other nullable fields inherit their values through the parent chain.
+
+        // Local maps are initialized at declaration.
+        // Other fields inherit through parent lookup.
     }
 
     private void initializeRootCollations() {
