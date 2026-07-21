@@ -48,9 +48,9 @@ import lombok.Setter;
 public class StaticContext {
 
     @Getter
-    private Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
+    private final Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
 
-    private Map<String, String> staticallyKnownNamespaces = new HashMap<>();
+    private final Map<String, String> staticallyKnownNamespaces = new HashMap<>();
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
 
     @Getter
@@ -80,9 +80,9 @@ public class StaticContext {
     @Getter
     private SerializationParameters serializationParameters = SerializationParameters.defaults();
 
-    private Set<String> explicitSerializationParameterNames = new LinkedHashSet<>();
+    private final Set<String> explicitSerializationParameterNames = new LinkedHashSet<>();
     private boolean isQuerySideEffecting;
-    private Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
     private String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
 
     /**
@@ -94,7 +94,7 @@ public class StaticContext {
     @Getter
     @Setter
     private SequenceType contextItemStaticType;
-    private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures =
+    private final Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures =
         new HashMap<>();
     private static final Map<String, String> DEFAULT_BINDINGS = Map.ofEntries(
         Map.entry("local", Name.LOCAL_NS),
@@ -112,7 +112,7 @@ public class StaticContext {
     );
 
     private DecimalFormatDefinition defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
-    private Map<Name, DecimalFormatDefinition> decimalFormats = new HashMap<>();
+    private final Map<Name, DecimalFormatDefinition> decimalFormats = new HashMap<>();
 
     @Getter
     @Setter
