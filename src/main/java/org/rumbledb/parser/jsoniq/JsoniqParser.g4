@@ -1539,3 +1539,4 @@ truncateCollectionExpr
 editCollectionExpr
    : KW_EDIT target = exprSingle KW_INTO content = exprSingle KW_IN KW_COLLECTION
    ;
+
