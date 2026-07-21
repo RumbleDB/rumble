@@ -203,10 +203,10 @@ public class JavaAPITest {
             RumbleException.class,
             () -> rumble.runQueryToString(
                 """
-                declare namespace output = "%s";
-                declare option output:method "text";
-                map { "a" : 1 }
-                """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
+                        declare namespace output = "%s";
+                        declare option output:method "text";
+                        map { "a" : 1 }
+                        """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
             )
         );
         Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
