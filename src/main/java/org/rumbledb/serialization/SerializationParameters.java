@@ -399,20 +399,21 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     /**
-     * Whether the requested HTML version is exactly 5.0.
+     * Whether the requested HTML version denotes HTML5.
      *
-     * This helper is intentionally lexical rather than numeric because the
-     * serializer's HTML5-specific branches are keyed off the spec's explicit
-     * comparisons to the string value {@code 5.0}.
+     * This check is intentionally narrow: we recognize the specific lexical forms
+     * that should trigger the HTML5 branch ({@code 5} and {@code 5.0}) without
+     * treating arbitrary version strings as decimals.
      *
-     * @return {@code true} if the requested HTML version is exactly {@code "5.0"}
+     * @return {@code true} if the requested HTML version is {@code "5"} or {@code "5.0"}
      */
     public boolean isRequestedHtml5Version() {
         String requestedHtmlVersion = getRequestedHtmlVersion();
         if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
             return false;
         }
-        return "5.0".equals(requestedHtmlVersion.trim());
+        String trimmed = requestedHtmlVersion.trim();
+        return "5".equals(trimmed) || "5.0".equals(trimmed);
     }
 
     public boolean getByteOrderMark() {
