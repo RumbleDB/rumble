@@ -197,51 +197,42 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public boolean isInScope(Name varName) {
-        boolean found = false;
-        if (this.inScopeVariables.containsKey(varName)) {
-            return true;
-        } else {
-            StaticContext ancestor = this.parent;
-            while (ancestor != null) {
-                found = found || ancestor.getInScopeVariables().containsKey(varName);
-                ancestor = ancestor.parent;
+        StaticContext context = this;
+        while (context != null) {
+            if (context.inScopeVariables.containsKey(varName)) {
+                return true;
             }
+            context = context.parent;
         }
-        return found;
+        return false;
     }
 
     private InScopeVariable getInScopeVariable(Name varName) {
-        if (this.inScopeVariables.containsKey(varName)) {
-            return this.inScopeVariables.get(varName);
-        } else {
-            StaticContext ancestor = this.parent;
-            while (ancestor != null) {
-                if (ancestor.inScopeVariables.containsKey(varName)) {
-                    return ancestor.inScopeVariables.get(varName);
-                }
-                ancestor = ancestor.parent;
+        StaticContext context = this;
+        while (context != null) {
+            InScopeVariable variable = context.inScopeVariables.get(varName);
+            if (variable != null) {
+                return variable;
             }
-            throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
+            context = context.parent;
         }
+        throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
     }
 
     public FunctionSignature getFunctionSignature(FunctionIdentifier identifier) {
-        if (this.staticallyKnownFunctionSignatures.containsKey(identifier)) {
-            return this.staticallyKnownFunctionSignatures.get(identifier);
-        } else {
-            StaticContext ancestor = this.parent;
-            while (ancestor != null) {
-                if (ancestor.staticallyKnownFunctionSignatures.containsKey(identifier)) {
-                    return ancestor.staticallyKnownFunctionSignatures.get(identifier);
-                }
-                ancestor = ancestor.parent;
+        StaticContext context = this;
+        while (context != null) {
+            FunctionSignature signature = context.staticallyKnownFunctionSignatures.get(identifier);
+            if (signature != null) {
+                return signature;
             }
-            throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    identifier.getArity(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+            context = context.parent;
         }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
