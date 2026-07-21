@@ -519,14 +519,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public void importModuleContext(StaticContext moduleContext) {
-        for (Name name : moduleContext.inScopeVariables.keySet()) {
-            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-            this.inScopeVariables.put(name, variable);
-        }
-        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
-            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-            this.staticallyKnownFunctionSignatures.put(fi, signature);
-        }
+        this.inScopeVariables.putAll(moduleContext.inScopeVariables);
+        this.staticallyKnownFunctionSignatures.putAll(moduleContext.staticallyKnownFunctionSignatures);
     }
 
     public void setUserDefinedFunctionsExecutionModes(
