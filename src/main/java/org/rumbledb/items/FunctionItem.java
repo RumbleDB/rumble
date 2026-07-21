@@ -88,6 +88,23 @@ public class FunctionItem implements Item {
         super();
     }
 
+    /**
+     * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
+     * bodies are created from its serialized snapshot and retained Spark ML bodies are intentionally shared. The
+     * closure maps, on the other hand, must be per value because lookup binds the current dynamic context into them.
+     */
+    private FunctionItem(FunctionItem source) {
+        this.identifier = source.identifier;
+        this.parameterNames = source.parameterNames;
+        this.signature = source.signature;
+        this.bodyIteratorFactory = source.bodyIteratorFactory;
+        this.dynamicModuleContext = source.dynamicModuleContext;
+        this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
+        this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
+        this.dataFrameVariablesInClosure = new HashMap<>(source.dataFrameVariablesInClosure);
+        this.isBuiltin = source.isBuiltin;
+    }
+
     public FunctionItem(
             FunctionIdentifier identifier,
             List<Name> parameterNames,
@@ -230,6 +247,16 @@ public class FunctionItem implements Item {
 
     public RuntimeIterator createBodyIterator() {
         return this.bodyIteratorFactory.createExecutionInstance();
+    }
+
+    /**
+     * Returns an independent function value without serializing its iterator tree.
+     *
+     * This is suitable for named-function lookup, which only extends the closure of the returned value. The closure
+     * maps are copied while immutable function metadata and the body factory are shared.
+     */
+    public FunctionItem copyForLookup() {
+        return new FunctionItem(this);
     }
 
     private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
