@@ -78,7 +78,6 @@ public class StaticContext {
      * </ul>
      */
     @Getter
-    @Setter
     private SerializationParameters serializationParameters = SerializationParameters.defaults();
 
     private Set<String> explicitSerializationParameterNames = new LinkedHashSet<>();
