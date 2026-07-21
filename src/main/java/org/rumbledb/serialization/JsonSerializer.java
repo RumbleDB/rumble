@@ -75,7 +75,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                appendJsonString(prepareStringForJson(key), sb);
+                appendJsonString(key, sb);
                 sb.append(":");
                 if (this.params.getIndent()) {
                     sb.append(" ");
@@ -273,37 +273,6 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             serializer = new XmlSerializer(nodeParams);
         }
         return serializer.serialize(item);
-    }
-
-    private String prepareStringForJson(String value) {
-        if (value == null) {
-            return "";
-        }
-        StringBuilder result = new StringBuilder();
-        StringBuilder pendingUnmapped = new StringBuilder();
-        Map<String, String> characterMaps = this.params.getCharacterMaps();
-        for (int index = 0; index < value.length();) {
-            int codePoint = value.codePointAt(index);
-            String current = new String(Character.toChars(codePoint));
-            String replacement = characterMaps == null ? null : characterMaps.get(current);
-            if (replacement != null) {
-                appendNormalizedUnmappedRun(pendingUnmapped, result);
-                result.append(replacement);
-            } else {
-                pendingUnmapped.append(current);
-            }
-            index += Character.charCount(codePoint);
-        }
-        appendNormalizedUnmappedRun(pendingUnmapped, result);
-        return result.toString();
-    }
-
-    private void appendNormalizedUnmappedRun(StringBuilder pendingUnmapped, StringBuilder target) {
-        if (pendingUnmapped.length() == 0) {
-            return;
-        }
-        target.append(applyNormalization(pendingUnmapped.toString()));
-        pendingUnmapped.setLength(0);
     }
 
     private String applyNormalization(String value) {

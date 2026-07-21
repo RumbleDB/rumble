@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class SerializationParameterUtils {
 
@@ -44,11 +45,20 @@ public final class SerializationParameterUtils {
             List<Item> optionsItems,
             ExceptionMetadata metadata
     ) {
+        applyParameterItems(params, optionsItems, null, metadata);
+    }
+
+    private static void applyParameterItems(
+            SerializationParameters params,
+            List<Item> optionsItems,
+            Set<String> explicitParameterNames,
+            ExceptionMetadata metadata
+    ) {
         if (optionsItems == null || optionsItems.isEmpty()) {
             return;
         }
         if (optionsItems.size() == 1) {
-            applyParameterItem(params, optionsItems.get(0), metadata);
+            applyParameterItem(params, optionsItems.get(0), explicitParameterNames, metadata);
             return;
         }
         for (Item item : optionsItems) {
@@ -59,13 +69,14 @@ public final class SerializationParameterUtils {
                 );
             }
         }
-        applyParameterElements(params, optionsItems, metadata);
+        applyParameterElements(params, optionsItems, explicitParameterNames, metadata);
     }
 
     public static void applyParameterDocument(
             SerializationParameters params,
             StaticContext staticContext,
             String location,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         try {
@@ -86,7 +97,7 @@ public final class SerializationParameterUtils {
                     uri.toString(),
                     staticContext.getRumbleConfiguration().optimizeParentPointers()
                 );
-                applyParameterItem(params, item, metadata);
+                applyParameterItem(params, item, explicitParameterNames, metadata);
             }
         } catch (ParserConfigurationException e) {
             throw new OurBadException("Document builder creation failed with: " + e, metadata);
@@ -112,6 +123,7 @@ public final class SerializationParameterUtils {
     private static void applyParameterItem(
             SerializationParameters params,
             Item options,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         if (options.isDocumentNode()) {
@@ -121,7 +133,7 @@ public final class SerializationParameterUtils {
                     elementChildren.add(child);
                 }
             }
-            applyParameterItems(params, elementChildren, metadata);
+            applyParameterItems(params, elementChildren, explicitParameterNames, metadata);
             return;
         }
         if (options.isElementNode()) {
@@ -132,14 +144,14 @@ public final class SerializationParameterUtils {
                         childElements.add(child);
                     }
                 }
-                applyParameterElements(params, childElements, metadata);
+                applyParameterElements(params, childElements, explicitParameterNames, metadata);
                 return;
             }
-            applyParameterElements(params, List.of(options), metadata);
+            applyParameterElements(params, List.of(options), explicitParameterNames, metadata);
             return;
         }
         if (options.isMap() || options.isObject()) {
-            applyParameterMap(params, options, metadata);
+            applyParameterMap(params, options, explicitParameterNames, metadata);
             return;
         }
         throw new InvalidArgumentTypeException(
@@ -151,11 +163,15 @@ public final class SerializationParameterUtils {
     private static void applyParameterMap(
             SerializationParameters params,
             Item options,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         for (Item key : options.getItemKeys()) {
             String parameterName = parameterNameFromKey(key, metadata);
             if (parameterName == null) {
+                continue;
+            }
+            if (explicitParameterNames != null && explicitParameterNames.contains(parameterName)) {
                 continue;
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
@@ -171,6 +187,7 @@ public final class SerializationParameterUtils {
     private static void applyParameterElements(
             SerializationParameters params,
             List<Item> elements,
+            Set<String> explicitParameterNames,
             ExceptionMetadata metadata
     ) {
         for (Item element : elements) {
@@ -183,6 +200,9 @@ public final class SerializationParameterUtils {
             }
             String namespace = name.getNamespace();
             if (namespace != null && !namespace.isEmpty() && !SERIALIZATION_NAMESPACE.equals(namespace)) {
+                continue;
+            }
+            if (explicitParameterNames != null && explicitParameterNames.contains(name.getLocalName())) {
                 continue;
             }
             if ("use-character-maps".equals(name.getLocalName())) {
