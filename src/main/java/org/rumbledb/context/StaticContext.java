@@ -52,6 +52,8 @@ public class StaticContext {
 
     private Map<String, String> staticallyKnownNamespaces = new HashMap<>();
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+
+    @Getter
     private InScopeSchemaTypes inScopeSchemaTypes = new InScopeSchemaTypes();
 
     @Setter
@@ -64,6 +66,18 @@ public class StaticContext {
     private boolean emptySequenceOrderLeast = true;
     private boolean boundarySpacePreserve = true;
 
+    /**
+     * -- GETTER --
+     * Returns the default serialization parameters stored in the static context.
+     * Spec references:
+     * <ul>
+     * <li>XQuery 3.1 Static Context Components (link:
+     * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+     * <li>Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+     * </ul>
+     */
+    @Getter
     @Setter
     private SerializationParameters serializationParameters = SerializationParameters.defaults();
 
@@ -348,21 +362,6 @@ public class StaticContext {
         return bindings;
     }
 
-    /**
-     * Returns the default serialization parameters stored in the static context.
-     * Spec references:
-     * 
-     * <ul>
-     * <li>XQuery 3.1 Static Context Components (link:
-     * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
-     * <li>Serialization 3.1 — Serialization Parameters (link:
-     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
-     * </ul>
-     */
-    public SerializationParameters getSerializationParameters() {
-        return this.serializationParameters;
-    }
-
 
     public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
         if ("parameter-document".equals(name)) {
@@ -573,10 +572,6 @@ public class StaticContext {
      */
     public static String getBuiltinNamespaceBinding(String prefix) {
         return DEFAULT_BINDINGS.get(prefix);
-    }
-
-    public InScopeSchemaTypes getInScopeSchemaTypes() {
-        return this.inScopeSchemaTypes;
     }
 
     public boolean getIsAssignable(Name name) {
