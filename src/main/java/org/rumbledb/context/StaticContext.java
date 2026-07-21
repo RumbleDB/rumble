@@ -623,14 +623,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this.boundarySpacePreserve;
     }
 
-    public void addStaticallyKnownCollation(String uri) {
-        if (this.parent != null) {
-            throw new OurBadException("Statically known collations can only be set in the root static context.");
-        }
-        ensureRootCollationsInitialized();
-        this.staticallyKnownCollations.add(uri);
-    }
-
     public boolean isStaticallyKnownCollation(String uri) {
         return getStaticallyKnownCollations().contains(uri);
     }
