@@ -61,6 +61,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
     private SerializationParameters serializationParameters;
+    private transient Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
     private transient Set<String> staticallyKnownCollations;
     private transient String defaultCollation;
@@ -112,6 +113,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeSchemaTypes = null;
         this.currentMutabilityLevel = 0;
         this.serializationParameters = null;
+        this.explicitSerializationParameterNames = null;
         this.defaultDecimalFormat = null;
         this.decimalFormats = new HashMap<>();
         this.isQuerySideEffecting = false;
@@ -515,14 +517,28 @@ public class StaticContext implements Serializable, KryoSerializable {
             this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
         }
         if ("parameter-document".equals(name)) {
-            SerializationParameterUtils.applyParameterDocument(this.serializationParameters, this, value, metadata);
+            SerializationParameterUtils.applyParameterDocument(
+                this.serializationParameters,
+                this,
+                value,
+                getExplicitSerializationParameterNames(),
+                metadata
+            );
             return;
         }
         if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
             value = expandSerializationQNames(value);
         }
+        getExplicitSerializationParameterNames().add(name);
         // update the local copy of theserialization parameters with the provided parameter name and value
         SerializationParameterBuilder.update(this.serializationParameters, name, value);
+    }
+
+    private Set<String> getExplicitSerializationParameterNames() {
+        if (this.explicitSerializationParameterNames == null) {
+            this.explicitSerializationParameterNames = new LinkedHashSet<>();
+        }
+        return this.explicitSerializationParameterNames;
     }
 
     private String expandSerializationQNames(String value) {

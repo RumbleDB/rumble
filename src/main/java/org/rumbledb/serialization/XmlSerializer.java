@@ -372,13 +372,14 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         }
         String namespace = element.nodeName().getNamespace();
         String localName = element.nodeName().getLocalName();
-        String expandedName = namespace == null
+        boolean hasNoNamespace = namespace == null || namespace.isEmpty();
+        String expandedName = hasNoNamespace
             ? localName
             : "Q{" + namespace + "}" + localName;
         if (entries.contains(expandedName)) {
             return true;
         }
-        if (namespace == null) {
+        if (hasNoNamespace) {
             for (String entry : entries) {
                 if (!entry.startsWith("Q{") && entry.equals(localName)) {
                     return true;
