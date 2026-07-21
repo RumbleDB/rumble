@@ -22,7 +22,6 @@ package org.rumbledb.items;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
@@ -41,7 +40,6 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -99,7 +97,7 @@ public class FunctionItem implements Item {
         this.signature = source.signature;
         this.bodyIteratorFactory = source.bodyIteratorFactory;
         this.dynamicModuleContext = source.dynamicModuleContext;
-        this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
+        this.localVariablesInClosure = copyLocalClosure(source.localVariablesInClosure);
         this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
         this.dataFrameVariablesInClosure = new HashMap<>(source.dataFrameVariablesInClosure);
         this.isBuiltin = source.isBuiltin;
@@ -259,6 +257,14 @@ public class FunctionItem implements Item {
         return new FunctionItem(this);
     }
 
+    private static Map<Name, List<Item>> copyLocalClosure(Map<Name, List<Item>> closure) {
+        Map<Name, List<Item>> copy = new HashMap<>();
+        for (Map.Entry<Name, List<Item>> entry : closure.entrySet()) {
+            copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
+        }
+        return copy;
+    }
+
     private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
         boolean retainBody = bodyIterator instanceof ApplyEstimatorRuntimeIterator
             || bodyIterator instanceof ApplyTransformerRuntimeIterator;
@@ -403,22 +409,7 @@ public class FunctionItem implements Item {
     }
 
     public FunctionItem deepCopy() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (FunctionItem) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            RumbleException rumbleException = new OurBadException(
-                    "Error while deep copying the function body runtimeIterator"
-            );
-            rumbleException.initCause(e);
-            throw rumbleException;
-        }
+        return new FunctionItem(this);
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
