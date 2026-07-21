@@ -248,7 +248,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return materializeIterator(call, context);
+        return materializeKeyIterator(call, context);
     }
 
     private List<Item> keyFromArrayLookup(Item keyArray, List<Item> memberSequence, DynamicContext context) {
@@ -277,7 +277,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
                 indexIterator,
                 localStaticContext()
         );
-        return materializeIterator(lookup, context);
+        return materializeKeyIterator(lookup, context);
     }
 
     private List<Item> keyFromMapLookup(Item mapItem, List<Item> memberSequence, DynamicContext context) {
@@ -293,7 +293,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (value == null) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(value);
+        return fnDataKeySequence(Collections.singletonList(value), context);
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
@@ -307,6 +307,10 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         } finally {
             iterator.close();
         }
+    }
+
+    private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
+        return fnDataKeySequence(materializeIterator(iterator, context), context);
     }
 
     private RuntimeStaticContext localStaticContext() {

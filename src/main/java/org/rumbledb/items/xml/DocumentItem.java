@@ -135,6 +135,9 @@ public class DocumentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
+        if (this.documentElement == null) {
+            return ItemTypeFactory.documentNodeItemType();
+        }
         return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
     }
 
@@ -142,6 +145,9 @@ public class DocumentItem implements Item {
     public boolean equals(Object other) {
         if (!(other instanceof DocumentItem otherDocumentItem)) {
             return false;
+        }
+        if (this.documentPos == null || otherDocumentItem.documentPos == null) {
+            return this == otherDocumentItem;
         }
         return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
@@ -299,6 +305,9 @@ public class DocumentItem implements Item {
 
     @Override
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 

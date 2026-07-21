@@ -9,8 +9,10 @@ import org.rumbledb.exceptions.RumbleException;
 public class TextSerializer implements Serializer, java.io.Serializable {
 
     private static final long serialVersionUID = 1L;
+    private final SerializationParameters params;
 
     public TextSerializer(SerializationParameters params) {
+        this.params = params != null ? params : SerializationParameters.defaults();
     }
 
     @Override
@@ -40,12 +42,29 @@ public class TextSerializer implements Serializer, java.io.Serializable {
             sb.append(item.getStringValue());
             return;
         }
-        if (item.isArray() || item.isMap() || item.isObject()) {
+        if (item.isArray()) {
+            appendArrayMembers(item, sb, indent);
+            return;
+        }
+        if (item.isMap() || item.isObject()) {
             throw new RumbleException(
                     "Serialization method text does not support arrays or maps.",
                     new ErrorCode(org.rumbledb.context.Name.createVariableInNoNamespace("SENR0001")),
                     ExceptionMetadata.EMPTY_METADATA
             );
+        }
+    }
+
+    private void appendArrayMembers(Item array, StringBuilder sb, String indent) {
+        boolean first = true;
+        for (java.util.List<Item> memberSequence : array.getSequenceMembers()) {
+            for (Item member : memberSequence) {
+                if (!first) {
+                    sb.append(" ");
+                }
+                serialize(member, sb, indent, false);
+                first = false;
+            }
         }
     }
 }

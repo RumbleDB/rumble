@@ -27,6 +27,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAttributeNameException;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
@@ -212,6 +213,45 @@ public final class NamespaceBindingUtils {
             case XMLNS_URI:
                 throw new InvalidNodeNameException(
                         "The namespace URI of the node-name is http://www.w3.org/2000/xmlns/.",
+                        metadata
+                );
+            default:
+                return;
+        }
+    }
+
+    public static void validateConstructedAttributeName(Name name, ExceptionMetadata metadata) {
+        String prefix = name.getPrefix();
+        String namespace = name.getNamespace();
+        if ((prefix == null || prefix.isEmpty()) && "xmlns".equals(name.getLocalName())) {
+            throw new InvalidAttributeNameException(
+                    "Computed attribute constructor cannot create a namespace declaration attribute named xmlns.",
+                    metadata
+            );
+        }
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, namespace);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace prefix xml is bound to a namespace URI other than http://www.w3.org/XML/1998/namespace.",
+                        metadata
+                );
+            case XMLNS_PREFIX:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot create a namespace declaration attribute with the xmlns prefix.",
+                        metadata
+                );
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace URI is http://www.w3.org/XML/1998/namespace but the prefix is not xml.",
+                        metadata
+                );
+            case XMLNS_URI:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot use the xmlns namespace URI.",
                         metadata
                 );
             default:

@@ -55,7 +55,11 @@ public final class ErrorCode implements Serializable {
 
     @Override
     public String toString() {
-        return this.name.getLocalName();
+        String namespace = this.name.getNamespace();
+        if (Name.ERROR_NS.equals(namespace)) {
+            return this.name.getLocalName();
+        }
+        return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
     @Override
@@ -160,7 +164,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode PrefixCannotBeExpandedErrorCode = registerBuiltIn("XPST0081");
 
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
-    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XTPY0018");
+    public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
@@ -186,11 +190,13 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
     public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
@@ -218,6 +224,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode UpdatingFunctionHasReturnTypeErrorCode = registerBuiltIn("XUST0028");
 
+    public static final ErrorCode InvalidAttributeNameErrorCode = registerBuiltIn("XQDY0044");
     public static final ErrorCode InvalidElementNameExpressionErrorCode = registerBuiltIn("XQDY0074");
     public static final ErrorCode InvalidCommentContentErrorCode = registerBuiltIn("XQDY0072");
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");

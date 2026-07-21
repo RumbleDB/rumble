@@ -11,7 +11,7 @@ public final class Serializers {
     public static Serializer from(SerializationParameters params) {
         SerializationParameters effectiveParams = params != null ? params : SerializationParameters.defaults();
         validateNormalizationForm(effectiveParams);
-        String method = effectiveParams.getMethod();
+        String method = normalizeMethodName(effectiveParams.getMethod());
         if (method == null || method.equalsIgnoreCase("json")) {
             return new JsonSerializer(effectiveParams);
         }
@@ -20,6 +20,9 @@ public final class Serializers {
         }
         if (method.equalsIgnoreCase("html")) {
             return new HtmlSerializer(effectiveParams);
+        }
+        if (method.equalsIgnoreCase("xhtml")) {
+            return new XhtmlSerializer(effectiveParams);
         }
         if (method.equalsIgnoreCase("text")) {
             return new TextSerializer(effectiveParams);
@@ -41,6 +44,26 @@ public final class Serializers {
             return new XmlJsonHybridSerializer(effectiveParams);
         }
         throw new OurBadException("Unsupported serialization method: " + method);
+    }
+
+    private static String normalizeMethodName(String method) {
+        if (method == null) {
+            return null;
+        }
+        String trimmed = method.trim();
+        if (!trimmed.startsWith("Q{")) {
+            return trimmed;
+        }
+        int closingBrace = trimmed.indexOf('}');
+        if (closingBrace < 0) {
+            return trimmed;
+        }
+        String namespace = trimmed.substring(2, closingBrace);
+        String localName = trimmed.substring(closingBrace + 1);
+        if (namespace.isEmpty()) {
+            return localName;
+        }
+        return trimmed;
     }
 
     private static void validateNormalizationForm(SerializationParameters params) {

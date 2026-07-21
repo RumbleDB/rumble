@@ -58,8 +58,8 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionArguments = functionArguments;
         this.isUpdating = functionItem.getSignature().isUpdating();
 
-        FunctionCallArgumentCoercion.validateArity(functionItem, this.functionArguments, getMetadata());
-        FunctionCallArgumentCoercion.wrapAccordingToSignature(
+        FunctionCallArgumentConversion.validateArity(functionItem, this.functionArguments, getMetadata());
+        FunctionCallArgumentConversion.wrapAccordingToSignature(
             functionItem,
             this.functionArguments,
             staticContext

@@ -409,7 +409,8 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            Item stringValue = ItemFactory.getInstance().createStringItem(item.getStringValue());
+            String normalized = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
+            Item stringValue = ItemFactory.getInstance().createStringItem(normalized);
             return finalizeAtomicBranchValue(stringValue, targetType, BuiltinTypesCatalogue.stringItem);
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
@@ -777,7 +778,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         // representation of the source value (or xs:string cast if no canonical form exists).
         String lexical = normalizeLexicalAccordingToWhitespace(
             item.getStringValue(),
-            targetType.getCastingPrimitiveType()
+            targetType
         );
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
@@ -792,10 +793,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     /**
-     * Normalizes a lexical string according to the whiteSpace facet of the given primitive type.
+     * Normalizes a lexical string according to the whiteSpace facet of the given target type.
      */
-    private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType primitiveType) {
-        WhitespaceFacet facet = primitiveType.getWhitespaceFacet();
+    private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType targetType) {
+        WhitespaceFacet facet = targetType.getWhitespaceFacet();
         if (facet == null) {
             return lexical;
         }
@@ -814,19 +815,19 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     /**
      * Checks the lexical-space patterns (if any) for the given target type against the lexical form of the item.
-     * Whitespace normalization is applied according to the whiteSpace facet of the target primitive type.
+     * Whitespace normalization is applied according to the whiteSpace facet of the target type.
      * Returns true when either no lexical patterns are modeled or at least one pattern matches; false otherwise.
      */
     private static boolean checkLexicalPatterns(Item item, ItemType targetType) {
         ItemType primitive = targetType.getCastingPrimitiveType();
         java.util.List<String> patterns = primitive.getLexicalSpacePatterns();
-        if (patterns == null || patterns.isEmpty()) {
-            return true;
-        }
-        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), primitive);
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
         if (xmlNameValidation != null) {
             return xmlNameValidation;
+        }
+        if (patterns == null || patterns.isEmpty()) {
+            return true;
         }
         for (String regex : patterns) {
             if (Pattern.matches(regex, lexical)) {
@@ -874,16 +875,44 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        String lexical = normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType);
         if (
-            (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
+            (targetType.getLengthFacet() != null && lexical.length() != targetType.getLengthFacet())
                 ||
                 (targetType.getMinLengthFacet() != null
-                    && item.getStringValue().length() < targetType.getMinLengthFacet())
+                    && lexical.length() < targetType.getMinLengthFacet())
                 ||
                 (targetType.getMaxLengthFacet() != null
-                    && item.getStringValue().length() > targetType.getMaxLengthFacet())
+                    && lexical.length() > targetType.getMaxLengthFacet())
         ) {
             return false;
+        }
+
+        Boolean xmlNameValidation = checkXmlSchemaNameFamilyLexicalConstraint(lexical, targetType);
+        if (xmlNameValidation != null && !xmlNameValidation) {
+            return false;
+        }
+        if (xmlNameValidation != null) {
+            return true;
+        }
+
+        List<String> patterns;
+        try {
+            patterns = targetType.getPatternFacet();
+        } catch (UnsupportedOperationException e) {
+            patterns = null;
+        }
+        if (patterns != null && !patterns.isEmpty()) {
+            boolean patternMatched = false;
+            for (String regex : patterns) {
+                if (Pattern.matches(regex, lexical)) {
+                    patternMatched = true;
+                    break;
+                }
+            }
+            if (!patternMatched) {
+                return false;
+            }
         }
 
         // If no enumeration facet, can directly return true

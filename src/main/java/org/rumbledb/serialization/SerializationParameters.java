@@ -23,6 +23,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -198,7 +199,7 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     private boolean allowDuplicateNames;
 
     public enum JsonNodeOutputMethod {
-        UNSPECIFIED, JSON, XML, HTML, TEXT
+        UNSPECIFIED, JSON, XML, XHTML, HTML, TEXT
     }
 
     /**
@@ -224,9 +225,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     public static SerializationParameters defaults() {
+        return defaults(null);
+    }
+
+    public static SerializationParameters defaults(String queryLanguage) {
         SerializationParameters p = new SerializationParameters();
         // Spec-aligned conservative defaults; implementation-defined noted explicitly
-        p.method = "xml-json-hybrid"; // implementation defined default
+        p.method = defaultMethod(queryLanguage); // implementation defined default
         p.encoding = "UTF-8";
         p.version = null;
         p.omitXmlDeclaration = false;
@@ -251,6 +256,13 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         p.extensionParameters = new HashMap<>();
         p.sparkOptions = new HashMap<>();
         return p;
+    }
+
+    private static String defaultMethod(String queryLanguage) {
+        if (queryLanguage != null && queryLanguage.startsWith("xquery")) {
+            return "xml";
+        }
+        return "xml-json-hybrid";
     }
 
     // Getters and setters
@@ -372,6 +384,36 @@ public class SerializationParameters implements Serializable, KryoSerializable {
 
     public void setHtmlVersion(String htmlVersion) {
         this.htmlVersion = htmlVersion;
+    }
+
+    /**
+     * Requested HTML version for the HTML/XHTML output methods.
+     *
+     * Per XSLT and XQuery Serialization 3.1, the requested HTML version is the
+     * value of {@code html-version} when that parameter is present; otherwise it
+     * falls back to {@code version}.
+     *
+     * @return the requested HTML version, or {@code null} if neither parameter is set
+     */
+    public String getRequestedHtmlVersion() {
+        return this.htmlVersion != null ? this.htmlVersion : this.version;
+    }
+
+    /**
+     * Whether the requested HTML version is exactly 5.0.
+     *
+     * @return {@code true} if the requested HTML version is a decimal with value 5
+     */
+    public boolean isRequestedHtml5Version() {
+        String requestedHtmlVersion = getRequestedHtmlVersion();
+        if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(requestedHtmlVersion.trim())) == 0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     public boolean getByteOrderMark() {

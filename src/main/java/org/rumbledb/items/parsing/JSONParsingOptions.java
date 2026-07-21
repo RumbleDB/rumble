@@ -1,5 +1,6 @@
 package org.rumbledb.items.parsing;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
+@Getter
 public final class JSONParsingOptions implements Serializable {
 
     @Serial
@@ -47,24 +49,30 @@ public final class JSONParsingOptions implements Serializable {
     public static final boolean DEFAULT_ESCAPE = false;
     public static final Function<String, String> DEFAULT_FALLBACK = s -> "\uFFFD";
 
+    // RumbleDB-specific extension, not part of the W3C specification.
+    public static final boolean DEFAULT_LEGACY = false;
+
     private final boolean liberal;
     private final String duplicates;
     private final boolean escape;
     private final String numberFormat;
     private final Function<String, String> fallback;
+    private final boolean legacy;
 
     private JSONParsingOptions(
             boolean liberal,
             String duplicates,
             boolean escape,
             Function<String, String> fallback,
-            String numberFormat
+            String numberFormat,
+            boolean legacy
     ) {
         this.liberal = liberal;
         this.duplicates = duplicates;
         this.escape = escape;
         this.fallback = fallback;
         this.numberFormat = numberFormat;
+        this.legacy = legacy;
     }
 
     public static JSONParsingOptions defaultInstance(boolean isJSONiq10) {
@@ -73,28 +81,9 @@ public final class JSONParsingOptions implements Serializable {
                 DEFAULT_DUPLICATES,
                 DEFAULT_ESCAPE,
                 DEFAULT_FALLBACK,
-                getDefaultNumberFormat(isJSONiq10)
+                getDefaultNumberFormat(isJSONiq10),
+                DEFAULT_LEGACY
         );
-    }
-
-    public boolean isLiberal() {
-        return this.liberal;
-    }
-
-    public String getDuplicates() {
-        return this.duplicates;
-    }
-
-    public boolean isEscape() {
-        return this.escape;
-    }
-
-    public Function<String, String> getFallback() {
-        return this.fallback;
-    }
-
-    public String getNumberFormat() {
-        return this.numberFormat;
     }
 
     @Override
@@ -107,6 +96,8 @@ public final class JSONParsingOptions implements Serializable {
             + this.escape
             + ", fallback: "
             + this.fallback
+            + ", legacy: "
+            + this.legacy
             + "]";
     }
 
@@ -182,6 +173,8 @@ public final class JSONParsingOptions implements Serializable {
         Function<String, String> fallback = JSONParsingOptions.DEFAULT_FALLBACK;
         boolean fallbackExplicitlySet = false;
 
+        boolean legacy = JSONParsingOptions.DEFAULT_LEGACY;
+
         if (optionsItem == null) {
             return JSONParsingOptions.defaultInstance(isJSONiq10);
         }
@@ -240,6 +233,9 @@ public final class JSONParsingOptions implements Serializable {
                     fallbackExplicitlySet = true;
                     break;
                 }
+                case "legacy":
+                    legacy = requireSingleBooleanOption("legacy", sequence, metadata);
+                    break;
                 default:
                     break;
             }
@@ -252,7 +248,22 @@ public final class JSONParsingOptions implements Serializable {
             );
         }
 
-        return new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat);
+        if (legacy) {
+            boolean othersAreDefault = liberal == JSONParsingOptions.DEFAULT_LIBERAL
+                && JSONParsingOptions.DEFAULT_DUPLICATES.equals(duplicates)
+                && escape == JSONParsingOptions.DEFAULT_ESCAPE
+                && !fallbackExplicitlySet
+                && numberFormat.equals(JSONParsingOptions.getDefaultNumberFormat(isJSONiq10));
+            if (!othersAreDefault) {
+                throw new InvalidOptionException(
+                        "Invalid options: option 'legacy' can only be combined with default values "
+                            + "for 'liberal', 'duplicates', 'escape', 'fallback', and 'number-format'.",
+                        metadata
+                );
+            }
+        }
+
+        return new JSONParsingOptions(liberal, duplicates, escape, fallback, numberFormat, legacy);
     }
 
     private static String validatedStringOption(

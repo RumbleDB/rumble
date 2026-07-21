@@ -27,6 +27,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -136,6 +138,7 @@ import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
 import org.rumbledb.expressions.xml.axis.ReverseAxis;
@@ -156,7 +159,6 @@ import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -167,7 +169,6 @@ import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.types.SequenceType.createSequenceType;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -191,7 +192,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
+    private CompilationConfiguration compilationConfiguration;
     private boolean isMainModule;
+    private String libraryModuleNamespace;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
@@ -199,25 +202,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             String code,
             CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
-        this.configuration = configuration;
+        this.compilationConfiguration = compilationConfiguration;
+        this.configuration = compilationConfiguration.runtimeConfiguration();
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
 
-        if (configuration.getQueryLanguage().equals("xquery10")) {
+        if (this.configuration.getQueryLanguage().equals("xquery10")) {
             this.moduleContext.setQueryLanguage("xquery10");
-        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery30")) {
             this.moduleContext.setQueryLanguage("xquery30");
-        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery31")) {
             this.moduleContext.setQueryLanguage("xquery31");
-        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery40")) {
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -355,11 +359,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = FileSystemUtil.resolveURI(
+        URI resolvedURI = URILiteralUtils.resolve(
             this.moduleContext.getStaticBaseURI(),
             namespace,
             createMetadataFromContext(ctx)
         );
+        this.libraryModuleNamespace = resolvedURI.toString();
         bindNamespace(
             prefix,
             resolvedURI.toString(),
@@ -417,16 +422,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.varDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
+                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Variable "
                                     + variableDeclaration.getVariableName().getLocalName()
                                     + ": namespace "
                                     + variableNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
@@ -442,16 +446,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.functionDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
+                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Function "
                                     + inlineFunctionExpression.getName().getLocalName()
                                     + ": namespace "
                                     + functionNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
@@ -494,12 +497,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private static final class PrologPhase1Flags {
         boolean emptyOrderSet;
+        boolean boundarySpaceSet;
         boolean defaultCollationSet;
         boolean baseURISet;
         boolean defaultFunctionNamespaceDeclared;
     }
 
     private void processPrologPhase1Setter(SetterContext setterContext, PrologPhase1Flags flags) {
+        if (setterContext.boundarySpaceDecl() != null) {
+            if (flags.boundarySpaceSet) {
+                throw new MoreThanOneBoundarySpaceDeclarationException(
+                        "The boundary-space policy was already set.",
+                        createMetadataFromContext(setterContext.boundarySpaceDecl())
+                );
+            }
+            this.moduleContext.setBoundarySpacePreserve(
+                setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE
+            );
+            flags.boundarySpaceSet = true;
+            return;
+        }
         if (setterContext.emptyOrderDecl() != null) {
             if (flags.emptyOrderSet) {
                 throw new MoreThanOneEmptyOrderDeclarationException(
@@ -537,10 +554,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = FileSystemUtil.resolveURI(
+            URI uri = URILiteralUtils.resolve(
                 this.moduleContext.getStaticBaseURI(),
                 uriString,
-                ExceptionMetadata.EMPTY_METADATA
+                createMetadataFromContext(setterContext.baseURIDecl())
             );
             this.moduleContext.setStaticBaseUri(uri);
             flags.baseURISet = true;
@@ -871,7 +888,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Node visitEnclosedExpression(XQueryParser.EnclosedExpressionContext ctx) {
         // empty expression
         if (ctx.expr() == null) {
-            return null;
+            return new CommaExpression(createMetadataFromContext(ctx));
         }
         return this.visitExpr(ctx.expr());
     }
@@ -1379,15 +1396,79 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         for (int i = 0; i < ctx.rhs.size(); ++i) {
             XQueryParser.UnionExprContext child = ctx.rhs.get(i);
+            Token operator = ctx.op.get(i);
+            validateMultiplicativeOperator(ctx.main_expr, child, operator);
             Expression rightExpression = (Expression) this.visitUnionExpr(child);
             result = new MultiplicativeExpression(
                     result,
                     rightExpression,
-                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(operator.getText()),
                     createMetadataFromRange(ctx.main_expr.getStart(), child.getStop())
             );
         }
         return result;
+    }
+
+    private void validateMultiplicativeOperator(
+            ParseTree leftExpression,
+            ParseTree rightExpression,
+            Token operator
+    ) {
+        String operatorText = operator.getText();
+        if (
+            operatorText.equals("*")
+                && (leftExpression.getText().equals("/") || leftExpression.getText().equals("//"))
+        ) {
+            throw new ParsingException(
+                    "Missing path step after leading slash.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (
+            !operatorText.equals("div")
+                && !operatorText.equals("idiv")
+                && !operatorText.equals("mod")
+        ) {
+            return;
+        }
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(
+                this.xQueryTokenStream,
+                getStopToken(leftExpression).getTokenIndex()
+            )
+                .isEmpty()
+                && !hasKeywordOperatorBoundary(getStopToken(leftExpression).getText(), false)
+        ) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the left operand.",
+                    createMetadataFromRange(getStartToken(leftExpression), operator)
+            );
+        }
+        if (
+            DirectConstructorUtils.getHiddenTextAfter(this.xQueryTokenStream, operator.getTokenIndex()).isEmpty()
+                && !hasKeywordOperatorBoundary(getStartToken(rightExpression).getText(), true)
+        ) {
+            throw new ParsingException(
+                    "Keyword operator '" + operatorText + "' must be separated from the right operand.",
+                    createMetadataFromRange(operator, getStartToken(rightExpression))
+            );
+        }
+    }
+
+    private boolean hasKeywordOperatorBoundary(String tokenText, boolean checkStart) {
+        if (tokenText == null || tokenText.isEmpty()) {
+            return false;
+        }
+        char boundaryCharacter = checkStart ? tokenText.charAt(0) : tokenText.charAt(tokenText.length() - 1);
+        return !isPotentialKeywordOperandCharacter(boundaryCharacter);
+    }
+
+    private boolean isPotentialKeywordOperandCharacter(char character) {
+        return Character.isLetterOrDigit(character)
+            || character == '_'
+            || character == '-'
+            || character == '.'
+            || character == ':';
     }
 
     @Override
@@ -1984,6 +2065,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 this.xQueryTokenStream,
                 openClose.endOpen,
                 openClose.dirElemContent(),
+                this.moduleContext.isBoundarySpacePreserve(),
                 child -> (Expression) this.visitDirElemContent(child)
             );
 
@@ -2034,7 +2116,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 // filter out the <![CDATA[ and ]]>, and return the text
                 return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
             }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx));
+            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
         }
     }
 
@@ -2045,6 +2127,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
         return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
+    }
+
+    private boolean isWhitespaceOnly(String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (!Character.isWhitespace(value.charAt(i))) {
+                return false;
+            }
+        }
+        return !value.isEmpty();
     }
 
     @Override
@@ -3215,11 +3306,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private Node visitSingleSlashNoStepExpr(XQueryParser.PathExprContext ctx) {
         // Case: No StepExpr, only dash
-        return new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
-                createMetadataFromContext(ctx)
-        );
+        this.configuration.setOptimizeParentPointers(false);
+        return new PathRootExpression(createMetadataFromContext(ctx));
     }
 
     private Node visitRelativeWithoutSlash(XQueryParser.RelativePathExprContext relativeContext) {
@@ -3234,10 +3322,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext doubleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingDoubleSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash)
         );
         StepExpr stepExpr = new ForwardStepExpr(
@@ -3257,10 +3344,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             XQueryParser.PathExprContext pathContext,
             XQueryParser.RelativePathExprContext singleSlashContext
     ) {
+        this.configuration.setOptimizeParentPointers(false);
         Token leadingSlash = pathContext.getStart();
-        FunctionCallExpression functionCallExpression = new FunctionCallExpression(
-                Name.createVariableInDefaultBuiltinFunctionNamespace("root"),
-                Collections.emptyList(),
+        PathRootExpression functionCallExpression = new PathRootExpression(
                 createMetadataFromRange(leadingSlash, leadingSlash)
         );
         return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
@@ -3635,47 +3721,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
+        List<String> locationHints = ctx.locations.stream()
+            .map(this::processURILiteral)
+            .collect(Collectors.toList());
+        LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
+            locationHints,
+            this.moduleContext,
+            this.compilationConfiguration,
             createMetadataFromContext(ctx)
         );
-        LibraryModule libraryModule = null;
-        try {
-            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                resolvedURI,
-                this.configuration,
-                this.moduleContext,
-                createMetadataFromContext(ctx)
-            );
-            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
-                throw new ModuleNotFoundException(
-                        "A module with namespace "
-                            + resolvedURI.toString()
-                            + " was not found. The namespace of the module at this location was: "
-                            + libraryModule.getNamespace(),
-                        createMetadataFromContext(ctx)
-                );
-            }
-        } catch (IOException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        } catch (CannotRetrieveResourceException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        }
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                resolvedURI.toString(),
+                libraryModule.getNamespace(),
                 createMetadataFromContext(ctx)
             );
         }
