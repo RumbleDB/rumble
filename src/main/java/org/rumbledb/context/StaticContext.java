@@ -47,15 +47,21 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private transient Map<Name, InScopeVariable> inScopeVariables;
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
+    @Setter
     private String queryLanguage;
+    @Getter
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
@@ -73,6 +79,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient String defaultFunctionNamespaceUri;
 
     // TODO: should these be transient?
+    @Getter
+    @Setter
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
     private static final Map<String, String> defaultBindings = Map.ofEntries(
@@ -93,6 +101,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
+    @Getter
+    @Setter
     private int currentMutabilityLevel;
 
     private RumbleRuntimeConfiguration configuration;
@@ -174,10 +184,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
-    public StaticContext getParent() {
-        return this.parent;
-    }
-
     public RumbleRuntimeConfiguration getRumbleConfiguration() {
         if (this.configuration != null) {
             return this.configuration;
@@ -186,10 +192,6 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getRumbleConfiguration();
         }
         throw new OurBadException("Configuration not set.");
-    }
-
-    public void setQueryLanguage(String queryLanguage) {
-        this.queryLanguage = queryLanguage;
     }
 
     public String getQueryLanguage() {
@@ -320,10 +322,6 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
-    }
-
-    public Map<Name, InScopeVariable> getInScopeVariables() {
-        return this.inScopeVariables;
     }
 
     public void show() {
@@ -699,14 +697,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this;
     }
 
-    public SequenceType getContextItemStaticType() {
-        return this.contextItemStaticType;
-    }
-
-    public void setContextItemStaticType(SequenceType contextItemStaticType) {
-        this.contextItemStaticType = contextItemStaticType;
-    }
-
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
     // with same variable with sequence type arity changed from 1 to + and form ? to *
     // used by groupBy clause
@@ -766,14 +756,6 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
-    }
-
-    public int getCurrentMutabilityLevel() {
-        return this.currentMutabilityLevel;
-    }
-
-    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
-        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 
     public boolean getIsAssignable(Name name) {
