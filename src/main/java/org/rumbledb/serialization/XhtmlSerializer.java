@@ -504,12 +504,12 @@ public class XhtmlSerializer extends XmlSerializer {
     }
 
     private boolean isHtml5Mode() {
-        String htmlVersion = this.params.getHtmlVersion();
-        if (htmlVersion == null || htmlVersion.isEmpty()) {
+        String htmlVersion = this.params.getRequestedHtmlVersion();
+        if (htmlVersion == null || htmlVersion.trim().isEmpty()) {
             return false;
         }
         try {
-            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(htmlVersion)) == 0;
+            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(htmlVersion.trim())) == 0;
         } catch (NumberFormatException e) {
             return false;
         }

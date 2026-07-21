@@ -103,11 +103,26 @@ public class HtmlSerializer extends XmlSerializer {
 
     @Override
     protected void serializeDocumentNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
-        Item firstElementChild = findFirstElementChild(item.children());
-        if (firstElementChild != null) {
-            appendDocTypeIfNeeded(firstElementChild, sb);
-        }
+        boolean doctypeEmitted = false;
+        boolean onlyWhitespaceTextBeforeFirstElement = true;
         for (Item child : item.children()) {
+            if (!doctypeEmitted && child.isElementNode()) {
+                if (onlyWhitespaceTextBeforeFirstElement) {
+                    appendDocTypeIfNeeded(child, sb);
+                }
+                doctypeEmitted = true;
+            } else if (!doctypeEmitted && child.isTextNode()) {
+                String text = child.getStringValue();
+                if (text != null && !text.isBlank()) {
+                    onlyWhitespaceTextBeforeFirstElement = false;
+                }
+            } else if (
+                !doctypeEmitted
+                    && !child.isCommentNode()
+                    && !child.isProcessingInstructionNode()
+            ) {
+                onlyWhitespaceTextBeforeFirstElement = false;
+            }
             serialize(child, sb, indent, false);
         }
     }
@@ -295,9 +310,15 @@ public class HtmlSerializer extends XmlSerializer {
     @Override
     public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isProcessingInstructionNode()) {
+            String content = item.getStringValue();
+            if (content != null && content.indexOf('>') >= 0) {
+                throw serializationError(
+                    "HTML processing instruction content must not contain the '>' character.",
+                    "SERE0015"
+                );
+            }
             sb.append("<?");
             SerializerUtils.appendDmNodeNameLexical(sb, item);
-            String content = item.getStringValue();
             if (content != null && !content.isEmpty()) {
                 sb.append(" ");
                 sb.append(content);
@@ -675,15 +696,6 @@ public class HtmlSerializer extends XmlSerializer {
         return value != null && value.equalsIgnoreCase(localName);
     }
 
-    private Item findFirstElementChild(List<Item> children) {
-        for (Item child : children) {
-            if (child.isElementNode()) {
-                return child;
-            }
-        }
-        return null;
-    }
-
     private String getSerializedElementName(Item item) {
         if (item == null || item.nodeName() == null) {
             return "";
@@ -777,14 +789,14 @@ public class HtmlSerializer extends XmlSerializer {
     }
 
     private boolean isHtml5Version() {
-        String version = this.params.getVersion();
+        String version = this.params.getRequestedHtmlVersion();
         if (version == null || version.trim().isEmpty()) {
             return false;
         }
         try {
             return BigDecimal.valueOf(5L).compareTo(new BigDecimal(version.trim())) == 0;
         } catch (NumberFormatException e) {
-            return version.trim().startsWith("5");
+            return false;
         }
     }
 }

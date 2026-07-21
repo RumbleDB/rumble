@@ -385,6 +385,19 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.htmlVersion = htmlVersion;
     }
 
+    /**
+     * Requested HTML version for the HTML/XHTML output methods.
+     *
+     * Per XSLT and XQuery Serialization 3.1, the requested HTML version is the
+     * value of {@code html-version} when that parameter is present; otherwise it
+     * falls back to {@code version}.
+     *
+     * @return the requested HTML version, or {@code null} if neither parameter is set
+     */
+    public String getRequestedHtmlVersion() {
+        return this.htmlVersion != null ? this.htmlVersion : this.version;
+    }
+
     public boolean getByteOrderMark() {
         return this.byteOrderMark;
     }
