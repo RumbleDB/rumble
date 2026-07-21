@@ -56,7 +56,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
 
     @Getter
-    private transient Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
+    private final transient Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
 
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
@@ -90,7 +90,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Getter
     @Setter
     private transient SequenceType contextItemStaticType;
-    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures = new HashMap<>();
+    private final transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures =
+        new HashMap<>();
     private static final Map<String, String> defaultBindings = Map.ofEntries(
         Map.entry("local", Name.LOCAL_NS),
         Map.entry("fn", Name.FN_NS),
@@ -129,7 +130,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
-        initializeRootCollations();
+        this.initializeRootCollations();
     }
 
     /**
@@ -156,7 +157,7 @@ public class StaticContext implements Serializable, KryoSerializable {
             return;
         }
         if (this.staticallyKnownCollations == null) {
-            initializeRootCollations();
+            this.initializeRootCollations();
         } else if (this.defaultCollation == null) {
             this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
         }
@@ -246,7 +247,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
     public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType) {
-        InScopeVariable variable = getInScopeVariable(varName);
+        InScopeVariable variable = this.getInScopeVariable(varName);
         this.inScopeVariables.replace(
             varName,
             new InScopeVariable(
@@ -260,15 +261,15 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public SequenceType getVariableSequenceType(Name varName) {
-        return getInScopeVariable(varName).getSequenceType();
+        return this.getInScopeVariable(varName).getSequenceType();
     }
 
     public ExecutionMode getVariableStorageMode(Name varName) {
-        return getInScopeVariable(varName).getStorageMode();
+        return this.getInScopeVariable(varName).getStorageMode();
     }
 
     public void setVariableStorageMode(Name varName, ExecutionMode mode) {
-        getInScopeVariable(varName).setStorageMode(mode);
+        this.getInScopeVariable(varName).setStorageMode(mode);
     }
 
     public void addVariable(
@@ -335,11 +336,11 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append("\n");
         }
         if (this.userDefinedFunctionExecutionModes != null) {
-            stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
+            stringBuilder.append(this.userDefinedFunctionExecutionModes);
         }
         if (this.parent != null) {
             stringBuilder.append("\nParent:");
-            stringBuilder.append(this.parent.toString());
+            stringBuilder.append(this.parent);
         }
         return stringBuilder.toString();
     }
@@ -352,7 +353,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.staticallyKnownNamespaces == null) {
             this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (canBindNamespace(prefix)) {
+        if (this.canBindNamespace(prefix)) {
             this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
@@ -366,7 +367,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.staticallyKnownNamespaces == null) {
             this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (!canBindNamespace(prefix)) {
+        if (!this.canBindNamespace(prefix)) {
             return false;
         }
         this.staticallyKnownNamespaces.put(prefix, null);
@@ -462,15 +463,15 @@ public class StaticContext implements Serializable, KryoSerializable {
                 this.serializationParameters,
                 this,
                 value,
-                getExplicitSerializationParameterNames(),
+                this.getExplicitSerializationParameterNames(),
                 metadata
             );
             return;
         }
         if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
-            value = expandSerializationQNames(value);
+            value = this.expandSerializationQNames(value);
         }
-        getExplicitSerializationParameterNames().add(name);
+        this.getExplicitSerializationParameterNames().add(name);
         // update the local copy of theserialization parameters with the provided parameter name and value
         SerializationParameterBuilder.update(this.serializationParameters, name, value);
     }
@@ -492,7 +493,7 @@ public class StaticContext implements Serializable, KryoSerializable {
             if (token.isEmpty()) {
                 continue;
             }
-            sb.append(separator).append(expandSerializationQName(token));
+            sb.append(separator).append(this.expandSerializationQName(token));
             separator = " ";
         }
         return sb.toString();
@@ -504,7 +505,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
         int colon = lexicalQName.indexOf(':');
         if (colon < 0) {
-            String namespace = getInScopeNamespaceBindings().get("");
+            String namespace = this.getInScopeNamespaceBindings().get("");
             if (namespace == null || namespace.isEmpty()) {
                 return lexicalQName;
             }
@@ -512,7 +513,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
         String prefix = lexicalQName.substring(0, colon);
         String localName = lexicalQName.substring(colon + 1);
-        String namespace = getInScopeNamespaceBindings().get(prefix);
+        String namespace = this.getInScopeNamespaceBindings().get(prefix);
         if (namespace == null) {
             return lexicalQName;
         }
@@ -598,14 +599,14 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public boolean isStaticallyKnownCollation(String uri) {
-        return getStaticallyKnownCollations().contains(uri);
+        return this.getStaticallyKnownCollations().contains(uri);
     }
 
     public Set<String> getStaticallyKnownCollations() {
         if (this.parent != null) {
             return this.parent.getStaticallyKnownCollations();
         }
-        ensureRootCollationsInitialized();
+        this.ensureRootCollationsInitialized();
         return Collections.unmodifiableSet(this.staticallyKnownCollations);
     }
 
@@ -613,7 +614,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             throw new OurBadException("Default collation can only be set in the root static context.");
         }
-        ensureRootCollationsInitialized();
+        this.ensureRootCollationsInitialized();
         if (!this.staticallyKnownCollations.contains(uri)) {
             throw new OurBadException("Default collation must be statically known.");
         }
@@ -624,7 +625,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             return this.parent.getDefaultCollation();
         }
-        ensureRootCollationsInitialized();
+        this.ensureRootCollationsInitialized();
         return this.defaultCollation;
     }
 
@@ -644,7 +645,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 ? value
                 : new InScopeVariable(
                         value.getName(),
-                        incrementArity(value.getSequenceType()),
+                        this.incrementArity(value.getSequenceType()),
                         value.getMetadata(),
                         value.getStorageMode()
                 )
@@ -657,7 +658,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                         entry.getKey(),
                         varToExclude.contains(entry.getKey())
                             ? entry.getValue().getSequenceType()
-                            : incrementArity(entry.getValue().getSequenceType()),
+                            : this.incrementArity(entry.getValue().getSequenceType()),
                         entry.getValue().getMetadata(),
                         entry.getValue().isAssignable()
                     );
@@ -675,7 +676,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void bindDefaultNamespaces() {
         for (String prefix : defaultBindings.keySet()) {
-            bindNamespace(prefix, defaultBindings.get(prefix));
+            this.bindNamespace(prefix, defaultBindings.get(prefix));
         }
     }
 
