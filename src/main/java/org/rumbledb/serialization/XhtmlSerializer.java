@@ -125,6 +125,7 @@ public class XhtmlSerializer extends XmlSerializer {
         "input",
         "ins",
         "kbd",
+        "keygen",
         "label",
         "legend",
         "li",
