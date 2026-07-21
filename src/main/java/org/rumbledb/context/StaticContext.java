@@ -75,28 +75,25 @@ public class StaticContext implements Serializable, KryoSerializable {
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
-    private static final Map<String, String> defaultBindings;
+    private static final Map<String, String> defaultBindings = Map.ofEntries(
+        Map.entry("local", Name.LOCAL_NS),
+        Map.entry("fn", Name.FN_NS),
+        Map.entry("math", Name.MATH_NS),
+        Map.entry("map", Name.MAP_NS),
+        Map.entry("array", Name.ARRAY_NS),
+        Map.entry("xs", Name.XS_NS),
+        Map.entry("xsi", Name.XSI_NS),
+        Map.entry("xml", Name.XML_NS),
+        Map.entry("jn", Name.JN_NS),
+        Map.entry("js", Name.JS_NS),
+        Map.entry("err", Name.ERROR_NS),
+        Map.entry("an", Name.JSONIQ_ANNOTATIONS_NS)
+    );
 
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
     private int currentMutabilityLevel;
-
-    static {
-        defaultBindings = new HashMap<>();
-        defaultBindings.put("local", Name.LOCAL_NS);
-        defaultBindings.put("fn", Name.FN_NS);
-        defaultBindings.put("math", Name.MATH_NS);
-        defaultBindings.put("map", Name.MAP_NS);
-        defaultBindings.put("array", Name.ARRAY_NS);
-        defaultBindings.put("xs", Name.XS_NS);
-        defaultBindings.put("xsi", Name.XSI_NS);
-        defaultBindings.put("xml", Name.XML_NS);
-        defaultBindings.put("jn", Name.JN_NS);
-        defaultBindings.put("js", Name.JS_NS);
-        defaultBindings.put("err", Name.ERROR_NS);
-        defaultBindings.put("an", Name.JSONIQ_ANNOTATIONS_NS);
-    }
 
     private RumbleRuntimeConfiguration configuration;
 
