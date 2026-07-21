@@ -113,9 +113,14 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         String childIndent = nextIndent(indent);
         sb.append("<");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
+        boolean namespaceAlreadyDeclared = false;
         for (Item namespace : item.declaredNamespaceNodes()) {
+            if (matchesElementNamespace(item, namespace)) {
+                namespaceAlreadyDeclared = true;
+            }
             appendAttributeOrNamespaceNode(namespace, sb);
         }
+        appendImplicitElementNamespace(item, sb, namespaceAlreadyDeclared);
         for (Item attribute : item.attributes()) {
             appendAttributeOrNamespaceNode(attribute, sb);
         }
@@ -183,6 +188,79 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         sb.append("=\"");
         sb.append(escapeAttribute(prepareAttributeValue(item)));
         sb.append("\"");
+    }
+
+    protected boolean matchesElementNamespace(Item element, Item namespace) {
+        if (
+            element == null
+                || element.nodeName() == null
+                || namespace == null
+                || !namespace.isNamespaceNode()
+        ) {
+            return false;
+        }
+        NamespaceItem namespaceItem = (NamespaceItem) namespace;
+        String elementPrefix = element.nodeName().getPrefix();
+        String namespacePrefix = namespaceItem.getPrefix();
+        String elementNamespace = element.nodeName().getNamespace();
+        String namespaceUri = namespaceItem.getUri();
+        if (elementNamespace == null || namespaceUri == null) {
+            return false;
+        }
+        if (elementPrefix == null || elementPrefix.isEmpty()) {
+            return namespacePrefix.isEmpty() && elementNamespace.equals(namespaceUri);
+        }
+        return elementPrefix.equals(namespacePrefix) && elementNamespace.equals(namespaceUri);
+    }
+
+    protected void appendImplicitElementNamespace(Item element, StringBuilder sb, boolean namespaceAlreadyDeclared) {
+        if (element == null || element.nodeName() == null || namespaceAlreadyDeclared) {
+            return;
+        }
+        String namespace = element.nodeName().getNamespace();
+        if (namespace == null || namespace.isEmpty()) {
+            return;
+        }
+        String prefix = element.nodeName().getPrefix();
+        if (isNamespaceBindingInScope(element.parent(), prefix, namespace)) {
+            return;
+        }
+        if (prefix == null || prefix.isEmpty()) {
+            sb.append(" xmlns=\"");
+            sb.append(escapeAttribute(namespace));
+            sb.append("\"");
+            return;
+        }
+        sb.append(" xmlns:");
+        sb.append(prefix);
+        sb.append("=\"");
+        sb.append(escapeAttribute(namespace));
+        sb.append("\"");
+    }
+
+    protected boolean isNamespaceBindingInScope(Item context, String prefix, String namespace) {
+        Item current = context;
+        String normalizedPrefix = prefix == null ? "" : prefix;
+        while (current != null && current.isElementNode()) {
+            if (current.nodeName() != null) {
+                String currentPrefix = current.nodeName().getPrefix() == null ? "" : current.nodeName().getPrefix();
+                String currentNamespace = current.nodeName().getNamespace();
+                if (
+                    normalizedPrefix.equals(currentPrefix)
+                        && namespace.equals(currentNamespace)
+                ) {
+                    return true;
+                }
+            }
+            for (Item namespaceNode : current.declaredNamespaceNodes()) {
+                NamespaceItem ns = (NamespaceItem) namespaceNode;
+                if (normalizedPrefix.equals(ns.getPrefix())) {
+                    return namespace.equals(ns.getUri());
+                }
+            }
+            current = current.parent();
+        }
+        return false;
     }
 
     protected String prepareAttributeValue(Item attribute) {

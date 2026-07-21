@@ -3,7 +3,6 @@ package org.rumbledb.serialization;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
-import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
@@ -504,15 +503,7 @@ public class XhtmlSerializer extends XmlSerializer {
     }
 
     private boolean isHtml5Mode() {
-        String htmlVersion = this.params.getHtmlVersion();
-        if (htmlVersion == null || htmlVersion.isEmpty()) {
-            return false;
-        }
-        try {
-            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(htmlVersion)) == 0;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return this.params.isRequestedHtml5Version();
     }
 
     private String escapeUriAttribute(String value) {
