@@ -547,7 +547,11 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
         int colon = lexicalQName.indexOf(':');
         if (colon < 0) {
-            return lexicalQName;
+            String namespace = getInScopeNamespaceBindings().get("");
+            if (namespace == null || namespace.isEmpty()) {
+                return lexicalQName;
+            }
+            return "Q{" + namespace + "}" + lexicalQName;
         }
         String prefix = lexicalQName.substring(0, colon);
         String localName = lexicalQName.substring(colon + 1);

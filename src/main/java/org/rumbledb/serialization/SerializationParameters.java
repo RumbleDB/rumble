@@ -23,7 +23,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -400,20 +399,21 @@ public class SerializationParameters implements Serializable, KryoSerializable {
     }
 
     /**
-     * Whether the requested HTML version is exactly 5.0.
+     * Whether the requested HTML version denotes HTML5.
      *
-     * @return {@code true} if the requested HTML version is a decimal with value 5
+     * This check is intentionally narrow: we recognize the specific lexical forms
+     * that should trigger the HTML5 branch ({@code 5} and {@code 5.0}) without
+     * treating arbitrary version strings as decimals.
+     *
+     * @return {@code true} if the requested HTML version is {@code "5"} or {@code "5.0"}
      */
     public boolean isRequestedHtml5Version() {
         String requestedHtmlVersion = getRequestedHtmlVersion();
         if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
             return false;
         }
-        try {
-            return BigDecimal.valueOf(5L).compareTo(new BigDecimal(requestedHtmlVersion.trim())) == 0;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        String trimmed = requestedHtmlVersion.trim();
+        return "5".equals(trimmed) || "5.0".equals(trimmed);
     }
 
     public boolean getByteOrderMark() {

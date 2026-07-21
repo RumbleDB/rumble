@@ -234,14 +234,40 @@ public class XhtmlSerializer extends XmlSerializer {
         }
 
         sb.append(">");
+        List<Item> children = item.children();
+        boolean indenting = shouldIndentElement(item);
+        boolean containsElementLikeChild = injectContentTypeMeta || containsElementLikeChild(children);
+        boolean preserveWhitespace = mustPreserveWhitespace(item);
+        boolean hasSignificantTextChild = hasSignificantTextChild(children);
+        String childIndent = nextIndent(indent);
         if (injectContentTypeMeta) {
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+            ) {
+                sb.append("\n").append(childIndent);
+            }
             appendInjectedMetaElement(item, sb);
         }
-        for (Item child : item.children()) {
+        for (Item child : children) {
             if (shouldSkipExistingContentTypeMeta(item, child)) {
                 continue;
             }
-            serialize(child, sb, indent, false);
+            if (
+                indenting
+                    && containsElementLikeChild
+                    && !preserveWhitespace
+                    && !hasSignificantTextChild
+                    && shouldIndentBeforeChild(child)
+            ) {
+                sb.append("\n").append(childIndent);
+            }
+            serialize(child, sb, childIndent, false);
+        }
+        if (indenting && containsElementLikeChild && !preserveWhitespace && !hasSignificantTextChild) {
+            sb.append("\n").append(indent);
         }
         sb.append("</");
         sb.append(serializedElementName);
@@ -303,10 +329,13 @@ public class XhtmlSerializer extends XmlSerializer {
     private void appendElementNamespaces(Item item, StringBuilder sb) {
         boolean emittedDefaultNamespaceForNormalizedElement = false;
         if (shouldApplyPrefixNormalization(item)) {
-            sb.append(" xmlns=\"");
-            sb.append(escapeAttribute(item.nodeName().getNamespace()));
-            sb.append("\"");
-            emittedDefaultNamespaceForNormalizedElement = true;
+            String normalizedNamespace = item.nodeName().getNamespace();
+            if (!isNormalizedDefaultNamespaceInScope(item.parent(), normalizedNamespace)) {
+                sb.append(" xmlns=\"");
+                sb.append(escapeAttribute(normalizedNamespace));
+                sb.append("\"");
+                emittedDefaultNamespaceForNormalizedElement = true;
+            }
         }
         for (Item namespace : item.declaredNamespaceNodes()) {
             if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
@@ -333,6 +362,28 @@ public class XhtmlSerializer extends XmlSerializer {
             if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean isNormalizedDefaultNamespaceInScope(Item context, String namespace) {
+        Item current = context;
+        while (current != null && current.isElementNode()) {
+            if (
+                shouldApplyPrefixNormalization(current)
+                    && current.nodeName() != null
+                    && namespace.equals(current.nodeName().getNamespace())
+            ) {
+                return true;
+            }
+            for (Item namespaceNode : current.declaredNamespaceNodes()) {
+                Name name = namespaceNode.nodeName();
+                String prefix = name == null ? "" : name.getLocalName();
+                if (prefix.isEmpty()) {
+                    return namespace.equals(namespaceNode.getStringValue());
+                }
+            }
+            current = current.parent();
         }
         return false;
     }
