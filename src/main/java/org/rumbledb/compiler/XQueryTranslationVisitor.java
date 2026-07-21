@@ -27,6 +27,8 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -157,7 +159,6 @@ import org.rumbledb.parser.xquery.XQueryParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.xquery.XQueryParser.SetterContext;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -168,7 +169,6 @@ import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.types.SequenceType.createSequenceType;
 
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
@@ -192,7 +192,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
+    private CompilationConfiguration compilationConfiguration;
     private boolean isMainModule;
+    private String libraryModuleNamespace;
     private String code;
     private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
@@ -200,25 +202,26 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration,
+            CompilationConfiguration compilationConfiguration,
             String code,
             CommonTokenStream xQueryTokenStream
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
-        this.configuration = configuration;
+        this.compilationConfiguration = compilationConfiguration;
+        this.configuration = compilationConfiguration.runtimeConfiguration();
         this.isMainModule = isMainModule;
         this.code = code;
         this.dirElemNamespaceFrames = new ArrayDeque<>();
         this.xQueryTokenStream = xQueryTokenStream;
 
-        if (configuration.getQueryLanguage().equals("xquery10")) {
+        if (this.configuration.getQueryLanguage().equals("xquery10")) {
             this.moduleContext.setQueryLanguage("xquery10");
-        } else if (configuration.getQueryLanguage().equals("xquery30")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery30")) {
             this.moduleContext.setQueryLanguage("xquery30");
-        } else if (configuration.getQueryLanguage().equals("xquery31")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery31")) {
             this.moduleContext.setQueryLanguage("xquery31");
-        } else if (configuration.getQueryLanguage().equals("xquery40")) {
+        } else if (this.configuration.getQueryLanguage().equals("xquery40")) {
             this.moduleContext.setQueryLanguage("xquery40");
         }
     }
@@ -356,11 +359,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = FileSystemUtil.resolveURI(
+        URI resolvedURI = URILiteralUtils.resolve(
             this.moduleContext.getStaticBaseURI(),
             namespace,
             createMetadataFromContext(ctx)
         );
+        this.libraryModuleNamespace = resolvedURI.toString();
         bindNamespace(
             prefix,
             resolvedURI.toString(),
@@ -418,16 +422,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.varDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
+                    if (variableNamespace == null || !variableNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Variable "
                                     + variableDeclaration.getVariableName().getLocalName()
                                     + ": namespace "
                                     + variableNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.varDecl())
                         );
                     }
@@ -443,16 +446,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                     annotatedDeclaration.functionDecl()
                 );
                 if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
                     String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
+                    if (functionNamespace == null || !functionNamespace.equals(this.libraryModuleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Function "
                                     + inlineFunctionExpression.getName().getLocalName()
                                     + ": namespace "
                                     + functionNamespace
                                     + " must match module namespace "
-                                    + moduleNamespace,
+                                    + this.libraryModuleNamespace,
                                 createMetadataFromContext(annotatedDeclaration.functionDecl())
                         );
                     }
@@ -552,10 +554,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = FileSystemUtil.resolveURI(
+            URI uri = URILiteralUtils.resolve(
                 this.moduleContext.getStaticBaseURI(),
                 uriString,
-                ExceptionMetadata.EMPTY_METADATA
+                createMetadataFromContext(setterContext.baseURIDecl())
             );
             this.moduleContext.setStaticBaseUri(uri);
             flags.baseURISet = true;
@@ -3719,47 +3721,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
+        List<String> locationHints = ctx.locations.stream()
+            .map(this::processURILiteral)
+            .collect(Collectors.toList());
+        LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
+            locationHints,
+            this.moduleContext,
+            this.compilationConfiguration,
             createMetadataFromContext(ctx)
         );
-        LibraryModule libraryModule = null;
-        try {
-            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                resolvedURI,
-                this.configuration,
-                this.moduleContext,
-                createMetadataFromContext(ctx)
-            );
-            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
-                throw new ModuleNotFoundException(
-                        "A module with namespace "
-                            + resolvedURI.toString()
-                            + " was not found. The namespace of the module at this location was: "
-                            + libraryModule.getNamespace(),
-                        createMetadataFromContext(ctx)
-                );
-            }
-        } catch (IOException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        } catch (CannotRetrieveResourceException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    createMetadataFromContext(ctx)
-            );
-            exception.initCause(e);
-            throw exception;
-        }
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                resolvedURI.toString(),
+                libraryModule.getNamespace(),
                 createMetadataFromContext(ctx)
             );
         }
