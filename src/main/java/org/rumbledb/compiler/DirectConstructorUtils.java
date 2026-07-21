@@ -82,6 +82,22 @@ final class DirectConstructorUtils {
         }
     }
 
+    private static final class TextRunState {
+        private final StringBuilder text;
+        private final ExceptionMetadata firstTextMetadata;
+        private final boolean boundaryWhitespaceOnly;
+
+        private TextRunState(
+                StringBuilder text,
+                ExceptionMetadata firstTextMetadata,
+                boolean boundaryWhitespaceOnly
+        ) {
+            this.text = text;
+            this.firstTextMetadata = firstTextMetadata;
+            this.boundaryWhitespaceOnly = boundaryWhitespaceOnly;
+        }
+    }
+
     /**
      * Converts a quoted direct attribute value into its ordered content expressions.
      *
@@ -197,27 +213,47 @@ final class DirectConstructorUtils {
                     previousToken = child.getStop();
                     continue;
                 }
-                if (textNode.getContent().contains("<!--") && textNode.getContent().contains("-->")) {
-                    if (text != null) {
-                        flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
-                        text = null;
-                        firstTextMetadata = null;
-                    }
-                    appendTextWithEmbeddedComments(
-                        content,
-                        textNode.getContent(),
-                        textNode.getMetadata(),
-                        preserveBoundarySpace
-                    );
-                    previousToken = child.getStop();
-                    continue;
-                }
                 if (text == null) {
                     text = new StringBuilder();
                     firstTextMetadata = textNode.getMetadata();
                     boundaryWhitespaceOnly = true;
                 }
                 String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+                if (textNode.getContent().contains("<!--") && textNode.getContent().contains("-->")) {
+                    if (isDirectCommentLiteral(hiddenText)) {
+                        flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+                        text = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                        boundaryWhitespaceOnly = true;
+                        content.add(
+                            new DirectCommentConstructorExpression(
+                                    hiddenText.substring(4, hiddenText.length() - 3),
+                                    ExceptionMetadata.EMPTY_METADATA
+                            )
+                        );
+                    } else {
+                        boundaryWhitespaceOnly = appendBoundarySegment(
+                            text,
+                            hiddenText,
+                            true,
+                            boundaryWhitespaceOnly
+                        );
+                    }
+                    TextRunState state = appendTextWithEmbeddedComments(
+                        content,
+                        text,
+                        textNode.getContent(),
+                        firstTextMetadata,
+                        textNode.getMetadata(),
+                        boundaryWhitespaceOnly,
+                        preserveBoundarySpace
+                    );
+                    text = state.text;
+                    firstTextMetadata = state.firstTextMetadata;
+                    boundaryWhitespaceOnly = state.boundaryWhitespaceOnly;
+                    previousToken = child.getStop();
+                    continue;
+                }
                 if (isDirectCommentLiteral(hiddenText)) {
                     flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
                     text = new StringBuilder();
@@ -290,48 +326,54 @@ final class DirectConstructorUtils {
         return text != null && text.startsWith("<!--") && text.endsWith("-->");
     }
 
-    private static void appendTextWithEmbeddedComments(
+    private static TextRunState appendTextWithEmbeddedComments(
             List<Expression> content,
-            String text,
-            ExceptionMetadata metadata,
+            StringBuilder textBuilder,
+            String sourceText,
+            ExceptionMetadata firstTextMetadata,
+            ExceptionMetadata fragmentMetadata,
+            boolean boundaryWhitespaceOnly,
             boolean preserveBoundarySpace
     ) {
         int position = 0;
-        while (position < text.length()) {
-            int commentStart = text.indexOf("<!--", position);
+        while (position < sourceText.length()) {
+            int commentStart = sourceText.indexOf("<!--", position);
             if (commentStart < 0) {
-                appendTrailingText(content, text.substring(position), metadata, preserveBoundarySpace);
-                return;
+                String trailingText = sourceText.substring(position);
+                textBuilder.append(trailingText);
+                return new TextRunState(
+                        textBuilder,
+                        firstTextMetadata,
+                        boundaryWhitespaceOnly && isWhitespaceOnly(trailingText)
+                );
             }
-            appendTrailingText(content, text.substring(position, commentStart), metadata, preserveBoundarySpace);
-            int commentEnd = text.indexOf("-->", commentStart);
+            String prefix = sourceText.substring(position, commentStart);
+            textBuilder.append(prefix);
+            boundaryWhitespaceOnly = boundaryWhitespaceOnly && isWhitespaceOnly(prefix);
+            flushTextNode(content, textBuilder, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
+            textBuilder = new StringBuilder();
+            firstTextMetadata = fragmentMetadata;
+            boundaryWhitespaceOnly = true;
+
+            int commentEnd = sourceText.indexOf("-->", commentStart);
             if (commentEnd < 0) {
-                appendTrailingText(content, text.substring(commentStart), metadata, preserveBoundarySpace);
-                return;
+                String trailingText = sourceText.substring(commentStart);
+                textBuilder.append(trailingText);
+                return new TextRunState(
+                        textBuilder,
+                        firstTextMetadata,
+                        boundaryWhitespaceOnly && isWhitespaceOnly(trailingText)
+                );
             }
             content.add(
                 new DirectCommentConstructorExpression(
-                        text.substring(commentStart + 4, commentEnd),
+                        sourceText.substring(commentStart + 4, commentEnd),
                         ExceptionMetadata.EMPTY_METADATA
                 )
             );
             position = commentEnd + 3;
         }
-    }
-
-    private static void appendTrailingText(
-            List<Expression> content,
-            String text,
-            ExceptionMetadata metadata,
-            boolean preserveBoundarySpace
-    ) {
-        if (text.isEmpty()) {
-            return;
-        }
-        if (!preserveBoundarySpace && isWhitespaceOnly(text)) {
-            return;
-        }
-        content.add(new TextNodeExpression(text, metadata));
+        return new TextRunState(textBuilder, firstTextMetadata, boundaryWhitespaceOnly);
     }
 
     private static boolean appendBoundarySegment(
