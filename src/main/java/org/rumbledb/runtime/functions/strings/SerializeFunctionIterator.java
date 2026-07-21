@@ -31,6 +31,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
+import org.rumbledb.serialization.SerializerUtils;
 
 import java.util.List;
 
@@ -50,7 +51,11 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             List<Item> items = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
             SerializationParameters params = resolveSerializationParameters();
-            Serializer serializer = Serializers.from(params);
+            SerializationParameters itemParams = SerializationParameters.copy(params);
+            if ("xml".equalsIgnoreCase(params.getMethod())) {
+                itemParams.setOmitXmlDeclaration(true);
+            }
+            Serializer serializer = Serializers.from(itemParams);
             String itemSeparator = params.getItemSeparator();
             if (itemSeparator == null) {
                 itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
@@ -69,6 +74,13 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
                     );
                 }
             } else {
+                if (
+                    "xml".equalsIgnoreCase(params.getMethod())
+                        && !params.getOmitXmlDeclaration()
+                        && !items.isEmpty()
+                ) {
+                    SerializerUtils.appendXmlDeclaration(stringBuilder, params);
+                }
                 for (int i = 0; i < items.size(); i++) {
                     if (i > 0) {
                         stringBuilder.append(itemSeparator);

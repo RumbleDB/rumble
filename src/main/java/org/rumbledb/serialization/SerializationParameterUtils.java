@@ -185,6 +185,10 @@ public final class SerializationParameterUtils {
             if (namespace != null && !namespace.isEmpty() && !SERIALIZATION_NAMESPACE.equals(namespace)) {
                 continue;
             }
+            if ("use-character-maps".equals(name.getLocalName())) {
+                applyCharacterMapsParameter(params, element, metadata);
+                continue;
+            }
             String value = attributeValue(element, "value");
             if (value == null) {
                 value = element.getStringValue();
@@ -193,10 +197,50 @@ public final class SerializationParameterUtils {
                 "cdata-section-elements".equals(name.getLocalName())
                     || "suppress-indentation".equals(name.getLocalName())
             ) {
-                value = expandLexicalQNames(value, element);
+                value = expandLexicalQNames(value, element, false);
             }
             applyNormalizedParameter(params, name.getLocalName(), value, metadata);
         }
+    }
+
+    private static void applyCharacterMapsParameter(
+            SerializationParameters params,
+            Item useCharacterMapsElement,
+            ExceptionMetadata metadata
+    ) {
+        Map<String, String> characterMaps = new HashMap<>();
+        for (Item child : useCharacterMapsElement.children()) {
+            if (!child.isElementNode()) {
+                continue;
+            }
+            Name childName = child.nodeName();
+            if (
+                childName == null
+                    || !"character-map".equals(childName.getLocalName())
+            ) {
+                continue;
+            }
+            String childNamespace = childName.getNamespace();
+            if (
+                childNamespace != null
+                    && !childNamespace.isEmpty()
+                    && !SERIALIZATION_NAMESPACE.equals(childNamespace)
+            ) {
+                continue;
+            }
+            String character = attributeValue(child, "character");
+            String mapString = attributeValue(child, "map-string");
+            if (character == null || mapString == null) {
+                throw new InvalidSerializationParameterValueException(
+                        "use-character-maps",
+                        child.getStringValue(),
+                        "character-map elements with character and map-string attributes",
+                        metadata
+                );
+            }
+            characterMaps.put(character, mapString);
+        }
+        params.setCharacterMaps(characterMaps);
     }
 
     private static void applyNormalizedParameter(
@@ -271,7 +315,7 @@ public final class SerializationParameterUtils {
             return List.of(expandedQName(item.getQNameValue()));
         }
         if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
-            return List.of(expandLexicalQNames(item.getStringValue(), namespaceContext));
+            return List.of(expandLexicalQNames(item.getStringValue(), namespaceContext, false));
         }
         return List.of(item.getStringValue());
     }
@@ -305,7 +349,11 @@ public final class SerializationParameterUtils {
         return null;
     }
 
-    private static String expandLexicalQNames(String value, Item contextNode) {
+    private static String expandLexicalQNames(
+            String value,
+            Item contextNode,
+            boolean useDefaultNamespaceForUnprefixed
+    ) {
         if (value == null || value.trim().isEmpty()) {
             return value;
         }
@@ -315,19 +363,30 @@ public final class SerializationParameterUtils {
             if (token.isEmpty()) {
                 continue;
             }
-            sb.append(separator).append(expandLexicalQName(token, contextNode));
+            sb.append(separator).append(expandLexicalQName(token, contextNode, useDefaultNamespaceForUnprefixed));
             separator = " ";
         }
         return sb.toString();
     }
 
-    private static String expandLexicalQName(String token, Item contextNode) {
+    private static String expandLexicalQName(
+            String token,
+            Item contextNode,
+            boolean useDefaultNamespaceForUnprefixed
+    ) {
         if (token.startsWith("Q{")) {
             return token;
         }
         int colon = token.indexOf(':');
         if (colon < 0) {
-            return token;
+            if (!useDefaultNamespaceForUnprefixed) {
+                return token;
+            }
+            String namespace = resolveNamespace("", contextNode);
+            if (namespace == null || namespace.isEmpty()) {
+                return token;
+            }
+            return "Q{" + namespace + "}" + token;
         }
         String prefix = token.substring(0, colon);
         String localName = token.substring(colon + 1);

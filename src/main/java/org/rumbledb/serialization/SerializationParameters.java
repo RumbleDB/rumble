@@ -385,6 +385,37 @@ public class SerializationParameters implements Serializable, KryoSerializable {
         this.htmlVersion = htmlVersion;
     }
 
+    /**
+     * Requested HTML version for the HTML/XHTML output methods.
+     *
+     * Per XSLT and XQuery Serialization 3.1, the requested HTML version is the
+     * value of {@code html-version} when that parameter is present; otherwise it
+     * falls back to {@code version}.
+     *
+     * @return the requested HTML version, or {@code null} if neither parameter is set
+     */
+    public String getRequestedHtmlVersion() {
+        return this.htmlVersion != null ? this.htmlVersion : this.version;
+    }
+
+    /**
+     * Whether the requested HTML version denotes HTML5.
+     *
+     * This check is intentionally narrow: we recognize the specific lexical forms
+     * that should trigger the HTML5 branch ({@code 5} and {@code 5.0}) without
+     * treating arbitrary version strings as decimals.
+     *
+     * @return {@code true} if the requested HTML version is {@code "5"} or {@code "5.0"}
+     */
+    public boolean isRequestedHtml5Version() {
+        String requestedHtmlVersion = getRequestedHtmlVersion();
+        if (requestedHtmlVersion == null || requestedHtmlVersion.trim().isEmpty()) {
+            return false;
+        }
+        String trimmed = requestedHtmlVersion.trim();
+        return "5".equals(trimmed) || "5.0".equals(trimmed);
+    }
+
     public boolean getByteOrderMark() {
         return this.byteOrderMark;
     }
