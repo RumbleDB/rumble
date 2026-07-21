@@ -330,7 +330,7 @@ public class XhtmlSerializer extends XmlSerializer {
         boolean emittedDefaultNamespaceForNormalizedElement = false;
         if (shouldApplyPrefixNormalization(item)) {
             String normalizedNamespace = item.nodeName().getNamespace();
-            if (!isNamespaceBindingInScope(item.parent(), "", normalizedNamespace)) {
+            if (!isNormalizedDefaultNamespaceInScope(item.parent(), normalizedNamespace)) {
                 sb.append(" xmlns=\"");
                 sb.append(escapeAttribute(normalizedNamespace));
                 sb.append("\"");
@@ -362,6 +362,28 @@ public class XhtmlSerializer extends XmlSerializer {
             if (prefix.isEmpty() && emittedDefaultNamespaceForNormalizedElement) {
                 return true;
             }
+        }
+        return false;
+    }
+
+    private boolean isNormalizedDefaultNamespaceInScope(Item context, String namespace) {
+        Item current = context;
+        while (current != null && current.isElementNode()) {
+            if (
+                shouldApplyPrefixNormalization(current)
+                    && current.nodeName() != null
+                    && namespace.equals(current.nodeName().getNamespace())
+            ) {
+                return true;
+            }
+            for (Item namespaceNode : current.declaredNamespaceNodes()) {
+                Name name = namespaceNode.nodeName();
+                String prefix = name == null ? "" : name.getLocalName();
+                if (prefix.isEmpty()) {
+                    return namespace.equals(namespaceNode.getStringValue());
+                }
+            }
+            current = current.parent();
         }
         return false;
     }

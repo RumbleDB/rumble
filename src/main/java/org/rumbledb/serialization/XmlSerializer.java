@@ -53,7 +53,7 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isAtomic()) {
-            sb.append(item.getStringValue());
+            sb.append(escapeText(item.getStringValue()));
             return;
         }
         if (item.isMap() || item.isObject()) {
