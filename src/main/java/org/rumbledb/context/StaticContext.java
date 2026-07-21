@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -55,17 +56,21 @@ public class StaticContext implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
 
     @Getter
-    private transient Map<Name, InScopeVariable> inScopeVariables;
+    private transient Map<Name, InScopeVariable> inScopeVariables = new HashMap<>();
+
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private transient InScopeSchemaTypes inScopeSchemaTypes;
+
     @Setter
     private String queryLanguage;
+
     @Getter
     private StaticContext parent;
+
     private URI staticBaseURI;
-    private boolean emptySequenceOrderLeast;
-    private boolean boundarySpacePreserve;
+    private boolean emptySequenceOrderLeast = true;
+    private boolean boundarySpacePreserve = true;
     private SerializationParameters serializationParameters;
     private transient Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
@@ -82,7 +87,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Getter
     @Setter
     private transient SequenceType contextItemStaticType;
-    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures = new HashMap<>();
     private static final Map<String, String> defaultBindings = Map.ofEntries(
         Map.entry("local", Name.LOCAL_NS),
         Map.entry("fn", Name.FN_NS),
@@ -108,63 +113,30 @@ public class StaticContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration configuration;
 
     public StaticContext() {
-        this.parent = null;
-        this.staticBaseURI = null;
-        this.queryLanguage = null;
-        this.inScopeVariables = null;
-        this.userDefinedFunctionExecutionModes = null;
-        this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
-        this.contextItemStaticType = null;
-        this.configuration = null;
-        this.inScopeSchemaTypes = null;
-        this.currentMutabilityLevel = 0;
-        this.serializationParameters = null;
-        this.explicitSerializationParameterNames = null;
-        this.defaultDecimalFormat = null;
-        this.decimalFormats = new HashMap<>();
-        this.isQuerySideEffecting = false;
-        initializeRootCollations();
+        initializeRoot(null, null);
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
-        this.parent = null;
+        initializeRoot(staticBaseURI, configuration);
+    }
+
+    private void initializeRoot(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.staticBaseURI = staticBaseURI;
-        this.queryLanguage = configuration.getQueryLanguage() != null
-            ? configuration.getQueryLanguage()
-            : this.queryLanguage;
         this.configuration = configuration;
-        this.inScopeVariables = new HashMap<>();
-        this.userDefinedFunctionExecutionModes = null;
-        this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
-        this.contextItemStaticType = null;
-        this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
-        this.currentMutabilityLevel = 0;
-        this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
+        if (configuration != null) {
+            this.queryLanguage = configuration.getQueryLanguage();
+            this.serializationParameters = SerializationParameters.copy(configuration.getSerializationParameters());
+        }
         this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
         this.decimalFormats = new HashMap<>();
-        this.isQuerySideEffecting = false;
         initializeRootCollations();
     }
 
     public StaticContext(StaticContext parent) {
-        this.parent = parent;
-        this.queryLanguage = null;
-        this.inScopeVariables = new HashMap<>();
-        this.userDefinedFunctionExecutionModes = null;
-        this.contextItemStaticType = null;
-        this.staticallyKnownFunctionSignatures = new HashMap<>();
-        this.configuration = null;
-        this.inScopeSchemaTypes = null;
+        this.parent = Objects.requireNonNull(parent, "parent");
         this.currentMutabilityLevel = parent.currentMutabilityLevel;
-        this.serializationParameters = null;
-        this.defaultDecimalFormat = null;
-        this.decimalFormats = null;
-        this.isQuerySideEffecting = false;
-        this.staticallyKnownCollations = null;
-        this.defaultCollation = null;
+        // All other nullable fields inherit their values through the parent chain.
     }
 
     private void initializeRootCollations() {
