@@ -38,8 +38,6 @@ public class XMLTests extends SparkAnnotationsTestsBase {
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
                 new String[] {
-                    "--print-iterator-tree",
-                    "yes",
                     "--variable:externalUnparsedString",
                     "unparsed string",
                     "--materialization-cap",

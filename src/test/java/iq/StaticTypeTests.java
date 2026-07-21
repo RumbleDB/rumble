@@ -9,7 +9,7 @@ import java.io.File;
 public class StaticTypeTests extends SparkAnnotationsTestsBase {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes", "--static-typing", "yes" }
+            new String[] { "--static-typing", "yes" }
     );
 
     public static final File staticTypeTestsDirectory = new File(

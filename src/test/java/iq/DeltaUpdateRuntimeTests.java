@@ -35,8 +35,6 @@ public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
     );
     protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--print-iterator-tree",
-                "yes",
                 "--output-format",
                 "delta",
                 "--show-error-info",
@@ -48,8 +46,6 @@ public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     protected static final RumbleRuntimeConfiguration deleteDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--print-iterator-tree",
-                "yes",
                 "--output-format",
                 "delta",
                 "--show-error-info",

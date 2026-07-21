@@ -46,8 +46,6 @@ public class UpdatesForRumbleBenchmark {
                 "yes",
                 "--dates-with-timezone",
                 "yes",
-                "--print-iterator-tree",
-                "yes",
                 "--apply-updates",
                 "yes",
                 "--show-error-info",
@@ -61,8 +59,6 @@ public class UpdatesForRumbleBenchmark {
 
     protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--print-iterator-tree",
-                "yes",
                 "--output-format",
                 "delta",
                 "--show-error-info",
