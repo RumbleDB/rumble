@@ -1,6 +1,5 @@
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -135,7 +134,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             }
         }
         if (isStringValue) {
-            appendJsonString(prepareStringForJson(item.getStringValue()), sb);
+            appendJsonString(item.getStringValue(), sb);
         } else {
             sb.append(item.getStringValue());
         }
@@ -143,7 +142,7 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
 
     private void appendJsonString(String value, StringBuilder sb) {
         sb.append("\"");
-        sb.append(StringEscapeUtils.escapeJson(value));
+        appendJsonStringContent(value, sb);
         sb.append("\"");
     }
 
@@ -217,10 +216,10 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         boolean firstTime = true;
         Set<String> serializedKeys = this.params.getAllowDuplicateNames() ? null : new HashSet<>();
         for (Item key : mapItem.getItemKeys()) {
-            String keyString = prepareStringForJson(key.getStringValue());
+            String keyString = key.getStringValue();
             if (serializedKeys != null && !serializedKeys.add(keyString)) {
                 throw jsonSerializationError(
-                    "JSON serialization produced duplicate names after key stringification.",
+                    "JSON serialization does not allow duplicate map key string values.",
                     "SERE0022"
                 );
             }
@@ -273,15 +272,38 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
             nodeParams.setOmitXmlDeclaration(true);
             serializer = new XmlSerializer(nodeParams);
         }
-        return prepareStringForJson(serializer.serialize(item));
+        return serializer.serialize(item);
     }
 
     private String prepareStringForJson(String value) {
         if (value == null) {
             return "";
         }
-        String result = applyNormalization(value);
-        return applyCharacterMaps(result);
+        StringBuilder result = new StringBuilder();
+        StringBuilder pendingUnmapped = new StringBuilder();
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        for (int index = 0; index < value.length();) {
+            int codePoint = value.codePointAt(index);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                appendNormalizedUnmappedRun(pendingUnmapped, result);
+                result.append(replacement);
+            } else {
+                pendingUnmapped.append(current);
+            }
+            index += Character.charCount(codePoint);
+        }
+        appendNormalizedUnmappedRun(pendingUnmapped, result);
+        return result.toString();
+    }
+
+    private void appendNormalizedUnmappedRun(StringBuilder pendingUnmapped, StringBuilder target) {
+        if (pendingUnmapped.length() == 0) {
+            return;
+        }
+        target.append(applyNormalization(pendingUnmapped.toString()));
+        pendingUnmapped.setLength(0);
     }
 
     private String applyNormalization(String value) {
@@ -295,37 +317,34 @@ public class JsonSerializer implements Serializer, java.io.Serializable {
         return value;
     }
 
-    private String applyCharacterMaps(String value) {
+    private void appendJsonStringContent(String value, StringBuilder sb) {
+        if (value == null || value.isEmpty()) {
+            return;
+        }
+        StringBuilder pendingUnmapped = new StringBuilder();
         Map<String, String> characterMaps = this.params.getCharacterMaps();
-        if (characterMaps == null || characterMaps.isEmpty() || value.isEmpty()) {
-            return value;
-        }
-        StringBuilder result = new StringBuilder();
-        int index = 0;
-        while (index < value.length()) {
-            String replacement = null;
-            int matchLength = 0;
-            for (Map.Entry<String, String> entry : characterMaps.entrySet()) {
-                String source = entry.getKey();
-                if (
-                    source != null
-                        && !source.isEmpty()
-                        && value.startsWith(source, index)
-                        && source.length() > matchLength
-                ) {
-                    replacement = entry.getValue();
-                    matchLength = source.length();
-                }
-            }
-            if (matchLength > 0) {
-                result.append(replacement == null ? "" : replacement);
-                index += matchLength;
+        for (int index = 0; index < value.length();) {
+            int codePoint = value.codePointAt(index);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps == null ? null : characterMaps.get(current);
+            if (replacement != null) {
+                appendEscapedNormalizedUnmappedRun(pendingUnmapped, sb);
+                sb.append(replacement);
             } else {
-                result.append(value.charAt(index));
-                index++;
+                pendingUnmapped.append(current);
             }
+            index += Character.charCount(codePoint);
         }
-        return result.toString();
+        appendEscapedNormalizedUnmappedRun(pendingUnmapped, sb);
+    }
+
+    private void appendEscapedNormalizedUnmappedRun(StringBuilder pendingUnmapped, StringBuilder sb) {
+        if (pendingUnmapped.length() == 0) {
+            return;
+        }
+        String normalized = applyNormalization(pendingUnmapped.toString());
+        pendingUnmapped.setLength(0);
+        SerializerUtils.appendJsonEscapedString(sb, normalized, this.params);
     }
 
     private RumbleException jsonSerializationError(String message, String errorCode) {
