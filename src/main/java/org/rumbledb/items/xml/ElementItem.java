@@ -275,11 +275,11 @@ public class ElementItem implements Item {
         // Replay from root (last in the list) to direct parent (first in the list),
         // so that inner ancestors override outer ones for the same prefix.
         for (int i = ancestorFrames.size() - 1; i >= 0; i--) {
-            inScope.putAll(ancestorFrames.get(i));
+            applyNamespaceFrame(inScope, ancestorFrames.get(i));
         }
 
         // Step 2: Current element's own declared namespaces override all inherited ones.
-        inScope.putAll(this.namespaces);
+        applyNamespaceFrame(inScope, this.namespaces);
 
         // Step 2b: The xml prefix is implicitly in-scope on every element.
         inScope.putIfAbsent("xml", Name.XML_NS);
@@ -293,6 +293,21 @@ public class ElementItem implements Item {
             result.add(namespaceItem);
         }
         return result;
+    }
+
+    private void applyNamespaceFrame(Map<String, String> inScope, Map<String, String> frame) {
+        if (frame == null || frame.isEmpty()) {
+            return;
+        }
+        for (Map.Entry<String, String> entry : frame.entrySet()) {
+            String prefix = entry.getKey();
+            String uri = entry.getValue();
+            if (uri == null || uri.isEmpty()) {
+                inScope.remove(prefix);
+            } else {
+                inScope.put(prefix, uri);
+            }
+        }
     }
 
     /**
