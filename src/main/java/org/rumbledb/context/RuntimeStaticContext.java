@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.Getter;
+import lombok.NonNull;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -17,17 +19,65 @@ public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /**
+     * Query language associated with this context, which is used for error reporting and to determine the
+     * semantics of certain operations.
+     */
+    @Getter
     private String queryLanguage;
+
+    /**
+     * Runtime configuration associated with this context, which is used for error reporting and to
+     * determine limits such as the materialization cap; the returned configuration is never {@code null}
+     */
+    @Getter
+    @NonNull
     private RumbleRuntimeConfiguration configuration;
+
     private SequenceType staticType;
+
+    /**
+     * Execution mode in which expressions in this context should be evaluated; the returned execution mode
+     * is never {@code null}
+     */
+    @Getter
+    @NonNull
     private ExecutionMode executionMode;
+
+    /**
+     * Metadata associated with this context, which is used for error reporting.
+     */
+    @Getter
+    @NonNull
     private ExceptionMetadata metadata;
+
     private final Map<String, String> staticallyKnownNamespaces;
     private final Set<String> staticallyKnownCollations;
+
+    @Getter
     private final SerializationParameters serializationParameters;
+
     private final String defaultCollation;
+    /**
+     * -- GETTER --
+     * Default decimal format definition, or {@code null} if no default decimal format is defined in this
+     * context
+     */
+    @Getter
     private DecimalFormatDefinition defaultDecimalFormat;
+
+    /**
+     * Decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
+     * in this context
+     */
+    @Getter
     private Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    /**
+     * Whether this context is associated with a query that has side effects. This is used to determine whether
+     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
+     */
+    @Getter
     private boolean isQuerySideEffecting;
 
     @Override
@@ -108,17 +158,6 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Returns the runtime configuration associated with this context, which is used for error reporting and to
-     * determine limits such as the materialization cap. The returned configuration is never {@code null}.
-     * 
-     * @return the runtime configuration associated with this context, which is used for error reporting and to
-     *         determine limits such as the materialization cap; the returned configuration is never {@code null}
-     */
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.configuration;
-    }
-
-    /**
      * Returns the static type of expressions in this context, or {@code null} if no static type is defined for this
      * context. Note that clauses do not have static types, so calling this method on a context associated with a clause
      * will throw an exception.
@@ -132,28 +171,6 @@ public class RuntimeStaticContext implements Serializable {
             throw new OurBadException("Clauses do not have static types.");
         }
         return this.staticType;
-    }
-
-    /**
-     * Returns the execution mode in which expressions in this context should be evaluated. The returned execution mode
-     * is never {@code null}.
-     * 
-     * @return the execution mode in which expressions in this context should be evaluated; the returned execution mode
-     *         is never {@code null}
-     */
-    public ExecutionMode getExecutionMode() {
-        return this.executionMode;
-    }
-
-    /**
-     * Returns the metadata associated with this context, which is used for error reporting. The returned metadata is
-     * never {@code null}.
-     * 
-     * @return the metadata associated with this context, which is used for error reporting; the returned metadata is
-     *         never {@code null}
-     */
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
     }
 
     /**
@@ -186,10 +203,6 @@ public class RuntimeStaticContext implements Serializable {
         return this.defaultCollation;
     }
 
-    public SerializationParameters getSerializationParameters() {
-        return this.serializationParameters;
-    }
-
     /**
      * Drops the decimal format definitions defined in this context, if any. After calling this method,
      * {@link #getDecimalFormats()} will return {@code null} and {@link #getDefaultDecimalFormat()} will return
@@ -198,38 +211,6 @@ public class RuntimeStaticContext implements Serializable {
     public void dropDecimalFormats() {
         this.decimalFormats = null;
         this.defaultDecimalFormat = null;
-    }
-
-    /**
-     * Returns the query language associated with this context, which is used for error reporting and to determine the
-     * semantics of certain operations. The returned query language is never {@code null}.
-     * 
-     * @return the query language.
-     */
-    public String getQueryLanguage() {
-        return this.queryLanguage;
-    }
-
-    /**
-     * Returns the decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
-     * in this context.
-     * 
-     * @return the decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
-     *         in this context
-     */
-    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
-        return this.decimalFormats;
-    }
-
-    /**
-     * Returns the default decimal format definition, or {@code null} if no default decimal format is defined in this
-     * context.
-     * 
-     * @return the default decimal format definition, or {@code null} if no default decimal format is defined in this
-     *         context
-     */
-    public DecimalFormatDefinition getDefaultDecimalFormat() {
-        return this.defaultDecimalFormat;
     }
 
     /**
@@ -294,16 +275,6 @@ public class RuntimeStaticContext implements Serializable {
         RuntimeStaticContext result = new RuntimeStaticContext(this);
         result.metadata = newMetadata;
         return result;
-    }
-
-    /**
-     * Returns whether this context is associated with a query that has side effects. This is used to determine whether
-     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
-     * 
-     * @return whether this context is associated with a query that has side effects.
-     */
-    public boolean isQuerySideEffecting() {
-        return this.isQuerySideEffecting;
     }
 
 }
