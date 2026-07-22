@@ -97,6 +97,11 @@ public class AttributeItem implements Item {
         this.parent = parent;
     }
 
+    @Override
+    public void addParentToDescendants() {
+        // Attribute nodes are leaves and therefore have no descendants to update.
+    }
+
     public void setNodeName(Name nodeName) {
         this.dmNodeName = nodeName;
     }
