@@ -24,6 +24,9 @@ import org.rumbledb.runtime.RuntimeIterator;
  * Ordinary bodies are serialized once when the factory is created. Creating an execution only deserializes that
  * immutable snapshot; it never serializes a live or previously executed iterator tree. Bodies that own Spark runtime
  * state are retained instead.
+ * 
+ * Note: this is just a temporary solution to reduce the expense of deep copy operations on function body iterators.
+ * We will switch to a cheaper and generic cursor-based solution in the future.
  */
 final class FunctionBodyIteratorFactory implements Serializable {
 
