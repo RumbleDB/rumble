@@ -97,6 +97,10 @@ public class AttributeItem implements Item {
         this.parent = parent;
     }
 
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
     @Override
     public ItemType getDynamicType() {
         return ItemTypeFactory.attributeNodeItemType(this.dmNodeName);
