@@ -20,12 +20,11 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 
 import java.io.Serializable;
 
-public interface RuntimeIteratorInterface extends Serializable {
+public interface RuntimeIteratorInterface<T> extends Serializable {
     void open(DynamicContext context);
 
     void close();
@@ -34,5 +33,5 @@ public interface RuntimeIteratorInterface extends Serializable {
 
     boolean hasNext();
 
-    Item next();
+    T next();
 }
