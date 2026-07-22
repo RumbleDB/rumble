@@ -78,13 +78,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
     }

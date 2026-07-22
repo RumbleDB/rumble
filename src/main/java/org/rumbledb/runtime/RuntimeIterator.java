@@ -232,12 +232,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isOpen = false;
     }
 
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContextForLocalExecution = context;
-        this.children.forEach(c -> c.reset(context));
-    }
-
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.children);

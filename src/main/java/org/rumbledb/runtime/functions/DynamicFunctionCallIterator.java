@@ -275,12 +275,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     public void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed

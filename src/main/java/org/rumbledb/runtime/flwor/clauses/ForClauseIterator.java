@@ -146,24 +146,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-
-        if (this.child != null && this.evaluationDepthLimit != 0) { // if it's not a start clause
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            this.position = 1;
-            this.isFirstItem = true;
-            setNextLocalTupleResult();
-        } else { // if it's a start clause, get results using only the assignmentIterator
-            this.assignmentIterator.reset(this.currentDynamicContext);
-            this.position = 1;
-            this.isFirstItem = true;
-            setResultFromExpression();
-        }
-    }
-
-    @Override
     public FlworTuple next() {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned

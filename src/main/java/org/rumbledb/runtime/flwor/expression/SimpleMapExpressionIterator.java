@@ -117,16 +117,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        setLast();
-        this.mapValues = new LinkedList<>();
-        this.position = 0;
-        this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

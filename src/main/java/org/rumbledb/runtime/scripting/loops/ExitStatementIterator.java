@@ -60,11 +60,6 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.childIterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return true;
     }
