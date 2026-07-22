@@ -97,6 +97,7 @@ final class NamespaceFixupUtils {
         // something we should materialize as a declared namespace on copied elements.
         inScope.remove("xml");
         if (preserveAll) {
+            mergeDeclaredUndeclarations(element, inScope);
             return inScope;
         }
         Map<String, String> selected = new LinkedHashMap<>();
@@ -141,6 +142,18 @@ final class NamespaceFixupUtils {
             result.put(prefix, namespaceNode.getStringValue());
         }
         return result;
+    }
+
+    private static void mergeDeclaredUndeclarations(ElementItem element, Map<String, String> preservedNamespaces) {
+        for (Item namespaceNode : element.declaredNamespaceNodes()) {
+            String prefix = namespaceNode instanceof NamespaceItem namespace
+                ? normalize(namespace.getPrefix())
+                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+            String uri = normalize(namespaceNode.getStringValue());
+            if (uri.isEmpty()) {
+                preservedNamespaces.put(prefix, uri);
+            }
+        }
     }
 
     private static void ensureElementNameBinding(ElementItem element) {
