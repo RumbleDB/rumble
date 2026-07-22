@@ -63,16 +63,15 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     /**
      * Indicates whether the function body can be reused for subsequent calls.
-     * 
+     *
      * A body is reusable if it was exhausted normally and is not sequential or updating.
-     * 
+     *
      * With a reusable body, the same execution instance can be reset with a new dynamic context for subsequent calls,
      * without needing to create a new execution instance, which currently requires a deep copy of the function body.
      */
     private transient boolean bodyReusable;
     private transient Item nextResult;
     private transient DynamicContext dynamicContextForCalls;
-
 
     public FunctionItemCallIterator(
             Item functionItem,
@@ -206,11 +205,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.currentDynamicContextForLocalExecution,
             this.dynamicContextForCalls
         );
-        boolean reuseBody = this.functionBodyIterator != null;
-        if (reuseBody) {
-            // Reopen through the normal open path so every child receives the context created by its parent.
-            this.functionBodyIterator.close();
-        } else {
+        if (this.functionBodyIterator == null) {
             // The previous body was discarded, or this is the first invocation at this call site.
             this.functionBodyIterator = createFunctionBodyIterator();
         }
@@ -364,17 +359,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             this.currentDynamicContextForLocalExecution,
             this.dynamicContextForCalls
         );
+        boolean reuseBody = this.functionBodyIterator != null && this.bodyReusable;
         this.bodyReusable = false;
         try {
-            if (this.functionBodyIterator == null) {
-                // A discarded body cannot be reset; replace it with a fresh execution instance and open it.
+            if (!reuseBody) {
+                // Only a normally exhausted body is safe to reuse. Replace active, sequential, updating, or failed
+                // executions with a fresh instance.
+                discardBody();
                 this.functionBodyIterator = createFunctionBodyIterator();
-                this.functionBodyIterator.open(this.dynamicContextForCalls);
-            } else {
-                // Reopen through the normal open path so every child receives the context created by its parent.
-                this.functionBodyIterator.close();
-                this.functionBodyIterator.open(this.dynamicContextForCalls);
             }
+            this.functionBodyIterator.open(this.dynamicContextForCalls);
             setNextResult();
         } catch (RuntimeException exception) {
             discardBody();
