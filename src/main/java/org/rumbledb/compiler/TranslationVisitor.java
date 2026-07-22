@@ -638,18 +638,26 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 ctx.URIQualifiedName().getText(),
                 createMetadataFromContext(ctx)
             );
-        } else if (ctx.FullQName() != null) {
-            // Handle FullQName by parsing its text content
-            String fullQNameText = ctx.FullQName().getText();
-            int colonIndex = fullQNameText.indexOf(':');
+        }
+
+        String lexicalFunctionName = ctx.FullQName() != null ? ctx.FullQName().getText() : ctx.getText();
+        int colonIndex = lexicalFunctionName.indexOf(':');
+        if (colonIndex != -1) {
+            // Some prefixed function names with keyword local parts do not surface through FullQName in the grammar.
+            // Fall back to the raw lexical text so enclosed expressions in direct constructors can still see
+            // namespace declarations from the same start tag (for example xmlns:p plus p:count()).
+            if (lexicalFunctionName.startsWith("Q{")) {
+                return URIQualifiedNameParser.parse(lexicalFunctionName, createMetadataFromContext(ctx));
+            }
+            // Handle prefixed lexical QNames by parsing their text content directly.
             if (colonIndex == -1) {
                 throw new ParsingException(
-                        "Invalid FullQName format: " + fullQNameText,
+                        "Invalid FullQName format: " + lexicalFunctionName,
                         createMetadataFromContext(ctx)
                 );
             }
-            String prefix = fullQNameText.substring(0, colonIndex);
-            String localName = fullQNameText.substring(colonIndex + 1);
+            String prefix = lexicalFunctionName.substring(0, colonIndex);
+            String localName = lexicalFunctionName.substring(colonIndex + 1);
             String namespace = resolvePrefixForDirConstructor(prefix);
             if (namespace != null) {
                 return new Name(namespace, prefix, localName);
@@ -658,14 +666,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     "Cannot expand prefix " + prefix,
                     createMetadataFromContext(ctx)
             );
-        } else if (ctx.keywordOKForFunction() != null) {
+        }
+
+        if (ctx.keywordOKForFunction() != null) {
             // if the rule matches a keyword, the prefix is not defined
             return nameForUnprefixedFunction(ctx.keywordOKForFunction().getText());
-        } else {
-            // Handle NCName case
-            String localName = ctx.NCName().getText();
-            return nameForUnprefixedFunction(localName);
         }
+        // Handle NCName case
+        String localName = ctx.NCName().getText();
+        return nameForUnprefixedFunction(localName);
     }
 
     /**
