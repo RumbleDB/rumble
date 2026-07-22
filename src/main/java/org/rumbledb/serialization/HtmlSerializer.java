@@ -431,8 +431,7 @@ public class HtmlSerializer extends XmlSerializer {
             sb.append("\"");
             emittedDefaultNamespaceForNormalizedElement = true;
         }
-        boolean namespaceAlreadyDeclared = false;
-        for (Item namespace : item.declaredNamespaceNodes()) {
+        for (Item namespace : getNamespaceNodesToSerialize(item)) {
             if (shouldSkipHtml5InheritedDefaultNamespace(item, namespace)) {
                 continue;
             }
@@ -445,12 +444,8 @@ public class HtmlSerializer extends XmlSerializer {
             if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
                 continue;
             }
-            if (matchesElementNamespace(item, namespace)) {
-                namespaceAlreadyDeclared = true;
-            }
             appendAttributeOrNamespaceNode(namespace, sb);
         }
-        appendImplicitElementNamespace(item, sb, namespaceAlreadyDeclared, emittedDefaultNamespaceForNormalizedElement);
     }
 
     private boolean shouldSkipHtml5InheritedDefaultNamespace(Item element, Item namespace) {
@@ -469,46 +464,6 @@ public class HtmlSerializer extends XmlSerializer {
             && XHTML_NS.equals(namespace.getStringValue())
             && XHTML_NS.equals(element.nodeName().getNamespace())
             && (element.nodeName().getPrefix() == null || element.nodeName().getPrefix().isEmpty());
-    }
-
-    private void appendImplicitElementNamespace(
-            Item element,
-            StringBuilder sb,
-            boolean namespaceAlreadyDeclared,
-            boolean emittedDefaultNamespaceForNormalizedElement
-    ) {
-        if (element == null || element.nodeName() == null || namespaceAlreadyDeclared) {
-            return;
-        }
-        String namespace = element.nodeName().getNamespace();
-        if (namespace == null || namespace.isEmpty()) {
-            return;
-        }
-        String prefix = element.nodeName().getPrefix();
-        if (
-            isHtml5Version()
-                && XHTML_NS.equals(namespace)
-                && (prefix == null || prefix.isEmpty())
-                && element.parent() != null
-        ) {
-            return;
-        }
-        if (isNamespaceBindingInScope(element.parent(), prefix, namespace)) {
-            return;
-        }
-        if (prefix == null || prefix.isEmpty()) {
-            if (!emittedDefaultNamespaceForNormalizedElement) {
-                sb.append(" xmlns=\"");
-                sb.append(escapeAttribute(namespace));
-                sb.append("\"");
-            }
-            return;
-        }
-        sb.append(" xmlns:");
-        sb.append(prefix);
-        sb.append("=\"");
-        sb.append(escapeAttribute(namespace));
-        sb.append("\"");
     }
 
     private boolean shouldSkipNamespaceDeclaration(
@@ -746,6 +701,11 @@ public class HtmlSerializer extends XmlSerializer {
                 return true;
             }
         }
+        return false;
+    }
+
+    @Override
+    protected boolean supportsPrefixUndeclaration(Item element) {
         return false;
     }
 
