@@ -13,9 +13,6 @@ public class ParentPointerAnalysisVisitor extends AbstractNodeVisitor<Boolean> {
     private static final Set<FunctionIdentifier> FUNCTIONS_REQUIRING_PARENT_POINTERS = Set.of(
         new FunctionIdentifier(new Name(Name.FN_NS, "fn", "lang"), 1),
         new FunctionIdentifier(new Name(Name.FN_NS, "fn", "lang"), 2),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "namespace-uri-for-prefix"), 2),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "root"), 0),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "root"), 1),
         new FunctionIdentifier(new Name(Name.FN_NS, "fn", "innermost"), 1),
         new FunctionIdentifier(new Name(Name.FN_NS, "fn", "outermost"), 1)
     );
