@@ -24,7 +24,7 @@ public class RuntimeStaticContext implements Serializable {
      * semantics of certain operations.
      */
     @Getter
-    private String queryLanguage;
+    private final String queryLanguage;
 
     /**
      * Runtime configuration associated with this context, which is used for error reporting and to
@@ -32,7 +32,7 @@ public class RuntimeStaticContext implements Serializable {
      */
     @Getter
     @NonNull
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleRuntimeConfiguration configuration;
 
     private SequenceType staticType;
 
@@ -78,7 +78,7 @@ public class RuntimeStaticContext implements Serializable {
      * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
      */
     @Getter
-    private boolean isQuerySideEffecting;
+    private final boolean isQuerySideEffecting;
 
     @Override
     public String toString() {
