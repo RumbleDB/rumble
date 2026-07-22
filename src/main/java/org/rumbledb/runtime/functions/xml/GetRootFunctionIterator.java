@@ -14,9 +14,11 @@ import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class GetRootFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public GetRootFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {

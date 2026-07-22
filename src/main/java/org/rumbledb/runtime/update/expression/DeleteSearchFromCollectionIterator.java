@@ -14,11 +14,13 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
 public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator contentIterator;
 

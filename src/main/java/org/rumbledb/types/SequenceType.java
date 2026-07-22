@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collections;
@@ -36,6 +37,7 @@ import java.util.Map;
 
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private ItemType itemType;
     private Arity arity;

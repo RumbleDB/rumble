@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -14,6 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 
 public class UnionItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(

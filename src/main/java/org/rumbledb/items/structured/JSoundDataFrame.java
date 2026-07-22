@@ -1,5 +1,6 @@
 package org.rumbledb.items.structured;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -25,6 +26,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 public class JSoundDataFrame implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Dataset<Row> dataFrame;

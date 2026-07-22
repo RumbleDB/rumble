@@ -48,11 +48,13 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serial;
 import java.util.*;
 
 public class WhereClauseIterator extends RuntimeTupleIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency

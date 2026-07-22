@@ -37,12 +37,14 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {

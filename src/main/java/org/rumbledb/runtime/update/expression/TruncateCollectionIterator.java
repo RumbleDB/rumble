@@ -17,11 +17,13 @@ import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
 public class TruncateCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private Mode mode;

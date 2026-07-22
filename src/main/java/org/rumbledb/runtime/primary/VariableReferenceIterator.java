@@ -37,6 +37,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -44,6 +45,7 @@ import java.util.TreeMap;
 public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
     private List<Item> items = null;

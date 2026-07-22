@@ -35,12 +35,14 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private List<Item> results;

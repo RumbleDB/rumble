@@ -41,6 +41,7 @@ import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -52,6 +53,7 @@ import java.util.stream.Collectors;
 
 public class CountClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
     private FlworTuple nextLocalTupleResult;

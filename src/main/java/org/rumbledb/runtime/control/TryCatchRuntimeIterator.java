@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.rumbledb.expressions.control.CatchPattern;
 public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryExpression;
     private final Map<CatchPattern, RuntimeIterator> catchExpressions;

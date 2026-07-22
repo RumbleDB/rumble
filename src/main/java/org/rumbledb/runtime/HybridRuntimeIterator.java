@@ -37,10 +37,12 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.List;
 
 public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     protected List<Item> result = null;
     private int currentResultIndex = 0;

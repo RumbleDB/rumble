@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 import java.util.UUID;
@@ -35,6 +36,7 @@ import java.util.UUID;
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable, KryoSerializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String path;
     private int docPosition;

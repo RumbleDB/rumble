@@ -32,11 +32,13 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private RuntimeIterator searchIterator;

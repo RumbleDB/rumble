@@ -27,6 +27,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +37,7 @@ import java.util.List;
 public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator rightIterator;
     private final DynamicContext dynamicContext;

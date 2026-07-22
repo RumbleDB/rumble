@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +23,7 @@ import scala.Tuple2;
 
 public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public BinaryClassificationMetricsFunctionIterator(
@@ -105,6 +107,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
     private JavaRDD<Item> tupleToArrays(JavaRDD<Tuple2<Object, Object>> pr1, String key1, String key2) {
         return pr1.map(
             new Function<Tuple2<Object, Object>, Item>() {
+                @Serial
                 private static final long serialVersionUID = 1L;
 
                 public Item call(Tuple2<Object, Object> a) {

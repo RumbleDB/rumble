@@ -10,12 +10,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
 public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Pattern LINE_SPLIT_PATTERN = Pattern.compile("\r\n|\r|\n");
 

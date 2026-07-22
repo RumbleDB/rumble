@@ -32,11 +32,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Properties;
 
 public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public PostgreSQLTableFunctionIterator(

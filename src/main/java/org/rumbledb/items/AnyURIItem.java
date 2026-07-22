@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -37,6 +38,7 @@ import com.esotericsoftware.kryo.io.Output;
 public class AnyURIItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private URI value;
 

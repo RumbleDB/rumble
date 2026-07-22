@@ -12,11 +12,13 @@ import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;

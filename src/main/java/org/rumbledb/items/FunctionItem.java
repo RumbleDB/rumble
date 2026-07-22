@@ -20,11 +20,7 @@
 
 package org.rumbledb.items;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +55,7 @@ import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 
 public class FunctionItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
     private List<Name> parameterNames;

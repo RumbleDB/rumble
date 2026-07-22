@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 
 public class DerivedAtomicItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private ItemType baseType;

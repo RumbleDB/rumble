@@ -34,11 +34,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public RootFileFunctionIterator(

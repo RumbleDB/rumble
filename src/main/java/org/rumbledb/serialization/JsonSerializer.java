@@ -6,6 +6,8 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
+
+import java.io.Serial;
 import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.List;
@@ -14,6 +16,7 @@ import java.util.Set;
 
 public class JsonSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final org.rumbledb.serialization.SerializationParameters params;

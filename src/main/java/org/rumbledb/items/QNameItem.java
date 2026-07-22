@@ -18,6 +18,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.Objects;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -34,6 +35,7 @@ import org.rumbledb.types.ItemType;
  */
 public class QNameItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
