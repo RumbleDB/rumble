@@ -3,8 +3,6 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -19,6 +17,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
 
 @Value
+@Builder(toBuilder = true)
 public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -51,14 +50,18 @@ public class RuntimeStaticContext implements Serializable {
     @NonNull
     private final ExceptionMetadata metadata;
 
-    private final Map<String, String> staticallyKnownNamespaces;
-    private final Set<String> staticallyKnownCollations;
+    @Builder.Default
+    private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
+
+    @Builder.Default
+    private final Set<String> staticallyKnownCollations = Collections.emptySet();
 
     private final SerializationParameters serializationParameters;
 
-    private final String defaultCollation;
+    @Builder.Default
+    private final String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+
     /**
-     * -- GETTER --
      * Default decimal format definition, or {@code null} if no default decimal format is defined in this
      * context
      */
@@ -120,45 +123,6 @@ public class RuntimeStaticContext implements Serializable {
             .isQuerySideEffecting(staticContext != null && staticContext.isQuerySideEffecting());
     }
 
-    @Builder(toBuilder = true)
-    private RuntimeStaticContext(
-            String queryLanguage,
-            @NonNull RumbleRuntimeConfiguration configuration,
-            SequenceType staticType,
-            @NonNull ExecutionMode executionMode,
-            @NonNull ExceptionMetadata metadata,
-            Map<String, String> staticallyKnownNamespaces,
-            Set<String> staticallyKnownCollations,
-            SerializationParameters serializationParameters,
-            String defaultCollation,
-            DecimalFormatDefinition defaultDecimalFormat,
-            Map<Name, DecimalFormatDefinition> decimalFormats,
-            boolean isQuerySideEffecting
-    ) {
-        this.queryLanguage = queryLanguage;
-        this.configuration = configuration;
-        this.staticType = staticType;
-        this.executionMode = executionMode;
-        this.metadata = metadata;
-        this.staticallyKnownNamespaces = Collections.unmodifiableMap(
-            new HashMap<>(staticallyKnownNamespaces == null ? Collections.emptyMap() : staticallyKnownNamespaces)
-        );
-        this.staticallyKnownCollations = Collections.unmodifiableSet(
-            new HashSet<>(
-                    staticallyKnownCollations == null
-                        ? CollationCatalogue.defaultStaticallyKnownCollations()
-                        : staticallyKnownCollations
-            )
-        );
-        this.serializationParameters = serializationParameters;
-        this.defaultCollation = defaultCollation == null ? CollationCatalogue.CODEPOINT_COLLATION : defaultCollation;
-        this.defaultDecimalFormat = defaultDecimalFormat;
-        this.decimalFormats = decimalFormats == null
-            ? null
-            : Collections.unmodifiableMap(new HashMap<>(decimalFormats));
-        this.isQuerySideEffecting = isQuerySideEffecting;
-    }
-
     /**
      * Returns the static type of expressions in this context, or {@code null} if no static type is defined for this
      * context. Note that clauses do not have static types, so calling this method on a context associated with a clause
@@ -173,36 +137,6 @@ public class RuntimeStaticContext implements Serializable {
             throw new OurBadException("Clauses do not have static types.");
         }
         return this.staticType;
-    }
-
-    /**
-     * Returns the namespace bindings that are statically known in this context, i.e. the namespace bindings that are
-     * defined in the static context from which this runtime static context was created. The returned map is
-     * unmodifiable. If no namespace bindings are statically known in this context, returns an empty map.
-     * 
-     * @return the namespace bindings that are statically known in this context, i.e. the namespace bindings that are
-     *         defined in the static context from which this runtime static context was created; the returned map is
-     *         unmodifiable; if no namespace bindings are statically known in this context, returns an empty map
-     */
-    public Map<String, String> getStaticallyKnownNamespaces() {
-        if (this.staticallyKnownNamespaces == null) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
-    }
-
-    public Set<String> getStaticallyKnownCollations() {
-        if (this.staticallyKnownCollations == null) {
-            return CollationCatalogue.defaultStaticallyKnownCollations();
-        }
-        return Collections.unmodifiableSet(this.staticallyKnownCollations);
-    }
-
-    public String getDefaultCollation() {
-        if (this.defaultCollation == null) {
-            return CollationCatalogue.CODEPOINT_COLLATION;
-        }
-        return this.defaultCollation;
     }
 
     /**
