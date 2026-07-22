@@ -259,8 +259,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract void closeLocal();
 
-    protected abstract void resetLocal();
-
     protected abstract boolean hasNextLocal();
 
     protected abstract Item nextLocal();

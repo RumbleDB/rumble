@@ -170,13 +170,6 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
-    }
-
-    @Override
     protected void closeLocal() {
         this.resultSequence = null;
         this.resultIndex = 0;

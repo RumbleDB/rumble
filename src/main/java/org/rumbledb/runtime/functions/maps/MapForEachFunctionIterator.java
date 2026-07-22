@@ -281,12 +281,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
 
         @Override
-        protected void resetLocal() {
-            this.position = 0;
-            setHasNextFromBuffer();
-        }
-
-        @Override
         protected void closeLocal() {
             this.position = 0;
             this.hasNext = false;

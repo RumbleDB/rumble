@@ -37,11 +37,6 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return false;
     }

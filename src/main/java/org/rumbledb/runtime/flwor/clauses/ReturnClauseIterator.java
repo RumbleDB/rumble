@@ -308,16 +308,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    protected void resetLocal() {
-        this.child.reset(this.currentDynamicContextForLocalExecution);
-        if (this.expression.isOpen()) {
-            this.expression.close();
-        }
-        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
-        setNextResult();
-    }
-
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());

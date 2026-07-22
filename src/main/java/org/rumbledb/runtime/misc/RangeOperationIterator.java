@@ -193,10 +193,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftContext = this.leftIterator.generateNativeQuery(nativeClauseContext);
         if (leftContext == NativeClauseContext.NoNativeQuery) {
