@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.OurBadException;
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 // import java.util.Iterator;
 import java.util.List;
@@ -35,6 +36,7 @@ import java.util.List;
 public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> nextResult;
     private List<List<Item>> deserializedParams;

@@ -20,6 +20,7 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +33,7 @@ import org.apache.spark.SparkException;
 public class RumbleException extends RuntimeException {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final ErrorCode errorCode;
     private final String errorMessage;

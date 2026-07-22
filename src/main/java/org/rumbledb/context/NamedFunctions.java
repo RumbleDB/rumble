@@ -45,6 +45,7 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
@@ -53,6 +54,7 @@ import java.util.List;
 
 public class NamedFunctions implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at

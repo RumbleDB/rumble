@@ -24,8 +24,11 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class UnknownFunctionCallException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public UnknownFunctionCallException(Name fnName, int arity, ExceptionMetadata metadata) {

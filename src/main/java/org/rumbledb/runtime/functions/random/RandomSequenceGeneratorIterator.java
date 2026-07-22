@@ -6,9 +6,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private GeneratedRandomsIterator generatedRandomsIterator;
 

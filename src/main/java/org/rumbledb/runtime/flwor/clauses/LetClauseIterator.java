@@ -66,12 +66,14 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.*;
 
 public class LetClauseIterator extends RuntimeTupleIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
     private SequenceType sequenceType;

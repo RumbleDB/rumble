@@ -30,10 +30,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
+    @Serial
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;

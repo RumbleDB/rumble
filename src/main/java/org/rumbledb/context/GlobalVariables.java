@@ -6,11 +6,13 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 public class GlobalVariables implements Serializable, KryoSerializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Set<Name> globalVariables;
 

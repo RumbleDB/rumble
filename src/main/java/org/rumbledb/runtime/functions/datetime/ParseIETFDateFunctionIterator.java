@@ -9,6 +9,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.time.DateTimeException;
 import java.time.LocalTime;
 import java.time.LocalDate;
@@ -22,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Map<String, Integer> MONTHS = createMonthMap();
     private static final Map<String, Integer> NAMED_ZONE_OFFSETS = createNamedZoneOffsets();

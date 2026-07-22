@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class WindowClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

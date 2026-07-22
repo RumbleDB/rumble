@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.time.*;
 
 import org.rumbledb.api.Item;
@@ -53,6 +54,7 @@ import java.util.Arrays;
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item left;
     private Item right;

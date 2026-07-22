@@ -35,6 +35,7 @@ import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,6 +44,7 @@ import java.util.Set;
 
 public class FlworTuple implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<Name, List<Item>> localVariables;
     private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;

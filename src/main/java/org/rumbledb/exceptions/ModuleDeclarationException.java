@@ -22,8 +22,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class ModuleDeclarationException extends ParsingException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ModuleDeclarationException(String message, ExceptionMetadata metadata) {

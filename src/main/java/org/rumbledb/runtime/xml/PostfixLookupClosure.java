@@ -23,6 +23,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +34,7 @@ import java.util.List;
  */
 public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<Item> keys;
     private final boolean wildcard;

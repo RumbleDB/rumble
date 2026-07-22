@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
@@ -38,6 +39,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 
 public interface ItemType extends Serializable, KryoSerializable {
 
+    @Serial
     long serialVersionUID = 1L;
 
     /**

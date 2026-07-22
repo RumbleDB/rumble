@@ -9,10 +9,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
 
+import java.io.Serial;
 import java.util.*;
 
 public class ItemTypeReference implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private ItemType resolvedItemType;

@@ -11,11 +11,14 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
+
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class HexBinaryItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private byte[] value;
     private String stringValue;
