@@ -93,6 +93,9 @@ final class NamespaceFixupUtils {
 
     private static Map<String, String> selectPreservedNamespaces(ElementItem element, boolean preserveAll) {
         Map<String, String> inScope = inScopeNamespaceMap(element);
+        // The predefined xml binding is always in scope in XDM, but it is implicit rather than
+        // something we should materialize as a declared namespace on copied elements.
+        inScope.remove("xml");
         if (preserveAll) {
             return inScope;
         }

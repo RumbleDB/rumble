@@ -278,6 +278,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldSerializeNamespace(String prefix, String uri) {
+        if ("xml".equals(prefix) && Name.XML_NS.equals(uri)) {
+            return false;
+        }
         if (!uri.isEmpty()) {
             return true;
         }
