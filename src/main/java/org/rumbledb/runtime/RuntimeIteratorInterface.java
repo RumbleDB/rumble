@@ -30,8 +30,6 @@ public interface RuntimeIteratorInterface extends Serializable {
 
     void close();
 
-    void reset(DynamicContext context);
-
     boolean hasNext();
 
     Item next();
