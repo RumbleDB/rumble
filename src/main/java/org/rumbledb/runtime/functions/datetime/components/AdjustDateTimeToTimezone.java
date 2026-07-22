@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
+import java.io.Serial;
 import java.time.Duration;
 
 import org.rumbledb.api.Item;
@@ -15,6 +16,7 @@ import java.util.List;
 
 public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item timezone = null;
 

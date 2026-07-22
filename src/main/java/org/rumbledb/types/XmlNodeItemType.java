@@ -3,6 +3,7 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Set;
 
 /**
@@ -15,6 +16,7 @@ import java.util.Set;
  */
 public class XmlNodeItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Name name;

@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.control;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -7,6 +8,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
 public class CatchPattern implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final String namespace;

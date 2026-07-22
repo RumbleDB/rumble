@@ -26,10 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.List;
 
 public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     protected RDDRuntimeIterator(

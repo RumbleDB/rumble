@@ -9,10 +9,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.*;
 
 public class ArrayItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(

@@ -22,6 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 /**
  * Exception for XQDY0101: It is a dynamic error if a computed namespace constructor attempts to do any of the
  * following:
@@ -38,6 +40,7 @@ import org.rumbledb.errorcodes.ErrorCode;
  */
 public class InvalidComputedNamespaceConstructorException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public InvalidComputedNamespaceConstructorException(String message, ExceptionMetadata metadata) {

@@ -45,6 +45,7 @@ import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -55,6 +56,7 @@ import java.util.TreeMap;
 
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;

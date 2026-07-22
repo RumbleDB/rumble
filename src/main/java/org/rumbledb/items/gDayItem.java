@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
 
 public class gDayItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private int day;

@@ -22,6 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 /**
  * Exception for SEPM0016: It is an error if a parameter value is invalid for the defined domain.
  * 
@@ -30,6 +32,7 @@ import org.rumbledb.errorcodes.ErrorCode;
  */
 public class InvalidSerializationParameterValueException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public InvalidSerializationParameterValueException(

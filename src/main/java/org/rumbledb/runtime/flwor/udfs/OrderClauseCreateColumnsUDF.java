@@ -34,12 +34,14 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;

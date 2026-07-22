@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -24,6 +25,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class DurationItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;

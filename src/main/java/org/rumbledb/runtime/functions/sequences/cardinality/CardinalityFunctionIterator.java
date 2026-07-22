@@ -24,11 +24,13 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public abstract class CardinalityFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     protected CardinalityFunctionIterator(

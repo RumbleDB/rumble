@@ -8,10 +8,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<String> names;
     private int index;

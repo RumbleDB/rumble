@@ -30,9 +30,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
+
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
 

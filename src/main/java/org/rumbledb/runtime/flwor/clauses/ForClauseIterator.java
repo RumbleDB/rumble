@@ -62,6 +62,7 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,7 @@ import java.util.TreeMap;
 public class ForClauseIterator extends RuntimeTupleIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // Properties

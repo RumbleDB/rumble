@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +47,7 @@ import sparksoniq.spark.SparkSessionManager;
 public class RangeOperationIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;

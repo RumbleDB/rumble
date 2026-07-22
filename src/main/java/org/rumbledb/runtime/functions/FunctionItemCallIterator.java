@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // parametrized fields

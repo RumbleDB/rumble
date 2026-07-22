@@ -22,6 +22,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
+
 /**
  * Placeholder body iterator for {@link org.rumbledb.items.FunctionItem}s that represent
  * a builtin named function reference ({@code fn:abs#1}). The real call path uses
@@ -30,6 +32,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  */
 public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {

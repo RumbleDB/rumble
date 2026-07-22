@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.apache.spark.sql.types.DataTypes;
@@ -33,6 +34,7 @@ import org.rumbledb.types.TypeMappings;
 
 public class FlworDataFrameColumn implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public enum ColumnFormat {

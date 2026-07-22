@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -23,6 +24,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator arrayIterator;
     private RuntimeIterator toAppendIterator;

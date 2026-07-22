@@ -35,6 +35,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import java.util.TreeMap;
 public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator {
     // static: functionIdentifier known at compile time
 
+    @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private FunctionIdentifier functionIdentifier;

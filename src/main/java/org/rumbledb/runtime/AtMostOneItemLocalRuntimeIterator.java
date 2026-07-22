@@ -37,6 +37,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import java.util.List;
 
 public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item result;
 

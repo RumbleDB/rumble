@@ -28,11 +28,13 @@ import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ZeroOrOneIterator(

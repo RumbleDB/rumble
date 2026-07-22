@@ -20,11 +20,13 @@
 
 package org.rumbledb.context;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private Name name;
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FunctionIdentifier() {

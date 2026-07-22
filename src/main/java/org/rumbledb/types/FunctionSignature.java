@@ -20,6 +20,7 @@
 
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
@@ -27,6 +28,7 @@ public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;
     private boolean isUpdating;
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FunctionSignature(

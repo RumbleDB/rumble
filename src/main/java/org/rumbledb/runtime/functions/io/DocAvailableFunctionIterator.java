@@ -10,10 +10,12 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DocAvailableFunctionIterator(

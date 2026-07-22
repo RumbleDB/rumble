@@ -23,6 +23,7 @@ package org.rumbledb.runtime.navigation;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
 public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ArrayUnboxingClosure() {

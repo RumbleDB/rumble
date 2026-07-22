@@ -27,6 +27,8 @@ import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
+
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -41,6 +43,7 @@ import java.util.Map;
 
 public class DynamicContext implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;

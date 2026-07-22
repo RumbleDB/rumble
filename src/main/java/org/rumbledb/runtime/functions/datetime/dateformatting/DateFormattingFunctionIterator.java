@@ -9,11 +9,13 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
+import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.util.List;
 
 abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DateFormattingFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {

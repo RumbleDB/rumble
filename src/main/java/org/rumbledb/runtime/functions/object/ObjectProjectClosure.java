@@ -6,12 +6,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> projectionKeys;
     private ExceptionMetadata itemMetadata;

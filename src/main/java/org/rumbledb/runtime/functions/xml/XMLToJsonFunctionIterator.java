@@ -16,6 +16,7 @@ import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.Locale;
 import java.util.regex.Pattern;
 
 public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final String FUNCTIONS_NAMESPACE = "http://www.w3.org/2005/xpath-functions";
     private static final Pattern JSON_NUMBER_PATTERN =

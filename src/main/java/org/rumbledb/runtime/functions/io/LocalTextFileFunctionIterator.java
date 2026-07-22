@@ -31,16 +31,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 
 public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
 
