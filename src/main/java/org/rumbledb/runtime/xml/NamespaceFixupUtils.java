@@ -20,17 +20,29 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 
+import java.util.LinkedHashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 final class NamespaceFixupUtils {
 
     private NamespaceFixupUtils() {
+    }
+
+    static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
+        Item copy = item.copy(true);
+        if (!item.isElementNode()) {
+            return copy;
+        }
+        configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
+        return copy;
     }
 
     static void applyNamespaceFixup(ElementItem element) {
@@ -50,6 +62,82 @@ final class NamespaceFixupUtils {
                 applyNamespaceFixup((ElementItem) child);
             }
         }
+    }
+
+    private static void configureCopiedElementNamespaces(
+            ElementItem original,
+            ElementItem copy,
+            RuntimeStaticContext staticContext,
+            boolean rootOfCopiedTree
+    ) {
+        copy.setDeclaredNamespaces(selectPreservedNamespaces(original, staticContext.isCopyNamespacesPreserve()));
+        if (rootOfCopiedTree) {
+            copy.setInheritNamespacesFromParent(staticContext.isCopyNamespacesInherit());
+        }
+
+        List<Item> originalChildren = original.children();
+        List<Item> copiedChildren = copy.children();
+        for (int i = 0; i < originalChildren.size() && i < copiedChildren.size(); i++) {
+            Item originalChild = originalChildren.get(i);
+            Item copiedChild = copiedChildren.get(i);
+            if (originalChild.isElementNode() && copiedChild.isElementNode()) {
+                configureCopiedElementNamespaces(
+                    (ElementItem) originalChild,
+                    (ElementItem) copiedChild,
+                    staticContext,
+                    false
+                );
+            }
+        }
+    }
+
+    private static Map<String, String> selectPreservedNamespaces(ElementItem element, boolean preserveAll) {
+        Map<String, String> inScope = inScopeNamespaceMap(element);
+        if (preserveAll) {
+            return inScope;
+        }
+        Map<String, String> selected = new LinkedHashMap<>();
+        for (String prefix : prefixesUsedByElementAndAttributes(element)) {
+            if (inScope.containsKey(prefix)) {
+                selected.put(prefix, inScope.get(prefix));
+            }
+        }
+        return selected;
+    }
+
+    private static Set<String> prefixesUsedByElementAndAttributes(ElementItem element) {
+        Set<String> result = new HashSet<>();
+        addUsedPrefix(result, element.nodeName(), true);
+        for (Item attribute : element.attributes()) {
+            addUsedPrefix(result, attribute.nodeName(), false);
+        }
+        return result;
+    }
+
+    private static void addUsedPrefix(Set<String> prefixes, Name nodeName, boolean elementName) {
+        if (nodeName == null) {
+            return;
+        }
+        String namespace = normalize(nodeName.getNamespace());
+        String prefix = normalize(nodeName.getPrefix());
+        if (!prefix.isEmpty()) {
+            prefixes.add(prefix);
+            return;
+        }
+        if (elementName && !namespace.isEmpty()) {
+            prefixes.add("");
+        }
+    }
+
+    private static Map<String, String> inScopeNamespaceMap(Item element) {
+        Map<String, String> result = new LinkedHashMap<>();
+        for (Item namespaceNode : element.namespaceNodes()) {
+            String prefix = namespaceNode instanceof NamespaceItem namespace
+                ? normalize(namespace.getPrefix())
+                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+            result.put(prefix, namespaceNode.getStringValue());
+        }
+        return result;
     }
 
     private static void ensureElementNameBinding(ElementItem element) {

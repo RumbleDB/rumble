@@ -150,7 +150,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                             }
 
                             // add the non-text node
-                            content.add(item.copy(true));
+                            content.add(NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext));
                             previousItemWasAtomic = false;
                         }
                     }

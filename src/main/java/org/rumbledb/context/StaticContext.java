@@ -60,6 +60,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
+    private boolean copyNamespacesPreserve;
+    private boolean copyNamespacesInherit;
     private SerializationParameters serializationParameters;
     private transient Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
@@ -108,6 +110,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
@@ -131,6 +135,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -449,6 +455,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         kryo.writeObject(output, this.staticBaseURI);
         output.writeBoolean(this.emptySequenceOrderLeast);
         output.writeBoolean(this.boundarySpacePreserve);
+        output.writeBoolean(this.copyNamespacesPreserve);
+        output.writeBoolean(this.copyNamespacesInherit);
         kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
     }
 
@@ -458,6 +466,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticBaseURI = kryo.readObject(input, URI.class);
         this.emptySequenceOrderLeast = input.readBoolean();
         this.boundarySpacePreserve = input.readBoolean();
+        this.copyNamespacesPreserve = input.readBoolean();
+        this.copyNamespacesInherit = input.readBoolean();
         // Backward compatibility: older serialized artifacts may not contain the serialization parameters field.
         this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
         // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
@@ -622,6 +632,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.boundarySpacePreserve = boundarySpacePreserve;
     }
 
+    public void setCopyNamespacesMode(boolean preserve, boolean inherit) {
+        if (this.parent != null) {
+            throw new OurBadException("Copy-namespaces mode can only be set in the root static context.");
+        }
+        this.copyNamespacesPreserve = preserve;
+        this.copyNamespacesInherit = inherit;
+    }
+
     /**
      * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
      */
@@ -654,6 +672,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.isBoundarySpacePreserve();
         }
         return this.boundarySpacePreserve;
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesPreserve();
+        }
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesInherit();
+        }
+        return this.copyNamespacesInherit;
     }
 
     public void addStaticallyKnownCollation(String uri) {

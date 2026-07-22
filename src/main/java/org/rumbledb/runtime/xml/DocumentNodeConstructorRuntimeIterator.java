@@ -159,7 +159,11 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                         flushTextAccumulator(contentSequence, textAccumulator);
                         textAccumulator = null;
                     }
-                    contentSequence.add(item);
+                    contentSequence.add(
+                        item.isNode()
+                            ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
+                            : item
+                    );
                     previousItemWasAtomic = false;
                 }
             }

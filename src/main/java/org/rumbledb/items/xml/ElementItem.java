@@ -28,6 +28,7 @@ public class ElementItem implements Item {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
+    private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
 
@@ -44,6 +45,7 @@ public class ElementItem implements Item {
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
@@ -98,6 +100,7 @@ public class ElementItem implements Item {
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
         copy.typeAnnotation = this.typeAnnotation;
+        copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
         return copy;
     }
 
@@ -142,6 +145,7 @@ public class ElementItem implements Item {
         kryo.writeObject(output, this.dmNodeName);
         output.writeString(this.stringValue);
         kryo.writeClassAndObject(output, this.typeAnnotation);
+        output.writeBoolean(this.inheritNamespacesFromParent);
     }
 
     @SuppressWarnings("unchecked")
@@ -155,6 +159,7 @@ public class ElementItem implements Item {
         this.dmNodeName = kryo.readObject(input, Name.class);
         this.stringValue = input.readString();
         this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
+        this.inheritNamespacesFromParent = input.readBoolean();
     }
 
     @Override
@@ -258,12 +263,14 @@ public class ElementItem implements Item {
         // Walk up the parent chain, collecting declared namespaces from each ancestor element.
         // We collect frames in child-to-root order, then replay root-to-child for correct override semantics.
         List<Map<String, String>> ancestorFrames = new ArrayList<>();
-        Item current = this.parent;
-        // optimization: we know that no other node types apart from element nodes can have namespaces
-        // so we stop the iteration when we encounter a non-element node
-        while (current != null && current.isElementNode()) {
-            ancestorFrames.add(((ElementItem) current).namespaces);
-            current = current.parent();
+        if (this.inheritNamespacesFromParent) {
+            Item current = this.parent;
+            // optimization: we know that no other node types apart from element nodes can have namespaces
+            // so we stop the iteration when we encounter a non-element node
+            while (current != null && current.isElementNode()) {
+                ancestorFrames.add(((ElementItem) current).namespaces);
+                current = current.parent();
+            }
         }
         // Replay from root (last in the list) to direct parent (first in the list),
         // so that inner ancestors override outer ones for the same prefix.
@@ -423,11 +430,22 @@ public class ElementItem implements Item {
         this.namespaces.put(prefix == null ? "" : prefix, uri);
     }
 
+    public void setDeclaredNamespaces(Map<String, String> namespaces) {
+        this.namespaces = new HashMap<>();
+        if (namespaces != null) {
+            this.namespaces.putAll(namespaces);
+        }
+    }
+
     /**
      * Updates the element node-name after namespace fixup chooses a non-conflicting prefix.
      */
     public void setNodeName(Name nodeName) {
         this.dmNodeName = nodeName;
+    }
+
+    public void setInheritNamespacesFromParent(boolean inheritNamespacesFromParent) {
+        this.inheritNamespacesFromParent = inheritNamespacesFromParent;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {

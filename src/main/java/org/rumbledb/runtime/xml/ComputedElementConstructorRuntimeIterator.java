@@ -252,7 +252,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             } else if (item.isNamespaceNode()) {
                 namespaces.add(item.copy(true));
             } else if (item.isNode()) {
-                nonAttributeContent.add(item.copy(true));
+                nonAttributeContent.add(NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext));
             } else {
                 // Non-node items are converted to text nodes
                 String textContent = item.getStringValue();
@@ -318,7 +318,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             if (item.isDocumentNode()) {
                 // Replace document node with its children
                 for (Item child : item.children()) {
-                    expandedSequence.add(child.copy(true));
+                    expandedSequence.add(child);
                 }
             } else {
                 expandedSequence.add(item);

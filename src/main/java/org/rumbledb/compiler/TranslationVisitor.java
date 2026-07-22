@@ -406,6 +406,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<SetterContext> setters = ctx.setter();
         boolean emptyOrderSet = false;
         boolean boundarySpaceSet = false;
+        boolean copyNamespacesSet = false;
         boolean defaultCollationSet = false;
         boolean baseURISet = false;
         for (SetterContext setterContext : setters) {
@@ -420,6 +421,20 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     setterContext.boundarySpaceDecl().type.getType() == JsoniqParser.KW_PRESERVE
                 );
                 boundarySpaceSet = true;
+                continue;
+            }
+            if (setterContext.copyNamespacesDecl() != null) {
+                if (copyNamespacesSet) {
+                    throw new MoreThanOneCopyNamespacesDeclarationException(
+                            "The copy-namespaces mode was already set.",
+                            createMetadataFromContext(setterContext.copyNamespacesDecl())
+                    );
+                }
+                this.moduleContext.setCopyNamespacesMode(
+                    setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
+                    setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null
+                );
+                copyNamespacesSet = true;
                 continue;
             }
             if (setterContext.emptyOrderDecl() != null) {
