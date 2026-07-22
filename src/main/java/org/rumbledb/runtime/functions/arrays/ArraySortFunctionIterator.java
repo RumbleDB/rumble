@@ -18,6 +18,7 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +53,7 @@ import org.rumbledb.types.SequenceType;
  */
 public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;

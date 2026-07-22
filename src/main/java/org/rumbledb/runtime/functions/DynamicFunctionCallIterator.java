@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -48,6 +49,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
+    @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private RuntimeIterator functionItemIterator;

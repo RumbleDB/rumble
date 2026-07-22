@@ -5,8 +5,11 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
+
 // TODO: Add support for name test
 public class NameTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name qname;
     private String wildcardWithNCName;

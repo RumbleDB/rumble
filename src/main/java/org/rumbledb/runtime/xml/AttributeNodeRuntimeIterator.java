@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.xml;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,6 +40,7 @@ import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
  */
 public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name attributeName;
     private List<DataFunctionIterator> atomizedValues;

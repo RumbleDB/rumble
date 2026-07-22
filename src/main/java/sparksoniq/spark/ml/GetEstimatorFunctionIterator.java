@@ -34,6 +34,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,6 +42,7 @@ import java.util.List;
 
 public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(

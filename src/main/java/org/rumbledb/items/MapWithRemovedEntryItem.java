@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +41,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithRemovedEntryItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**

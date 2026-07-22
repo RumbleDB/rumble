@@ -27,8 +27,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+import java.io.Serial;
+
 public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final FunctionIdentifier functionIdentifier;

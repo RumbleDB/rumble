@@ -21,10 +21,12 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class StepExprIterator extends LocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator axisIterator;
     private NodeTest nodeTest;

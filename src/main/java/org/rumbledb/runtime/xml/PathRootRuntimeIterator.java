@@ -8,9 +8,11 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class PathRootRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public PathRootRuntimeIterator(RuntimeStaticContext staticContext) {

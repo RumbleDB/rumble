@@ -30,10 +30,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
+import java.io.Serial;
 import java.util.List;
 
 public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private int numberPartitions;

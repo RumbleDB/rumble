@@ -34,6 +34,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -42,6 +43,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     /**
      *
      */
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(

@@ -23,12 +23,14 @@ package sparksoniq.jsoniq.tuple;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 import java.util.List;
 
 public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressions;
     private ExceptionMetadata metadata;

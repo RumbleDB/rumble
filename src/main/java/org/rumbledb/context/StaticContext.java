@@ -361,7 +361,6 @@ public class StaticContext {
         return bindings;
     }
 
-
     public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
         if ("parameter-document".equals(name)) {
             SerializationParameterUtils.applyParameterDocument(

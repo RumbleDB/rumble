@@ -20,6 +20,7 @@
 
 package org.rumbledb.exceptions;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 import org.antlr.v4.runtime.Token;
@@ -31,6 +32,7 @@ import org.antlr.v4.runtime.Token;
  */
 public class ExceptionMetadata implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String location;
     private final SourceRange range;

@@ -11,12 +11,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator clauseIterator;
     private final RuntimeIterator expression;

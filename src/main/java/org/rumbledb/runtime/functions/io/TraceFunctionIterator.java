@@ -30,12 +30,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
 public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator valueIterator;
     private RuntimeIterator labelIterator;

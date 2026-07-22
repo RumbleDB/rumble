@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import org.rumbledb.types.SequenceType;
 
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean isFixedSlotsArrayConstructor;
     private boolean mutable;

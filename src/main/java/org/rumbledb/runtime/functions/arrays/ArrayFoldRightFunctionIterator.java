@@ -36,12 +36,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;

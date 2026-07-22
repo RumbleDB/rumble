@@ -7,12 +7,14 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class AxisIterator extends LocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
         Item::getXmlDocumentPosition,

@@ -18,11 +18,13 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item callableItem;

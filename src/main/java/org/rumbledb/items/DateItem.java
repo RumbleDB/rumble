@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -22,6 +23,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class DateItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = false;

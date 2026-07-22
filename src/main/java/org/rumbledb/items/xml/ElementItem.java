@@ -12,6 +12,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ElementItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
@@ -404,6 +406,17 @@ public class ElementItem implements Item {
             this.namespaces.put(replacement, this.dmNodeName.getNamespace());
         }
         this.namespaces.put(prefix, uri);
+    }
+
+    public void declareNamespaceBinding(String prefix, String uri) {
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        this.namespaces.put(prefix == null ? "" : prefix, uri);
+    }
+
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {

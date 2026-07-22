@@ -20,6 +20,7 @@ import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -30,6 +31,7 @@ import java.util.List;
  * {@code fn:sort($input, $collation?, $key)}.
  */
 public class SortFunctionIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator inputIterator;

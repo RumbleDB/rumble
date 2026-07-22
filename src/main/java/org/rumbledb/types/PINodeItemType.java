@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Objects;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import java.util.Set;
  */
 public class PINodeItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;

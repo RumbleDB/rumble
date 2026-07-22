@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
@@ -19,6 +20,7 @@ import org.rumbledb.types.ItemType;
 
 public class TimeItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetTime value;
     private boolean hasTimeZone = true;

@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Map<Name, RuntimeIterator> copyDeclMap;
     private RuntimeIterator modifyIterator;
