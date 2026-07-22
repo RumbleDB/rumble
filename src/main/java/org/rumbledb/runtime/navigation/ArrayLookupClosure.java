@@ -38,6 +38,7 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
         this.lookup = lookup;
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 

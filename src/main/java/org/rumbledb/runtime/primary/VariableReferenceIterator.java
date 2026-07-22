@@ -171,6 +171,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         return this.variableName;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);

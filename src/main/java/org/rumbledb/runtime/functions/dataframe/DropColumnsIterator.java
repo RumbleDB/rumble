@@ -51,6 +51,7 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.children.get(0).getDataFrame(context);
         List<Item> columnsToDropItems = this.children.get(1).materialize(context);

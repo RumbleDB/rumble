@@ -110,6 +110,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 @Serial
                 private static final long serialVersionUID = 1L;
 
+                @Override
                 public Item call(Tuple2<Object, Object> a) {
                     List<String> keys = new ArrayList<>();
                     keys.add(key1);

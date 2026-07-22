@@ -63,6 +63,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    @Override
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned

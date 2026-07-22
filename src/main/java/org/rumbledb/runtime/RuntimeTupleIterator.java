@@ -76,6 +76,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.child;
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (this.isOpen) {
             throw new IteratorFlowException(
@@ -88,11 +89,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.currentDynamicContext = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
         this.child.close();
     }
 
+    @Override
     public void reset(DynamicContext context) {
         this.hasNext = true;
         this.currentDynamicContext = context;
@@ -119,10 +122,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.isOpen;
     }
 
+    @Override
     public boolean hasNext() {
         return this.hasNext;
     }
 
+    @Override
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {

@@ -178,6 +178,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return mapValuesRaw;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
@@ -187,6 +188,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

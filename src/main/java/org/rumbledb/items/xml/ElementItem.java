@@ -377,6 +377,7 @@ public class ElementItem implements Item {
         return this.atomizedValue();
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
         this.typeAnnotation = typeAnnotation;
     }
