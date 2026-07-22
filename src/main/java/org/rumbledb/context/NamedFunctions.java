@@ -292,7 +292,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 .withExecutionMode(callerStaticContext.getExecutionMode());
 
         if (!"format-number".equals(identifier.getName().getLocalName())) {
-            delegateContext.dropDecimalFormats();
+            delegateContext = delegateContext.withoutDecimalFormats();
         }
 
         RuntimeIterator functionCallIterator;

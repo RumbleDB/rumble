@@ -63,12 +63,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
         for (Item inputItem : inputItems) {
             if (accumulator.size() == 1) {
                 if (reusableCall == null) {
-                    RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
-                            getConfiguration(),
-                            SequenceType.createSequenceType("item*"),
-                            ExecutionMode.LOCAL,
-                            getMetadata()
-                    );
+                    RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
+                        .configuration(getConfiguration())
+                        .staticType(SequenceType.createSequenceType("item*"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build();
                     ConstantRuntimeIterator accumulatorArgument = new ConstantRuntimeIterator(
                             accumulator.get(0),
                             localItemStarContext
@@ -115,12 +115,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
-        RuntimeStaticContext localItemStarContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         if (items.isEmpty()) {
             return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
         }
