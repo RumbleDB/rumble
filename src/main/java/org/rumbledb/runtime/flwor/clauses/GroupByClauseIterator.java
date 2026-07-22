@@ -139,18 +139,6 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
-            this.localTupleResults = null;
-            this.hasNext = this.child.hasNext();
-        } else {
-            throw new OurBadException("Invalid groupby clause.");
-        }
-    }
-
     /**
      * All local results need to be calculated for grouping to be performed.
      */
