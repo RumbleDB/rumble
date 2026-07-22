@@ -406,6 +406,17 @@ public class ElementItem implements Item {
         this.namespaces.put(prefix, uri);
     }
 
+    public void declareNamespaceBinding(String prefix, String uri) {
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        this.namespaces.put(prefix == null ? "" : prefix, uri);
+    }
+
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
         return name != null
             && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
