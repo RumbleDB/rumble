@@ -52,8 +52,11 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.cursor.LegacyRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -66,13 +69,13 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface, RuntimePlan<Item>, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    protected boolean isUpdating;
+    protected final boolean isUpdating;
     protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
@@ -95,6 +98,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
         }
+    }
+
+    /**
+     * Compatibility bridge for runtime iterators whose mutable state has not yet been extracted into a cursor.
+     * Migrated plans should override this method and return a purpose-built cursor without cloning the plan.
+     */
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new LegacyRuntimeIteratorCursor(this, context);
     }
 
     // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
