@@ -99,7 +99,10 @@ public class DocumentItem implements Item {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> child.setParent(this));
+        this.children.forEach(child -> {
+            child.setParent(this);
+            child.addParentToDescendants();
+        });
     }
 
     @Override

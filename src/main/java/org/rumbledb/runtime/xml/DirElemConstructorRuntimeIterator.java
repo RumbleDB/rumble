@@ -98,9 +98,9 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                                 );
                             }
                             if (item.isAttributeNode()) {
-                                attributes.add(item);
+                                attributes.add(item.copy(true));
                             } else {
-                                namespaces.add(item);
+                                namespaces.add(item.copy(true));
                             }
                             continue;
                         }
@@ -150,7 +150,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                             }
 
                             // add the non-text node
-                            content.add(item);
+                            content.add(item.copy(true));
                             previousItemWasAtomic = false;
                         }
                     }
@@ -190,7 +190,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        attributes.add(item);
+                        attributes.add(item.copy(true));
                     }
                 }
                 iterator.close();
@@ -210,6 +210,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
+        NamespaceFixupUtils.applyNamespaceFixup(elementItem);
 
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {

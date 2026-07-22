@@ -122,8 +122,14 @@ public class ElementItem implements Item {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> child.setParent(this));
-        this.attributes.forEach(attribute -> attribute.setParent(this));
+        this.children.forEach(child -> {
+            child.setParent(this);
+            child.addParentToDescendants();
+        });
+        this.attributes.forEach(attribute -> {
+            attribute.setParent(this);
+            attribute.addParentToDescendants();
+        });
     }
 
     @Override
@@ -404,6 +410,24 @@ public class ElementItem implements Item {
             this.namespaces.put(replacement, this.dmNodeName.getNamespace());
         }
         this.namespaces.put(prefix, uri);
+    }
+
+    /**
+     * Declares or overrides a namespace binding on this element without rewriting the element name.
+     * This is used by constructor namespace-fixup after any necessary prefix rewrites have already been decided.
+     */
+    public void declareNamespaceBinding(String prefix, String uri) {
+        if (this.namespaces == null) {
+            this.namespaces = new HashMap<>();
+        }
+        this.namespaces.put(prefix == null ? "" : prefix, uri);
+    }
+
+    /**
+     * Updates the element node-name after namespace fixup chooses a non-conflicting prefix.
+     */
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {

@@ -202,6 +202,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
+        NamespaceFixupUtils.applyNamespaceFixup(elementItem);
 
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -247,11 +248,11 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
         for (Item item : expandedContentSequence) {
             if (item.isAttributeNode()) {
-                attributes.add(item);
+                attributes.add(item.copy(true));
             } else if (item.isNamespaceNode()) {
-                namespaces.add(item);
+                namespaces.add(item.copy(true));
             } else if (item.isNode()) {
-                nonAttributeContent.add(item);
+                nonAttributeContent.add(item.copy(true));
             } else {
                 // Non-node items are converted to text nodes
                 String textContent = item.getStringValue();
@@ -316,7 +317,9 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         for (Item item : contentSequence) {
             if (item.isDocumentNode()) {
                 // Replace document node with its children
-                expandedSequence.addAll(item.children());
+                for (Item child : item.children()) {
+                    expandedSequence.add(child.copy(true));
+                }
             } else {
                 expandedSequence.add(item);
             }
