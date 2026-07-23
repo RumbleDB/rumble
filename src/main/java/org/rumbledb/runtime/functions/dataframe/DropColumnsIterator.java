@@ -48,8 +48,8 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame dataFrame = this.children.get(0).getDataFrame(context);
-        List<Item> columnsToDropItems = this.children.get(1).materialize(context);
+        JSoundDataFrame dataFrame = this.getChild(0).getDataFrame(context);
+        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
