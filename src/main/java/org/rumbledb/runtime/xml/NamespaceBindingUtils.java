@@ -259,6 +259,26 @@ public final class NamespaceBindingUtils {
         }
     }
 
+    /**
+     * XQuery 3.1 computed attribute constructors:
+     * if the attribute QName has a namespace URI but no prefix, an implementation-defined prefix is used.
+     * The XML namespace is special-cased to use the required {@code xml} prefix.
+     */
+    public static Name normalizeComputedAttributeName(Name name) {
+        if (name == null) {
+            return null;
+        }
+        String namespace = name.getNamespace();
+        String prefix = name.getPrefix();
+        if (namespace != null && (prefix == null || prefix.isEmpty())) {
+            if (XML_NAMESPACE_URI.equals(namespace)) {
+                return new Name(namespace, "xml", name.getLocalName());
+            }
+            return new Name(namespace, "ns0", name.getLocalName());
+        }
+        return name;
+    }
+
     private static final class LexicalQNameSplit {
         final String prefix;
         final String local;
