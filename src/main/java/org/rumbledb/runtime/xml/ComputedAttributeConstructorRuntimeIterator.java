@@ -200,7 +200,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
         String attributeValue = contentExpressionBuilder.toString();
 
         // 5: If the attribute name is xml:id, then xml:id processing is performed
-        // Note: we currently do not support xml:id processing
+        if (isXmlIdAttribute(attributeName.getQNameValue())) {
+            attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
+        }
 
         // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
         // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
@@ -224,5 +226,11 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
             attributeItem.setXmlDocumentPosition(documentPath, 0);
         }
         return attributeItem;
+    }
+
+    private static boolean isXmlIdAttribute(Name attributeName) {
+        return attributeName != null
+            && "id".equals(attributeName.getLocalName())
+            && Name.XML_NS.equals(attributeName.getNamespace());
     }
 }
