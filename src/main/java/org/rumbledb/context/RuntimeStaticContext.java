@@ -151,8 +151,7 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Creates a context without decimal format definitions. In the returned context,
-     * {@link #getDecimalFormats()} and {@link #getDefaultDecimalFormat()} return {@code null}.
+     * Creates a context without decimal format definitions.
      *
      * @return a copy of this context without decimal format definitions
      */
