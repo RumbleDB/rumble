@@ -25,12 +25,12 @@ public class SubstringBeforeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
-        Item substringItem = this.children.get(1)
+        Item substringItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }

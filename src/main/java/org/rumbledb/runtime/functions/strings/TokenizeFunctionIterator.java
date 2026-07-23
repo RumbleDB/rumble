@@ -69,7 +69,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         if (this.results == null) {
             // Getting first parameter
-            RuntimeIterator stringIterator = this.children.get(0);
+            RuntimeIterator stringIterator = this.getChild(0);
             String input = null;
             String separator = null;
             Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);

@@ -28,7 +28,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator functionIterator = this.children.get(0);
+        RuntimeIterator functionIterator = this.getChild(0);
         /*
          * TODO remove...
          * Currently used for debugging, this guard fails when given an if statement
