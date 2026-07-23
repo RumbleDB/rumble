@@ -60,6 +60,13 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
         return descendants;
     }
 
+    protected List<Item> getDescendantsOrSelf(Item node) {
+        List<Item> descendantsOrSelf = new ArrayList<>();
+        descendantsOrSelf.add(node);
+        descendantsOrSelf.addAll(getDescendants(node));
+        return descendantsOrSelf;
+    }
+
     protected List<Item> getAncestors(Item node) {
         List<Item> ancestors = new ArrayList<>();
         Item parent = node.parent();
