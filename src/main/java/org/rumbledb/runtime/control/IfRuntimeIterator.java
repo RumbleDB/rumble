@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
+import java.util.List;
 
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
@@ -43,23 +44,16 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(condition);
-        this.children.add(branch);
-        this.children.add(elseBranch);
-        this.isUpdating = isUpdating;
-    }
-
-    public IfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
-        this(condition, branch, elseBranch, false, staticContext);
+        super(
+            List.of(
+                condition,
+                branch,
+                elseBranch
+            ),
+            staticContext
+        );
     }
 
     @Override

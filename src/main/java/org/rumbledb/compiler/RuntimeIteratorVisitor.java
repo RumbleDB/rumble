@@ -1789,8 +1789,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     conditionIterator,
                     thenIterator,
                     elseIterator,
-                    expression.isUpdating(),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                        .toBuilder()
+                        .isUpdating(
+                            expression.isUpdating()
+                        )
+                        .build()
             );
         }
 
