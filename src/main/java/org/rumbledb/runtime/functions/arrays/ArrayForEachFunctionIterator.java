@@ -140,12 +140,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    org.rumbledb.types.SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             return new org.rumbledb.runtime.CommaExpressionIterator(
                     Collections.emptyList(),
                     staticContext
@@ -154,12 +154,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
         List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
         for (Item item : items) {
-            RuntimeStaticContext childStaticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    org.rumbledb.types.SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             childIterators.add(
                 new org.rumbledb.runtime.ConstantRuntimeIterator(
                         item,
@@ -168,12 +168,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                getConfiguration(),
-                org.rumbledb.types.SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(org.rumbledb.types.SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         return new org.rumbledb.runtime.CommaExpressionIterator(childIterators, staticContext);
     }
 
@@ -190,12 +190,12 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
         List<RuntimeIterator> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
 
-        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         RuntimeIterator functionCall = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(action, functionItemContext),
                 arguments,

@@ -440,12 +440,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         if (equalityCriteria.size() == 1) {
             return equalityCriteria.get(0);
         }
-        RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                this.getStaticContext()
-                    .withStaticType(SequenceType.createSequenceType("item*"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
-                    .withMetadata(metadata)
-        );
+        RuntimeStaticContext staticContext = this.getStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(ExecutionMode.LOCAL)
+            .withMetadata(metadata);
         return new ArrayRuntimeIterator(
                 new CommaExpressionIterator(
                         equalityCriteria,
