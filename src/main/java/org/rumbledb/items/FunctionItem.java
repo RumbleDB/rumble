@@ -348,6 +348,7 @@ public class FunctionItem implements Item {
         kryo.writeObject(output, this.parameterNames);
         kryo.writeObject(output, this.signature.getParameterTypes());
         kryo.writeObject(output, this.signature.getReturnType());
+        output.writeBoolean(this.signature.isUpdating());
         // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.localVariablesInClosure);
         kryo.writeObject(output, this.RDDVariablesInClosure);
@@ -378,7 +379,8 @@ public class FunctionItem implements Item {
         this.parameterNames = kryo.readObject(input, ArrayList.class);
         List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
         SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(parameters, returnType);
+        boolean isUpdating = input.readBoolean();
+        this.signature = new FunctionSignature(parameters, returnType, isUpdating);
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
