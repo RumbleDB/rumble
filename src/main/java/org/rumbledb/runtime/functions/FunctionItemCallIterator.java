@@ -59,7 +59,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     // calculated fields
     private boolean isPartialApplication;
     private boolean isTailOptimization;
-    // A retained, closed body was exhausted normally and is safe to reuse.
+
     private transient RuntimeIterator functionBodyIterator;
 
     private transient Item nextResult;
