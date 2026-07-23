@@ -378,6 +378,15 @@ public final class NamespaceBindingUtils {
             }
             String uriRaw = lexical.substring(2, closeBrace);
             String local = lexical.substring(closeBrace + 1);
+            // XQuery EQNames use BracedURILiteral, which forbids brace characters inside the URI part.
+            // Dynamic computed attribute names coming from strings must reject malformed forms like Q{{}x or Q{}}x
+            // during QName conversion so the constructor raises XQDY0074 rather than constructing a bad node-name.
+            if (uriRaw.indexOf('{') >= 0 || uriRaw.indexOf('}') >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (invalid brace in URI part): " + lexical,
+                        metadata
+                );
+            }
             if (local.isEmpty()) {
                 throw new InvalidLexicalValueException(
                         "Invalid URIQualifiedName (missing local name): " + lexical,
