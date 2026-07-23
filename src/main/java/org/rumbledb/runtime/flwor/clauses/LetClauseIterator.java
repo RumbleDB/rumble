@@ -107,19 +107,6 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.tupleContext = this.currentDynamicContext;
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
-        } else {
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            setNextLocalTupleResult();
-        }
-    }
-
     private void setNextLocalTupleResult() {
         // if starting clause: result is a single tuple -> no more tuples after the first next call
         if (this.child == null || this.evaluationDepthLimit == 0) {
@@ -453,12 +440,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         if (equalityCriteria.size() == 1) {
             return equalityCriteria.get(0);
         }
-        RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                this.getStaticContext()
-                    .withStaticType(SequenceType.createSequenceType("item*"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
-                    .withMetadata(metadata)
-        );
+        RuntimeStaticContext staticContext = this.getStaticContext()
+            .withStaticType(SequenceType.createSequenceType("item*"))
+            .withExecutionMode(ExecutionMode.LOCAL)
+            .withMetadata(metadata);
         return new ArrayRuntimeIterator(
                 new CommaExpressionIterator(
                         equalityCriteria,
@@ -534,6 +519,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return intersection.isEmpty();
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
@@ -546,6 +532,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         if (this.child != null && this.evaluationDepthLimit != 0) {
@@ -555,6 +542,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
@@ -564,6 +552,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -903,6 +892,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.LET) {
             return true;

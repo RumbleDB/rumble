@@ -101,7 +101,8 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item attributeName;
         if (this.staticAttributeName != null) {
-            attributeName = ItemFactory.getInstance().createQNameItem(this.staticAttributeName);
+            attributeName = ItemFactory.getInstance()
+                .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
         } else {
             // Dynamic attribute name - evaluate the name expression
             // processing of the name expression according to
@@ -131,8 +132,10 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 // but has no prefix, it is given an implementation-dependent prefix.
                 // b. The resulting expanded QName (including its prefix) is used as the node-name
                 // property of the constructed attribute node.
-                // TODO: add support for implementation-dependent prefix
-                attributeName = atomizedNameItem;
+                attributeName = ItemFactory.getInstance()
+                    .createQNameItem(
+                        NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue())
+                    );
             } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
                 // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
                 // that value is converted to an expanded QName. If the string value contains a namespace
@@ -145,10 +148,12 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
                 try {
                     attributeName = ItemFactory.getInstance()
                         .createQNameItem(
-                            NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
-                                collapsed,
-                                NamespaceBindingUtils.namespaceResolver(this.staticContext),
-                                getMetadata()
+                            NamespaceBindingUtils.normalizeComputedAttributeName(
+                                NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
+                                    collapsed,
+                                    NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                    getMetadata()
+                                )
                             )
                         );
                 } catch (InvalidLexicalValueException e) {

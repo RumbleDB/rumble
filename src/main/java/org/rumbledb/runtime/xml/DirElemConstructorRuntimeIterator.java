@@ -25,6 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
+import org.rumbledb.exceptions.DuplicateAttributeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
@@ -34,7 +35,9 @@ import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Runtime iterator for direct element constructors.
@@ -100,9 +103,9 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                                 );
                             }
                             if (item.isAttributeNode()) {
-                                attributes.add(item);
+                                attributes.add(item.copy(true));
                             } else {
-                                namespaces.add(item);
+                                namespaces.add(item.copy(true));
                             }
                             continue;
                         }
@@ -152,7 +155,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                             }
 
                             // add the non-text node
-                            content.add(item);
+                            content.add(NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext));
                             previousItemWasAtomic = false;
                         }
                     }
@@ -192,12 +195,13 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
-                        attributes.add(item);
+                        attributes.add(item.copy(true));
                     }
                 }
                 iterator.close();
             }
         }
+        validateNoDuplicateAttributes(attributes);
         // create and return the element item
         this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
@@ -212,6 +216,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
+        NamespaceFixupUtils.applyNamespaceFixup(elementItem);
 
         // Set XML document position if this is the top-level runtime iterator
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -221,6 +226,24 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
 
         return elementItem;
+    }
+
+    private void validateNoDuplicateAttributes(List<Item> attributes) {
+        Set<Name> attributeNames = new HashSet<>();
+
+        for (Item attribute : attributes) {
+            if (!attribute.isAttributeNode()) {
+                continue;
+            }
+            Name expanded = attribute.nodeName();
+            if (expanded == null) {
+                continue;
+            }
+            if (attributeNames.contains(expanded)) {
+                throw new DuplicateAttributeException(expanded.toString(), getMetadata());
+            }
+            attributeNames.add(expanded);
+        }
     }
 
     private static List<RuntimeIterator> createChildList(

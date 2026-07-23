@@ -16,6 +16,7 @@ public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
     public ArrayDescendantClosure() {
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
         List<Item> innerValues;

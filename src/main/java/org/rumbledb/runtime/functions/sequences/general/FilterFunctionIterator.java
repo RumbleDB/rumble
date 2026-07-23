@@ -70,22 +70,22 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.argumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.argumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.itemIndex = 0;
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.currentCallbackIterator = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(this.predicate, functionItemContext),
                 callbackArguments,
@@ -130,17 +130,6 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
         Item result = this.nextResult;
         setNextResult(this.currentDynamicContextForLocalExecution);
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.predicateIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        setNextResult(this.currentDynamicContextForLocalExecution);
     }
 
     @Override

@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -13,22 +16,74 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
 
+@Value
+@Builder(toBuilder = true)
 public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private String queryLanguage;
-    private RumbleRuntimeConfiguration configuration;
-    private SequenceType staticType;
-    private ExecutionMode executionMode;
-    private ExceptionMetadata metadata;
-    private final Map<String, String> staticallyKnownNamespaces;
-    private final Set<String> staticallyKnownCollations;
+    /**
+     * Query language associated with this context, which is used for error reporting and to determine the
+     * semantics of certain operations.
+     */
+    private final String queryLanguage;
+
+    /**
+     * Runtime configuration associated with this context, which is used for error reporting and to
+     * determine limits such as the materialization cap; the returned configuration is never {@code null}
+     */
+    @NonNull
+    private final RumbleRuntimeConfiguration configuration;
+
+    private final SequenceType staticType;
+
+    /**
+     * Execution mode in which expressions in this context should be evaluated; the returned execution mode
+     * is never {@code null}
+     */
+    @NonNull
+    private final ExecutionMode executionMode;
+
+    /**
+     * Metadata associated with this context, which is used for error reporting.
+     */
+    @NonNull
+    private final ExceptionMetadata metadata;
+
+    @Builder.Default
+    private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
+
+    @Builder.Default
+    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+
     private final SerializationParameters serializationParameters;
-    private final String defaultCollation;
-    private DecimalFormatDefinition defaultDecimalFormat;
-    private Map<Name, DecimalFormatDefinition> decimalFormats;
-    private boolean isQuerySideEffecting;
+
+    @Builder.Default
+    private final String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+
+    /**
+     * Default decimal format definition, or {@code null} if no default decimal format is defined in this
+     * context
+     */
+    private final DecimalFormatDefinition defaultDecimalFormat;
+
+    /**
+     * Decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
+     * in this context
+     */
+    private final Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    /**
+     * Whether this context is associated with a query that has side effects. This is used to determine whether
+     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
+     */
+    private final boolean isQuerySideEffecting;
+
+    @Builder.Default
+    private final boolean copyNamespacesPreserve = true;
+
+    @Builder.Default
+    private final boolean copyNamespacesInherit = true;
 
     @Override
     public String toString() {
@@ -42,6 +97,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
         sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
         sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
+        sb.append("  copyNamespacesPreserve: ").append(this.copyNamespacesPreserve).append("\n");
+        sb.append("  copyNamespacesInherit: ").append(this.copyNamespacesInherit).append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
@@ -50,72 +107,31 @@ public class RuntimeStaticContext implements Serializable {
         return sb.toString();
     }
 
-    public RuntimeStaticContext(
-            RuntimeStaticContext oldContext
-    ) {
-        this.queryLanguage = oldContext.queryLanguage;
-        this.configuration = oldContext.configuration;
-        this.staticType = oldContext.staticType;
-        this.executionMode = oldContext.executionMode;
-        this.metadata = oldContext.metadata;
-        this.staticallyKnownNamespaces = oldContext.staticallyKnownNamespaces;
-        this.staticallyKnownCollations = oldContext.staticallyKnownCollations;
-        this.decimalFormats = oldContext.decimalFormats;
-        this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
-        this.serializationParameters = oldContext.serializationParameters;
-        this.defaultCollation = oldContext.defaultCollation;
-        this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
-    }
-
-    /*
-     * TODO at all the places where it is used, it should instead be obtained by modifying the existing fully populated
-     * context.
+    /**
+     * Lombok generates the body of this class.
+     * Without this declaration, Javadoc generation will return error because it cannot find symbol
      */
-    public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            SequenceType staticType,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        this(configuration, staticType, executionMode, metadata, null);
-    }
-
-    public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            SequenceType staticType,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            StaticContext staticContext
-    ) {
-        this.configuration = configuration;
-        this.staticType = staticType;
-        this.executionMode = executionMode;
-        this.metadata = metadata;
-        this.staticallyKnownNamespaces = staticContext == null
-            ? Collections.emptyMap()
-            : staticContext.getInScopeNamespaceBindings();
-        this.staticallyKnownCollations = staticContext == null
-            ? CollationCatalogue.defaultStaticallyKnownCollations()
-            : staticContext.getStaticallyKnownCollations();
-        this.queryLanguage = staticContext == null ? null : staticContext.getQueryLanguage();
-        this.decimalFormats = staticContext == null ? null : staticContext.getDecimalFormats();
-        this.defaultDecimalFormat = staticContext == null ? null : staticContext.getDefaultDecimalFormat();
-        this.serializationParameters = staticContext == null ? null : staticContext.getSerializationParameters();
-        this.defaultCollation = staticContext == null
-            ? CollationCatalogue.CODEPOINT_COLLATION
-            : staticContext.getDefaultCollation();
-        this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
+    public static class RuntimeStaticContextBuilder {
     }
 
     /**
-     * Returns the runtime configuration associated with this context, which is used for error reporting and to
-     * determine limits such as the materialization cap. The returned configuration is never {@code null}.
-     * 
-     * @return the runtime configuration associated with this context, which is used for error reporting and to
-     *         determine limits such as the materialization cap; the returned configuration is never {@code null}
+     * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
+     *
+     * @param staticContext the static context to copy settings from; must not be {@code null}
+     * @return a builder for completing a runtime static context
      */
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.configuration;
+    public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
+        return builder()
+            .queryLanguage(staticContext.getQueryLanguage())
+            .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+            .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
+            .serializationParameters(staticContext.getSerializationParameters())
+            .defaultCollation(staticContext.getDefaultCollation())
+            .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
+            .decimalFormats(staticContext.getDecimalFormats())
+            .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+            .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
+            .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
 
     /**
@@ -135,101 +151,15 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Returns the execution mode in which expressions in this context should be evaluated. The returned execution mode
-     * is never {@code null}.
-     * 
-     * @return the execution mode in which expressions in this context should be evaluated; the returned execution mode
-     *         is never {@code null}
+     * Creates a context without decimal format definitions.
+     *
+     * @return a copy of this context without decimal format definitions
      */
-    public ExecutionMode getExecutionMode() {
-        return this.executionMode;
-    }
-
-    /**
-     * Returns the metadata associated with this context, which is used for error reporting. The returned metadata is
-     * never {@code null}.
-     * 
-     * @return the metadata associated with this context, which is used for error reporting; the returned metadata is
-     *         never {@code null}
-     */
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
-    }
-
-    /**
-     * Returns the namespace bindings that are statically known in this context, i.e. the namespace bindings that are
-     * defined in the static context from which this runtime static context was created. The returned map is
-     * unmodifiable. If no namespace bindings are statically known in this context, returns an empty map.
-     * 
-     * @return the namespace bindings that are statically known in this context, i.e. the namespace bindings that are
-     *         defined in the static context from which this runtime static context was created; the returned map is
-     *         unmodifiable; if no namespace bindings are statically known in this context, returns an empty map
-     */
-    public Map<String, String> getStaticallyKnownNamespaces() {
-        if (this.staticallyKnownNamespaces == null) {
-            return Collections.emptyMap();
-        }
-        return Collections.unmodifiableMap(this.staticallyKnownNamespaces);
-    }
-
-    public Set<String> getStaticallyKnownCollations() {
-        if (this.staticallyKnownCollations == null) {
-            return CollationCatalogue.defaultStaticallyKnownCollations();
-        }
-        return Collections.unmodifiableSet(this.staticallyKnownCollations);
-    }
-
-    public String getDefaultCollation() {
-        if (this.defaultCollation == null) {
-            return CollationCatalogue.CODEPOINT_COLLATION;
-        }
-        return this.defaultCollation;
-    }
-
-    public SerializationParameters getSerializationParameters() {
-        return this.serializationParameters;
-    }
-
-    /**
-     * Drops the decimal format definitions defined in this context, if any. After calling this method,
-     * {@link #getDecimalFormats()} will return {@code null} and {@link #getDefaultDecimalFormat()} will return
-     * {@code null}.
-     */
-    public void dropDecimalFormats() {
-        this.decimalFormats = null;
-        this.defaultDecimalFormat = null;
-    }
-
-    /**
-     * Returns the query language associated with this context, which is used for error reporting and to determine the
-     * semantics of certain operations. The returned query language is never {@code null}.
-     * 
-     * @return the query language.
-     */
-    public String getQueryLanguage() {
-        return this.queryLanguage;
-    }
-
-    /**
-     * Returns the decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
-     * in this context.
-     * 
-     * @return the decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
-     *         in this context
-     */
-    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
-        return this.decimalFormats;
-    }
-
-    /**
-     * Returns the default decimal format definition, or {@code null} if no default decimal format is defined in this
-     * context.
-     * 
-     * @return the default decimal format definition, or {@code null} if no default decimal format is defined in this
-     *         context
-     */
-    public DecimalFormatDefinition getDefaultDecimalFormat() {
-        return this.defaultDecimalFormat;
+    public RuntimeStaticContext withoutDecimalFormats() {
+        return this.toBuilder()
+            .decimalFormats(null)
+            .defaultDecimalFormat(null)
+            .build();
     }
 
     /**
@@ -245,6 +175,14 @@ public class RuntimeStaticContext implements Serializable {
         return StaticContext.getBuiltinNamespaceBinding(prefix);
     }
 
+    public boolean isCopyNamespacesPreserve() {
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        return this.copyNamespacesInherit;
+    }
+
     /**
      * Creates a new context with a different static type (e.g. when building
      * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
@@ -257,9 +195,7 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext withStaticType(
             SequenceType newStaticType
     ) {
-        RuntimeStaticContext result = new RuntimeStaticContext(this);
-        result.staticType = newStaticType;
-        return result;
+        return this.toBuilder().staticType(newStaticType).build();
     }
 
     /**
@@ -274,9 +210,7 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext withExecutionMode(
             ExecutionMode newExecutionMode
     ) {
-        RuntimeStaticContext result = new RuntimeStaticContext(this);
-        result.executionMode = newExecutionMode;
-        return result;
+        return this.toBuilder().executionMode(newExecutionMode).build();
     }
 
     /**
@@ -291,19 +225,7 @@ public class RuntimeStaticContext implements Serializable {
     public RuntimeStaticContext withMetadata(
             ExceptionMetadata newMetadata
     ) {
-        RuntimeStaticContext result = new RuntimeStaticContext(this);
-        result.metadata = newMetadata;
-        return result;
-    }
-
-    /**
-     * Returns whether this context is associated with a query that has side effects. This is used to determine whether
-     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
-     * 
-     * @return whether this context is associated with a query that has side effects.
-     */
-    public boolean isQuerySideEffecting() {
-        return this.isQuerySideEffecting;
+        return this.toBuilder().metadata(newMetadata).build();
     }
 
 }

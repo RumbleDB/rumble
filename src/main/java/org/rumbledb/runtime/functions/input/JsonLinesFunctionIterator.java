@@ -163,17 +163,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
-        }
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

@@ -14,6 +14,7 @@ public class AtomizationClosure implements FlatMapFunction<Item, Item> {
     public AtomizationClosure() {
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         return arg0.atomizedValue().iterator();
     }

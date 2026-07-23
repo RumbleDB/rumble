@@ -229,11 +229,9 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
                                 SequenceType.createSequenceType("item*")
                             ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(metadata)
                     ),
-                    new RuntimeStaticContext(
-                            staticContext.withStaticType(SequenceType.createSequenceType("item*"))
-                                .withExecutionMode(ExecutionMode.LOCAL)
-                                .withMetadata(metadata)
-                    ),
+                    staticContext.withStaticType(SequenceType.createSequenceType("item*"))
+                        .withExecutionMode(ExecutionMode.LOCAL)
+                        .withMetadata(metadata),
                     false
             );
         }
@@ -436,6 +434,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         return null;
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         return false;
     }

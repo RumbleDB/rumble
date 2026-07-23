@@ -105,18 +105,18 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.keyArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("anyAtomicType"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.valueArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.keyArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("anyAtomicType"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.valueArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.mapKeys = this.mapItem.getItemKeys();
         this.keyIndex = 0;
 
@@ -169,17 +169,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         Item result = this.currentCallbackIterator.next();
         advanceToNextResult(this.currentDynamicContextForLocalExecution);
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.actionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
@@ -289,12 +278,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             this.position++;
             this.hasNext = this.position < this.items.size();
             return result;
-        }
-
-        @Override
-        protected void resetLocal() {
-            this.position = 0;
-            setHasNextFromBuffer();
         }
 
         @Override
