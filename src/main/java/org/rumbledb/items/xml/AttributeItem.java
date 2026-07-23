@@ -285,6 +285,7 @@ public class AttributeItem implements Item {
         );
     }
 
+    @Override
     public void setSchemaType(ItemType typeAnnotation) {
         this.typeAnnotation = typeAnnotation;
     }

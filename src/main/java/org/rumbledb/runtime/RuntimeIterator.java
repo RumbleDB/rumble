@@ -210,6 +210,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (context == null) {
             throw new IteratorFlowException(
@@ -225,10 +226,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.currentDynamicContextForLocalExecution = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
     }
 
+    @Override
     public void reset(DynamicContext context) {
         this.hasNext = true;
         this.currentDynamicContextForLocalExecution = context;
@@ -251,6 +254,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         // TODO serializer other fields
     }
 
+    @Override
     public boolean hasNext() {
         return this.hasNext;
     }
@@ -414,6 +418,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.isSequential;
     }
 
+    @Override
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {

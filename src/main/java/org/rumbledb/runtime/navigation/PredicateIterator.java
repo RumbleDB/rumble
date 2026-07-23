@@ -263,6 +263,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return true;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         RuntimeIterator filter = this.children.get(1);
@@ -365,6 +366,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();

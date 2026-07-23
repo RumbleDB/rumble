@@ -1859,6 +1859,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
+    @Override
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
             return new StringLiteralExpression(
@@ -2212,6 +2213,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         );
     }
 
+    @Override
     public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
         if (ctx.ncName() != null) {

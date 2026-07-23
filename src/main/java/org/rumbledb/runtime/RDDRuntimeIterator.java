@@ -41,6 +41,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
         super(children, staticContext);
     }
 
+    @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
     }

@@ -260,6 +260,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
