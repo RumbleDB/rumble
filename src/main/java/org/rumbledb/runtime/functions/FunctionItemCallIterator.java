@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
@@ -60,7 +61,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private boolean isPartialApplication;
     private boolean isTailOptimization;
 
-    // Only used for local and non-partial application execution
+    // Only used for local execution.
     private transient RuntimeIterator functionBodyIterator;
 
     private transient Item nextResult;
@@ -187,19 +188,22 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         if (this.isPartialApplication) {
-            // Partial application produces a function item; it does not execute the function body.
-            this.nextResult = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
-            this.hasNext = true;
-            return;
-        }
-
-        DynamicContext callContext = createCallContext(this.currentDynamicContextForLocalExecution);
-        if (this.functionBodyIterator == null) {
-            // The previous body was discarded, or this is the first invocation at this call site.
-            this.functionBodyIterator = createFunctionBodyIterator();
+            this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
+            this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
+        } else {
+            DynamicContext callContext = createCallContext(this.currentDynamicContextForLocalExecution);
+            if (this.functionBodyIterator == null) {
+                // The previous body was discarded, or this is the first invocation at this call site.
+                this.functionBodyIterator = createFunctionBodyIterator();
+            }
+            try {
+                this.functionBodyIterator.open(callContext);
+            } catch (RuntimeException exception) {
+                discardBody();
+                throw exception;
+            }
         }
         try {
-            this.functionBodyIterator.open(callContext);
             setNextResult();
         } catch (RuntimeException exception) {
             discardBody();
@@ -215,9 +219,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * <li>Argument placeholders form the parameters</li>
      * </ul>
      *
-     * @return the partially applied function item
+     * @return a one-item iterator containing the partially applied function item
      */
-    private Item generatePartiallyAppliedFunction(DynamicContext context) {
+    private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         Name argName;
         RuntimeIterator argIterator;
 
@@ -273,7 +277,15 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return partiallyAppliedFunction;
+        return new ConstantRuntimeIterator(
+                partiallyAppliedFunction,
+                this.staticContext
+                    .toBuilder()
+                    .staticType(SequenceType.createSequenceType("function(*)"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build()
+        );
     }
 
     private void populateDynamicContextWithArguments(DynamicContext context, DynamicContext callContext) {
@@ -311,11 +323,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult;
-            if (this.isPartialApplication) {
-                this.nextResult = null;
-                this.hasNext = false;
-                return result;
-            }
             setNextResult();
             return result;
         }
@@ -337,9 +344,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.nextResult = null;
         this.hasNext = false;
-        if (this.isPartialApplication) {
-            return;
-        }
         // Preserve a normally exhausted body for reuse; discard an execution that is still active.
         if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             discardBody();
@@ -357,7 +361,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 // Reaching the end through normal iteration is the only path that can make a body reusable.
                 this.hasNext = false;
                 this.functionBodyIterator.close();
-                if (!canReuseBody()) {
+                if (this.isPartialApplication || !canReuseBody()) {
                     discardBody();
                 }
             } else {
