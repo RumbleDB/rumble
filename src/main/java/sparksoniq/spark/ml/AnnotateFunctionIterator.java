@@ -29,8 +29,8 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator inputDataIterator = this.children.get(0);
-        RuntimeIterator schemaIterator = this.children.get(1);
+        RuntimeIterator inputDataIterator = this.getChild(0);
+        RuntimeIterator schemaIterator = this.getChild(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
         ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());

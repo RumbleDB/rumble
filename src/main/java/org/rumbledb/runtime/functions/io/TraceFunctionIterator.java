@@ -55,9 +55,9 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.valueIterator = this.children.get(0);
-        if (this.children.size() == 2) {
-            this.labelIterator = this.children.get(1);
+        this.valueIterator = this.getChild(0);
+        if (this.getChildren().size() == 2) {
+            this.labelIterator = this.getChild(1);
             this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
         } else {
             this.label = "";
