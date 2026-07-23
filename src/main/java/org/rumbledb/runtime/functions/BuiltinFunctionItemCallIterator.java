@@ -50,15 +50,13 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        for (RuntimeIterator arg : functionArguments) {
-            if (arg != null) {
-                this.children.add(arg);
-            }
-        }
+        super(
+            functionArguments.stream().filter(arg -> arg != null).toList(),
+            staticContext.toBuilder().isUpdating(functionItem.getSignature().isUpdating()).build()
+        );
+
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
-        this.isUpdating = functionItem.getSignature().isUpdating();
 
         FunctionCallArgumentConversion.validateArity(functionItem, this.functionArguments, getMetadata());
         FunctionCallArgumentConversion.wrapAccordingToSignature(
