@@ -38,6 +38,7 @@ public class ParentPointerAnalysisVisitor extends AbstractNodeVisitor<Boolean> {
         return ("lang".equals(localName) && (arity == 1 || arity == 2))
             || ("in-scope-prefixes".equals(localName) && arity == 1)
             || ("namespace-uri-for-prefix".equals(localName) && arity == 2)
+            || ("serialize".equals(localName) && (arity == 1 || arity == 2))
             || ("innermost".equals(localName) && arity == 1)
             || ("outermost".equals(localName) && arity == 1);
     }
