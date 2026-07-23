@@ -121,9 +121,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     transformerShortName,
                     transformer,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("object*"))
-                        .withExecutionMode(ExecutionMode.DATAFRAME)
-                        .withMetadata(getMetadata())
+                    this.staticContext
+                        .toBuilder()
+                        .staticType(SequenceType.createSequenceType("object*"))
+                        .executionMode(ExecutionMode.DATAFRAME)
+                        .metadata(getMetadata())
+                        .build()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

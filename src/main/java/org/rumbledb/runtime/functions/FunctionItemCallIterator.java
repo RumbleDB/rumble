@@ -142,9 +142,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
-                        .withExecutionMode(executionMode)
-                        .withMetadata(this.functionArguments.get(i).getMetadata());
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext()
+                        .toBuilder()
+                        .staticType(sequenceType)
+                        .executionMode(executionMode)
+                        .metadata(this.functionArguments.get(i).getMetadata())
+                        .build();
                     RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         this.functionArguments.get(i),
                         sequenceType,
@@ -261,9 +264,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                this.staticContext.withStaticType(
-                    SequenceType.createSequenceType("function(*)")
-                ).withExecutionMode(ExecutionMode.LOCAL).withMetadata(getMetadata())
+                this.staticContext
+                    .toBuilder()
+                    .staticType(SequenceType.createSequenceType("function(*)"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build()
         );
     }
 
