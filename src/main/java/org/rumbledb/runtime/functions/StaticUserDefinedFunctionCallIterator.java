@@ -138,14 +138,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected void resetLocal() {
-        this.userDefinedFunctionCallIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.encounteredExitStatement = false;
-        this.nextExitStatementResult = 0;
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed

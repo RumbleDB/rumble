@@ -151,13 +151,6 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.results = null;
-        this.nextResultCounter = 0;
-        setNextResult();
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return this.hasNext;
     }

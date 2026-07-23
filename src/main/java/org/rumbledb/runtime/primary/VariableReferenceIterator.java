@@ -161,11 +161,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         // do nothing
     }
 
-    @Override
-    public void resetLocal() {
-        this.currentIndex = 0;
-        this.items = null;
-    }
 
     public Name getVariableName() {
         return this.variableName;

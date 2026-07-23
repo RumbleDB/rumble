@@ -60,7 +60,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
@@ -229,13 +229,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     @Override
     public void close() {
         this.isOpen = false;
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContextForLocalExecution = context;
-        this.children.forEach(c -> c.reset(context));
     }
 
     @Override
