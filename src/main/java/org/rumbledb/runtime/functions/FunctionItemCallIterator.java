@@ -60,6 +60,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private boolean isPartialApplication;
     private boolean isTailOptimization;
 
+    // Only used for local and non-partial application execution
     private transient RuntimeIterator functionBodyIterator;
 
     private transient Item nextResult;
