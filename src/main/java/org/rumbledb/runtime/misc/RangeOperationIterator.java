@@ -152,6 +152,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

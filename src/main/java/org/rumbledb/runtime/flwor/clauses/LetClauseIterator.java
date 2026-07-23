@@ -521,6 +521,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return intersection.isEmpty();
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
@@ -533,6 +534,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         if (this.child != null && this.evaluationDepthLimit != 0) {
@@ -542,6 +544,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
@@ -551,6 +554,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -890,6 +894,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.LET) {
             return true;

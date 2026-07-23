@@ -308,6 +308,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
@@ -318,6 +319,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -579,6 +581,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         return new NativeClauseContext(nativeClauseContext, resultColumnName, resultType);
     }
 
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();

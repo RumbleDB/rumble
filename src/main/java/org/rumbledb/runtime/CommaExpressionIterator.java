@@ -233,6 +233,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         return this.children;
     }
 
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();

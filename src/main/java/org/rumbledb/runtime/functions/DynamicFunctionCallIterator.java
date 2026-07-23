@@ -285,6 +285,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         this.encounteredExitStatement = false;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

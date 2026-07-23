@@ -59,6 +59,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         }
     }
 
+    @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         Item i = materializeFirstItemOrNull(context);
         List<Item> result = new ArrayList<>();
@@ -68,6 +69,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(result);
     }
 
+    @Override
     public abstract Item materializeFirstItemOrNull(
             DynamicContext context
     );
@@ -94,6 +96,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         this.result = null;
     }
 
+    @Override
     public Item materializeExactlyOneItem(
             DynamicContext dynamicContext
     )
@@ -106,6 +109,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         return result;
     }
 
+    @Override
     public Item materializeAtMostOneItemOrNull(
             DynamicContext dynamicContext
     )
@@ -113,6 +117,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         return materializeFirstItemOrNull(dynamicContext);
     }
 
+    @Override
     public void materialize(DynamicContext dynamicContext, List<Item> result) {
         result.clear();
         Item item = materializeFirstItemOrNull(dynamicContext);
@@ -121,6 +126,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         }
     }
 
+    @Override
     public void materializeNFirstItems(DynamicContext dynamicContext, List<Item> result, int n) {
         result.clear();
         if (n == 0) {

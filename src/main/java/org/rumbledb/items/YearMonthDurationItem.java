@@ -121,6 +121,7 @@ public class YearMonthDurationItem implements Item {
         return Duration.between(anchor, target);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.value;
     }

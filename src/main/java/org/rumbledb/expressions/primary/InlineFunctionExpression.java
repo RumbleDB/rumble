@@ -181,6 +181,7 @@ public class InlineFunctionExpression extends Expression {
         return visitor.visitInlineFunctionExpr(this, argument);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

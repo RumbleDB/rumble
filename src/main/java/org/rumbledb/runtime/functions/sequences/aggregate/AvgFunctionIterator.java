@@ -79,6 +79,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.item;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =

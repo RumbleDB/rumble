@@ -448,6 +448,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         );
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
@@ -460,10 +461,12 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
@@ -471,6 +474,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -625,6 +629,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         return new NativeClauseContext(orderContext, null, orderContext.getResultingType());
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.ORDER_BY) {
             return true;

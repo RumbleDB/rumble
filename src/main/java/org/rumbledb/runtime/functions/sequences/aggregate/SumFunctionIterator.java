@@ -189,6 +189,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return summedDF.getExactlyOneItem();
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =

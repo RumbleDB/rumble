@@ -1266,6 +1266,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.FOR) {
             return true;
@@ -1400,6 +1401,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
      *         it is not possible
      * @param nativeClauseContext context information to generate the native query
      */
+    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.allowingEmpty) {
             return NativeClauseContext.NoNativeQuery;

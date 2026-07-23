@@ -218,10 +218,12 @@ public class ObjectItem implements Item {
         return this.keys.size();
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         return this.keyStringToIndex.containsKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return false;
