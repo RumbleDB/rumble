@@ -1844,8 +1844,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                expression.isUpdating(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .isUpdating(
+                        expression.isUpdating()
+                    )
+                    .build()
         );
 
         return runtimeIterator;
