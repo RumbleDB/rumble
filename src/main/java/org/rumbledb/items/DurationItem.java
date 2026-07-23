@@ -79,6 +79,7 @@ public class DurationItem implements Item {
         return false;
     }
 
+    @Override
     public Duration getDurationValue() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return Duration.ZERO;
@@ -91,6 +92,7 @@ public class DurationItem implements Item {
             .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.periodValue;
     }

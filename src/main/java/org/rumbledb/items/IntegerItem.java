@@ -155,6 +155,7 @@ public class IntegerItem implements Item {
         return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("integer"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }
