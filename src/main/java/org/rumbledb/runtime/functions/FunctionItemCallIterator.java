@@ -72,7 +72,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext,
             boolean isTailOptimization
     ) {
-        super(null, staticContext);
+        super(
+            null,
+            staticContext.toBuilder()
+                .isUpdating(functionItem.getSignature().isUpdating())
+                .isSequential(functionItem.getBodyIterator().isSequential())
+                .build()
+        );
         for (RuntimeIterator arg : functionArguments) {
             if (arg == null) {
                 this.isPartialApplication = true;
@@ -87,8 +93,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
         this.functionBodyIterator = null;
-        this.isUpdating = functionItem.getSignature().isUpdating();
-        this.isSequential = functionItem.getBodyIterator().isSequential();
 
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
