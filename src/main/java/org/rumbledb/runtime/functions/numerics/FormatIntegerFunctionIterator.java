@@ -22,11 +22,11 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
 
-        Item languageItem = this.children.size() > 2
-            ? this.children.get(2).materializeFirstItemOrNull(context)
+        Item languageItem = this.getChildren().size() > 2
+            ? this.getChild(2).materializeFirstItemOrNull(context)
             : null;
 
         String language = languageItem != null && !languageItem.isNull() ? languageItem.getStringValue() : null;

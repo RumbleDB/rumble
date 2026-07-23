@@ -51,7 +51,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        Item value = this.getChild(0).materializeFirstItemOrNull(context);
         if (value == null) {
             return null;
         }
@@ -102,7 +102,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (value == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

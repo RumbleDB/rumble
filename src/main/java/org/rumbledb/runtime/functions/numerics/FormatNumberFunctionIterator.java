@@ -28,10 +28,10 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);
-        Item decimalFormatNameItem = this.children.size() > 2
-            ? this.children.get(2).materializeFirstItemOrNull(context)
+        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item decimalFormatNameItem = this.getChildren().size() > 2
+            ? this.getChild(2).materializeFirstItemOrNull(context)
             : null;
 
         if (valueItem == null) {
