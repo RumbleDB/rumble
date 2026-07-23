@@ -100,6 +100,13 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
+     * Lombok generates the body of this class.
+     * Without this declaration, Javadoc generation will return error because it cannot find symbol
+     */
+    public static class RuntimeStaticContextBuilder {
+    }
+
+    /**
      * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
      *
      * @param staticContext the static context to copy settings from; {@code null} uses the runtime defaults
