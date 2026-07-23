@@ -67,7 +67,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected transient boolean isOpen;
     protected boolean isUpdating;
     protected transient boolean isSequential;
-    protected List<RuntimeIterator> children;
+    private final List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
@@ -82,10 +82,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isUpdating = false;
         this.isSequential = false;
 
-        this.children = new ArrayList<>();
-        if (children != null && !children.isEmpty()) {
-            this.children.addAll(children);
-        }
+        this.children = List.copyOf(children);
     }
 
     /**
@@ -241,6 +238,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
 
     public boolean isOpen() {
         return this.isOpen;
+    }
+
+    protected final RuntimeIterator getChild(int index) {
+        return this.children.get(index);
+    }
+
+    protected final List<RuntimeIterator> getChildren() {
+        return this.children;
+    }
+
+    protected final int getNumberOfChildren() {
+        return this.children.size();
     }
 
     public ExceptionMetadata getMetadata() {
