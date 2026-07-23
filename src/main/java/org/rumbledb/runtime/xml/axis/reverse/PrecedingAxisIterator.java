@@ -54,7 +54,7 @@ public class PrecedingAxisIterator extends AxisIterator {
             }
         }
         for (int i = 0; i < nodeIndex; ++i) {
-            precedingNodes.addAll(getDescendants(parentChildren.get(i)));
+            precedingNodes.addAll(getDescendantsOrSelf(parentChildren.get(i)));
         }
         precedingNodes.addAll(getPrecedingNode(parent.parent(), parent));
         return precedingNodes;
