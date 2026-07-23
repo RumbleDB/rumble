@@ -142,19 +142,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.alreadyFoundKeys = new ArrayList<>();
-        this.nextResults = new LinkedList<>();
-
-        if (this.iterator.isDataFrame()) {
-            setResultsFromDF();
-        } else {
-            this.iterator.reset(this.currentDynamicContextForLocalExecution);
-            setResultsFromNextObjectItem();
-        }
-    }
-
-    @Override
     protected void closeLocal() {
         if (!this.iterator.isDataFrame()) {
             this.iterator.close();

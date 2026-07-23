@@ -96,13 +96,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.child.reset(context);
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeBoolean(this.hasNext);
         output.writeBoolean(this.isOpen);

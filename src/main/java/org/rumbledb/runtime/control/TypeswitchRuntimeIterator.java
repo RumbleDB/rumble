@@ -97,12 +97,6 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         resetMatchingIteratorToNull();
     }
 
-    @Override
-    public void resetLocal() {
-        resetMatchingIteratorToNull();
-        initializeIterator();
-    }
-
     private void initializeIterator() {
 
         this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);

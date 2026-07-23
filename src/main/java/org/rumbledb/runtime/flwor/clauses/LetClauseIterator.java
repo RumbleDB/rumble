@@ -107,19 +107,6 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.tupleContext = this.currentDynamicContext;
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
-        } else {
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            setNextLocalTupleResult();
-        }
-    }
-
     private void setNextLocalTupleResult() {
         // if starting clause: result is a single tuple -> no more tuples after the first next call
         if (this.child == null || this.evaluationDepthLimit == 0) {

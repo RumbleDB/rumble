@@ -96,20 +96,6 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-
-            setNextLocalTupleResult();
-
-        } else {
-            throw new OurBadException("Invalid where clause.");
-        }
-    }
-
-    @Override
     public FlworTuple next() {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
