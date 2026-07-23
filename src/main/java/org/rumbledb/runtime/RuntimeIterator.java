@@ -72,7 +72,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
-    protected RuntimeIterator(@NonNull List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -82,8 +82,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isOpen = false;
         this.isUpdating = false;
         this.isSequential = false;
-
-        this.children = List.copyOf(children);
+        this.children = children;
     }
 
     /**
