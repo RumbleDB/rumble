@@ -498,6 +498,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private static final class PrologPhase1Flags {
         boolean emptyOrderSet;
         boolean boundarySpaceSet;
+        boolean copyNamespacesSet;
         boolean defaultCollationSet;
         boolean baseURISet;
         boolean defaultFunctionNamespaceDeclared;
@@ -515,6 +516,20 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 setterContext.boundarySpaceDecl().type.getType() == XQueryParser.KW_PRESERVE
             );
             flags.boundarySpaceSet = true;
+            return;
+        }
+        if (setterContext.copyNamespacesDecl() != null) {
+            if (flags.copyNamespacesSet) {
+                throw new MoreThanOneCopyNamespacesDeclarationException(
+                        "The copy-namespaces mode was already set.",
+                        createMetadataFromContext(setterContext.copyNamespacesDecl())
+                );
+            }
+            this.moduleContext.setCopyNamespacesMode(
+                setterContext.copyNamespacesDecl().preserveMode().KW_PRESERVE() != null,
+                setterContext.copyNamespacesDecl().inheritMode().KW_INHERIT() != null
+            );
+            flags.copyNamespacesSet = true;
             return;
         }
         if (setterContext.emptyOrderDecl() != null) {

@@ -104,6 +104,11 @@ public class AttributeItem implements Item {
     }
 
     @Override
+    public void addParentToDescendants() {
+        // Attribute nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
     public ItemType getDynamicType() {
         return ItemTypeFactory.attributeNodeItemType(this.dmNodeName);
     }

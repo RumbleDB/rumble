@@ -65,6 +65,11 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
+    public void addParentToDescendants() {
+        // Processing-instruction nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
     public Item parent() {
         return this.parent;
     }
