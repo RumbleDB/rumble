@@ -33,7 +33,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             int mutabilityLevel,
             boolean resultMutable
     ) {
-        super(null, staticContext);
+        super(null, staticContext.toBuilder().isUpdating(false).build());
         this.children.addAll(copyDeclMap.values());
         this.children.add(modifyIterator);
         this.children.add(returnIterator);
@@ -42,7 +42,6 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         this.modifyIterator = modifyIterator;
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
-        this.isUpdating = false;
         this.mutable = resultMutable;
     }
 

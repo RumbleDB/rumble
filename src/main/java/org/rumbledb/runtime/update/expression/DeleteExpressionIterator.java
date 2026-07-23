@@ -32,10 +32,9 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator lookupIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, lookupIterator), staticContext);
+        super(Arrays.asList(mainIterator, lookupIterator), staticContext.toBuilder().isUpdating(true).build());
         this.mainIterator = mainIterator;
         this.lookupIterator = lookupIterator;
-        this.isUpdating = true;
     }
 
     @Override

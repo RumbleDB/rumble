@@ -37,12 +37,11 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator), staticContext);
+        super(Arrays.asList(targetIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = null;
         this.isFirst = isFirst;
         this.mode = mode;
-        this.isUpdating = true;
     }
 
     public DeleteIndexFromCollectionIterator(
@@ -52,12 +51,11 @@ public class DeleteIndexFromCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext);
+        super(Arrays.asList(targetIterator, numDeleteIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.numDeleteIterator = numDeleteIterator;
         this.isFirst = isFirst;
         this.mode = mode;
-        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {
