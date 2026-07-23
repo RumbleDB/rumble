@@ -248,10 +248,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         return this.children;
     }
 
-    protected final int getNumberOfChildren() {
-        return this.children.size();
-    }
-
     public ExceptionMetadata getMetadata() {
         return this.staticContext.getMetadata();
     }

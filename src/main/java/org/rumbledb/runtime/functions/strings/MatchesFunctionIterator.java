@@ -54,7 +54,7 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         String pattern = regexpItem.getStringValue();
         String flags = null;
-        if (this.getNumberOfChildren() == 3) {
+        if (this.getChildren().size() == 3) {
             Item flagsItem = this.getChild(2)
                 .materializeFirstItemOrNull(context);
             if (flagsItem != null) {

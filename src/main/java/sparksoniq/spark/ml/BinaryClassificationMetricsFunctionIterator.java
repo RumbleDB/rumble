@@ -39,7 +39,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         String scoreCol = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         String labelCol = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
         int numBins = -1;
-        if (this.getNumberOfChildren() > 3) {
+        if (this.getChildren().size() > 3) {
             numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
         }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(

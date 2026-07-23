@@ -104,7 +104,7 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
         SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
             this.staticContext.getQueryLanguage()
         );
-        if (this.getNumberOfChildren() < 2) {
+        if (this.getChildren().size() < 2) {
             return params;
         }
 

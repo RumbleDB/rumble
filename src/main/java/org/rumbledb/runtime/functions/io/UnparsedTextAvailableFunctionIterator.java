@@ -28,7 +28,7 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         String encoding = null;
-        if (this.getNumberOfChildren() == 2) {
+        if (this.getChildren().size() == 2) {
             Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
             encoding = encodingItem.getStringValue();
         }

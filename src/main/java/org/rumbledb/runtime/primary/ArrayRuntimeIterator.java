@@ -108,7 +108,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (this.getNumberOfChildren() == 1) {
+        if (this.getChildren().size() == 1) {
             NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;

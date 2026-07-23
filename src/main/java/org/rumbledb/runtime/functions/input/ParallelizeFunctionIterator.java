@@ -47,7 +47,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = null;
-        if (this.getNumberOfChildren() > 1) {
+        if (this.getChildren().size() > 1) {
             this.partitionsIterator = this.getChild(1);
         }
     }
@@ -59,14 +59,14 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
             rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
-            if (this.getNumberOfChildren() == 1) {
+            if (this.getChildren().size() == 1) {
                 return rdd;
             } else {
                 return rdd.repartition(getNumberOfPartitions(context).getIntValue());
             }
         }
         this.sequenceIterator.materialize(context, contents);
-        if (this.getNumberOfChildren() == 1) {
+        if (this.getChildren().size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             Item partitions = getNumberOfPartitions(context);
@@ -108,7 +108,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         this.getChild(0).open(this.currentDynamicContextForLocalExecution);
-        if (this.getNumberOfChildren() > 1) {
+        if (this.getChildren().size() > 1) {
             getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
         }
     }

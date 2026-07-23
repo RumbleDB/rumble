@@ -70,7 +70,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     ) {
         String transformerShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.getNumberOfChildren() >= 2) {
+        if (this.getChildren().size() >= 2) {
             paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 

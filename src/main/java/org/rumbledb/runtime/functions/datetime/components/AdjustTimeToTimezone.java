@@ -30,10 +30,10 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
         if (timeItem == null) {
             return null;
         }
-        if (this.getNumberOfChildren() == 2) {
+        if (this.getChildren().size() == 2) {
             this.timezone = this.getChild(1).materializeFirstItemOrNull(context);
         }
-        if (this.timezone == null && this.getNumberOfChildren() == 1) {
+        if (this.timezone == null && this.getChildren().size() == 1) {
             return ItemFactory.getInstance()
                 .createTimeItem(timeItem.getTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }

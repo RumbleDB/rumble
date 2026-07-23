@@ -58,7 +58,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         int partitions = -1;
-        if (this.getNumberOfChildren() > 1) {
+        if (this.getChildren().size() > 1) {
             partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
         try {
