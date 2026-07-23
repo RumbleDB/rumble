@@ -20,10 +20,10 @@ final class TimezonePictureParser {
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
+        boolean useZForZero = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
+
         if (presentation.isEmpty()) {
-            return component == 'z'
-                ? ParsedTimezonePicture.defaultGmt()
-                : ParsedTimezonePicture.defaultNumeric();
+            return defaultTimezonePicture(component, useZForZero, pictureStringForErrors, metadata);
         }
 
         if (component == 'Z' && "Z".equals(presentation)) {
@@ -31,7 +31,6 @@ final class TimezonePictureParser {
         }
 
         String core = presentation;
-        boolean useZForZero = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
 
         if (core.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata);

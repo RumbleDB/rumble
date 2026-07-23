@@ -52,10 +52,6 @@ final class ParsedTimezonePicture {
         return new ParsedTimezonePicture(false, true, ":", 2, 2, '0', false, false, false, false, false, null);
     }
 
-    static ParsedTimezonePicture defaultGmt() {
-        return new ParsedTimezonePicture(true, true, ":", 2, 2, '0', false, false, false, false, false, null);
-    }
-
     static ParsedTimezonePicture named(String namePresentation) {
         return new ParsedTimezonePicture(
                 false,
