@@ -331,9 +331,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         if (!checkReturnTypesOfBuiltinFunctions) {
             return functionCallIterator;
         }
-        RuntimeStaticContext returnCheckContext = callerStaticContext.withStaticType(catalogueReturnType)
-            .withExecutionMode(functionCallIterator.getHighestExecutionMode())
-            .withMetadata(functionCallIterator.getMetadata());
+        RuntimeStaticContext returnCheckContext = callerStaticContext
+            .toBuilder()
+            .staticType(catalogueReturnType)
+            .executionMode(functionCallIterator.getHighestExecutionMode())
+            .metadata(functionCallIterator.getMetadata())
+            .build();
         if (
             catalogueReturnType.isEmptySequence()
                 || catalogueReturnType.getArity().equals(Arity.One)
