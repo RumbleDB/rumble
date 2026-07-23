@@ -69,7 +69,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         if (this.results == null) {
             // Getting first parameter
-            RuntimeIterator stringIterator = this.children.get(0);
+            RuntimeIterator stringIterator = this.getChild(0);
             String input = null;
             String separator = null;
             Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
@@ -80,11 +80,11 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             input = stringItem.getStringValue();
 
             // Getting second parameter
-            if (this.children.size() == 1) {
+            if (this.getChildren().size() == 1) {
                 this.results = RegexPatternUtils.tokenizeOnXmlWhitespace(input);
                 this.currentPosition = 0;
             } else {
-                RuntimeIterator separatorIterator = this.children.get(1);
+                RuntimeIterator separatorIterator = this.getChild(1);
                 separatorIterator.open(this.currentDynamicContextForLocalExecution);
                 if (!separatorIterator.hasNext()) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
@@ -103,8 +103,8 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
                 String flags = null;
-                if (this.children.size() == 3) {
-                    Item flagsItem = this.children.get(2)
+                if (this.getChildren().size() == 3) {
+                    Item flagsItem = this.getChild(2)
                         .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
                     if (flagsItem != null) {
                         flags = flagsItem.getStringValue();

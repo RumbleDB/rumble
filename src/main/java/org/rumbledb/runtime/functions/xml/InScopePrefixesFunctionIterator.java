@@ -72,7 +72,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
 
         // fn:in-scope-prefixes($element as element()) as xs:string*
         // The function requires exactly one argument of type element().
-        Item element = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item element = this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         this.prefixItems = computeInScopePrefixes(element);
         this.hasNext = !this.prefixItems.isEmpty();

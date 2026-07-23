@@ -29,6 +29,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -53,10 +54,10 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             Map<CatchPattern, RuntimeIterator> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(tryExpression);
-        for (RuntimeIterator value : catchExpressions.values())
-            this.children.add(value);
+        super(
+            Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream()).toList(),
+            staticContext
+        );
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
     }

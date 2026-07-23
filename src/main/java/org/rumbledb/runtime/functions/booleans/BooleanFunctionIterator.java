@@ -44,7 +44,7 @@ public class BooleanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.children.get(0);
+        RuntimeIterator iterator = this.getChild(0);
         boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
             context
         );

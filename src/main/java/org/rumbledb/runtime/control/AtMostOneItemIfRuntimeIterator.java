@@ -51,28 +51,28 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        RuntimeIterator condition = this.children.get(0);
+        RuntimeIterator condition = this.getChild(0);
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
         if (effectiveBooleanValue) {
-            return this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         } else {
-            return this.children.get(2).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(2).materializeFirstItemOrNull(dynamicContext);
         }
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext conditionResult = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext conditionResult = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (conditionResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext thenResult = this.children.get(1)
+        NativeClauseContext thenResult = this.getChild(1)
             .generateNativeQuery(new NativeClauseContext(conditionResult, null, null));
         if (thenResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext elseResult = this.children.get(2)
+        NativeClauseContext elseResult = this.getChild(2)
             .generateNativeQuery(new NativeClauseContext(thenResult, null, null));
         if (elseResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;

@@ -40,13 +40,13 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     public Item materializeFirstItemOrNull(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         String flags = null;
-        if (this.children.size() == 3) {
-            Item flagsItem = this.children.get(2).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() == 3) {
+            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

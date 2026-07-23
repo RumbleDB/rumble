@@ -55,7 +55,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
@@ -65,7 +65,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
         Item optionsObjectItem;
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-            if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
+            if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getStringKeys();
                 List<Item> values = options.getItemValues();
@@ -105,6 +105,6 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.children.get(1).materializeFirstItemOrNull(context);
+        return this.getChild(1).materializeFirstItemOrNull(context);
     }
 }

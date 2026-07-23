@@ -64,7 +64,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator inputDataIterator = this.children.get(0);
+        RuntimeIterator inputDataIterator = this.getChild(0);
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
@@ -458,28 +458,28 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
+        JavaRDD<Item> childrenItems = this.getChild(0).getRDD(context);
         return childrenItems.map(x -> validate(x, this.itemType, getMetadata(), this.isValidate, this.staticContext));
     }
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
     protected void closeLocal() {
-        this.children.get(0).close();
+        this.getChild(0).close();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.children.get(0).hasNext();
+        return this.getChild(0).hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
+        return validate(this.getChild(0).next(), this.itemType, getMetadata(), this.isValidate, this.staticContext);
     }
 
     private static Item validate(
@@ -817,7 +817,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (this.isValidate) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return this.children.get(0).generateNativeQuery(nativeClauseContext);
+        return this.getChild(0).generateNativeQuery(nativeClauseContext);
     }
 
 

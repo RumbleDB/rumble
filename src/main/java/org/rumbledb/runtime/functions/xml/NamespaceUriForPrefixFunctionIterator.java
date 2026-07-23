@@ -24,9 +24,9 @@ public class NamespaceUriForPrefixFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item prefixItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item prefixItem = this.getChild(0).materializeFirstItemOrNull(context);
         String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
-        Item element = this.children.get(1).materializeFirstItemOrNull(context);
+        Item element = this.getChild(1).materializeFirstItemOrNull(context);
         for (Item namespaceNode : element.namespaceNodes()) {
             Name name = namespaceNode.nodeName();
             String namespacePrefix = name == null ? "" : name.getLocalName();

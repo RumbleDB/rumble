@@ -60,10 +60,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.positionIterator = this.children.get(1);
-        if (this.children.size() == 3) {
-            this.lengthIterator = this.children.get(2);
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
+        if (this.getChildren().size() == 3) {
+            this.lengthIterator = this.getChild(2);
         }
     }
 
@@ -247,7 +247,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
-        if (this.children.size() == 3) {
+        if (this.getChildren().size() == 3) {
             Item lengthItem = this.lengthIterator
                 .materializeFirstItemOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());

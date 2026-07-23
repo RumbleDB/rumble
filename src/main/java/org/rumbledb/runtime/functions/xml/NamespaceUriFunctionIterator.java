@@ -39,8 +39,8 @@ public class NamespaceUriFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     private Item getContextNode(DynamicContext context) {
-        if (!this.children.isEmpty()) {
-            return this.children.get(0).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() > 0) {
+            return this.getChild(0).materializeFirstItemOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())

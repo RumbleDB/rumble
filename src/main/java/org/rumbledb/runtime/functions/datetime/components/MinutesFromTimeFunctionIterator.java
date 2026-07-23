@@ -24,7 +24,7 @@ public class MinutesFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item timeItem = this.children.get(0)
+        Item timeItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (timeItem == null) {
             return null;

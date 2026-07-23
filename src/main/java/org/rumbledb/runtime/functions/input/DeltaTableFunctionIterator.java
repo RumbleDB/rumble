@@ -30,7 +30,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.children.get(0);
+        RuntimeIterator collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);

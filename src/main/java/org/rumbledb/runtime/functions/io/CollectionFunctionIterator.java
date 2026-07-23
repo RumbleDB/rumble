@@ -29,10 +29,10 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());

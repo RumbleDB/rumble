@@ -45,7 +45,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
     }
 
     @Override
@@ -67,7 +67,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",

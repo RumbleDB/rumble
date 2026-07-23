@@ -54,7 +54,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.iterator.open(context);
         this.nextResults = new LinkedList<>();
 

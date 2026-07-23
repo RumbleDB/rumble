@@ -185,7 +185,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         List<Item> keys = this.lookupKeys;
         FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(

@@ -35,7 +35,7 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void computeResults() {
-        List<Item> nodes = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> nodes = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
         for (Item node : nodes) {
             if (!node.isNode()) {
                 throw new UnexpectedTypeException("fn:innermost requires a sequence of nodes", getMetadata());

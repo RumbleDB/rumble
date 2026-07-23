@@ -14,6 +14,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
     @Serial
@@ -27,18 +28,11 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             RuntimeIterator exprIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
+        super(Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(), staticContext);
         // Expect an expression to be present
         assert exprIterator != null;
 
-        this.children.addAll(statements);
-        this.children.add(exprIterator);
-
-        for (RuntimeIterator child : this.children) {
-            if (child.isSequential()) {
-                this.isSequential = child.isSequential();
-            }
-        }
+        this.isSequential = this.getChildren().stream().anyMatch(RuntimeIterator::isSequential);
     }
 
     @Override
@@ -50,15 +44,15 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        if (!this.children.isEmpty()) {
+        if (!this.getChildren().isEmpty()) {
             this.childIndex = 0;
-            this.currentChild = this.children.get(this.childIndex);
+            this.currentChild = this.getChild(this.childIndex);
 
             JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
             this.childIndex++;
 
-            while (this.childIndex < this.children.size()) {
-                this.currentChild = this.children.get(this.childIndex);
+            while (this.childIndex < this.getChildren().size()) {
+                this.currentChild = this.getChild(this.childIndex);
                 JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
                 this.childIndex++;
@@ -73,7 +67,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
 
     private void startLocal() {
         this.childIndex = 0;
-        this.currentChild = this.children.get(this.childIndex);
+        this.currentChild = this.getChild(this.childIndex);
         this.currentChild.open(this.currentDynamicContextForLocalExecution);
 
         setNextResult();
@@ -89,15 +83,15 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         while (this.result == null) {
             if (!this.currentChild.hasNext()) {
                 this.currentChild.close();
-                if (++this.childIndex == this.children.size()) {
+                if (++this.childIndex == this.getChildren().size()) {
                     this.currentChild = null;
                     break;
                 } else {
-                    this.currentChild = this.children.get(this.childIndex);
+                    this.currentChild = this.getChild(this.childIndex);
                     this.currentChild.open(this.currentDynamicContextForLocalExecution);
                 }
             } else {
-                if (this.childIndex == this.children.size() - 1) {
+                if (this.childIndex == this.getChildren().size() - 1) {
                     // Result is only the expression's result
                     this.result = this.currentChild.next();
                 } else {
@@ -145,23 +139,23 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         int childIndex = 0;
-        while (childIndex < this.children.size() - 1) {
-            this.children.get(childIndex).getDataFrame(dynamicContext);
+        while (childIndex < this.getChildren().size() - 1) {
+            this.getChild(childIndex).getDataFrame(dynamicContext);
             ++childIndex;
         }
-        RuntimeIterator exprIterator = this.children.get(childIndex);
+        RuntimeIterator exprIterator = this.getChild(childIndex);
         return exprIterator.getDataFrame(dynamicContext);
     }
 
     @Override
     public boolean isUpdating() {
-        this.isUpdating = this.children.get(this.children.size() - 1).isUpdating();
+        this.isUpdating = this.getChild(this.getChildren().size() - 1).isUpdating();
         return this.isUpdating;
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        RuntimeIterator exprIterator = this.children.get(this.children.size() - 1);
+        RuntimeIterator exprIterator = this.getChild(this.getChildren().size() - 1);
         if (exprIterator.isUpdating()) {
             return exprIterator.getPendingUpdateList(context);
         }

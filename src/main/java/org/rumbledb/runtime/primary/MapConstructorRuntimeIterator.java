@@ -21,6 +21,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -48,8 +49,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(keys, staticContext);
-        this.children.addAll(values);
+        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
         this.mutable = mutable;

@@ -124,7 +124,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        if (this.children.size() < 2) {
+        if (this.getChildren().size() < 2) {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
@@ -220,8 +220,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = this.children.get(0);
-        RuntimeIterator filter = this.children.get(1);
+        RuntimeIterator iterator = this.getChild(0);
+        RuntimeIterator filter = this.getChild(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
@@ -250,8 +250,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        RuntimeIterator filter = this.children.get(1);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        RuntimeIterator filter = this.getChild(1);
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
                 FLWOR_CLAUSES.FILTER,
                 childDataFrame.getDataFrame().schema(),

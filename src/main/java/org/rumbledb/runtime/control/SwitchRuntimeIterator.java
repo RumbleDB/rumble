@@ -34,6 +34,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
 import java.util.Map;
+import java.util.stream.Stream;
 
 
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
@@ -51,11 +52,13 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator defaultReturn,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(test);
-        this.children.addAll(cases.keySet());
-        this.children.addAll(cases.values());
-        this.children.add(defaultReturn);
+        super(
+            Stream.concat(
+                Stream.concat(Stream.of(test), cases.keySet().stream()),
+                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
+            ).toList(),
+            staticContext
+        );
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;

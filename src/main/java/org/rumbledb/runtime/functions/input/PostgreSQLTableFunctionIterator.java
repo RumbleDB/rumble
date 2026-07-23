@@ -51,11 +51,11 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
 
-        String connectionString = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        String table = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String connectionString = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        String table = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         int partitions = -1;
-        if (this.children.size() > 2) {
-            partitions = this.children.get(2).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 2) {
+            partitions = this.getChild(2).materializeFirstItemOrNull(context).getIntValue();
         }
 
         try {

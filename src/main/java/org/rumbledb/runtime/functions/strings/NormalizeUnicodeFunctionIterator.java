@@ -136,15 +136,15 @@ public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeI
     public Item materializeFirstItemOrNull(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-        Item inputItem = this.children.get(0)
+        Item inputItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
-        if (this.children.size() > 1) {
-            Item normalizationFormItem = this.children.get(1)
+        if (this.getChildren().size() > 1) {
+            Item normalizationFormItem = this.getChild(1)
                 .materializeFirstItemOrNull(context);
 
             String normalizationFormRaw = normalizationFormItem.getStringValue();
