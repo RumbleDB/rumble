@@ -59,8 +59,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(keys, staticContext);
-        this.children.addAll(values);
+        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
         this.mutable = mutable;
@@ -71,8 +70,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(null, staticContext);
-        this.children.addAll(childExpressions);
+        super(childExpressions, staticContext);
         this.isMergedObject = true;
         this.mutable = mutable;
     }
@@ -82,7 +80,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
-            for (RuntimeIterator iterator : this.children) {
+            for (RuntimeIterator iterator : this.getChildren()) {
                 iterator.open(dynamicContext);
                 while (iterator.hasNext()) {
                     ObjectItem item = (ObjectItem) iterator.next();
@@ -153,8 +151,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
-        List<RuntimeIterator> objectsToMerge = this.children;
-        if (this.children.get(0) instanceof CommaExpressionIterator commaExpressionIterator) {
+        List<RuntimeIterator> objectsToMerge = this.getChildren();
+        if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
             objectsToMerge = commaExpressionIterator.getChildren();
         }
         if (
