@@ -2,6 +2,7 @@ package org.rumbledb.context;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -21,6 +22,8 @@ import org.rumbledb.types.SequenceType;
 public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private final URI staticURI;
 
     /**
      * Query language associated with this context, which is used for error reporting and to determine the
@@ -122,6 +125,7 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
+            .staticURI(staticContext.getStaticBaseURI())
             .queryLanguage(staticContext.getQueryLanguage())
             .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
             .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
