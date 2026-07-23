@@ -112,6 +112,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
         sb.append("  isQuerySideEffecting: ").append(this.isQuerySideEffecting).append("\n");
+        sb.append("  isUpdating: ").append(this.isUpdating).append("\n");
+        sb.append("  isSequential: ").append(this.isSequential).append("\n");
         sb.append("}");
         return sb.toString();
     }
