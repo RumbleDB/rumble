@@ -187,23 +187,18 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+        DynamicContext callContext = this.currentDynamicContextForLocalExecution;
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
-            this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
         } else {
-            DynamicContext callContext = createCallContext(this.currentDynamicContextForLocalExecution);
+            callContext = createCallContext(callContext);
             if (this.functionBodyIterator == null) {
                 // The previous body was discarded, or this is the first invocation at this call site.
                 this.functionBodyIterator = createFunctionBodyIterator();
             }
-            try {
-                this.functionBodyIterator.open(callContext);
-            } catch (RuntimeException exception) {
-                discardBody();
-                throw exception;
-            }
         }
         try {
+            this.functionBodyIterator.open(callContext);
             setNextResult();
         } catch (RuntimeException exception) {
             discardBody();
