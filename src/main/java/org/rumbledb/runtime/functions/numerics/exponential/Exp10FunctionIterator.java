@@ -48,7 +48,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item exponent = this.children.get(0).materializeFirstItemOrNull(context);
+        Item exponent = this.getChild(0).materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
         }
@@ -57,7 +57,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext powerQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext powerQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

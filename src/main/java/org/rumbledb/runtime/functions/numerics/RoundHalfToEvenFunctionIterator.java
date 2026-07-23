@@ -49,7 +49,7 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        Item value = this.getChild(0).materializeFirstItemOrNull(context);
         if (value == null) {
             return null;
         }
@@ -73,8 +73,8 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
         }
 
         int precision;
-        if (this.children.size() > 1) {
-            precision = this.children.get(1)
+        if (this.getChildren().size() > 1) {
+            precision = this.getChild(1)
                 .materializeFirstItemOrNull(context)
                 .getIntValue();
         }

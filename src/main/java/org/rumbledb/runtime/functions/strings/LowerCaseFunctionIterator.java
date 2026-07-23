@@ -44,7 +44,7 @@ public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item stringItem = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
 
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
