@@ -54,7 +54,7 @@ public class RuntimeStaticContext implements Serializable {
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
 
     @Builder.Default
-    private final Set<String> staticallyKnownCollations = Collections.emptySet();
+    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
 
     private final SerializationParameters serializationParameters;
 
@@ -117,27 +117,21 @@ public class RuntimeStaticContext implements Serializable {
     /**
      * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
      *
-     * @param staticContext the static context to copy settings from; {@code null} uses the runtime defaults
+     * @param staticContext the static context to copy settings from; must not be {@code null}
      * @return a builder for completing a runtime static context
      */
-    public static RuntimeStaticContextBuilder fromStaticContext(StaticContext staticContext) {
+    public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
-            .queryLanguage(staticContext == null ? null : staticContext.getQueryLanguage())
-            .staticallyKnownNamespaces(
-                staticContext == null ? Collections.emptyMap() : staticContext.getInScopeNamespaceBindings()
-            )
-            .staticallyKnownCollations(
-                staticContext == null
-                    ? CollationCatalogue.defaultStaticallyKnownCollations()
-                    : staticContext.getStaticallyKnownCollations()
-            )
-            .serializationParameters(staticContext == null ? null : staticContext.getSerializationParameters())
-            .defaultCollation(staticContext == null ? null : staticContext.getDefaultCollation())
-            .defaultDecimalFormat(staticContext == null ? null : staticContext.getDefaultDecimalFormat())
-            .decimalFormats(staticContext == null ? null : staticContext.getDecimalFormats())
-            .isQuerySideEffecting(staticContext != null && staticContext.isQuerySideEffecting())
-            .copyNamespacesPreserve(staticContext == null || staticContext.isCopyNamespacesPreserve())
-            .copyNamespacesInherit(staticContext == null || staticContext.isCopyNamespacesInherit());
+            .queryLanguage(staticContext.getQueryLanguage())
+            .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+            .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())
+            .serializationParameters(staticContext.getSerializationParameters())
+            .defaultCollation(staticContext.getDefaultCollation())
+            .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
+            .decimalFormats(staticContext.getDecimalFormats())
+            .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+            .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
+            .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
 
     /**
