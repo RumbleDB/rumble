@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -71,7 +72,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(@NonNull List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
