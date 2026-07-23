@@ -190,6 +190,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
+    @Override
     public void materialize(DynamicContext context, List<Item> result) {
         if (!isRDDOrDataFrame()) {
             super.materialize(context, result);
@@ -201,6 +202,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         result.addAll(collectedItems);
     }
 
+    @Override
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         if (!isRDDOrDataFrame()) {
             super.materializeNFirstItems(context, result, n);
@@ -211,6 +213,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         result.addAll(items.take(n));
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
@@ -226,6 +229,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
+    @Override
     public Item materializeExactlyOneItem(
             DynamicContext context
     )
@@ -245,6 +249,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         throw new MoreThanOneItemException();
     }
 
+    @Override
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )

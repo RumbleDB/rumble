@@ -221,6 +221,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         return this.defaultCase.getReturnIterator().getPendingUpdateList(context);
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
