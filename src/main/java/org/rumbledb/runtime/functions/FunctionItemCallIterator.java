@@ -339,7 +339,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.isPartialApplication) {
             return;
         }
-        // The deepest recursive call might never be opened, so close only an active body.
+        // Preserve a normally exhausted body for reuse; discard an execution that is still active.
         if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             discardBody();
         }
@@ -380,9 +380,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      */
     private void discardBody() {
         RuntimeIterator iterator = this.functionBodyIterator;
-        this.functionBodyIterator = null;
-        if (iterator != null && iterator.isOpen()) {
-            iterator.close();
+        try {
+            if (iterator != null && iterator.isOpen()) {
+                iterator.close();
+            }
+        } finally {
+            this.functionBodyIterator = null;
         }
     }
 
