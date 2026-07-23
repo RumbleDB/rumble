@@ -209,22 +209,27 @@ public class FunctionItem implements Item {
         return this.signature;
     }
 
+    @Override
     public DynamicContext getModuleDynamicContext() {
         return this.dynamicModuleContext;
     }
 
+    @Override
     public RuntimeIterator getBodyIterator() {
         return this.bodyIterator;
     }
 
+    @Override
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
         return this.localVariablesInClosure;
     }
 
+    @Override
     public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
         return this.RDDVariablesInClosure;
     }
 
+    @Override
     public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }

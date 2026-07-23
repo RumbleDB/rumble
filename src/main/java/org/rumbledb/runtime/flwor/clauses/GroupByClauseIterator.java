@@ -139,18 +139,6 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
-            this.localTupleResults = null;
-            this.hasNext = this.child.hasNext();
-        } else {
-            throw new OurBadException("Invalid groupby clause.");
-        }
-    }
-
     /**
      * All local results need to be calculated for grouping to be performed.
      */
@@ -500,6 +488,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(result);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -516,6 +505,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -525,6 +515,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
@@ -538,6 +529,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -683,6 +675,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             );
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.GROUP_BY) {
             return true;

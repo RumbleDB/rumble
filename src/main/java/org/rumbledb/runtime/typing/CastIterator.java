@@ -45,6 +45,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {

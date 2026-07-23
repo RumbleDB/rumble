@@ -37,6 +37,7 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
     public ArrayUnboxingClosure() {
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         if (!(arg0.isArray())) {
             return Collections.emptyIterator();

@@ -436,6 +436,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         return null;
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         return false;
     }

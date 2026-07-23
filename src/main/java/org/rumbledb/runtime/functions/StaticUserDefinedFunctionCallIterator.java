@@ -74,6 +74,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
@@ -134,14 +135,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.userDefinedFunctionCallIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.encounteredExitStatement = false;
-        this.nextExitStatementResult = 0;
-        setNextResult();
     }
 
     @Override
@@ -218,6 +211,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());

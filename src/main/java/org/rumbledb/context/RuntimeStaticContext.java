@@ -26,6 +26,8 @@ public class RuntimeStaticContext implements Serializable {
     private final Set<String> staticallyKnownCollations;
     private final SerializationParameters serializationParameters;
     private final String defaultCollation;
+    private final boolean copyNamespacesPreserve;
+    private final boolean copyNamespacesInherit;
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
     private boolean isQuerySideEffecting;
@@ -42,6 +44,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
         sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
         sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
+        sb.append("  copyNamespacesPreserve: ").append(this.copyNamespacesPreserve).append("\n");
+        sb.append("  copyNamespacesInherit: ").append(this.copyNamespacesInherit).append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
@@ -64,6 +68,8 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultDecimalFormat = oldContext.defaultDecimalFormat;
         this.serializationParameters = oldContext.serializationParameters;
         this.defaultCollation = oldContext.defaultCollation;
+        this.copyNamespacesPreserve = oldContext.copyNamespacesPreserve;
+        this.copyNamespacesInherit = oldContext.copyNamespacesInherit;
         this.isQuerySideEffecting = oldContext.isQuerySideEffecting;
     }
 
@@ -104,6 +110,8 @@ public class RuntimeStaticContext implements Serializable {
         this.defaultCollation = staticContext == null
             ? CollationCatalogue.CODEPOINT_COLLATION
             : staticContext.getDefaultCollation();
+        this.copyNamespacesPreserve = staticContext == null || staticContext.isCopyNamespacesPreserve();
+        this.copyNamespacesInherit = staticContext == null || staticContext.isCopyNamespacesInherit();
         this.isQuerySideEffecting = staticContext == null ? false : staticContext.isQuerySideEffecting();
     }
 
@@ -243,6 +251,14 @@ public class RuntimeStaticContext implements Serializable {
             return this.staticallyKnownNamespaces.get(prefix);
         }
         return StaticContext.getBuiltinNamespaceBinding(prefix);
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        return this.copyNamespacesInherit;
     }
 
     /**

@@ -63,6 +63,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    @Override
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
@@ -75,13 +76,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

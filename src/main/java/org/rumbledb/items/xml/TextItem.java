@@ -60,6 +60,11 @@ public class TextItem implements Item {
     }
 
     @Override
+    public void addParentToDescendants() {
+        // Text nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
     public boolean equals(Object other) {
         if (!(other instanceof TextItem otherTextItem)) {
             return false;
@@ -72,6 +77,7 @@ public class TextItem implements Item {
         return this.content;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.content.isEmpty();
     }

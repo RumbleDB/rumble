@@ -11,8 +11,11 @@ import org.rumbledb.items.xml.NamespaceItem;
 import java.io.Serial;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class XmlSerializer implements Serializer, java.io.Serializable {
 
@@ -117,14 +120,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         String childIndent = nextIndent(indent);
         sb.append("<");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
-        boolean namespaceAlreadyDeclared = false;
-        for (Item namespace : item.declaredNamespaceNodes()) {
-            if (matchesElementNamespace(item, namespace)) {
-                namespaceAlreadyDeclared = true;
-            }
+        for (Item namespace : getNamespaceNodesToSerialize(item)) {
             appendAttributeOrNamespaceNode(namespace, sb);
         }
-        appendImplicitElementNamespace(item, sb, namespaceAlreadyDeclared);
         for (Item attribute : item.attributes()) {
             appendAttributeOrNamespaceNode(attribute, sb);
         }
@@ -217,54 +215,79 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
         return elementPrefix.equals(namespacePrefix) && elementNamespace.equals(namespaceUri);
     }
 
-    protected void appendImplicitElementNamespace(Item element, StringBuilder sb, boolean namespaceAlreadyDeclared) {
-        if (element == null || element.nodeName() == null || namespaceAlreadyDeclared) {
-            return;
+    protected List<Item> getNamespaceNodesToSerialize(Item element) {
+        Map<String, String> currentScope = getEffectiveNamespaceScope(element);
+        Map<String, String> parentScope = getEffectiveNamespaceScope(getParentElement(element));
+        List<Item> result = new ArrayList<>();
+
+        for (Map.Entry<String, String> entry : currentScope.entrySet()) {
+            String prefix = entry.getKey();
+            String uri = entry.getValue();
+            if (!Objects.equals(parentScope.get(prefix), uri)) {
+                result.add(createNamespaceNode(element, prefix, uri));
+            }
         }
-        String namespace = element.nodeName().getNamespace();
-        if (namespace == null || namespace.isEmpty()) {
-            return;
+
+        for (Map.Entry<String, String> entry : parentScope.entrySet()) {
+            String prefix = entry.getKey();
+            if (currentScope.containsKey(prefix)) {
+                continue;
+            }
+            if (shouldEmitNamespaceUndeclaration(prefix, entry.getValue(), element)) {
+                result.add(createNamespaceNode(element, prefix, ""));
+            }
         }
-        String prefix = element.nodeName().getPrefix();
-        if (isNamespaceBindingInScope(element.parent(), prefix, namespace)) {
-            return;
-        }
-        if (prefix == null || prefix.isEmpty()) {
-            sb.append(" xmlns=\"");
-            sb.append(escapeAttribute(namespace));
-            sb.append("\"");
-            return;
-        }
-        sb.append(" xmlns:");
-        sb.append(prefix);
-        sb.append("=\"");
-        sb.append(escapeAttribute(namespace));
-        sb.append("\"");
+
+        return result;
     }
 
-    protected boolean isNamespaceBindingInScope(Item context, String prefix, String namespace) {
-        Item current = context;
-        String normalizedPrefix = prefix == null ? "" : prefix;
-        while (current != null && current.isElementNode()) {
-            if (current.nodeName() != null) {
-                String currentPrefix = current.nodeName().getPrefix() == null ? "" : current.nodeName().getPrefix();
-                String currentNamespace = current.nodeName().getNamespace();
-                if (
-                    normalizedPrefix.equals(currentPrefix)
-                        && namespace.equals(currentNamespace)
-                ) {
-                    return true;
-                }
-            }
-            for (Item namespaceNode : current.declaredNamespaceNodes()) {
-                NamespaceItem ns = (NamespaceItem) namespaceNode;
-                if (normalizedPrefix.equals(ns.getPrefix())) {
-                    return namespace.equals(ns.getUri());
-                }
-            }
-            current = current.parent();
+    protected boolean shouldEmitNamespaceUndeclaration(String prefix, String previousUri, Item element) {
+        if (previousUri == null || previousUri.isEmpty() || "xml".equals(prefix)) {
+            return false;
         }
-        return false;
+        if (prefix == null || prefix.isEmpty()) {
+            return true;
+        }
+        if (!supportsPrefixUndeclaration(element) || !this.params.getUndeclarePrefixes()) {
+            return false;
+        }
+        if (!isXml11()) {
+            throw serializationError(
+                "Prefix undeclaration requires XML 1.1 or later when using the XML or XHTML output method.",
+                "SEPM0010"
+            );
+        }
+        return true;
+    }
+
+    protected boolean supportsPrefixUndeclaration(Item element) {
+        return true;
+    }
+
+    protected Map<String, String> getEffectiveNamespaceScope(Item element) {
+        LinkedHashMap<String, String> scope = new LinkedHashMap<>();
+        if (element == null || !element.isElementNode()) {
+            return scope;
+        }
+        for (Item namespaceNode : element.namespaceNodes()) {
+            NamespaceItem namespaceItem = (NamespaceItem) namespaceNode;
+            scope.put(namespaceItem.getPrefix(), namespaceItem.getUri());
+        }
+        return scope;
+    }
+
+    protected Item getParentElement(Item item) {
+        if (item == null) {
+            return null;
+        }
+        Item parent = item.parent();
+        return parent != null && parent.isElementNode() ? parent : null;
+    }
+
+    protected Item createNamespaceNode(Item parent, String prefix, String uri) {
+        Item namespaceItem = new NamespaceItem(prefix, uri);
+        namespaceItem.setParent(parent);
+        return namespaceItem;
     }
 
     protected String prepareAttributeValue(Item attribute) {
@@ -280,6 +303,9 @@ public class XmlSerializer implements Serializer, java.io.Serializable {
     }
 
     protected boolean shouldSerializeNamespace(String prefix, String uri) {
+        if ("xml".equals(prefix) && Name.XML_NS.equals(uri)) {
+            return false;
+        }
         if (!uri.isEmpty()) {
             return true;
         }

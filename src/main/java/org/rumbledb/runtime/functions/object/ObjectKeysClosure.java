@@ -38,6 +38,7 @@ public class ObjectKeysClosure implements FlatMapFunction<Item, Item> {
     public ObjectKeysClosure() {
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 

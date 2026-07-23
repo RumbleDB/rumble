@@ -122,24 +122,6 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        this.closeExpressionIterators();
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.pendingResults.clear();
-        this.nextResult = null;
-        this.currentInputTuple = null;
-
-        if (!this.hasActiveChild()) {
-            this.prepareForTuple(null);
-            this.prepareNextResult();
-        } else {
-            this.child.reset(this.currentDynamicContext);
-            this.prepareNextTuple();
-        }
-    }
-
-    @Override
     public void close() {
         this.closeExpressionIterators();
         if (this.hasActiveChild() && this.child.isOpen()) {
