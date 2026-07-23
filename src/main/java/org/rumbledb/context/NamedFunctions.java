@@ -128,15 +128,16 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
         }
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
-        RuntimeStaticContext outerStaticContext = callerRuntimeContext.withStaticType(
-            sequenceType
-        )
-            .withExecutionMode(
-                executionModeForFunctionCall
-            );
-        RuntimeStaticContext innerStaticContext = callerRuntimeContext.withStaticType(
-            innerSequenceType
-        ).withExecutionMode(executionModeForFunctionCall);
+        RuntimeStaticContext outerStaticContext = callerRuntimeContext
+            .toBuilder()
+            .staticType(sequenceType)
+            .executionMode(executionModeForFunctionCall)
+            .build();
+        RuntimeStaticContext innerStaticContext = callerRuntimeContext
+            .toBuilder()
+            .staticType(innerSequenceType)
+            .executionMode(executionModeForFunctionCall)
+            .build();
         RuntimeIterator functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
@@ -244,10 +245,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                         .equals(SequenceType.createSequenceType("item*"))
                 ) {
                     SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
-                    RuntimeStaticContext argStaticContext =
-                        callerStaticContext.withStaticType(sequenceType)
-                            .withExecutionMode(arguments.get(i).getHighestExecutionMode())
-                            .withMetadata(arguments.get(i).getMetadata());
+                    RuntimeStaticContext argStaticContext = callerStaticContext
+                        .toBuilder()
+                        .staticType(sequenceType)
+                        .executionMode(arguments.get(i).getHighestExecutionMode())
+                        .metadata(arguments.get(i).getMetadata())
+                        .build();
                     RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         arguments.get(i),
                         sequenceType,
@@ -285,12 +288,19 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
         SequenceType catalogueReturnType = builtinFunction.getSignature().getReturnType();
 
-        RuntimeStaticContext delegateContext =
-            callerStaticContext.withStaticType(catalogueReturnType)
-                .withExecutionMode(callerStaticContext.getExecutionMode());
+        RuntimeStaticContext delegateContext = callerStaticContext
+            .toBuilder()
+            .staticType(catalogueReturnType)
+            .executionMode(callerStaticContext.getExecutionMode())
+            .build();
 
         if (!"format-number".equals(identifier.getName().getLocalName())) {
-            delegateContext = delegateContext.withoutDecimalFormats();
+            // Remove decimal formats definition from the context
+            delegateContext = delegateContext
+                .toBuilder()
+                .decimalFormats(null)
+                .defaultDecimalFormat(null)
+                .build();
         }
 
         RuntimeIterator functionCallIterator;
@@ -324,9 +334,12 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         if (!checkReturnTypesOfBuiltinFunctions) {
             return functionCallIterator;
         }
-        RuntimeStaticContext returnCheckContext = callerStaticContext.withStaticType(catalogueReturnType)
-            .withExecutionMode(functionCallIterator.getHighestExecutionMode())
-            .withMetadata(functionCallIterator.getMetadata());
+        RuntimeStaticContext returnCheckContext = callerStaticContext
+            .toBuilder()
+            .staticType(catalogueReturnType)
+            .executionMode(functionCallIterator.getHighestExecutionMode())
+            .metadata(functionCallIterator.getMetadata())
+            .build();
         if (
             catalogueReturnType.isEmptySequence()
                 || catalogueReturnType.getArity().equals(Arity.One)

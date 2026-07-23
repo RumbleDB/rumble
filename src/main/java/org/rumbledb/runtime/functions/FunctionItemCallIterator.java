@@ -150,9 +150,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext().withStaticType(sequenceType)
-                        .withExecutionMode(executionMode)
-                        .withMetadata(this.functionArguments.get(i).getMetadata());
+                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext()
+                        .toBuilder()
+                        .staticType(sequenceType)
+                        .executionMode(executionMode)
+                        .metadata(this.functionArguments.get(i).getMetadata())
+                        .build();
                     RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         this.functionArguments.get(i),
                         sequenceType,
