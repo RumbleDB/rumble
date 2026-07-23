@@ -464,7 +464,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
     }
 
     @Override

@@ -45,7 +45,7 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
-        for (RuntimeIterator iterator : this.children) {
+        for (RuntimeIterator iterator : this.getChildren()) {
             Item item = iterator.materializeFirstItemOrNull(context);
             // if not empty sequence
             if (item != null) {
