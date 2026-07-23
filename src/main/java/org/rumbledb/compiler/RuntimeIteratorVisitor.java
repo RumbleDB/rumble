@@ -335,12 +335,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnExpr(),
                     argument
                 ),
-                expression.isUpdating(),
                 RuntimeStaticContext.fromStaticContext(expression.getStaticContext())
                     .configuration(this.config)
                     .staticType(expression.getStaticSequenceType())
                     .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
                     .metadata(returnClause.getMetadata())
+                    .isUpdating(expression.isUpdating())
                     .build()
         );
         return runtimeIterator;
