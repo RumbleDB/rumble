@@ -35,16 +35,14 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     ) {
         super(
             Stream.concat(
-                Stream.of(test, defaultCase.getReturnIterator()),
-                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)
+                Stream.concat(
+                    Stream.of(test),
+                    cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)
+                ),
+                Stream.of(defaultCase.getReturnIterator())
             ).toList(),
             staticContext
         );
-        this.children.add(test);
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            this.children.add(typeSwitchCase.getReturnIterator());
-        }
-        this.children.add(defaultCase.getReturnIterator());
 
         this.testField = test;
         this.cases = cases;
