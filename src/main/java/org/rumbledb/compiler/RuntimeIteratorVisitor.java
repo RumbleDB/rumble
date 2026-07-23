@@ -332,12 +332,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnExpr(),
                     argument
                 ),
-                RuntimeStaticContext.fromStaticContext(expression.getStaticContext())
-                    .configuration(this.config)
-                    .staticType(expression.getStaticSequenceType())
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
                     .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
                     .metadata(returnClause.getMetadata())
-                    .isUpdating(expression.isUpdating())
                     .build()
         );
         return runtimeIterator;
@@ -2107,12 +2105,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     returnClause.getReturnStatement(),
                     argument
                 ),
-                RuntimeStaticContext.fromStaticContext(statement.getStaticContext())
-                    .configuration(this.config)
-                    .staticType(statement.getStaticSequenceType())
-                    .executionMode(returnClause.getHighestExecutionMode(this.visitorConfig))
-                    .metadata(returnClause.getMetadata())
-                    .build()
+                statement.getStaticContextForRuntime(this.config, this.visitorConfig)
         );
 
         return runtimeIterator;
@@ -2161,11 +2154,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new StepExprIterator(
                 axisIterator,
                 nodeTest,
-                RuntimeStaticContext.fromStaticContext(stepExpr.getStaticContext())
-                    .configuration(this.config)
+                stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
                     .staticType(SequenceType.createSequenceType("item"))
-                    .executionMode(stepExpr.getHighestExecutionMode(this.visitorConfig))
-                    .metadata(stepExpr.getMetadata())
                     .build()
         );
     }
@@ -2186,8 +2177,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     private AxisIterator visitAxisStep(StepExpr stepExpr, ExceptionMetadata metadata) {
         return stepExpr.accept(
             new AxisIteratorVisitor(),
-            RuntimeStaticContext.fromStaticContext(stepExpr.getStaticContext())
-                .configuration(this.config)
+            stepExpr.getStaticContextForRuntime(this.config, this.visitorConfig)
+                .toBuilder()
                 .staticType(SequenceType.createSequenceType("string"))
                 .executionMode(ExecutionMode.LOCAL)
                 .metadata(metadata)
