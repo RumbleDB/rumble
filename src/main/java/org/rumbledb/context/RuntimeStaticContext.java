@@ -151,18 +151,6 @@ public class RuntimeStaticContext implements Serializable {
     }
 
     /**
-     * Creates a context without decimal format definitions.
-     *
-     * @return a copy of this context without decimal format definitions
-     */
-    public RuntimeStaticContext withoutDecimalFormats() {
-        return this.toBuilder()
-            .decimalFormats(null)
-            .defaultDecimalFormat(null)
-            .build();
-    }
-
-    /**
      * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
      * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
      *
@@ -174,50 +162,4 @@ public class RuntimeStaticContext implements Serializable {
         }
         return StaticContext.getBuiltinNamespaceBinding(prefix);
     }
-
-    /**
-     * Creates a new context with a different static type (e.g. when building
-     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
-     * 
-     * @param newStaticType the new static type to use in the returned context
-     * 
-     * @return a new {@link RuntimeStaticContext} with the same configuration, execution mode, and metadata as this
-     *         context, but with the specified static type
-     */
-    public RuntimeStaticContext withStaticType(
-            SequenceType newStaticType
-    ) {
-        return this.toBuilder().staticType(newStaticType).build();
-    }
-
-    /**
-     * Creates a new context with a different execution mode (e.g. when building
-     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
-     * 
-     * @param newExecutionMode the new execution mode to use in the returned context
-     * 
-     * @return a new {@link RuntimeStaticContext} with the same configuration, static type, and metadata as this
-     *         context, but with the specified execution mode
-     */
-    public RuntimeStaticContext withExecutionMode(
-            ExecutionMode newExecutionMode
-    ) {
-        return this.toBuilder().executionMode(newExecutionMode).build();
-    }
-
-    /**
-     * Creates a new context with different metadata (e.g. when building
-     * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
-     * 
-     * @param newMetadata the new metadata to use in the returned context
-     * 
-     * @return a new {@link RuntimeStaticContext} with the same configuration, static type, and execution mode as this
-     *         context, but with the specified metadata
-     */
-    public RuntimeStaticContext withMetadata(
-            ExceptionMetadata newMetadata
-    ) {
-        return this.toBuilder().metadata(newMetadata).build();
-    }
-
 }
