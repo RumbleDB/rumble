@@ -60,7 +60,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial

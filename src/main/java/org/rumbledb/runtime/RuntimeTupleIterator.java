@@ -47,7 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
+public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple>, KryoSerializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
