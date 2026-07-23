@@ -15,6 +15,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
     @Serial
