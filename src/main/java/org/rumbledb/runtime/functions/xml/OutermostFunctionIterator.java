@@ -1,18 +1,26 @@
 package org.rumbledb.runtime.functions.xml;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-public class OutermostFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
+public class OutermostFunctionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
+
+    private List<Item> results;
+    private int currentIndex;
 
     public OutermostFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -22,7 +30,75 @@ public class OutermostFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:outermost", getMetadata());
+    protected void openLocal() {
+        computeResults();
+    }
+
+    private void computeResults() {
+        List<Item> nodes = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
+        for (Item node : nodes) {
+            if (!node.isNode()) {
+                throw new UnexpectedTypeException("fn:outermost requires a sequence of nodes", getMetadata());
+            }
+        }
+        Set<Item> nodeSet = new HashSet<>(nodes);
+        List<Item> distinctResult = new ArrayList<>();
+        Set<Item> seen = new HashSet<>();
+        for (Item node : nodes) {
+            if (seen.contains(node)) {
+                continue;
+            }
+            boolean hasAncestorInSet = false;
+            Item current = node.parent();
+            while (current != null) {
+                if (nodeSet.contains(current)) {
+                    hasAncestorInSet = true;
+                    break;
+                }
+                current = current.parent();
+            }
+            if (!hasAncestorInSet) {
+                distinctResult.add(node);
+                seen.add(node);
+            }
+        }
+        distinctResult.sort((a, b) -> a.getXmlDocumentPosition().compareTo(b.getXmlDocumentPosition()));
+        this.results = distinctResult;
+        this.currentIndex = 0;
+        this.hasNext = !this.results.isEmpty();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
+        if (!this.hasNext) {
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " fn:outermost", getMetadata());
+        }
+        Item result = this.results.get(this.currentIndex++);
+        this.hasNext = this.currentIndex < this.results.size();
+        return result;
+    }
+
+    @Override
+    protected void closeLocal() {
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return false;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        throw new OurBadException("fn:outermost is currently supported only in local execution mode.");
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        throw new OurBadException("fn:outermost is currently supported only in local execution mode.");
     }
 }

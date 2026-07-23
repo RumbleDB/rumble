@@ -69,6 +69,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         this.isMinus = isMinus;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
             this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);

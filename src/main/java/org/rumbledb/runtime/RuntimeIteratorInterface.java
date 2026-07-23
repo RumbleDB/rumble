@@ -29,8 +29,6 @@ public interface RuntimeIteratorInterface<T> extends Serializable {
 
     void close();
 
-    void reset(DynamicContext context);
-
     boolean hasNext();
 
     T next();

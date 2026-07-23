@@ -118,15 +118,6 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.indexIterator != null) {
-            this.indexIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.indexIterator != null && this.indexIterator.isOpen()) {
             this.indexIterator.close();

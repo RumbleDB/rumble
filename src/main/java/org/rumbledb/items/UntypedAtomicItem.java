@@ -120,6 +120,7 @@ public class UntypedAtomicItem implements Item {
         return false;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }

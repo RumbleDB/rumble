@@ -148,14 +148,6 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.positionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator.isOpen()) {
             this.arrayIterator.close();

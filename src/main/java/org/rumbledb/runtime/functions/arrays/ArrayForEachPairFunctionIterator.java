@@ -235,16 +235,6 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator1.reset(this.currentDynamicContextForLocalExecution);
-        this.arrayIterator2.reset(this.currentDynamicContextForLocalExecution);
-        this.functionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator1.isOpen()) {
             this.arrayIterator1.close();

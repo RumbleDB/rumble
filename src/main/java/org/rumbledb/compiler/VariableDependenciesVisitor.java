@@ -300,6 +300,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitGroupByClause(GroupByClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -321,6 +322,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitOrderByClause(OrderByClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -338,6 +340,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitWhereClause(WhereClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -352,6 +355,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitCountClause(CountClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
@@ -363,6 +367,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitReturnClause(ReturnClause expression, Void argument) {
         visit(expression.getReturnExpr(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getReturnExpr()));
@@ -374,6 +379,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    @Override
     public Void visitFilterExpression(FilterExpression expression, Void argument) {
         visit(expression.getMainExpression(), null);
         visit(expression.getPredicateExpression(), null);

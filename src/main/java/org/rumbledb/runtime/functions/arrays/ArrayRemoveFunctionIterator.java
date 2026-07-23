@@ -167,15 +167,6 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.positionsIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator.isOpen()) {
             this.arrayIterator.close();

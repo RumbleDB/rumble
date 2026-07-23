@@ -62,12 +62,6 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.delegate.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.delegate != null && this.delegate.isOpen()) {
             this.delegate.close();
