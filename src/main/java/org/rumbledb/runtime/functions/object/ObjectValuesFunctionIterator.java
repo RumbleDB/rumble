@@ -29,12 +29,14 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection

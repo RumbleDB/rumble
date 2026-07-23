@@ -12,9 +12,11 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.Map;
 
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryStatementIterator;
     private final Map<CatchPattern, RuntimeIterator> catchStatements;

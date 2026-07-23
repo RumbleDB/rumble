@@ -39,6 +39,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -48,6 +49,7 @@ import java.util.Set;
 
 public class VariableValues implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Map<Name, List<Item>> localVariableValues;
     private Map<Name, Item> localVariableCounts;
@@ -353,6 +355,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         kryo.writeObject(output, this.configuration);
     }
 
+    @Serial
     private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
         ois.defaultReadObject();
         this.nestedQuery = true;

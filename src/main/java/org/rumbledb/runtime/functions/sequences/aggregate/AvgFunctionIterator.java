@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import java.util.TreeMap;
 public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Item item;
 

@@ -7,8 +7,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.RumbleException;
 
+import java.io.Serial;
+
 public class TextSerializer implements Serializer, java.io.Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final SerializationParameters params;
 

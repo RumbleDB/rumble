@@ -27,11 +27,13 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 
 public class ItemComparator implements Comparator<Item>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private RumbleException exception;

@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
@@ -18,6 +19,7 @@ import java.util.Set;
  */
 public class MapItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;

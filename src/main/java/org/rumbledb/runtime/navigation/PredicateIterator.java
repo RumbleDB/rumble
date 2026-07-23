@@ -54,12 +54,14 @@ import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private RuntimeIterator filter;

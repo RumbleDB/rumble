@@ -11,10 +11,13 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
+
 public class TreatAsClosure implements Function<Item, Boolean> {
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
     private ErrorCode errorCode;
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public TreatAsClosure(SequenceType sequenceType, ErrorCode shouldThrowTreatException, ExceptionMetadata metadata) {

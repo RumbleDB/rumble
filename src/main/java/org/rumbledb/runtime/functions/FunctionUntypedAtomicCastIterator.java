@@ -15,6 +15,7 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
 import java.util.Collections;
 
 /**
@@ -23,6 +24,7 @@ import java.util.Collections;
  */
 public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator iterator;
@@ -56,6 +58,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
         return this.iterator.getRDD(context)
             .map(
                 new Function<Item, Item>() {
+                    @Serial
                     private static final long serialVersionUID = 1L;
 
                     @Override

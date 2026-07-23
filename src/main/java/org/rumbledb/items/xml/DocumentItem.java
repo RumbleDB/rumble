@@ -10,11 +10,13 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class DocumentItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String stringValue;
     private List<Item> children;

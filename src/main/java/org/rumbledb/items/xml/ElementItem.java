@@ -12,6 +12,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -20,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 public class ElementItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<Item> children;
     private List<Item> attributes;
@@ -67,6 +69,7 @@ public class ElementItem implements Item {
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(

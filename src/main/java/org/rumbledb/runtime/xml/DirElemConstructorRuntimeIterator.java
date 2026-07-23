@@ -32,6 +32,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,6 +43,7 @@ import java.util.List;
  */
 public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Name elementName;
     private List<RuntimeIterator> content;

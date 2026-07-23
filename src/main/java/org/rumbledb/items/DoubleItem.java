@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
@@ -40,6 +41,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class DoubleItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private double value;
 

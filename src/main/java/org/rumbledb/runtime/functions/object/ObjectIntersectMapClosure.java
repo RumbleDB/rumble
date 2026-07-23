@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -32,6 +33,7 @@ import org.rumbledb.items.ItemFactory;
 public class ObjectIntersectMapClosure implements Function<Item, Item> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean mutable;
 

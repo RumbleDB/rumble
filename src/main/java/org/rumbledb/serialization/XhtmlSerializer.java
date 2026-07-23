@@ -3,12 +3,14 @@ package org.rumbledb.serialization;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
 public class XhtmlSerializer extends XmlSerializer {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final String XHTML_NAMESPACE = "http://www.w3.org/1999/xhtml";

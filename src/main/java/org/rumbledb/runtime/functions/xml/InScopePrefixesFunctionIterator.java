@@ -28,6 +28,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,6 +54,7 @@ import java.util.List;
  *      Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> prefixItems;

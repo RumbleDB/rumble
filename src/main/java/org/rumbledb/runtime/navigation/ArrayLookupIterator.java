@@ -45,12 +45,14 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private int lookup;

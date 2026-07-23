@@ -57,6 +57,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -70,6 +71,7 @@ import java.util.stream.Collectors;
 
 public class GroupByClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<GroupByClauseSparkIteratorExpression> groupingExpressions;
     private List<FlworTuple> localTupleResults;

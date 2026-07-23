@@ -22,8 +22,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class UnsupportedFeatureException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public UnsupportedFeatureException(String message, ExceptionMetadata metadata) {

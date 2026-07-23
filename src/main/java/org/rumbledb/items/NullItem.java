@@ -31,9 +31,12 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
+
 public class NullItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public NullItem() {

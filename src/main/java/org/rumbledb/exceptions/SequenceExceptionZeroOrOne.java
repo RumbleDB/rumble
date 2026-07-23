@@ -22,8 +22,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 public class SequenceExceptionZeroOrOne extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public SequenceExceptionZeroOrOne(String message, ExceptionMetadata metadata) {

@@ -1,5 +1,6 @@
 package org.rumbledb.context;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Map;
@@ -13,6 +14,7 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
 
 public class RuntimeStaticContext implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private String queryLanguage;

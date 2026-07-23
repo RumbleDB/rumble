@@ -28,13 +28,10 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariableReferenceExpression extends Expression implements Serializable {
-
-    private static final long serialVersionUID = 1L;
+public class VariableReferenceExpression extends Expression {
     private Name name;
     private SequenceType type;
 

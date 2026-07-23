@@ -9,9 +9,11 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ThrowErrorIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {

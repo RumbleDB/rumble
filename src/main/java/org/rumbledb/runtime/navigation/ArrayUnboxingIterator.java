@@ -44,6 +44,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,6 +52,7 @@ import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
