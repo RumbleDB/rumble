@@ -1349,7 +1349,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-                new StringLiteralExpression("", null),
+                new StringLiteralExpression("", createMetadataFromContext(ctx)),
                 createMetadataFromContext(ctx)
         );
         whereClause.chainWith(returnClause);

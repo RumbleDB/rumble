@@ -267,20 +267,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.inputIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.collationIterator != null) {
-            this.collationIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.nextIndex = 0;
-        this.hasNext = !this.sortedItems.isEmpty();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.inputIterator.isOpen()) {
             this.inputIterator.close();

@@ -86,14 +86,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         this.matchingIterator.close();
     }
 
-    @Override
-    public void resetLocal() {
-        this.matchingIterator.close();
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
-    }
-
     private RuntimeIterator selectApplicableIterator(
             DynamicContext dynamicContext
     ) {

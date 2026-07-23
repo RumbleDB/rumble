@@ -58,11 +58,6 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return false;
     }

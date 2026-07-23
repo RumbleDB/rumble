@@ -82,16 +82,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (!isRDDOrDataFrame() && implementsLocal()) {
-            resetLocal();
-            return;
-        }
-        this.result = null;
-    }
-
-    @Override
     public void close() {
         super.close();
         if (!isRDDOrDataFrame() && implementsLocal()) {
@@ -273,8 +263,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     protected abstract void openLocal();
 
     protected abstract void closeLocal();
-
-    protected abstract void resetLocal();
 
     protected abstract boolean hasNextLocal();
 

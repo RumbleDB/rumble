@@ -91,13 +91,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public void reset(DynamicContext dynamicContext) {
-        super.reset(dynamicContext);
-        this.result = materializeFirstItemOrNull(dynamicContext);
-        this.hasNext = this.result != null;
-    }
-
-    @Override
     public void close() {
         super.close();
         this.result = null;

@@ -67,13 +67,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.childIndex = 0;
-        setNextResult();
-    }
-
-    @Override
     public void closeLocal() {
         this.iterator.close();
     }

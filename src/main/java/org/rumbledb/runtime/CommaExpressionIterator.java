@@ -124,11 +124,6 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        startLocal();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.currentChild != null) {
             this.currentChild.close();

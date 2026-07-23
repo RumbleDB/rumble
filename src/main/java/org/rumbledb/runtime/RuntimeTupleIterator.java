@@ -47,7 +47,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
+public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple>, KryoSerializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -93,13 +93,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     public void close() {
         this.isOpen = false;
         this.child.close();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.child.reset(context);
     }
 
     @Override
