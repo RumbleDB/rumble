@@ -45,17 +45,17 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item regexpItem = this.children.get(1)
+        Item regexpItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
         String pattern = regexpItem.getStringValue();
         String flags = null;
-        if (this.children.size() == 3) {
-            Item flagsItem = this.children.get(2)
+        if (this.getNumberOfChildren() == 3) {
+            Item flagsItem = this.getChild(2)
                 .materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();

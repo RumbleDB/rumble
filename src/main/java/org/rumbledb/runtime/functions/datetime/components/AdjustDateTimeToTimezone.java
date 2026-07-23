@@ -26,14 +26,14 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if (this.children.size() == 2) {
-            this.timezone = this.children.get(1).materializeFirstItemOrNull(context);
+        Item timeItem = this.getChild(0).materializeFirstItemOrNull(context);
+        if (this.getNumberOfChildren() == 2) {
+            this.timezone = this.getChild(1).materializeFirstItemOrNull(context);
         }
         if (timeItem == null) {
             return null;
         }
-        if (this.timezone == null && this.children.size() == 1) {
+        if (this.timezone == null && this.getNumberOfChildren() == 1) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }

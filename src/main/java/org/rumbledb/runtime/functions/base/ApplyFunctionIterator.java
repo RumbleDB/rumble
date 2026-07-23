@@ -87,8 +87,8 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         Item functionItem;
         Item argumentsArray;
         try {
-            functionItem = this.children.get(0).materializeAtMostOneItemOrNull(context);
-            argumentsArray = this.children.get(1).materializeAtMostOneItemOrNull(context);
+            functionItem = this.getChild(0).materializeAtMostOneItemOrNull(context);
+            argumentsArray = this.getChild(1).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",

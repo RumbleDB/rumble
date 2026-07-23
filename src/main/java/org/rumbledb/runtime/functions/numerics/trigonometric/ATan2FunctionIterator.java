@@ -47,8 +47,8 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item valuey = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
-        Item valuex = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        Item valuey = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        Item valuex = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         double y = valuey.getDoubleValue();
         double x = valuex.getDoubleValue();
         if (Double.isNaN(x) || Double.isNaN(y)) {
@@ -59,11 +59,11 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext yQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext yQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (yQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext xQuery = this.children.get(1)
+        NativeClauseContext xQuery = this.getChild(1)
             .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
         if (xQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;

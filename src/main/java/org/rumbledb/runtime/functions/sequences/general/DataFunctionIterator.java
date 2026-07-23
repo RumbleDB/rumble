@@ -51,8 +51,8 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        if (!this.children.isEmpty())
-            this.sequenceIterator = this.children.get(0);
+        if (!this.getChildren().isEmpty())
+            this.sequenceIterator = this.getChild(0);
     }
 
     @Override

@@ -51,7 +51,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.children.get(0);
+        RuntimeIterator iterator = this.getChild(0);
 
         if (!iterator.isDataFrame()) {
             if (this.hasNext) {
