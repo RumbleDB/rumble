@@ -306,9 +306,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator runtimeIterator = new CommaExpressionIterator(
                     result,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                        .toBuilder()
-                        .isUpdating(expression.isUpdating())
-                        .build()
             );
             return runtimeIterator;
         }
@@ -1330,9 +1327,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 returnType,
                 bodyIterator,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isUpdating(expression.isUpdating())
-                    .build()
         );
 
         return runtimeIterator;
@@ -1369,10 +1363,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                        .toBuilder()
-                        .isUpdating(expression.isUpdating())
-                        .build(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isTailCallOptimization()
             );
         }
@@ -1739,9 +1730,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isUpdating(expression.isUpdating())
-                    .build()
         );
 
         return runtimeIterator;
@@ -1796,11 +1784,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     thenIterator,
                     elseIterator,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                        .toBuilder()
-                        .isUpdating(
-                            expression.isUpdating()
-                        )
-                        .build()
             );
         }
 
@@ -1851,11 +1834,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 cases,
                 defaultCase,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isUpdating(
-                        expression.isUpdating()
-                    )
-                    .build()
         );
 
         return runtimeIterator;
@@ -1885,9 +1863,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 testConditionIterator,
                 statementIterator,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isSequential(statement.isSequential())
-                    .build()
         );
     }
 
@@ -1926,9 +1901,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isSequential(statement.isSequential())
-                    .build()
         );
     }
 
@@ -1937,9 +1909,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ApplyStatementIterator(
                 this.visit(statement.getApplyExpression(), argument),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
-                    .toBuilder()
-                    .isSequential(statement.isSequential())
-                    .build()
         );
     }
 
