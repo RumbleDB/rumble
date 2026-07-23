@@ -36,13 +36,13 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
+public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
     public static final int MIN_PARTITIONS = 10;
 
-    public UnparsedTextLinesFunctionIterator(
+    public TextFileFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
@@ -59,9 +59,12 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 .emptyRDD();
         }
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url.getStringValue(), getMetadata());
-        int partitions = -1;
+        int partitions = MIN_PARTITIONS;
         if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+            Item partitionsItem = this.children.get(1).materializeFirstItemOrNull(context);
+            if (partitionsItem != null) {
+                partitions = partitionsItem.getIntValue();
+            }
         }
 
         JavaRDD<String> strings;
@@ -81,38 +84,16 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
             } catch (IOException e) {
                 throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
             }
-            if (partitions == -1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(lines);
-            } else {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .parallelize(
-                        lines,
-                        partitions
-                    );
-            }
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelize(lines, partitions);
         } else {
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
-
-            if (this.children.size() == 1) {
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(FileSystemUtil.convertURIToStringForSpark(uri), MIN_PARTITIONS);
-            } else {
-                RuntimeIterator partitionsIterator = this.children.get(1);
-                partitionsIterator.open(context);
-                strings = SparkSessionManager.getInstance()
-                    .getJavaSparkContext()
-                    .textFile(
-                        FileSystemUtil.convertURIToStringForSpark(uri),
-                        partitionsIterator.next().getIntValue()
-                    );
-                partitionsIterator.close();
-            }
+            strings = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .textFile(FileSystemUtil.convertURIToStringForSpark(uri), partitions);
         }
         return strings.mapPartitions(new StringToStringItemMapper());
     }

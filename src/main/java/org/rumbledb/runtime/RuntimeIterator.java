@@ -36,8 +36,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.BreakStatementException;
-import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -118,85 +116,84 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        open(dynamicContext);
-        if (hasNext()) {
-            Item item = this.next();
-            boolean result;
-            if (item.isBoolean()) {
-                result = item.getBooleanValue();
-            } else if (item.isNumeric()) {
-                if (position == null) {
-                    if (item.isInt()) {
-                        result = item.getIntValue() != 0;
-                    } else if (item.isInteger()) {
-                        result = !item.getIntegerValue().equals(BigInteger.ZERO);
-                    } else if (item.isDouble()) {
-                        result = !item.isNaN() && item.getDoubleValue() != 0;
-                    } else if (item.isFloat()) {
-                        result = !item.isNaN() && item.getFloatValue() != 0;
-                    } else if (item.isDecimal()) {
-                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
-                    } else {
-                        throw new OurBadException(
-                                "Unexpected numeric type found while calculating effective boolean value."
-                        );
-                    }
-                } else {
-                    result = ComparisonIterator.compareItems(
-                        item,
-                        position,
-                        ComparisonOperator.VC_EQ,
-                        getMetadata()
-                    ) == 0;
-                }
-            } else if (item.isNull()) {
-                result = false;
-            } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
-                result = !item.getStringValue().isEmpty();
-            } else if (item.isNode()) {
-                // returns true even if sequence has more items according to spec
-                this.close();
-                return true;
-            } else {
-                if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
-                    if (item.isObject() || item.isArray()) {
-                        this.close();
-                        return true;
-                    }
-                } else {
-                    if (item.isObject() || item.isArray()) {
-                        System.err.println(
-                            "Note: effective boolean value of "
-                                + (item.isObject() ? "Object " : "Array ")
-                                + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                        );
-                    }
-                }
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for items of type "
-                            +
-                            item.getDynamicType().toString(),
-                        getMetadata()
-                );
-            }
-
+        try {
+            open(dynamicContext);
             if (hasNext()) {
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item. "
-                            + "Sequence containing: "
-                            + item.serialize()
-                            + " must be a singleton.",
-                        getMetadata()
-                );
+                Item item = this.next();
+                boolean result;
+                if (item.isBoolean()) {
+                    result = item.getBooleanValue();
+                } else if (item.isNumeric()) {
+                    if (position == null) {
+                        if (item.isInt()) {
+                            result = item.getIntValue() != 0;
+                        } else if (item.isInteger()) {
+                            result = !item.getIntegerValue().equals(BigInteger.ZERO);
+                        } else if (item.isDouble()) {
+                            result = !item.isNaN() && item.getDoubleValue() != 0;
+                        } else if (item.isFloat()) {
+                            result = !item.isNaN() && item.getFloatValue() != 0;
+                        } else if (item.isDecimal()) {
+                            result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
+                        } else {
+                            throw new OurBadException(
+                                    "Unexpected numeric type found while calculating effective boolean value."
+                            );
+                        }
+                    } else {
+                        result = ComparisonIterator.compareItems(
+                            item,
+                            position,
+                            ComparisonOperator.VC_EQ,
+                            getMetadata()
+                        ) == 0;
+                    }
+                } else if (item.isNull()) {
+                    result = false;
+                } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+                    result = !item.getStringValue().isEmpty();
+                } else if (item.isNode()) {
+                    // returns true even if sequence has more items according to spec
+                    return true;
+                } else {
+                    if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
+                        if (item.isObject() || item.isArray()) {
+                            return true;
+                        }
+                    } else {
+                        if (item.isObject() || item.isArray()) {
+                            System.err.println(
+                                "Note: effective boolean value of "
+                                    + (item.isObject() ? "Object " : "Array ")
+                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                            );
+                        }
+                    }
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for items of type "
+                                +
+                                item.getDynamicType().toString(),
+                            getMetadata()
+                    );
+                }
+
+                if (hasNext()) {
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for sequences of more than one atomic item. "
+                                + "Sequence containing: "
+                                + item.serialize()
+                                + " must be a singleton.",
+                            getMetadata()
+                    );
+                }
+
+                return result;
+            } else {
+                return false;
             }
-
+        } finally {
             this.close();
-            return result;
-        } else {
-            this.close();
-            return false;
         }
-
     }
 
     /**
@@ -420,11 +417,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             while (this.hasNext()) {
                 result.add(this.next());
             }
-            this.close();
             return result;
-        } catch (BreakStatementException | ContinueStatementException controlException) {
+        } finally {
             this.close();
-            throw controlException;
         }
     }
 
@@ -436,31 +431,39 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
-        this.open(context);
-        while (this.hasNext()) {
-            result.add(this.next());
+        try {
+            this.open(context);
+            while (this.hasNext()) {
+                result.add(this.next());
+            }
+        } finally {
+            this.close();
         }
-        this.close();
     }
 
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         result.clear();
-        this.open(context);
-        int i = 0;
-        while (this.hasNext() && i < n) {
-            result.add(this.next());
-            ++i;
+        try {
+            this.open(context);
+            int i = 0;
+            while (this.hasNext() && i < n) {
+                result.add(this.next());
+                ++i;
+            }
+        } finally {
+            this.close();
         }
-        this.close();
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        this.open(context);
-        Item result = this.hasNext() ? this.next() : null;
-        this.close();
-        return result;
+        try {
+            this.open(context);
+            return this.hasNext() ? this.next() : null;
+        } finally {
+            this.close();
+        }
     }
 
     public Item materializeExactlyOneItem(
@@ -468,33 +471,38 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        this.open(context);
-        if (!this.hasNext()) {
-            throw new NoItemException();
+        try {
+            this.open(context);
+            if (!this.hasNext()) {
+                throw new NoItemException();
+            }
+            Item result = this.next();
+            if (this.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        } finally {
+            this.close();
         }
-        Item result = this.next();
-        if (this.hasNext()) {
-            throw new MoreThanOneItemException();
-        }
-        this.close();
-        return result;
     }
 
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        this.open(context);
-        if (!this.hasNext()) {
+        try {
+            this.open(context);
+            if (!this.hasNext()) {
+                return null;
+            }
+            Item result = this.next();
+            if (this.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        } finally {
             this.close();
-            return null;
         }
-        Item result = this.next();
-        if (this.hasNext()) {
-            throw new MoreThanOneItemException();
-        }
-        this.close();
-        return result;
     }
 
     public Item materializeAtMostOneItemOrDefault(
