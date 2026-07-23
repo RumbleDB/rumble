@@ -48,8 +48,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
-        super(keys, staticContext);
-        this.children.addAll(values);
+        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
         this.mutable = mutable;
