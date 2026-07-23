@@ -924,6 +924,10 @@ public class ItemParser {
     public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
         if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
             return getTextNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
+            return getCommentNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+            return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
             return getDocumentNodeItem(currentNode, path, removeParentPointers);
         }
@@ -963,6 +967,10 @@ public class ItemParser {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
+            } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
+                children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
+            } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+                children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if (
                 (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
                     && !hasWhitespaceText(childNode)
@@ -1025,5 +1033,17 @@ public class ItemParser {
         Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
         textItem.setXmlDocumentPosition(path, 0);
         return textItem;
+    }
+
+    private static Item getCommentNodeItem(Node currentNode, String path) {
+        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(currentNode);
+        commentItem.setXmlDocumentPosition(path, 0);
+        return commentItem;
+    }
+
+    private static Item getProcessingInstructionNodeItem(Node currentNode, String path) {
+        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
+        processingInstructionItem.setXmlDocumentPosition(path, 0);
+        return processingInstructionItem;
     }
 }
