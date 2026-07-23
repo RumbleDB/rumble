@@ -30,10 +30,10 @@ public class InvalidAttributeNameException extends RumbleException {
     private static final long serialVersionUID = 1L;
 
     public InvalidAttributeNameException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.InvalidNodeNameErrorCode, metadata);
+        super(message, ErrorCode.InvalidAttributeNameErrorCode, metadata);
     }
 
     public InvalidAttributeNameException(String message) {
-        super(message, ErrorCode.InvalidNodeNameErrorCode);
+        super(message, ErrorCode.InvalidAttributeNameErrorCode);
     }
 }
