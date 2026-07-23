@@ -48,21 +48,11 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     private Item nextResult;
     private int childIndex;
 
-
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
-        this.isUpdating = isUpdating;
-    }
-
-    public CommaExpressionIterator(
-            List<RuntimeIterator> childIterators,
-            RuntimeStaticContext staticContext
-    ) {
-        this(childIterators, false, staticContext);
     }
 
     @Override

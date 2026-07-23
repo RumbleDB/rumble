@@ -305,8 +305,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             RuntimeIterator runtimeIterator = new CommaExpressionIterator(
                     result,
-                    expression.isUpdating(),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                        .toBuilder()
+                        .isUpdating(expression.isUpdating())
+                        .build()
             );
             return runtimeIterator;
         }
