@@ -55,9 +55,17 @@ import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
+import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
+import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.types.ItemType;
@@ -216,9 +224,17 @@ public class SparkSessionManager {
                 IntegerItem.class,
                 IntItem.class,
                 NullItem.class,
+                QNameItem.class,
                 StringItem.class,
                 TimeItem.class,
                 YearMonthDurationItem.class,
+                DocumentItem.class,
+                ElementItem.class,
+                AttributeItem.class,
+                NamespaceItem.class,
+                CommentItem.class,
+                ProcessingInstructionItem.class,
+                TextItem.class,
                 FunctionItem.class,
                 FunctionIdentifier.class,
                 Name.class,

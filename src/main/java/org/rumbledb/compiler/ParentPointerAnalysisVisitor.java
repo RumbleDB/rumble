@@ -6,16 +6,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 
-import java.util.Set;
-
 public class ParentPointerAnalysisVisitor extends AbstractNodeVisitor<Boolean> {
-
-    private static final Set<FunctionIdentifier> FUNCTIONS_REQUIRING_PARENT_POINTERS = Set.of(
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "lang"), 1),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "lang"), 2),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "innermost"), 1),
-        new FunctionIdentifier(new Name(Name.FN_NS, "fn", "outermost"), 1)
-    );
 
     private boolean found;
 
@@ -27,9 +18,28 @@ public class ParentPointerAnalysisVisitor extends AbstractNodeVisitor<Boolean> {
 
     @Override
     public Boolean visitFunctionCall(FunctionCallExpression expression, Boolean argument) {
-        if (FUNCTIONS_REQUIRING_PARENT_POINTERS.contains(expression.getFunctionIdentifier())) {
+        if (requiresParentPointers(expression.getFunctionIdentifier())) {
             this.found = true;
         }
         return defaultAction(expression, argument);
+    }
+
+    private boolean requiresParentPointers(FunctionIdentifier identifier) {
+        Name name = identifier.getName();
+        String namespace = name.getNamespace();
+        if (
+            !Name.FN_NS.equals(namespace)
+                && !Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(namespace)
+        ) {
+            return false;
+        }
+        String localName = name.getLocalName();
+        int arity = identifier.getArity();
+        return ("lang".equals(localName) && (arity == 1 || arity == 2))
+            || ("in-scope-prefixes".equals(localName) && arity == 1)
+            || ("namespace-uri-for-prefix".equals(localName) && arity == 2)
+            || ("serialize".equals(localName) && (arity == 1 || arity == 2))
+            || ("innermost".equals(localName) && arity == 1)
+            || ("outermost".equals(localName) && arity == 1);
     }
 }
