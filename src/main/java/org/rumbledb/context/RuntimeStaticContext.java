@@ -85,6 +85,12 @@ public class RuntimeStaticContext implements Serializable {
     @Builder.Default
     private final boolean copyNamespacesInherit = true;
 
+    @Builder.Default
+    private final boolean isUpdating = false;
+
+    @Builder.Default
+    private final boolean isSequential = false;
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
