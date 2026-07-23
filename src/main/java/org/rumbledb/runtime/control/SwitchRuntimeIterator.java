@@ -51,11 +51,13 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator defaultReturn,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(test);
-        this.children.addAll(cases.keySet());
-        this.children.addAll(cases.values());
-        this.children.add(defaultReturn);
+        super(
+            Stream.concat(
+                Stream.concat(Stream.of(test), cases.keySet().stream()),
+                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
+            ).toList(),
+            staticContext
+        );
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
