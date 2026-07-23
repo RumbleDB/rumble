@@ -260,6 +260,9 @@ public class FunctionItem implements Item {
     private static Map<Name, List<Item>> copyLocalClosure(Map<Name, List<Item>> closure) {
         Map<Name, List<Item>> copy = new HashMap<>();
         for (Map.Entry<Name, List<Item>> entry : closure.entrySet()) {
+            // Keep closure containers independent so lookup can add bindings safely.
+            // Captured Item values are shared: copying them recursively would reintroduce the expensive deep-copy
+            // operation this path avoids.
             copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
         }
         return copy;
