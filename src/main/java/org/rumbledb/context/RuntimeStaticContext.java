@@ -175,14 +175,6 @@ public class RuntimeStaticContext implements Serializable {
         return StaticContext.getBuiltinNamespaceBinding(prefix);
     }
 
-    public boolean isCopyNamespacesPreserve() {
-        return this.copyNamespacesPreserve;
-    }
-
-    public boolean isCopyNamespacesInherit() {
-        return this.copyNamespacesInherit;
-    }
-
     /**
      * Creates a new context with a different static type (e.g. when building
      * nested iterator contexts from a call-site {@link RuntimeStaticContext}).
