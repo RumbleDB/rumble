@@ -32,8 +32,8 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
         if (variableValues.containsLocally(variableValues, this.variableName)) {
             throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
         }
-        if (this.children != null && !this.children.isEmpty()) {
-            RuntimeIterator exprIterator = this.children.get(0);
+        if (!this.getChildren().isEmpty()) {
+            RuntimeIterator exprIterator = this.getChild(0);
             exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
         } else {
             // Casting needed to distinguish between local and RDD variables.

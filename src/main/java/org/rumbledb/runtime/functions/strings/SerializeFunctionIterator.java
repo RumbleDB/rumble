@@ -51,7 +51,7 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            List<Item> items = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> items = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
             SerializationParameters params = resolveSerializationParameters();
             SerializationParameters itemParams = SerializationParameters.copy(params);
             if ("xml".equalsIgnoreCase(params.getMethod())) {
@@ -104,11 +104,11 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
         SerializationParameters params = SerializationParameterUtils.defaultsForSerializeFunction(
             this.staticContext.getQueryLanguage()
         );
-        if (this.children.size() < 2) {
+        if (this.getNumberOfChildren() < 2) {
             return params;
         }
 
-        List<Item> optionsItems = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> optionsItems = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
         SerializationParameterUtils.applyParameterItems(params, optionsItems, getMetadata());
         return params;
     }

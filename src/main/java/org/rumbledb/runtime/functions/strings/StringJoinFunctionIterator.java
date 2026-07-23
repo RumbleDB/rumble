@@ -46,16 +46,16 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
-        if (this.children.size() > 1) {
-            joinString = this.children.get(1).materializeFirstItemOrNull(context);
+        if (this.getNumberOfChildren() > 1) {
+            joinString = this.getChild(1).materializeFirstItemOrNull(context);
         }
-        List<Item> strings = this.children.get(0).materialize(context);
+        List<Item> strings = this.getChild(0).materialize(context);
 
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
             if (!(item.isString())) {
-                throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
+                throw new UnexpectedTypeException("String item expected", this.getChild(0).getMetadata());
             }
             if (!first) {
                 stringBuilder.append(joinString.getStringValue());
