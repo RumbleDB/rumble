@@ -56,7 +56,7 @@ public class UnparsedTextFunctionIterator extends AtMostOneItemLocalRuntimeItera
         }
 
         String result = UnparsedTextReader.read(
-            this.staticURI,
+            this.staticContext.getStaticURI(),
             hrefItem.getStringValue(),
             encoding,
             context.getRumbleRuntimeConfiguration(),

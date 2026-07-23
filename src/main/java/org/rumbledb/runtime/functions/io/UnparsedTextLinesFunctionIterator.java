@@ -44,7 +44,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
         }
 
         String text = UnparsedTextReader.read(
-            this.staticURI,
+            this.staticContext.getStaticURI(),
             hrefItem.getStringValue(),
             encoding,
             context.getRumbleRuntimeConfiguration(),

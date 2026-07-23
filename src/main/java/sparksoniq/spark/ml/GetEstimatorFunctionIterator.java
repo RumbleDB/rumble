@@ -112,9 +112,12 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
                     estimatorShortName,
                     estimator,
-                    this.staticContext.withStaticType(SequenceType.createSequenceType("function(*)"))
-                        .withExecutionMode(ExecutionMode.LOCAL)
-                        .withMetadata(getMetadata())
+                    this.staticContext
+                        .toBuilder()
+                        .staticType(SequenceType.createSequenceType("function(*)"))
+                        .executionMode(ExecutionMode.LOCAL)
+                        .metadata(getMetadata())
+                        .build()
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

@@ -34,7 +34,7 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
         }
         try {
             UnparsedTextReader.read(
-                this.staticURI,
+                this.staticContext.getStaticURI(),
                 hrefItem.getStringValue(),
                 encoding,
                 context.getRumbleRuntimeConfiguration(),

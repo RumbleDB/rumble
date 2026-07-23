@@ -84,10 +84,12 @@ public final class FunctionCallArgumentConversion {
                 ) {
                     executionMode = ExecutionMode.LOCAL;
                 }
-                RuntimeStaticContext runtimeStaticContext =
-                    callerStaticContext.withStaticType(sequenceType)
-                        .withExecutionMode(executionMode)
-                        .withMetadata(functionArguments.get(i).getMetadata());
+                RuntimeStaticContext runtimeStaticContext = callerStaticContext
+                    .toBuilder()
+                    .staticType(sequenceType)
+                    .executionMode(executionMode)
+                    .metadata(functionArguments.get(i).getMetadata())
+                    .build();
                 RuntimeIterator argumentIterator = wrapForFunctionConversion(
                     functionArguments.get(i),
                     sequenceType,

@@ -25,6 +25,6 @@ public class StaticBaseURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createAnyURIItem(this.staticURI.toString());
+        return ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
     }
 }
