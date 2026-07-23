@@ -368,6 +368,43 @@ public final class NamespaceBindingUtils {
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata
     ) {
+        if (lexical.startsWith("Q{")) {
+            int closeBrace = lexical.indexOf('}', 2);
+            if (closeBrace < 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (no closing '}') : " + lexical,
+                        metadata
+                );
+            }
+            String uriRaw = lexical.substring(2, closeBrace);
+            String local = lexical.substring(closeBrace + 1);
+            // XQuery EQNames use BracedURILiteral, which forbids brace characters inside the URI part.
+            // Dynamic computed attribute names coming from strings must reject malformed forms like Q{{}x or Q{}}x
+            // during QName conversion so the constructor raises XQDY0074 rather than constructing a bad node-name.
+            if (uriRaw.indexOf('{') >= 0 || uriRaw.indexOf('}') >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (invalid brace in URI part): " + lexical,
+                        metadata
+                );
+            }
+            if (local.isEmpty()) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (missing local name): " + lexical,
+                        metadata
+                );
+            }
+            if (!isValidNcName(local)) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName local name: " + lexical,
+                        metadata
+                );
+            }
+            String namespace = uriRaw.trim().replaceAll("\\s+", " ");
+            if (namespace.isEmpty()) {
+                return new Name(null, null, local);
+            }
+            return new Name(namespace, null, local);
+        }
         LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
         if (split.prefix == null) {
             return new Name(null, null, split.local);
