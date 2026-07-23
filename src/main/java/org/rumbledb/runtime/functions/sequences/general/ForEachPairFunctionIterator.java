@@ -94,18 +94,18 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.firstArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.secondArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.firstArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.secondArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.pairIndex = 0;
 
         this.mutableFirstArgumentIterator = new MutableArgumentIterator(this.firstArgumentContext);

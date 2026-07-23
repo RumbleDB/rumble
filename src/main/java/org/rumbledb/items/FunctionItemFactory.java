@@ -57,12 +57,12 @@ public final class FunctionItemFactory {
             paramNames.add(Name.createVariableInNoNamespace("$p" + i));
         }
         SequenceType returnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext markerContext = new RuntimeStaticContext(
-                conf,
-                returnType,
-                ExecutionMode.LOCAL,
-                metadata
-        );
+        RuntimeStaticContext markerContext = RuntimeStaticContext.builder()
+            .configuration(conf)
+            .staticType(returnType)
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(metadata)
+            .build();
         RuntimeIterator markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
         return new FunctionItem(
                 identifier,

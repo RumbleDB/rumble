@@ -403,20 +403,22 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                     SparkSessionManager.leftHandSideHashColumnName
                 )
             );
+
         // We now post-filter on the predicate, by hash group.
+        RuntimeStaticContext staticContext = this.getStaticContext()
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
-                        this.getStaticContext()
-                            .withStaticType(SequenceType.createSequenceType("item*"))
-                            .withExecutionMode(ExecutionMode.LOCAL)
-                            .withMetadata(getMetadata())
+                        staticContext
                 ),
                 predicateIterator,
-                this.getStaticContext()
-                    .withStaticType(SequenceType.createSequenceType("item*"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
-                    .withMetadata(getMetadata())
+                staticContext
         );
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
             inputDF,
@@ -440,12 +442,14 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         if (equalityCriteria.size() == 1) {
             return equalityCriteria.get(0);
         }
-        RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                this.getStaticContext()
-                    .withStaticType(SequenceType.createSequenceType("item*"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
-                    .withMetadata(metadata)
-        );
+
+        RuntimeStaticContext staticContext = this.getStaticContext()
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(metadata)
+            .build();
+
         return new ArrayRuntimeIterator(
                 new CommaExpressionIterator(
                         equalityCriteria,
