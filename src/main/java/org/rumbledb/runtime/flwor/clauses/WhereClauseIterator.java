@@ -96,20 +96,6 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child != null) {
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-
-            setNextLocalTupleResult();
-
-        } else {
-            throw new OurBadException("Invalid where clause.");
-        }
-    }
-
-    @Override
     public FlworTuple next() {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
@@ -366,6 +352,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
 
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
                 this.expression.getVariableDependencies()
@@ -377,15 +364,18 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         this.expression.print(buffer, indent + 1);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -472,6 +462,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         );
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.WHERE) {
             return true;

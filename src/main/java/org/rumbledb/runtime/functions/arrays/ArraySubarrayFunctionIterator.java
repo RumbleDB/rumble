@@ -182,18 +182,6 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.startIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.lengthIterator != null) {
-            this.lengthIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.arrayIterator.isOpen()) {
             this.arrayIterator.close();

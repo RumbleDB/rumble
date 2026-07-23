@@ -82,17 +82,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.delegate != null) {
-            this.delegate.reset(this.currentDynamicContextForLocalExecution);
-        } else {
-            this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-            this.delegate.open(this.currentDynamicContextForLocalExecution);
-        }
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.delegate != null && this.delegate.isOpen()) {
             this.delegate.close();

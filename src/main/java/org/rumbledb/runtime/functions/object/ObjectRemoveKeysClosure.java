@@ -22,6 +22,7 @@ public class ObjectRemoveKeysClosure implements FlatMapFunction<Item, Item> {
         this.itemMetadata = itemMetadata;
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
         List<String> keys = new ArrayList<>();

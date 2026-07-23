@@ -127,7 +127,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
                 continue;
             }
             result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.toString())
+                ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName())
             );
         }
 

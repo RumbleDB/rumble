@@ -58,11 +58,6 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         // TODO: Ascertain this
         return false;

@@ -80,40 +80,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        try {
-            this.is.close();
-        } catch (IOException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException("I/O exception", getMetadata());
-            ex.initCause(e);
-            throw ex;
-        }
-        this.iterator = this.children.get(0);
-        Item path = this.iterator.materializeFirstItemOrNull(context);
-        if (path == null) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
-                    getMetadata()
-            );
-        }
-        URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticURI,
-            path.getStringValue(),
-            getMetadata()
-        );
-        this.is = FileSystemUtil.getDataInputStream(
-            uri,
-            this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-            getMetadata()
-        );
-        InputStreamReader r = new InputStreamReader(this.is);
-        BufferedReader br = new BufferedReader(r);
-        this.stream = br.lines().iterator();
-        this.hasNext = this.stream.hasNext();
-    }
-
-    @Override
     public void close() {
         super.close();
         this.iterator = null;

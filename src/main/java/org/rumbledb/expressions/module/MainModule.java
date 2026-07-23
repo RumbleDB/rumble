@@ -48,6 +48,7 @@ public class MainModule extends Module {
         this.program = program;
     }
 
+    @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
     }

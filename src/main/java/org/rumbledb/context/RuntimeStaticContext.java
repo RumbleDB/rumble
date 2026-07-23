@@ -79,6 +79,12 @@ public class RuntimeStaticContext implements Serializable {
      */
     private final boolean isQuerySideEffecting;
 
+    @Builder.Default
+    private final boolean copyNamespacesPreserve = true;
+
+    @Builder.Default
+    private final boolean copyNamespacesInherit = true;
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -91,6 +97,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  staticallyKnownNamespaces: ").append(this.staticallyKnownNamespaces).append("\n");
         sb.append("  staticallyKnownCollations: ").append(this.staticallyKnownCollations).append("\n");
         sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
+        sb.append("  copyNamespacesPreserve: ").append(this.copyNamespacesPreserve).append("\n");
+        sb.append("  copyNamespacesInherit: ").append(this.copyNamespacesInherit).append("\n");
         sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
@@ -127,7 +135,9 @@ public class RuntimeStaticContext implements Serializable {
             .defaultCollation(staticContext == null ? null : staticContext.getDefaultCollation())
             .defaultDecimalFormat(staticContext == null ? null : staticContext.getDefaultDecimalFormat())
             .decimalFormats(staticContext == null ? null : staticContext.getDecimalFormats())
-            .isQuerySideEffecting(staticContext != null && staticContext.isQuerySideEffecting());
+            .isQuerySideEffecting(staticContext != null && staticContext.isQuerySideEffecting())
+            .copyNamespacesPreserve(staticContext == null || staticContext.isCopyNamespacesPreserve())
+            .copyNamespacesInherit(staticContext == null || staticContext.isCopyNamespacesInherit());
     }
 
     /**
@@ -170,6 +180,14 @@ public class RuntimeStaticContext implements Serializable {
             return this.staticallyKnownNamespaces.get(prefix);
         }
         return StaticContext.getBuiltinNamespaceBinding(prefix);
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        return this.copyNamespacesInherit;
     }
 
     /**

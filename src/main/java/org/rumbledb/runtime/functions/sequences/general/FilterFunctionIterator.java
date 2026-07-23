@@ -133,17 +133,6 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.predicateIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        setNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.sequenceIterator.isOpen()) {
             this.sequenceIterator.close();

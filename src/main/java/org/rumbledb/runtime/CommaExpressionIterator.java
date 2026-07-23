@@ -124,11 +124,6 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        startLocal();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.currentChild != null) {
             this.currentChild.close();
@@ -238,6 +233,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         return this.children;
     }
 
+    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();

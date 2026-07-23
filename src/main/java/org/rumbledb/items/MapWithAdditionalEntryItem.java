@@ -130,6 +130,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.getSize() + 1;
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         if (this.additionalKey.isString() && this.additionalKey.getStringValue().equals(key)) {
             return true;
@@ -137,6 +138,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.hasKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             return true;
