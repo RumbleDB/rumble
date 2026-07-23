@@ -1949,8 +1949,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitExitStatement(ExitStatement statement, RuntimeIterator argument) {
         return new ExitStatementIterator(
                 this.visit(statement.getExitExpression(), argument),
-                true,
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .isSequential(true)
+                    .build()
         );
     }
 
