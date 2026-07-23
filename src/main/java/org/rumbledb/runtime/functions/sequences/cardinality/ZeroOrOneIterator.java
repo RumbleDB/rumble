@@ -46,7 +46,7 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator = this.children.get(0);
+        RuntimeIterator sequenceIterator = this.getChild(0);
         Item result = null;
         try {
             result = sequenceIterator.materializeAtMostOneItemOrNull(context);

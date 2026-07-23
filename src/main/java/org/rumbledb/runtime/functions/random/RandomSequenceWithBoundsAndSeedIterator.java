@@ -25,11 +25,11 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
 
     @Override
     public void open(DynamicContext context) {
-        this.low = this.children.get(0).materializeFirstItemOrNull(context);
-        this.high = this.children.get(1).materializeFirstItemOrNull(context);
-        this.size = this.children.get(2).materializeFirstItemOrNull(context).castToIntValue();
-        this.type = this.children.get(3).materializeFirstItemOrNull(context);
-        this.seed = this.children.get(4).materializeFirstItemOrNull(context).castToIntValue();
+        this.low = this.getChild(0).materializeFirstItemOrNull(context);
+        this.high = this.getChild(1).materializeFirstItemOrNull(context);
+        this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
+        this.type = this.getChild(3).materializeFirstItemOrNull(context);
+        this.seed = this.getChild(4).materializeFirstItemOrNull(context).castToIntValue();
         this.generatedRandomsIterator = createRandomNumberStream();
     }
 

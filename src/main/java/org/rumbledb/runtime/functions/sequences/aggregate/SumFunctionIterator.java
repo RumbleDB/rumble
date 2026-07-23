@@ -64,7 +64,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.item = computeSum(
             zeroElement(context),
-            this.children.get(0),
+            this.getChild(0),
             context,
             getMetadata()
         );
@@ -75,8 +75,8 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item zeroElement(DynamicContext context) {
-        if (this.children.size() > 1) {
-            return this.children.get(1).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() > 1) {
+            return this.getChild(1).materializeFirstItemOrNull(context);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
         }
@@ -191,7 +191,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
@@ -203,7 +203,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

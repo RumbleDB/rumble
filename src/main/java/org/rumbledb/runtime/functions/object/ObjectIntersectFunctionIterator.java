@@ -50,7 +50,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
     }
 
     @Override

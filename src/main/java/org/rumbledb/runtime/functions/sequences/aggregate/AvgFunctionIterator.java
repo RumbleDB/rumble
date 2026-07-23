@@ -54,7 +54,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item count = CountFunctionIterator.computeCount(
-            this.children.get(0),
+            this.getChild(0),
             context,
             getMetadata()
         );
@@ -66,7 +66,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item sum = SumFunctionIterator.computeSum(
             ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
-            this.children.get(0),
+            this.getChild(0),
             context,
             getMetadata()
         );
@@ -81,7 +81,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);
