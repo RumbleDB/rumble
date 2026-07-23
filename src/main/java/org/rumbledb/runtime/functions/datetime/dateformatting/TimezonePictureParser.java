@@ -20,10 +20,10 @@ final class TimezonePictureParser {
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
+        boolean zuluForZeroOffset = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
+
         if (presentation.isEmpty()) {
-            return component == 'z'
-                ? ParsedTimezonePicture.defaultGmt()
-                : ParsedTimezonePicture.defaultNumeric();
+            return defaultTimezonePicture(component, zuluForZeroOffset, pictureStringForErrors, metadata);
         }
 
         if (component == 'Z' && "Z".equals(presentation)) {
@@ -31,7 +31,6 @@ final class TimezonePictureParser {
         }
 
         String core = presentation;
-        boolean useZForZero = secondPresentationModifier == ParsedPresentationModifier.TRADITIONAL;
 
         if (core.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata);
@@ -43,22 +42,22 @@ final class TimezonePictureParser {
 
         PrimaryFormatToken primaryFormatToken = parsePrimaryFormatToken(core, pictureStringForErrors, metadata);
         if (!PrimaryFormatToken.DECIMAL.equals(primaryFormatToken.getType())) {
-            return defaultTimezonePicture(component, useZForZero, pictureStringForErrors, metadata);
+            return defaultTimezonePicture(component, zuluForZeroOffset, pictureStringForErrors, metadata);
         }
 
         if (component == 'z') {
-            return parseNumericTimezone(core, true, useZForZero, pictureStringForErrors, metadata);
+            return parseNumericTimezone(core, true, zuluForZeroOffset, pictureStringForErrors, metadata);
         }
-        return parseNumericTimezone(core, false, useZForZero, pictureStringForErrors, metadata);
+        return parseNumericTimezone(core, false, zuluForZeroOffset, pictureStringForErrors, metadata);
     }
 
     private static ParsedTimezonePicture defaultTimezonePicture(
             char component,
-            boolean useZForZero,
+            boolean zuluForZeroOffset,
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
-        return parseNumericTimezone("01:01", component == 'z', useZForZero, pictureStringForErrors, metadata);
+        return parseNumericTimezone("01:01", component == 'z', zuluForZeroOffset, pictureStringForErrors, metadata);
     }
 
     private static PrimaryFormatToken parsePrimaryFormatToken(
@@ -80,7 +79,7 @@ final class TimezonePictureParser {
     private static ParsedTimezonePicture parseNumericTimezone(
             String core,
             boolean gmtPrefix,
-            boolean useZForZero,
+            boolean zuluForZeroOffset,
             String pictureStringForErrors,
             ExceptionMetadata metadata
     ) {
@@ -99,7 +98,7 @@ final class TimezonePictureParser {
                 hourPic.getMandatoryDigitCount(),
                 minPic.getMandatoryDigitCount(),
                 hourPic.getZeroDigit(),
-                useZForZero,
+                zuluForZeroOffset,
                 false,
                 false
             );
@@ -116,7 +115,7 @@ final class TimezonePictureParser {
                 pic.getMandatoryDigitCount(),
                 2,
                 pic.getZeroDigit(),
-                useZForZero,
+                zuluForZeroOffset,
                 true,
                 false
             );
@@ -130,7 +129,7 @@ final class TimezonePictureParser {
                 digits == 4 ? 2 : 1,
                 2,
                 pic.getZeroDigit(),
-                useZForZero,
+                zuluForZeroOffset,
                 false,
                 true
             );

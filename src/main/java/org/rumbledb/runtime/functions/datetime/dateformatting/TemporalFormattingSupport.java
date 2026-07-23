@@ -128,7 +128,7 @@ final class TemporalFormattingSupport {
     ) {
         int totalMinutes = offset.getTotalSeconds() / 60;
 
-        if (tz.useZForZero && totalMinutes == 0 && !tz.gmtPrefix) {
+        if (tz.zuluForZeroOffset && totalMinutes == 0 && !tz.gmtPrefix) {
             return "Z";
         }
 
