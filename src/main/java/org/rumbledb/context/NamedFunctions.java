@@ -83,7 +83,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildFunctionItemCallIterator(
-                getUserDefinedFunction(identifier),
+                this.userDefinedFunctions.get(identifier),
                 callerRuntimeContext,
                 callerRuntimeContext.getExecutionMode(),
                 arguments,
@@ -216,9 +216,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
-        FunctionItem copyFunctionItem = functionItem.deepCopy();
-        copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
-        return copyFunctionItem;
+        return functionItem.copyForLookup();
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
