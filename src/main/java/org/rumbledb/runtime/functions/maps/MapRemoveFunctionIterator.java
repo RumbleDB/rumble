@@ -174,15 +174,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.keysIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.mapIterator.isOpen()) {
             this.mapIterator.close();

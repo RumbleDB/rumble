@@ -95,13 +95,6 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.resultCount = 0;
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     public void closeLocal() {
         this.iterator.close();
     }

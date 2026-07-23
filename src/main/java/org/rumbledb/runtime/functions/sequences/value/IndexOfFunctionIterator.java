@@ -92,14 +92,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.currentIndex = 0;
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

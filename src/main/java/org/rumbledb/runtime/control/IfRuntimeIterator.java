@@ -63,14 +63,6 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.selectedIterator.close();
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
-    }
-
-    @Override
     public void openLocal() {
         this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
         this.selectedIterator.open(this.currentDynamicContextForLocalExecution);

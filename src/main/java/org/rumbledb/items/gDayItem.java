@@ -88,6 +88,7 @@ public class gDayItem implements Item {
         return false;
     }
 
+    @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
             return String.format("---%02d", this.day) + this.offset;

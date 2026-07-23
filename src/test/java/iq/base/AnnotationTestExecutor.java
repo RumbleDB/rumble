@@ -130,11 +130,11 @@ public final class AnnotationTestExecutor {
             Rumble rumble = new Rumble(configuration);
             return QueryExecutionResult.success(rumble.runQuery(uri));
         } catch (ParsingException exception) {
-            return QueryExecutionResult.failure(TestStage.PARSING, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.PARSING, errorOutput(exception));
         } catch (SemanticException exception) {
-            return QueryExecutionResult.failure(TestStage.COMPILATION, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.COMPILATION, errorOutput(exception));
         } catch (RumbleException exception) {
-            return QueryExecutionResult.failure(TestStage.RUNTIME, exception.getMessage());
+            return QueryExecutionResult.failure(TestStage.RUNTIME, errorOutput(exception));
         } catch (Throwable exception) {
             throw new AssertionError("Could not execute test query for " + path, exception);
         }
@@ -192,11 +192,10 @@ public final class AnnotationTestExecutor {
         try {
             checkExpectedOutput(path, annotation.output(), sequence, checkOutput, applyUpdates, resultSizeCap);
         } catch (RumbleException exception) {
-            String errorOutput = exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput)));
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         } catch (Throwable exception) {
             // Catch all other exceptions not given by Rumble
-            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, exception.getMessage())));
+            Assertions.fail(withTestFile(path, unexpectedFailureMessage(TestStage.RUNTIME, errorOutput(exception))));
         }
     }
 
@@ -211,7 +210,7 @@ public final class AnnotationTestExecutor {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
         } catch (Throwable exception) {
-            checkErrorCode(exception.getMessage(), annotation.errorCode(), annotation.errorMetadata());
+            checkErrorCode(errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
         }
     }
 
@@ -301,6 +300,10 @@ public final class AnnotationTestExecutor {
 
     private static boolean isWithinLegacyResultSizeCap(int itemCount, int resultSizeCap) {
         return resultSizeCap <= 0 || itemCount < resultSizeCap;
+    }
+
+    private static String errorOutput(Throwable exception) {
+        return exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
     }
 
     private static void checkErrorCode(String errorOutput, String expectedErrorCode, String errorMetadata) {

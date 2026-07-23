@@ -58,6 +58,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {

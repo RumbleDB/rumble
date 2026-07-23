@@ -41,6 +41,7 @@ public class LibraryModule extends Module {
         this.namespace = namespace;
     }
 
+    @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -71,6 +72,7 @@ public class LibraryModule extends Module {
         return visitor.visitLibraryModule(this, argument);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
