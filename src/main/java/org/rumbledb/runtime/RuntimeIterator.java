@@ -67,7 +67,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected transient boolean isOpen;
     protected boolean isUpdating;
     protected transient boolean isSequential;
-    private final List<RuntimeIterator> children;
+    private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
