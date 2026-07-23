@@ -53,10 +53,10 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             Map<CatchPattern, RuntimeIterator> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(tryExpression);
-        for (RuntimeIterator value : catchExpressions.values())
-            this.children.add(value);
+        super(
+            Stream.concat(Stream.of(tryExpression), catchExpressions.values().stream()).toList(),
+            staticContext
+        );
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
     }
