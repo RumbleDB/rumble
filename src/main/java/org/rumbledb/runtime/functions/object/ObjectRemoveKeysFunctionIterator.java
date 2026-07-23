@@ -132,11 +132,6 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        startLocal();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }

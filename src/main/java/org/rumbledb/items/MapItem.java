@@ -214,10 +214,12 @@ public class MapItem implements Item {
         return this.keys.size();
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         return hasKey(ItemFactory.getInstance().createStringItem(key));
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         return this.keyToIndex.containsKey(key);
     }

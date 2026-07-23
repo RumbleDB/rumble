@@ -1418,7 +1418,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-                new StringLiteralExpression("", null),
+                new StringLiteralExpression("", createMetadataFromContext(ctx)),
                 createMetadataFromContext(ctx)
         );
         whereClause.chainWith(returnClause);
@@ -2052,6 +2052,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
+    @Override
     public Node visitKeySpecifier(JsoniqParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
             return new StringLiteralExpression(
@@ -2475,6 +2476,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         );
     }
 
+    @Override
     public Node visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
         if (ctx.ncName() != null) {

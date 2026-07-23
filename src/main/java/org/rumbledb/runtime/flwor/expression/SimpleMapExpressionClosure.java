@@ -53,6 +53,7 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
         this.dynamicContext = new DynamicContext(dynamicContext);
     }
 
+    @Override
     public Iterator<Item> call(Item item) throws Exception {
         List<Item> currentItems = new ArrayList<>();
 

@@ -172,17 +172,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.actionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.mapIterator.isOpen()) {
             this.mapIterator.close();
@@ -289,12 +278,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             this.position++;
             this.hasNext = this.position < this.items.size();
             return result;
-        }
-
-        @Override
-        protected void resetLocal() {
-            this.position = 0;
-            setHasNextFromBuffer();
         }
 
         @Override

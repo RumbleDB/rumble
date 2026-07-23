@@ -60,7 +60,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
@@ -210,6 +210,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (context == null) {
             throw new IteratorFlowException(
@@ -225,14 +226,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.currentDynamicContextForLocalExecution = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
-    }
-
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContextForLocalExecution = context;
-        this.children.forEach(c -> c.reset(context));
     }
 
     @Override
@@ -251,6 +247,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         // TODO serializer other fields
     }
 
+    @Override
     public boolean hasNext() {
         return this.hasNext;
     }
@@ -414,6 +411,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.isSequential;
     }
 
+    @Override
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {

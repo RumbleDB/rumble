@@ -346,37 +346,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.isPartialApplication) {
-            // Resetting a partial application regenerates its single function-item result.
-            this.nextResult = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
-            this.hasNext = true;
-            return;
-        }
-
-        this.dynamicContextForCalls = createCallContext();
-        populateDynamicContextWithArguments(
-            this.currentDynamicContextForLocalExecution,
-            this.dynamicContextForCalls
-        );
-        boolean reuseBody = this.functionBodyIterator != null && this.bodyReusable;
-        this.bodyReusable = false;
-        try {
-            if (!reuseBody) {
-                // Only a normally exhausted body is safe to reuse. Replace active, sequential, updating, or failed
-                // executions with a fresh instance.
-                discardBody();
-                this.functionBodyIterator = createFunctionBodyIterator();
-            }
-            this.functionBodyIterator.open(this.dynamicContextForCalls);
-            setNextResult();
-        } catch (RuntimeException exception) {
-            discardBody();
-            throw exception;
-        }
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.isPartialApplication) {
             this.nextResult = null;

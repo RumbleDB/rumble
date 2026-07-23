@@ -18,6 +18,7 @@ public class ChildAxisIterator extends AxisIterator {
         super(staticContext);
     }
 
+    @Override
     protected void setNextResult() {
         if (this.results == null) {
             this.results = new ArrayList<>();

@@ -97,22 +97,27 @@ public class DecimalItem implements Item {
         return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
     }
 
+    @Override
     public double castToDoubleValue() {
         return getDecimalValue().doubleValue();
     }
 
+    @Override
     public float castToFloatValue() {
         return getDecimalValue().floatValue();
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return getDecimalValue();
     }
 
+    @Override
     public int castToIntValue() {
         return getDecimalValue().intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return getDecimalValue().toBigInteger();
     }
@@ -149,6 +154,7 @@ public class DecimalItem implements Item {
         return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("decimal"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }

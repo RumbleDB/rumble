@@ -81,13 +81,6 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.results = null;
-        setNextResult();
-    }
-
-    @Override
     public void close() {
         super.close();
         this.results = null;

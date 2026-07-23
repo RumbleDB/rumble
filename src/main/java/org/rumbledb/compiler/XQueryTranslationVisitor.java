@@ -1334,7 +1334,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-                new StringLiteralExpression("", null),
+                new StringLiteralExpression("", createMetadataFromContext(ctx)),
                 createMetadataFromContext(ctx)
         );
         whereClause.chainWith(returnClause);
@@ -1844,6 +1844,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
+    @Override
     public Node visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
         if (ctx.lt != null) {
             return new StringLiteralExpression(
@@ -2197,6 +2198,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         );
     }
 
+    @Override
     public Node visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
         Expression contentExpression = (Expression) visit(ctx.enclosedExpression());
         if (ctx.ncName() != null) {

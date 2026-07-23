@@ -72,6 +72,7 @@ public class TextItem implements Item {
         return this.content;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.content.isEmpty();
     }
