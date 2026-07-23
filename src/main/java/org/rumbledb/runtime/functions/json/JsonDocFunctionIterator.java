@@ -62,7 +62,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             getMetadata()
         );
 
-        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
+        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticContext.getStaticURI(), getMetadata());
 
         String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
 

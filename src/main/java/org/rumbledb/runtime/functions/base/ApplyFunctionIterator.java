@@ -96,8 +96,10 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
             );
         }
         RuntimeStaticContext localItemStarContext = this.staticContext
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .build();
 
         if (functionItem.getParameterNames().size() != argumentsArray.getSize()) {
             throw new RumbleException(
@@ -119,8 +121,10 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         RuntimeIterator functionItemIterator = new ConstantRuntimeIterator(
                 functionItem,
                 this.staticContext
-                    .withStaticType(SequenceType.createSequenceType("function(*)"))
-                    .withExecutionMode(ExecutionMode.LOCAL)
+                    .toBuilder()
+                    .staticType(SequenceType.createSequenceType("function(*)"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .build()
         );
         return new DynamicFunctionCallIterator(
                 functionItemIterator,

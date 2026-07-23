@@ -32,7 +32,11 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         try {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, uriItem.getStringValue(), getMetadata());
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticContext.getStaticURI(),
+                uriItem.getStringValue(),
+                getMetadata()
+            );
             InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getConfiguration(), getMetadata());
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
