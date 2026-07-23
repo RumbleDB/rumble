@@ -112,12 +112,12 @@ public final class JSONParsingOptions {
                 );
             }
 
-            RuntimeStaticContext callContext = new RuntimeStaticContext(
-                    staticContext.getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    metadata
-            );
+            RuntimeStaticContext callContext = RuntimeStaticContext.builder()
+                .configuration(staticContext.getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
 
             List<RuntimeIterator> arguments = new ArrayList<>(1);
             arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
