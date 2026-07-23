@@ -23,7 +23,6 @@ package org.rumbledb.runtime;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -72,8 +71,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
-    protected URI staticURI;
-    // private StaticContext staticContext;
 
     protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
