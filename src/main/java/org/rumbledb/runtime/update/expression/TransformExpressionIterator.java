@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -33,10 +34,13 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             int mutabilityLevel,
             boolean resultMutable
     ) {
-        super(null, staticContext);
-        this.children.addAll(copyDeclMap.values());
-        this.children.add(modifyIterator);
-        this.children.add(returnIterator);
+        super(
+            Stream.concat(
+                copyDeclMap.values().stream(),
+                Stream.of(modifyIterator, returnIterator)
+            ).toList(),
+            staticContext
+        );
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;

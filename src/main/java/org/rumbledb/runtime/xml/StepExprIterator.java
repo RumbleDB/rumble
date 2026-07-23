@@ -39,8 +39,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
             NodeTest nodeTest,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(axisIterator);
+        super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
     }
