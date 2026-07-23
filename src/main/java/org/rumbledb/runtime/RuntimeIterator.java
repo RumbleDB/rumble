@@ -23,10 +23,7 @@ package org.rumbledb.runtime;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
@@ -82,7 +79,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isOpen = false;
         this.isUpdating = false;
         this.isSequential = false;
-        this.children = children;
+        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
 
     /**
