@@ -88,6 +88,7 @@ public class FunctionItem implements Item {
      * Creates a new function value for a named-function lookup. The function body factory is immutable: ordinary
      * bodies are created from its serialized snapshot and retained Spark ML bodies are intentionally shared. The
      * closure maps, on the other hand, must be per value because lookup binds the current dynamic context into them.
+     * Their captured sequences and items can remain shared because lookup only adds or replaces map entries.
      */
     private FunctionItem(FunctionItem source) {
         this.identifier = source.identifier;
@@ -95,7 +96,7 @@ public class FunctionItem implements Item {
         this.signature = source.signature;
         this.bodyIteratorFactory = source.bodyIteratorFactory;
         this.dynamicModuleContext = source.dynamicModuleContext;
-        this.localVariablesInClosure = copyLocalClosure(source.localVariablesInClosure);
+        this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
         this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
         this.dataFrameVariablesInClosure = new HashMap<>(source.dataFrameVariablesInClosure);
         this.isBuiltin = source.isBuiltin;
@@ -255,17 +256,6 @@ public class FunctionItem implements Item {
      */
     public FunctionItem copyForLookup() {
         return new FunctionItem(this);
-    }
-
-    private static Map<Name, List<Item>> copyLocalClosure(Map<Name, List<Item>> closure) {
-        Map<Name, List<Item>> copy = new HashMap<>();
-        for (Map.Entry<Name, List<Item>> entry : closure.entrySet()) {
-            // Keep closure containers independent so lookup can add bindings safely.
-            // Captured Item values are shared: copying them recursively would reintroduce the expensive deep-copy
-            // operation this path avoids.
-            copy.put(entry.getKey(), new ArrayList<>(entry.getValue()));
-        }
-        return copy;
     }
 
     private static FunctionBodyIteratorFactory createBodyIteratorFactory(RuntimeIterator bodyIterator) {
