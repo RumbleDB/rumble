@@ -154,7 +154,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
         List<RuntimeIterator> objectsToMerge = this.getChildren();
         if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
-            objectsToMerge = commaExpressionIterator.getChildren();
+            objectsToMerge = commaExpressionIterator.getOperands();
         }
         if (
             !objectsToMerge.stream()

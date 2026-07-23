@@ -130,6 +130,12 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         }
     }
 
+    public List<RuntimeIterator> getOperands() {
+        // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
+        // Because getChildren is protected and not visible from there
+        return getChildren();
+    }
+
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
