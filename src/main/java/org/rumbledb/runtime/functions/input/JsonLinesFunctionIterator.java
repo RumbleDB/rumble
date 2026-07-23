@@ -65,7 +65,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
         if (this.children.size() > 1) {
@@ -129,7 +129,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     protected void init() {
         try {
             URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticURI,
+                this.staticContext.getStaticURI(),
                 this.path.getStringValue(),
                 getMetadata()
             );

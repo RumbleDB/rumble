@@ -35,7 +35,7 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (this.children.size() == 2) {
             base = this.children.get(1).materializeFirstItemOrNull(context);
         } else {
-            base = ItemFactory.getInstance().createAnyURIItem(this.staticURI.toString());
+            base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }
         if (base == null) {
             return null;

@@ -59,13 +59,12 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
         FunctionItem function = new FunctionItem(
                 this.functionName,
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                bodyIteratorCopy,
+                this.bodyIterator,
                 this.isUpdating
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());

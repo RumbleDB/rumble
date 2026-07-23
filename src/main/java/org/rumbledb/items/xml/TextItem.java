@@ -69,7 +69,10 @@ public class TextItem implements Item {
         if (!(other instanceof TextItem otherTextItem)) {
             return false;
         }
-        return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
+        if (this.documentPos == null || otherTextItem.documentPos == null) {
+            return false;
+        }
+        return this.documentPos.equals(otherTextItem.documentPos);
     }
 
     @Override
@@ -97,6 +100,9 @@ public class TextItem implements Item {
     }
 
     public int hashCode() {
+        if (this.documentPos == null) {
+            return System.identityHashCode(this);
+        }
         return this.documentPos.hashCode();
     }
 
