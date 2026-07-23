@@ -34,7 +34,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -87,15 +86,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
         }
-    }
-
-    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
-    // This avoids the deserialization of many static context copies at runtime.
-    public void setStaticContext(StaticContext staticContext) {
-        if (this.staticURI != null) {
-            throw new OurBadException("Static context already consumed.");
-        }
-        this.staticURI = staticContext.getStaticBaseURI();
     }
 
     /**
