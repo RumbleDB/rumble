@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;

@@ -34,6 +34,7 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
 import java.util.Map;
+import java.util.stream.Stream;
 
 
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
