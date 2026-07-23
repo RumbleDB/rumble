@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.scripting.block;
 
-import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.rumbledb.api.Item;
@@ -26,7 +25,7 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
 
     public StatementsWithExprIterator(
             List<RuntimeIterator> statements,
-            @NonNull RuntimeIterator exprIterator,
+            RuntimeIterator exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
