@@ -1923,8 +1923,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
-                statement.isSequential(),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig)
+                    .toBuilder()
+                    .isSequential(statement.isSequential())
+                    .build()
         );
     }
 
