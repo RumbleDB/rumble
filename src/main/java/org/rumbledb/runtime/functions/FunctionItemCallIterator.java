@@ -374,7 +374,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * Sequential and updating bodies can retain statement or mutation state even after normal exhaustion.
      */
     private boolean canReuseBody() {
-        return !this.isSequential && !this.isUpdating;
+        return !this.staticContext.isSequential() && !this.staticContext.isUpdating();
     }
 
     /**
