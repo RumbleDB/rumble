@@ -21,11 +21,9 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
 
     public ExitStatementIterator(
             RuntimeIterator childIterator,
-            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(childIterator), staticContext);
-        this.isSequential = isSequential;
         this.childIterator = childIterator;
     }
 

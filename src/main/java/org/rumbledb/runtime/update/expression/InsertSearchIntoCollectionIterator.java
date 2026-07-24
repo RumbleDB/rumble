@@ -33,12 +33,11 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isBefore,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.isBefore = isBefore;
 
-        this.isUpdating = true;
 
     }
 

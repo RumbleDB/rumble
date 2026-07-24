@@ -14,6 +14,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
     @Serial
@@ -27,18 +28,17 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             RuntimeIterator exprIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        // Expect an expression to be present
-        assert exprIterator != null;
+        super(
+            Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
+            staticContext.toBuilder()
+                .isUpdating(exprIterator.isUpdating())
+                .isSequential(isSequential(statements, exprIterator))
+                .build()
+        );
+    }
 
-        this.children.addAll(statements);
-        this.children.add(exprIterator);
-
-        for (RuntimeIterator child : this.children) {
-            if (child.isSequential()) {
-                this.isSequential = child.isSequential();
-            }
-        }
+    private static boolean isSequential(List<RuntimeIterator> statements, RuntimeIterator exprIterator) {
+        return exprIterator.isSequential() || statements.stream().anyMatch(RuntimeIterator::isSequential);
     }
 
     @Override
@@ -151,12 +151,6 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         }
         RuntimeIterator exprIterator = this.children.get(childIndex);
         return exprIterator.getDataFrame(dynamicContext);
-    }
-
-    @Override
-    public boolean isUpdating() {
-        this.isUpdating = this.children.get(this.children.size() - 1).isUpdating();
-        return this.isUpdating;
     }
 
     @Override

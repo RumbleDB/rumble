@@ -38,12 +38,14 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator replacerIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), staticContext);
+        super(
+            Arrays.asList(mainIterator, locatorIterator, replacerIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.replacerIterator = replacerIterator;
-        this.isUpdating = true;
     }
 
     @Override

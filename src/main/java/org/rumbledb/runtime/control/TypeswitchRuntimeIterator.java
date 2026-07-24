@@ -15,6 +15,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
@@ -26,37 +27,28 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator matchingIterator;
     private Item testValue;
 
-
     public TypeswitchRuntimeIterator(
             RuntimeIterator test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(test);
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            this.children.add(typeSwitchCase.getReturnIterator());
-        }
-        this.children.add(defaultCase.getReturnIterator());
+        super(
+            Stream.concat(
+                Stream.concat(
+                    Stream.of(test),
+                    cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)
+                ),
+                Stream.of(defaultCase.getReturnIterator())
+            ).toList(),
+            staticContext
+        );
 
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
-        this.isUpdating = isUpdating;
         this.matchingIterator = null;
     }
-
-    public TypeswitchRuntimeIterator(
-            RuntimeIterator test,
-            List<TypeswitchRuntimeIteratorCase> cases,
-            TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
-        this(test, cases, defaultCase, false, staticContext);
-    }
-
 
     @Override
     public void openLocal() {

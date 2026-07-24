@@ -41,13 +41,12 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             positionIterator == null
                 ? Arrays.asList(mainIterator, toInsertIterator)
                 : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-            staticContext
+            staticContext.toBuilder().isUpdating(true).build()
         );
 
         this.mainIterator = mainIterator;
         this.toInsertIterator = toInsertIterator;
         this.positionIterator = positionIterator;
-        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {

@@ -31,10 +31,9 @@ public class EditCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
-        this.isUpdating = true;
 
     }
 

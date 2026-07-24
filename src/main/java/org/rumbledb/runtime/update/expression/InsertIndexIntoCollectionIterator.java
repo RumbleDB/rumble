@@ -46,7 +46,10 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isLast,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator, posIterator), staticContext);
+        super(
+            Arrays.asList(targetIterator, contentIterator, posIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = posIterator;
@@ -54,7 +57,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        this.isUpdating = true;
 
     }
 
@@ -66,7 +68,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isLast,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = null;
@@ -74,7 +76,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
-        this.isUpdating = true;
 
     }
 

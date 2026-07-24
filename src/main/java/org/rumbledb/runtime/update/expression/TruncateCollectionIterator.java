@@ -33,10 +33,9 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator), staticContext);
+        super(Arrays.asList(targetIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.mode = mode;
-        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {

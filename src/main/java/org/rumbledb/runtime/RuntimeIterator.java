@@ -65,8 +65,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    protected boolean isUpdating;
-    protected transient boolean isSequential;
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
@@ -79,8 +77,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
             );
         }
         this.isOpen = false;
-        this.isUpdating = false;
-        this.isSequential = false;
 
         this.children = new ArrayList<>();
         if (children != null && !children.isEmpty()) {
@@ -384,7 +380,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     }
 
     public boolean isUpdating() {
-        return this.isUpdating;
+        return this.staticContext.isUpdating();
     }
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
@@ -395,7 +391,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     }
 
     public boolean isSequential() {
-        return this.isSequential;
+        return this.staticContext.isSequential();
     }
 
     @Override
@@ -536,7 +532,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         buffer.append(" | ");
         buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
-        buffer.append(this.isSequential ? "sequential" : "non-sequential");
+        buffer.append(this.isSequential() ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

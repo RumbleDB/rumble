@@ -18,12 +18,10 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     private int childIndex;
 
     public StatementsOnlyIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
-        super(children, staticContext);
-        for (RuntimeIterator child : children) {
-            if (child.isSequential()) {
-                this.isSequential = child.isSequential();
-            }
-        }
+        super(
+            children,
+            staticContext.toBuilder().isSequential(children.stream().anyMatch(RuntimeIterator::isSequential)).build()
+        );
     }
 
     @Override

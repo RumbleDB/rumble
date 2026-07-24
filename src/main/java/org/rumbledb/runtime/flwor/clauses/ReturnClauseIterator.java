@@ -77,22 +77,12 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
         this.child = child;
         this.expression = expression;
-        this.isUpdating = isUpdating;
         setInputAndOutputTupleVariableDependencies();
-    }
-
-    public ReturnClauseIterator(
-            RuntimeTupleIterator child,
-            RuntimeIterator expression,
-            RuntimeStaticContext staticContext
-    ) {
-        this(child, expression, false, staticContext);
     }
 
     @Override
