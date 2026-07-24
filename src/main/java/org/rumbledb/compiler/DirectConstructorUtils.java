@@ -188,12 +188,35 @@ final class DirectConstructorUtils {
         ExceptionMetadata firstTextMetadata = null;
         boolean boundaryWhitespaceOnly = true;
         Token previousToken = firstContentToken;
+        ExceptionMetadata previousMetadata = null;
 
         for (T child : children) {
             Expression expression = contentProcessor.apply(child);
+            String hiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+            if (!hiddenText.isEmpty()) {
+                if (text == null) {
+                    text = new StringBuilder();
+                    firstTextMetadata = expression.getMetadata();
+                    boundaryWhitespaceOnly = true;
+                }
+                boundaryWhitespaceOnly = appendBoundarySegment(
+                    text,
+                    hiddenText,
+                    true,
+                    boundaryWhitespaceOnly
+                );
+            }
             if (expression instanceof TextNodeExpression textNode) {
                 if (textNode.getContent().isEmpty()) {
+                    if (text == null) {
+                        text = new StringBuilder();
+                        firstTextMetadata = textNode.getMetadata();
+                        boundaryWhitespaceOnly = true;
+                    }
+                    // Empty CDATA sections are content boundaries, so adjacent whitespace must not be stripped.
+                    boundaryWhitespaceOnly = false;
                     previousToken = child.getStop();
+                    previousMetadata = textNode.getMetadata();
                     continue;
                 }
                 if (text == null) {
@@ -201,24 +224,12 @@ final class DirectConstructorUtils {
                     firstTextMetadata = textNode.getMetadata();
                     boundaryWhitespaceOnly = true;
                 }
-                boundaryWhitespaceOnly = appendBoundarySegment(
-                    text,
-                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                    true,
-                    boundaryWhitespaceOnly
-                );
                 text.append(textNode.getContent());
                 boundaryWhitespaceOnly = boundaryWhitespaceOnly
                     && textNode.isBoundaryWhitespace()
                     && isWhitespaceOnly(textNode.getContent());
             } else {
                 if (text != null) {
-                    boundaryWhitespaceOnly = appendBoundarySegment(
-                        text,
-                        getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                        true,
-                        boundaryWhitespaceOnly
-                    );
                     flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
                     text = null;
                     firstTextMetadata = null;
@@ -226,15 +237,24 @@ final class DirectConstructorUtils {
                 content.add(expression);
             }
             previousToken = child.getStop();
+            previousMetadata = expression.getMetadata();
         }
 
-        if (text != null) {
+        String trailingHiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
+        if (!trailingHiddenText.isEmpty()) {
+            if (text == null) {
+                text = new StringBuilder();
+                firstTextMetadata = previousMetadata == null ? ExceptionMetadata.EMPTY_METADATA : previousMetadata;
+                boundaryWhitespaceOnly = true;
+            }
             boundaryWhitespaceOnly = appendBoundarySegment(
                 text,
-                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                trailingHiddenText,
                 true,
                 boundaryWhitespaceOnly
             );
+        }
+        if (text != null) {
             flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
         }
         return content;
