@@ -29,7 +29,7 @@ import org.rumbledb.runtime.RuntimeIterator;
  * Note: this is just a temporary solution to reduce the expense of deep copy operations on function body iterators.
  * We will switch to a cheaper and generic cursor-based solution in the future.
  */
-@NoArgsConstructor(force = true)  // For Kryo serialization
+@NoArgsConstructor(force = true) // For Kryo serialization
 final class FunctionBodyIteratorFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;
