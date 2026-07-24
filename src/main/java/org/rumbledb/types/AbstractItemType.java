@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -13,6 +14,8 @@ import org.rumbledb.context.Name;
  * types override {@link #equalityKey()} with a canonical structural key.
  */
 public abstract class AbstractItemType implements ItemType {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Override
     public final boolean equals(Object other) {
