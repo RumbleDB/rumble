@@ -4,16 +4,23 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CatchPattern implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @EqualsAndHashCode.Include
     private final String namespace;
+    @EqualsAndHashCode.Include
     private final String localName;
+    @EqualsAndHashCode.Include
     private final boolean namespaceWildcard;
+    @EqualsAndHashCode.Include
     private final boolean localNameWildcard;
     private final String displayText;
 
@@ -70,19 +77,4 @@ public class CatchPattern implements Serializable {
         return this.displayText;
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof CatchPattern pattern)) {
-            return false;
-        }
-        return Objects.equals(this.namespace, pattern.namespace)
-            && Objects.equals(this.localName, pattern.localName)
-            && this.namespaceWildcard == pattern.namespaceWildcard
-            && this.localNameWildcard == pattern.localNameWildcard;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.namespace, this.localName, this.namespaceWildcard, this.localNameWildcard);
-    }
 }

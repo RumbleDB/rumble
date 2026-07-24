@@ -35,6 +35,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
     @Serial
@@ -257,20 +260,6 @@ public class SequenceType implements Serializable {
             }
         }
         return this;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType sequenceType)) {
-            return false;
-        }
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
     }
 
     public enum Arity {

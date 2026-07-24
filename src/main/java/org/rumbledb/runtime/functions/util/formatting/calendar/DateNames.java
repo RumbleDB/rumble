@@ -8,8 +8,9 @@ import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.EqualsAndHashCode;
 
 public final class DateNames {
 
@@ -54,6 +55,7 @@ public final class DateNames {
         return symbols;
     }
 
+    @EqualsAndHashCode
     private static final class SymbolsKey {
         private final String calendarType;
         private final ULocale locale;
@@ -63,22 +65,6 @@ public final class DateNames {
             this.locale = locale;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof SymbolsKey)) {
-                return false;
-            }
-            SymbolsKey other = (SymbolsKey) o;
-            return this.calendarType.equals(other.calendarType) && this.locale.equals(other.locale);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.calendarType, this.locale);
-        }
     }
 
     private static String monthName(DateFormatSymbols symbols, int month, int min, int max) {
