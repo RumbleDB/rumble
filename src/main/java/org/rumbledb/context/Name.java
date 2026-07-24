@@ -20,7 +20,10 @@
 
 package org.rumbledb.context;
 
-import java.io.*;
+import java.io.Serial;
+import java.io.Serializable;
+
+import lombok.EqualsAndHashCode;
 
 import org.rumbledb.exceptions.OurBadException;
 
@@ -37,13 +40,19 @@ import org.rumbledb.exceptions.OurBadException;
  * @author Ghislain Fourny
  *
  */
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    @EqualsAndHashCode.Include
     private String namespace;
+
     private String prefix;
+
+    @EqualsAndHashCode.Include
     private String localName;
-    private transient int hashCode;
+
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
@@ -74,7 +83,6 @@ public class Name implements Comparable<Name>, Serializable {
         this.namespace = null;
         this.prefix = null;
         this.localName = null;
-        this.hashCode = 0;
     }
 
     public Name(String namespace, String prefix, String localName) {
@@ -84,7 +92,6 @@ public class Name implements Comparable<Name>, Serializable {
         if (this.prefix != null && this.namespace == null) {
             throw new OurBadException("Namespace is null, but prefix is present");
         }
-        precomputeHashCode();
     }
 
     /**
@@ -258,53 +265,4 @@ public class Name implements Comparable<Name>, Serializable {
         return this.localName.compareTo(other.localName);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Name other)) {
-            return false;
-        }
-        if (this.namespace == null && other.namespace != null) {
-            return false;
-        }
-        if (this.namespace != null && other.namespace == null) {
-            return false;
-        }
-        if (this.namespace == null && other.namespace == null) {
-            return this.localName.equals(other.localName);
-        }
-        if (!this.namespace.equals(other.namespace)) {
-            return false;
-        }
-        return this.localName.equals(other.localName);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.hashCode;
-    }
-
-
-
-    public void precomputeHashCode() {
-        if (this.localName == null) {
-            this.hashCode = 0;
-            return;
-        }
-        if (this.namespace == null) {
-            this.hashCode = this.localName.hashCode();
-            return;
-        }
-        this.hashCode = this.localName.hashCode() + this.namespace.hashCode();
-    }
-
-    @Serial
-    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
-        i.defaultReadObject();
-        precomputeHashCode();
-    }
-
-    @Serial
-    private void writeObject(ObjectOutputStream i) throws IOException {
-        i.defaultWriteObject();
-    }
 }
