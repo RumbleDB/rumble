@@ -11,8 +11,9 @@ import java.time.DateTimeException;
 import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+
+import lombok.EqualsAndHashCode;
 
 public final class FormattingContext {
 
@@ -69,6 +70,7 @@ public final class FormattingContext {
         this.javaLocale = triple.javaLocale;
     }
 
+    @EqualsAndHashCode
     private static final class LocaleKey {
         private final String effectiveLanguage;
         private final String icuCalendarType;
@@ -78,23 +80,6 @@ public final class FormattingContext {
             this.icuCalendarType = icuCalendarType;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof LocaleKey)) {
-                return false;
-            }
-            LocaleKey other = (LocaleKey) o;
-            return Objects.equals(this.effectiveLanguage, other.effectiveLanguage)
-                && Objects.equals(this.icuCalendarType, other.icuCalendarType);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.effectiveLanguage, this.icuCalendarType);
-        }
     }
 
     private static final class LocaleTriple {

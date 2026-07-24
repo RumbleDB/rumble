@@ -27,14 +27,16 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Objects;
 import java.util.UUID;
+
+import lombok.EqualsAndHashCode;
 
 /**
  * The `XMLDocumentPosition` class represents the position of an item within an XML document.
  * It provides information about the document's path and the item's position within the document.
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
+@EqualsAndHashCode
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable, KryoSerializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -83,18 +85,4 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         return pathResult;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        XMLDocumentPosition that = (XMLDocumentPosition) o;
-        return getDocPosition() == that.getDocPosition() && Objects.equals(getPath(), that.getPath());
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getPath(), getDocPosition());
-    }
 }
