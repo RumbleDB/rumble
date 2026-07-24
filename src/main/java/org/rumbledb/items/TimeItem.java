@@ -1,8 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serial;
 import java.time.*;
@@ -116,17 +113,7 @@ public class TimeItem implements Item {
         );
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.value.format(DateTimeFormatter.ISO_OFFSET_TIME));
-        output.writeBoolean(this.hasTimeZone);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = OffsetTime.parse(input.readString());
-        this.hasTimeZone = input.readBoolean();
-    }
 
     @Override
     public ItemType getDynamicType() {

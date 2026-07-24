@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -131,15 +128,7 @@ public class IntegerItem implements Item {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, BigInteger.class);
-    }
 
     public int hashCode() {
         return this.value.hashCode();

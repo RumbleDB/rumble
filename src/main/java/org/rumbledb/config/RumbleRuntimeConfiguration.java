@@ -27,10 +27,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.serialization.SerializationParameters;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -44,7 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
+public class RumbleRuntimeConfiguration implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -1287,16 +1283,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return sb.toString();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.arguments);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.arguments = kryo.readObject(input, HashMap.class);
-    }
 
     public static final String DEFAULT_XML_VERSION = "1.1";
 

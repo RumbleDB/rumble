@@ -209,21 +209,7 @@ public class XQueryArrayItemType implements ItemType {
         return current;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.memberSequenceType);
-        output.writeInt(this.typeTreeDepth);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.memberSequenceType = (SequenceType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-    }
 
     @Override
     public boolean hasName() {

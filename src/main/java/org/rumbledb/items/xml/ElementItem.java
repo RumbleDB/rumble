@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -138,32 +135,7 @@ public class ElementItem implements Item {
         });
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.attributes);
-        kryo.writeObject(output, this.namespaces);
-        kryo.writeObject(output, this.dmNodeName);
-        output.writeString(this.stringValue);
-        kryo.writeClassAndObject(output, this.typeAnnotation);
-        output.writeBoolean(this.inheritNamespacesFromParent);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.children = kryo.readObject(input, ArrayList.class);
-        this.attributes = kryo.readObject(input, ArrayList.class);
-        this.namespaces = kryo.readObject(input, HashMap.class);
-        this.dmNodeName = kryo.readObject(input, Name.class);
-        this.stringValue = input.readString();
-        this.typeAnnotation = (ItemType) kryo.readClassAndObject(input);
-        this.inheritNamespacesFromParent = input.readBoolean();
-    }
 
     @Override
     public boolean isNode() {

@@ -20,15 +20,7 @@ public class ErrorItemType implements ItemType {
     private static final long serialVersionUID = 1L;
     private static final Name name = new Name(Name.XS_NS, "xs", "error");
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // No fields to serialize
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // No fields to deserialize
-    }
 
     @Override
     public boolean equals(Object other) {

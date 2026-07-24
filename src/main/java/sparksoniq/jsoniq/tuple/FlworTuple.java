@@ -20,10 +20,6 @@
 
 package sparksoniq.jsoniq.tuple;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -42,7 +38,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-public class FlworTuple implements Serializable, KryoSerializable {
+public class FlworTuple implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -181,22 +177,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return this;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.localVariables);
-        kryo.writeObject(output, this.rddVariables);
-        kryo.writeObject(output, this.dataFrameVariables);
-        kryo.writeObject(output, this.configuration);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.localVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
-        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
-    }
 
     @Override
     public String toString() {

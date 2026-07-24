@@ -20,10 +20,6 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
@@ -52,7 +48,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class NamedFunctions implements Serializable, KryoSerializable {
+public class NamedFunctions implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -360,16 +356,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         );
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.userDefinedFunctions);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.userDefinedFunctions = kryo.readObject(input, HashMap.class);
-    }
 
     @Override
     public String toString() {

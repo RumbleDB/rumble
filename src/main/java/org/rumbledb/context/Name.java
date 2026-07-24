@@ -23,10 +23,6 @@ package org.rumbledb.context;
 import java.io.*;
 
 import org.rumbledb.exceptions.OurBadException;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 /**
  * This class represents expanded names, corresponding to QNames in the W3C XQuery standard.
@@ -41,7 +37,7 @@ import com.esotericsoftware.kryo.io.Output;
  * @author Ghislain Fourny
  *
  */
-public class Name implements Comparable<Name>, Serializable, KryoSerializable {
+public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private String namespace;
@@ -287,20 +283,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return this.hashCode;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.namespace);
-        output.writeString(this.prefix);
-        output.writeString(this.localName);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.namespace = input.readString();
-        this.prefix = input.readString();
-        this.localName = input.readString();
-        precomputeHashCode();
-    }
 
     public void precomputeHashCode() {
         if (this.localName == null) {

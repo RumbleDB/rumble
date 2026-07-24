@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -118,15 +115,7 @@ public class CommentItem implements Item {
             && this.getXmlDocumentPosition().equals(otherComment.getXmlDocumentPosition());
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.content);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.content = input.readString();
-    }
 
     @Override
     public List<Item> namespaceNodes() {

@@ -53,12 +53,8 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, KryoSerializable {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
@@ -218,21 +214,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isOpen = false;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.children);
-        // TODO serializer other fields
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.hasNext = false;
-        this.isOpen = false;
-        this.currentDynamicContextForLocalExecution = null;
-        this.children = kryo.readObject(input, ArrayList.class);
-        // TODO serializer other fields
-    }
 
     @Override
     public boolean hasNext() {
