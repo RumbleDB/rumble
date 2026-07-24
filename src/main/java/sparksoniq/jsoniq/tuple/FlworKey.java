@@ -53,11 +53,11 @@ public class FlworKey implements KryoSerializable {
 
     @Override
     public int hashCode() {
-        StringBuilder result = new StringBuilder();
+        int result = 1;
         for (Item key : this.keyItems) {
-            result.append(AtomicValueComparison.hash(key));
+            result = 31 * result + AtomicValueComparison.hash(key);
         }
-        return result.toString().hashCode();
+        return result;
     }
 
     @Override
