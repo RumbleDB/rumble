@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -8,6 +9,8 @@ import org.rumbledb.api.Item;
  * Structural Java equality for both JSON arrays and XDM sequence-member arrays.
  */
 public abstract class AbstractArrayItem implements Item {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Override
     public final boolean equals(Object other) {
