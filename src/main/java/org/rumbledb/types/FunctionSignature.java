@@ -24,10 +24,18 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FunctionSignature implements Serializable {
+    @EqualsAndHashCode.Include
     private List<SequenceType> parameterTypes;
+
+    @EqualsAndHashCode.Include
     private SequenceType returnType;
+
     private boolean isUpdating;
+
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -61,13 +69,6 @@ public class FunctionSignature implements Serializable {
         return this.isUpdating;
     }
 
-    @Override
-    public boolean equals(Object instance) {
-        return instance instanceof FunctionSignature functionSignature
-            && this.getParameterTypes() == functionSignature.getParameterTypes()
-            && this.getReturnType() == functionSignature.getReturnType();
-    }
-
     public boolean isSubtypeOf(FunctionSignature other) {
         // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type
         // errors)
@@ -87,11 +88,6 @@ public class FunctionSignature implements Serializable {
             }
         }
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.getParameterTypes().hashCode() + this.getReturnType().hashCode();
     }
 
     @Override
