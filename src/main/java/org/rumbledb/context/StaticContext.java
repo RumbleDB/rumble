@@ -100,7 +100,7 @@ public class StaticContext {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
+        this.boundarySpacePreserve = false;
         this.copyNamespacesPreserve = true;
         this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
@@ -125,7 +125,7 @@ public class StaticContext {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
+        this.boundarySpacePreserve = false;
         this.copyNamespacesPreserve = true;
         this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;

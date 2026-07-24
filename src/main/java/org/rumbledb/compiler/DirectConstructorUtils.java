@@ -188,7 +188,6 @@ final class DirectConstructorUtils {
         ExceptionMetadata firstTextMetadata = null;
         boolean boundaryWhitespaceOnly = true;
         Token previousToken = firstContentToken;
-        ExceptionMetadata previousMetadata = null;
 
         for (T child : children) {
             Expression expression = contentProcessor.apply(child);
@@ -216,7 +215,6 @@ final class DirectConstructorUtils {
                     // Empty CDATA sections are content boundaries, so adjacent whitespace must not be stripped.
                     boundaryWhitespaceOnly = false;
                     previousToken = child.getStop();
-                    previousMetadata = textNode.getMetadata();
                     continue;
                 }
                 if (text == null) {
@@ -237,14 +235,13 @@ final class DirectConstructorUtils {
                 content.add(expression);
             }
             previousToken = child.getStop();
-            previousMetadata = expression.getMetadata();
         }
 
         String trailingHiddenText = getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
         if (!trailingHiddenText.isEmpty()) {
             if (text == null) {
                 text = new StringBuilder();
-                firstTextMetadata = previousMetadata == null ? ExceptionMetadata.EMPTY_METADATA : previousMetadata;
+                firstTextMetadata = ExceptionMetadata.EMPTY_METADATA;
                 boundaryWhitespaceOnly = true;
             }
             boundaryWhitespaceOnly = appendBoundarySegment(
