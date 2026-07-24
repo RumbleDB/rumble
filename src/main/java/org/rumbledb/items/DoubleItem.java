@@ -26,11 +26,8 @@ import java.math.BigInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -39,7 +36,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public class DoubleItem implements Item {
+public class DoubleItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -57,20 +54,6 @@ public class DoubleItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new DoubleItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -184,10 +167,6 @@ public class DoubleItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readDouble();
-    }
-
-    public int hashCode() {
-        return (int) Math.round(getDoubleValue());
     }
 
     @Override

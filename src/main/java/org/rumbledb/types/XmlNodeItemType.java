@@ -14,7 +14,7 @@ import java.util.Set;
  *
  * All concrete node types share node() as their base type at depth 1.
  */
-public class XmlNodeItemType implements ItemType {
+public class XmlNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -31,14 +31,6 @@ public class XmlNodeItemType implements ItemType {
 
     @Override
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
     }
 
     @Override
@@ -86,4 +78,3 @@ public class XmlNodeItemType implements ItemType {
         return false;
     }
 }
-

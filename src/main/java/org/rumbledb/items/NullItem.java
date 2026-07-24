@@ -25,15 +25,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 
-public class NullItem implements Item {
+public class NullItem extends AbstractAtomicItem {
 
 
     @Serial
@@ -41,20 +38,6 @@ public class NullItem implements Item {
 
     public NullItem() {
         super();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -86,10 +69,6 @@ public class NullItem implements Item {
     public void read(Kryo kryo, Input input) {
         kryo.readObjectOrNull(input, Item.class);
 
-    }
-
-    public int hashCode() {
-        return 0;
     }
 
     @Override

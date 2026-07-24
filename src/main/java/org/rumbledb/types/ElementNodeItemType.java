@@ -4,9 +4,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
-import java.util.Objects;
-
-import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -15,8 +12,7 @@ import java.util.Set;
  * Wildcard element() is represented with no node-name restriction.
  * element(QName) is represented with a concrete node-name restriction.
  */
-@EqualsAndHashCode
-public class ElementNodeItemType implements ItemType {
+public class ElementNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -42,6 +38,11 @@ public class ElementNodeItemType implements ItemType {
     }
 
     @Override
+    protected Object equalityKey() {
+        return structuralTypeKey(ElementNodeItemType.class, this.catalogueName, this.nodeName);
+    }
+
+    @Override
     public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
         kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
         kryo.writeObjectOrNull(output, this.nodeName, Name.class);
@@ -51,15 +52,6 @@ public class ElementNodeItemType implements ItemType {
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.catalogueName = kryo.readObjectOrNull(input, Name.class);
         this.nodeName = kryo.readObjectOrNull(input, Name.class);
-    }
-
-    @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof ElementNodeItemType other)) {
-            return false;
-        }
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.nodeName, other.nodeName);
     }
 
     @Override

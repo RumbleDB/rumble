@@ -7,7 +7,7 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.Serial;
 import java.util.Set;
 
-public class FunctionItemType implements ItemType {
+public class FunctionItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -49,11 +49,8 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        return isEqualTo(itemType);
+    protected Object equalityKey() {
+        return structuralTypeKey(FunctionItemType.class, this.isGeneric, this.signature);
     }
 
     @Override

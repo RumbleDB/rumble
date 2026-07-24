@@ -25,10 +25,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -38,7 +35,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 
-public class DecimalItem implements Item {
+public class DecimalItem extends AbstractAtomicItem {
 
 
     @Serial
@@ -57,20 +54,6 @@ public class DecimalItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new DecimalItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     public BigDecimal getValue() {
@@ -135,13 +118,6 @@ public class DecimalItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = kryo.readObject(input, BigDecimal.class);
-    }
-
-    public int hashCode() {
-        if (getDecimalValue().stripTrailingZeros().scale() == 0) {
-            return getDecimalValue().intValue();
-        }
-        return getDecimalValue().hashCode();
     }
 
     @Override

@@ -4,9 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -14,7 +11,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class UntypedAtomicItem implements Item {
+public class UntypedAtomicItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -107,20 +104,6 @@ public class UntypedAtomicItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }
@@ -133,10 +116,6 @@ public class UntypedAtomicItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readString();
-    }
-
-    public int hashCode() {
-        return getStringValue().hashCode();
     }
 
     @Override
@@ -159,5 +138,3 @@ public class UntypedAtomicItem implements Item {
         return "STRING";
     }
 }
-
-

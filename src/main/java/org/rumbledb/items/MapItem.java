@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -41,7 +40,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public class MapItem implements Item {
+public class MapItem extends AbstractMapItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -62,7 +61,7 @@ public class MapItem implements Item {
     public MapItem() {
         this.values = new ArrayList<>();
         this.keys = new ArrayList<>();
-        this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
+        this.keyToIndex = new HashMap<>();
         this.allKeysString = true;
         this.allValuesSingletons = true;
         this.mutabilityLevel = -1;
@@ -88,7 +87,7 @@ public class MapItem implements Item {
         // assume atomicity of keys is checked by the caller, or at the typesystem level
         this.values = new ArrayList<>();
         this.keys = new ArrayList<>();
-        this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
+        this.keyToIndex = new HashMap<>();
         for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
             Item key = entry.getKey();
             List<Item> valueSequence = entry.getValue();
@@ -118,7 +117,7 @@ public class MapItem implements Item {
 
     private void rebuildKeyStringIndex() {
         if (this.keyToIndex == null) {
-            this.keyToIndex = new TreeMap<>(new ItemSameKeyComparator());
+            this.keyToIndex = new HashMap<>();
         } else {
             this.keyToIndex.clear();
         }
@@ -550,44 +549,4 @@ public class MapItem implements Item {
         }
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (Item key : this.keys) {
-            List<Item> thisSequence = getSequenceByKey(key);
-            List<Item> otherSequence = otherItem.getSequenceByKey(key);
-            if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
-                return false;
-            }
-            for (int i = 0; i < thisSequence.size(); i++) {
-                if (!thisSequence.get(i).equals(otherSequence.get(i))) {
-                    return false;
-                }
-            }
-        }
-        for (Item key : otherItem.getItemKeys()) {
-            if (getSequenceByKey(key) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.keys.size();
-        for (Item key : this.keys) {
-            List<Item> valueSequence = getSequenceByKey(key);
-            result += key.hashCode();
-            for (Item item : valueSequence) {
-                result += item.hashCode();
-            }
-        }
-        return result;
-    }
 }

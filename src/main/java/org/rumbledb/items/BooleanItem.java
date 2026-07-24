@@ -30,7 +30,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serial;
 
-public class BooleanItem implements Item {
+public class BooleanItem extends AbstractAtomicItem {
 
 
     @Serial
@@ -88,20 +88,6 @@ public class BooleanItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readBoolean();
-    }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isBoolean()) {
-            return false;
-        }
-        return (getBooleanValue() == otherItem.getBooleanValue());
-    }
-
-    public int hashCode() {
-        return getBooleanValue() ? 1 : 0;
     }
 
     @Override

@@ -58,16 +58,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
-            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
-                return false;
-            }
-            return this.toString().equals(otherType.toString());
-        }
-        if (!this.hasName() || !otherType.hasName()) {
-            return this == otherType;
-        }
-        return this.getName().equals(otherType.getName());
+        return this.equals(otherType);
     }
     // region kind
 

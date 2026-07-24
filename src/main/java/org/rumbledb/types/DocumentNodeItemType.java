@@ -4,9 +4,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
-import java.util.Objects;
-
-import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -15,8 +12,7 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
-@EqualsAndHashCode
-public class DocumentNodeItemType implements ItemType {
+public class DocumentNodeItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -41,6 +37,11 @@ public class DocumentNodeItemType implements ItemType {
         return this.elementTestType == null;
     }
 
+    @Override
+    protected Object equalityKey() {
+        return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
+    }
+
     public ItemType getElementTestType() {
         return this.elementTestType;
     }
@@ -55,15 +56,6 @@ public class DocumentNodeItemType implements ItemType {
     public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
         this.catalogueName = kryo.readObjectOrNull(input, Name.class);
         this.elementTestType = kryo.readObjectOrNull(input, ElementNodeItemType.class);
-    }
-
-    @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof DocumentNodeItemType other)) {
-            return false;
-        }
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.elementTestType, other.elementTestType);
     }
 
     @Override

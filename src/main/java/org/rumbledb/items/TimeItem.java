@@ -12,13 +12,11 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
 
-public class TimeItem implements Item {
+public class TimeItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -71,20 +69,6 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -102,11 +86,6 @@ public class TimeItem implements Item {
     @Override
     public boolean hasTimeZone() {
         return this.hasTimeZone;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.value.hashCode();
     }
 
     @Override

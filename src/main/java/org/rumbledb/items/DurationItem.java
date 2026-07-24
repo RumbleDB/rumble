@@ -14,8 +14,6 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -23,7 +21,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public class DurationItem implements Item {
+public class DurationItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -63,20 +61,6 @@ public class DurationItem implements Item {
             return new DurationItem(this.periodValue);
         }
         throw new IllegalStateException("Invalid DurationItem state");
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -121,11 +105,6 @@ public class DurationItem implements Item {
     @Override
     public boolean getEffectiveBooleanValue() {
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.durationValue, this.periodValue);
     }
 
     @Override

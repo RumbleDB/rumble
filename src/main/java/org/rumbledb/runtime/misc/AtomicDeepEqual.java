@@ -17,6 +17,8 @@
 package org.rumbledb.runtime.misc;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 
 /**
  * Atom-only {@code fn:deep-equal} behavior shared by {@code op:same-key} (FO 3.1, section 17.1.1)
@@ -37,7 +39,17 @@ public final class AtomicDeepEqual {
         if (bothFloatOrDoubleNaN(item1, item2)) {
             return true;
         }
-        return item1.equals(item2);
+        try {
+            return ComparisonIterator.compareItems(
+                item1,
+                item2,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            ) == 0;
+        } catch (RuntimeException e) {
+            // Deep-equal is false for atomic values that cannot be value-compared.
+            return false;
+        }
     }
 
     private static boolean bothFloatOrDoubleNaN(Item item1, Item item2) {

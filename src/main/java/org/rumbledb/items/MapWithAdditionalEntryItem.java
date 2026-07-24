@@ -36,7 +36,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-public class MapWithAdditionalEntryItem implements Item {
+public class MapWithAdditionalEntryItem extends AbstractMapItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -47,7 +47,6 @@ public class MapWithAdditionalEntryItem implements Item {
     private Item original;
     private Item additionalKey;
     private List<Item> additionalValue;
-    private ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
 
     public MapWithAdditionalEntryItem() {
         this.original = null;
@@ -114,7 +113,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemKeys() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (this.itemSameKeyComparator.compare(key, this.additionalKey) != 0) {
+            if (!AtomicItemEquivalence.equivalent(key, this.additionalKey)) {
                 result.add(key);
             }
         }
@@ -140,7 +139,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
-        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
+        if (AtomicItemEquivalence.equivalent(this.additionalKey, key)) {
             return true;
         }
         return this.original.hasKey(key);
@@ -150,7 +149,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<Item> getItemValues() {
         List<Item> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (AtomicItemEquivalence.equivalent(key, this.additionalKey)) {
                 continue;
             }
             result.add(this.original.getItemByKey(key));
@@ -166,7 +165,7 @@ public class MapWithAdditionalEntryItem implements Item {
     public List<List<Item>> getSequenceValues() {
         List<List<Item>> result = new ArrayList<>();
         for (Item key : this.original.getItemKeys()) {
-            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
+            if (AtomicItemEquivalence.equivalent(key, this.additionalKey)) {
                 continue;
             }
             result.add(this.original.getSequenceByKey(key));
@@ -188,7 +187,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
+        if (AtomicItemEquivalence.equivalent(this.additionalKey, key)) {
             if (this.additionalValue.size() != 1) {
                 throw new OurBadException("Map is not an object.");
             }
@@ -207,7 +206,7 @@ public class MapWithAdditionalEntryItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
+        if (AtomicItemEquivalence.equivalent(this.additionalKey, key)) {
             return this.additionalValue;
         }
         return this.original.getSequenceByKey(key);
@@ -366,57 +365,4 @@ public class MapWithAdditionalEntryItem implements Item {
         throw new OurBadException("Cannot change collection of a MapEntryItem, which is not mutable.");
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (Item key : this.original.getItemKeys()) {
-            List<Item> thisSequence = this.original.getSequenceByKey(key);
-            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
-                thisSequence = this.additionalValue;
-            }
-            List<Item> otherSequence = otherItem.getSequenceByKey(key);
-            if (otherSequence == null || thisSequence.size() != otherSequence.size()) {
-                return false;
-            }
-            for (int i = 0; i < thisSequence.size(); i++) {
-                if (!thisSequence.get(i).equals(otherSequence.get(i))) {
-                    return false;
-                }
-            }
-        }
-        for (Item key : otherItem.getItemKeys()) {
-            if (this.itemSameKeyComparator.compare(key, this.additionalKey) == 0) {
-                List<Item> otherSequence = otherItem.getSequenceByKey(key);
-                if (otherSequence == null || this.additionalValue.size() != otherSequence.size()) {
-                    return false;
-                }
-                for (int i = 0; i < this.additionalValue.size(); i++) {
-                    if (!this.additionalValue.get(i).equals(otherSequence.get(i))) {
-                        return false;
-                    }
-                }
-            }
-            if (getSequenceByKey(key) == null) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.getItemKeys().size();
-        for (Item key : this.getItemKeys()) {
-            result += key.hashCode();
-            for (Item value : this.getSequenceByKey(key)) {
-                result += value.hashCode();
-            }
-        }
-        return result;
-    }
 }

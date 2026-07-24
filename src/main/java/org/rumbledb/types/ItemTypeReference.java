@@ -12,7 +12,7 @@ import org.rumbledb.exceptions.UndefinedTypeException;
 import java.io.Serial;
 import java.util.*;
 
-public class ItemTypeReference implements ItemType {
+public class ItemTypeReference extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -120,11 +120,12 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getAllowedFacets();
     }
 
-    public boolean equals(Object other) {
+    @Override
+    protected Object equalityKey() {
         if (this.resolvedItemType == null) {
-            throw new OurBadException("Unresolved type: " + this.name);
+            return namedTypeKey(this.name);
         }
-        return this.resolvedItemType.equals(other);
+        return equalityKeyOf(this.resolvedItemType);
     }
 
     @Override

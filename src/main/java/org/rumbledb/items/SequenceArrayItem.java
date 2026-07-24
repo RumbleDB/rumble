@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class SequenceArrayItem implements Item {
+public class SequenceArrayItem extends AbstractArrayItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -70,32 +70,6 @@ public class SequenceArrayItem implements Item {
             copiedMemberSequences.add(copiedMember);
         }
         return new SequenceArrayItem(copiedMemberSequences);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isArray()) {
-            return false;
-        }
-        if (getSize() != otherItem.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> thisMember = this.getSequenceAt(i);
-            List<Item> otherMember = otherItem.getSequenceAt(i);
-            if (thisMember.size() != otherMember.size()) {
-                return false;
-            }
-            for (int j = 0; j < thisMember.size(); j++) {
-                if (!thisMember.get(j).equals(otherMember.get(j))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     // region arrays
@@ -259,19 +233,6 @@ public class SequenceArrayItem implements Item {
         this.pathIn = kryo.readObject(input, String.class);
         this.location = kryo.readObject(input, String.class);
         this.collection = kryo.readObjectOrNull(input, Collection.class);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = 1;
-        for (int i = 0; i < getSize(); ++i) {
-            List<Item> member = this.memberSequences.get(i);
-            result = 31 * result + member.size();
-            for (Item item : member) {
-                result = 31 * result + item.hashCode();
-            }
-        }
-        return result;
     }
 
     @Override
