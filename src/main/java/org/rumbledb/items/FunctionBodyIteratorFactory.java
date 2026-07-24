@@ -14,6 +14,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -28,7 +30,8 @@ import org.rumbledb.runtime.RuntimeIterator;
  * Note: this is just a temporary solution to reduce the expense of deep copy operations on function body iterators.
  * We will switch to a cheaper and generic cursor-based solution in the future.
  */
-final class FunctionBodyIteratorFactory implements Serializable {
+@NoArgsConstructor(force = true, access = AccessLevel.PUBLIC) // For Kryo serialization
+public final class FunctionBodyIteratorFactory implements Serializable {
 
     private static final long serialVersionUID = 1L;
 

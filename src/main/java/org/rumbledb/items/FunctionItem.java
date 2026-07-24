@@ -44,9 +44,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
 import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
@@ -342,62 +339,7 @@ public class FunctionItem implements Item {
             + this.signature.hashCode();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.identifier);
-        kryo.writeObject(output, this.parameterNames);
-        kryo.writeObject(output, this.signature.getParameterTypes());
-        kryo.writeObject(output, this.signature.getReturnType());
-        // kryo.writeObject(output, this.bodyIterator);
-        kryo.writeObject(output, this.localVariablesInClosure);
-        kryo.writeObject(output, this.RDDVariablesInClosure);
-        kryo.writeObject(output, this.dataFrameVariablesInClosure);
-        kryo.writeObject(output, this.dynamicModuleContext);
 
-        // convert RuntimeIterator to byte[] data
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(getBodyIterator());
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            output.writeInt(data.length);
-            output.writeBytes(data);
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to byte[]:" + e.getMessage()
-            );
-        }
-        output.writeBoolean(this.isBuiltin);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.identifier = kryo.readObject(input, FunctionIdentifier.class);
-        this.parameterNames = kryo.readObject(input, ArrayList.class);
-        List<SequenceType> parameters = kryo.readObject(input, ArrayList.class);
-        SequenceType returnType = kryo.readObject(input, SequenceType.class);
-        this.signature = new FunctionSignature(parameters, returnType);
-        // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
-        this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
-
-        try {
-            int dataLength = input.readInt();
-            byte[] data = input.readBytes(dataLength);
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIteratorFactory = createBodyIteratorFactory((RuntimeIterator) ois.readObject());
-        } catch (Exception e) {
-            throw new OurBadException(
-                    "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()
-            );
-        }
-        this.isBuiltin = input.readBoolean();
-    }
 
     @Override
     public ItemType getDynamicType() {

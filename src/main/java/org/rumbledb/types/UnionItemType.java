@@ -52,25 +52,7 @@ public class UnionItemType implements ItemType {
         this.userDefined = userDefined;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeClassAndObject(output, this.name);
-        kryo.writeClassAndObject(output, this.baseType);
-        output.writeInt(this.typeTreeDepth);
-        kryo.writeClassAndObject(output, this.types);
-        output.writeBoolean(this.userDefined);
 
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = (Name) kryo.readClassAndObject(input);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-        this.types = (List<ItemType>) kryo.readClassAndObject(input);
-        this.userDefined = input.readBoolean();
-    }
 
     @Override
     public boolean equals(Object other) {

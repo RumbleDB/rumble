@@ -1,8 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serial;
 import java.time.Duration;
@@ -80,15 +77,7 @@ public class YearMonthDurationItem implements Item {
         return Objects.hash(this.value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = normalizeMonthsToYears(Period.parse(input.readString()));
-    }
 
     @Override
     public boolean equals(Object other) {

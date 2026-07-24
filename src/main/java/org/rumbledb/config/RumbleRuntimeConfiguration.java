@@ -27,15 +27,12 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.serialization.SerializationParameters;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -44,7 +41,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
+public class RumbleRuntimeConfiguration implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -261,7 +258,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * @param newValue the allowed URI prefixes.
      */
     public void setAllowedURIPrefixes(List<String> newValue) {
-        this.allowedPrefixes = newValue;
+        this.allowedPrefixes = new ArrayList<>(newValue);
     }
 
     /**
@@ -344,9 +341,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.laxJSONNullValidation = true;
         }
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
-            this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
+            this.allowedPrefixes = new ArrayList<>(
+                    Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"))
+            );
         } else {
-            this.allowedPrefixes = Arrays.asList();
+            this.allowedPrefixes = new ArrayList<>();
         }
         if (this.arguments.containsKey("input-format")) {
             this.inputFormat = this.arguments.get("input-format").toLowerCase();
@@ -1287,16 +1286,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return sb.toString();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.arguments);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.arguments = kryo.readObject(input, HashMap.class);
-    }
 
     public static final String DEFAULT_XML_VERSION = "1.1";
 

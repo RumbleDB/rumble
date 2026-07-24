@@ -38,9 +38,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class ObjectItem implements Item {
 
@@ -388,31 +385,7 @@ public class ObjectItem implements Item {
         }
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.values);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        output.writeDouble(this.topLevelOrder);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.topLevelOrder = input.readDouble();
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-        rebuildKeyStringIndex();
-    }
 
     public int hashCode() {
         int result = 0;

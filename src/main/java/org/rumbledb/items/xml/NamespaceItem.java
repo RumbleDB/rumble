@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -67,21 +64,7 @@ public class NamespaceItem implements Item {
         // Namespaces do not have descendants.
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        output.writeString(this.prefix);
-        output.writeString(this.uri);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.prefix = input.readString();
-        this.uri = input.readString();
-    }
 
     @Override
     public boolean isNode() {

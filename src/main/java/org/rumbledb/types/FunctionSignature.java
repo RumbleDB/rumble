@@ -20,10 +20,13 @@
 
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+@NoArgsConstructor() // For Kryo serialization
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
     private SequenceType returnType;

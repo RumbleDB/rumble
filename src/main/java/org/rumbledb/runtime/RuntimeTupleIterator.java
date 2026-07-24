@@ -20,10 +20,6 @@
 
 package org.rumbledb.runtime;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -47,7 +43,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple>, KryoSerializable {
+public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -95,21 +91,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         this.child.close();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this.hasNext);
-        output.writeBoolean(this.isOpen);
-        kryo.writeObject(output, this.currentDynamicContext);
-        kryo.writeObject(output, this.child);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.hasNext = input.readBoolean();
-        this.isOpen = input.readBoolean();
-        this.currentDynamicContext = kryo.readObject(input, DynamicContext.class);
-        this.child = kryo.readObject(input, RuntimeTupleIterator.class);
-    }
 
     public boolean isOpen() {
         return this.isOpen;
