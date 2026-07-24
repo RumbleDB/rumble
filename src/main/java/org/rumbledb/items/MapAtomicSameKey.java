@@ -86,9 +86,7 @@ public final class MapAtomicSameKey {
      * Gregorian branch: types match, timezone precondition (FO 3.1), then {@code fn:deep-equal}.
      */
     private static boolean gregorianSameKey(Item k1, Item k2) {
-        boolean tzPrecondition = (k1.hasTimeZone() && k2.hasTimeZone())
-            || (!k1.hasTimeZone() && !k2.hasTimeZone())
-            || AtomicDeepEqual.deepEqual(k1, k2);
+        boolean tzPrecondition = k1.hasTimeZone() == k2.hasTimeZone();
         if (!tzPrecondition) {
             return false;
         }
@@ -200,11 +198,10 @@ public final class MapAtomicSameKey {
             return BigDecimal.valueOf(k.getIntValue());
         }
         if (k.isDouble()) {
-            double d = k.getDoubleValue();
-            return BigDecimal.valueOf(d);
+            return new BigDecimal(k.getDoubleValue());
         }
         if (k.isFloat()) {
-            return new BigDecimal(Float.toString(k.getFloatValue()));
+            return new BigDecimal(k.getFloatValue());
         }
         return k.castToDecimalValue();
     }

@@ -119,10 +119,10 @@ public final class AtomicItemEquivalence {
             return BigDecimal.valueOf(item.getIntValue());
         }
         if (item.isDouble()) {
-            return BigDecimal.valueOf(item.getDoubleValue());
+            return new BigDecimal(item.getDoubleValue());
         }
         if (item.isFloat()) {
-            return new BigDecimal(Float.toString(item.getFloatValue()));
+            return new BigDecimal(item.getFloatValue());
         }
         return item.castToDecimalValue();
     }

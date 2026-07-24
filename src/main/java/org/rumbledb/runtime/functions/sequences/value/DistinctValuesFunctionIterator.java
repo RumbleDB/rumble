@@ -30,6 +30,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.AtomicValueComparison;
+import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 
 
 import java.io.Serial;
@@ -97,7 +99,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
         while (this.sequenceIterator.hasNext()) {
             Item item = this.sequenceIterator.next();
-            if (!this.prevResults.contains(item)) {
+            if (!containsEquivalentValue(item)) {
                 this.prevResults.add(item);
                 this.nextResult = item;
                 break;
@@ -112,16 +114,28 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    private boolean containsEquivalentValue(Item candidate) {
+        for (Item previous : this.prevResults) {
+            if (AtomicValueComparison.equal(previous, candidate)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         checkCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.distinct();
+        return childRDD.map(AtomicValueComparisonKey::new)
+            .distinct()
+            .map(AtomicValueComparisonKey::getItem);
     }
 
     @Override
     protected boolean implementsDataFrames() {
-        return true;
+        // SQL DISTINCT does not implement XDM numeric promotion or NaN equality.
+        return false;
     }
 
     @Override
