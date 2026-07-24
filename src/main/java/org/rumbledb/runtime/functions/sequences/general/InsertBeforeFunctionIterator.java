@@ -120,17 +120,6 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.currentPosition = 1; // initialize index as the first item
-        this.insertingNow = false;
-        this.insertingCompleted = false;
-
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.insertIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

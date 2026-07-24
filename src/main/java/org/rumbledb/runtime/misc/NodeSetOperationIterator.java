@@ -115,11 +115,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         this.nextResultIndex = 0;
     }
 
-    @Override
-    protected void resetLocal() {
-        openLocal();
-    }
-
     private List<Item> computeNodeSet(DynamicContext context) {
         Set<Item> leftNodes = buildNodeSet(this.leftIterator, context, "left");
         Set<Item> rightNodes = buildNodeSet(this.rightIterator, context, "right");

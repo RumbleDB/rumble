@@ -78,11 +78,6 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext dynamicContext) {
-        startLocal(dynamicContext);
-    }
-
-    @Override
     public Item next() {
         if (this.hasNext) {
             iterateChildren();

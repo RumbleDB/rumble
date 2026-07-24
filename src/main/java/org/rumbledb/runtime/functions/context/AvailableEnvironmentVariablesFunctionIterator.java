@@ -40,13 +40,6 @@ public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunction
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.index = 0;
-        this.hasNext = this.names != null && !this.names.isEmpty();
-    }
-
-    @Override
     public Item next() {
         if (!this.hasNext) {
             throw new IteratorFlowException(

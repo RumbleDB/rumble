@@ -340,7 +340,7 @@ public class XhtmlSerializer extends XmlSerializer {
                 emittedDefaultNamespaceForNormalizedElement = true;
             }
         }
-        for (Item namespace : item.declaredNamespaceNodes()) {
+        for (Item namespace : getNamespaceNodesToSerialize(item)) {
             if (shouldSkipNamespaceDeclaration(item, namespace, emittedDefaultNamespaceForNormalizedElement)) {
                 continue;
             }

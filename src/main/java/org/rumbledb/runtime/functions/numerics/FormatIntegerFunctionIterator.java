@@ -20,6 +20,7 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
         super(arguments, staticContext);
     }
 
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);

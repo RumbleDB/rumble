@@ -34,11 +34,6 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
         computeResults();
     }
 
-    @Override
-    protected void resetLocal() {
-        computeResults();
-    }
-
     private void computeResults() {
         List<Item> nodes = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
         for (Item node : nodes) {

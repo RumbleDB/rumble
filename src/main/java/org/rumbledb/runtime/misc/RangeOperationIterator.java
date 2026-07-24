@@ -152,6 +152,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return null;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
@@ -190,10 +191,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
     }
 
     @Override

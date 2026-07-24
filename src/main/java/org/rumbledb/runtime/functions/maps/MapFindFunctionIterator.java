@@ -145,13 +145,6 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    @Override
     protected void closeLocal() {
         this.resultItem = null;
         this.hasProducedResult = false;

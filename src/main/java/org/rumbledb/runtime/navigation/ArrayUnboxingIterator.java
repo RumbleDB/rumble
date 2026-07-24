@@ -91,12 +91,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -192,6 +186,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());

@@ -163,6 +163,7 @@ public class TimeItem implements Item {
         return this.value.getOffset().getTotalSeconds() / 60;
     }
 
+    @Override
     public OffsetTime getTimeValue() {
         return this.value;
     }

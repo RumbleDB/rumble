@@ -86,12 +86,6 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-    }
-
-    @Override
     public boolean hasNextLocal() {
         return this.iterator.hasNext();
     }

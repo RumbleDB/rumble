@@ -86,6 +86,7 @@ public class StringItem implements Item {
         return getStringValue();
     }
 
+    @Override
     public double castToDoubleValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -100,6 +101,7 @@ public class StringItem implements Item {
         return Double.parseDouble(this.getValue());
     }
 
+    @Override
     public float castToFloatValue() {
         String trimmedValue = this.value.trim();
         if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
@@ -117,14 +119,17 @@ public class StringItem implements Item {
         return Float.parseFloat(this.getValue());
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return new BigDecimal(this.value.trim());
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return new BigInteger(this.value.trim());
     }
 
+    @Override
     public int castToIntValue() {
         return Integer.parseInt(this.value.trim());
     }
@@ -134,6 +139,7 @@ public class StringItem implements Item {
         return true;
     }
 
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
     }

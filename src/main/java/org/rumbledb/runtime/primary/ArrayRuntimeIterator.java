@@ -76,6 +76,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {

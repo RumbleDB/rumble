@@ -117,16 +117,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        setLast();
-        this.mapValues = new LinkedList<>();
-        this.position = 0;
-        this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -178,6 +168,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return mapValuesRaw;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
@@ -187,6 +178,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         return result;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

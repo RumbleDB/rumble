@@ -41,6 +41,7 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
         this.mutable = mutable;
     }
 
+    @Override
     public Item call(Item arg0) throws Exception {
         if (!arg0.isObject())
             return arg0;

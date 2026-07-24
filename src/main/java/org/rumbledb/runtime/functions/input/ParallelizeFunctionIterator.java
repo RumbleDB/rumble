@@ -119,11 +119,6 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.children.get(0).hasNext();
     }

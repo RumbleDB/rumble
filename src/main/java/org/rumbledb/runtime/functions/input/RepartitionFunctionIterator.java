@@ -64,11 +64,6 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }

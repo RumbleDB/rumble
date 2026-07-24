@@ -187,11 +187,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        initializeLocal();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -218,9 +213,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
             return;
         } else {
-            if (this.sequenceIterator.isOpen()) {
-                this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-            } else {
+            if (!this.sequenceIterator.isOpen()) {
                 this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
             }
 

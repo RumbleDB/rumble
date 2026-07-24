@@ -138,6 +138,7 @@ public class FloatItem implements Item {
         return this.value;
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -145,10 +146,12 @@ public class FloatItem implements Item {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return Float.valueOf(this.value).intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }

@@ -51,6 +51,7 @@ public class CountClause extends Clause {
         return this.variableName;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

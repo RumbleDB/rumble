@@ -38,6 +38,7 @@ public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
         this.key = key;
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 

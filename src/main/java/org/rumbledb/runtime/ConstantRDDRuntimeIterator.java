@@ -59,12 +59,6 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         // TODO Auto-generated method stub
         return false;

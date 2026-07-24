@@ -14,26 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package org.rumbledb.runtime;
+package org.rumbledb.exceptions;
 
-import sparksoniq.jsoniq.tuple.FlworTuple;
+import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serializable;
+public class MoreThanOneCopyNamespacesDeclarationException extends RumbleException {
 
-import org.rumbledb.context.DynamicContext;
+    private static final long serialVersionUID = 1L;
 
-public interface RuntimeTupleIteratorInterface extends Serializable {
-    void open(DynamicContext context);
-
-    void close();
-
-    void reset(DynamicContext context);
-
-    boolean hasNext();
-
-    FlworTuple next();
+    public MoreThanOneCopyNamespacesDeclarationException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.MoreThanOneCopyNamespacesDeclarationErrorCode, metadata);
+    }
 }

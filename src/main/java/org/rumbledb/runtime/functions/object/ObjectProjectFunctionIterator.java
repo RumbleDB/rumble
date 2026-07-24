@@ -123,20 +123,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
-        if (this.projectionKeys.isEmpty()) {
-            throw new InvalidSelectorException(
-                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
-                    getMetadata()
-            );
-        }
-
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }

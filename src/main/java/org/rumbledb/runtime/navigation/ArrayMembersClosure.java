@@ -16,6 +16,7 @@ public class ArrayMembersClosure implements FlatMapFunction<Item, Item> {
     public ArrayMembersClosure() {
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 

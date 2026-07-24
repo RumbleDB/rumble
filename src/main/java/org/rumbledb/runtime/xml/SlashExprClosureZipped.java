@@ -38,6 +38,7 @@ public class SlashExprClosureZipped implements FlatMapFunction<Tuple2<Item, Long
         this.contextSize = contextSize;
     }
 
+    @Override
     public Iterator<Item> call(Tuple2<Item, Long> itemWithIndex) {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(itemWithIndex._1());

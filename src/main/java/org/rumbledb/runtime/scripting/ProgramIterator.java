@@ -58,11 +58,6 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.statementsAndExprIterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         if (!this.encounteredExitStatement) {
             return this.statementsAndExprIterator.hasNext();

@@ -115,14 +115,6 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.pendingResults.clear();
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.mapIterator.isOpen()) {
             this.mapIterator.close();

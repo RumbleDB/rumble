@@ -55,6 +55,7 @@ public class TreatExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

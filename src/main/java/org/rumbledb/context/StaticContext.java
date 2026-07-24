@@ -52,6 +52,8 @@ public class StaticContext {
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
+    private boolean copyNamespacesPreserve;
+    private boolean copyNamespacesInherit;
     private SerializationParameters serializationParameters;
     private Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
@@ -99,6 +101,8 @@ public class StaticContext {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
@@ -122,6 +126,8 @@ public class StaticContext {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -590,6 +596,14 @@ public class StaticContext {
         this.boundarySpacePreserve = boundarySpacePreserve;
     }
 
+    public void setCopyNamespacesMode(boolean preserve, boolean inherit) {
+        if (this.parent != null) {
+            throw new OurBadException("Copy-namespaces mode can only be set in the root static context.");
+        }
+        this.copyNamespacesPreserve = preserve;
+        this.copyNamespacesInherit = inherit;
+    }
+
     /**
      * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
      */
@@ -622,6 +636,20 @@ public class StaticContext {
             return this.parent.isBoundarySpacePreserve();
         }
         return this.boundarySpacePreserve;
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesPreserve();
+        }
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesInherit();
+        }
+        return this.copyNamespacesInherit;
     }
 
     public void addStaticallyKnownCollation(String uri) {

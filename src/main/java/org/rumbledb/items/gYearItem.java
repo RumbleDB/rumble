@@ -87,6 +87,7 @@ public class gYearItem implements Item {
         return false;
     }
 
+    @Override
     public String getStringValue() {
         return String.format(
             "%s%04d%s",

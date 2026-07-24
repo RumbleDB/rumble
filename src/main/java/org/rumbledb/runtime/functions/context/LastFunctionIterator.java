@@ -55,6 +55,7 @@ public class LastFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return result;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();

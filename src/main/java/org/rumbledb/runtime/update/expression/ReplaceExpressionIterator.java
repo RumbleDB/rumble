@@ -62,11 +62,6 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return false;
     }

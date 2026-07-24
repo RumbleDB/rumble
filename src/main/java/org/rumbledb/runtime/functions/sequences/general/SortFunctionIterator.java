@@ -246,9 +246,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
 
     private RuntimeStaticContext localStaticContext() {
         return getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(ExecutionMode.LOCAL)
-            .withMetadata(getMetadata());
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
     }
 
     @Override
@@ -264,20 +266,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         Item result = this.sortedItems.get(this.nextIndex++);
         this.hasNext = this.nextIndex < this.sortedItems.size();
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.inputIterator.reset(this.currentDynamicContextForLocalExecution);
-        if (this.collationIterator != null) {
-            this.collationIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.keyIterator != null) {
-            this.keyIterator.reset(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.nextIndex = 0;
-        this.hasNext = !this.sortedItems.isEmpty();
     }
 
     @Override

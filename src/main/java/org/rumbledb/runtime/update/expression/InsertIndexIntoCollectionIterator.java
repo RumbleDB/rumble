@@ -97,10 +97,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     }
 
-    @Override
-    protected void resetLocal() {
-
-    }
 
     @Override
     protected boolean hasNextLocal() {
@@ -141,7 +137,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = targetItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                this.staticContext.getStaticURI(),
+                logicalPath,
+                getMetadata()
+            );
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 

@@ -93,13 +93,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.lookupResultQueue = null;
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -260,6 +253,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);

@@ -66,13 +66,6 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.nextResults.clear();
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

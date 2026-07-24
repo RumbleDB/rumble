@@ -69,13 +69,6 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
-        pul.applyUpdates(this.getMetadata());
-        this.returnIterator.reset(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.returnIterator.hasNext();
     }

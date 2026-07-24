@@ -157,14 +157,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        if (this.sequenceIterator != null)
-            this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.usedContext = false;
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

@@ -57,6 +57,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      *
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
+    @Override
     public int compare(Item v1, Item v2) {
         if (this.compareMin) {
             if (

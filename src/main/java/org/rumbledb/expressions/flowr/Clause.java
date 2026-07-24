@@ -223,6 +223,7 @@ public abstract class Clause extends Node {
     }
 
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -247,12 +248,11 @@ public abstract class Clause extends Node {
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return new RuntimeStaticContext(
-                conf,
-                null,
-                getHighestExecutionMode(visitorConfig),
-                getMetadata(),
-                this.staticContext
-        );
+        return RuntimeStaticContext.fromStaticContext(this.staticContext)
+            .configuration(conf)
+            .staticType(null)
+            .executionMode(getHighestExecutionMode(visitorConfig))
+            .metadata(getMetadata())
+            .build();
     }
 }

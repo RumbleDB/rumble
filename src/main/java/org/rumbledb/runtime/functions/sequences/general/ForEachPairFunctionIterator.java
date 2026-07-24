@@ -94,18 +94,18 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.firstArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.secondArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.firstArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.secondArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.pairIndex = 0;
 
         this.mutableFirstArgumentIterator = new MutableArgumentIterator(this.firstArgumentContext);
@@ -162,18 +162,6 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         Item result = this.currentCallbackIterator.next();
         advanceToNextResult(this.currentDynamicContextForLocalExecution);
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.sequenceIterator1.reset(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator2.reset(this.currentDynamicContextForLocalExecution);
-        this.actionIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
     }
 
     @Override

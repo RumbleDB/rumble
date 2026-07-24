@@ -95,18 +95,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        if (!this.iterator.hasNext()) {
-            throw new SequenceExceptionOneOrMore(
-                    "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
-        }
-        setNextResult();
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

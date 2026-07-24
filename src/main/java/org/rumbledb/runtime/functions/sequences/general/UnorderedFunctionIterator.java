@@ -75,17 +75,6 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-
-        if (!this.iterator.hasNext()) {
-            this.hasNext = false;
-        } else {
-            setNextResult();
-        }
-    }
-
-    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }

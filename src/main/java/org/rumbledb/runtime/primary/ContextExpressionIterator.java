@@ -70,6 +70,7 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
         return items.get(0);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);

@@ -106,12 +106,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal() {
-        this.builtinDelegate.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     protected void closeLocal() {
         if (this.builtinDelegate != null && this.builtinDelegate.isOpen()) {
             this.builtinDelegate.close();

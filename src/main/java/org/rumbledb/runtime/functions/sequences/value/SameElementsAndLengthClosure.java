@@ -37,6 +37,7 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
     public SameElementsAndLengthClosure() {
     }
 
+    @Override
     public Iterator<Boolean> call(Iterator<Item> iterator1, Iterator<Item> iterator2) throws Exception {
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {

@@ -123,11 +123,6 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        startLocal();
-    }
-
-    @Override
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.result; // save the result to be returned
