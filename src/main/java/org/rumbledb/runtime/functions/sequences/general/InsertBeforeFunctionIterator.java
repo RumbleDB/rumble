@@ -25,11 +25,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import scala.Tuple2;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +45,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
-    private RuntimeIterator insertIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
+    private final RuntimeIterator insertIterator;
     private Item nextResult;
     private int insertPosition; // position to start inserting
     private int currentPosition; // current position
@@ -56,6 +62,17 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
         this.insertIterator = this.getChild(2);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(
+                this.sequenceIterator,
+                this.positionIterator,
+                this.insertIterator,
+                context,
+                getMetadata()
+        );
     }
 
     @Override
@@ -180,6 +197,103 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             this.insertIterator.close();
         } else {
             this.hasNext = true;
+        }
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> positionPlan;
+        private final RuntimePlan<Item> insertPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> sequenceCursor;
+        private LocalCursor<Item> insertCursor;
+        private int insertPosition;
+        private int currentPosition;
+        private boolean insertionCompleted;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> sequencePlan,
+                @NonNull RuntimePlan<Item> positionPlan,
+                @NonNull RuntimePlan<Item> insertPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.insertPlan = insertPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item positionItem = LocalCursorUtils.materializeFirst(this.positionPlan, this.context);
+            this.insertPosition = positionItem.getIntValue();
+            this.currentPosition = 1;
+            this.insertionCompleted = false;
+
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+            this.insertCursor = this.insertPlan.createLocalCursor(this.context);
+            this.insertCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                if (this.insertCursor.hasNext()) {
+                    return true;
+                }
+                this.insertionCompleted = true;
+            }
+
+            if (this.sequenceCursor.hasNext()) {
+                return true;
+            }
+
+            if (!this.insertionCompleted && this.insertCursor.hasNext()) {
+                return true;
+            }
+            this.insertionCompleted = true;
+            return false;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                return this.insertCursor.next();
+            }
+            if (this.sequenceCursor.hasNext()) {
+                this.currentPosition++;
+                return this.sequenceCursor.next();
+            }
+            return this.insertCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            if (this.insertCursor != null) {
+                this.insertCursor.close();
+                this.insertCursor = null;
+            }
+        }
+
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
         }
     }
 }

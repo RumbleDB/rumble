@@ -27,16 +27,22 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
@@ -45,9 +51,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
-    private RuntimeIterator lengthIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
+    private final RuntimeIterator lengthIterator;
     private Item nextResult;
     private int startPosition;
     private int currentLength;
@@ -62,9 +68,18 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            this.lengthIterator = this.getChild(2);
-        }
+        this.lengthIterator = this.getChildren().size() == 3 ? this.getChild(2) : null;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(
+                this.sequenceIterator,
+                this.positionIterator,
+                this.lengthIterator,
+                context,
+                getMetadata()
+        );
     }
 
     @Override
@@ -276,6 +291,97 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
         } else {
             this.hasNext = true;
+        }
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> positionPlan;
+        private final RuntimePlan<Item> lengthPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> sequenceCursor;
+        private int startPosition;
+        private int currentLength;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> sequencePlan,
+                @NonNull RuntimePlan<Item> positionPlan,
+                RuntimePlan<Item> lengthPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.lengthPlan = lengthPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item positionItem = LocalCursorUtils.materializeFirst(this.positionPlan, this.context);
+            this.startPosition = (int) Math.round(positionItem.getDoubleValue());
+
+            this.currentLength = -1;
+            if (this.lengthPlan != null) {
+                Item lengthItem = LocalCursorUtils.materializeFirst(this.lengthPlan, this.context);
+                this.currentLength = (int) Math.round(lengthItem.getDoubleValue());
+            }
+            if (this.startPosition <= 0 && this.currentLength != -1) {
+                this.currentLength += this.startPosition - 1;
+            }
+            if (this.currentLength == 0) {
+                return;
+            }
+
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+            int currentPosition = 1;
+            while (currentPosition < this.startPosition && this.sequenceCursor.hasNext()) {
+                this.sequenceCursor.next();
+                currentPosition++;
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentLength != 0
+                && this.sequenceCursor != null
+                && this.sequenceCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            if (this.currentLength < -1) {
+                throw new OurBadException("Unexpected length value found.");
+            }
+            Item result = this.sequenceCursor.next();
+            if (this.currentLength > 0) {
+                this.currentLength--;
+            }
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+        }
+
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
         }
     }
 }

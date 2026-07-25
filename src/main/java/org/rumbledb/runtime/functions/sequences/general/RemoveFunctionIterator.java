@@ -25,10 +25,16 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
@@ -37,8 +43,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
     private Item nextResult;
     private int removePosition; // position to remove the item
     private int currentPosition; // current position
@@ -51,6 +57,11 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.sequenceIterator, this.positionIterator, context, getMetadata());
     }
 
     @Override
@@ -119,6 +130,73 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
             this.sequenceIterator.close();
         } else {
             this.hasNext = true;
+        }
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> positionPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> sequenceCursor;
+        private int removePosition;
+        private int currentPosition;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> sequencePlan,
+                @NonNull RuntimePlan<Item> positionPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item positionItem = LocalCursorUtils.materializeFirst(this.positionPlan, this.context);
+            this.removePosition = positionItem.getIntValue();
+            this.currentPosition = 1;
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            if (this.currentPosition == this.removePosition && this.sequenceCursor.hasNext()) {
+                this.sequenceCursor.next();
+                this.currentPosition++;
+            }
+            return this.sequenceCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            this.currentPosition++;
+            return this.sequenceCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+        }
+
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", this.metadata);
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
         }
     }
 }
