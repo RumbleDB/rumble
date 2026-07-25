@@ -23,6 +23,7 @@ package org.rumbledb.runtime.misc;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -31,9 +32,14 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Runtime iterator for node comparisons.
@@ -46,9 +52,9 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private NodeComparisonExpression.NodeComparisonOperator operator;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final NodeComparisonExpression.NodeComparisonOperator operator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public NodeComparisonRuntimeIterator(
             RuntimeIterator leftIterator,
@@ -60,6 +66,17 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.operator = operator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(
+                this.leftIterator,
+                this.rightIterator,
+                this.operator,
+                context,
+                getMetadata()
+        );
     }
 
     public NodeComparisonExpression.NodeComparisonOperator getOperator() {
@@ -98,6 +115,15 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             );
         }
 
+        return applyComparison(leftItem, rightItem, this.operator, getMetadata());
+    }
+
+    private static Item applyComparison(
+            Item leftItem,
+            Item rightItem,
+            NodeComparisonExpression.NodeComparisonOperator operator,
+            ExceptionMetadata metadata
+    ) {
         // 2. If either operand is an empty sequence, the result of the comparison is an empty sequence,
         // and the implementation need not evaluate the other operand or apply the operator.
         // However, an implementation may choose to evaluate the other operand in order to determine whether it raises
@@ -111,19 +137,19 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         if (!leftItem.isNode()) {
             throw new UnexpectedTypeException(
                     "Left operand of node comparison must be a node, got: " + leftItem.getDynamicType(),
-                    getMetadata()
+                    metadata
             );
         }
 
         if (!rightItem.isNode()) {
             throw new UnexpectedTypeException(
                     "Right operand of node comparison must be a node, got: " + rightItem.getDynamicType(),
-                    getMetadata()
+                    metadata
             );
         }
 
         boolean result;
-        switch (this.operator) {
+        switch (operator) {
             case NC_IS: // is
                 // 4. A comparison with the is operator is true if the two operand nodes are the same node;
                 // otherwise it is false.
@@ -136,18 +162,60 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 if (leftPos == null || rightPos == null) {
                     throw new UnexpectedTypeException(
                             "Node comparison in document order requires both operands to have a document position.",
-                            getMetadata()
+                            metadata
                     );
                 }
                 int comparison = leftPos.compareTo(rightPos);
-                result = this.operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
+                result = operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
                     ? comparison < 0
                     : comparison > 0;
                 break;
             default:
-                throw new OurBadException("Unrecognized node comparison operator: " + this.operator);
+                throw new OurBadException("Unrecognized node comparison operator: " + operator);
         }
 
         return ItemFactory.getInstance().createBooleanItem(result);
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> leftPlan;
+        private final RuntimePlan<Item> rightPlan;
+        private final NodeComparisonExpression.NodeComparisonOperator operator;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                RuntimePlan<Item> leftPlan,
+                RuntimePlan<Item> rightPlan,
+                NodeComparisonExpression.NodeComparisonOperator operator,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
+            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
+            this.operator = Objects.requireNonNull(operator, "operator cannot be null");
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            Item leftItem = materializeOperand(this.leftPlan, true);
+            Item rightItem = materializeOperand(this.rightPlan, false);
+            return applyComparison(leftItem, rightItem, this.operator, this.metadata);
+        }
+
+        private Item materializeOperand(RuntimePlan<Item> plan, boolean isLeftOperand) {
+            try {
+                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        (isLeftOperand ? "Left" : "Right")
+                            + " operand of node comparison must be a single node or empty sequence, got more than one item",
+                        this.metadata
+                );
+            }
+        }
     }
 }
