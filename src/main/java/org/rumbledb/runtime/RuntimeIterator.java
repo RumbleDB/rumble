@@ -21,8 +21,6 @@
 package org.rumbledb.runtime;
 
 import java.io.*;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 import lombok.NonNull;
@@ -33,24 +31,20 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LegacyRuntimeIteratorCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -103,79 +97,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
         try {
             open(dynamicContext);
-            if (hasNext()) {
-                Item item = this.next();
-                boolean result;
-                if (item.isBoolean()) {
-                    result = item.getBooleanValue();
-                } else if (item.isNumeric()) {
-                    if (position == null) {
-                        if (item.isInt()) {
-                            result = item.getIntValue() != 0;
-                        } else if (item.isInteger()) {
-                            result = !item.getIntegerValue().equals(BigInteger.ZERO);
-                        } else if (item.isDouble()) {
-                            result = !item.isNaN() && item.getDoubleValue() != 0;
-                        } else if (item.isFloat()) {
-                            result = !item.isNaN() && item.getFloatValue() != 0;
-                        } else if (item.isDecimal()) {
-                            result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
-                        } else {
-                            throw new OurBadException(
-                                    "Unexpected numeric type found while calculating effective boolean value."
-                            );
-                        }
-                    } else {
-                        result = ComparisonIterator.compareItems(
-                            item,
-                            position,
-                            ComparisonOperator.VC_EQ,
-                            getMetadata()
-                        ) == 0;
-                    }
-                } else if (item.isNull()) {
-                    result = false;
-                } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
-                    result = !item.getStringValue().isEmpty();
-                } else if (item.isNode()) {
-                    // returns true even if sequence has more items according to spec
-                    return true;
-                } else {
-                    if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
-                        if (item.isObject() || item.isArray()) {
-                            return true;
-                        }
-                    } else {
-                        if (item.isObject() || item.isArray()) {
-                            System.err.println(
-                                "Note: effective boolean value of "
-                                    + (item.isObject() ? "Object " : "Array ")
-                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                            );
-                        }
-                    }
-                    throw new InvalidArgumentTypeException(
-                            "Effective boolean value not defined for items of type "
-                                +
-                                item.getDynamicType().toString(),
-                            getMetadata()
-                    );
-                }
-
-                if (hasNext()) {
-                    throw new InvalidArgumentTypeException(
-                            "Effective boolean value not defined for sequences of more than one atomic item. "
-                                + "Sequence containing: "
-                                + item.serialize()
-                                + " must be a singleton.",
-                            getMetadata()
-                    );
-                }
-
-                return result;
-            } else {
-                return false;
-            }
+            return EffectiveBooleanValue.evaluateOpenSequence(
+                this::hasNext,
+                this::next,
+                this.staticContext,
+                position
+            );
         } finally {
             this.close();
         }
