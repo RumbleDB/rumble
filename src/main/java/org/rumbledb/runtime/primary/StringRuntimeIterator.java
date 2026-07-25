@@ -25,6 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
@@ -34,12 +36,17 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public StringRuntimeIterator(String value, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         // String unescaping is now handled in the translation visitor
         this.item = ItemFactory.getInstance().createStringItem(value);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new SingletonLocalCursor<>(this.item);
     }
 
     @Override

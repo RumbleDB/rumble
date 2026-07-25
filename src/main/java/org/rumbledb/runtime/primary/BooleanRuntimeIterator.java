@@ -25,6 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -35,12 +37,17 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public BooleanRuntimeIterator(boolean value, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.item = ItemFactory.getInstance().createBooleanItem(value);
 
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new SingletonLocalCursor<>(this.item);
     }
 
     @Override
@@ -57,4 +64,3 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 }
-

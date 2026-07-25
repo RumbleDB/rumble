@@ -24,6 +24,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -36,12 +38,17 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public DecimalRuntimeIterator(BigDecimal value, RuntimeStaticContext staticContext) {
         super(null, staticContext);
         this.item = ItemFactory.getInstance().createDecimalItem(value);
 
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new SingletonLocalCursor<>(this.item);
     }
 
     @Override
