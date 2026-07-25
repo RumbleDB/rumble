@@ -32,14 +32,19 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
@@ -51,7 +56,6 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
 
     public SumFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,17 +65,19 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        RuntimePlan<Item> zeroPlan = getChildren().size() > 1 ? getChild(1) : null;
+        return new Cursor(getChild(0), zeroPlan, context, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.item = computeSum(
+        return computeSum(
             zeroElement(context),
             this.getChild(0),
             context,
             getMetadata()
         );
-        if (this.item == null) {
-            return null;
-        }
-        return this.item;
     }
 
     private Item zeroElement(DynamicContext context) {
@@ -103,7 +109,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 metadata
             );
         } else {
-            return computeLocally(
+            return computeLocalSum(
                 zeroElement,
                 iterator,
                 context,
@@ -112,44 +118,46 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private static Item computeLocally(
+    private static Item computeLocalSum(
             Item zeroElement,
-            RuntimeIterator iterator,
+            RuntimePlan<Item> plan,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        iterator.open(context);
-
         Item result = null;
-        while (iterator.hasNext()) {
-            Item nextValue = iterator.next();
-            if (nextValue.isUntypedAtomic()) {
-                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
-            }
-            if (result == null) {
-                result = nextValue;
-            } else {
-                if (result.isUntypedAtomic()) {
-                    result = ItemFactory.getInstance().createDoubleItem(result.castToDoubleValue());
-                }
-                Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
-                if (sum == null) {
-                    throw new InvalidArgumentTypeException(
-                            " \"+\": operation not possible with parameters of type \""
-                                + result.getDynamicType().toString()
-                                + "\" and \""
-                                + nextValue.getDynamicType().toString()
-                                + "\"",
-                            metadata
-                    );
-                }
-                result = sum;
+        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+            cursor.open();
+            while (cursor.hasNext()) {
+                result = addToSum(result, cursor.next(), metadata);
             }
         }
         if (result == null) {
             result = zeroElement;
         }
-        iterator.close();
+        return result;
+    }
+
+    static Item addToSum(Item currentSum, Item nextValue, ExceptionMetadata metadata) {
+        if (nextValue.isUntypedAtomic()) {
+            nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
+        }
+        if (currentSum == null) {
+            return nextValue;
+        }
+        if (currentSum.isUntypedAtomic()) {
+            currentSum = ItemFactory.getInstance().createDoubleItem(currentSum.castToDoubleValue());
+        }
+        Item result = AdditiveOperationIterator.processItem(currentSum, nextValue, false);
+        if (result == null) {
+            throw new InvalidArgumentTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + currentSum.getDynamicType().toString()
+                        + "\" and \""
+                        + nextValue.getDynamicType().toString()
+                        + "\"",
+                    metadata
+            );
+        }
         return result;
     }
 
@@ -222,5 +230,33 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         // each row contains a single value
         return childContext;
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final RuntimePlan<Item> zeroPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                RuntimePlan<Item> zeroPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.childPlan = childPlan;
+            this.zeroPlan = zeroPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            Item zeroElement = this.zeroPlan == null
+                ? ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO)
+                : LocalCursorUtils.materializeFirst(this.zeroPlan, this.context);
+            return computeLocalSum(zeroElement, this.childPlan, this.context, this.metadata);
+        }
     }
 }

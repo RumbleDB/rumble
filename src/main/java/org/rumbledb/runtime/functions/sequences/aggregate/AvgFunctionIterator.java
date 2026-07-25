@@ -24,13 +24,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
@@ -42,7 +47,6 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
 
     public AvgFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -52,9 +56,18 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(getChild(0), context, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        RuntimeIterator child = this.getChild(0);
+        if (!child.isRDDOrDataFrame()) {
+            return computeLocalAverage(child, context, getMetadata());
+        }
         Item count = CountFunctionIterator.computeCount(
-            this.getChild(0),
+            child,
             context,
             getMetadata()
         );
@@ -66,17 +79,16 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item sum = SumFunctionIterator.computeSum(
             ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
-            this.getChild(0),
+            child,
             context,
             getMetadata()
         );
-        this.item = MultiplicativeOperationIterator.processItem(
+        return MultiplicativeOperationIterator.processItem(
             sum,
             count,
             MultiplicativeExpression.MultiplicativeOperator.DIV,
             getMetadata()
         );
-        return this.item;
     }
 
     @Override
@@ -88,6 +100,53 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return result;
         } else {
             return super.getVariableDependencies();
+        }
+    }
+
+    private static Item computeLocalAverage(
+            RuntimePlan<Item> plan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        Item sum = null;
+        long count = 0;
+        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+            cursor.open();
+            while (cursor.hasNext()) {
+                sum = SumFunctionIterator.addToSum(sum, cursor.next(), metadata);
+                count++;
+            }
+        }
+        if (count == 0) {
+            return null;
+        }
+        return MultiplicativeOperationIterator.processItem(
+            sum,
+            ItemFactory.getInstance().createLongItem(count),
+            MultiplicativeExpression.MultiplicativeOperator.DIV,
+            metadata
+        );
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.childPlan = childPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            return computeLocalAverage(this.childPlan, this.context, this.metadata);
         }
     }
 }

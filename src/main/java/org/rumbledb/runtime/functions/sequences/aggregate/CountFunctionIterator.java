@@ -29,11 +29,15 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +55,15 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        RuntimeIterator child = getChild(0);
+        Name countedVariable = child instanceof VariableReferenceIterator variable
+            ? variable.getVariableName()
+            : null;
+        return new Cursor(child, countedVariable, context, getMetadata());
     }
 
 
@@ -92,27 +105,22 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 metadata
             );
         } else {
-            return computeLocally(
+            return computeLocalCount(
                 iterator,
-                context,
-                metadata
+                context
             );
         }
     }
 
-    private static Item computeLocally(
-            RuntimeIterator iterator,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        iterator.open(context);
+    private static Item computeLocalCount(RuntimePlan<Item> plan, DynamicContext context) {
         long result = 0;
-
-        while (iterator.hasNext()) {
-            iterator.next();
-            result += 1;
+        try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
+            cursor.open();
+            while (cursor.hasNext()) {
+                cursor.next();
+                result++;
+            }
         }
-        iterator.close();
         return ItemFactory.getInstance().createLongItem(result);
     }
 
@@ -189,5 +197,34 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         return NativeClauseContext.NoNativeQuery;
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final Name countedVariable;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                Name countedVariable,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.childPlan = childPlan;
+            this.countedVariable = countedVariable;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            if (this.countedVariable != null) {
+                return this.context.getVariableValues()
+                    .getVariableCount(this.countedVariable, this.metadata);
+            }
+            return computeLocalCount(this.childPlan, this.context);
+        }
     }
 }
