@@ -26,6 +26,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.cursor.ConcatLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -53,6 +55,11 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(childIterators, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ConcatLocalCursor<>(getChildren(), context);
     }
 
     @Override
