@@ -79,7 +79,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 .isSequential(functionItem.getBodyIterator().isSequential())
                 .build()
         );
-
         this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
         if (isTailOptimization) {
             this.isPartialApplication = true;

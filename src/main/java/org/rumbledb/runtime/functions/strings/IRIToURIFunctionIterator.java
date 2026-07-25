@@ -25,7 +25,7 @@ public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

@@ -23,7 +23,7 @@ public class EnvironmentVariableFunctionIterator extends AtMostOneItemLocalRunti
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item nameItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
         String value = System.getenv(nameItem.getStringValue());
         if (value == null) {
             return null;
