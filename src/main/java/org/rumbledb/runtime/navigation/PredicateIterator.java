@@ -54,12 +54,14 @@ import org.rumbledb.types.TypeMappings;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private RuntimeIterator filter;
@@ -103,21 +105,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.close();
-        this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
-            setLast();
-        }
-        if (!this.isBooleanOnlyFilter) {
-            this.position = 0;
-            this.mustMaintainPosition = true;
-        }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -261,6 +248,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         return true;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         RuntimeIterator filter = this.children.get(1);
@@ -363,6 +351,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();

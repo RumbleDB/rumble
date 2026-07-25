@@ -37,17 +37,14 @@ import com.google.gson.stream.JsonReader;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.StringReader;
+import java.io.*;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     RuntimeIterator iterator;
     BufferedReader reader;
@@ -68,7 +65,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
         if (this.children.size() > 1) {
@@ -132,7 +129,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     protected void init() {
         try {
             URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticURI,
+                this.staticContext.getStaticURI(),
                 this.path.getStringValue(),
                 getMetadata()
             );
@@ -163,17 +160,6 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
         }
         this.reader = null;
         this.nextItem = null;
-    }
-
-    @Override
-    protected void resetLocal() {
-        try {
-            this.reader.close();
-        } catch (IOException e) {
-            handleException(e);
-        }
-        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        init();
     }
 
     @Override

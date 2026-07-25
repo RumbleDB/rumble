@@ -5,12 +5,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ObjectItem;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ObjectRemoveKeysClosure implements FlatMapFunction<Item, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<String> removalKeys;
     private ExceptionMetadata itemMetadata;
@@ -20,6 +22,7 @@ public class ObjectRemoveKeysClosure implements FlatMapFunction<Item, Item> {
         this.itemMetadata = itemMetadata;
     }
 
+    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<>();
         List<String> keys = new ArrayList<>();

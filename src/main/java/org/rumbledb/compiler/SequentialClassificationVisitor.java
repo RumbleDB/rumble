@@ -60,6 +60,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         this.variableBlockLevel = new HashMap<>();
     }
 
+    @Override
     protected DescendentSequentialProperties defaultAction(Node node, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = this.visitDescendants(node, argument);
         if (node instanceof Expression expression) {

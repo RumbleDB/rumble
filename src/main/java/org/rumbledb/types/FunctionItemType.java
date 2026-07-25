@@ -4,10 +4,12 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serial;
 import java.util.Set;
 
 public class FunctionItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final boolean isGeneric;

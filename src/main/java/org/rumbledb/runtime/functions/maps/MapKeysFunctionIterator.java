@@ -29,6 +29,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -44,6 +45,7 @@ import java.util.Queue;
  */
 public class MapKeysFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator mapIterator;
@@ -110,14 +112,6 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
         Item result = this.pendingResults.remove();
         setNextResult();
         return result;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.mapIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.pendingResults.clear();
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

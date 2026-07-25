@@ -29,11 +29,13 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private RuntimeIterator positionIterator;
@@ -73,14 +75,6 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.currentPosition = 1;
-
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

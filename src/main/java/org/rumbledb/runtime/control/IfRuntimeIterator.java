@@ -30,9 +30,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
+
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
 
@@ -57,14 +60,6 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         this(condition, branch, elseBranch, false, staticContext);
-    }
-
-    @Override
-    public void resetLocal() {
-        this.selectedIterator.close();
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
     }
 
     @Override

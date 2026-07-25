@@ -58,7 +58,6 @@ import org.w3c.dom.NodeList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -73,10 +72,7 @@ import java.util.Map;
 import java.util.Collections;
 import java.util.Set;
 
-public class ItemParser implements Serializable {
-
-
-    private static final long serialVersionUID = 1L;
+public class ItemParser {
 
     /**
      * Parses a JSON string to an item.

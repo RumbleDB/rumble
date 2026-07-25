@@ -29,6 +29,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
@@ -40,6 +41,7 @@ import java.util.StringJoiner;
  */
 public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     /** The content iterator */
     private final DataFunctionIterator contentIterator;

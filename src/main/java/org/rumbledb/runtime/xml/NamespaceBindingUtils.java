@@ -259,6 +259,26 @@ public final class NamespaceBindingUtils {
         }
     }
 
+    /**
+     * XQuery 3.1 computed attribute constructors:
+     * if the attribute QName has a namespace URI but no prefix, an implementation-defined prefix is used.
+     * The XML namespace is special-cased to use the required {@code xml} prefix.
+     */
+    public static Name normalizeComputedAttributeName(Name name) {
+        if (name == null) {
+            return null;
+        }
+        String namespace = name.getNamespace();
+        String prefix = name.getPrefix();
+        if (namespace != null && (prefix == null || prefix.isEmpty())) {
+            if (XML_NAMESPACE_URI.equals(namespace)) {
+                return new Name(namespace, "xml", name.getLocalName());
+            }
+            return new Name(namespace, "ns0", name.getLocalName());
+        }
+        return name;
+    }
+
     private static final class LexicalQNameSplit {
         final String prefix;
         final String local;
@@ -348,6 +368,43 @@ public final class NamespaceBindingUtils {
             NamespaceResolver namespaceResolver,
             ExceptionMetadata metadata
     ) {
+        if (lexical.startsWith("Q{")) {
+            int closeBrace = lexical.indexOf('}', 2);
+            if (closeBrace < 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (no closing '}') : " + lexical,
+                        metadata
+                );
+            }
+            String uriRaw = lexical.substring(2, closeBrace);
+            String local = lexical.substring(closeBrace + 1);
+            // XQuery EQNames use BracedURILiteral, which forbids brace characters inside the URI part.
+            // Dynamic computed attribute names coming from strings must reject malformed forms like Q{{}x or Q{}}x
+            // during QName conversion so the constructor raises XQDY0074 rather than constructing a bad node-name.
+            if (uriRaw.indexOf('{') >= 0 || uriRaw.indexOf('}') >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (invalid brace in URI part): " + lexical,
+                        metadata
+                );
+            }
+            if (local.isEmpty()) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (missing local name): " + lexical,
+                        metadata
+                );
+            }
+            if (!isValidNcName(local)) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName local name: " + lexical,
+                        metadata
+                );
+            }
+            String namespace = uriRaw.trim().replaceAll("\\s+", " ");
+            if (namespace.isEmpty()) {
+                return new Name(null, null, local);
+            }
+            return new Name(namespace, null, local);
+        }
         LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
         if (split.prefix == null) {
             return new Name(null, null, split.local);

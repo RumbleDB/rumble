@@ -23,10 +23,12 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
     private RuntimeIterator iterator;
@@ -62,13 +64,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    public void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        this.childIndex = 0;
-        setNextResult();
     }
 
     @Override

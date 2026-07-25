@@ -10,10 +10,12 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.InputStream;
+import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DocAvailableFunctionIterator(
@@ -30,7 +32,11 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         try {
-            URI uri = FileSystemUtil.resolveURI(this.staticURI, uriItem.getStringValue(), getMetadata());
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticContext.getStaticURI(),
+                uriItem.getStringValue(),
+                getMetadata()
+            );
             InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getConfiguration(), getMetadata());
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);

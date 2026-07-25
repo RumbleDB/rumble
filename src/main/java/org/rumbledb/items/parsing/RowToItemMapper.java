@@ -26,9 +26,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 
+import java.io.Serial;
+
 public class RowToItemMapper implements Function<Row, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
 

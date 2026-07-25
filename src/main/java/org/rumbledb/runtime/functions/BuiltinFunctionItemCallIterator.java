@@ -27,6 +27,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +36,7 @@ import java.util.List;
  */
 public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Item functionItem;
@@ -101,12 +103,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.builtinDelegate.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

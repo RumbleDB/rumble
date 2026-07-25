@@ -25,6 +25,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,6 +39,7 @@ import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkML
 
 public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private String estimatorShortName;
     private Estimator<?> estimator;
@@ -355,9 +357,12 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                this.staticContext.withStaticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
-                    .withExecutionMode(ExecutionMode.DATAFRAME)
-                    .withMetadata(getMetadata())
+                this.staticContext
+                    .toBuilder()
+                    .staticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
+                    .executionMode(ExecutionMode.DATAFRAME)
+                    .metadata(getMetadata())
+                    .build()
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(

@@ -12,9 +12,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.List;
 
 public class StatementsWithExprIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
@@ -118,11 +120,6 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         if (this.currentChild != null) {
             this.currentChild.close();
         }
-    }
-
-    @Override
-    public void resetLocal() {
-        startLocal();
     }
 
     @Override

@@ -4,7 +4,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
+
 public class AnyKindTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

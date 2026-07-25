@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Duration;
@@ -36,6 +37,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class AnnotatedItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item itemToAnnotate;

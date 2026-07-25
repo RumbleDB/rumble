@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 /**
@@ -60,6 +61,7 @@ import java.util.List;
  *      Operators 3.1: fn:base-uri</a>
  */
 public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> resultItems;

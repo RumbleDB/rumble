@@ -36,11 +36,13 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Item nextResult;
@@ -118,20 +120,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
-        if (this.projectionKeys.isEmpty()) {
-            throw new InvalidSelectorException(
-                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
-                    getMetadata()
-            );
-        }
-
-        setNextResult();
     }
 
     @Override

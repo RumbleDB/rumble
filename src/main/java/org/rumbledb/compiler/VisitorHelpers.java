@@ -664,6 +664,9 @@ public class VisitorHelpers {
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleRuntimeConfiguration configuration) {
+        if (new ParentPointerAnalysisVisitor().scan(node)) {
+            configuration.setOptimizeParentPointers(false);
+        }
         DynamicContextVisitor visitor = new DynamicContextVisitor(configuration);
         return visitor.visit(node, null);
     }

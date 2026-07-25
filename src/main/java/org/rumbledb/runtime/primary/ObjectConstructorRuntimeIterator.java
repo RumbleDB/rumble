@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -45,6 +46,7 @@ import sparksoniq.spark.SparkSessionManager;
 public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<RuntimeIterator> keys;
     private List<RuntimeIterator> values;

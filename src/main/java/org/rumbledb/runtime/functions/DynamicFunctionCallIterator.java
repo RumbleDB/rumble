@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -48,6 +49,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
+    @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private RuntimeIterator functionItemIterator;
@@ -180,12 +182,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new ArrayFunctionCallIterator(
                     this.functionItem,
                     keyIterator,
@@ -207,12 +209,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new MapFunctionCallIterator(
                     this.functionItem,
                     keyIterator,
@@ -273,12 +275,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal() {
-        this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
     public void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
@@ -289,6 +285,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         this.encounteredExitStatement = false;
     }
 
+    @Override
     protected boolean implementsDataFrames() {
         return true;
     }

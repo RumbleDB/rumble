@@ -10,9 +10,11 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.Collections;
 
 public class ExitStatementIterator extends HybridRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;
     private PendingUpdateList pendingUpdateList;
@@ -55,11 +57,6 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.childIterator.reset(this.currentDynamicContextForLocalExecution);
     }
 
     @Override

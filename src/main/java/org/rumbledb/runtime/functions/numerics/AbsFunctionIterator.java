@@ -30,11 +30,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 
 public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public AbsFunctionIterator(

@@ -20,26 +20,19 @@
 
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class UserDefinedFunctionExecutionModes implements Serializable, KryoSerializable {
-
-    private static final long serialVersionUID = 1L;
+public class UserDefinedFunctionExecutionModes {
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
@@ -177,23 +170,6 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
     public List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
         return this.userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.userDefinedFunctionsExecutionMode);
-        kryo.writeObject(output, this.userDefinedFunctionIdentifiersWithUnsetExecutionModes);
-        kryo.writeObject(output, this.userDefinedFunctionsParametersStorageMode);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.userDefinedFunctionsExecutionMode = kryo.readObject(input, HashMap.class);
-        this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = kryo.readObject(input, List.class);
-        this.userDefinedFunctionsParametersStorageMode = kryo.readObject(input, HashMap.class);
-    }
-
-
 
     @Override
     public String toString() {

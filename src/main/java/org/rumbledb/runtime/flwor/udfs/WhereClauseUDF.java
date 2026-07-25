@@ -27,9 +27,11 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
+import java.io.Serial;
 import java.util.List;
 
 public class WhereClauseUDF implements UDF1<Row, Boolean> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;

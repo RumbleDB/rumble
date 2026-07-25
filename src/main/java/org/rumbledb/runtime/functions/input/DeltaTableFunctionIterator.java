@@ -12,11 +12,13 @@ import sparksoniq.spark.SparkSessionManager;
 
 import static org.apache.spark.sql.functions.lit;
 
+import java.io.Serial;
 import java.util.List;
 
 
 public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public DeltaTableFunctionIterator(

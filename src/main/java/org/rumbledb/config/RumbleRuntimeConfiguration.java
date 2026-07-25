@@ -34,6 +34,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,7 +46,9 @@ import java.util.Set;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private static final String SHORTCUT_PREFIX = "-";
     private static final String ARGUMENT_PREFIX = "--";
     private HashMap<String, String> arguments;

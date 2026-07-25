@@ -32,11 +32,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private RuntimeIterator partitionsIterator;
@@ -114,11 +116,6 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.children.get(0).close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
     }
 
     @Override

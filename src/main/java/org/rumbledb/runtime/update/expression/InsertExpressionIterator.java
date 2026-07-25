@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.expression;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -24,6 +25,7 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 public class InsertExpressionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator mainIterator;
     private RuntimeIterator toInsertIterator;
@@ -64,11 +66,6 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-
-    }
-
-    @Override
-    protected void resetLocal() {
 
     }
 

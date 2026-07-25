@@ -9,10 +9,13 @@ import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
+
 public class TypePromotionClosure implements Function<Item, Item> {
     private String exceptionMessage;
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {

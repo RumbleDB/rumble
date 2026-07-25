@@ -23,10 +23,12 @@ package org.rumbledb.runtime.flwor.expression;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class OrderByClauseAnnotatedChildIterator implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private final boolean ascending;

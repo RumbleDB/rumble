@@ -44,6 +44,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -51,6 +52,7 @@ import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
@@ -86,12 +88,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Unboxing", getMetadata());
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -190,6 +186,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());

@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -10,6 +11,7 @@ import org.rumbledb.context.Name;
  */
 public class ItemItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static final ItemType item = new ItemItemType();
@@ -23,6 +25,7 @@ public class ItemItemType implements ItemType {
         this.name = name;
     }
 
+    @Override
     public boolean isTopmostItemType() {
         return true;
     }

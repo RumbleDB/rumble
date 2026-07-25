@@ -3,6 +3,7 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.util.Set;
 
 /**
@@ -10,6 +11,7 @@ import java.util.Set;
  */
 public class JsonItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     static final ItemType jsonItem = new JsonItemType();

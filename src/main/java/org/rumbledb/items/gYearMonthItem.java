@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import java.io.Serial;
 import java.time.*;
 
 import org.rumbledb.api.Item;
@@ -18,6 +19,7 @@ import java.util.regex.Pattern;
 
 public class gYearMonthItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private Year year;

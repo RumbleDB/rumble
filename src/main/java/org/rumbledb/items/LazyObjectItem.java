@@ -32,6 +32,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +42,7 @@ import java.util.Map;
 public class LazyObjectItem implements Item {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<String> keys;
     private Map<String, Item> values;

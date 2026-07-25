@@ -20,10 +20,8 @@
 
 package org.rumbledb.context;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
+
 import org.rumbledb.exceptions.OurBadException;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -44,6 +42,7 @@ import com.esotericsoftware.kryo.io.Output;
  *
  */
 public class Name implements Comparable<Name>, Serializable, KryoSerializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String namespace;
     private String prefix;
@@ -315,11 +314,13 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         this.hashCode = this.localName.hashCode() + this.namespace.hashCode();
     }
 
+    @Serial
     private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
         i.defaultReadObject();
         precomputeHashCode();
     }
 
+    @Serial
     private void writeObject(ObjectOutputStream i) throws IOException {
         i.defaultWriteObject();
     }

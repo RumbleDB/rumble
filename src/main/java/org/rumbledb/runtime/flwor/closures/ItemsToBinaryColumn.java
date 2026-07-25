@@ -27,12 +27,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemsToBinaryColumn implements Function<Item, Row> {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
 

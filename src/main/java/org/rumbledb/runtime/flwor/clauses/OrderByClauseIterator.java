@@ -56,11 +56,13 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serial;
 import java.util.*;
 
 public class OrderByClauseIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
+    @Serial
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
@@ -90,18 +92,6 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid order-by clause.");
         }
         this.child.open(this.currentDynamicContext);
-        this.localTupleResults.clear();
-        this.resultIndex = 0;
-        this.hasNext = this.child.hasNext();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        if (this.child == null) {
-            throw new OurBadException("Invalid order-by clause.");
-        }
-        this.child.reset(this.currentDynamicContext);
         this.localTupleResults.clear();
         this.resultIndex = 0;
         this.hasNext = this.child.hasNext();
@@ -458,6 +448,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         );
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
@@ -470,10 +461,12 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
@@ -481,6 +474,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -635,6 +629,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         return new NativeClauseContext(orderContext, null, orderContext.getResultingType());
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.ORDER_BY) {
             return true;

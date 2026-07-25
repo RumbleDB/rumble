@@ -29,11 +29,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;

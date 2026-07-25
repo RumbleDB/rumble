@@ -8,9 +8,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
@@ -73,11 +75,6 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.currentChild != null) {
             this.currentChild.close();
         }
-    }
-
-    @Override
-    public void reset(DynamicContext dynamicContext) {
-        startLocal(dynamicContext);
     }
 
     @Override

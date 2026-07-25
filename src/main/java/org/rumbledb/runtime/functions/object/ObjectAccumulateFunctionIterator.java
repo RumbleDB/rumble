@@ -30,6 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
     /**
      *
      */
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ObjectAccumulateFunctionIterator(

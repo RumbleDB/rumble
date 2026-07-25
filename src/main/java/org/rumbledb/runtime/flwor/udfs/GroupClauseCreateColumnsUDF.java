@@ -31,11 +31,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<Name> groupingVariableNames;

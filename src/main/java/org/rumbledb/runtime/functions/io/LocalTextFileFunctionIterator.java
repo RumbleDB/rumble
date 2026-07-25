@@ -31,16 +31,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.net.URI;
 import java.util.Iterator;
 import java.util.List;
 
 public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
 
@@ -66,41 +64,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
             );
         }
         URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticURI,
-            path.getStringValue(),
-            getMetadata()
-        );
-        this.is = FileSystemUtil.getDataInputStream(
-            uri,
-            this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-            getMetadata()
-        );
-        InputStreamReader r = new InputStreamReader(this.is);
-        BufferedReader br = new BufferedReader(r);
-        this.stream = br.lines().iterator();
-        this.hasNext = this.stream.hasNext();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        try {
-            this.is.close();
-        } catch (IOException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException("I/O exception", getMetadata());
-            ex.initCause(e);
-            throw ex;
-        }
-        this.iterator = this.children.get(0);
-        Item path = this.iterator.materializeFirstItemOrNull(context);
-        if (path == null) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
-                    getMetadata()
-            );
-        }
-        URI uri = FileSystemUtil.resolveFileSystemURI(
-            this.staticURI,
+            this.staticContext.getStaticURI(),
             path.getStringValue(),
             getMetadata()
         );

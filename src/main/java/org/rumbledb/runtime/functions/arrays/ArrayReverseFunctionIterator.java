@@ -17,6 +17,7 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -37,6 +38,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator arrayIterator;
@@ -114,14 +116,6 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
         this.hasProducedResult = true;
         this.hasNext = false;
         return this.resultItem;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.arrayIterator.reset(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
     }
 
     @Override

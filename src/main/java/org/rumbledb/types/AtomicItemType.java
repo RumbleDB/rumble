@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -39,6 +40,7 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
  */
 public class AtomicItemType implements ItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;

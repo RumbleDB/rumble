@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -64,6 +65,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Item lookupKey;
@@ -147,12 +149,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override
@@ -386,6 +382,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupKey(context);

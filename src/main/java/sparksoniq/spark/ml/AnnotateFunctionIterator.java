@@ -12,10 +12,12 @@ import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
+import java.io.Serial;
 import java.util.List;
 
 public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public AnnotateFunctionIterator(

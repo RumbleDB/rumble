@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.flwor.clauses;
 
+import java.io.Serial;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,6 +31,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 public class WindowClauseIterator extends RuntimeTupleIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -115,24 +117,6 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             this.prepareNextResult();
         } else {
             this.child.open(this.currentDynamicContext);
-            this.prepareNextTuple();
-        }
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        this.closeExpressionIterators();
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.pendingResults.clear();
-        this.nextResult = null;
-        this.currentInputTuple = null;
-
-        if (!this.hasActiveChild()) {
-            this.prepareForTuple(null);
-            this.prepareNextResult();
-        } else {
-            this.child.reset(this.currentDynamicContext);
             this.prepareNextTuple();
         }
     }

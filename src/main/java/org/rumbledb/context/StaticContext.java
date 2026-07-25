@@ -20,7 +20,6 @@
 
 package org.rumbledb.context;
 
-import java.io.Serializable;
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.Collections;
@@ -42,39 +41,33 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+public class StaticContext {
 
-public class StaticContext implements Serializable, KryoSerializable {
-
-    private static final long serialVersionUID = 1L;
-
-    private transient Map<Name, InScopeVariable> inScopeVariables;
-    private transient Map<String, String> staticallyKnownNamespaces;
-    private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
-    private transient InScopeSchemaTypes inScopeSchemaTypes;
+    private Map<Name, InScopeVariable> inScopeVariables;
+    private Map<String, String> staticallyKnownNamespaces;
+    private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    private InScopeSchemaTypes inScopeSchemaTypes;
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
+    private boolean copyNamespacesPreserve;
+    private boolean copyNamespacesInherit;
     private SerializationParameters serializationParameters;
-    private transient Set<String> explicitSerializationParameterNames;
+    private Set<String> explicitSerializationParameterNames;
     private boolean isQuerySideEffecting;
-    private transient Set<String> staticallyKnownCollations;
-    private transient String defaultCollation;
+    private Set<String> staticallyKnownCollations;
+    private String defaultCollation;
 
     /**
      * XQuery {@code declare default function namespace}; when null, unprefixed function names use
      * {@link Name#JSONIQ_DEFAULT_FUNCTION_NS} (Rumble's usual fn/jn/... resolution path).
      */
-    private transient String defaultFunctionNamespaceUri;
+    private String defaultFunctionNamespaceUri;
 
-    // TODO: should these be transient?
-    private transient SequenceType contextItemStaticType;
-    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private SequenceType contextItemStaticType;
+    private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
     private static final Map<String, String> defaultBindings;
 
     private DecimalFormatDefinition defaultDecimalFormat;
@@ -108,6 +101,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.configuration = null;
         this.inScopeSchemaTypes = null;
@@ -131,6 +126,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.boundarySpacePreserve = true;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
@@ -443,29 +440,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         return bindings;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
-        kryo.writeObject(output, this.staticBaseURI);
-        output.writeBoolean(this.emptySequenceOrderLeast);
-        output.writeBoolean(this.boundarySpacePreserve);
-        kryo.writeObjectOrNull(output, this.serializationParameters, SerializationParameters.class);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObjectOrNull(input, StaticContext.class);
-        this.staticBaseURI = kryo.readObject(input, URI.class);
-        this.emptySequenceOrderLeast = input.readBoolean();
-        this.boundarySpacePreserve = input.readBoolean();
-        // Backward compatibility: older serialized artifacts may not contain the serialization parameters field.
-        this.serializationParameters = kryo.readObjectOrNull(input, SerializationParameters.class);
-        // Pointer chain semantics: only root initializes defaults; non-root leaves null to inherit from parent.
-        if (this.serializationParameters == null && this.parent == null) {
-            this.serializationParameters = SerializationParameters.defaults();
-        }
-    }
-
     /**
      * Returns the default serialization parameters stored in the static context.
      *
@@ -622,6 +596,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.boundarySpacePreserve = boundarySpacePreserve;
     }
 
+    public void setCopyNamespacesMode(boolean preserve, boolean inherit) {
+        if (this.parent != null) {
+            throw new OurBadException("Copy-namespaces mode can only be set in the root static context.");
+        }
+        this.copyNamespacesPreserve = preserve;
+        this.copyNamespacesInherit = inherit;
+    }
+
     /**
      * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
      */
@@ -654,6 +636,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.isBoundarySpacePreserve();
         }
         return this.boundarySpacePreserve;
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesPreserve();
+        }
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesInherit();
+        }
+        return this.copyNamespacesInherit;
     }
 
     public void addStaticallyKnownCollation(String uri) {

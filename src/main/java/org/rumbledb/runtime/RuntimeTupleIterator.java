@@ -41,13 +41,15 @@ import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
+public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple>, KryoSerializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final RuntimeStaticContext staticContext;
@@ -74,6 +76,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.child;
     }
 
+    @Override
     public void open(DynamicContext context) {
         if (this.isOpen) {
             throw new IteratorFlowException(
@@ -86,15 +89,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.currentDynamicContext = context;
     }
 
+    @Override
     public void close() {
         this.isOpen = false;
         this.child.close();
-    }
-
-    public void reset(DynamicContext context) {
-        this.hasNext = true;
-        this.currentDynamicContext = context;
-        this.child.reset(context);
     }
 
     @Override
@@ -117,10 +115,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return this.isOpen;
     }
 
+    @Override
     public boolean hasNext() {
         return this.hasNext;
     }
 
+    @Override
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {

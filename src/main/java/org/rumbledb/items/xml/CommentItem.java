@@ -10,10 +10,12 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class CommentItem implements Item {
+    @Serial
     private static final long serialVersionUID = 1L;
     private String content;
     private Item parent;
@@ -50,6 +52,11 @@ public class CommentItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        // Comment nodes are leaves and therefore have no descendants to update.
     }
 
     @Override

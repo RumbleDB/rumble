@@ -11,12 +11,14 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class SequenceArrayItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private List<List<Item>> memberSequences;
     private int mutabilityLevel;

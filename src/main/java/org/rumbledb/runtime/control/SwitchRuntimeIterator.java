@@ -32,11 +32,13 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
+import java.io.Serial;
 import java.util.Map;
 
 
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
@@ -82,14 +84,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public void closeLocal() {
         this.matchingIterator.close();
-    }
-
-    @Override
-    public void resetLocal() {
-        this.matchingIterator.close();
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
     }
 
     private RuntimeIterator selectApplicableIterator(

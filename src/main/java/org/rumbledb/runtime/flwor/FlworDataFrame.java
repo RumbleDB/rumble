@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.flwor;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,6 +17,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.SequenceType;
 
 public class FlworDataFrame implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Dataset<Row> dataFrame;

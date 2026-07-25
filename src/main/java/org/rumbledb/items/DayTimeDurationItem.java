@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
@@ -21,6 +22,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class DayTimeDurationItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private Duration value;
     private static final Pattern durationRegex = Pattern.compile(

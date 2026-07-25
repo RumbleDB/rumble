@@ -9,10 +9,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
+import java.io.Serial;
 import java.util.List;
 
 public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;

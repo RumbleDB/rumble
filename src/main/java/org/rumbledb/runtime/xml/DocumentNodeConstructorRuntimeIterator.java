@@ -29,6 +29,7 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -44,6 +45,7 @@ import java.util.List;
  */
 public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator contentIterator;
 
@@ -159,7 +161,11 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                         flushTextAccumulator(contentSequence, textAccumulator);
                         textAccumulator = null;
                     }
-                    contentSequence.add(item);
+                    contentSequence.add(
+                        item.isNode()
+                            ? NamespaceFixupUtils.copyNodeForConstructor(item, this.staticContext)
+                            : item
+                    );
                     previousItemWasAtomic = false;
                 }
             }

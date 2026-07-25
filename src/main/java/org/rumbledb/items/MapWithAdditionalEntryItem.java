@@ -19,6 +19,7 @@
  */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +38,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithAdditionalEntryItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -128,6 +130,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.getSize() + 1;
     }
 
+    @Override
     public boolean hasKey(String key) throws UnsupportedOperationException {
         if (this.additionalKey.isString() && this.additionalKey.getStringValue().equals(key)) {
             return true;
@@ -135,6 +138,7 @@ public class MapWithAdditionalEntryItem implements Item {
         return this.original.hasKey(key);
     }
 
+    @Override
     public boolean hasKey(Item key) throws UnsupportedOperationException {
         if (this.itemSameKeyComparator.compare(this.additionalKey, key) == 0) {
             return true;

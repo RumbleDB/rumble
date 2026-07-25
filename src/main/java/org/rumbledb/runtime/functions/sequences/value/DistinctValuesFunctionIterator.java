@@ -32,11 +32,13 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private Item nextResult;
@@ -61,6 +63,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
+    @Override
     public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
@@ -73,13 +76,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

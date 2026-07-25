@@ -25,11 +25,13 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 public class GroupByClauseSparkIteratorExpression implements Serializable {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final Name variableName;
     private final RuntimeIterator expression;

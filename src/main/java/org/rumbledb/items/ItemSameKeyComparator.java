@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -37,6 +38,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
  */
 public class ItemSameKeyComparator implements Comparator<Item>, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override

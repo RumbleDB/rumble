@@ -22,11 +22,13 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
@@ -95,10 +97,6 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     }
 
-    @Override
-    protected void resetLocal() {
-
-    }
 
     @Override
     protected boolean hasNextLocal() {
@@ -139,7 +137,11 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = targetItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, logicalPath, getMetadata());
+            URI uri = FileSystemUtil.resolveFileSystemURI(
+                this.staticContext.getStaticURI(),
+                logicalPath,
+                getMetadata()
+            );
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 

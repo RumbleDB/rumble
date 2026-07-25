@@ -30,12 +30,14 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private RuntimeIterator positionIterator;
@@ -115,17 +117,6 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.sequenceIterator.close();
         this.insertIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.currentPosition = 1; // initialize index as the first item
-        this.insertingNow = false;
-        this.insertingCompleted = false;
-
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        this.insertIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     @Override

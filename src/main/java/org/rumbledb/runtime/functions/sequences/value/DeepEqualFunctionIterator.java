@@ -36,6 +36,7 @@ import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
 
+import java.io.Serial;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -43,6 +44,7 @@ import java.util.Objects;
 public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static boolean sameExpandedNodeName(Item node1, Item node2) {

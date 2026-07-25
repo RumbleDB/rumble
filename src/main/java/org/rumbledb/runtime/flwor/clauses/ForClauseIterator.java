@@ -62,6 +62,7 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -76,6 +77,7 @@ import java.util.TreeMap;
 public class ForClauseIterator extends RuntimeTupleIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     // Properties
@@ -137,24 +139,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.open(this.currentDynamicContext);
-            this.position = 1;
-            this.isFirstItem = true;
-            setResultFromExpression();
-        }
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-
-        if (this.child != null && this.evaluationDepthLimit != 0) { // if it's not a start clause
-            this.child.reset(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            this.position = 1;
-            this.isFirstItem = true;
-            setNextLocalTupleResult();
-        } else { // if it's a start clause, get results using only the assignmentIterator
-            this.assignmentIterator.reset(this.currentDynamicContext);
             this.position = 1;
             this.isFirstItem = true;
             setResultFromExpression();
@@ -1282,6 +1266,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
     public boolean containsClause(FLWOR_CLAUSES kind) {
         if (kind == FLWOR_CLAUSES.FOR) {
             return true;
@@ -1416,6 +1401,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
      *         it is not possible
      * @param nativeClauseContext context information to generate the native query
      */
+    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.allowingEmpty) {
             return NativeClauseContext.NoNativeQuery;

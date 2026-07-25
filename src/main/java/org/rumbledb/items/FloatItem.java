@@ -35,11 +35,13 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class FloatItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private float value;
 
@@ -136,6 +138,7 @@ public class FloatItem implements Item {
         return this.value;
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -143,10 +146,12 @@ public class FloatItem implements Item {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return Float.valueOf(this.value).intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }

@@ -35,12 +35,14 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
     private List<Item> results;
@@ -113,20 +115,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
-
-        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-        for (int i = items.size() - 1; i >= 0; i--) {
-            this.results.add(items.get(i));
-        }
-
-        this.hasNext = this.results.size() != 0;
     }
 
     @Override

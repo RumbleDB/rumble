@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.update.primitives;
 
+import java.io.Serial;
 import java.io.Serializable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -8,6 +9,7 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 
 
 public class Collection implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
     private Mode mode;
     private String logicalName;

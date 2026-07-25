@@ -22,6 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
+import java.io.Serial;
+
 /**
  * Exception for XQDY0072: computed comment constructor content contains illegal hyphen sequences.
  *
@@ -29,6 +31,7 @@ import org.rumbledb.errorcodes.ErrorCode;
  */
 public class InvalidCommentContentException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public InvalidCommentContentException(String content, ExceptionMetadata metadata) {

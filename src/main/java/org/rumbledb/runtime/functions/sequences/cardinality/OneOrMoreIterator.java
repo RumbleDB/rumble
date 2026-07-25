@@ -30,10 +30,12 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.io.Serial;
 import java.util.List;
 
 public class OneOrMoreIterator extends HybridRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Item nextResult;
@@ -90,18 +92,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.iterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        if (!this.iterator.hasNext()) {
-            throw new SequenceExceptionOneOrMore(
-                    "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
-        }
-        setNextResult();
     }
 
     @Override

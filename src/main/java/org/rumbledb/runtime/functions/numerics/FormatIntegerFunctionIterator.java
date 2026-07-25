@@ -8,16 +8,19 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.IntegerPictureFormatter;
 
+import java.io.Serial;
 import java.util.List;
 
 public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public FormatIntegerFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);

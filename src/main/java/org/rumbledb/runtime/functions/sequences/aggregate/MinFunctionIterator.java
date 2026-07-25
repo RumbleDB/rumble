@@ -21,6 +21,8 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
+
+import java.io.Serial;
 import java.time.Duration;
 import java.time.OffsetTime;
 import java.time.Period;
@@ -53,6 +55,7 @@ import java.util.TreeMap;
 public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private transient double currentMinDouble;
@@ -491,6 +494,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.result;
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =

@@ -73,6 +73,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return new FlworExpression((ReturnClause) result, expression.getMetadata());
     }
 
+    @Override
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
         VariableReferenceExpression result = new VariableReferenceExpression(
                 expression.getVariableName(),
@@ -235,6 +236,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     // endregion
 
     // region primary
+    @Override
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
         ArrayConstructorExpression result;
         if (expression.isFixedSlotsArrayConstructor()) {
@@ -326,32 +328,39 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return result;
     }
 
+    @Override
     public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
         return new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
     }
     // endregion
 
     // region literal
+    @Override
     public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
         return new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
     }
 
+    @Override
     public Node visitString(StringLiteralExpression expression, Node argument) {
         return new StringLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
+    @Override
     public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
         return new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
+    @Override
     public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
         return new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
+    @Override
     public Node visitNull(NullLiteralExpression expression, Node argument) {
         return new NullLiteralExpression(expression.getMetadata());
     }
 
+    @Override
     public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
         return new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
     }

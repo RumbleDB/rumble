@@ -22,6 +22,7 @@ package org.rumbledb.errorcodes;
 
 import org.rumbledb.context.Name;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -29,6 +30,7 @@ import java.util.Objects;
 
 public final class ErrorCode implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private static final Map<String, ErrorCode> BUILTIN_BY_IDENTIFIER = new HashMap<>();
@@ -195,6 +197,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
+    public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");

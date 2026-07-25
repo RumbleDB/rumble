@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
 
@@ -17,6 +18,7 @@ import com.esotericsoftware.kryo.io.Output;
 
 public class DateTimeStampItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 

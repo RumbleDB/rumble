@@ -129,6 +129,7 @@ public class VariableDeclaration extends Node {
         this.variableHighestStorageMode = mode;
     }
 
+    @Override
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

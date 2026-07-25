@@ -5,11 +5,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.io.Serial;
 import java.util.List;
 
 import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
 
 public class ExitStatementException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = 1L;
     private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
