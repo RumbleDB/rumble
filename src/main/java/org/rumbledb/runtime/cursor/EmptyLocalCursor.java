@@ -13,38 +13,36 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
  */
 
-package org.rumbledb.runtime;
+package org.rumbledb.runtime.cursor;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.cursor.EmptyLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursor;
+import java.util.NoSuchElementException;
 
-import java.io.Serial;
+/**
+ * Cursor over an empty local sequence.
+ *
+ * @param <T> the value type
+ */
+public final class EmptyLocalCursor<T> extends AbstractLocalCursor<T> {
 
-public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
-
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    public EmptySequenceIterator(RuntimeStaticContext staticContext) {
-        super(null, staticContext);
+    @Override
+    protected void openLocal() {
+        // No evaluation state.
     }
 
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>();
+    protected boolean hasNextLocal() {
+        return false;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        return null;
+    protected T nextLocal() {
+        throw new NoSuchElementException("Empty cursor has no values.");
+    }
+
+    @Override
+    protected void closeLocal() {
+        // No resources to release.
     }
 }
