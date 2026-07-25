@@ -11,6 +11,7 @@ import java.util.Objects;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -18,11 +19,11 @@ import org.rumbledb.runtime.RuntimeIterator;
  * Compatibility cursor for a legacy {@link RuntimeIterator}.
  *
  * <p>
- * Each opening deep-copies the pristine legacy iterator prototype and delegates the old iterator lifecycle to that
+ * Opening deep-copies the pristine legacy iterator prototype and delegates the old iterator lifecycle to that
  * private copy. Migrated plans should return purpose-built cursors and must not use this adapter.
  * </p>
  */
-public final class LegacyRuntimeIteratorCursor implements LocalCursor<Item> {
+public final class LegacyRuntimeIteratorCursor extends AbstractLocalCursor<Item> {
 
     private final RuntimeIterator prototype;
     private final DynamicContext context;
@@ -34,42 +35,35 @@ public final class LegacyRuntimeIteratorCursor implements LocalCursor<Item> {
     }
 
     @Override
-    public void open() {
-        if (this.execution != null) {
-            throw new IteratorFlowException("Local cursor cannot be opened twice.", this.prototype.getMetadata());
-        }
+    protected void openLocal() {
         this.execution = this.prototype.deepCopy();
-        try {
-            this.execution.open(this.context);
-        } catch (RuntimeException exception) {
-            this.execution = null;
-            throw exception;
+        this.execution.open(this.context);
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.execution.hasNext();
+    }
+
+    @Override
+    protected Item nextLocal() {
+        return this.execution.next();
+    }
+
+    @Override
+    protected void closeLocal() {
+        if (this.execution != null && this.execution.isOpen()) {
+            this.execution.close();
         }
-    }
-
-    @Override
-    public boolean hasNext() {
-        return getOpenExecution().hasNext();
-    }
-
-    @Override
-    public Item next() {
-        return getOpenExecution().next();
-    }
-
-    @Override
-    public void close() {
-        RuntimeIterator iterator = this.execution;
         this.execution = null;
-        if (iterator != null && iterator.isOpen()) {
-            iterator.close();
-        }
     }
 
-    private RuntimeIterator getOpenExecution() {
-        if (this.execution == null) {
-            throw new IteratorFlowException("Local cursor is not open.", this.prototype.getMetadata());
-        }
-        return this.execution;
+    @Override
+    protected RuntimeException invalidState(String message) {
+        return new IteratorFlowException(message, getMetadata());
+    }
+
+    private ExceptionMetadata getMetadata() {
+        return this.prototype.getMetadata();
     }
 }
