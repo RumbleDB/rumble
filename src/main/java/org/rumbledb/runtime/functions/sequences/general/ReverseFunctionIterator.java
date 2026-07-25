@@ -26,15 +26,20 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,7 +49,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
@@ -54,6 +59,11 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.sequenceIterator, context, getMetadata());
     }
 
     @Override
@@ -138,5 +148,60 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
         }
         return this.results.get(this.currentIndex++);
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> sequencePlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private List<Item> results;
+        private int currentIndex;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> sequencePlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.sequencePlan = sequencePlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.results = new ArrayList<>();
+            try (LocalCursor<Item> childCursor = this.sequencePlan.createLocalCursor(this.context)) {
+                childCursor.open();
+                while (childCursor.hasNext()) {
+                    this.results.add(childCursor.next());
+                }
+            }
+            this.currentIndex = this.results.size() - 1;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentIndex >= 0;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.currentIndex < 0) {
+                throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "reverse function", this.metadata);
+            }
+            return this.results.get(this.currentIndex--);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.results = null;
+            this.currentIndex = -1;
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
+        }
     }
 }

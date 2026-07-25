@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -37,7 +38,7 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item nextResult;
 
     public UnorderedFunctionIterator(
@@ -46,6 +47,11 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(parameters, staticContext);
         this.iterator = this.getChild(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return this.iterator.createLocalCursor(context);
     }
 
     @Override
