@@ -53,4 +53,24 @@ public final class LocalCursorUtils {
             return result;
         }
     }
+
+    /**
+     * Evaluates a plan locally and substitutes a default value for an empty sequence.
+     *
+     * @param plan the plan to evaluate
+     * @param context the dynamic context for the evaluation
+     * @param defaultValue the value returned for an empty sequence
+     * @param <T> the value type
+     * @return the single value or {@code defaultValue}
+     * @throws MoreThanOneItemException if the plan produces more than one value
+     */
+    public static <T> T materializeAtMostOneOrDefault(
+            RuntimePlan<T> plan,
+            DynamicContext context,
+            T defaultValue
+    )
+            throws MoreThanOneItemException {
+        T result = materializeAtMostOne(plan, context);
+        return result == null ? defaultValue : result;
+    }
 }
