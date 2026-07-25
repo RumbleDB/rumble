@@ -23,12 +23,17 @@ package org.rumbledb.runtime.arithmetics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -36,12 +41,12 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
+import java.util.Objects;
 
 public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    private boolean negated;
+    private final boolean negated;
     private final RuntimeIterator child;
-    private Item item;
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -53,57 +58,100 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.negated = negated;
-        this.item = null;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.child, this.negated, context, getMetadata());
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item item;
         try {
-            this.item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Unary expression requires at most one item in its input sequence.",
                     getMetadata()
             );
         }
-        if (this.item == null) {
+        return applyOperator(item, this.negated, getMetadata());
+    }
+
+    private static Item applyOperator(Item item, boolean negated, ExceptionMetadata metadata) {
+        if (item == null) {
             return null;
         }
 
-        if (!this.negated) {
-            if (!this.item.isNumeric()) {
+        if (!negated) {
+            if (!item.isNumeric()) {
                 throw new UnexpectedTypeException(
                         "Unary expression has non numeric args "
                             +
-                            this.item.serialize(),
-                        getMetadata()
+                            item.serialize(),
+                        metadata
                 );
             }
-            return this.item;
+            return item;
         }
-        if (this.item.isInt()) {
-            return ItemFactory.getInstance().createIntItem(-1 * this.item.getIntValue());
+        if (item.isInt()) {
+            return ItemFactory.getInstance().createIntItem(-1 * item.getIntValue());
         }
-        if (this.item.isInteger()) {
+        if (item.isInteger()) {
             return ItemFactory.getInstance()
-                .createIntegerItem(BigInteger.valueOf(-1).multiply(this.item.getIntegerValue()));
+                .createIntegerItem(BigInteger.valueOf(-1).multiply(item.getIntegerValue()));
         }
-        if (this.item.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(-1 * this.item.getFloatValue());
+        if (item.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(-1 * item.getFloatValue());
         }
-        if (this.item.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(-1 * this.item.getDoubleValue());
+        if (item.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(-1 * item.getDoubleValue());
         }
-        if (this.item.isDecimal()) {
+        if (item.isDecimal()) {
             return ItemFactory.getInstance()
-                .createDecimalItem(this.item.getDecimalValue().multiply(new BigDecimal(-1)));
+                .createDecimalItem(item.getDecimalValue().multiply(new BigDecimal(-1)));
         }
         throw new UnexpectedTypeException(
                 "Unary expression has non numeric args "
                     +
-                    this.item.serialize(),
-                getMetadata()
+                    item.serialize(),
+                metadata
         );
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final boolean negated;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                RuntimePlan<Item> childPlan,
+                boolean negated,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
+            this.negated = negated;
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            Item item;
+            try {
+                item = LocalCursorUtils.materializeAtMostOne(this.childPlan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        "Unary expression requires at most one item in its input sequence.",
+                        this.metadata
+                );
+            }
+            return applyOperator(item, this.negated, this.metadata);
+        }
     }
 
     @Override
