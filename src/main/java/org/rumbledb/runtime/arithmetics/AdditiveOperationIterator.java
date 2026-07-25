@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.OffsetTime;
 import java.util.Arrays;
+import java.util.Objects;
 
 import java.time.OffsetDateTime;
 import java.time.Period;
@@ -33,13 +34,18 @@ import java.time.Duration;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -51,8 +57,6 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item left;
-    private Item right;
     private final boolean isMinus;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
@@ -70,9 +74,16 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.leftIterator, this.rightIterator, this.isMinus, context, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item left;
+        Item right;
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
+            left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its left input sequence.",
@@ -80,52 +91,101 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             );
         }
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
+            right = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its right input sequence.",
                     getMetadata()
             );
         }
+        return applyOperator(left, right, this.isMinus, getMetadata());
+    }
 
+    private static Item applyOperator(
+            Item left,
+            Item right,
+            boolean isMinus,
+            ExceptionMetadata metadata
+    ) {
         // if left or right equals empty sequence, return empty sequence
-        if (this.left == null || this.right == null) {
+        if (left == null || right == null) {
             return null;
         }
-        if (!this.left.isAtomic()) {
+        if (!left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.left.getDynamicType().toString()
+                left.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (!this.right.isAtomic()) {
+        if (!right.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.right.getDynamicType().toString()
+                right.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (this.left.isUntypedAtomic()) {
-            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());
         }
-        if (this.right.isUntypedAtomic()) {
-            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createDoubleItem(right.castToDoubleValue());
         }
-        Item result = processItem(this.left, this.right, this.isMinus);
+        Item result = processItem(left, right, isMinus);
         if (result == null) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
+                        + left.getDynamicType().toString()
                         + "\" and \""
-                        + this.right.getDynamicType().toString()
+                        + right.getDynamicType().toString()
                         + "\"",
-                    getMetadata()
+                    metadata
             );
         }
         return result;
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> leftPlan;
+        private final RuntimePlan<Item> rightPlan;
+        private final boolean isMinus;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                RuntimePlan<Item> leftPlan,
+                RuntimePlan<Item> rightPlan,
+                boolean isMinus,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
+            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
+            this.isMinus = isMinus;
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            Item left = materializeOperand(this.leftPlan, "left");
+            Item right = materializeOperand(this.rightPlan, "right");
+            return applyOperator(left, right, this.isMinus, this.metadata);
+        }
+
+        private Item materializeOperand(RuntimePlan<Item> plan, String side) {
+            try {
+                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        "Addition expression requires at most one item in its " + side + " input sequence.",
+                        this.metadata
+                );
+            }
+        }
     }
 
     public static Item processItem(Item left, Item right, boolean isMinus) {
@@ -442,9 +502,9 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
+                        + leftResult.getResultingType().getItemType()
                         + "\" and \""
-                        + this.right.getDynamicType().toString()
+                        + rightResult.getResultingType().getItemType()
                         + "\"",
                     getMetadata()
             );

@@ -26,6 +26,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 
 import java.time.Period;
 
@@ -38,7 +39,11 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.Multiplicati
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -50,9 +55,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
 
     @Serial
     private static final long serialVersionUID = 1L;
-    Item left;
-    Item right;
-    MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    private final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 
@@ -69,10 +72,22 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(
+                this.leftIterator,
+                this.rightIterator,
+                this.multiplicativeOperator,
+                context,
+                getMetadata()
+        );
+    }
 
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item left;
+        Item right;
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(context);
+            left = this.leftIterator.materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its left input sequence.",
@@ -80,41 +95,90 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             );
         }
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(context);
+            right = this.rightIterator.materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its right input sequence.",
                     getMetadata()
             );
         }
+        return applyOperator(left, right, this.multiplicativeOperator, getMetadata());
+    }
 
+    private static Item applyOperator(
+            Item left,
+            Item right,
+            MultiplicativeOperator operator,
+            ExceptionMetadata metadata
+    ) {
         // if left or right equals empty sequence, return empty sequence
-        if (this.left == null || this.right == null) {
+        if (left == null || right == null) {
             return null;
         }
-        if (!this.left.isAtomic()) {
+        if (!left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.left.getDynamicType().toString()
+                left.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (!this.right.isAtomic()) {
+        if (!right.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                this.right.getDynamicType().toString()
+                right.getDynamicType().toString()
             );
-            throw new NonAtomicKeyException(message, getMetadata());
+            throw new NonAtomicKeyException(message, metadata);
         }
-        if (this.left.isUntypedAtomic()) {
-            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());
         }
-        if (this.right.isUntypedAtomic()) {
-            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createDoubleItem(right.castToDoubleValue());
         }
-        return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
+        return processItem(left, right, operator, metadata);
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> leftPlan;
+        private final RuntimePlan<Item> rightPlan;
+        private final MultiplicativeOperator operator;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(
+                RuntimePlan<Item> leftPlan,
+                RuntimePlan<Item> rightPlan,
+                MultiplicativeOperator operator,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
+            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
+            this.operator = Objects.requireNonNull(operator, "operator cannot be null");
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            Item left = materializeOperand(this.leftPlan, "left");
+            Item right = materializeOperand(this.rightPlan, "right");
+            return applyOperator(left, right, this.operator, this.metadata);
+        }
+
+        private Item materializeOperand(RuntimePlan<Item> plan, String side) {
+            try {
+                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        "Multiplication expression requires at most one item in its " + side + " input sequence.",
+                        this.metadata
+                );
+            }
+        }
     }
 
     public static Item processItem(
@@ -640,9 +704,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (resultingArity.equals(Arity.OneOrMore) || resultingArity.equals(Arity.ZeroOrMore)) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
+                        + leftResult.getResultingType().getItemType()
                         + "\" and \""
-                        + this.right.getDynamicType().toString()
+                        + rightResult.getResultingType().getItemType()
                         + "\"",
                     getMetadata()
             );
