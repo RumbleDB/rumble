@@ -20,13 +20,11 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     public AssignStatementIterator(
             RuntimeIterator assignExpression,
             Name variableName,
-            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(assignExpression), staticContext);
         this.assignExpression = assignExpression;
         this.variableName = variableName;
-        this.isSequential = isSequential;
     }
 
 
