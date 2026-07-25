@@ -19,6 +19,7 @@ package org.rumbledb.runtime.cursor;
 
 import java.util.Objects;
 
+import lombok.NonNull;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -26,6 +27,21 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 public final class LocalCursorUtils {
 
     private LocalCursorUtils() {
+    }
+
+    /**
+     * Evaluates a plan locally and returns its first value, or {@code null} for an empty sequence.
+     *
+     * @param plan the plan to evaluate
+     * @param context the dynamic context for the evaluation
+     * @param <T> the value type
+     * @return the first value, or {@code null}
+     */
+    public static <T> T materializeFirst(@NonNull RuntimePlan<T> plan, @NonNull DynamicContext context) {
+        try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
+            cursor.open();
+            return cursor.hasNext() ? cursor.next() : null;
+        }
     }
 
     /**
