@@ -28,6 +28,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ConditionalLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -53,6 +55,16 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
                 elseBranch
             ),
             staticContext
+        );
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ConditionalLocalCursor<>(
+                getChild(0),
+                getChild(1),
+                getChild(2),
+                context
         );
     }
 
