@@ -23,13 +23,19 @@ package org.rumbledb.runtime.functions.sequences.cardinality;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Objects;
 
 public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -42,6 +48,11 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(getChild(0), context, getMetadata());
     }
 
     @Override
@@ -59,4 +70,28 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
         return result;
     }
 
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+
+        private Cursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
+            this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            try {
+                return LocalCursorUtils.materializeAtMostOne(this.childPlan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new SequenceExceptionZeroOrOne(
+                        "fn:zero-or-one() called with a sequence containing more than one item",
+                        this.metadata
+                );
+            }
+        }
+    }
 }
