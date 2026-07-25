@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.cursor;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 /**
@@ -25,36 +24,16 @@ import java.util.Objects;
  *
  * @param <T> the value type
  */
-public final class SingletonLocalCursor<T> extends AbstractLocalCursor<T> {
+public final class SingletonLocalCursor<T> extends AtMostOneLocalCursor<T> {
 
     private final T value;
-    private boolean hasNext;
 
     public SingletonLocalCursor(T value) {
         this.value = Objects.requireNonNull(value, "value cannot be null");
     }
 
     @Override
-    protected void openLocal() {
-        this.hasNext = true;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected T nextLocal() {
-        if (!this.hasNext) {
-            throw new NoSuchElementException("Singleton cursor is exhausted.");
-        }
-        this.hasNext = false;
+    protected T materializeFirstItemOrNull() {
         return this.value;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.hasNext = false;
     }
 }

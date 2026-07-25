@@ -17,15 +17,43 @@
 
 package org.rumbledb.runtime.cursor;
 
+import java.util.NoSuchElementException;
+
 /**
- * Cursor over an empty local sequence.
+ * Cursor template for an evaluation that produces zero or one value.
  *
  * @param <T> the value type
  */
-public final class EmptyLocalCursor<T> extends AtMostOneLocalCursor<T> {
+public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
+
+    private T result;
+    private boolean hasNext;
 
     @Override
-    protected T materializeFirstItemOrNull() {
-        return null;
+    protected final void openLocal() {
+        this.result = materializeFirstItemOrNull();
+        this.hasNext = this.result != null;
     }
+
+    @Override
+    protected final boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected final T nextLocal() {
+        if (!this.hasNext) {
+            throw new NoSuchElementException("At-most-one cursor is exhausted.");
+        }
+        this.hasNext = false;
+        return this.result;
+    }
+
+    @Override
+    protected final void closeLocal() {
+        this.result = null;
+        this.hasNext = false;
+    }
+
+    protected abstract T materializeFirstItemOrNull();
 }
