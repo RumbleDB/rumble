@@ -16,9 +16,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DayTimeDurationItem implements Item {
 
@@ -85,15 +82,7 @@ public class DayTimeDurationItem implements Item {
         return Objects.hash(this.value);
     }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = Duration.parse(input.readString());
-    }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
 
     @Override
     public boolean equals(Object other) {

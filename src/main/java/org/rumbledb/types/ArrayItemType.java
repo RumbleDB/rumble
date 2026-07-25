@@ -401,34 +401,7 @@ public class ArrayItemType implements ItemType {
         return sb.toString();
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.content);
-        kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
-        output.writeInt(this.minLength != null ? this.minLength : -1);
-        output.writeInt(this.maxLength != null ? this.maxLength : -1);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.content = (ItemType) kryo.readClassAndObject(input);
-        this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
-        int min = input.readInt();
-        int max = input.readInt();
-        this.minLength = (min == -1) ? null : min;
-        this.maxLength = (max == -1) ? null : max;
-        if (this.baseType.isResolved()) {
-            processBaseType();
-            if (this.content != null && this.content.isResolved()) {
-                checkSubtypeConsistency();
-            }
-        }
-    }
 
     private boolean hasEnumerationFacet() {
         return this.enumeration != null && !this.enumeration.isEmpty();
