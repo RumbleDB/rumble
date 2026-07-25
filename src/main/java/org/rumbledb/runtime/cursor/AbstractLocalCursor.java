@@ -31,7 +31,6 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
     private enum State {
         CREATED,
-        OPENING,
         OPEN,
         CLOSED
     }
@@ -43,7 +42,6 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
         if (this.state != State.CREATED) {
             throw invalidState("Local cursor is single-use and cannot be reopened.");
         }
-        this.state = State.OPENING;
         try {
             openLocal();
             this.state = State.OPEN;
@@ -60,24 +58,25 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
     @Override
     public final boolean hasNext() {
-        checkOpen();
+        if (this.state != State.OPEN) {
+            throw invalidState("Local cursor is not open.");
+        }
         return hasNextLocal();
     }
 
     @Override
     public final T next() {
-        checkOpen();
+        if (this.state != State.OPEN) {
+            throw invalidState("Local cursor is not open.");
+        }
         return nextLocal();
     }
 
     @Override
     public final void close() {
-        if (this.state == State.CLOSED) {
-            return;
-        }
-        State previousState = this.state;
+        boolean wasOpen = this.state == State.OPEN;
         this.state = State.CLOSED;
-        if (previousState == State.OPEN || previousState == State.OPENING) {
+        if (wasOpen) {
             closeLocal();
         }
     }
@@ -99,11 +98,5 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
      */
     protected RuntimeException invalidState(String message) {
         return new IllegalStateException(message);
-    }
-
-    private void checkOpen() {
-        if (this.state != State.OPEN) {
-            throw invalidState("Local cursor is not open.");
-        }
     }
 }
