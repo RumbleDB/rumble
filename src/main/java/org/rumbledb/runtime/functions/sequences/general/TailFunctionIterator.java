@@ -25,10 +25,15 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
@@ -37,7 +42,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item nextResult;
 
     public TailFunctionIterator(
@@ -46,6 +51,11 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(parameters, staticContext);
         this.iterator = this.getChild(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.iterator, context, getMetadata());
     }
 
     @Override
@@ -103,5 +113,58 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
             return filteredRDD.map(x -> x._1);
         }
         return childRDD;
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> childCursor;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.childPlan = childPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor.open();
+            if (this.childCursor.hasNext()) {
+                this.childCursor.next();
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.childCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.childCursor.hasNext()) {
+                throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tail function", this.metadata);
+            }
+            return this.childCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
+        }
     }
 }

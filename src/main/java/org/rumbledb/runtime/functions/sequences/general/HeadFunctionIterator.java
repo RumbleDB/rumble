@@ -25,7 +25,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
@@ -43,6 +48,11 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(getChild(0), context);
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (this.getChild(0).isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
@@ -52,5 +62,21 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return i.get(0);
         }
         return this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+    }
+
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final RuntimePlan<Item> childPlan;
+        private final DynamicContext context;
+
+        private Cursor(@NonNull RuntimePlan<Item> childPlan, @NonNull DynamicContext context) {
+            this.childPlan = childPlan;
+            this.context = context;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            return LocalCursorUtils.materializeFirst(this.childPlan, this.context);
+        }
     }
 }
