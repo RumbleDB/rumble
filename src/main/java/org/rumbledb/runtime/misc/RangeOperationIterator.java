@@ -24,12 +24,14 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -37,7 +39,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -49,8 +55,8 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;
@@ -64,6 +70,11 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         super(Arrays.asList(leftIterator, rightiterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightiterator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
     @Override
@@ -191,6 +202,86 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> leftPlan;
+        private final RuntimePlan<Item> rightPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private long rightBound;
+        private long position;
+        private boolean hasNext;
+
+        private Cursor(
+                RuntimePlan<Item> leftPlan,
+                RuntimePlan<Item> rightPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
+            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
+            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
+            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        }
+
+        @Override
+        protected void openLocal() {
+            Item left = materializeBound(this.leftPlan);
+            Item right = materializeBound(this.rightPlan);
+            if (left == null || right == null) {
+                this.hasNext = false;
+                return;
+            }
+            if (!left.isInteger() || !right.isInteger()) {
+                throw new UnexpectedTypeException(
+                        "Range expression must have integer input, but instead received "
+                            + left.getDynamicType()
+                            + " and "
+                            + right.getDynamicType(),
+                        this.metadata
+                );
+            }
+            this.position = left.castToIntegerValue().longValue();
+            this.rightBound = right.castToIntegerValue().longValue();
+            this.hasNext = this.position <= this.rightBound;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.hasNext;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.hasNext) {
+                throw new IteratorFlowException("Invalid next call in Range Operation", this.metadata);
+            }
+            long result = this.position;
+            if (this.position == this.rightBound) {
+                this.hasNext = false;
+            } else {
+                this.position++;
+            }
+            return ItemFactory.getInstance().createLongItem(result);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.hasNext = false;
+        }
+
+        private Item materializeBound(RuntimePlan<Item> plan) {
+            try {
+                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+            } catch (MoreThanOneItemException exception) {
+                throw new UnexpectedTypeException(
+                        "Range expression must have integer input, but instead received more than one item",
+                        this.metadata
+                );
+            }
+        }
     }
 
     @Override
