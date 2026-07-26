@@ -1,9 +1,7 @@
 package org.rumbledb.runtime.xml.axis.reverse;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
 import java.io.Serial;
@@ -19,21 +17,14 @@ public class ParentAxisIterator extends AxisIterator {
     }
 
     @Override
-    protected void setNextResult() {
-        if (this.results == null) {
-            this.results = new ArrayList<>();
-            List<Item> currentContext = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            if (currentContext.isEmpty()) {
-                throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
-            }
-            for (Item node : currentContext) {
-                Item parent = node.parent();
-                if (parent != null) {
-                    this.results.add(parent);
-                }
+    protected List<Item> selectAxis(List<Item> contextItems) {
+        List<Item> selectedItems = new ArrayList<>();
+        for (Item node : contextItems) {
+            Item parent = node.parent();
+            if (parent != null) {
+                selectedItems.add(parent);
             }
         }
-        storeNextResult();
+        return selectedItems;
     }
 }
