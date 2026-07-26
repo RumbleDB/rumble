@@ -64,6 +64,23 @@ public final class LocalCursorUtils {
     }
 
     /**
+     * Evaluates a plan locally and materializes at most {@code limit} values.
+     */
+    public static <T> List<T> materializeFirst(
+            @NonNull RuntimePlan<T> plan,
+            @NonNull DynamicContext context,
+            int limit
+    ) {
+        List<T> result = new ArrayList<>();
+        try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
+            while (result.size() < limit && cursor.hasNext()) {
+                result.add(cursor.next());
+            }
+        }
+        return result;
+    }
+
+    /**
      * Evaluates a plan locally and returns its single value, or {@code null} for an empty sequence.
      *
      * @param plan the plan to evaluate
