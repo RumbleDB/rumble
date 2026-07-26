@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -47,11 +49,17 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new MappingLocalCursor<>(this.getChild(0), context, ArraySizeFunctionIterator::size, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item array = this.getChild(0).materializeFirstItemOrNull(context);
-        if (array == null) {
-            return null;
-        }
+        return array == null ? null : size(array);
+    }
+
+    private static Item size(Item array) {
         return ItemFactory.getInstance().createIntItem(array.getSize());
     }
 

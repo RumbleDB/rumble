@@ -22,6 +22,8 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
 
@@ -39,15 +41,29 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            arguments -> evaluate(arguments, context),
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator pathIterator = this.getChild(0);
-        RuntimeIterator optionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            ),
+            context
+        );
+    }
 
-        Item pathItem = pathIterator.materializeFirstItemOrNull(context);
-        Item optionsItem = optionsIterator != null
-            ? optionsIterator.materializeFirstItemOrNull(context)
-            : null;
-
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments, DynamicContext context) {
+        Item pathItem = arguments.get(0);
+        Item optionsItem = arguments.size() > 1 ? arguments.get(1) : null;
         if (pathItem == null) {
             return null;
         }

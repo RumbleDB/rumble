@@ -8,6 +8,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,11 +26,35 @@ public class LangFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            arguments -> evaluate(arguments, context),
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item testlangItem = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            ),
+            context
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments, DynamicContext context) {
+        Item testlangItem = arguments.get(0);
         String testlang = testlangItem == null ? "" : testlangItem.getStringValue();
 
-        Item node = getContextNode(context);
+        Item node = arguments.size() == 2
+            ? arguments.get(1)
+            : context.getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
         if (node == null || !node.isNode()) {
             throw new UnexpectedTypeException("The argument to fn:lang must be a node", getMetadata());
         }
@@ -56,12 +82,4 @@ public class LangFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             && lang.regionMatches(true, 0, testlang, 0, testlang.length());
     }
 
-    private Item getContextNode(DynamicContext context) {
-        if (this.getChildren().size() == 2) {
-            return this.getChild(1).materializeFirstItemOrNull(context);
-        }
-        return context.getVariableValues()
-            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-            .get(0);
-    }
 }

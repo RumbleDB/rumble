@@ -7,6 +7,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -23,10 +25,29 @@ public class NamespaceUriForPrefixFunctionIterator extends AtMostOneItemLocalRun
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            NamespaceUriForPrefixFunctionIterator::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item prefixItem = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private static Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item prefixItem = arguments.get(0);
         String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
-        Item element = this.getChild(1).materializeFirstItemOrNull(context);
+        Item element = arguments.get(1);
         for (Item namespaceNode : element.namespaceNodes()) {
             Name name = namespaceNode.nodeName();
             String namespacePrefix = name == null ? "" : name.getLocalName();

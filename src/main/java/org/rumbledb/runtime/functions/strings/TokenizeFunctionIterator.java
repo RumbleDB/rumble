@@ -28,6 +28,9 @@ import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -46,6 +49,11 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new TokenizeLocalCursor(this, context);
     }
 
     @Override
@@ -110,18 +118,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                         flags = flagsItem.getStringValue();
                     }
                 }
-                RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
-                    separator,
-                    flags,
-                    getMetadata()
-                );
-                if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
-                    throw new MatchesEmptyStringException(
-                            "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
-                            getMetadata()
-                    );
-                }
-                this.results = RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
+                this.results = tokenize(input, separator, flags);
                 this.currentPosition = 0;
             }
         }
@@ -131,6 +128,101 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = true;
         } else {
             this.hasNext = false;
+        }
+    }
+
+    private String[] tokenize(String input, String separator, String flags) {
+        if (separator == null) {
+            return RegexPatternUtils.tokenizeOnXmlWhitespace(input);
+        }
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+            separator,
+            flags,
+            getMetadata()
+        );
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+            throw new MatchesEmptyStringException(
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
+                    getMetadata()
+            );
+        }
+        return RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
+    }
+
+    private static final class TokenizeLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final TokenizeFunctionIterator plan;
+        private final DynamicContext context;
+        private String[] results;
+        private int position;
+
+        private TokenizeLocalCursor(TokenizeFunctionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item inputItem = LocalCursorUtils.materializeFirst(this.plan.getChild(0), this.context);
+            if (inputItem == null) {
+                this.results = new String[0];
+                return;
+            }
+            String separator = null;
+            String flags = null;
+            if (this.plan.getChildren().size() > 1) {
+                separator = materializeSeparator();
+                if (this.plan.getChildren().size() == 3) {
+                    Item flagsItem = LocalCursorUtils.materializeFirst(this.plan.getChild(2), this.context);
+                    flags = flagsItem == null ? null : flagsItem.getStringValue();
+                }
+            }
+            this.results = this.plan.tokenize(inputItem.getStringValue(), separator, flags);
+            this.position = 0;
+        }
+
+        private String materializeSeparator() {
+            try (LocalCursor<Item> cursor = this.plan.getChild(1).createLocalCursor(this.context)) {
+                cursor.open();
+                if (!cursor.hasNext()) {
+                    throw invalidSeparator();
+                }
+                Item separator = cursor.next();
+                if (cursor.hasNext() || !separator.isString()) {
+                    throw invalidSeparator();
+                }
+                try {
+                    return separator.getStringValue();
+                } catch (RuntimeException exception) {
+                    throw invalidSeparator();
+                }
+            }
+        }
+
+        private UnexpectedTypeException invalidSeparator() {
+            return new UnexpectedTypeException(
+                    "Second parameter of tokenize must be a string.",
+                    this.plan.getMetadata()
+            );
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.position < this.results.length;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("Tokenize cursor is exhausted.");
+            }
+            return ItemFactory.getInstance().createStringItem(this.results[this.position++]);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.results = null;
         }
     }
 }

@@ -15,6 +15,9 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -37,6 +40,11 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(() -> materializeWithCursors(context), getMetadata());
     }
 
     @Override
@@ -76,7 +84,10 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                     getMetadata()
             );
         }
+        return resolveIndentOption(options);
+    }
 
+    private boolean resolveIndentOption(Item options) {
         if (options == null) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a map item [err:XPTY0004].",
@@ -101,6 +112,37 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             );
         }
         return indentOption.get(0).getBooleanValue();
+    }
+
+    private Item materializeWithCursors(DynamicContext context) {
+        Item input;
+        try {
+            input = LocalCursorUtils.materializeAtMostOne(this.getChild(0), context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "fn:xml-to-json expects at most one input item [err:XPTY0004].",
+                    getMetadata()
+            );
+        }
+        if (input == null) {
+            return null;
+        }
+
+        boolean indent = false;
+        if (this.getChildren().size() >= 2) {
+            Item options;
+            try {
+                options = LocalCursorUtils.materializeAtMostOne(this.getChild(1), context);
+            } catch (MoreThanOneItemException e) {
+                throw new UnexpectedTypeException(
+                        "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",
+                        getMetadata()
+                );
+            }
+            indent = resolveIndentOption(options);
+        }
+        Item value = parseInputItem(input);
+        return ItemFactory.getInstance().createStringItem(serializeAsJson(value, indent));
     }
 
     private Item parseInputItem(Item input) {

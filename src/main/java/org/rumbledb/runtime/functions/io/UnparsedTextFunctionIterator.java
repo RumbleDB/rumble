@@ -27,6 +27,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,14 +46,34 @@ public class UnparsedTextFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            arguments -> evaluate(arguments, context),
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item hrefItem = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            ),
+            context
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments, DynamicContext context) {
+        Item hrefItem = arguments.get(0);
         if (hrefItem == null) {
             return null;
         }
         String encoding = null;
-        if (this.getChildren().size() == 2) {
-            Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
+        if (arguments.size() == 2) {
+            Item encodingItem = arguments.get(1);
             encoding = encodingItem.getStringValue();
         }
 
