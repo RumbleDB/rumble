@@ -10,6 +10,9 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -27,20 +30,32 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    validateStaticType();
+                    return evaluate(LocalCursorUtils.materializeFirst(this.getChild(0), context));
+                },
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator functionIterator = this.getChild(0);
-        /*
-         * TODO remove...
-         * Currently used for debugging, this guard fails when given an if statement
-         */
-        if (!functionIterator.getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
+        validateStaticType();
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private void validateStaticType() {
+        if (!this.getChild(0).getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
             throw new UnexpectedTypeException(
-                    "fn:function-name expects a function item, found " + functionIterator.getStaticType(),
+                    "fn:function-name expects a function item, found " + this.getChild(0).getStaticType(),
                     getMetadata()
             );
         }
-        System.err.println("Item is of type function");
-        Item functionItem = functionIterator.materializeFirstItemOrNull(context);
+    }
+
+    private Item evaluate(Item functionItem) {
         if (!(functionItem instanceof FunctionItem function)) {
             throw new OurBadException("Expected argument to be of type function and not be null");
         }

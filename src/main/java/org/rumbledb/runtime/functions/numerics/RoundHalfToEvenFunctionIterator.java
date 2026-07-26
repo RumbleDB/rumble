@@ -28,11 +28,15 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -48,8 +52,30 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(
+                    LocalCursorUtils.materializeFirst(this.getChild(0), context),
+                    () -> this.getChildren().size() > 1
+                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context).getIntValue()
+                        : 0
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item value = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            value,
+            () -> this.getChildren().size() > 1
+                ? this.getChild(1).materializeFirstItemOrNull(context).getIntValue()
+                : 0
+        );
+    }
+
+    private Item evaluate(Item value, IntSupplier precisionSupplier) {
         if (value == null) {
             return null;
         }
@@ -72,16 +98,7 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
             return value;
         }
 
-        int precision;
-        if (this.getChildren().size() > 1) {
-            precision = this.getChild(1)
-                .materializeFirstItemOrNull(context)
-                .getIntValue();
-        }
-        // if second param is not given precision is set as 0 (rounds to a whole number)
-        else {
-            precision = 0;
-        }
+        int precision = precisionSupplier.getAsInt();
         try {
             if (value.isInt()) {
                 BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_EVEN);

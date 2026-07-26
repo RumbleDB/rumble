@@ -19,6 +19,9 @@ package org.rumbledb.runtime.cursor;
 
 import java.util.NoSuchElementException;
 
+import lombok.NonNull;
+import org.rumbledb.exceptions.ExceptionMetadata;
+
 /**
  * Cursor template for an evaluation that produces zero or one value.
  *
@@ -28,6 +31,14 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
 
     private T result;
     private boolean hasNext;
+
+    protected AtMostOneLocalCursor() {
+        super();
+    }
+
+    protected AtMostOneLocalCursor(@NonNull ExceptionMetadata metadata) {
+        super(metadata);
+    }
 
     @Override
     protected final void openLocal() {

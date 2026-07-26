@@ -8,6 +8,8 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.MappingLocalCursor;
 
 import java.io.Serial;
 import java.time.DateTimeException;
@@ -126,11 +128,16 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new MappingLocalCursor<>(this.getChild(0), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
-        if (inputItem == null) {
-            return null;
-        }
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private Item evaluate(Item inputItem) {
         String lexicalValue = inputItem.getStringValue();
         try {
             ParsedDateTime parsedValue = parseIetfDate(lexicalValue);

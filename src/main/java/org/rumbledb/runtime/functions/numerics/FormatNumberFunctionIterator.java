@@ -7,6 +7,9 @@ import org.rumbledb.exceptions.InvalidDecimalFormatName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.io.Serial;
@@ -27,13 +30,30 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(
+                    LocalCursorUtils.materializeFirst(this.getChild(0), context),
+                    LocalCursorUtils.materializeFirst(this.getChild(1), context),
+                    this.getChildren().size() > 2
+                        ? LocalCursorUtils.materializeFirst(this.getChild(2), context)
+                        : null
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
         Item decimalFormatNameItem = this.getChildren().size() > 2
             ? this.getChild(2).materializeFirstItemOrNull(context)
             : null;
+        return evaluate(valueItem, pictureItem, decimalFormatNameItem);
+    }
 
+    private Item evaluate(Item valueItem, Item pictureItem, Item decimalFormatNameItem) {
         if (valueItem == null) {
             return ItemFactory.getInstance()
                 .createStringItem(

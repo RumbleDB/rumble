@@ -6,6 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -27,7 +29,16 @@ public class RandomNumberGeneratorIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(RandomNumberGeneratorIterator::generate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return generate();
+    }
+
+    private static Item generate() {
         Random random = new Random();
         return ItemFactory.getInstance().createDoubleItem(random.nextDouble());
     }

@@ -8,6 +8,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.MappingLocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,8 +26,22 @@ public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRun
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new MappingLocalCursor<>(
+                this.getChild(0),
+                context,
+                NamespaceURIFromQNameFunctionIterator::evaluate,
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        QNameItem qnameItem = (QNameItem) this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private static Item evaluate(Item item) {
+        QNameItem qnameItem = (QNameItem) item;
         if (qnameItem == null) {
             return null;
         }

@@ -8,6 +8,8 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -25,8 +27,21 @@ public class FunctionArityFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapArgument(
+            this.getChild(0),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item function = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private Item evaluate(Item function) {
         if (function == null || !function.isFunction()) {
             throw new UnexpectedTypeException(
                     "The argument of fn:function-arity must be a single function item [err:XPTY0004].",
