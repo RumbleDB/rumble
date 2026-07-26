@@ -12,6 +12,9 @@ import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
@@ -49,6 +52,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        return evaluate(dynamicContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(context);
+    }
+
+    private Item evaluate(DynamicContext dynamicContext) {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
@@ -80,7 +92,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
         Item item;
         try {
-            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            item = LocalCursorUtils.materializeAtMostOne(this.child, dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(dynamicContext, getMetadata());
             }
@@ -112,6 +124,20 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new CastException(message, getMetadata());
         }
         return result;
+    }
+
+    private final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final DynamicContext context;
+
+        private Cursor(DynamicContext context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            return evaluate(this.context);
+        }
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
