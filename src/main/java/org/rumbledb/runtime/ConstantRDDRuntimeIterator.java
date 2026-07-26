@@ -24,6 +24,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 
@@ -31,7 +33,8 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private JavaRDD<Item> items;
+
+    private final JavaRDD<Item> items;
 
     public ConstantRDDRuntimeIterator(
             JavaRDD<Item> items,
@@ -42,31 +45,30 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>();
+    }
+
+    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         return this.items;
     }
 
     @Override
     protected void openLocal() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected void closeLocal() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     protected boolean hasNextLocal() {
-        // TODO Auto-generated method stub
         return false;
     }
 
     @Override
     protected Item nextLocal() {
-        // TODO Auto-generated method stub
         return null;
     }
 }
