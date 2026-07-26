@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.logics;
 
 import java.util.Objects;
 
@@ -24,6 +24,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 
 /**
  * Local cursor for boolean operators based on effective boolean values.

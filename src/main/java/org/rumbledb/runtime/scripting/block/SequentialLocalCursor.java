@@ -5,7 +5,7 @@
  * The ASF licenses this file to You under the Apache License, Version 2.0.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.scripting.block;
 
 import java.util.List;
 
@@ -13,11 +13,13 @@ import lombok.NonNull;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 /**
  * Drains a sequence of side-effecting plans before streaming a result plan.
  */
-public final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
+final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
 
     private final List<? extends RuntimePlan<?>> prefixPlans;
     private final RuntimePlan<T> resultPlan;

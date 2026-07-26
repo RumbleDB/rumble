@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.control;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
@@ -24,13 +24,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 /**
  * Local cursor that evaluates a condition and delegates to exactly one branch.
  *
  * @param <T> the branch value type
  */
-public final class ConditionalLocalCursor<T> extends AbstractLocalCursor<T> {
+final class ConditionalLocalCursor<T> extends AbstractLocalCursor<T> {
 
     private final RuntimePlan<Item> conditionPlan;
     private final RuntimePlan<T> thenPlan;

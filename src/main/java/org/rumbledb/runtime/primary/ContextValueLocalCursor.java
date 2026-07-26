@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.primary;
 
 import java.util.List;
 
@@ -26,6 +26,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 
 /**
  * Local cursor for singleton values supplied by the dynamic context.

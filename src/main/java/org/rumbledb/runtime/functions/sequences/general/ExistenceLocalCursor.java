@@ -15,18 +15,20 @@
  * limitations under the License.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.functions.sequences.general;
 
 import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * Local cursor for testing whether a sequence is empty or non-empty.
  */
-public final class ExistenceLocalCursor extends AtMostOneLocalCursor<Item> {
+final class ExistenceLocalCursor extends AtMostOneLocalCursor<Item> {
 
     private final RuntimePlan<Item> childPlan;
     private final DynamicContext context;

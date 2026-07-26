@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.rumbledb.runtime.cursor;
+package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import lombok.NonNull;
 import org.rumbledb.api.Item;
@@ -27,13 +27,16 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /**
  * Local cursor shared by the {@code min()} and {@code max()} aggregate plans.
  */
-public final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
+final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
 
     private enum Kind {
         MIN,
