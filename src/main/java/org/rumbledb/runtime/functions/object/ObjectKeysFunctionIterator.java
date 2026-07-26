@@ -25,22 +25,25 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
-import java.util.HashSet;
 import java.util.Set;
 
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
@@ -61,20 +64,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        Set<String> seenKeys = new HashSet<>();
-        return new FlatMappingLocalCursor<>(
+        return new ObjectKeysLocalCursor(
                 this.iterator,
                 context,
-                item -> {
-                    if (!item.isObject()) {
-                        return List.<Item>of().iterator();
-                    }
-                    return item.getStringKeys()
-                        .stream()
-                        .filter(seenKeys::add)
-                        .map(ItemFactory.getInstance()::createStringItem)
-                        .iterator();
-                },
                 getMetadata()
         );
     }
@@ -177,5 +169,80 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();
         return childRDD.flatMap(transformation).distinct();
+    }
+
+    private static final class ObjectKeysLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimeIterator inputPlan;
+        private final DynamicContext context;
+        private final Set<String> seenKeys;
+        private LocalCursor<Item> inputCursor;
+        private Iterator<String> currentKeys;
+        private String nextKey;
+
+        private ObjectKeysLocalCursor(
+                RuntimeIterator inputPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.inputPlan = inputPlan;
+            this.context = context;
+            this.seenKeys = new HashSet<>();
+        }
+
+        @Override
+        protected void openLocal() {
+            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+            this.inputCursor.open();
+            this.currentKeys = Collections.emptyIterator();
+            advance();
+        }
+
+        private void advance() {
+            this.nextKey = null;
+            while (true) {
+                while (this.currentKeys.hasNext()) {
+                    String key = this.currentKeys.next();
+                    if (this.seenKeys.add(key)) {
+                        this.nextKey = key;
+                        return;
+                    }
+                }
+                if (!this.inputCursor.hasNext()) {
+                    return;
+                }
+                Item item = this.inputCursor.next();
+                this.currentKeys = item.isObject()
+                    ? item.getStringKeys().iterator()
+                    : Collections.emptyIterator();
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextKey != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextKey == null) {
+                throw invalidState("No more object keys are available.");
+            }
+            Item result = ItemFactory.getInstance().createStringItem(this.nextKey);
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+                this.inputCursor = null;
+            }
+            this.currentKeys = null;
+            this.nextKey = null;
+            this.seenKeys.clear();
+        }
     }
 }

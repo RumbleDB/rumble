@@ -79,7 +79,14 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
         if (!isRDDOrDataFrame() && implementsLocal()) {
-            openLocal();
+            this.localCursor = createLocalCursor(context);
+            try {
+                this.localCursor.open();
+            } catch (RuntimeException exception) {
+                this.localCursor = null;
+                super.close();
+                throw exception;
+            }
         }
     }
 
@@ -87,7 +94,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public void close() {
         super.close();
         if (!isRDDOrDataFrame() && implementsLocal()) {
-            closeLocal();
+            if (this.localCursor != null) {
+                this.localCursor.close();
+                this.localCursor = null;
+            }
             return;
         }
         this.result = null;
@@ -96,7 +106,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public boolean hasNext() {
         if (isLocal() && implementsLocal()) {
-            return hasNextLocal();
+            return this.localCursor != null && this.localCursor.hasNext();
         }
         if (this.result == null) {
             this.currentResultIndex = 0;
@@ -118,7 +128,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public Item next() {
         if (!isRDDOrDataFrame() && implementsLocal()) {
-            return nextLocal();
+            if (this.localCursor == null) {
+                throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+            }
+            return this.localCursor.next();
         }
         if (!this.isOpen) {
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());

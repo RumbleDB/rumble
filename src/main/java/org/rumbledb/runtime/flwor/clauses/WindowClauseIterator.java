@@ -15,7 +15,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -23,7 +22,9 @@ import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -63,23 +64,6 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
      * For example, {@code end $y when $y < 3}
      */
     private final RuntimeIterator endCondition;
-
-    /**
-     * Store generated window tuples waiting to be consumed.
-     */
-    private final Deque<FlworTuple> pendingResults = new ArrayDeque<>();
-
-    /**
-     * The next result to be returned by the {@code next()} method.
-     */
-    private transient FlworTuple nextResult;
-
-    /**
-     * The input tuple currently being processed
-     * If the child iterator is {@code null}, this is always {@code null} as well (for example, when window is the start
-     * clause of a FLWOR expression).
-     */
-    private transient FlworTuple currentInputTuple;
 
     public WindowClauseIterator(
             RuntimeTupleIterator child,
@@ -135,286 +119,178 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        return new WindowClauseIterator(
-                createChildLocalExecution(),
-                this.windowType,
-                this.windowVariable,
-                this.declaredWindowType,
-                this.startVariables,
-                this.endVariables,
-                this.endConditionOnly,
-                CursorRuntimeIteratorAdapter.adapt(this.sourceIterator),
-                CursorRuntimeIteratorAdapter.adapt(this.startCondition),
-                this.endCondition == null ? null : CursorRuntimeIteratorAdapter.adapt(this.endCondition),
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new WindowLocalCursor(this, context);
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.pendingResults.clear();
-        this.nextResult = null;
-        this.currentInputTuple = null;
-        if (!this.hasActiveChild()) {
-            // No upcoming tuple
-            this.prepareForTuple(null);
-            this.prepareNextResult();
-        } else {
-            this.child.open(this.currentDynamicContext);
-            this.prepareNextTuple();
-        }
-    }
+    private static final class WindowLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-    @Override
-    public void close() {
-        this.closeExpressionIterators();
-        if (this.hasActiveChild() && this.child.isOpen()) {
-            this.child.close();
-        }
-        this.pendingResults.clear();
-        this.nextResult = null;
-        this.currentInputTuple = null;
-        this.isOpen = false;
-    }
+        private final WindowClauseIterator plan;
+        private final DynamicContext context;
+        private final Deque<FlworTuple> pending = new ArrayDeque<>();
+        private LocalCursor<FlworTuple> childCursor;
 
-    private boolean hasActiveChild() {
-        return this.child != null && this.evaluationDepthLimit != 0;
-    }
-
-    private void closeExpressionIterators() {
-        if (this.sourceIterator.isOpen()) {
-            this.sourceIterator.close();
-        }
-        if (this.startCondition.isOpen()) {
-            this.startCondition.close();
-        }
-        if (this.endCondition != null && this.endCondition.isOpen()) {
-            this.endCondition.close();
-        }
-    }
-
-    @Override
-    public FlworTuple next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("Invalid next() call in window clause", this.getMetadata());
-        }
-        FlworTuple result = this.nextResult;
-        this.prepareNextResult();
-        return result;
-    }
-
-    private void prepareNextResult() {
-        if (!this.pendingResults.isEmpty()) {
-            // Consume from the deque if it's not empty
-            this.nextResult = this.pendingResults.removeFirst();
-            this.hasNext = true;
-            return;
+        private WindowLocalCursor(WindowClauseIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
 
-        // In case that the deque is empty, we need to query for more
-        if (!this.hasActiveChild()) {
-            // No upcoming tuple
-            this.hasNext = false;
-            return;
-        }
-
-        // Prepare for the next tuple from the child iterator
-        this.prepareNextTuple();
-    }
-
-    private void prepareNextTuple() {
-        while (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
-            this.prepareForTuple(inputTuple);
-            if (!this.pendingResults.isEmpty()) {
-                // At lease one window has been generated
-                this.nextResult = this.pendingResults.removeFirst();
-                this.hasNext = true;
-                return;
-            }
-        }
-
-        // If we reach here, it means that the child iterator has no more tuples to provide
-        this.hasNext = false;
-        this.child.close();
-    }
-
-
-    /**
-     * Used for intermediate window clauses to process the tuple coming from the child iterator.
-     * 
-     * @param inputTuple if the window clause is not the first clause of the FLWOR expression, this is the tuple coming
-     *        from the child iterator. Otherwise, it is {@code null}.
-     */
-    private void prepareForTuple(FlworTuple inputTuple) {
-        this.currentInputTuple = inputTuple;
-        List<Item> items = this.materializeSource(inputTuple);
-
-        if (!items.isEmpty()) {
-            if (this.windowType == WindowClause.WindowType.TUMBLING) {
-                this.generateTumblingWindows(items, inputTuple);
+        @Override
+        protected void openLocal() {
+            if (this.plan.hasActiveChild()) {
+                this.childCursor = this.plan.child.createLocalCursor(this.context);
+                this.childCursor.open();
+                fillPending();
             } else {
-                this.generateSlidingWindows(items, inputTuple);
+                this.pending.addAll(this.plan.generateWindows(this.context, null));
             }
+        }
+
+        private void fillPending() {
+            while (
+                this.pending.isEmpty()
+                    && this.childCursor != null
+                    && this.childCursor.hasNext()
+            ) {
+                FlworTuple inputTuple = this.childCursor.next();
+                this.pending.addAll(this.plan.generateWindows(this.context, inputTuple));
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            fillPending();
+            return !this.pending.isEmpty();
+        }
+
+        @Override
+        protected FlworTuple nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("No more window-clause tuples are available.");
+            }
+            return this.pending.removeFirst();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.pending.clear();
         }
     }
 
-    /**
-     * Evaluate the expression after {@code in} and materialize the results into a list of items.
-     * 
-     * @param inputTuple if the window clause is not the first clause of the FLWOR expression, this is the tuple coming
-     *        from the child iterator. Otherwise, it is {@code null}.
-     * @return a list of items produced by the source iterator
-     */
-    private List<Item> materializeSource(FlworTuple inputTuple) {
-        DynamicContext sourceContext = new DynamicContext(this.currentDynamicContext);
+    private List<FlworTuple> generateWindows(DynamicContext context, FlworTuple inputTuple) {
+        DynamicContext sourceContext = new DynamicContext(context);
         if (inputTuple != null) {
-            // Bind the variables from the input tuple to the source context so that the source iterator can access them
-            // For example: for $x in ... for sliding window $w in $x
-            // Here we have a flwor tuple with $x variable that needs to be bind to the source iterator so it can
-            // evaluate
-            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, this.getMetadata());
+            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
         if (this.sourceIterator.isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
+            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
         }
-
-        List<Item> items = new ArrayList<>();
-        this.sourceIterator.open(sourceContext);
-        try {
-            while (this.sourceIterator.hasNext()) {
-                items.add(this.sourceIterator.next());
+        List<Item> items = LocalCursorUtils.materialize(this.sourceIterator, sourceContext);
+        List<FlworTuple> results = new ArrayList<>();
+        if (this.windowType == WindowClause.WindowType.TUMBLING) {
+            int start = 0;
+            while (start < items.size()) {
+                while (
+                    start < items.size()
+                        && !matches(
+                            context,
+                            inputTuple,
+                            this.startCondition,
+                            this.startVariables,
+                            false,
+                            items,
+                            start,
+                            start
+                        )
+                ) {
+                    start++;
+                }
+                if (start >= items.size()) {
+                    break;
+                }
+                int end = findEnd(context, inputTuple, items, start);
+                if (end < 0) {
+                    break;
+                }
+                results.add(createTuple(inputTuple, items, start, end));
+                start = end + 1;
             }
-        } finally {
-            if (this.sourceIterator.isOpen()) {
-                this.sourceIterator.close();
+        } else {
+            for (int start = 0; start < items.size(); start++) {
+                if (
+                    !matches(context, inputTuple, this.startCondition, this.startVariables, false, items, start, start)
+                ) {
+                    continue;
+                }
+                int end = findEnd(context, inputTuple, items, start);
+                if (end >= 0) {
+                    results.add(createTuple(inputTuple, items, start, end));
+                }
             }
         }
-        return items;
+        return results;
     }
 
-    /**
-     * Generate tumbling windows (no overlap) from the list of items and add them to the pending results deque.
-     * 
-     * @param items the list of items produced by the source iterator
-     * @param inputTuple if the window clause is not the first clause of the FLWOR expression, this is the tuple coming
-     *        from the child iterator. Otherwise, it is {@code null}.
-     */
-    private void generateTumblingWindows(List<Item> items, FlworTuple inputTuple) {
-        int start = 0;
-        while (start < items.size()) {
-            while (
-                start < items.size()
-                    && !this.matches(this.startCondition, this.startVariables, false, items, start, start)
-            ) {
-                // Skip items until we find a start condition match (fine because tumbling windows do not overlap)
-                start++;
-            }
-            if (start >= items.size()) {
-                // No more start condition matches, we are done
-                return;
-            }
-            // Find the end of the window starting from the current start position
-            int end = this.findEnd(items, start);
-            if (end < 0) {
-                // No end condition match found, we are done
-                return;
-            }
-
-            // Create a new tuple for the window and add it to the pending results deque
-            this.pendingResults.add(this.createTuple(inputTuple, items, start, end));
-            start = end + 1;
-        }
-    }
-
-    /**
-     * Generate sliding windows (can overlap) from the list of items and add them to the pending results deque.
-     * 
-     * @param items the list of items produced by the source iterator
-     * @param inputTuple if the window clause is not the first clause of the FLWOR expression, this is the tuple coming
-     *        from the child iterator. Otherwise, it is {@code null}.
-     */
-    private void generateSlidingWindows(List<Item> items, FlworTuple inputTuple) {
-        for (int start = 0; start < items.size(); start++) {
-            if (!this.matches(this.startCondition, this.startVariables, false, items, start, start)) {
-                // This item does not match the start condition, skip it
-                continue;
-            }
-            int end = this.findEnd(items, start);
-            if (end >= 0) {
-                this.pendingResults.add(this.createTuple(inputTuple, items, start, end));
-            }
-        }
-    }
-
-    private int findEnd(List<Item> items, int start) {
+    private int findEnd(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
         if (this.endCondition == null) {
-            // This can only happen for tumbling windows without an explicit end clause
-            // In that case, the end of the window will be the item before the next start condition match, or the last
-            // item in the list if there is no next start condition match
             for (int nextStart = start + 1; nextStart < items.size(); nextStart++) {
-                if (this.matches(this.startCondition, this.startVariables, false, items, nextStart, nextStart)) {
+                if (
+                    matches(
+                        context,
+                        inputTuple,
+                        this.startCondition,
+                        this.startVariables,
+                        false,
+                        items,
+                        nextStart,
+                        nextStart
+                    )
+                ) {
                     return nextStart - 1;
                 }
             }
             return items.size() - 1;
         }
-
         for (int end = start; end < items.size(); end++) {
-            if (this.matches(this.endCondition, this.endVariables, true, items, end, start)) {
+            if (matches(context, inputTuple, this.endCondition, this.endVariables, true, items, end, start)) {
                 return end;
             }
         }
         return this.endConditionOnly ? -1 : items.size() - 1;
     }
 
-    /**
-     * Check if the window condition matches for the given position in the list of items.
-     */
     private boolean matches(
-            RuntimeIterator conditionIterator,
+            DynamicContext context,
+            FlworTuple inputTuple,
+            RuntimeIterator condition,
             WindowClause.WindowVars variables,
-            boolean endCondition,
+            boolean isEndCondition,
             List<Item> items,
             int position,
             int startPosition
     ) {
-        if (conditionIterator.isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
+        if (condition.isRDDOrDataFrame()) {
+            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
         }
-
-        // Evaluate each condition in a child context so temporary window bindings from one condition do not leak into
-        // the next one, while outer bindings (including external variables) remain visible.
-        DynamicContext conditionContext = new DynamicContext(this.currentDynamicContext);
+        DynamicContext conditionContext = new DynamicContext(context);
         conditionContext.getVariableValues().removeAllVariables();
-
-        if (this.currentInputTuple != null) {
-            // Bind the variables from the input tuple to the current dynamic context so that the condition iterator can
-            // access them
-            conditionContext.getVariableValues().setBindingsFromTuple(this.currentInputTuple, this.getMetadata());
+        if (inputTuple != null) {
+            conditionContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
-
-        if (endCondition) {
-            // Bind the variables from the start condition to the current dynamic context so that the end condition can
-            // access them
-            bindTupleContext(
-                conditionContext,
-                items,
-                startPosition,
-                this.startVariables
-            );
+        if (isEndCondition) {
+            bindTupleContext(conditionContext, items, startPosition, this.startVariables);
         }
-
         bindTupleContext(conditionContext, items, position, variables);
-        try {
-            return conditionIterator.getEffectiveBooleanValue(conditionContext);
-        } finally {
-            if (conditionIterator.isOpen()) {
-                conditionIterator.close();
-            }
-        }
+        return condition.getEffectiveBooleanValue(conditionContext);
+    }
+
+    private boolean hasActiveChild() {
+        return this.child != null && this.evaluationDepthLimit != 0;
     }
 
     /**

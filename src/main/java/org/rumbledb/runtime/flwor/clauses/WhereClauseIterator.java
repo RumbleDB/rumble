@@ -30,7 +30,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -38,7 +37,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -58,8 +58,6 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private FlworTuple nextLocalTupleResult;
 
     public WhereClauseIterator(
             RuntimeTupleIterator child,
@@ -72,73 +70,72 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        return new WhereClauseIterator(
-                createChildLocalExecution(),
-                CursorRuntimeIteratorAdapter.adapt(this.expression),
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new WhereLocalCursor(this, context);
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (this.child != null) {
-            this.child.open(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
+    private static final class WhereLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-            setNextLocalTupleResult();
+        private final WhereClauseIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<FlworTuple> childCursor;
+        private DynamicContext tupleContext;
+        private FlworTuple nextTuple;
 
-        } else {
-            throw new OurBadException("Invalid where clause.");
+        private WhereLocalCursor(WhereClauseIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
-    }
 
-    @Override
-    public void close() {
-        super.close();
-        if (this.child != null) {
-            this.child.close();
-            this.tupleContext = null;
-        } else {
-            throw new OurBadException("Invalid where clause.");
+        @Override
+        protected void openLocal() {
+            if (this.plan.child == null) {
+                throw new OurBadException("Invalid where clause.");
+            }
+            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor.open();
+            this.tupleContext = new DynamicContext(this.context);
+            advance();
         }
-    }
 
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
-    }
-
-    private void setNextLocalTupleResult() {
-        // for each incoming tuple, evaluate the expression to a boolean.
-        // forward if true, drop if false
-
-        FlworTuple inputTuple;
-        while (this.child.hasNext()) {
-            // tuple received from child, used for tuple creation
-            inputTuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                   // variables from new
-                                                                                                   // tuple
-
-            boolean effectiveBooleanValue = this.expression.getEffectiveBooleanValue(this.tupleContext);
-            if (effectiveBooleanValue) {
-                this.nextLocalTupleResult = inputTuple;
-                this.hasNext = true;
-                return;
+        private void advance() {
+            this.nextTuple = null;
+            while (this.childCursor.hasNext()) {
+                FlworTuple candidate = this.childCursor.next();
+                this.tupleContext.getVariableValues().removeAllVariables();
+                this.tupleContext.getVariableValues().setBindingsFromTuple(candidate, this.plan.getMetadata());
+                if (this.plan.expression.getEffectiveBooleanValue(this.tupleContext)) {
+                    this.nextTuple = candidate;
+                    return;
+                }
             }
         }
 
-        // execution reaches here when there are no more results
-        this.child.close();
-        this.hasNext = false;
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextTuple != null;
+        }
+
+        @Override
+        protected FlworTuple nextLocal() {
+            if (this.nextTuple == null) {
+                throw invalidState("No more where-clause tuples are available.");
+            }
+            FlworTuple result = this.nextTuple;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.tupleContext = null;
+            this.nextTuple = null;
+        }
     }
 
     @Override

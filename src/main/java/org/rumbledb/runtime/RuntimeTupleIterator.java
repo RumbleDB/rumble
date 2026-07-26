@@ -35,7 +35,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeTupleIteratorCursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -58,9 +57,8 @@ public abstract class RuntimeTupleIterator
     protected RuntimeTupleIterator child;
     protected int evaluationDepthLimit;
 
-    protected transient DynamicContext currentDynamicContext;
-    protected transient boolean hasNext;
     protected transient boolean isOpen;
+    private transient LocalCursor<FlworTuple> localCursor;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
@@ -79,34 +77,7 @@ public abstract class RuntimeTupleIterator
     }
 
     @Override
-    public final LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeTupleIteratorCursor(
-                this::createConfiguredLocalExecution,
-                context,
-                getMetadata()
-        );
-    }
-
-    /**
-     * Recreates this tuple operation with fresh children for one local evaluation.
-     */
-    protected abstract RuntimeTupleIterator createLocalExecution();
-
-    protected final RuntimeTupleIterator createChildLocalExecution() {
-        return this.child == null ? null : this.child.createConfiguredLocalExecution();
-    }
-
-    protected final RuntimeStaticContext getLocalRuntimeStaticContext() {
-        return this.staticContext.toBuilder().executionMode(ExecutionMode.LOCAL).build();
-    }
-
-    private RuntimeTupleIterator createConfiguredLocalExecution() {
-        RuntimeTupleIterator execution = createLocalExecution();
-        execution.evaluationDepthLimit = this.evaluationDepthLimit;
-        execution.inputTupleProjection = this.inputTupleProjection;
-        execution.outputTupleProjection = this.outputTupleProjection;
-        return execution;
-    }
+    public abstract LocalCursor<FlworTuple> createLocalCursor(DynamicContext context);
 
     @Override
     public final RuntimeStaticContext getRuntimeStaticContext() {
@@ -122,14 +93,23 @@ public abstract class RuntimeTupleIterator
             );
         }
         this.isOpen = true;
-        this.hasNext = true;
-        this.currentDynamicContext = context;
+        this.localCursor = createLocalCursor(context);
+        try {
+            this.localCursor.open();
+        } catch (RuntimeException exception) {
+            this.localCursor = null;
+            this.isOpen = false;
+            throw exception;
+        }
     }
 
     @Override
     public void close() {
+        if (this.localCursor != null) {
+            this.localCursor.close();
+        }
+        this.localCursor = null;
         this.isOpen = false;
-        this.child.close();
     }
 
 
@@ -140,11 +120,16 @@ public abstract class RuntimeTupleIterator
 
     @Override
     public boolean hasNext() {
-        return this.hasNext;
+        return this.localCursor != null && this.localCursor.hasNext();
     }
 
     @Override
-    public abstract FlworTuple next();
+    public FlworTuple next() {
+        if (this.localCursor == null) {
+            throw new IteratorFlowException("Tuple iterator is not open.", getMetadata());
+        }
+        return this.localCursor.next();
+    }
 
     public ExceptionMetadata getMetadata() {
         return this.staticContext.getMetadata();

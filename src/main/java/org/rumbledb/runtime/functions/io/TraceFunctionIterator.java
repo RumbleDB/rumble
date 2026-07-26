@@ -25,9 +25,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -57,21 +58,10 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        String[] traceLabel = new String[1];
-        int[] tracePosition = new int[1];
-        return new FlatMappingLocalCursor<>(
+        return new TraceLocalCursor(
                 this.getChild(0),
+                this.getChildren().size() == 2 ? this.getChild(1) : null,
                 context,
-                () -> {
-                    traceLabel[0] = this.getChildren().size() == 2
-                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context).getStringValue()
-                        : "";
-                    tracePosition[0] = 0;
-                },
-                item -> {
-                    writeTrace(item, traceLabel[0], ++tracePosition[0], context);
-                    return List.of(item).iterator();
-                },
                 getMetadata()
         );
     }
@@ -105,7 +95,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 result,
                 this.label,
                 ++this.position,
-                this.currentDynamicContextForLocalExecution
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
             );
             this.hasNext = this.valueIterator.hasNext();
             return result;
@@ -113,7 +104,13 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
     }
 
-    private void writeTrace(Item result, String label, int position, DynamicContext context) {
+    private static void writeTrace(
+            Item result,
+            String label,
+            int position,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
         RumbleRuntimeConfiguration configuration = context.getRumbleRuntimeConfiguration();
         if (configuration == null || configuration.getLogPath() == null) {
             return;
@@ -121,14 +118,72 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             configuration.getLogPath(),
             configuration,
-            getMetadata()
+            metadata
         );
         FileSystemUtil.append(
             uri,
             Collections.singletonList(label + " [" + position + "]: " + result.serialize()),
             configuration,
-            getMetadata()
+            metadata
         );
     }
 
+    private static final class TraceLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimeIterator valuePlan;
+        private final RuntimeIterator labelPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> valueCursor;
+        private String label;
+        private int position;
+
+        private TraceLocalCursor(
+                RuntimeIterator valuePlan,
+                RuntimeIterator labelPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.valuePlan = valuePlan;
+            this.labelPlan = labelPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.label = this.labelPlan == null
+                ? ""
+                : LocalCursorUtils.materializeFirst(this.labelPlan, this.context).getStringValue();
+            this.position = 0;
+            this.valueCursor = this.valuePlan.createLocalCursor(this.context);
+            this.valueCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.valueCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.valueCursor.hasNext()) {
+                throw invalidState("No more trace results are available.");
+            }
+            Item result = this.valueCursor.next();
+            writeTrace(result, this.label, ++this.position, this.context, this.metadata);
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.valueCursor != null) {
+                this.valueCursor.close();
+                this.valueCursor = null;
+            }
+            this.label = null;
+            this.position = 0;
+        }
+    }
 }

@@ -67,7 +67,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(context);
+        return new Cursor(this, context);
     }
 
     private Item evaluate(DynamicContext context) {
@@ -107,17 +107,19 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         return item;
     }
 
-    private final class Cursor extends AtMostOneLocalCursor<Item> {
+    private static final class Cursor extends AtMostOneLocalCursor<Item> {
 
+        private final AtMostOneItemTypePromotionIterator plan;
         private final DynamicContext context;
 
-        private Cursor(DynamicContext context) {
+        private Cursor(AtMostOneItemTypePromotionIterator plan, DynamicContext context) {
+            this.plan = plan;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return evaluate(this.context);
+            return this.plan.evaluate(this.context);
         }
     }
 

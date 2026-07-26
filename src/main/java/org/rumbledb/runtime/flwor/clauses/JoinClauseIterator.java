@@ -44,6 +44,8 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -70,18 +72,6 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     @SuppressWarnings("unused")
     private DataFrameContext dataFrameContext;
 
-    // Computation state
-    @SuppressWarnings("unused")
-    private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    @SuppressWarnings("unused")
-    private transient long position;
-    @SuppressWarnings("unused")
-    private transient FlworTuple nextLocalTupleResult;
-    @SuppressWarnings("unused")
-    private transient FlworTuple inputTuple; // tuple received from child, used for tuple creation
-    @SuppressWarnings("unused")
-    private transient boolean isFirstItem;
-
     public JoinClauseIterator(
             RuntimeTupleIterator leftChild,
             RuntimeTupleIterator rightChild,
@@ -94,13 +84,8 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        return new JoinClauseIterator(
-                createChildLocalExecution(),
-                null,
-                this.isLeftOuterJoin,
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>();
     }
 
     /**
@@ -425,12 +410,6 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             }
         }
         return optimizableJoin;
-    }
-
-    @Override
-    public FlworTuple next() {
-        // TODO Auto-generated method stub
-        return null;
     }
 
     @Override

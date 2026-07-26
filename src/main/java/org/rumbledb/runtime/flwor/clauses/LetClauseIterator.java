@@ -21,28 +21,26 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.log4j.LogManager;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -79,8 +77,6 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     private Name variableName; // for efficient use in local iteration
     private SequenceType sequenceType;
     private RuntimeIterator assignmentIterator;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private FlworTuple nextLocalTupleResult;
 
     public LetClauseIterator(
             RuntimeTupleIterator child,
@@ -96,92 +92,103 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        return new LetClauseIterator(
-                createChildLocalExecution(),
-                this.variableName,
-                this.sequenceType,
-                CursorRuntimeIteratorAdapter.adapt(this.assignmentIterator),
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new LetLocalCursor(this, context);
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.tupleContext = this.currentDynamicContext;
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null);
-        } else {
-            this.child.open(this.currentDynamicContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-            setNextLocalTupleResult();
-        }
-    }
+    private static final class LetLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-    private void setNextLocalTupleResult() {
-        // if starting clause: result is a single tuple -> no more tuples after the first next call
-        if (this.child == null || this.evaluationDepthLimit == 0) {
-            this.hasNext = false;
-            return;
+        private final LetClauseIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<FlworTuple> childCursor;
+        private DynamicContext tupleContext;
+        private FlworTuple nextTuple;
+        private boolean startingClause;
+
+        private LetLocalCursor(LetClauseIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
 
-        if (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                   // variables from new
-                                                                                                   // tuple
-            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple);
-            this.hasNext = true;
-        } else {
-            this.child.close();
-            this.hasNext = false;
-        }
-    }
-
-    private FlworTuple generateTupleFromExpressionWithContext(FlworTuple inputTuple) {
-        FlworTuple resultTuple;
-        if (inputTuple == null) {
-            resultTuple = new FlworTuple(this.getConfiguration());
-        } else {
-            resultTuple = new FlworTuple(inputTuple);
-        }
-        if (this.assignmentIterator.isDataFrame()) {
-            JSoundDataFrame df = this.assignmentIterator.getDataFrame(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
-            resultTuple.putValue(this.variableName, df);
-        } else if (this.assignmentIterator.isRDDOrDataFrame()) {
-            JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(this.tupleContext);
-            this.tupleContext = new DynamicContext(this.currentDynamicContext);
-            resultTuple.putValue(this.variableName, itemRDD);
-        } else {
-            List<Item> results = new ArrayList<>();
-            this.assignmentIterator.open(this.tupleContext);
-            while (this.assignmentIterator.hasNext()) {
-                results.add(this.assignmentIterator.next());
+        @Override
+        protected void openLocal() {
+            this.startingClause = this.plan.child == null
+                || this.plan.evaluationDepthLimit == 0;
+            if (this.startingClause) {
+                this.tupleContext = this.context;
+                this.nextTuple = generateTuple(null);
+                return;
             }
-            this.assignmentIterator.close();
-            resultTuple.putValue(this.variableName, results);
+            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor.open();
+            this.tupleContext = new DynamicContext(this.context);
+            advance();
         }
-        return resultTuple;
-    }
 
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
+        private void advance() {
+            if (!this.childCursor.hasNext()) {
+                this.nextTuple = null;
+                return;
+            }
+            FlworTuple inputTuple = this.childCursor.next();
+            this.tupleContext.getVariableValues().removeAllVariables();
+            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, this.plan.getMetadata());
+            this.nextTuple = generateTuple(inputTuple);
+        }
+
+        private FlworTuple generateTuple(FlworTuple inputTuple) {
+            FlworTuple result = inputTuple == null
+                ? new FlworTuple(this.plan.getConfiguration())
+                : new FlworTuple(inputTuple);
+            if (this.plan.assignmentIterator.isDataFrame()) {
+                result.putValue(
+                    this.plan.variableName,
+                    this.plan.assignmentIterator.getDataFrame(this.tupleContext)
+                );
+                this.tupleContext = new DynamicContext(this.context);
+            } else if (this.plan.assignmentIterator.isRDDOrDataFrame()) {
+                result.putValue(
+                    this.plan.variableName,
+                    this.plan.assignmentIterator.getRDD(this.tupleContext)
+                );
+                this.tupleContext = new DynamicContext(this.context);
+            } else {
+                result.putValue(
+                    this.plan.variableName,
+                    LocalCursorUtils.materialize(this.plan.assignmentIterator, this.tupleContext)
+                );
+            }
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
-    }
 
-    @Override
-    public void close() {
-        this.isOpen = false;
-        if (this.child != null && this.evaluationDepthLimit != 0) {
-            this.child.close();
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextTuple != null;
+        }
+
+        @Override
+        protected FlworTuple nextLocal() {
+            if (this.nextTuple == null) {
+                throw invalidState("No more let-clause tuples are available.");
+            }
+            FlworTuple result = this.nextTuple;
+            if (this.startingClause) {
+                this.nextTuple = null;
+            } else {
+                advance();
+            }
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.tupleContext = null;
+            this.nextTuple = null;
         }
     }
 

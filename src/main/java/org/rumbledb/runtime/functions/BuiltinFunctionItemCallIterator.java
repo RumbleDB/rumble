@@ -21,12 +21,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -43,9 +42,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
     private final Item functionItem;
     private final List<RuntimeIterator> functionArguments;
-
-    private RuntimeIterator builtinDelegate;
-    private Item nextResult;
 
     public BuiltinFunctionItemCallIterator(
             Item functionItem,
@@ -70,17 +66,43 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            this.functionArguments,
-            context,
-            this.staticContext,
-            (arguments, staticContext) -> new BuiltinFunctionItemCallIterator(
-                    this.functionItem,
-                    arguments,
-                    staticContext
-            ),
-            getMetadata()
-        );
+        return new BuiltinCallLocalCursor(this, context);
+    }
+
+    private static final class BuiltinCallLocalCursor extends AbstractLocalCursor<Item> {
+        private final BuiltinFunctionItemCallIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> delegate;
+
+        private BuiltinCallLocalCursor(BuiltinFunctionItemCallIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.delegate = this.plan.newBuiltinDelegate().createLocalCursor(this.context);
+            this.delegate.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.delegate.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.delegate.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.delegate != null) {
+                this.delegate.close();
+                this.delegate = null;
+            }
+        }
     }
 
     private RuntimeIterator newBuiltinDelegate() {
@@ -90,54 +112,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
             this.staticContext,
             true
         );
-    }
-
-    @Override
-    public void openLocal() {
-        this.builtinDelegate = newBuiltinDelegate();
-        this.builtinDelegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + " in "
-                    + this.functionItem.getIdentifier().getName()
-                    + "  function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.builtinDelegate != null && this.builtinDelegate.isOpen()) {
-            this.builtinDelegate.close();
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.builtinDelegate.hasNext()) {
-            this.nextResult = this.builtinDelegate.next();
-        }
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.builtinDelegate.close();
-        } else {
-            this.hasNext = true;
-        }
     }
 
     @Override

@@ -24,35 +24,34 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
-import org.rumbledb.runtime.cursor.SingletonLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class ForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ForEachFunctionIterator::new,
-            getMetadata()
+        return new ForEachLocalCursor(
+                this.sequenceIterator,
+                this.actionIterator,
+                context,
+                getRuntimeStaticContext()
         );
     }
 
@@ -61,12 +60,6 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
 
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator actionIterator;
-    private RuntimeIterator currentCallbackIterator;
-    private List<Item> inputItems;
-    private Item actionFunction;
-    private int itemIndex;
-    private RuntimeStaticContext argumentContext;
-    private MutableArgumentIterator mutableArgumentIterator;
 
     public ForEachFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -80,51 +73,55 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         this.actionIterator = arguments.get(1);
     }
 
-    @Override
-    protected void openLocal() {
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    private void initializeState(DynamicContext context) {
-        this.inputItems = this.sequenceIterator.materialize(context);
-
-        List<Item> functionItems = this.actionIterator.materialize(context);
+    private static Item resolveAction(
+            RuntimeIterator actionIterator,
+            DynamicContext context,
+            RuntimeStaticContext staticContext
+    ) {
+        List<Item> functionItems = LocalCursorUtils.materialize(actionIterator, context);
         if (functionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:for-each must be a single function item [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
-        this.actionFunction = functionItems.get(0);
-        if (!acceptsSingleArgument(this.actionFunction)) {
+        Item function = functionItems.get(0);
+        if (!acceptsSingleArgument(function)) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each must accept exactly one argument [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
 
-        this.argumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
+        return function;
+    }
+
+    private static List<Item> invokeAction(
+            Item function,
+            Item item,
+            DynamicContext context,
+            RuntimeStaticContext staticContext
+    ) {
+        RuntimeStaticContext argumentContext = RuntimeStaticContext.builder()
+            .configuration(staticContext.getConfiguration())
             .staticType(SequenceType.createSequenceType("item"))
             .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
+            .metadata(staticContext.getMetadata())
             .build();
-        this.itemIndex = 0;
-        this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
-        callbackArguments.add(this.mutableArgumentIterator);
+        callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
+            .configuration(staticContext.getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
+            .metadata(staticContext.getMetadata())
             .build();
-        this.currentCallbackIterator = new DynamicFunctionCallIterator(
-                new ConstantRuntimeIterator(this.actionFunction, functionItemContext),
+        RuntimeIterator callback = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(function, functionItemContext),
                 callbackArguments,
                 functionItemContext
         );
+        return LocalCursorUtils.materialize(callback, context);
     }
 
     private static boolean acceptsSingleArgument(Item item) {
@@ -132,60 +129,6 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
             return true;
         }
         return item.isFunction() && item.getIdentifier().getArity() == 1;
-    }
-
-    private void advanceToNextResult(DynamicContext context) {
-        while (true) {
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.hasNext()) {
-                this.hasNext = true;
-                return;
-            }
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-                this.currentCallbackIterator.close();
-            }
-
-            if (this.inputItems == null || this.itemIndex >= this.inputItems.size()) {
-                this.hasNext = false;
-                return;
-            }
-
-            this.mutableArgumentIterator.setCurrentItem(this.inputItems.get(this.itemIndex++));
-            this.currentCallbackIterator.open(context);
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.currentCallbackIterator.next();
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.sequenceIterator.isOpen()) {
-            this.sequenceIterator.close();
-        }
-        if (this.actionIterator.isOpen()) {
-            this.actionIterator.close();
-        }
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.currentCallbackIterator = null;
-        this.inputItems = null;
-        this.actionFunction = null;
-        this.itemIndex = 0;
-        this.argumentContext = null;
-        this.mutableArgumentIterator = null;
     }
 
     @Override
@@ -203,27 +146,66 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("fn:for-each is currently supported only in local execution mode.");
     }
 
-    private static class MutableArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-        @Serial
-        private static final long serialVersionUID = 1L;
-        private Item currentItem;
+    private static final class ForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        MutableArgumentIterator(RuntimeStaticContext staticContext) {
-            super(null, staticContext);
-        }
+        private final RuntimeIterator sequencePlan;
+        private final RuntimeIterator actionPlan;
+        private final DynamicContext context;
+        private final RuntimeStaticContext staticContext;
+        private LocalCursor<Item> sequenceCursor;
+        private Item action;
+        private Iterator<Item> currentResults;
 
-        void setCurrentItem(Item item) {
-            this.currentItem = item;
+        private ForEachLocalCursor(
+                RuntimeIterator sequencePlan,
+                RuntimeIterator actionPlan,
+                DynamicContext context,
+                RuntimeStaticContext staticContext
+        ) {
+            super(staticContext.getMetadata());
+            this.sequencePlan = sequencePlan;
+            this.actionPlan = actionPlan;
+            this.context = context;
+            this.staticContext = staticContext;
         }
 
         @Override
-        public Item materializeFirstItemOrNull(DynamicContext context) {
-            return this.currentItem;
+        protected void openLocal() {
+            this.action = resolveAction(this.actionPlan, this.context, this.staticContext);
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+            this.currentResults = Collections.emptyIterator();
         }
 
         @Override
-        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-            return new SingletonLocalCursor<>(this.currentItem);
+        protected boolean hasNextLocal() {
+            while (!this.currentResults.hasNext() && this.sequenceCursor.hasNext()) {
+                this.currentResults = invokeAction(
+                    this.action,
+                    this.sequenceCursor.next(),
+                    this.context,
+                    this.staticContext
+                ).iterator();
+            }
+            return this.currentResults.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("No more fn:for-each results are available.");
+            }
+            return this.currentResults.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            this.action = null;
+            this.currentResults = null;
         }
     }
 }

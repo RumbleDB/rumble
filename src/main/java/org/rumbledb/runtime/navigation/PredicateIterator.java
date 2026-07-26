@@ -33,16 +33,15 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -66,26 +65,14 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new PredicateIterator(
-                        CursorRuntimeIteratorAdapter.adapt(this.iterator),
-                        CursorRuntimeIteratorAdapter.adapt(this.filter),
-                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
-                ),
-                context,
-                getMetadata()
-        );
+        return new PredicateLocalCursor(this, context);
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private RuntimeIterator filter;
-    private Item nextResult;
-    private long position;
-    private boolean mustMaintainPosition;
-    private DynamicContext filterDynamicContext;
-    private boolean isBooleanOnlyFilter;
+    private final RuntimeIterator iterator;
+    private final RuntimeIterator filter;
+    private final boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
@@ -96,7 +83,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
         super(Arrays.asList(sequence, filterExpression), staticContext);
         this.iterator = sequence;
         this.filter = filterExpression;
-        this.filterDynamicContext = null;
         this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
@@ -106,26 +92,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     public RuntimeIterator predicateIterator() {
         return this.filter;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext == true) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
     }
 
     private boolean isBooleanOnlyFilter() {
@@ -138,99 +104,135 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 || this.filter instanceof ComparisonIterator);
     }
 
-    @Override
-    protected void openLocal() {
-        if (this.getChildren().size() < 2) {
-            throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
+    private static final class PredicateLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final PredicateIterator plan;
+        private final DynamicContext context;
+        private DynamicContext filterContext;
+        private LocalCursor<Item> inputCursor;
+        private Item nextResult;
+        private long position;
+
+        private PredicateLocalCursor(PredicateIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
-        this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
-            setLast();
-        }
-        if (!this.isBooleanOnlyFilter) {
+
+        @Override
+        protected void openLocal() {
+            if (this.plan.getChildren().size() < 2) {
+                throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
+            }
+            this.filterContext = new DynamicContext(this.context);
+            if (this.plan.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
+                this.filterContext.getVariableValues().setLast(countInput());
+            }
             this.position = 0;
-            this.mustMaintainPosition = true;
+            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
+            this.inputCursor.open();
+            advance();
         }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
 
-    private void setLast() {
-        long last = 0;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        while (this.iterator.hasNext()) {
-            this.iterator.next();
-            ++last;
-        }
-        this.iterator.close();
-        this.filterDynamicContext.getVariableValues().setLast(last);
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            List<Item> currentItems = new ArrayList<>();
-            currentItems.add(item);
-            this.filterDynamicContext.getVariableValues()
-                .addVariableValue(
-                    Name.CONTEXT_ITEM,
-                    currentItems
-                );
-            if (this.mustMaintainPosition) {
-                this.filterDynamicContext.getVariableValues().setPosition(++this.position);
-            }
-
-            Item fil = null;
-            try {
-                fil = this.filter.materializeAtMostOneItemOrNull(this.filterDynamicContext);
-            } catch (MoreThanOneItemException e) {
-                throw new InvalidArgumentTypeException(
-                        "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
-                        this.filter.getMetadata()
-                );
-            }
-            // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
-            if (fil != null && fil.isNumeric()) {
-                BigDecimal numericValue;
-                if (fil.isInt() || fil.isInteger()) {
-                    numericValue = new BigDecimal(fil.getIntegerValue());
-                } else if (fil.isDecimal()) {
-                    numericValue = fil.getDecimalValue();
-                } else if (fil.isDouble()) {
-                    double value = fil.getDoubleValue();
-                    if (Double.isNaN(value) || Double.isInfinite(value)) {
-                        continue;
-                    }
-                    numericValue = BigDecimal.valueOf(value);
-                } else if (fil.isFloat()) {
-                    float value = fil.getFloatValue();
-                    if (Float.isNaN(value) || Float.isInfinite(value)) {
-                        continue;
-                    }
-                    numericValue = new BigDecimal(Float.toString(value));
-                } else {
-                    continue;
+        private long countInput() {
+            long count = 0;
+            try (LocalCursor<Item> cursor = this.plan.iterator.createLocalCursor(this.context)) {
+                cursor.open();
+                while (cursor.hasNext()) {
+                    cursor.next();
+                    count++;
                 }
-                if (
-                    numericValue.stripTrailingZeros().scale() <= 0
-                        && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position))
-                ) {
+            }
+            return count;
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.inputCursor.hasNext()) {
+                Item item = this.inputCursor.next();
+                this.position++;
+                this.filterContext.getVariableValues()
+                    .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(item));
+                if (!this.plan.isBooleanOnlyFilter) {
+                    this.filterContext.getVariableValues().setPosition(this.position);
+                }
+                Item filterResult;
+                try {
+                    filterResult = LocalCursorUtils.materializeAtMostOne(
+                        this.plan.filter,
+                        this.filterContext
+                    );
+                } catch (MoreThanOneItemException e) {
+                    throw new InvalidArgumentTypeException(
+                            "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
+                            this.plan.filter.getMetadata()
+                    );
+                }
+                if (matches(filterResult)) {
                     this.nextResult = item;
                     break;
                 }
-            } else if (fil != null && fil.getEffectiveBooleanValue()) {
-                this.nextResult = item;
-                break;
             }
+            this.filterContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
         }
-        this.filterDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        private boolean matches(Item filterResult) {
+            if (filterResult == null) {
+                return false;
+            }
+            if (!filterResult.isNumeric()) {
+                return filterResult.getEffectiveBooleanValue();
+            }
+            BigDecimal numericValue;
+            if (filterResult.isInt() || filterResult.isInteger()) {
+                numericValue = new BigDecimal(filterResult.getIntegerValue());
+            } else if (filterResult.isDecimal()) {
+                numericValue = filterResult.getDecimalValue();
+            } else if (filterResult.isDouble()) {
+                double value = filterResult.getDoubleValue();
+                if (Double.isNaN(value) || Double.isInfinite(value)) {
+                    return false;
+                }
+                numericValue = BigDecimal.valueOf(value);
+            } else if (filterResult.isFloat()) {
+                float value = filterResult.getFloatValue();
+                if (Float.isNaN(value) || Float.isInfinite(value)) {
+                    return false;
+                }
+                numericValue = new BigDecimal(Float.toString(value));
+            } else {
+                return false;
+            }
+            return numericValue.stripTrailingZeros().scale() <= 0
+                && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position));
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more predicate results are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+            }
+            if (this.filterContext != null) {
+                this.filterContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
+            }
+            this.inputCursor = null;
+            this.filterContext = null;
+            this.nextResult = null;
         }
     }
 

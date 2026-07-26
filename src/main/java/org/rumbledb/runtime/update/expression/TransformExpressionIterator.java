@@ -2,7 +2,6 @@ package org.rumbledb.runtime.update.expression;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -14,21 +13,20 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Map<Name, RuntimeIterator> copyDeclMap;
-    private RuntimeIterator modifyIterator;
-    private RuntimeIterator returnIterator;
-    private boolean mutable;
-
-    private int mutabilityLevel;
+    private final Map<Name, RuntimeIterator> copyDeclMap;
+    private final RuntimeIterator modifyIterator;
+    private final RuntimeIterator returnIterator;
+    private final boolean mutable;
+    private final int mutabilityLevel;
 
     public TransformExpressionIterator(
             Map<Name, RuntimeIterator> copyDeclMap,
@@ -55,24 +53,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> {
-                    Map<Name, RuntimeIterator> adaptedCopies = new LinkedHashMap<>();
-                    this.copyDeclMap.forEach(
-                        (name, iterator) -> adaptedCopies.put(name, CursorRuntimeIteratorAdapter.adapt(iterator))
-                    );
-                    return new TransformExpressionIterator(
-                            adaptedCopies,
-                            CursorRuntimeIteratorAdapter.adapt(this.modifyIterator),
-                            CursorRuntimeIteratorAdapter.adapt(this.returnIterator),
-                            RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext),
-                            this.mutabilityLevel,
-                            this.mutable
-                    );
-                },
-                context,
-                getMetadata()
-        );
+        return new TransformLocalCursor(this, context);
     }
 
     @Override
@@ -80,35 +61,6 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         PendingUpdateList pul = getPendingUpdateList(context);
         pul.applyUpdates(this.getMetadata());
         return this.returnIterator.getRDD(context);
-    }
-
-    @Override
-    protected void openLocal() {
-        PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
-        pul.applyUpdates(this.getMetadata());
-        this.returnIterator.open(this.currentDynamicContextForLocalExecution);
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.returnIterator.close();
-        for (Name copyVar : this.copyDeclMap.keySet()) {
-            this.currentDynamicContextForLocalExecution.getVariableValues().removeVariable(copyVar);
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.returnIterator.hasNext();
-    }
-
-    @Override
-    protected Item nextLocal() {
-        Item result = this.returnIterator.next();
-        if (this.mutable) {
-            result.setMutabilityLevel(this.currentDynamicContextForLocalExecution.getCurrentMutabilityLevel());
-        }
-        return result;
     }
 
     @Override
@@ -122,7 +74,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     private void bindCopyDeclarations(DynamicContext context) {
         for (Name copyVar : this.copyDeclMap.keySet()) {
             RuntimeIterator copyIterator = this.copyDeclMap.get(copyVar);
-            List<Item> toCopy = copyIterator.materialize(context);
+            List<Item> toCopy = LocalCursorUtils.materialize(copyIterator, context);
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
@@ -136,4 +88,49 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         }
     }
 
+    private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final TransformExpressionIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> returnCursor;
+
+        private TransformLocalCursor(TransformExpressionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            PendingUpdateList updates = this.plan.getPendingUpdateList(this.context);
+            updates.applyUpdates(this.plan.getMetadata());
+            this.returnCursor = this.plan.returnIterator.createLocalCursor(this.context);
+            this.returnCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.returnCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            Item result = this.returnCursor.next();
+            if (this.plan.mutable) {
+                result.setMutabilityLevel(this.context.getCurrentMutabilityLevel());
+            }
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.returnCursor != null) {
+                this.returnCursor.close();
+                this.returnCursor = null;
+            }
+            for (Name copyVariable : this.plan.copyDeclMap.keySet()) {
+                this.context.getVariableValues().removeVariable(copyVariable);
+            }
+        }
+    }
 }

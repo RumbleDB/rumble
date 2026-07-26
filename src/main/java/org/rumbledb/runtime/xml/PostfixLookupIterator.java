@@ -48,27 +48,29 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new LookupLocalCursor(context);
+        return new LookupLocalCursor(this, context);
     }
 
-    private final class LookupLocalCursor extends AbstractLocalCursor<Item> {
+    private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
 
+        private final PostfixLookupIterator plan;
         private final DynamicContext context;
         private LocalCursor<Item> inputCursor;
         private List<Item> keys;
         private Iterator<Item> currentResults;
 
-        private LookupLocalCursor(DynamicContext context) {
-            super(PostfixLookupIterator.this.getMetadata());
+        private LookupLocalCursor(PostfixLookupIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = PostfixLookupIterator.this.wildcard
+            this.keys = this.plan.wildcard
                 ? List.of()
-                : LocalCursorUtils.materialize(PostfixLookupIterator.this.lookupIterator, this.context);
-            this.inputCursor = PostfixLookupIterator.this.iterator.createLocalCursor(this.context);
+                : LocalCursorUtils.materialize(this.plan.lookupIterator, this.context);
+            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
             this.inputCursor.open();
             this.currentResults = Collections.emptyIterator();
         }
@@ -76,7 +78,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         @Override
         protected boolean hasNextLocal() {
             while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
-                this.currentResults = lookupLocally(this.inputCursor.next(), this.keys).iterator();
+                this.currentResults = this.plan.lookupLocally(this.inputCursor.next(), this.keys).iterator();
             }
             return this.currentResults.hasNext();
         }

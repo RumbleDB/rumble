@@ -23,7 +23,6 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
 
     private final RuntimePlan<I> inputPlan;
     private final DynamicContext context;
-    private final Runnable initializer;
     private final Function<? super I, ? extends Iterator<? extends O>> mapper;
     private LocalCursor<I> inputCursor;
     private Iterator<? extends O> currentResults;
@@ -34,27 +33,14 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
             @NonNull Function<? super I, ? extends Iterator<? extends O>> mapper,
             @NonNull ExceptionMetadata metadata
     ) {
-        this(inputPlan, context, () -> {
-        }, mapper, metadata);
-    }
-
-    public FlatMappingLocalCursor(
-            @NonNull RuntimePlan<I> inputPlan,
-            @NonNull DynamicContext context,
-            @NonNull Runnable initializer,
-            @NonNull Function<? super I, ? extends Iterator<? extends O>> mapper,
-            @NonNull ExceptionMetadata metadata
-    ) {
         super(metadata);
         this.inputPlan = inputPlan;
         this.context = context;
-        this.initializer = initializer;
         this.mapper = mapper;
     }
 
     @Override
     protected void openLocal() {
-        this.initializer.run();
         this.inputCursor = this.inputPlan.createLocalCursor(this.context);
         this.inputCursor.open();
         this.currentResults = Collections.emptyIterator();

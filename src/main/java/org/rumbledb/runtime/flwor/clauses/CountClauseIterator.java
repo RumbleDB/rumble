@@ -28,11 +28,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -42,7 +43,6 @@ import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -56,8 +56,6 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
-    private FlworTuple nextLocalTupleResult;
-    private int currentCountIndex;
 
     public CountClauseIterator(
             RuntimeTupleIterator child,
@@ -66,7 +64,6 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     ) {
         super(child, staticContext);
         this.variableName = variableName;
-        this.currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
     public Name getVariableName() {
@@ -74,54 +71,55 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        return new CountClauseIterator(
-                createChildLocalExecution(),
-                this.variableName,
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new CountLocalCursor(this, context);
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        if (this.child != null) {
-            this.child.open(this.currentDynamicContext);
+    private static final class CountLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-            setNextLocalTupleResult();
-        } else {
-            throw new OurBadException("Invalid count clause.");
+        private final CountClauseIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<FlworTuple> childCursor;
+        private int count;
+
+        private CountLocalCursor(CountClauseIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
-    }
 
-    @Override
-    public void close() {
-        super.close();
-        this.currentCountIndex = 1;
-    }
-
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
-            setNextLocalTupleResult(); // calculate and store the next result
-            return result;
+        @Override
+        protected void openLocal() {
+            if (this.plan.child == null) {
+                throw new OurBadException("Invalid count clause.");
+            }
+            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor.open();
+            this.count = 1;
         }
-        throw new IteratorFlowException("Invalid next() call in count flwor clause", getMetadata());
-    }
 
-    private void setNextLocalTupleResult() {
-        if (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
+        @Override
+        protected boolean hasNextLocal() {
+            return this.childCursor.hasNext();
+        }
 
-            List<Item> results = new ArrayList<>();
-            results.add(ItemFactory.getInstance().createIntItem(this.currentCountIndex++));
+        @Override
+        protected FlworTuple nextLocal() {
+            if (!this.childCursor.hasNext()) {
+                throw invalidState("No more count-clause tuples are available.");
+            }
+            FlworTuple tuple = this.childCursor.next();
+            List<Item> value = Collections.singletonList(ItemFactory.getInstance().createIntItem(this.count++));
+            return new FlworTuple(tuple).putValue(this.plan.variableName, value);
+        }
 
-            this.nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this.variableName, results);
-            this.hasNext = true;
-        } else {
-            this.child.close();
-            this.hasNext = false;
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.count = 1;
         }
     }
 

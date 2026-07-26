@@ -44,7 +44,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ForEachPairLocalCursor(context);
+        return new ForEachPairLocalCursor(this, context);
     }
 
     @Serial
@@ -128,8 +128,9 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
     }
 
-    private final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
+    private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
 
+        private final ForEachPairFunctionIterator plan;
         private final DynamicContext context;
         private List<Item> firstItems;
         private List<Item> secondItems;
@@ -138,23 +139,27 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         private int pairIndex;
         private LocalCursor<Item> callbackCursor;
 
-        private ForEachPairLocalCursor(DynamicContext context) {
-            super(ForEachPairFunctionIterator.this.getMetadata());
+        private ForEachPairLocalCursor(
+                ForEachPairFunctionIterator plan,
+                DynamicContext context
+        ) {
+            super(plan.getMetadata());
+            this.plan = plan;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
             this.firstItems = LocalCursorUtils.materialize(
-                ForEachPairFunctionIterator.this.sequenceIterator1,
+                this.plan.sequenceIterator1,
                 this.context
             );
             this.secondItems = LocalCursorUtils.materialize(
-                ForEachPairFunctionIterator.this.sequenceIterator2,
+                this.plan.sequenceIterator2,
                 this.context
             );
-            this.action = ForEachPairFunctionIterator.this.resolveAction(this.context);
-            this.argumentContext = ForEachPairFunctionIterator.this.argumentContext();
+            this.action = this.plan.resolveAction(this.context);
+            this.argumentContext = this.plan.argumentContext();
             this.pairIndex = 0;
         }
 
@@ -165,7 +170,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
                 if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
                     return false;
                 }
-                RuntimeIterator callback = ForEachPairFunctionIterator.this.buildCallback(
+                RuntimeIterator callback = this.plan.buildCallback(
                     this.action,
                     this.firstItems.get(this.pairIndex),
                     this.secondItems.get(this.pairIndex),

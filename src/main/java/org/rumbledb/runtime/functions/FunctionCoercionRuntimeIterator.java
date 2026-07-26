@@ -6,14 +6,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
@@ -33,8 +32,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     private final List<Name> parameterNames;
     private final SequenceType expectedReturnType;
     private final String exceptionMessage;
-    private RuntimeIterator delegate;
-    private Item nextResult;
 
     public FunctionCoercionRuntimeIterator(
             Item callableItem,
@@ -52,17 +49,43 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new FunctionCoercionRuntimeIterator(
-                        this.callableItem,
-                        this.parameterNames,
-                        this.expectedReturnType,
-                        this.exceptionMessage,
-                        RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
-                ),
-                context,
-                getMetadata()
-        );
+        return new CoercionLocalCursor(this, context);
+    }
+
+    private static final class CoercionLocalCursor extends AbstractLocalCursor<Item> {
+        private final FunctionCoercionRuntimeIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> delegate;
+
+        private CoercionLocalCursor(FunctionCoercionRuntimeIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.delegate = this.plan.buildDelegate(this.context).createLocalCursor(this.context);
+            this.delegate.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.delegate.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.delegate.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.delegate != null) {
+                this.delegate.close();
+                this.delegate = null;
+            }
+        }
     }
 
     public Item getCallableItem() {
@@ -74,43 +97,6 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             return ExecutionMode.LOCAL;
         }
         return this.callableItem.getBodyIterator().getHighestExecutionMode();
-    }
-
-    @Override
-    protected void openLocal() {
-        this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-        this.delegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.nextResult;
-        setNextResult();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.delegate != null && this.delegate.isOpen()) {
-            this.delegate.close();
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.delegate.hasNext()) {
-            this.nextResult = this.delegate.next();
-        }
-        this.hasNext = this.nextResult != null;
     }
 
     private RuntimeIterator buildDelegate(DynamicContext context) {

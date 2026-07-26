@@ -8,9 +8,8 @@ import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -21,30 +20,18 @@ public class ProgramIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new ProgramIterator(
-                        CursorRuntimeIteratorAdapter.adapt(this.statementsAndExprIterator),
-                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
-                ),
-                context,
-                getMetadata()
-        );
+        return new ProgramLocalCursor(this, context);
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator statementsAndExprIterator;
     private PendingUpdateList pendingUpdateList;
-    private int nextExitStatementResult;
-    private List<Item> exitStatementLocalResult;
-
     private boolean encounteredExitStatement;
 
     public ProgramIterator(RuntimeIterator statementsAndExprIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
         this.encounteredExitStatement = false;
-        this.nextExitStatementResult = 0;
-        this.exitStatementLocalResult = null;
         this.statementsAndExprIterator = statementsAndExprIterator;
     }
 
@@ -56,29 +43,6 @@ public class ProgramIterator extends HybridRuntimeIterator {
             setPULFromExitStatement(exitStatementException);
             return exitStatementException.getRddResult();
         }
-    }
-
-    @Override
-    protected void openLocal() {
-        try {
-            this.statementsAndExprIterator.open(this.currentDynamicContextForLocalExecution);
-        } catch (ExitStatementException exitStatementException) {
-            setPULFromExitStatement(exitStatementException);
-            this.exitStatementLocalResult = exitStatementException.getLocalResult();
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.statementsAndExprIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        if (!this.encounteredExitStatement) {
-            return this.statementsAndExprIterator.hasNext();
-        }
-        return this.nextExitStatementResult < this.exitStatementLocalResult.size();
     }
 
     @Override
@@ -102,24 +66,6 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected Item nextLocal() {
-        if (!this.encounteredExitStatement) {
-            try {
-                return this.statementsAndExprIterator.next();
-            } catch (ExitStatementException exitStatementException) {
-                // Encountering an exit statement sets the result and PUL for this iterator.
-                setPULFromExitStatement(exitStatementException);
-                this.exitStatementLocalResult = exitStatementException.getLocalResult();
-            }
-        }
-        // If we encountered an exit with local result, return the next item.
-        if (this.exitStatementLocalResult != null) {
-            return this.exitStatementLocalResult.get(this.nextExitStatementResult++);
-        }
-        return null;
-    }
-
-    @Override
     public boolean isSequential() {
         return this.statementsAndExprIterator.isSequential();
     }
@@ -135,5 +81,72 @@ public class ProgramIterator extends HybridRuntimeIterator {
             return this.statementsAndExprIterator.getPendingUpdateList(context);
         }
         return this.pendingUpdateList;
+    }
+
+    private static final class ProgramLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final ProgramIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> delegate;
+        private List<Item> exitResults;
+        private int exitIndex;
+
+        private ProgramLocalCursor(ProgramIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.delegate = this.plan.statementsAndExprIterator.createLocalCursor(this.context);
+            try {
+                this.delegate.open();
+            } catch (ExitStatementException e) {
+                captureExit(e);
+            }
+        }
+
+        private void captureExit(ExitStatementException exception) {
+            this.plan.setPULFromExitStatement(exception);
+            this.exitResults = exception.getLocalResult();
+            if (this.delegate != null) {
+                this.delegate.close();
+                this.delegate = null;
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.exitResults == null
+                ? this.delegate.hasNext()
+                : this.exitIndex < this.exitResults.size();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.exitResults != null) {
+                if (this.exitIndex >= this.exitResults.size()) {
+                    throw invalidState("No more program results are available.");
+                }
+                return this.exitResults.get(this.exitIndex++);
+            }
+            try {
+                return this.delegate.next();
+            } catch (ExitStatementException e) {
+                captureExit(e);
+                return nextLocal();
+            }
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.delegate != null) {
+                this.delegate.close();
+            }
+            this.delegate = null;
+            this.exitResults = null;
+            this.exitIndex = 0;
+        }
     }
 }

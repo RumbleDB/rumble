@@ -31,16 +31,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -68,8 +68,6 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
-    private List<FlworTuple> localTupleResults;
-    private int resultIndex;
 
     public OrderByClauseIterator(
             RuntimeTupleIterator child,
@@ -83,132 +81,52 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
-        this.localTupleResults = new ArrayList<>();
     }
 
     @Override
-    protected RuntimeTupleIterator createLocalExecution() {
-        List<OrderByClauseAnnotatedChildIterator> adaptedExpressions = this.expressionsWithIterator.stream()
-            .map(
-                expression -> new OrderByClauseAnnotatedChildIterator(
-                        CursorRuntimeIteratorAdapter.adapt(expression.getIterator()),
-                        expression.isAscending(),
-                        expression.getUri(),
-                        expression.getEmptyOrder()
-                )
-            )
-            .toList();
-        return new OrderByClauseIterator(
-                createChildLocalExecution(),
-                adaptedExpressions,
-                false,
-                getLocalRuntimeStaticContext()
-        );
+    public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeLocalResults(context).iterator(), getMetadata());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    private List<FlworTuple> computeLocalResults(DynamicContext context) {
         if (this.child == null) {
             throw new OurBadException("Invalid order-by clause.");
         }
-        this.child.open(this.currentDynamicContext);
-        this.localTupleResults.clear();
-        this.resultIndex = 0;
-        this.hasNext = this.child.hasNext();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        if (this.child == null) {
-            throw new OurBadException("Invalid order-by clause.");
-        }
-        this.child.close();
-        this.localTupleResults.clear();
-        this.resultIndex = 0;
-    }
-
-    @Override
-    public FlworTuple next() {
-        if (this.hasNext) {
-            if (this.resultIndex == 0) {
-                setAllLocalResults();
-            }
-            FlworTuple result = this.localTupleResults.get(this.resultIndex++);
-            if (this.resultIndex == this.localTupleResults.size()) {
-                this.hasNext = false;
-            }
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in order-by clause", getMetadata());
-    }
-
-    /**
-     * All local results need to be calculated for sorting/ordering to be performed.
-     */
-    private void setAllLocalResults() {
-        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = mapExpressionsToOrderedPairs();
-        // get only the values(ordered tuples) and save them in a list for next() calls
-        keyValuePairs.forEach((key, valueList) -> this.localTupleResults.addAll(valueList));
-
-        this.child.close();
-        this.hasNext = this.localTupleResults.size() != 0;
-    }
-
-    /**
-     * Evaluates expressions to atomics(error is thrown if not possible) which are used as keys for sorted TreeMap.
-     * Requires child iterator to be opened.
-     *
-     * @return Sorted TreeMap(ascending). key - atomics from expressions, value - input tuples
-     */
-    private TreeMap<FlworKey, List<FlworTuple>> mapExpressionsToOrderedPairs() {
-        // tree map keeps the natural item order deduced from an implementation of Comparator
-        // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
-        // as well
-        TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
+        TreeMap<FlworKey, List<FlworTuple>> tuplesByKey = new TreeMap<>(
                 new FlworKeyComparator(this.expressionsWithIterator, getMetadata())
         );
-
-        // assign current context as parent. re-use the same context object for efficiency
-        DynamicContext tupleContext = new DynamicContext(this.currentDynamicContext);
-        while (this.child.hasNext()) {
-            FlworTuple inputTuple = this.child.next();
-
-            List<Item> results = new ArrayList<>(); // results from the expressions will become a key
-            for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-                tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-                tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
-                                                                                                  // variables from new
-                                                                                                  // tuple
-
-                RuntimeIterator iterator = expressionWithIterator.getIterator();
-                try {
-                    Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
-                    if (resultItem != null && !resultItem.isAtomic()) {
+        DynamicContext tupleContext = new DynamicContext(context);
+        try (LocalCursor<FlworTuple> childCursor = this.child.createLocalCursor(context)) {
+            childCursor.open();
+            while (childCursor.hasNext()) {
+                FlworTuple tuple = childCursor.next();
+                List<Item> keys = new ArrayList<>();
+                for (OrderByClauseAnnotatedChildIterator expression : this.expressionsWithIterator) {
+                    tupleContext.getVariableValues().removeAllVariables();
+                    tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                    Item key;
+                    try {
+                        key = LocalCursorUtils.materializeAtMostOne(expression.getIterator(), tupleContext);
+                    } catch (MoreThanOneItemException e) {
                         throw new UnexpectedTypeException(
-                                "Keys in an order-by clause must be atomics.",
-                                expressionWithIterator.getIterator().getMetadata()
+                                "Keys in an order-by clause must be at most one item.",
+                                expression.getIterator().getMetadata()
                         );
                     }
-                    // possibly null for empty sequence.
-                    results.add(resultItem);
-                } catch (MoreThanOneItemException e) {
-                    throw new UnexpectedTypeException(
-                            "Keys in an order-by clause must be at most one item.",
-                            expressionWithIterator.getIterator().getMetadata()
-                    );
+                    if (key != null && !key.isAtomic()) {
+                        throw new UnexpectedTypeException(
+                                "Keys in an order-by clause must be atomics.",
+                                expression.getIterator().getMetadata()
+                        );
+                    }
+                    keys.add(key);
                 }
+                tuplesByKey.computeIfAbsent(new FlworKey(keys), ignored -> new ArrayList<>()).add(tuple);
             }
-            FlworKey key = new FlworKey(results);
-            List<FlworTuple> values = keyValuePairs.get(key); // all values for a single matching key are held in a list
-            if (values == null) {
-                values = new ArrayList<>();
-                keyValuePairs.put(key, values);
-            }
-            values.add(inputTuple);
         }
-        return keyValuePairs;
+        List<FlworTuple> results = new ArrayList<>();
+        tuplesByKey.values().forEach(results::addAll);
+        return results;
     }
 
     @Override

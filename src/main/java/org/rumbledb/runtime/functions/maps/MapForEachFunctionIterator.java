@@ -22,18 +22,17 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.SingletonLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -48,13 +47,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            MapForEachFunctionIterator::new,
-            getMetadata()
-        );
+        return new MapForEachLocalCursor(this, context);
     }
 
     @Serial
@@ -62,15 +55,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
     private final RuntimeIterator mapIterator;
     private final RuntimeIterator actionIterator;
-    private RuntimeIterator currentCallbackIterator;
-    private List<Item> mapKeys;
-    private Item mapItem;
-    private Item actionFunction;
-    private int keyIndex;
-    private RuntimeStaticContext keyArgumentContext;
-    private RuntimeStaticContext valueArgumentContext;
-    private MutableKeyArgumentIterator mutableKeyArgumentIterator;
-    private MutableValueSequenceIterator mutableValueSequenceIterator;
 
     public MapForEachFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -82,130 +66,46 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
         this.mapIterator = arguments.get(0);
         this.actionIterator = arguments.get(1);
-        this.currentCallbackIterator = null;
-        this.mapKeys = null;
-        this.mapItem = null;
-        this.actionFunction = null;
-        this.keyIndex = 0;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeState(this.currentDynamicContextForLocalExecution);
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-    }
-
-    private void initializeState(DynamicContext context) {
-        List<Item> mapArguments = this.mapIterator.materialize(context);
+    private Invocation resolveInvocation(DynamicContext context) {
+        List<Item> mapArguments = LocalCursorUtils.materialize(this.mapIterator, context);
         if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
             throw new UnexpectedTypeException(
                     "The first argument of map:for-each must be a single map item [err:XPTY0004].",
                     getMetadata()
             );
         }
-        this.mapItem = mapArguments.get(0);
+        Item mapItem = mapArguments.get(0);
 
-        List<Item> functionArguments = this.actionIterator.materialize(context);
+        List<Item> functionArguments = LocalCursorUtils.materialize(this.actionIterator, context);
         if (functionArguments.size() != 1 || !functionArguments.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The second argument of map:for-each must be a single function item [err:XPTY0004].",
                     getMetadata()
             );
         }
-        this.actionFunction = functionArguments.get(0);
-        if (this.actionFunction.getIdentifier().getArity() != 2) {
+        Item actionFunction = functionArguments.get(0);
+        if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to map:for-each must accept exactly two arguments [err:XPTY0004].",
                     getMetadata()
             );
         }
 
-        this.keyArgumentContext = RuntimeStaticContext.builder()
+        RuntimeStaticContext keyArgumentContext = RuntimeStaticContext.builder()
             .configuration(getConfiguration())
             .staticType(SequenceType.createSequenceType("anyAtomicType"))
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-        this.valueArgumentContext = RuntimeStaticContext.builder()
+        RuntimeStaticContext valueArgumentContext = RuntimeStaticContext.builder()
             .configuration(getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-        this.mapKeys = this.mapItem.getItemKeys();
-        this.keyIndex = 0;
-
-        this.mutableKeyArgumentIterator = new MutableKeyArgumentIterator(this.keyArgumentContext);
-        this.mutableValueSequenceIterator = new MutableValueSequenceIterator(this.valueArgumentContext);
-        List<RuntimeIterator> callbackArguments = new ArrayList<>(2);
-        callbackArguments.add(this.mutableKeyArgumentIterator);
-        callbackArguments.add(this.mutableValueSequenceIterator);
-        this.currentCallbackIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.actionFunction,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            callbackArguments,
-            false
-        );
-    }
-
-    private void advanceToNextResult(DynamicContext context) {
-        while (true) {
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.hasNext()) {
-                this.hasNext = true;
-                return;
-            }
-            if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-                this.currentCallbackIterator.close();
-            }
-
-            if (this.mapKeys == null || this.keyIndex >= this.mapKeys.size()) {
-                this.hasNext = false;
-                return;
-            }
-
-            Item key = this.mapKeys.get(this.keyIndex++);
-            this.mutableKeyArgumentIterator.setCurrentKey(key);
-            this.mutableValueSequenceIterator.setCurrentValue(this.mapItem.getSequenceByKey(key));
-            this.currentCallbackIterator.open(context);
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.currentCallbackIterator.next();
-        advanceToNextResult(this.currentDynamicContextForLocalExecution);
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.mapIterator.isOpen()) {
-            this.mapIterator.close();
-        }
-        if (this.actionIterator.isOpen()) {
-            this.actionIterator.close();
-        }
-        if (this.currentCallbackIterator != null && this.currentCallbackIterator.isOpen()) {
-            this.currentCallbackIterator.close();
-        }
-        this.currentCallbackIterator = null;
-        this.mapKeys = null;
-        this.mapItem = null;
-        this.actionFunction = null;
-        this.keyIndex = 0;
-        this.keyArgumentContext = null;
-        this.valueArgumentContext = null;
-        this.mutableKeyArgumentIterator = null;
-        this.mutableValueSequenceIterator = null;
+        return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
 
     @Override
@@ -223,108 +123,102 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
-    /**
-     * Single map key supplied per callback; binding is updated before each {@code open} on the shared function call.
-     */
-    private static class MutableKeyArgumentIterator extends AtMostOneItemLocalRuntimeIterator {
-
-        @Serial
-        private static final long serialVersionUID = 1L;
-        private Item currentKey;
-
-        MutableKeyArgumentIterator(RuntimeStaticContext staticContext) {
-            super(null, staticContext);
+    private RuntimeIterator buildCallback(Invocation invocation, Item key) {
+        List<RuntimeIterator> valueChildren = new ArrayList<>();
+        List<Item> values = invocation.map.getSequenceByKey(key);
+        if (values != null) {
+            for (Item value : values) {
+                valueChildren.add(new ConstantRuntimeIterator(value, invocation.valueContext));
+            }
         }
+        return NamedFunctions.buildFunctionItemCallIterator(
+            invocation.action,
+            this.staticContext,
+            ExecutionMode.LOCAL,
+            List.of(
+                new ConstantRuntimeIterator(key, invocation.keyContext),
+                new CommaExpressionIterator(valueChildren, invocation.valueContext)
+            ),
+            false
+        );
+    }
 
-        void setCurrentKey(Item key) {
-            this.currentKey = key;
-        }
+    private static final class Invocation {
+        private final Item map;
+        private final Item action;
+        private final RuntimeStaticContext keyContext;
+        private final RuntimeStaticContext valueContext;
 
-        @Override
-        public Item materializeFirstItemOrNull(DynamicContext context) {
-            return this.currentKey;
-        }
-
-        @Override
-        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-            return new SingletonLocalCursor<>(this.currentKey);
+        private Invocation(
+                Item map,
+                Item action,
+                RuntimeStaticContext keyContext,
+                RuntimeStaticContext valueContext
+        ) {
+            this.map = map;
+            this.action = action;
+            this.keyContext = keyContext;
+            this.valueContext = valueContext;
         }
     }
 
-    /**
-     * Value sequence for the current map key; list content is replaced before each callback {@code open}.
-     */
-    private static class MutableValueSequenceIterator extends HybridRuntimeIterator {
+    private static final class MapForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        @Serial
-        private static final long serialVersionUID = 1L;
+        private final MapForEachFunctionIterator plan;
+        private final DynamicContext context;
+        private Invocation invocation;
+        private java.util.Iterator<Item> keys;
+        private LocalCursor<Item> callbackCursor;
 
-        private final List<Item> items;
-        private int position;
-
-        MutableValueSequenceIterator(RuntimeStaticContext staticContext) {
-            super(null, staticContext);
-            this.items = new ArrayList<>();
-        }
-
-        void setCurrentValue(List<Item> valueSequence) {
-            this.items.clear();
-            if (valueSequence != null && !valueSequence.isEmpty()) {
-                this.items.addAll(valueSequence);
-            }
-        }
-
-        @Override
-        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-            List<Item> snapshot = List.copyOf(this.items);
-            return new IteratorLocalCursor<>(snapshot::iterator, getMetadata());
+        private MapForEachLocalCursor(MapForEachFunctionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            this.position = 0;
-            setHasNextFromBuffer();
-        }
-
-        private void setHasNextFromBuffer() {
-            this.hasNext = !this.items.isEmpty();
+            this.invocation = this.plan.resolveInvocation(this.context);
+            this.keys = this.invocation.map.getItemKeys().iterator();
         }
 
         @Override
         protected boolean hasNextLocal() {
-            return this.hasNext;
+            while (this.callbackCursor == null || !this.callbackCursor.hasNext()) {
+                closeCallback();
+                if (!this.keys.hasNext()) {
+                    return false;
+                }
+                RuntimeIterator callback = this.plan.buildCallback(
+                    this.invocation,
+                    this.keys.next()
+                );
+                this.callbackCursor = callback.createLocalCursor(this.context);
+                this.callbackCursor.open();
+            }
+            return true;
         }
 
         @Override
         protected Item nextLocal() {
-            if (!this.hasNext) {
-                throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+            if (!hasNextLocal()) {
+                throw invalidState("No more map:for-each results are available.");
             }
-            Item result = this.items.get(this.position);
-            this.position++;
-            this.hasNext = this.position < this.items.size();
-            return result;
+            return this.callbackCursor.next();
+        }
+
+        private void closeCallback() {
+            if (this.callbackCursor != null) {
+                this.callbackCursor.close();
+                this.callbackCursor = null;
+            }
         }
 
         @Override
         protected void closeLocal() {
-            this.position = 0;
-            this.hasNext = false;
-        }
-
-        @Override
-        protected boolean implementsDataFrames() {
-            return false;
-        }
-
-        @Override
-        public JavaRDD<Item> getRDDAux(DynamicContext context) {
-            throw new OurBadException("Mutable value sequence iterators are local-only.");
-        }
-
-        @Override
-        public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-            throw new OurBadException("Mutable value sequence iterators are local-only.");
+            closeCallback();
+            this.invocation = null;
+            this.keys = null;
         }
     }
 }

@@ -43,24 +43,26 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RemovalLocalCursor(context);
+        return new RemovalLocalCursor(this, context);
     }
 
-    private final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
+    private static final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
 
+        private final ObjectRemoveKeysFunctionIterator plan;
         private final DynamicContext context;
         private LocalCursor<Item> inputCursor;
         private List<String> keys;
 
-        private RemovalLocalCursor(DynamicContext context) {
-            super(ObjectRemoveKeysFunctionIterator.this.getMetadata());
+        private RemovalLocalCursor(ObjectRemoveKeysFunctionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = getRemovalKeys(this.context);
-            this.inputCursor = ObjectRemoveKeysFunctionIterator.this.iterator.createLocalCursor(this.context);
+            this.keys = this.plan.getRemovalKeys(this.context);
+            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
             this.inputCursor.open();
         }
 
@@ -72,7 +74,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             Item item = this.inputCursor.next();
-            return item.isObject() ? removeKeys(item, this.keys) : item;
+            return item.isObject() ? this.plan.removeKeys(item, this.keys) : item;
         }
 
         @Override

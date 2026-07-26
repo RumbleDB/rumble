@@ -46,24 +46,26 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ProjectionLocalCursor(context);
+        return new ProjectionLocalCursor(this, context);
     }
 
-    private final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
+    private static final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
 
+        private final ObjectProjectFunctionIterator plan;
         private final DynamicContext context;
         private LocalCursor<Item> inputCursor;
         private List<Item> keys;
 
-        private ProjectionLocalCursor(DynamicContext context) {
-            super(ObjectProjectFunctionIterator.this.getMetadata());
+        private ProjectionLocalCursor(ObjectProjectFunctionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = getProjectionKeys(this.context);
-            this.inputCursor = ObjectProjectFunctionIterator.this.iterator.createLocalCursor(this.context);
+            this.keys = this.plan.getProjectionKeys(this.context);
+            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
             this.inputCursor.open();
         }
 
@@ -75,7 +77,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             Item item = this.inputCursor.next();
-            return item.isObject() ? getProjection(item, this.keys) : item;
+            return item.isObject() ? this.plan.getProjection(item, this.keys) : item;
         }
 
         @Override

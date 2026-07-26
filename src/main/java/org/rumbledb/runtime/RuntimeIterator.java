@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime;
 
-import java.io.*;
+import java.io.Serial;
 import java.util.*;
 
 import lombok.NonNull;
@@ -35,7 +35,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -473,25 +472,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
             targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
-        }
-    }
-
-    public RuntimeIterator deepCopy() {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (RuntimeIterator) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            RumbleException rumbleException = new OurBadException(
-                    "Error while deep copying the function body runtimeIterator"
-            );
-            rumbleException.initCause(e);
-            throw rumbleException;
         }
     }
 

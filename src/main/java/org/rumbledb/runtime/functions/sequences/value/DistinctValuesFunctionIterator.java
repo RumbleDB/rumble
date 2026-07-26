@@ -25,11 +25,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DefaultCollationException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -57,30 +58,12 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        List<Item> seen = new ArrayList<>();
-        return new FlatMappingLocalCursor<>(
+        return new DistinctLocalCursor(
                 this.sequenceIterator,
+                this.getChildren().size() == 2 ? this.getChild(1) : null,
                 context,
-                () -> checkCollationWithCursor(context),
-                item -> seen.contains(item)
-                    ? List.<Item>of().iterator()
-                    : addAndReturn(seen, item).iterator(),
                 getMetadata()
         );
-    }
-
-    private static List<Item> addAndReturn(List<Item> seen, Item item) {
-        seen.add(item);
-        return List.of(item);
-    }
-
-    private void checkCollationWithCursor(DynamicContext context) {
-        if (this.getChildren().size() == 2) {
-            String collation = LocalCursorUtils.materializeFirst(this.getChild(1), context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
     }
 
     private void checkCollation(DynamicContext context) {
@@ -172,5 +155,79 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
             + sequenceQuery.getResultingQuery()
             + " )";
         return new NativeClauseContext(sequenceQuery, resultingQuery, sequenceQuery.getResultingType());
+    }
+
+    private static final class DistinctLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimeIterator sequencePlan;
+        private final RuntimeIterator collationPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private final List<Item> seen = new ArrayList<>();
+        private LocalCursor<Item> sequenceCursor;
+        private Item nextResult;
+
+        private DistinctLocalCursor(
+                RuntimeIterator sequencePlan,
+                RuntimeIterator collationPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.collationPlan = collationPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            if (this.collationPlan != null) {
+                String collation = LocalCursorUtils.materializeFirst(this.collationPlan, this.context).getStringValue();
+                if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                    throw new DefaultCollationException("Wrong collation parameter", this.metadata);
+                }
+            }
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+            advance();
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.sequenceCursor.hasNext()) {
+                Item item = this.sequenceCursor.next();
+                if (!this.seen.contains(item)) {
+                    this.seen.add(item);
+                    this.nextResult = item;
+                    return;
+                }
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more distinct values are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            this.seen.clear();
+            this.nextResult = null;
+        }
     }
 }

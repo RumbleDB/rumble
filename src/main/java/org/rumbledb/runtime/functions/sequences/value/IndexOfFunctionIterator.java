@@ -30,7 +30,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -60,50 +60,13 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        Item[] searchValue = new Item[1];
-        int[] index = new int[1];
-        return new FlatMappingLocalCursor<>(
+        return new IndexOfLocalCursor(
                 this.sequenceIterator,
+                this.searchIterator,
+                this.getChildren().size() == 3 ? this.getChild(2) : null,
                 context,
-                () -> {
-                    checkCollationWithCursor(context);
-                    searchValue[0] = LocalCursorUtils.materializeFirst(this.searchIterator, context);
-                    index[0] = 0;
-                },
-                item -> {
-                    index[0]++;
-                    if (!item.isAtomic()) {
-                        throw new NonAtomicKeyException(
-                                "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                                getMetadata()
-                        );
-                    }
-                    long comparison = ComparisonIterator.compareItems(
-                        item,
-                        searchValue[0],
-                        ComparisonOperator.VC_EQ,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (
-                        comparison == 0
-                            && ((!searchValue[0].isDouble() && !searchValue[0].isFloat())
-                                || !searchValue[0].isNaN())
-                    ) {
-                        return List.of(ItemFactory.getInstance().createIntItem(index[0])).iterator();
-                    }
-                    return List.<Item>of().iterator();
-                },
                 getMetadata()
         );
-    }
-
-    private void checkCollationWithCursor(DynamicContext context) {
-        if (this.getChildren().size() == 3) {
-            String collation = LocalCursorUtils.materializeFirst(this.getChild(2), context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
     }
 
     private void checkCollation(DynamicContext context) {
@@ -187,6 +150,102 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
         } else {
             this.hasNext = true;
+        }
+    }
+
+    private static final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimeIterator sequencePlan;
+        private final RuntimeIterator searchPlan;
+        private final RuntimeIterator collationPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private LocalCursor<Item> sequenceCursor;
+        private Item search;
+        private Item nextResult;
+        private int index;
+
+        private IndexOfLocalCursor(
+                RuntimeIterator sequencePlan,
+                RuntimeIterator searchPlan,
+                RuntimeIterator collationPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.searchPlan = searchPlan;
+            this.collationPlan = collationPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            if (this.collationPlan != null) {
+                String collation = LocalCursorUtils.materializeFirst(this.collationPlan, this.context).getStringValue();
+                if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                    throw new UnsupportedCollationException("Wrong collation parameter", this.metadata);
+                }
+            }
+            this.search = LocalCursorUtils.materializeFirst(this.searchPlan, this.context);
+            this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
+            this.sequenceCursor.open();
+            this.index = 0;
+            advance();
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.sequenceCursor.hasNext()) {
+                Item item = this.sequenceCursor.next();
+                this.index++;
+                if (!item.isAtomic()) {
+                    throw new NonAtomicKeyException(
+                            "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
+                            this.metadata
+                    );
+                }
+                long comparison = ComparisonIterator.compareItems(
+                    item,
+                    this.search,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (
+                    comparison == 0
+                        && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())
+                ) {
+                    this.nextResult = ItemFactory.getInstance().createIntItem(this.index);
+                    return;
+                }
+            }
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more index-of results are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            this.search = null;
+            this.nextResult = null;
+            this.index = 0;
         }
     }
 }
