@@ -7,6 +7,9 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
@@ -42,7 +45,13 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     private RuntimeIterator selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
+        return selectApplicableIterator(
+            iterator -> iterator.materializeFirstItemOrNull(dynamicContext)
+        );
+    }
+
+    private RuntimeIterator selectApplicableIterator(Function<RuntimeIterator, Item> materializeFirst) {
+        Item testValue = materializeFirst.apply(this.testField);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -59,7 +68,7 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : this.cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(dynamicContext);
+            Item caseValue = materializeFirst.apply(caseKey);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
@@ -95,6 +104,20 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         return this.defaultReturn;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    RuntimeIterator matchingIterator = selectApplicableIterator(
+                        iterator -> LocalCursorUtils.materializeFirst(iterator, context)
+                    );
+                    LocalCursorUtils.materialize(matchingIterator, new DynamicContext(context));
+                    return null;
+                },
+                getMetadata()
+        );
     }
 
     @Override

@@ -27,6 +27,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -60,6 +63,19 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
         this.nextResult = new LinkedList<>();
         this.lookupIterator = lookupIterator;
         this.wildcard = this.lookupIterator == null;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> lookup(
+                    context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata()),
+                    this.wildcard
+                        ? List.of()
+                        : LocalCursorUtils.materialize(this.lookupIterator, context)
+                ).iterator(),
+                getMetadata()
+        );
     }
 
     @Override
@@ -144,6 +160,84 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
             }
         }
         this.hasNext = !this.nextResult.isEmpty();
+    }
+
+    private List<Item> lookup(List<Item> contextItems, List<Item> keys) {
+        List<Item> results = new ArrayList<>();
+        for (Item item : contextItems) {
+            if (item.isMap()) {
+                appendMapLookup(item, keys, results);
+            } else if (item.isArray()) {
+                appendArrayLookup(item, keys, results);
+            } else {
+                throw new UnexpectedTypeException(
+                        "Type error; Lookup is only possible on Maps and Arrays, "
+                            + item.getDynamicType()
+                            + " detected instead",
+                        getMetadata()
+                );
+            }
+        }
+        return results;
+    }
+
+    private void appendMapLookup(Item map, List<Item> keys, List<Item> results) {
+        if (this.wildcard) {
+            if (map.isObject()) {
+                results.addAll(map.getItemValues());
+            } else {
+                map.getSequenceValues().forEach(results::addAll);
+            }
+            return;
+        }
+        for (Item rawKey : keys) {
+            List<Item> atomized = rawKey.atomizedValue();
+            if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
+                throw new UnexpectedTypeException(
+                        "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
+                        getMetadata()
+                );
+            }
+            Item key = atomized.get(0);
+            if (map.isObject()) {
+                Item value = map.getItemByKey(key);
+                if (value != null) {
+                    results.add(value);
+                }
+            } else {
+                List<Item> values = map.getSequenceByKey(key);
+                if (values != null) {
+                    results.addAll(values);
+                }
+            }
+        }
+    }
+
+    private void appendArrayLookup(Item array, List<Item> keys, List<Item> results) {
+        if (this.wildcard) {
+            if (array.isArrayOfItems()) {
+                results.addAll(array.getItemMembers());
+            } else {
+                array.getSequenceMembers().forEach(results::addAll);
+            }
+            return;
+        }
+        for (Item key : keys) {
+            if (key.isString()) {
+                throw new UnexpectedTypeException(
+                        "Type error; Lookup with String on Arrays is not possible",
+                        getMetadata()
+                );
+            }
+            if (key.isNumeric()) {
+                int index = key.castToIntValue() - 1;
+                if (array.isArrayOfItems()) {
+                    results.add(array.getItemAt(index));
+                } else {
+                    results.addAll(array.getSequenceAt(index));
+                }
+            }
+        }
     }
 
     @Override

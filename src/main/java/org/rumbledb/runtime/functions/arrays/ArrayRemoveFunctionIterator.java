@@ -30,14 +30,15 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
@@ -68,6 +69,17 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> remove(
+                    LocalCursorUtils.materialize(this.arrayIterator, context),
+                    LocalCursorUtils.materialize(this.positionsIterator, context)
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
@@ -75,21 +87,20 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void initializeResult(DynamicContext context) {
-        Item arrayItem;
-        try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:remove expects exactly one array as the first argument.",
-                    getMetadata()
-            );
-        } catch (MoreThanOneItemException e) {
+        this.resultItem = remove(
+            this.arrayIterator.materialize(context),
+            this.positionsIterator.materialize(context)
+        );
+    }
+
+    private Item remove(List<Item> arrays, List<Item> positionItems) {
+        if (arrays.size() != 1) {
             throw new UnexpectedTypeException(
                     "array:remove expects exactly one array as the first argument.",
                     getMetadata()
             );
         }
-
+        Item arrayItem = arrays.get(0);
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:remove must be an array.",
@@ -98,11 +109,8 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
         }
 
         int size = arrayItem.getSize();
-        List<Item> positionItems = this.positionsIterator.materialize(context);
-
         if (positionItems.isEmpty()) {
-            this.resultItem = arrayItem;
-            return;
+            return arrayItem;
         }
 
         Set<BigInteger> positionsToRemove = new HashSet<>();
@@ -135,7 +143,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
@@ -146,7 +154,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator {
                     keptMembers.add(originalMembers.get(i));
                 }
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
     }

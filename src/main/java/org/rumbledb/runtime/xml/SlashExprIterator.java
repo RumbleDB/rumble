@@ -32,12 +32,28 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import scala.Tuple2;
 
 import java.io.Serial;
 import java.util.*;
 
 public class SlashExprIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new SlashExprIterator(
+                        CursorRuntimeIteratorAdapter.adapt(this.leftIterator),
+                        CursorRuntimeIteratorAdapter.adapt(this.rightIterator),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -30,6 +30,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -38,6 +40,8 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.HashSet;
+import java.util.Set;
 
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
@@ -53,6 +57,26 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        Set<String> seenKeys = new HashSet<>();
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isObject()) {
+                        return List.<Item>of().iterator();
+                    }
+                    return item.getStringKeys()
+                        .stream()
+                        .filter(seenKeys::add)
+                        .map(ItemFactory.getInstance()::createStringItem)
+                        .iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override

@@ -10,6 +10,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -17,6 +19,18 @@ import java.util.List;
 import java.util.Set;
 
 public class InnermostFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            InnermostFunctionIterator::new,
+            getMetadata()
+        );
+    }
+
     private static final long serialVersionUID = 1L;
 
     private List<Item> results;

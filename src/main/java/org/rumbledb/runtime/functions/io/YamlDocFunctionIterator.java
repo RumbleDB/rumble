@@ -33,6 +33,9 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -56,6 +59,32 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ResourceLocalCursor<>(
+                () -> {
+                    Item path = LocalCursorUtils.materializeFirst(this.getChild(0), context);
+                    try {
+                        URI uri = FileSystemUtil.resolveURI(
+                            this.staticContext.getStaticURI(),
+                            path.getStringValue(),
+                            getMetadata()
+                        );
+                        InputStream input = FileSystemUtil.getDataInputStream(
+                            uri,
+                            context.getRumbleRuntimeConfiguration(),
+                            getMetadata()
+                        );
+                        YAMLParser yamlParser = new YAMLFactory().createParser(new InputStreamReader(input));
+                        return new YamlResourceIterator(yamlParser, getMetadata());
+                    } catch (IOException e) {
+                        throw new ParsingException(e.getMessage(), getMetadata());
+                    }
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -114,5 +143,62 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
+    private static final class YamlResourceIterator
+            implements
+                ResourceLocalCursor.ResourceIterator<Item> {
+
+        private final YAMLParser parser;
+        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private Item next;
+
+        private YamlResourceIterator(
+                YAMLParser parser,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            this.parser = parser;
+            this.metadata = metadata;
+            advance();
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.next != null;
+        }
+
+        @Override
+        public Item next() {
+            Item result = this.next;
+            advance();
+            return result;
+        }
+
+        private void advance() {
+            try {
+                this.next = ItemParser.getItemFromYAML(
+                    this.parser,
+                    this.parser.nextToken(),
+                    this.metadata
+                );
+            } catch (IOException e) {
+                RumbleException exception = new ParsingException(
+                        "An error happened while parsing YAML. YAML is not well-formed!",
+                        this.metadata
+                );
+                exception.initCause(e);
+                throw exception;
+            }
+        }
+
+        @Override
+        public void close() {
+            try {
+                this.parser.close();
+            } catch (IOException e) {
+                RumbleException exception = new ParsingException(e.getMessage(), this.metadata);
+                exception.initCause(e);
+                throw exception;
+            }
+        }
+    }
 
 }

@@ -31,6 +31,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -42,6 +44,17 @@ import java.util.List;
  * by a given sequence (FOAY0001 if position is out of bounds).
  */
 public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            ArrayPutFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

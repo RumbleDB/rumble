@@ -41,6 +41,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -91,6 +93,22 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            this.functionArguments,
+            context,
+            this.staticContext,
+            (arguments, staticContext) -> new FunctionItemCallIterator(
+                    this.functionItem,
+                    arguments,
+                    staticContext,
+                    this.isTailOptimization
+            ),
+            getMetadata()
+        );
     }
 
     private DynamicContext createCallContext(DynamicContext context) {

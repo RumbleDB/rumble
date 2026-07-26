@@ -29,6 +29,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -43,6 +46,19 @@ import java.util.stream.Stream;
  * per XPath and XQuery Functions 3.1.
  */
 public class PostfixLookupIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new PostfixLookupIterator(
+                        CursorRuntimeIteratorAdapter.adapt(this.iterator),
+                        this.lookupIterator == null ? null : CursorRuntimeIteratorAdapter.adapt(this.lookupIterator),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

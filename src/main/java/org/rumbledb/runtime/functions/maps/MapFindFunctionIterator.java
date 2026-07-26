@@ -35,11 +35,24 @@ import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
 public class MapFindFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            MapFindFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

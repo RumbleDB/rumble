@@ -17,6 +17,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.expressions.ExecutionMode;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -60,6 +64,18 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             this.key = key;
             this.values = values;
         }
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new MapMergeFunctionIterator(
+                        CursorRuntimeIteratorAdapter.adaptItems(this.getChildren()),
+                        getRuntimeStaticContext().toBuilder().executionMode(ExecutionMode.LOCAL).build()
+                ),
+                context,
+                getMetadata()
+        );
     }
 
     private final RuntimeIterator mapsIterator;

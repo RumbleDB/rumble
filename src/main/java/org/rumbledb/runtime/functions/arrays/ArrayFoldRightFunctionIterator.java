@@ -33,6 +33,8 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
@@ -42,6 +44,17 @@ import java.util.Collections;
 import java.util.List;
 
 public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            ArrayFoldRightFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

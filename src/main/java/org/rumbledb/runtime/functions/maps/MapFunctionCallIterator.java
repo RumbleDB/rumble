@@ -27,6 +27,9 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -39,6 +42,19 @@ import java.util.Queue;
  * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
  */
 public class MapFunctionCallIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new MapFunctionCallIterator(
+                        this.mapItem,
+                        CursorRuntimeIteratorAdapter.adapt(this.keyIterator),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

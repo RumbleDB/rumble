@@ -28,11 +28,15 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 
 /**
  * Runtime iterator for document node constructors.
@@ -67,7 +71,28 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createDocument(
+                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createDocument(
+            (iterator, childContext) -> iterator.materialize(childContext),
+            dynamicContext
+        );
+    }
+
+    private Item createDocument(
+            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -84,10 +109,13 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
         // as an enclosed expression in the content of a direct element constructor, as described in
         // Step 1e of 3.9.1.3 Content. The result of processing the content expression is a sequence
         // of nodes called the content sequence.
-        List<Item> processedContent = processContentExpression(contextToUse);
+        List<Item> processedContent = processContentExpression(
+            this.contentIterator == null
+                ? List.of()
+                : materialize.apply(this.contentIterator, contextToUse)
+        );
 
         // Create and return the document node item
-        this.hasNext = false;
         Item documentItem = ItemFactory.getInstance()
             .createXmlDocumentNode(
                 processedContent
@@ -118,17 +146,16 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
      * 3. If the content sequence contains an attribute node, a type error is raised [err:XPTY0004].
      * 4. If the content sequence contains a namespace node, a type error is raised [err:XPTY0004].
      */
-    private List<Item> processContentExpression(DynamicContext dynamicContext) {
+    private List<Item> processContentExpression(List<Item> contentItems) {
         List<Item> contentSequence = new ArrayList<>();
         StringBuilder textAccumulator = null;
         boolean previousItemWasAtomic = false;
 
         // Collect all content items
         if (this.contentIterator != null) {
-            this.contentIterator.open(dynamicContext);
-            while (this.contentIterator.hasNext()) {
+            for (Item contentItem : contentItems) {
                 List<Item> expandedItems = new ArrayList<>();
-                XmlConstructorContentUtils.appendExpandedItem(this.contentIterator.next(), expandedItems);
+                XmlConstructorContentUtils.appendExpandedItem(contentItem, expandedItems);
                 for (Item item : expandedItems) {
                     if (item.isAttributeNode() || item.isNamespaceNode()) {
                         if (textAccumulator != null) {
@@ -169,7 +196,6 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
                     previousItemWasAtomic = false;
                 }
             }
-            this.contentIterator.close();
         }
         if (textAccumulator != null) {
             flushTextAccumulator(contentSequence, textAccumulator);

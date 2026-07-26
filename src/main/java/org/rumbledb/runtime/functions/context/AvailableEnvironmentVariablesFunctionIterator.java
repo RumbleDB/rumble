@@ -6,6 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -23,6 +25,18 @@ public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunction
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> System.getenv()
+                    .keySet()
+                    .stream()
+                    .map(ItemFactory.getInstance()::createStringItem)
+                    .iterator(),
+                getMetadata()
+        );
     }
 
     @Override

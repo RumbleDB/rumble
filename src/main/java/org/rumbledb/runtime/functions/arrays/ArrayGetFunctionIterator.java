@@ -6,13 +6,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -42,6 +43,17 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> getMember(
+                    LocalCursorUtils.materialize(this.arrayIterator, context),
+                    LocalCursorUtils.materialize(this.positionIterator, context)
+                ).iterator(),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
         this.positionIterator.open(this.currentDynamicContextForLocalExecution);
@@ -51,19 +63,22 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
 
     private void initializeResults(DynamicContext context) {
         this.pendingResults.clear();
+        this.pendingResults.addAll(
+            getMember(this.arrayIterator.materialize(context), this.positionIterator.materialize(context))
+        );
+    }
 
-        Item arrayItem;
-        try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            return;
-        } catch (MoreThanOneItemException e) {
+    private List<Item> getMember(List<Item> arrays, List<Item> positions) {
+        if (arrays.isEmpty()) {
+            return List.of();
+        }
+        if (arrays.size() > 1) {
             throw new UnexpectedTypeException(
                     "array:get expects exactly one array argument.",
                     getMetadata()
             );
         }
-
+        Item arrayItem = arrays.get(0);
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:get must be an array.",
@@ -71,21 +86,13 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        Item positionItem;
-        try {
-            positionItem = this.positionIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:get expects exactly one position argument.",
-                    getMetadata()
-            );
-        } catch (MoreThanOneItemException e) {
+        if (positions.size() != 1) {
             throw new UnexpectedTypeException(
                     "array:get expects exactly one position argument.",
                     getMetadata()
             );
         }
-
+        Item positionItem = positions.get(0);
         if (!positionItem.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; position argument to array:get must be numeric.",
@@ -116,12 +123,9 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
         int lookup = positionInteger.intValue();
 
         if (arrayItem.isArrayOfItems()) {
-            Item member = arrayItem.getItemAt(lookup - 1);
-            this.pendingResults.add(member);
-        } else {
-            List<Item> memberSeq = arrayItem.getSequenceAt(lookup - 1);
-            this.pendingResults.addAll(memberSeq);
+            return List.of(arrayItem.getItemAt(lookup - 1));
         }
+        return arrayItem.getSequenceAt(lookup - 1);
     }
 
     @Override
@@ -177,4 +181,3 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-

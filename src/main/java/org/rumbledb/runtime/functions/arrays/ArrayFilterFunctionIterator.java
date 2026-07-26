@@ -38,6 +38,8 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -46,6 +48,17 @@ import org.rumbledb.types.SequenceType;
  * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
  */
 public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            ArrayFilterFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

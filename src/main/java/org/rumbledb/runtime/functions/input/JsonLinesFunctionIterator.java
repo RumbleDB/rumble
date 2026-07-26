@@ -32,6 +32,8 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import com.google.gson.stream.JsonReader;
 
@@ -43,6 +45,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            JsonLinesFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

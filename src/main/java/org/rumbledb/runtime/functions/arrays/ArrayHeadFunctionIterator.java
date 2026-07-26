@@ -13,6 +13,9 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -40,6 +43,14 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> headArgument(LocalCursorUtils.materialize(this.arrayIterator, context)).iterator(),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
         initializeResults(this.currentDynamicContextForLocalExecution);
@@ -61,6 +72,13 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
+        this.pendingResults.addAll(head(arrayItem));
+    }
+
+    private List<Item> head(Item arrayItem) {
+        if (arrayItem == null) {
+            return List.of();
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:head must be an array.",
@@ -77,10 +95,19 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (arrayItem.isArrayOfItems()) {
-            this.pendingResults.add(arrayItem.getItemAt(0));
-        } else {
-            this.pendingResults.addAll(arrayItem.getSequenceAt(0));
+            return List.of(arrayItem.getItemAt(0));
         }
+        return arrayItem.getSequenceAt(0);
+    }
+
+    private List<Item> headArgument(List<Item> items) {
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:head expects exactly one array argument.",
+                    getMetadata()
+            );
+        }
+        return head(items.isEmpty() ? null : items.get(0));
     }
 
     @Override
@@ -129,4 +156,3 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-

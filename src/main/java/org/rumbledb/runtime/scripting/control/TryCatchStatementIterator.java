@@ -11,6 +11,9 @@ import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.Map;
@@ -36,10 +39,28 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> execute(
+                    context,
+                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext)
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        return execute(context, RuntimeIterator::materialize);
+    }
+
+    private Item execute(
+            DynamicContext context,
+            java.util.function.BiConsumer<RuntimeIterator, DynamicContext> materialize
+    ) {
         try {
             DynamicContext childContext = new DynamicContext(context);
-            this.tryStatementIterator.materialize(childContext);
+            materialize.accept(this.tryStatementIterator, childContext);
         } catch (Throwable throwable) {
             // If we catch a break or continue exception, our catch should not be allowed to act on it
             if (
@@ -54,7 +75,7 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
             if (catchingStatementIterator != null) {
                 DynamicContext childContext = new DynamicContext(context);
                 ErrorVariables.injectDynamicContext(childContext, unnestedException);
-                catchingStatementIterator.materializeFirstItemOrNull(childContext);
+                materialize.accept(catchingStatementIterator, childContext);
             } else {
                 throw throwable;
             }

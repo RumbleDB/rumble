@@ -33,6 +33,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -70,6 +72,22 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
         this.tailCallOptimizationCandidate = tailCallOptimization;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            this.functionArguments,
+            context,
+            this.staticContext,
+            (arguments, staticContext) -> new StaticUserDefinedFunctionCallIterator(
+                    this.functionIdentifier,
+                    arguments,
+                    staticContext,
+                    this.tailCallOptimizationCandidate
+            ),
+            getMetadata()
+        );
     }
 
     @Override

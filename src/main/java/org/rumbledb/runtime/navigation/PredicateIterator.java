@@ -40,6 +40,9 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -60,6 +63,19 @@ import java.math.BigDecimal;
 import java.util.*;
 
 public class PredicateIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new PredicateIterator(
+                        CursorRuntimeIteratorAdapter.adapt(this.iterator),
+                        CursorRuntimeIteratorAdapter.adapt(this.filter),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

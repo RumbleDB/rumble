@@ -8,10 +8,14 @@ import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.Collections;
+import java.util.List;
 
 public class ExitStatementIterator extends HybridRuntimeIterator {
     @Serial
@@ -25,6 +29,11 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     ) {
         super(Collections.singletonList(childIterator), staticContext);
         this.childIterator = childIterator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ExitLocalCursor(this.childIterator, context, this);
     }
 
     @Override
@@ -99,5 +108,58 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
                 childDataFrame,
                 this.getMetadata()
         );
+    }
+
+    private static final class ExitLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimeIterator childPlan;
+        private final DynamicContext context;
+        private final ExitStatementIterator plan;
+        private boolean hasNext;
+
+        private ExitLocalCursor(
+                RuntimeIterator childPlan,
+                DynamicContext context,
+                ExitStatementIterator plan
+        ) {
+            super(plan.getMetadata());
+            this.childPlan = childPlan;
+            this.context = context;
+            this.plan = plan;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.hasNext = true;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.hasNext;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.hasNext) {
+                throw invalidState("No more values are available.");
+            }
+            this.hasNext = false;
+            List<Item> result = LocalCursorUtils.materialize(this.childPlan, this.context);
+            PendingUpdateList updates = this.childPlan.isUpdating()
+                ? this.childPlan.getPendingUpdateList(this.context)
+                : new PendingUpdateList();
+            throw new ExitStatementException(
+                    updates,
+                    result,
+                    null,
+                    null,
+                    this.plan.getMetadata()
+            );
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.hasNext = false;
+        }
     }
 }

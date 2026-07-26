@@ -29,6 +29,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 
@@ -50,6 +53,34 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.sequenceIterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        List<Item> seen = new ArrayList<>();
+        return new FlatMappingLocalCursor<>(
+                this.sequenceIterator,
+                context,
+                () -> checkCollationWithCursor(context),
+                item -> seen.contains(item)
+                    ? List.<Item>of().iterator()
+                    : addAndReturn(seen, item).iterator(),
+                getMetadata()
+        );
+    }
+
+    private static List<Item> addAndReturn(List<Item> seen, Item item) {
+        seen.add(item);
+        return List.of(item);
+    }
+
+    private void checkCollationWithCursor(DynamicContext context) {
+        if (this.getChildren().size() == 2) {
+            String collation = LocalCursorUtils.materializeFirst(this.getChild(1), context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
     }
 
     private void checkCollation(DynamicContext context) {

@@ -8,6 +8,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.w3c.dom.Document;
@@ -36,6 +39,14 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> loadDocument(LocalCursorUtils.materializeFirst(this.getChild(0), context), context),
+                getMetadata()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
         this.pathIterator = this.getChild(0);
@@ -49,50 +60,54 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             Item path = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            try {
-                URI uri = FileSystemUtil.resolveURI(
-                    this.staticContext.getStaticURI(),
-                    path.getStringValue(),
-                    getMetadata()
-                );
-                DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                documentBuilderFactory.setNamespaceAware(true);
-                DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                try (
-                    InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
-                        uri,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    )
-                ) {
-                    Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                    return ItemParser.getItemFromXML(
-                        xmlDocument,
-                        uri.toString(),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()
-                            .optimizeParentPointers()
-                    );
-                }
-            } catch (ParserConfigurationException e) {
-                throw new OurBadException("Document builder creation failed with: " + e);
-            } catch (CannotRetrieveResourceException e) {
-                throw e;
-            } catch (IOException e) {
-                CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                        "Unable to read the resource supplied to fn:doc().",
-                        getMetadata()
-                );
-                ex.initCause(e);
-                throw ex;
-            } catch (SAXException e) {
-                CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                        "Unable to parse the resource supplied to fn:doc() as well-formed XML.",
-                        getMetadata()
-                );
-                ex.initCause(e);
-                throw ex;
-            }
+            return loadDocument(path, this.currentDynamicContextForLocalExecution);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " xml-doc function", getMetadata());
+    }
+
+    private Item loadDocument(Item path, DynamicContext context) {
+        try {
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticContext.getStaticURI(),
+                path.getStringValue(),
+                getMetadata()
+            );
+            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
+            documentBuilderFactory.setNamespaceAware(true);
+            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+            try (
+                InputStream xmlFileStream = FileSystemUtil.getDataInputStream(
+                    uri,
+                    context.getRumbleRuntimeConfiguration(),
+                    getMetadata()
+                )
+            ) {
+                Document xmlDocument = documentBuilder.parse(xmlFileStream);
+                return ItemParser.getItemFromXML(
+                    xmlDocument,
+                    uri.toString(),
+                    context.getRumbleRuntimeConfiguration()
+                        .optimizeParentPointers()
+                );
+            }
+        } catch (ParserConfigurationException e) {
+            throw new OurBadException("Document builder creation failed with: " + e);
+        } catch (CannotRetrieveResourceException e) {
+            throw e;
+        } catch (IOException e) {
+            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
+                    "Unable to read the resource supplied to fn:doc().",
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        } catch (SAXException e) {
+            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
+                    "Unable to parse the resource supplied to fn:doc() as well-formed XML.",
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
+        }
     }
 }

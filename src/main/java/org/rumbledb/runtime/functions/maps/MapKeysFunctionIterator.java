@@ -21,13 +21,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -64,6 +65,14 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> getKeys(LocalCursorUtils.materialize(this.mapIterator, context)).iterator(),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         initializeResults(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -71,17 +80,17 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
 
     private void initializeResults(DynamicContext context) {
         this.pendingResults.clear();
+        this.pendingResults.addAll(getKeys(this.mapIterator.materialize(context)));
+    }
 
-        Item mapItem;
-        try {
-            mapItem = this.mapIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+    private List<Item> getKeys(List<Item> maps) {
+        if (maps.size() != 1) {
             throw new UnexpectedTypeException(
                     "map:keys expects exactly one map argument.",
                     getMetadata()
             );
         }
-
+        Item mapItem = maps.get(0);
         if (mapItem == null || !mapItem.isMap()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to map:keys must be a map.",
@@ -90,9 +99,7 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
         }
 
         // MapItem already enforces distinct atomic keys (via op:same-key) during construction/merge.
-        for (Item key : mapItem.getItemKeys()) {
-            this.pendingResults.add(key);
-        }
+        return mapItem.getItemKeys();
     }
 
     private void setNextResult() {
@@ -137,4 +144,3 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:keys is currently supported only in local execution mode.");
     }
 }
-

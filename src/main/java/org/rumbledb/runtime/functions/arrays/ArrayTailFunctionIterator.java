@@ -39,6 +39,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
 
@@ -63,6 +66,14 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> tailArgument(LocalCursorUtils.materialize(this.arrayIterator, context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
         initializeResult(this.currentDynamicContextForLocalExecution);
@@ -84,6 +95,13 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
+        this.resultItem = tail(arrayItem);
+    }
+
+    private Item tail(Item arrayItem) {
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:tail must be an array.",
@@ -100,22 +118,31 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (size == 1) {
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(Collections.emptyList(), false);
-            return;
         }
 
         if (arrayItem.isArrayOfItems()) {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> tailMembers = new ArrayList<>(originalMembers.subList(1, size));
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createSequenceArrayItem(tailMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+    }
+
+    private Item tailArgument(List<Item> items) {
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:tail expects exactly one array argument.",
+                    getMetadata()
+            );
+        }
+        return tail(items.isEmpty() ? null : items.get(0));
     }
 
     @Override
@@ -161,4 +188,3 @@ public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-

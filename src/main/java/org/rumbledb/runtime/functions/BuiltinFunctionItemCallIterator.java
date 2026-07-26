@@ -25,6 +25,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -63,6 +65,21 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
             functionItem,
             this.functionArguments,
             staticContext
+        );
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            this.functionArguments,
+            context,
+            this.staticContext,
+            (arguments, staticContext) -> new BuiltinFunctionItemCallIterator(
+                    this.functionItem,
+                    arguments,
+                    staticContext
+            ),
+            getMetadata()
         );
     }
 

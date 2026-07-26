@@ -37,6 +37,9 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -47,6 +50,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
@@ -66,6 +70,27 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(array, iterator), staticContext);
         this.iterator = array;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        int position = requireLookupPosition(
+            LocalCursorUtils.materialize(this.getChild(1), context)
+        );
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray() || position <= 0 || position > item.getSize()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return List.of(item.getItemAt(position - 1)).iterator();
+                    }
+                    return item.getSequenceAt(position - 1).iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -121,6 +146,29 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
+    }
+
+    private int requireLookupPosition(List<Item> values) {
+        if (values.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with no key.",
+                    getMetadata()
+            );
+        }
+        if (values.size() > 1) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.",
+                    getMetadata()
+            );
+        }
+        Item lookupExpression = values.get(0);
+        if (!lookupExpression.isNumeric()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Non numeric array lookup for : " + lookupExpression.serialize(),
+                    getMetadata()
+            );
+        }
+        return lookupExpression.castToIntValue();
     }
 
     @Override

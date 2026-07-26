@@ -9,6 +9,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SequentialLocalCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -34,6 +36,17 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
                 .isUpdating(exprIterator.isUpdating())
                 .isSequential(isSequential(statements, exprIterator))
                 .build()
+        );
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        int resultIndex = this.getChildren().size() - 1;
+        return new SequentialLocalCursor<>(
+                this.getChildren().subList(0, resultIndex),
+                this.getChild(resultIndex),
+                context,
+                getMetadata()
         );
     }
 

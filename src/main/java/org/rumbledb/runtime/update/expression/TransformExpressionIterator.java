@@ -2,6 +2,7 @@ package org.rumbledb.runtime.update.expression;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -13,6 +14,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
@@ -47,6 +51,28 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
         this.mutable = resultMutable;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> {
+                    Map<Name, RuntimeIterator> adaptedCopies = new LinkedHashMap<>();
+                    this.copyDeclMap.forEach(
+                        (name, iterator) -> adaptedCopies.put(name, CursorRuntimeIteratorAdapter.adapt(iterator))
+                    );
+                    return new TransformExpressionIterator(
+                            adaptedCopies,
+                            CursorRuntimeIteratorAdapter.adapt(this.modifyIterator),
+                            CursorRuntimeIteratorAdapter.adapt(this.returnIterator),
+                            RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext),
+                            this.mutabilityLevel,
+                            this.mutable
+                    );
+                },
+                context,
+                getMetadata()
+        );
     }
 
     @Override

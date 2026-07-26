@@ -34,6 +34,9 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -41,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.Set;
 
 /**
@@ -103,7 +107,28 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createElement(
+                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createElement(
+            (iterator, childContext) -> iterator.materialize(childContext),
+            dynamicContext
+        );
+    }
+
+    private Item createElement(
+            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -125,7 +150,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
             // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
             // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
             // [err:XPTY0004].
-            List<Item> atomizedNameItems = this.nameIterator.materialize(contextToUse);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator, contextToUse);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
@@ -186,10 +211,13 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         NamespaceBindingUtils.validateConstructedNodeName(elementName.getQNameValue(), getMetadata());
 
         // Process content expression according to XQuery 3.1 specification
-        ProcessedContent processedContent = processContentExpression(contextToUse);
+        ProcessedContent processedContent = processContentExpression(
+            this.contentIterator == null
+                ? List.of()
+                : materialize.apply(this.contentIterator, contextToUse)
+        );
 
         // Create and return the element item
-        this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 elementName.getQNameValue(),
@@ -222,19 +250,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      * Processing of the computed element constructor proceeds as follows:
      * 4. The properties of the newly constructed element node are determined as described in the specification.
      */
-    private ProcessedContent processContentExpression(DynamicContext dynamicContext) {
-        List<Item> rawContentSequence = new ArrayList<>();
-
-        // Collect all content items
-        if (this.contentIterator != null) {
-            this.contentIterator.open(dynamicContext);
-            while (this.contentIterator.hasNext()) {
-                Item item = this.contentIterator.next();
-                rawContentSequence.add(item);
-            }
-            this.contentIterator.close();
-        }
-
+    private ProcessedContent processContentExpression(List<Item> rawContentSequence) {
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
         List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);

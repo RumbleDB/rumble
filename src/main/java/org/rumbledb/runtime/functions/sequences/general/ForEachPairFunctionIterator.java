@@ -33,6 +33,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -40,6 +42,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            ForEachPairFunctionIterator::new,
+            getMetadata()
+        );
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 

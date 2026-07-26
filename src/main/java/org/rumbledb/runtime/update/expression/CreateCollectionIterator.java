@@ -6,7 +6,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
@@ -24,7 +23,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
-public class CreateCollectionIterator extends HybridRuntimeIterator {
+public class CreateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;

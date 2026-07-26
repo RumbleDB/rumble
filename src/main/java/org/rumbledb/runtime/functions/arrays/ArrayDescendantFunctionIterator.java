@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -50,6 +52,20 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    List<Item> results = new ArrayList<>();
+                    getDescendantArrays(List.of(item), results);
+                    return results.iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -97,18 +113,22 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void getDescendantArrays(List<Item> items) {
+        getDescendantArrays(items, this.nextResults);
+    }
+
+    private static void getDescendantArrays(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
-                this.nextResults.add(item);
+                results.add(item);
                 if (item.isArrayOfItems()) {
-                    getDescendantArrays(item.getItemMembers());
+                    getDescendantArrays(item.getItemMembers(), results);
                 } else {
                     for (java.util.List<Item> member : item.getSequenceMembers()) {
-                        getDescendantArrays(member);
+                        getDescendantArrays(member, results);
                     }
                 }
             } else if (item.isObject()) {
-                getDescendantArrays(item.getItemValues());
+                getDescendantArrays(item.getItemValues(), results);
             } else {
                 // for atomic types: do nothing
             }

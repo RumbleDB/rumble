@@ -8,6 +8,9 @@ import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -27,19 +30,44 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> declare(
+                    this.getChildren().isEmpty()
+                        ? null
+                        : LocalCursorUtils.materialize(this.getChild(0), context),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        if (!this.getChildren().isEmpty() && !this.getChild(0).isLocal()) {
+            return declareDistributed(dynamicContext);
+        }
+        return declare(
+            this.getChildren().isEmpty() ? null : this.getChild(0).materialize(dynamicContext),
+            dynamicContext
+        );
+    }
+
+    private Item declare(List<Item> value, DynamicContext dynamicContext) {
         VariableValues variableValues = dynamicContext.getVariableValues();
         if (variableValues.containsLocally(variableValues, this.variableName)) {
             throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
         }
-        if (!this.getChildren().isEmpty()) {
-            RuntimeIterator exprIterator = this.getChild(0);
-            exprIterator.bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
-        } else {
-            // Casting needed to distinguish between local and RDD variables.
-            dynamicContext.getVariableValues()
-                .addVariableValue(this.variableName, (List<Item>) null);
+        dynamicContext.getVariableValues().addVariableValue(this.variableName, value);
+        return null;
+    }
+
+    private Item declareDistributed(DynamicContext dynamicContext) {
+        VariableValues variableValues = dynamicContext.getVariableValues();
+        if (variableValues.containsLocally(variableValues, this.variableName)) {
+            throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
         }
+        this.getChild(0).bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
         return null;
     }
 }

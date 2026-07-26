@@ -15,14 +15,13 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
 
-public class AppendExpressionIterator extends HybridRuntimeIterator {
+public class AppendExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -30,6 +30,9 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
@@ -53,6 +56,54 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         super(arguments, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.searchIterator = this.getChild(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        Item[] searchValue = new Item[1];
+        int[] index = new int[1];
+        return new FlatMappingLocalCursor<>(
+                this.sequenceIterator,
+                context,
+                () -> {
+                    checkCollationWithCursor(context);
+                    searchValue[0] = LocalCursorUtils.materializeFirst(this.searchIterator, context);
+                    index[0] = 0;
+                },
+                item -> {
+                    index[0]++;
+                    if (!item.isAtomic()) {
+                        throw new NonAtomicKeyException(
+                                "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
+                                getMetadata()
+                        );
+                    }
+                    long comparison = ComparisonIterator.compareItems(
+                        item,
+                        searchValue[0],
+                        ComparisonOperator.VC_EQ,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (
+                        comparison == 0
+                            && ((!searchValue[0].isDouble() && !searchValue[0].isFloat())
+                                || !searchValue[0].isNaN())
+                    ) {
+                        return List.of(ItemFactory.getInstance().createIntItem(index[0])).iterator();
+                    }
+                    return List.<Item>of().iterator();
+                },
+                getMetadata()
+        );
+    }
+
+    private void checkCollationWithCursor(DynamicContext context) {
+        if (this.getChildren().size() == 3) {
+            String collation = LocalCursorUtils.materializeFirst(this.getChild(2), context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
     }
 
     private void checkCollation(DynamicContext context) {

@@ -28,6 +28,9 @@ import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -38,6 +41,21 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class NodeSetOperationIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new NodeSetOperationIterator(
+                        CursorRuntimeIteratorAdapter.adapt(this.leftIterator),
+                        CursorRuntimeIteratorAdapter.adapt(this.rightIterator),
+                        this.operator,
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 

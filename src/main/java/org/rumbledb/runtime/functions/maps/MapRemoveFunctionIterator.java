@@ -19,6 +19,8 @@ import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -28,6 +30,17 @@ import org.rumbledb.runtime.RuntimeIterator;
  * This built-in is local execution only (consistent with other map/array accessors).
  */
 public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            MapRemoveFunctionIterator::new,
+            getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

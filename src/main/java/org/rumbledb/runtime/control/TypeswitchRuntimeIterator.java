@@ -8,6 +8,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
@@ -48,6 +51,32 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         this.cases = cases;
         this.defaultCase = defaultCase;
         this.matchingIterator = null;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new TypeswitchRuntimeIterator(
+                        CursorRuntimeIteratorAdapter.adapt(this.testField),
+                        this.cases.stream().map(TypeswitchRuntimeIterator::adaptCase).toList(),
+                        adaptCase(this.defaultCase),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
+                ),
+                context,
+                getMetadata()
+        );
+    }
+
+    private static TypeswitchRuntimeIteratorCase adaptCase(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+        RuntimeIterator returnIterator = CursorRuntimeIteratorAdapter.adapt(typeSwitchCase.getReturnIterator());
+        if (typeSwitchCase.getSequenceTypeUnion() == null) {
+            return new TypeswitchRuntimeIteratorCase(typeSwitchCase.getVariableName(), returnIterator);
+        }
+        return new TypeswitchRuntimeIteratorCase(
+                typeSwitchCase.getVariableName(),
+                typeSwitchCase.getSequenceTypeUnion(),
+                returnIterator
+        );
     }
 
     @Override

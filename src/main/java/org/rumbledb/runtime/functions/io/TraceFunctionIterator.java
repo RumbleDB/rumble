@@ -27,6 +27,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -50,6 +53,27 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     ) {
         super(arguments, staticContext);
         this.position = 0;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        String[] traceLabel = new String[1];
+        int[] tracePosition = new int[1];
+        return new FlatMappingLocalCursor<>(
+                this.getChild(0),
+                context,
+                () -> {
+                    traceLabel[0] = this.getChildren().size() == 2
+                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context).getStringValue()
+                        : "";
+                    tracePosition[0] = 0;
+                },
+                item -> {
+                    writeTrace(item, traceLabel[0], ++tracePosition[0], context);
+                    return List.of(item).iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -77,29 +101,34 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             Item result = this.valueIterator.next();
-            RumbleRuntimeConfiguration conf = this.currentDynamicContextForLocalExecution
-                .getRumbleRuntimeConfiguration();
-            if (conf != null) {
-                String path = conf.getLogPath();
-                if (path != null) {
-                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                        path,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    );
-                    FileSystemUtil.append(
-                        uri,
-                        Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    );
-                }
-            }
+            writeTrace(
+                result,
+                this.label,
+                ++this.position,
+                this.currentDynamicContextForLocalExecution
+            );
             this.hasNext = this.valueIterator.hasNext();
             return result;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
     }
 
+    private void writeTrace(Item result, String label, int position, DynamicContext context) {
+        RumbleRuntimeConfiguration configuration = context.getRumbleRuntimeConfiguration();
+        if (configuration == null || configuration.getLogPath() == null) {
+            return;
+        }
+        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+            configuration.getLogPath(),
+            configuration,
+            getMetadata()
+        );
+        FileSystemUtil.append(
+            uri,
+            Collections.singletonList(label + " [" + position + "]: " + result.serialize()),
+            configuration,
+            getMetadata()
+        );
+    }
 
 }

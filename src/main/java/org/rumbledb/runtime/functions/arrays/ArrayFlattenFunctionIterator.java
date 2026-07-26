@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -49,6 +51,20 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    List<Item> flattened = new LinkedList<>();
+                    flatten(List.of(item), flattened);
+                    return flattened.iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -91,17 +107,21 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void flatten(List<Item> items) {
+        flatten(items, this.nextResults);
+    }
+
+    private static void flatten(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
                 if (item.isArrayOfItems()) {
-                    flatten(item.getItemMembers());
+                    flatten(item.getItemMembers(), results);
                 } else {
                     for (java.util.List<Item> member : item.getSequenceMembers()) {
-                        flatten(member);
+                        flatten(member, results);
                     }
                 }
             } else {
-                this.nextResults.add(item);
+                results.add(item);
             }
         }
     }

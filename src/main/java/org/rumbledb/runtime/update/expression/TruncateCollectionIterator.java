@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -21,7 +20,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
-public class TruncateCollectionIterator extends HybridRuntimeIterator {
+public class TruncateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;

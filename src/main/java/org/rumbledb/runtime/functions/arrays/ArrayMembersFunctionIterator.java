@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 
 import java.io.Serial;
@@ -50,6 +52,24 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
         super(arguments, staticContext);
         this.iterator = this.getChild(0);
         this.nextResults = new LinkedList<>();
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return item.getItemMembers().iterator();
+                    }
+                    return item.getSequenceMembers().stream().flatMap(List::stream).iterator();
+                },
+                getMetadata()
+        );
     }
 
 

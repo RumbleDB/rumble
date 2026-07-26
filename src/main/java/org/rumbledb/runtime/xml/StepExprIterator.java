@@ -19,6 +19,8 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.xml.axis.forward.AttributeAxisIterator;
 
 import java.io.Serial;
@@ -29,7 +31,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator axisIterator;
-    private NodeTest nodeTest;
+    private final NodeTest nodeTest;
     private List<Item> results;
     private Item nextResult;
     private int resultCounter = 0;
@@ -42,6 +44,19 @@ public class StepExprIterator extends LocalRuntimeIterator {
         super(List.of(axisIterator), staticContext);
         this.axisIterator = axisIterator;
         this.nodeTest = nodeTest;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.axisIterator,
+                context,
+                node -> {
+                    Item result = nodeTestItem(node, this.nodeTest);
+                    return result == null ? List.<Item>of().iterator() : List.of(result).iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -82,7 +97,7 @@ public class StepExprIterator extends LocalRuntimeIterator {
     private List<Item> applyNodeTest(List<Item> axisResult) {
         List<Item> nodeTestResults = new ArrayList<>();
         for (Item node : axisResult) {
-            Item nodeTestResult = nodeTestItem(node);
+            Item nodeTestResult = nodeTestItem(node, this.nodeTest);
             if (nodeTestResult != null) {
                 nodeTestResults.add(nodeTestResult);
             }
@@ -95,40 +110,30 @@ public class StepExprIterator extends LocalRuntimeIterator {
         return n == null ? "" : n.toString();
     }
 
-    private Item nodeTestItem(Item node) {
-        if (this.nodeTest instanceof AnyKindTest) {
+    private Item nodeTestItem(Item node, NodeTest test) {
+        if (test instanceof AnyKindTest) {
             return anyKindTest(node);
-        } else if (this.nodeTest instanceof TextTest) {
+        } else if (test instanceof TextTest) {
             return textKindTest(node);
-        } else if (this.nodeTest instanceof CommentTest) {
+        } else if (test instanceof CommentTest) {
             return commentKindTest(node);
-        } else if (this.nodeTest instanceof PITest piTest) {
+        } else if (test instanceof PITest piTest) {
             return piKindTest(node, piTest);
-        } else if (this.nodeTest instanceof NamespaceNodeTest) {
+        } else if (test instanceof NamespaceNodeTest) {
             return namespaceNodeKindTest(node);
-        } else if (this.nodeTest instanceof AttributeTest attributeTest) {
+        } else if (test instanceof AttributeTest attributeTest) {
             return attributeKindTest(node, attributeTest);
-        } else if (this.nodeTest instanceof ElementTest elementTest) {
+        } else if (test instanceof ElementTest elementTest) {
             return elementKindTest(node, elementTest);
-        } else if (this.nodeTest instanceof NameTest nameTest) {
+        } else if (test instanceof NameTest nameTest) {
             return nameKindTest(node, nameTest);
-        } else if (this.nodeTest instanceof DocumentTest documentTest) {
+        } else if (test instanceof DocumentTest documentTest) {
             return documentKindTest(node, documentTest);
         } else {
             throw new UnsupportedFeatureException(
-                    "Unsupported node test: " + this.nodeTest,
+                    "Unsupported node test: " + test,
                     getMetadata()
             );
-        }
-    }
-
-    private Item nodeTestItem(Item node, NodeTest testToApply) {
-        NodeTest previousNodeTest = this.nodeTest;
-        this.nodeTest = testToApply;
-        try {
-            return nodeTestItem(node);
-        } finally {
-            this.nodeTest = previousNodeTest;
         }
     }
 

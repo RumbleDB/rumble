@@ -6,7 +6,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
@@ -18,7 +17,7 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
+public class DeleteSearchFromCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;

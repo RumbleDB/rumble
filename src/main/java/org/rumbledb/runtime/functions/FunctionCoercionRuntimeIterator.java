@@ -12,6 +12,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
@@ -46,6 +48,21 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         this.parameterNames = parameterNames;
         this.expectedReturnType = expectedReturnType;
         this.exceptionMessage = exceptionMessage;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new FunctionCoercionRuntimeIterator(
+                        this.callableItem,
+                        this.parameterNames,
+                        this.expectedReturnType,
+                        this.exceptionMessage,
+                        RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
+                ),
+                context,
+                getMetadata()
+        );
     }
 
     public Item getCallableItem() {

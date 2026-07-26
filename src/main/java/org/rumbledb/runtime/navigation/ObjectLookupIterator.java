@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.LogManager;
@@ -51,6 +52,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -79,6 +83,31 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        String key;
+        if (this.getChild(1) instanceof ContextExpressionIterator) {
+            key = context.getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0)
+                .getStringValue();
+        } else {
+            key = requireLookupKey(LocalCursorUtils.materialize(this.getChild(1), context));
+        }
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isObject()) {
+                        return List.<Item>of().iterator();
+                    }
+                    Item result = item.getItemByKey(key);
+                    return result == null ? List.<Item>of().iterator() : List.of(result).iterator();
+                },
+                getMetadata()
+        );
     }
 
     private void initLookupKey(DynamicContext context) {
@@ -136,6 +165,42 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 );
             }
         }
+    }
+
+    private String requireLookupKey(List<Item> values) {
+        if (values.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with no key.",
+                    getMetadata()
+            );
+        }
+        if (values.size() > 1) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
+                    getMetadata()
+            );
+        }
+        Item key = values.get(0);
+        if (key.isNull() || key.isObject() || key.isArray()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Object selector can't be converted to a string: " + key.serialize(),
+                    getMetadata()
+            );
+        }
+        if (
+            key.isBoolean()
+                || key.isDecimal()
+                || key.isDouble()
+                || key.isInt()
+                || key.isInteger()
+                || key.isString()
+        ) {
+            return key.getStringValue();
+        }
+        throw new UnexpectedTypeException(
+                "Non string object lookup for " + key.serialize(),
+                getMetadata()
+        );
     }
 
     @Override

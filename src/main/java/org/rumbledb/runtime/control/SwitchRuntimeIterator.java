@@ -30,9 +30,13 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -62,6 +66,29 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> {
+                    Map<RuntimeIterator, RuntimeIterator> adaptedCases = new LinkedHashMap<>();
+                    this.cases.forEach(
+                        (key, value) -> adaptedCases.put(
+                            CursorRuntimeIteratorAdapter.adapt(key),
+                            CursorRuntimeIteratorAdapter.adapt(value)
+                        )
+                    );
+                    return new SwitchRuntimeIterator(
+                            CursorRuntimeIteratorAdapter.adapt(this.testField),
+                            adaptedCases,
+                            CursorRuntimeIteratorAdapter.adapt(this.defaultReturn),
+                            RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
+                    );
+                },
+                context,
+                getMetadata()
+        );
     }
 
     @Override

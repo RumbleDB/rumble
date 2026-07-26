@@ -30,12 +30,16 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -99,17 +103,33 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createNamespace(
+                    iterator -> LocalCursorUtils.materialize(iterator, context),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createNamespace(iterator -> iterator.materialize(dynamicContext), dynamicContext);
+    }
+
+    private Item createNamespace(
+            Function<RuntimeIterator, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         // Spec: "A computed namespace constructor creates a new namespace node, with its own node identity."
         // Spec: "The parent of the newly created namespace node is empty."
         // Spec: "By itself, a computed namespace constructor has no effect on in-scope namespaces, but if an element
         // constructor's content sequence contains a namespace node, the namespace binding it represents is added to the
         // element's in-scope namespaces."
-        String prefix = resolvePrefix(dynamicContext);
-        String uri = resolveUri(dynamicContext);
+        String prefix = resolvePrefix(materialize);
+        String uri = resolveUri(materialize);
         validateNamespaceBinding(prefix, uri);
-
-        this.hasNext = false;
 
         Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -119,14 +139,14 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return namespaceItem;
     }
 
-    private String resolvePrefix(DynamicContext dynamicContext) {
+    private String resolvePrefix(Function<RuntimeIterator, List<Item>> materialize) {
         // Spec: "If the constructor specifies a Prefix, it is used as the prefix for the namespace node."
         if (this.staticPrefix != null) {
             return this.staticPrefix;
         }
         // Spec: "If the constructor specifies a PrefixExpr, the prefix expression is evaluated as follows:"
         // Spec: "Atomization is applied to the result of the PrefixExpr."
-        List<Item> atomizedPrefixItems = this.prefixIterator.materialize(dynamicContext);
+        List<Item> atomizedPrefixItems = materialize.apply(this.prefixIterator);
         // Spec: "If the result is the empty sequence or a zero-length xs:string or xs:untypedAtomic value, the new
         // namespace node has no name (such a namespace node represents a binding for the default namespace)."
         if (atomizedPrefixItems.isEmpty()) {
@@ -163,12 +183,12 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return prefix;
     }
 
-    private String resolveUri(DynamicContext dynamicContext) {
+    private String resolveUri(Function<RuntimeIterator, List<Item>> materialize) {
         // Spec: "The content expression is evaluated, and the result is cast to xs:anyURI to create the URI property
         // for the newly created node. An implementation may raise a dynamic error [err:XQDY0074] if the URIExpr of a
         // computed namespace
         // constructor is not a valid instance of xs:anyURI."
-        List<Item> atomizedUriItems = this.uriIterator.materialize(dynamicContext);
+        List<Item> atomizedUriItems = materialize.apply(this.uriIterator);
         if (atomizedUriItems.isEmpty()) {
             return "";
         }

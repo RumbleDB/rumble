@@ -1,0 +1,87 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0.
+ */
+
+package org.rumbledb.runtime.cursor;
+
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.function.Function;
+
+import lombok.NonNull;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.plan.RuntimePlan;
+
+/**
+ * Streams each input value through a zero-or-more mapping.
+ */
+public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
+
+    private final RuntimePlan<I> inputPlan;
+    private final DynamicContext context;
+    private final Runnable initializer;
+    private final Function<? super I, ? extends Iterator<? extends O>> mapper;
+    private LocalCursor<I> inputCursor;
+    private Iterator<? extends O> currentResults;
+
+    public FlatMappingLocalCursor(
+            @NonNull RuntimePlan<I> inputPlan,
+            @NonNull DynamicContext context,
+            @NonNull Function<? super I, ? extends Iterator<? extends O>> mapper,
+            @NonNull ExceptionMetadata metadata
+    ) {
+        this(inputPlan, context, () -> {
+        }, mapper, metadata);
+    }
+
+    public FlatMappingLocalCursor(
+            @NonNull RuntimePlan<I> inputPlan,
+            @NonNull DynamicContext context,
+            @NonNull Runnable initializer,
+            @NonNull Function<? super I, ? extends Iterator<? extends O>> mapper,
+            @NonNull ExceptionMetadata metadata
+    ) {
+        super(metadata);
+        this.inputPlan = inputPlan;
+        this.context = context;
+        this.initializer = initializer;
+        this.mapper = mapper;
+    }
+
+    @Override
+    protected void openLocal() {
+        this.initializer.run();
+        this.inputCursor = this.inputPlan.createLocalCursor(this.context);
+        this.inputCursor.open();
+        this.currentResults = Collections.emptyIterator();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
+            this.currentResults = this.mapper.apply(this.inputCursor.next());
+        }
+        return this.currentResults.hasNext();
+    }
+
+    @Override
+    protected O nextLocal() {
+        if (!hasNextLocal()) {
+            throw invalidState("No more values are available.");
+        }
+        return this.currentResults.next();
+    }
+
+    @Override
+    protected void closeLocal() {
+        if (this.inputCursor != null) {
+            this.inputCursor.close();
+        }
+        this.inputCursor = null;
+        this.currentResults = null;
+    }
+}

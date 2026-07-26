@@ -31,6 +31,9 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.io.Serial;
@@ -38,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 /**
  * Runtime iterator for direct element constructors.
@@ -68,7 +72,28 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createElement(
+                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createElement(
+            (iterator, childContext) -> iterator.materialize(childContext),
+            dynamicContext
+        );
+    }
+
+    private Item createElement(
+            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         // Check if this is the top-level runtime iterator for XML tree building
         DynamicContext contextToUse;
         if (dynamicContext.getTopLevelRuntimeIterator() == null) {
@@ -90,10 +115,9 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
             for (RuntimeIterator iterator : this.content) {
                 boolean previousItemWasAtomic = false;
-                iterator.open(contextToUse);
-                while (iterator.hasNext()) {
+                for (Item childItem : materialize.apply(iterator, contextToUse)) {
                     List<Item> expandedItems = new ArrayList<>();
-                    XmlConstructorContentUtils.appendExpandedItem(iterator.next(), expandedItems);
+                    XmlConstructorContentUtils.appendExpandedItem(childItem, expandedItems);
                     for (Item item : expandedItems) {
 
                         if (item.isAttributeNode() || item.isNamespaceNode()) {
@@ -160,7 +184,6 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
                         }
                     }
                 }
-                iterator.close();
             }
 
             // handle any remaining accumulated text at the end
@@ -189,21 +212,16 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         // process regular attributes
         if (this.attributes != null) {
             for (RuntimeIterator iterator : this.attributes) {
-                iterator.open(contextToUse);
-                while (iterator.hasNext()) {
-                    Item item = iterator.next();
-
+                for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
                         attributes.add(item.copy(true));
                     }
                 }
-                iterator.close();
             }
         }
         validateNoDuplicateAttributes(attributes);
         // create and return the element item
-        this.hasNext = false;
         ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
             .createXmlElementNode(
                 this.elementName,

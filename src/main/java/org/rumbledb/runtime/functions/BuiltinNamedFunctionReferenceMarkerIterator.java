@@ -21,6 +21,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 
@@ -37,6 +39,11 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator
 
     public BuiltinNamedFunctionReferenceMarkerIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new EmptyLocalCursor<>();
     }
 
     @Override

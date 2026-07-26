@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -49,6 +51,20 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    List<Item> results = new ArrayList<>();
+                    getDescendantObjects(List.of(item), results);
+                    return results.iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -95,12 +111,16 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void getDescendantObjects(List<Item> items) {
+        getDescendantObjects(items, this.nextResults);
+    }
+
+    private static void getDescendantObjects(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantObjects(item.getItemMembers());
+                getDescendantObjects(item.getItemMembers(), results);
             } else if (item.isObject()) {
-                this.nextResults.add(item);
-                getDescendantObjects(item.getItemValues());
+                results.add(item);
+                getDescendantObjects(item.getItemValues(), results);
             } else {
                 // for atomic types: do nothing
             }

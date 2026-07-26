@@ -5,6 +5,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -20,6 +23,19 @@ public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntim
 
     public CommaVariableDeclStatementIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    for (RuntimeIterator child : this.getChildren()) {
+                        LocalCursorUtils.materialize(child, context);
+                    }
+                    return null;
+                },
+                getMetadata()
+        );
     }
 
     @Override

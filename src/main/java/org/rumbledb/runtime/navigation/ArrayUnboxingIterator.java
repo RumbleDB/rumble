@@ -36,6 +36,8 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -63,6 +65,24 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     ) {
         super(Arrays.asList(arrayIterator), staticContext);
         this.iterator = arrayIterator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return item.getItemMembers().iterator();
+                    }
+                    return item.getSequenceMembers().stream().flatMap(List::stream).iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override

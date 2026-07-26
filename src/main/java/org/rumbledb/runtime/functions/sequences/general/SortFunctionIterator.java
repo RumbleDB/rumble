@@ -15,6 +15,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
@@ -31,6 +33,18 @@ import java.util.List;
  * {@code fn:sort($input, $collation?, $key)}.
  */
 public class SortFunctionIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            getRuntimeStaticContext(),
+            SortFunctionIterator::new,
+            getMetadata()
+        );
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 

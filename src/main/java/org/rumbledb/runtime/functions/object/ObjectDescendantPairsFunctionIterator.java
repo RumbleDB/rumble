@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -48,6 +50,20 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.getChild(0),
+                context,
+                item -> {
+                    List<Item> results = new ArrayList<>();
+                    getDescendantPairs(List.of(item), results);
+                    return results.iterator();
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -103,9 +119,13 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     }
 
     private void getDescendantPairs(List<Item> items) {
+        getDescendantPairs(items, this.nextResults);
+    }
+
+    private void getDescendantPairs(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantPairs(item.getItemMembers());
+                getDescendantPairs(item.getItemMembers(), results);
             } else if (item.isObject()) {
                 List<String> keys = item.getStringKeys();
                 for (String key : keys) {
@@ -116,8 +136,8 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
 
                     Item result = ItemFactory.getInstance()
                         .createObjectItem(keyList, valueList, getMetadata(), true);
-                    this.nextResults.add(result);
-                    getDescendantPairs(valueList);
+                    results.add(result);
+                    getDescendantPairs(valueList, results);
                 }
             } else {
                 // do nothing

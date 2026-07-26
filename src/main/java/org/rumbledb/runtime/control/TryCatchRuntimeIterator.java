@@ -24,6 +24,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -60,6 +63,29 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
         );
         this.tryExpression = tryExpression;
         this.catchExpressions = catchExpressions;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> evaluate(context).iterator(),
+                getMetadata()
+        );
+    }
+
+    private List<Item> evaluate(DynamicContext context) {
+        try {
+            return LocalCursorUtils.materialize(this.tryExpression, context);
+        } catch (Throwable throwable) {
+            RumbleException exception = RumbleException.unnestException(throwable);
+            RuntimeIterator catchingExpression = findMatchingCatch(exception);
+            if (catchingExpression == null) {
+                throw throwable;
+            }
+            DynamicContext catchContext = new DynamicContext(context);
+            ErrorVariables.injectDynamicContext(catchContext, exception);
+            return LocalCursorUtils.materialize(catchingExpression, catchContext);
+        }
     }
 
     @Override

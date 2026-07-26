@@ -9,12 +9,28 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 
 import java.io.Serial;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new ArrayFunctionCallIterator(
+                        this.arrayItem,
+                        CursorRuntimeIteratorAdapter.adapt(this.indexIterator),
+                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
+                ),
+                context,
+                getMetadata()
+        );
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;

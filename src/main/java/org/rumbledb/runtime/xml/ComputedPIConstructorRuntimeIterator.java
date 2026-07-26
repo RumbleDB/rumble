@@ -31,12 +31,16 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.regex.Pattern;
 
 /**
@@ -88,12 +92,33 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createProcessingInstruction(
+                    iterator -> LocalCursorUtils.materialize(iterator, context),
+                    context
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createProcessingInstruction(
+            iterator -> iterator.materialize(dynamicContext),
+            dynamicContext
+        );
+    }
+
+    private Item createProcessingInstruction(
+            Function<RuntimeIterator, List<Item>> materialize,
+            DynamicContext dynamicContext
+    ) {
         String target;
         if (this.staticTarget != null) {
             target = this.staticTarget;
         } else {
-            List<Item> atomizedNameItems = this.nameIterator.materialize(dynamicContext);
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
             if (atomizedNameItems.size() != 1) {
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic"
@@ -126,7 +151,7 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         }
 
         List<Item> materialized = this.contentIterator != null
-            ? this.contentIterator.materialize(dynamicContext)
+            ? materialize.apply(this.contentIterator)
             : Collections.emptyList();
 
         List<String> stringValues = new ArrayList<>();
@@ -148,7 +173,6 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
 
-        this.hasNext = false;
         Item processingInstructionItem = ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 target,

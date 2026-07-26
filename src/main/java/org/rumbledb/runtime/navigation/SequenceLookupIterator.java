@@ -30,6 +30,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 
@@ -61,6 +63,29 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
         super(Arrays.asList(sequence), staticContext);
         this.iterator = sequence;
         this.position = position;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    if (this.position <= 0) {
+                        return null;
+                    }
+                    try (LocalCursor<Item> child = this.iterator.createLocalCursor(context)) {
+                        child.open();
+                        Item result = null;
+                        for (int current = 0; current < this.position && child.hasNext(); current++) {
+                            result = child.next();
+                            if (current + 1 == this.position) {
+                                return result;
+                            }
+                        }
+                        return null;
+                    }
+                },
+                getMetadata()
+        );
     }
 
     @Override

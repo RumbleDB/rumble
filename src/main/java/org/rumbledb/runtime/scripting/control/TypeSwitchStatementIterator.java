@@ -6,6 +6,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -21,8 +24,6 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
     private final RuntimeIterator testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
-    private RuntimeIterator matchingIterator;
-    private Item testValue;
 
     public TypeSwitchStatementIterator(
             RuntimeIterator testField,
@@ -44,53 +45,74 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> execute(
+                    LocalCursorUtils.materializeFirst(this.testField, context),
+                    new DynamicContext(context),
+                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext)
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         DynamicContext childContext = new DynamicContext(context);
-        this.currentDynamicContextForLocalExecution = childContext;
-        initializeIterator();
-        this.matchingIterator.materialize(childContext);
+        return execute(
+            this.testField.materializeFirstItemOrNull(context),
+            childContext,
+            RuntimeIterator::materialize
+        );
+    }
+
+    private Item execute(
+            Item value,
+            DynamicContext childContext,
+            java.util.function.BiConsumer<RuntimeIterator, DynamicContext> materialize
+    ) {
+        RuntimeIterator selected = selectIterator(value, childContext);
+        materialize.accept(selected, childContext);
         return null;
     }
 
-    private void initializeIterator() {
-
-        this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
+    private RuntimeIterator selectIterator(Item value, DynamicContext childContext) {
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
-            if (this.matchingIterator != null) {
+            RuntimeIterator selected = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
+            if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.getVariableValues()
+                    childContext.getVariableValues()
                         .addVariableValue(
                             typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
+                            Collections.singletonList(value)
                         );
                 }
-                break;
+                return selected;
             }
         }
 
-        if (this.matchingIterator == null) {
-            if (this.defaultCase.getVariableName() != null) {
-                this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .addVariableValue(
-                        this.defaultCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
-            }
-            this.matchingIterator = this.defaultCase.getReturnIterator();
+        if (this.defaultCase.getVariableName() != null) {
+            childContext.getVariableValues()
+                .addVariableValue(
+                    this.defaultCase.getVariableName(),
+                    Collections.singletonList(value)
+                );
         }
+        return this.defaultCase.getReturnIterator();
     }
 
-    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(
+            TypeswitchRuntimeIteratorCase typeSwitchCase,
+            Item value
+    ) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (this.testValue == null && sequenceType.isEmptySequence()) {
+                if (value == null && sequenceType.isEmptySequence()) {
                     return typeSwitchCase.getReturnIterator();
                 }
                 if (
-                    this.testValue != null
-                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), this.testValue)
+                    value != null
+                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), value)
                 ) {
                     return typeSwitchCase.getReturnIterator();
                 }

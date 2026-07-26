@@ -28,6 +28,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -59,6 +62,14 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createResult(LocalCursorUtils.materialize(this.arraysIterator, context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         initializeResult(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.resultItem != null;
@@ -66,7 +77,10 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void initializeResult(DynamicContext context) {
-        List<Item> arrays = this.arraysIterator.materialize(context);
+        this.resultItem = createResult(this.arraysIterator.materialize(context));
+    }
+
+    private Item createResult(List<Item> arrays) {
         List<List<Item>> joined = new ArrayList<>();
         for (Item arrayItem : arrays) {
             if (!arrayItem.isArray()) {
@@ -81,7 +95,7 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
             }
         }
         // when joining, we always create a sequence array for now
-        this.resultItem = ItemFactory.getInstance().createSequenceArrayItem(joined, false);
+        return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
     }
 
     @Override

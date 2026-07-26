@@ -28,6 +28,9 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -50,6 +53,33 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ResourceLocalCursor<>(
+                () -> {
+                    Item path = LocalCursorUtils.materializeFirst(this.getChild(0), context);
+                    if (path == null) {
+                        throw new IteratorFlowException(
+                                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
+                                getMetadata()
+                        );
+                    }
+                    URI uri = FileSystemUtil.resolveFileSystemURI(
+                        this.staticContext.getStaticURI(),
+                        path.getStringValue(),
+                        getMetadata()
+                    );
+                    InputStream input = FileSystemUtil.getDataInputStream(
+                        uri,
+                        context.getRumbleRuntimeConfiguration(),
+                        getMetadata()
+                    );
+                    return new TextLineResourceIterator(input, getMetadata());
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -105,5 +135,46 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
+    private static final class TextLineResourceIterator
+            implements
+                ResourceLocalCursor.ResourceIterator<Item> {
+
+        private final InputStream input;
+        private final Iterator<String> lines;
+        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+
+        private TextLineResourceIterator(
+                InputStream input,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            this.input = input;
+            this.lines = new BufferedReader(new InputStreamReader(input)).lines().iterator();
+            this.metadata = metadata;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return this.lines.hasNext();
+        }
+
+        @Override
+        public Item next() {
+            return ItemFactory.getInstance().createStringItem(this.lines.next());
+        }
+
+        @Override
+        public void close() {
+            try {
+                this.input.close();
+            } catch (IOException e) {
+                CannotRetrieveResourceException exception = new CannotRetrieveResourceException(
+                        "I/O exception",
+                        this.metadata
+                );
+                exception.initCause(e);
+                throw exception;
+            }
+        }
+    }
 
 }

@@ -5,6 +5,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -23,27 +26,52 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> createRandomNumberStream(
+                    ComputedLocalCursor.arguments(
+                        this.getChildren().size(),
+                        index -> org.rumbledb.runtime.cursor.LocalCursorUtils.materializeFirst(
+                            this.getChild(index),
+                            context
+                        )
+                    )
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         this.low = this.getChild(0).materializeFirstItemOrNull(context);
         this.high = this.getChild(1).materializeFirstItemOrNull(context);
         this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
         this.type = this.getChild(3).materializeFirstItemOrNull(context);
-        this.generatedRandomsIterator = createRandomNumberStream();
+        this.generatedRandomsIterator = createRandomNumberStream(this.low, this.high, this.size, this.type);
     }
 
-    private GeneratedRandomsIterator createRandomNumberStream() {
-        if (this.type.getStringValue().equals("integer")) {
+    private GeneratedRandomsIterator createRandomNumberStream(ComputedLocalCursor.Arguments<Item> arguments) {
+        return createRandomNumberStream(
+            arguments.get(0),
+            arguments.get(1),
+            arguments.get(2).castToIntValue(),
+            arguments.get(3)
+        );
+    }
+
+    private GeneratedRandomsIterator createRandomNumberStream(Item low, Item high, int size, Item type) {
+        if (type.getStringValue().equals("integer")) {
             return new GeneratedRandomIntegersIterator(
-                    this.size,
-                    this.low.castToIntValue(),
-                    this.high.castToIntValue()
+                    size,
+                    low.castToIntValue(),
+                    high.castToIntValue()
             );
         } else {
             // Generate doubles otherwise
             return new GeneratedRandomDoublesIterator(
-                    this.size,
-                    this.low.castToDoubleValue(),
-                    this.high.castToDoubleValue()
+                    size,
+                    low.castToDoubleValue(),
+                    high.castToDoubleValue()
             );
         }
     }

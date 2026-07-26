@@ -35,6 +35,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
 
@@ -59,6 +62,14 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> reverseArgument(LocalCursorUtils.materialize(this.arrayIterator, context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     protected void openLocal() {
         this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
         initializeResult(this.currentDynamicContextForLocalExecution);
@@ -80,6 +91,13 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
+        this.resultItem = reverse(arrayItem);
+    }
+
+    private Item reverse(Item arrayItem) {
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:reverse must be an array.",
@@ -91,16 +109,25 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
             List<Item> originalMembers = arrayItem.getItemMembers();
             List<Item> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         } else {
             List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
             List<List<Item>> reversedMembers = new ArrayList<>(originalMembers);
             Collections.reverse(reversedMembers);
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createSequenceArrayItem(reversedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+    }
 
+    private Item reverseArgument(List<Item> items) {
+        if (items.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "array:reverse expects exactly one array argument.",
+                    getMetadata()
+            );
+        }
+        return reverse(items.isEmpty() ? null : items.get(0));
     }
 
     @Override
@@ -146,4 +173,3 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
         );
     }
 }
-

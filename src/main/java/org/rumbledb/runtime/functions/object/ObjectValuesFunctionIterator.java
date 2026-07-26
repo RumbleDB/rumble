@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -47,6 +49,16 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, staticContext);
         this.iterator = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> item.isObject() ? item.getItemValues().iterator() : List.<Item>of().iterator(),
+                getMetadata()
+        );
     }
 
     @Override

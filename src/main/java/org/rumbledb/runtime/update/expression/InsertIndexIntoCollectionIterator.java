@@ -8,7 +8,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
@@ -26,7 +25,7 @@ import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
-public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
+public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
