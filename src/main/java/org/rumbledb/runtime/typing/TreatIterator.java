@@ -13,18 +13,17 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.TreatException;
-import org.rumbledb.exceptions.UnexpectedNodeException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -34,6 +33,7 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
@@ -43,11 +43,8 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private final SequenceType sequenceType;
-    private ErrorCode errorCode;
-
-    private ItemType itemType;
+    private final RuntimeIterator iterator;
+    private final TreatTypeValidator validator;
 
     private Item nextResult;
     private Item currentResult;
@@ -61,11 +58,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     ) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
-        this.sequenceType = sequenceType;
-        this.errorCode = errorCode;
-        if (!this.sequenceType.isEmptySequence()) {
-            this.itemType = this.sequenceType.getItemType();
-        }
+        this.validator = new TreatTypeValidator(sequenceType, errorCode, getMetadata());
         if (
             !getHighestExecutionMode().equals(ExecutionMode.LOCAL)
                 && (sequenceType.isEmptySequence()
@@ -76,6 +69,11 @@ public class TreatIterator extends HybridRuntimeIterator {
                     "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
             );
         }
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.iterator, context, this.validator);
     }
 
     @Override
@@ -90,9 +88,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(this.currentDynamicContextForLocalExecution, getMetadata());
-        }
+        this.validator.resolve(this.currentDynamicContextForLocalExecution);
         this.resultCount = 0;
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.setNextResult();
@@ -116,7 +112,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                 if (this.currentResult == null) {
                     JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();
-                    checkMoreThanOneItemSequence(size);
+                    this.validator.validateMaximumCardinality(size);
                     this.nextResult = childRDD.first();
                 } else {
                     this.nextResult = null;
@@ -131,7 +127,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                 this.resultCount++;
             }
         } else {
-            checkEmptySequence(this.resultCount);
+            this.validator.validateEmpty(this.resultCount);
         }
 
         this.hasNext = this.nextResult != null;
@@ -139,64 +135,19 @@ public class TreatIterator extends HybridRuntimeIterator {
             return;
         }
 
-        checkTreatAsEmptySequence(this.resultCount);
-        checkMoreThanOneItemSequence(this.resultCount);
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
-            throw errorToThrow(this.nextResult.getDynamicType().toString());
-        }
-    }
-
-    private RuntimeException errorToThrow(String type) {
-        if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
-            return new TreatException(
-                    type
-                        + " cannot be treated as type "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
-        }
-        if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
-            return new UnexpectedTypeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
-        }
-        if (this.errorCode.equals(ErrorCode.InvalidInstance)) {
-            return new InvalidInstanceException(
-                    "Invalid instance because of arity mismatch. The expected arity is "
-                        + this.sequenceType.getArity(),
-                    this.getMetadata()
-            );
-        }
-        if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
-            return new UnexpectedNodeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
-        }
-        return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+        this.validator.validateItem(this.nextResult, this.resultCount);
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
-        }
+        this.validator.resolve(dynamicContext);
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
 
-        if (this.sequenceType.getArity() != SequenceType.Arity.ZeroOrMore) {
-            checkEmptySequence(childRDD.take(2).size());
+        if (this.validator.getSequenceType().getArity() != SequenceType.Arity.ZeroOrMore) {
+            this.validator.validateEmpty(childRDD.take(2).size());
         }
 
-        Function<Item, Boolean> transformation = new TreatAsClosure(
-                this.sequenceType,
-                this.errorCode,
-                getMetadata()
-        );
+        Function<Item, Boolean> transformation = new TreatAsClosure(this.validator);
         return childRDD.filter(transformation);
     }
 
@@ -217,19 +168,17 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
-        }
+        this.validator.resolve(dynamicContext);
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
-        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
+        this.validator.validateEmpty(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
         }
         ItemType dataItemType = df.getItemType();
-        if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
+        if (dataItemType.isSubtypeOf(this.validator.getSequenceType().getItemType())) {
             return df;
         }
-        throw errorToThrow("" + dataItemType);
+        throw this.validator.error(dataItemType.toString());
     }
 
     @Override
@@ -265,32 +214,81 @@ public class TreatIterator extends HybridRuntimeIterator {
         return new JSoundDataFrame(df, itemType);
     }
 
-    private void checkEmptySequence(int size) {
-        if (
-            size == 0
-                && !this.sequenceType.isEmptySequence()
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
-        ) {
-            throw errorToThrow("Empty sequence");
-        }
-    }
+    private static final class Cursor extends AbstractLocalCursor<Item> {
 
-    private void checkTreatAsEmptySequence(int size) {
-        if (size > 0 && this.sequenceType.isEmptySequence()) {
-            throw errorToThrow(this.nextResult.getDynamicType().toString());
-        }
-    }
+        private final RuntimePlan<Item> childPlan;
+        private final DynamicContext context;
+        private final TreatTypeValidator validator;
 
-    private void checkMoreThanOneItemSequence(int size) {
-        if (
-            size > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
+        private LocalCursor<Item> childCursor;
+        private Item nextResult;
+        private int resultCount;
+
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull DynamicContext context,
+                @NonNull TreatTypeValidator validator
         ) {
-            throw errorToThrow("A sequence of more than one item");
+            super(validator.getMetadata());
+            this.childPlan = childPlan;
+            this.context = context;
+            this.validator = validator;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.validator.resolve(this.context);
+            this.resultCount = 0;
+            this.childCursor = this.childPlan.createLocalCursor(this.context);
+            this.childCursor.open();
+            setNextResult();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw new IteratorFlowException(
+                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE,
+                        this.validator.getMetadata()
+                );
+            }
+            Item result = this.nextResult;
+            setNextResult();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.childCursor != null) {
+                this.childCursor.close();
+                this.childCursor = null;
+            }
+            this.nextResult = null;
+        }
+
+        private void setNextResult() {
+            this.nextResult = null;
+            if (!this.childCursor.hasNext()) {
+                this.validator.validateEmpty(this.resultCount);
+                return;
+            }
+
+            Item candidate = this.childCursor.next();
+            if (candidate != null && !candidate.getDynamicType().isResolved()) {
+                candidate.getDynamicType().resolve(this.context, this.validator.getMetadata());
+            }
+            if (candidate == null) {
+                return;
+            }
+
+            this.resultCount++;
+            this.validator.validateItem(candidate, this.resultCount);
+            this.nextResult = candidate;
         }
     }
 
