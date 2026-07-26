@@ -27,7 +27,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -37,8 +38,9 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private int numberPartitions;
+
+    private final RuntimeIterator iterator;
+    private final RuntimeIterator partitionCountIterator;
 
     public RepartitionFunctionIterator(
             List<RuntimeIterator> inputIterators,
@@ -46,6 +48,12 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(inputIterators, staticContext);
         this.iterator = inputIterators.get(0);
+        this.partitionCountIterator = inputIterators.get(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return this.iterator.createLocalCursor(context);
     }
 
     @Override
@@ -71,9 +79,9 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
-        JavaRDD<Item> resultRDD = childRDD.repartition(this.numberPartitions);
-        return resultRDD;
+        int numberPartitions = LocalCursorUtils.materializeFirst(this.partitionCountIterator, dynamicContext)
+            .getIntValue();
+        return childRDD.repartition(numberPartitions);
     }
 
     @Override
@@ -88,9 +96,8 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
-        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
-        JSoundDataFrame result = childDataFrame.repartition(this.numberPartitions);
-        return result;
+        JSoundDataFrame childDataFrame = this.iterator.getDataFrame(context);
+        int numberPartitions = LocalCursorUtils.materializeFirst(this.partitionCountIterator, context).getIntValue();
+        return childDataFrame.repartition(numberPartitions);
     }
 }
