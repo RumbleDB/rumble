@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -39,25 +41,37 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final RuntimeIterator argument;
+
     public Exp10FunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.argument = arguments.get(0);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new MappingLocalCursor<>(this.argument, context, Exp10FunctionIterator::evaluate, getMetadata());
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item exponent = this.getChild(0).materializeFirstItemOrNull(context);
+        Item exponent = this.argument.materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
         }
+        return evaluate(exponent);
+    }
+
+    private static Item evaluate(Item exponent) {
         return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext powerQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext powerQuery = this.argument.generateNativeQuery(nativeClauseContext);
         if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
