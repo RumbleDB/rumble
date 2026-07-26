@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,15 +46,27 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
         String result;
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = arguments.get(0);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item indexItem = arguments.get(1);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
                     "Type error; Start index parameter can't be empty sequence ",
@@ -63,9 +77,8 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (index >= stringItem.getStringValue().length()) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        if (this.getChildren().size() > 2) {
-            Item endIndexItem = this.getChild(2)
-                .materializeFirstItemOrNull(context);
+        if (arguments.size() > 2) {
+            Item endIndexItem = arguments.get(2);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; End index parameter can't be empty sequence ",

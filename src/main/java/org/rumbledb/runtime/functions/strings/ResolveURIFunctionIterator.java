@@ -7,6 +7,8 @@ import org.rumbledb.exceptions.InvalidArgumentValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.net.URI;
@@ -24,16 +26,29 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         super(children, staticContext);
     }
 
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item relative = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item relative = arguments.get(0);
         if (relative == null) {
             return null;
         }
         Item base;
-        if (this.getChildren().size() == 2) {
-            base = this.getChild(1).materializeFirstItemOrNull(context);
+        if (arguments.size() == 2) {
+            base = arguments.get(1);
         } else {
             base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }

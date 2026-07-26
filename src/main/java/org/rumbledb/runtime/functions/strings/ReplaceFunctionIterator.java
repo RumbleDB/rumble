@@ -28,6 +28,8 @@ import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -47,20 +49,31 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item stringItem = arguments.get(0);
+        Item patternStringItem = arguments.get(1);
 
         if (patternStringItem == null) {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
         String flags = null;
-        if (this.getChildren().size() == 4) {
-            Item flagsItem = this.getChild(3)
-                .materializeFirstItemOrNull(context);
+        if (arguments.size() == 4) {
+            Item flagsItem = arguments.get(3);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }
@@ -73,8 +86,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Item replacementStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+        Item replacementStringItem = arguments.get(2);
         String replacement = replacementStringItem.getStringValue();
         if (compiledRegex.isQuote()) {
             replacement = Matcher.quoteReplacement(replacement);

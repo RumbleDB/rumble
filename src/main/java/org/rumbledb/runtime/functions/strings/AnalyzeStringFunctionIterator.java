@@ -9,6 +9,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.ArrayDeque;
@@ -37,16 +39,30 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item inputItem = arguments.get(0);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String pattern = arguments.get(1).getStringValue();
         String flags = null;
-        if (this.getChildren().size() == 3) {
-            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
+        if (arguments.size() == 3) {
+            Item flagsItem = arguments.get(2);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

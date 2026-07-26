@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,21 +46,33 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        if (arguments.size() == 3) {
+            String collation = arguments.get(2).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
 
-        Item substringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item substringItem = arguments.get(1);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        Item stringItem = arguments.get(0);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

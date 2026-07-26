@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.HashMap;
@@ -45,13 +47,24 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-        Item mapStringItem = this.getChild(1)
-            .materializeFirstItemOrNull(context);
-        Item transStringItem = this.getChild(2)
-            .materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item inputItem = arguments.get(0);
+        Item mapStringItem = arguments.get(1);
+        Item transStringItem = arguments.get(2);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

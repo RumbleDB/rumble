@@ -7,6 +7,9 @@ import org.rumbledb.exceptions.UnimplementedFunctionException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -20,6 +23,24 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    if (this.getChildren().size() == 3) {
+                        throw new UnimplementedFunctionException("fn:contains-token#3", getMetadata());
+                    }
+                    Item tokenItem = LocalCursorUtils.materializeFirst(this.getChild(1), context);
+                    String token = trimXmlWhitespace(tokenItem.getStringValue());
+                    if (token.isEmpty()) {
+                        return ItemFactory.getInstance().createBooleanItem(false);
+                    }
+                    return ItemFactory.getInstance().createBooleanItem(cursorContainsToken(context, token));
+                },
+                getMetadata()
+        );
     }
 
     @Override
@@ -64,6 +85,19 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
             return iteratorContainsToken(inputIterator, token);
         } finally {
             inputIterator.close();
+        }
+    }
+
+    private boolean cursorContainsToken(DynamicContext context, String token) {
+        try (LocalCursor<Item> cursor = this.getChild(0).createLocalCursor(context)) {
+            cursor.open();
+            while (cursor.hasNext()) {
+                String[] inputTokens = cursor.next().getStringValue().split("[\\t\\n\\r ]+");
+                if (isTokenInSequence(inputTokens, token)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 

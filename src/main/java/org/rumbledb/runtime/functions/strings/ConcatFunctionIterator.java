@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -43,10 +45,29 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            ConcatFunctionIterator::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private static Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
         StringBuilder builder = new StringBuilder();
-        for (RuntimeIterator iterator : this.getChildren()) {
-            Item item = iterator.materializeFirstItemOrNull(context);
+        for (int index = 0; index < arguments.size(); index++) {
+            Item item = arguments.get(index);
             // if not empty sequence
             if (item != null) {
                 String stringValue = item.serialize();
