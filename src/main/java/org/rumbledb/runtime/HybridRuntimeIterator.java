@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -46,6 +47,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     private static final long serialVersionUID = 1L;
     protected List<Item> result = null;
     private int currentResultIndex = 0;
+    private transient LocalCursor<Item> localCursor;
 
     protected HybridRuntimeIterator(
             List<RuntimeIterator> children,
@@ -260,11 +262,27 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
-    protected abstract void openLocal();
+    /**
+     * Compatibility implementation for callers still using the legacy iterator lifecycle.
+     * Cursor-native subclasses need no local lifecycle overrides.
+     */
+    protected void openLocal() {
+        this.localCursor = createLocalCursor(this.currentDynamicContextForLocalExecution);
+        this.localCursor.open();
+    }
 
-    protected abstract void closeLocal();
+    protected void closeLocal() {
+        if (this.localCursor != null) {
+            this.localCursor.close();
+            this.localCursor = null;
+        }
+    }
 
-    protected abstract boolean hasNextLocal();
+    protected boolean hasNextLocal() {
+        return this.localCursor.hasNext();
+    }
 
-    protected abstract Item nextLocal();
+    protected Item nextLocal() {
+        return this.localCursor.next();
+    }
 }
