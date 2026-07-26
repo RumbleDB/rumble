@@ -151,7 +151,6 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.predicate = resolvePredicate(this.predicatePlan, this.context, this.staticContext);
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             advance();
         }
 

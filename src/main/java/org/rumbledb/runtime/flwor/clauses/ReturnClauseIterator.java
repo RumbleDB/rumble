@@ -126,7 +126,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.tupleCursor = this.tuplePlan.createLocalCursor(this.context);
-            this.tupleCursor.open();
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }
@@ -162,7 +161,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
                 this.tupleContext.getVariableValues().removeAllVariables();
                 this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, this.metadata);
                 this.expressionCursor = this.expressionPlan.createLocalCursor(this.tupleContext);
-                this.expressionCursor.open();
                 if (this.expressionCursor.hasNext()) {
                     this.nextResult = this.expressionCursor.next();
                     this.hasNext = true;

@@ -173,7 +173,6 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.action = resolveAction(this.actionPlan, this.context, this.staticContext);
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             this.currentResults = Collections.emptyIterator();
         }
 

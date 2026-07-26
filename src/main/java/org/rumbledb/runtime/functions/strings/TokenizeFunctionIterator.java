@@ -196,7 +196,6 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
         private String materializeSeparator() {
             try (LocalCursor<Item> cursor = this.arguments.get(1).createLocalCursor(this.context)) {
-                cursor.open();
                 if (!cursor.hasNext()) {
                     throw invalidSeparator();
                 }

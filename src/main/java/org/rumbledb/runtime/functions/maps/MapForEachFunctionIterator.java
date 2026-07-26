@@ -194,7 +194,6 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
                     this.keys.next()
                 );
                 this.callbackCursor = callback.createLocalCursor(this.context);
-                this.callbackCursor.open();
             }
             return true;
         }

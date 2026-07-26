@@ -173,7 +173,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.results = new ArrayList<>();
             try (LocalCursor<Item> childCursor = this.sequencePlan.createLocalCursor(this.context)) {
-                childCursor.open();
                 while (childCursor.hasNext()) {
                     this.results.add(childCursor.next());
                 }

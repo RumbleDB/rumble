@@ -76,7 +76,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.keys = getProjectionKeys();
             this.inputCursor = this.inputPlan.createLocalCursor(this.context);
-            this.inputCursor.open();
         }
 
         @Override

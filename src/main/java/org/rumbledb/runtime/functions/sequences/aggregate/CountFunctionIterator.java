@@ -115,7 +115,6 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static Item computeLocalCount(RuntimePlan<Item> plan, DynamicContext context) {
         long result = 0;
         try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 cursor.next();
                 result++;

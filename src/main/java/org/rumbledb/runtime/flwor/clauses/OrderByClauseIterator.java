@@ -97,7 +97,6 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         );
         DynamicContext tupleContext = new DynamicContext(context);
         try (LocalCursor<FlworTuple> childCursor = this.child.createLocalCursor(context)) {
-            childCursor.open();
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();

@@ -170,7 +170,6 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             getNumberOfPartitions(this.partitionsPlan, this.context, this.metadata);
         }
 

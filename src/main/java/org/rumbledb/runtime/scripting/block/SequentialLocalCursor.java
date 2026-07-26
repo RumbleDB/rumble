@@ -44,12 +44,10 @@ final class SequentialLocalCursor<T> extends AbstractLocalCursor<T> {
             drain(prefixPlan);
         }
         this.resultCursor = this.resultPlan.createLocalCursor(this.context);
-        this.resultCursor.open();
     }
 
     private <V> void drain(RuntimePlan<V> plan) {
         try (LocalCursor<V> cursor = plan.createLocalCursor(this.context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 cursor.next();
             }

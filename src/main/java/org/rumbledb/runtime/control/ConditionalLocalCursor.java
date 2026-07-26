@@ -58,7 +58,6 @@ final class ConditionalLocalCursor<T> extends AbstractLocalCursor<T> {
             ? this.thenPlan
             : this.elsePlan;
         this.selectedCursor = selectedPlan.createLocalCursor(this.context);
-        this.selectedCursor.open();
     }
 
     @Override

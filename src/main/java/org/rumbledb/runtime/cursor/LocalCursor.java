@@ -24,19 +24,14 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 public interface LocalCursor<T> extends AutoCloseable {
 
     /**
-     * Opens this cursor. A cursor cannot be reopened after it has been closed.
-     */
-    void open();
-
-    /**
      * @return whether another value is available
-     * @throws RuntimeException if this cursor is not open
+     *         Opens the cursor if needed, then returns whether another value is available.
      */
     boolean hasNext();
 
     /**
      * @return the next value
-     * @throws RuntimeException if this cursor is not open or has no next value
+     *         Opens the cursor if needed, then returns the next value.
      */
     T next();
 

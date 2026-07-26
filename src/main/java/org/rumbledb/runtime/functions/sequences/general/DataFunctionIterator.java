@@ -205,7 +205,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 }
                 this.inputCursor = new SingletonLocalCursor<>(contextItems.get(0));
             }
-            this.inputCursor.open();
         }
 
         @Override

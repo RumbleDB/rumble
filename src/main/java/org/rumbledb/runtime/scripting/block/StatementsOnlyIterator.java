@@ -32,7 +32,6 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
                 () -> {
                     for (RuntimeIterator childPlan : this.getChildren()) {
                         try (LocalCursor<Item> child = childPlan.createLocalCursor(context)) {
-                            child.open();
                             while (child.hasNext()) {
                                 child.next();
                             }

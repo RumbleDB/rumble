@@ -269,7 +269,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             this.call = this.plan.resolveFunctionCall(this.context);
             this.delegate = this.call.iterator.createLocalCursor(this.context);
             try {
-                this.delegate.open();
             } catch (InvalidRumbleMLParamException e) {
                 throw new InvalidRumbleMLParamException(e.getMLMessage(), this.plan.getMetadata());
             } catch (ExitStatementException e) {

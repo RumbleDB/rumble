@@ -126,7 +126,6 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         Item result = null;
         try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 result = addToSum(result, cursor.next(), metadata);
             }

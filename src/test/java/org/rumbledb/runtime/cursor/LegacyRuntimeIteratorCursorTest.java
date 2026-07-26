@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.rumbledb.api.Item;
@@ -49,8 +50,6 @@ public class LegacyRuntimeIteratorCursorTest {
         LocalCursor<Item> first = prototype.createLocalCursor(dynamicContext);
         LocalCursor<Item> second = prototype.createLocalCursor(dynamicContext);
 
-        first.open();
-        second.open();
         try {
             assertEquals(42, first.next().getIntValue());
             assertEquals(42, second.next().getIntValue());
@@ -64,7 +63,7 @@ public class LegacyRuntimeIteratorCursorTest {
     }
 
     @Test
-    public void cursorIsSingleUseAndCloseIsIdempotent() {
+    public void cursorOpensOnFirstReadAndCloseIsIdempotent() {
         RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
         DynamicContext dynamicContext = new DynamicContext(configuration);
         RuntimeIterator prototype = new ConstantRuntimeIterator(
@@ -73,12 +72,10 @@ public class LegacyRuntimeIteratorCursorTest {
         );
         LocalCursor<Item> cursor = prototype.createLocalCursor(dynamicContext);
 
-        assertThrows(IteratorFlowException.class, cursor::hasNext);
-        cursor.open();
+        assertTrue(cursor.hasNext());
         cursor.close();
         assertDoesNotThrow(cursor::close);
         assertThrows(IteratorFlowException.class, cursor::hasNext);
-        assertThrows(IteratorFlowException.class, cursor::open);
     }
 
     private static RuntimeStaticContext createStaticContext(RumbleRuntimeConfiguration configuration) {

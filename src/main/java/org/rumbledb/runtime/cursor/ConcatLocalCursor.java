@@ -85,7 +85,6 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
                 }
                 this.currentChild = this.childPlans.get(this.childIndex).createLocalCursor(this.context);
                 this.childIndex++;
-                this.currentChild.open();
             }
             if (this.currentChild.hasNext()) {
                 this.nextValue = this.currentChild.next();

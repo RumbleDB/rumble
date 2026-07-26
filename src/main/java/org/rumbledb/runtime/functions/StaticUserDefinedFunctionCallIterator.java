@@ -190,7 +190,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         private void openDelegate(RuntimeIterator call) {
             this.delegate = call.createLocalCursor(this.context);
             try {
-                this.delegate.open();
             } catch (ExitStatementException e) {
                 this.exitResults = e.getLocalResult();
                 closeDelegate();

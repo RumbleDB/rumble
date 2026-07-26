@@ -46,7 +46,6 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.delegate = this.plan.buildDelegate(this.context).createLocalCursor(this.context);
-            this.delegate.open();
         }
 
         @Override

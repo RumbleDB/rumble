@@ -190,7 +190,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             }
             this.search = LocalCursorUtils.materializeFirst(this.searchPlan, this.context);
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             this.index = 0;
             advance();
         }

@@ -90,7 +90,6 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     private boolean cursorContainsToken(DynamicContext context, String token) {
         try (LocalCursor<Item> cursor = this.getChild(0).createLocalCursor(context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 String[] inputTokens = cursor.next().getStringValue().split("[\\t\\n\\r ]+");
                 if (isTokenInSequence(inputTokens, token)) {

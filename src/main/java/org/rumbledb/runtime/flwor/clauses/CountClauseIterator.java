@@ -101,7 +101,6 @@ public class CountClauseIterator extends RuntimeTupleIterator {
                 throw new OurBadException("Invalid count clause.");
             }
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             this.count = 1;
         }
 

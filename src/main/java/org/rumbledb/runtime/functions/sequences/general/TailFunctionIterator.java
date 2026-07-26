@@ -136,7 +136,6 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             if (this.childCursor.hasNext()) {
                 this.childCursor.next();
             }

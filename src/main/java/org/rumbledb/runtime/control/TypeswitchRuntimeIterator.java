@@ -80,7 +80,6 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             Match match = selectMatch();
             bindMatch(match, this.context);
             this.selected = match.typeSwitchCase.getReturnIterator().createLocalCursor(this.context);
-            this.selected.open();
         }
 
         @Override

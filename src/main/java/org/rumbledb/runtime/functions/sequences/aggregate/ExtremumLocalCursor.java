@@ -102,7 +102,6 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
         );
 
         try (LocalCursor<Item> childCursor = this.childPlan.createLocalCursor(this.context)) {
-            childCursor.open();
             while (childCursor.hasNext()) {
                 Item candidate = childCursor.next();
                 if (candidate.isNull()) {

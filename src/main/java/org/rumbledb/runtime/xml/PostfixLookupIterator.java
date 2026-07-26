@@ -71,7 +71,6 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 ? List.of()
                 : LocalCursorUtils.materialize(this.plan.lookupIterator, this.context);
             this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
-            this.inputCursor.open();
             this.currentResults = Collections.emptyIterator();
         }
 

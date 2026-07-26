@@ -178,7 +178,6 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
                 );
                 this.pairIndex++;
                 this.callbackCursor = callback.createLocalCursor(this.context);
-                this.callbackCursor.open();
             }
             return true;
         }

@@ -42,7 +42,6 @@ public final class FlatMappingLocalCursor<I, O> extends AbstractLocalCursor<O> {
     @Override
     protected void openLocal() {
         this.inputCursor = this.inputPlan.createLocalCursor(this.context);
-        this.inputCursor.open();
         this.currentResults = Collections.emptyIterator();
     }
 

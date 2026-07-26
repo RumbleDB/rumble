@@ -101,7 +101,6 @@ public class ProgramIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.delegate = this.plan.statementsAndExprIterator.createLocalCursor(this.context);
             try {
-                this.delegate.open();
             } catch (ExitStatementException e) {
                 captureExit(e);
             }

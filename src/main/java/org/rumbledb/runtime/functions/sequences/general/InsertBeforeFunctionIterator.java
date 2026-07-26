@@ -236,9 +236,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             this.insertionCompleted = false;
 
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             this.insertCursor = this.insertPlan.createLocalCursor(this.context);
-            this.insertCursor.open();
         }
 
         @Override

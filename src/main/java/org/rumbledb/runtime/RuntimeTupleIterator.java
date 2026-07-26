@@ -95,7 +95,6 @@ public abstract class RuntimeTupleIterator
         this.isOpen = true;
         this.localCursor = createLocalCursor(context);
         try {
-            this.localCursor.open();
         } catch (RuntimeException exception) {
             this.localCursor = null;
             this.isOpen = false;

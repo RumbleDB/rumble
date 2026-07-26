@@ -194,7 +194,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.inputCursor = this.inputPlan.createLocalCursor(this.context);
-            this.inputCursor.open();
             this.currentKeys = Collections.emptyIterator();
             advance();
         }

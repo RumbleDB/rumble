@@ -336,7 +336,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.childIndex = 0;
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             setNextResult();
         }
 

@@ -54,7 +54,6 @@ public final class EffectiveBooleanValue {
         Objects.requireNonNull(plan, "plan cannot be null");
         Objects.requireNonNull(context, "dynamic context cannot be null");
         try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             return evaluateOpenSequence(
                 cursor::hasNext,
                 cursor::next,

@@ -121,7 +121,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 mapContext.getVariableValues().setLast(this.inputs.size());
                 this.inputIndex++;
                 this.currentResults = this.rightPlan.createLocalCursor(mapContext);
-                this.currentResults.open();
             }
             return true;
         }

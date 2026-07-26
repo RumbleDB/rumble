@@ -83,7 +83,6 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.delegate = this.plan.newBuiltinDelegate().createLocalCursor(this.context);
-            this.delegate.open();
         }
 
         @Override

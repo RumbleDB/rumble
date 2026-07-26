@@ -140,7 +140,6 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         protected void openLocal() {
             if (this.plan.hasActiveChild()) {
                 this.childCursor = this.plan.child.createLocalCursor(this.context);
-                this.childCursor.open();
                 fillPending();
             } else {
                 this.pending.addAll(this.plan.generateWindows(this.context, null));

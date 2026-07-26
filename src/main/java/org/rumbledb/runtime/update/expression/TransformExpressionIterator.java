@@ -132,7 +132,6 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             PendingUpdateList updates = getPendingUpdateList();
             updates.applyUpdates(this.metadata);
             this.returnCursor = this.returnPlan.createLocalCursor(this.context);
-            this.returnCursor.open();
         }
 
         @Override

@@ -153,7 +153,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             if (!this.childCursor.hasNext()) {
                 throw new SequenceExceptionOneOrMore(
                         "fn:one-or-more() called with a sequence containing less than 1 item",

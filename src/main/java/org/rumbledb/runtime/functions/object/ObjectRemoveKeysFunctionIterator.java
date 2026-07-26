@@ -73,7 +73,6 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.keys = getRemovalKeys();
             this.inputCursor = this.inputPlan.createLocalCursor(this.context);
-            this.inputCursor.open();
         }
 
         @Override

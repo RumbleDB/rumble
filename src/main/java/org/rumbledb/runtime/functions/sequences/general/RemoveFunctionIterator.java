@@ -162,7 +162,6 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
             this.removePosition = positionItem.getIntValue();
             this.currentPosition = 1;
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
         }
 
         @Override

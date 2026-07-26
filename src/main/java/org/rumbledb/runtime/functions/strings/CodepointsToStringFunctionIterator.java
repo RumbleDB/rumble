@@ -54,7 +54,6 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
                 () -> {
                     String xmlVersion = getConfiguration().getXmlVersion();
                     try (LocalCursor<Item> cursor = this.getChild(0).createLocalCursor(context)) {
-                        cursor.open();
                         return ItemFactory.getInstance()
                             .createStringItem(
                                 buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion)

@@ -42,7 +42,6 @@ public final class LocalCursorUtils {
     public static <T> List<T> materialize(@NonNull RuntimePlan<T> plan, @NonNull DynamicContext context) {
         List<T> result = new ArrayList<>();
         try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -60,7 +59,6 @@ public final class LocalCursorUtils {
      */
     public static <T> T materializeFirst(@NonNull RuntimePlan<T> plan, @NonNull DynamicContext context) {
         try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             return cursor.hasNext() ? cursor.next() : null;
         }
     }
@@ -79,7 +77,6 @@ public final class LocalCursorUtils {
         Objects.requireNonNull(plan, "plan cannot be null");
         Objects.requireNonNull(context, "dynamic context cannot be null");
         try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             if (!cursor.hasNext()) {
                 return null;
             }

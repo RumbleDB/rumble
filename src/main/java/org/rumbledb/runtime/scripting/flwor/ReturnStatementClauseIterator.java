@@ -47,13 +47,11 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     private Item executeLocally(DynamicContext context) {
         DynamicContext tupleContext = new DynamicContext(context);
         try (LocalCursor<FlworTuple> tuples = this.clauseIterator.createLocalCursor(context)) {
-            tuples.open();
             while (tuples.hasNext()) {
                 FlworTuple tuple = tuples.next();
                 tupleContext.getVariableValues().removeAllVariables();
                 tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
                 try (LocalCursor<Item> results = this.expression.createLocalCursor(tupleContext)) {
-                    results.open();
                     while (results.hasNext()) {
                         results.next();
                     }

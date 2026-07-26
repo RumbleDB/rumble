@@ -158,7 +158,6 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
         try (LocalCursor<Item> maps = this.mapsIterator.createLocalCursor(context)) {
-            maps.open();
             while (maps.hasNext()) {
                 Item mapItem = maps.next();
                 if (!mapItem.isMap()) {

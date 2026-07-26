@@ -147,7 +147,6 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                 return;
             }
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

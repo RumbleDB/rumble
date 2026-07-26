@@ -110,7 +110,6 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         Map<FlworKey, List<FlworTuple>> tuplesByKey = new HashMap<>();
         DynamicContext tupleContext = new DynamicContext(context);
         try (LocalCursor<FlworTuple> childCursor = this.child.createLocalCursor(context)) {
-            childCursor.open();
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
                 List<Item> keys = new ArrayList<>();

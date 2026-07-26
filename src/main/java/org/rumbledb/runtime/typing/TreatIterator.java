@@ -240,7 +240,6 @@ public class TreatIterator extends HybridRuntimeIterator {
             this.validator.resolve(this.context);
             this.resultCount = 0;
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             setNextResult();
         }
 

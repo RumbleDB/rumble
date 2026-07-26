@@ -81,7 +81,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDDOrDataFrame() && implementsLocal()) {
             this.localCursor = createLocalCursor(context);
             try {
-                this.localCursor.open();
             } catch (RuntimeException exception) {
                 this.localCursor = null;
                 super.close();
@@ -281,7 +280,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
      */
     protected void openLocal() {
         this.localCursor = createLocalCursor(this.currentDynamicContextForLocalExecution);
-        this.localCursor.open();
     }
 
     protected void closeLocal() {

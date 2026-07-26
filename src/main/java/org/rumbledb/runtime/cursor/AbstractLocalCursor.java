@@ -25,8 +25,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
  * Lifecycle template for local cursors.
  *
  * <p>
- * Implementations only manage evaluation-specific state in the four local methods. This class enforces the
- * single-use lifecycle and performs best-effort cleanup if opening fails.
+ * Implementations only manage evaluation-specific state in the four local methods. This class opens a cursor on its
+ * first read, enforces the single-use lifecycle, and performs best-effort cleanup if opening fails.
  * </p>
  *
  * @param <T> the value type returned by this cursor
@@ -51,10 +51,9 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
         this.metadata = metadata;
     }
 
-    @Override
-    public final void open() {
+    private void openIfNeeded() {
         if (this.state != State.CREATED) {
-            throw invalidState("Local cursor is single-use and cannot be reopened.");
+            return;
         }
         try {
             openLocal();
@@ -72,6 +71,7 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
     @Override
     public final boolean hasNext() {
+        openIfNeeded();
         if (this.state != State.OPEN) {
             throw invalidState("Local cursor is not open.");
         }
@@ -80,6 +80,7 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
     @Override
     public final T next() {
+        openIfNeeded();
         if (this.state != State.OPEN) {
             throw invalidState("Local cursor is not open.");
         }

@@ -103,7 +103,6 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
                 throw new OurBadException("Invalid where clause.");
             }
             this.childCursor = this.childPlan.createLocalCursor(this.context);
-            this.childCursor.open();
             this.tupleContext = new DynamicContext(this.context);
             advance();
         }

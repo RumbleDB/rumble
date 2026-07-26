@@ -154,7 +154,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             this.firstItem = true;
             if (hasActiveChild()) {
                 this.childCursor = this.plan.child.createLocalCursor(this.context);
-                this.childCursor.open();
                 this.tupleContext = new DynamicContext(this.context);
                 advanceTuple();
             } else {
@@ -165,7 +164,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
 
         private void openAssignment(DynamicContext assignmentContext) {
             this.assignmentCursor = this.plan.assignmentIterator.createLocalCursor(assignmentContext);
-            this.assignmentCursor.open();
         }
 
         private void advanceTuple() {

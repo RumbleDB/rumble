@@ -73,7 +73,6 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
                         return null;
                     }
                     try (LocalCursor<Item> child = this.iterator.createLocalCursor(context)) {
-                        child.open();
                         Item result = null;
                         for (int current = 0; current < this.position && child.hasNext(); current++) {
                             result = child.next();

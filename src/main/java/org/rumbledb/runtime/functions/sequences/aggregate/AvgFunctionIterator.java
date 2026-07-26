@@ -111,7 +111,6 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item sum = null;
         long count = 0;
         try (LocalCursor<Item> cursor = plan.createLocalCursor(context)) {
-            cursor.open();
             while (cursor.hasNext()) {
                 sum = SumFunctionIterator.addToSum(sum, cursor.next(), metadata);
                 count++;

@@ -97,7 +97,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             this.selected = selectApplicablePlan().createLocalCursor(this.context);
-            this.selected.open();
         }
 
         @Override

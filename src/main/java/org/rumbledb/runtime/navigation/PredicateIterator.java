@@ -130,14 +130,12 @@ public class PredicateIterator extends HybridRuntimeIterator {
             }
             this.position = 0;
             this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
-            this.inputCursor.open();
             advance();
         }
 
         private long countInput() {
             long count = 0;
             try (LocalCursor<Item> cursor = this.plan.iterator.createLocalCursor(this.context)) {
-                cursor.open();
                 while (cursor.hasNext()) {
                     cursor.next();
                     count++;

@@ -338,7 +338,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             }
 
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             int currentPosition = 1;
             while (currentPosition < this.startPosition && this.sequenceCursor.hasNext()) {
                 this.sequenceCursor.next();

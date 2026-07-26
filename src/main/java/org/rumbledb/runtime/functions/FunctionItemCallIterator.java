@@ -116,7 +116,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 bodyContext = this.plan.createCallContext(this.context);
             }
             this.body = bodyPlan.createLocalCursor(bodyContext);
-            this.body.open();
         }
 
         @Override

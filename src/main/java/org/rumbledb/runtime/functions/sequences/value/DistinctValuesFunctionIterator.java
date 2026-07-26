@@ -189,7 +189,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
                 }
             }
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
-            this.sequenceCursor.open();
             advance();
         }
 

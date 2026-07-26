@@ -158,7 +158,6 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 : LocalCursorUtils.materializeFirst(this.labelPlan, this.context).getStringValue();
             this.position = 0;
             this.valueCursor = this.valuePlan.createLocalCursor(this.context);
-            this.valueCursor.open();
         }
 
         @Override
