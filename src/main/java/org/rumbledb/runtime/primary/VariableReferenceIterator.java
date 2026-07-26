@@ -195,6 +195,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.variableName = variableName;
             this.context = context;
             this.metadata = metadata;
@@ -229,9 +230,5 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             this.currentIndex = 0;
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

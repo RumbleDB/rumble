@@ -144,6 +144,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
         private LocalCursor<Item> childCursor;
 
         private Cursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
+            super(metadata);
             this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
             this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
             this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
@@ -185,9 +186,5 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
             }
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

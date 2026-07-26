@@ -186,6 +186,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.sequencePlan = sequencePlan;
             this.context = context;
             this.metadata = metadata;
@@ -250,9 +251,5 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

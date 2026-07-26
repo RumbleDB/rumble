@@ -312,6 +312,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
             this.lengthPlan = lengthPlan;
@@ -379,9 +380,5 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

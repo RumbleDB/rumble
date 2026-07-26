@@ -17,6 +17,10 @@
 
 package org.rumbledb.runtime.cursor;
 
+import lombok.NonNull;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+
 /**
  * Lifecycle template for local cursors.
  *
@@ -29,6 +33,8 @@ package org.rumbledb.runtime.cursor;
  */
 public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
+    private final ExceptionMetadata metadata;
+
     private enum State {
         CREATED,
         OPEN,
@@ -36,6 +42,14 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
     }
 
     private State state = State.CREATED;
+
+    protected AbstractLocalCursor() {
+        this.metadata = null;
+    }
+
+    protected AbstractLocalCursor(@NonNull ExceptionMetadata metadata) {
+        this.metadata = metadata;
+    }
 
     @Override
     public final void open() {
@@ -90,13 +104,20 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
     protected abstract void closeLocal();
 
     /**
-     * Creates the exception used for invalid lifecycle calls. Implementations may override this to attach plan
-     * metadata.
+     * Creates the exception used for invalid lifecycle calls.
+     *
+     * <p>
+     * Cursors constructed with query metadata preserve the legacy {@link IteratorFlowException}; generic cursors use
+     * {@link IllegalStateException}.
+     * </p>
      *
      * @param message the lifecycle error
      * @return the exception to throw
      */
-    protected RuntimeException invalidState(String message) {
+    protected final RuntimeException invalidState(String message) {
+        if (this.metadata != null) {
+            return new IteratorFlowException(message, this.metadata);
+        }
         return new IllegalStateException(message);
     }
 }

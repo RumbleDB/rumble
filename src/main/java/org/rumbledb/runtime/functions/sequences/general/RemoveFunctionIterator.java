@@ -149,6 +149,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
             this.context = context;
@@ -194,9 +195,5 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
             return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", this.metadata);
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

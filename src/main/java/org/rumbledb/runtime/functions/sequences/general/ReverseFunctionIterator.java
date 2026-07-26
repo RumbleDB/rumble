@@ -163,6 +163,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.sequencePlan = sequencePlan;
             this.context = context;
             this.metadata = metadata;
@@ -199,9 +200,5 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
             this.currentIndex = -1;
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

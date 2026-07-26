@@ -127,6 +127,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.context = context;
             this.metadata = metadata;
@@ -162,9 +163,5 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
             }
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

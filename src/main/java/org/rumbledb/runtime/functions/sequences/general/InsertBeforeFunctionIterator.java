@@ -220,6 +220,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.sequencePlan = sequencePlan;
             this.positionPlan = positionPlan;
             this.insertPlan = insertPlan;
@@ -291,9 +292,5 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             return new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
         }
 
-        @Override
-        protected RuntimeException invalidState(String message) {
-            return new IteratorFlowException(message, this.metadata);
-        }
     }
 }

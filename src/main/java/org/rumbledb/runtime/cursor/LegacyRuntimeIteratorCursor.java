@@ -11,8 +11,6 @@ import java.util.Objects;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 
 /**
@@ -30,7 +28,8 @@ public final class LegacyRuntimeIteratorCursor extends AbstractLocalCursor<Item>
     private RuntimeIterator execution;
 
     public LegacyRuntimeIteratorCursor(RuntimeIterator prototype, DynamicContext context) {
-        this.prototype = Objects.requireNonNull(prototype, "prototype cannot be null");
+        super(Objects.requireNonNull(prototype, "prototype cannot be null").getMetadata());
+        this.prototype = prototype;
         this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
     }
 
@@ -58,12 +57,4 @@ public final class LegacyRuntimeIteratorCursor extends AbstractLocalCursor<Item>
         this.execution = null;
     }
 
-    @Override
-    protected RuntimeException invalidState(String message) {
-        return new IteratorFlowException(message, getMetadata());
-    }
-
-    private ExceptionMetadata getMetadata() {
-        return this.prototype.getMetadata();
-    }
 }
