@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
@@ -62,7 +63,8 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         this.dataFrameContext.setFromRow(row);
-        this.expression.materialize(this.dataFrameContext.getContext(), this.results);
+        this.results.clear();
+        this.results.addAll(LocalCursorUtils.materialize(this.expression, this.dataFrameContext.getContext()));
         return this.results.iterator();
     }
 }

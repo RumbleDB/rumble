@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
@@ -67,9 +68,7 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            Item nextItem = this.expression.next();
+        for (Item nextItem : LocalCursorUtils.materialize(this.expression, this.dataFrameContext.getContext())) {
             this.results.add(
                 FlworDataFrameUtils.serializeItem(
                     nextItem,
@@ -78,7 +77,6 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
                 )
             );
         }
-        this.expression.close();
 
         return this.results;
     }

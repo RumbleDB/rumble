@@ -39,6 +39,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -237,13 +238,12 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         }
         RuntimeIterator right = comparisonIterator.getRightIterator();
         Set<Name> usedVariables = right.getVariableDependencies().keySet();
-        List<Item> items = new ArrayList<>();
         Set<Name> tuples = countClauseIterator.getOutputTupleVariableNames();
         usedVariables.retainAll(tuples);
         if (!usedVariables.isEmpty()) {
             return null;
         }
-        right.materializeNFirstItems(context, items, 2);
+        List<Item> items = LocalCursorUtils.materializeFirst(right, context, 2);
         if (items.size() != 1) {
             return null;
         }

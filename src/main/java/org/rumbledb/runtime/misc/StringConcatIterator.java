@@ -64,7 +64,8 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item left = null;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrDefault(
+            left = LocalCursorUtils.materializeAtMostOneOrDefault(
+                this.leftIterator,
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );
@@ -76,7 +77,8 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item right = null;
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrDefault(
+            right = LocalCursorUtils.materializeAtMostOneOrDefault(
+                this.rightIterator,
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );

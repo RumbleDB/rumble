@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -54,8 +53,7 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item key = this.keyIterator.materializeFirstItemOrNull(dynamicContext);
 
-        List<Item> valueSequence = new ArrayList<>();
-        this.valueIterator.materialize(dynamicContext, valueSequence);
+        List<Item> valueSequence = LocalCursorUtils.materialize(this.valueIterator, dynamicContext);
 
         return createEntry(key, valueSequence);
     }
