@@ -47,7 +47,12 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new MapForEachLocalCursor(this, context);
+        return new MapForEachLocalCursor(
+                this.mapIterator,
+                this.actionIterator,
+                this.staticContext,
+                context
+        );
     }
 
     @Serial
@@ -68,42 +73,47 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         this.actionIterator = arguments.get(1);
     }
 
-    private Invocation resolveInvocation(DynamicContext context) {
-        List<Item> mapArguments = LocalCursorUtils.materialize(this.mapIterator, context);
+    private static Invocation resolveInvocation(
+            RuntimeIterator mapPlan,
+            RuntimeIterator actionPlan,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
+        List<Item> mapArguments = LocalCursorUtils.materialize(mapPlan, context);
         if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
             throw new UnexpectedTypeException(
                     "The first argument of map:for-each must be a single map item [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
         Item mapItem = mapArguments.get(0);
 
-        List<Item> functionArguments = LocalCursorUtils.materialize(this.actionIterator, context);
+        List<Item> functionArguments = LocalCursorUtils.materialize(actionPlan, context);
         if (functionArguments.size() != 1 || !functionArguments.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The second argument of map:for-each must be a single function item [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
         Item actionFunction = functionArguments.get(0);
         if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to map:for-each must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
 
         RuntimeStaticContext keyArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
+            .configuration(staticContext.getConfiguration())
             .staticType(SequenceType.createSequenceType("anyAtomicType"))
             .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
+            .metadata(staticContext.getMetadata())
             .build();
         RuntimeStaticContext valueArgumentContext = RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
+            .configuration(staticContext.getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
+            .metadata(staticContext.getMetadata())
             .build();
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
@@ -123,7 +133,11 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
-    private RuntimeIterator buildCallback(Invocation invocation, Item key) {
+    private static RuntimeIterator buildCallback(
+            Invocation invocation,
+            Item key,
+            RuntimeStaticContext staticContext
+    ) {
         List<RuntimeIterator> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
@@ -133,7 +147,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
         return NamedFunctions.buildFunctionItemCallIterator(
             invocation.action,
-            this.staticContext,
+            staticContext,
             ExecutionMode.LOCAL,
             List.of(
                 new ConstantRuntimeIterator(key, invocation.keyContext),
@@ -164,21 +178,35 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
 
     private static final class MapForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final MapForEachFunctionIterator plan;
+        private final RuntimeIterator mapPlan;
+        private final RuntimeIterator actionPlan;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private Invocation invocation;
         private java.util.Iterator<Item> keys;
         private LocalCursor<Item> callbackCursor;
 
-        private MapForEachLocalCursor(MapForEachFunctionIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private MapForEachLocalCursor(
+                RuntimeIterator mapPlan,
+                RuntimeIterator actionPlan,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.mapPlan = mapPlan;
+            this.actionPlan = actionPlan;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            this.invocation = this.plan.resolveInvocation(this.context);
+            this.invocation = resolveInvocation(
+                this.mapPlan,
+                this.actionPlan,
+                this.staticContext,
+                this.context
+            );
             this.keys = this.invocation.map.getItemKeys().iterator();
         }
 
@@ -189,9 +217,10 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                RuntimeIterator callback = this.plan.buildCallback(
+                RuntimeIterator callback = buildCallback(
                     this.invocation,
-                    this.keys.next()
+                    this.keys.next(),
+                    this.staticContext
                 );
                 this.callbackCursor = callback.createLocalCursor(this.context);
             }

@@ -62,68 +62,117 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return evaluate(context);
+        return evaluate(
+            this.iterator,
+            this.sequenceType,
+            this.itemType,
+            this.exceptionMessage,
+            getRuntimeStaticContext(),
+            context
+        );
     }
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this, context);
+        return new Cursor(
+                this.iterator,
+                this.sequenceType,
+                this.itemType,
+                this.exceptionMessage,
+                getRuntimeStaticContext(),
+                context
+        );
     }
 
-    private Item evaluate(DynamicContext context) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(context, getMetadata());
+    private static Item evaluate(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            ItemType itemType,
+            String exceptionMessage,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(context, staticContext.getMetadata());
         }
         Item item = null;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(this.iterator, context);
+            item = LocalCursorUtils.materializeAtMostOne(iterator, context);
             if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(context, getMetadata());
+                item.getDynamicType().resolve(context, staticContext.getMetadata());
             }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    this.exceptionMessage
+                    exceptionMessage
                         + "Expecting at most one item, but the value provided has at least two items.",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
 
         }
         if (
-            item == null && (this.sequenceType.getArity() == SequenceType.Arity.One)
+            item == null && (sequenceType.getArity() == SequenceType.Arity.One)
         ) {
             throw new UnexpectedTypeException(
-                    this.exceptionMessage
+                    exceptionMessage
                         + "Expecting one item, but the value provided is the empty sequence.",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
         if (item == null) {
             return null;
         }
 
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, item)) {
-            item = checkTypePromotion(item);
+        if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
+            item = checkTypePromotion(item, itemType, sequenceType, exceptionMessage, staticContext);
         }
         return item;
     }
 
     private static final class Cursor extends AtMostOneLocalCursor<Item> {
 
-        private final AtMostOneItemTypePromotionIterator plan;
+        private final RuntimeIterator iterator;
+        private final SequenceType sequenceType;
+        private final ItemType itemType;
+        private final String exceptionMessage;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
 
-        private Cursor(AtMostOneItemTypePromotionIterator plan, DynamicContext context) {
-            this.plan = plan;
+        private Cursor(
+                RuntimeIterator iterator,
+                SequenceType sequenceType,
+                ItemType itemType,
+                String exceptionMessage,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            this.iterator = iterator;
+            this.sequenceType = sequenceType;
+            this.itemType = itemType;
+            this.exceptionMessage = exceptionMessage;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return this.plan.evaluate(this.context);
+            return evaluate(
+                this.iterator,
+                this.sequenceType,
+                this.itemType,
+                this.exceptionMessage,
+                this.staticContext,
+                this.context
+            );
         }
     }
 
-    private Item checkTypePromotion(Item item) {
+    private static Item checkTypePromotion(
+            Item item,
+            ItemType itemType,
+            SequenceType sequenceType,
+            String exceptionMessage,
+            RuntimeStaticContext staticContext
+    ) {
         if (
             item.isFunction()
                 && item.getIdentifier() != null
@@ -134,35 +183,35 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
         if (
             (item.isFunction() || item.isMap() || item.isArray())
-                && this.itemType.isFunctionItemType()
-                && this.itemType.getSignature() != null
+                && itemType.isFunctionItemType()
+                && itemType.getSignature() != null
         ) {
             return FunctionCoercion.coerceToFunctionItem(
                 item,
-                this.itemType,
-                getRuntimeStaticContext(),
-                this.exceptionMessage
+                itemType,
+                staticContext,
+                exceptionMessage
             );
         }
-        if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
+        if (item.isAnyURI() && itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if (item.isFloat() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+        if (item.isFloat() && itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+        if (item.isDecimal() && itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.floatItem)) {
+        if (item.isDecimal() && itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
         }
         throw new UnexpectedTypeException(
-                this.exceptionMessage
+                exceptionMessage
                     + item.getDynamicType().toString()
                     + " cannot be promoted to type "
-                    + this.sequenceType
+                    + sequenceType
                     + ".",
-                getMetadata()
+                staticContext.getMetadata()
         );
     }
 

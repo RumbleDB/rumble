@@ -24,7 +24,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
@@ -66,49 +66,56 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new BuiltinCallLocalCursor(this, context);
+        return new BuiltinCallLocalCursor(
+                this.functionItem,
+                this.functionArguments,
+                this.staticContext,
+                context
+        );
     }
 
-    private static final class BuiltinCallLocalCursor extends AbstractLocalCursor<Item> {
-        private final BuiltinFunctionItemCallIterator plan;
+    private static final class BuiltinCallLocalCursor extends AbstractDelegatingLocalCursor<Item> {
+        private final Item functionItem;
+        private final List<RuntimeIterator> functionArguments;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
-        private LocalCursor<Item> delegate;
 
-        private BuiltinCallLocalCursor(BuiltinFunctionItemCallIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private BuiltinCallLocalCursor(
+                Item functionItem,
+                List<RuntimeIterator> functionArguments,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.functionItem = functionItem;
+            this.functionArguments = functionArguments;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         @Override
-        protected void openLocal() {
-            this.delegate = this.plan.newBuiltinDelegate().createLocalCursor(this.context);
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.delegate.hasNext();
-        }
-
-        @Override
-        protected Item nextLocal() {
-            return this.delegate.next();
-        }
-
-        @Override
-        protected void closeLocal() {
-            if (this.delegate != null) {
-                this.delegate.close();
-                this.delegate = null;
-            }
+        protected LocalCursor<Item> createDelegateCursor() {
+            return newBuiltinDelegate(
+                this.functionItem,
+                this.functionArguments,
+                this.staticContext
+            ).createLocalCursor(this.context);
         }
     }
 
     private RuntimeIterator newBuiltinDelegate() {
+        return newBuiltinDelegate(this.functionItem, this.functionArguments, this.staticContext);
+    }
+
+    private static RuntimeIterator newBuiltinDelegate(
+            Item functionItem,
+            List<RuntimeIterator> functionArguments,
+            RuntimeStaticContext staticContext
+    ) {
         return NamedFunctions.getBuiltInFunctionIterator(
-            this.functionItem.getIdentifier(),
-            new ArrayList<>(this.functionArguments),
-            this.staticContext,
+            functionItem.getIdentifier(),
+            new ArrayList<>(functionArguments),
+            staticContext,
             true
         );
     }

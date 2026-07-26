@@ -34,7 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -65,7 +65,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new PredicateLocalCursor(this, context);
+        return new PredicateLocalCursor(
+                this.iterator,
+                this.filter,
+                this.isBooleanOnlyFilter,
+                context,
+                getMetadata()
+        );
     }
 
     @Serial
@@ -106,36 +112,43 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     private static final class PredicateLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final PredicateIterator plan;
+        private final RuntimeIterator inputPlan;
+        private final RuntimeIterator filterPlan;
+        private final boolean booleanOnlyFilter;
         private final DynamicContext context;
         private DynamicContext filterContext;
         private LocalCursor<Item> inputCursor;
         private Item nextResult;
         private long position;
 
-        private PredicateLocalCursor(PredicateIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private PredicateLocalCursor(
+                RuntimeIterator inputPlan,
+                RuntimeIterator filterPlan,
+                boolean booleanOnlyFilter,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.inputPlan = inputPlan;
+            this.filterPlan = filterPlan;
+            this.booleanOnlyFilter = booleanOnlyFilter;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            if (this.plan.getChildren().size() < 2) {
-                throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
-            }
             this.filterContext = new DynamicContext(this.context);
-            if (this.plan.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
+            if (this.filterPlan.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 this.filterContext.getVariableValues().setLast(countInput());
             }
             this.position = 0;
-            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
+            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
             advance();
         }
 
         private long countInput() {
             long count = 0;
-            try (LocalCursor<Item> cursor = this.plan.iterator.createLocalCursor(this.context)) {
+            try (LocalCursor<Item> cursor = this.inputPlan.createLocalCursor(this.context)) {
                 while (cursor.hasNext()) {
                     cursor.next();
                     count++;
@@ -151,19 +164,19 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 this.position++;
                 this.filterContext.getVariableValues()
                     .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(item));
-                if (!this.plan.isBooleanOnlyFilter) {
+                if (!this.booleanOnlyFilter) {
                     this.filterContext.getVariableValues().setPosition(this.position);
                 }
                 Item filterResult;
                 try {
                     filterResult = LocalCursorUtils.materializeAtMostOne(
-                        this.plan.filter,
+                        this.filterPlan,
                         this.filterContext
                     );
                 } catch (MoreThanOneItemException e) {
                     throw new InvalidArgumentTypeException(
                             "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
-                            this.plan.filter.getMetadata()
+                            this.filterPlan.getMetadata()
                     );
                 }
                 if (matches(filterResult)) {

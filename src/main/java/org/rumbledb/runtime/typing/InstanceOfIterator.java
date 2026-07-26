@@ -64,54 +64,64 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        return evaluate(dynamicContext);
+        return evaluate(this.child, this.sequenceType, getMetadata(), dynamicContext);
     }
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this, context);
+        return new Cursor(this.child, this.sequenceType, getMetadata(), context);
     }
 
-    private Item evaluate(DynamicContext dynamicContext) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+    private static Item evaluate(
+            RuntimeIterator child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        if (!this.child.isRDDOrDataFrame()) {
-            return evaluateLocal(dynamicContext);
+        if (!child.isRDDOrDataFrame()) {
+            return evaluateLocal(child, sequenceType, metadata, dynamicContext);
         }
-        if (this.child.isDataFrame()) {
-            JSoundDataFrame childDF = this.child.getDataFrame(dynamicContext);
-            if (isInvalidArity(childDF.take(2).size())) {
+        if (child.isDataFrame()) {
+            JSoundDataFrame childDF = child.getDataFrame(dynamicContext);
+            if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
             ItemType itemType = childDF.getItemType();
-            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(sequenceType.getItemType()));
         }
-        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = child.getRDD(dynamicContext);
 
-        if (isInvalidArity(childRDD.take(2).size())) {
+        if (isInvalidArity(childRDD.take(2).size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
-    private Item evaluateLocal(DynamicContext dynamicContext) {
-        List<Item> items = LocalCursorUtils.materialize(this.child, dynamicContext);
+    private static Item evaluateLocal(
+            RuntimeIterator child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        List<Item> items = LocalCursorUtils.materialize(child, dynamicContext);
 
-        if (this.sequenceType.isEmptySequence()) {
+        if (sequenceType.isEmptySequence()) {
             return ItemFactory.getInstance().createBooleanItem(items.isEmpty());
         }
-        if (isInvalidArity(items.size())) {
+        if (isInvalidArity(items.size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
 
-        ItemType itemType = this.sequenceType.getItemType();
+        ItemType itemType = sequenceType.getItemType();
         for (Item item : items) {
             if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, getMetadata());
+                item.getDynamicType().resolve(dynamicContext, metadata);
             }
             if (!doesItemTypeMatchItem(itemType, item)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
@@ -122,32 +132,41 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final class Cursor extends AtMostOneLocalCursor<Item> {
 
-        private final InstanceOfIterator plan;
+        private final RuntimeIterator child;
+        private final SequenceType sequenceType;
+        private final ExceptionMetadata metadata;
         private final DynamicContext context;
 
-        private Cursor(InstanceOfIterator plan, DynamicContext context) {
-            this.plan = plan;
+        private Cursor(
+                RuntimeIterator child,
+                SequenceType sequenceType,
+                ExceptionMetadata metadata,
+                DynamicContext context
+        ) {
+            this.child = child;
+            this.sequenceType = sequenceType;
+            this.metadata = metadata;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return this.plan.evaluate(this.context);
+            return evaluate(this.child, this.sequenceType, this.metadata, this.context);
         }
     }
 
-    private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && this.sequenceType.isEmptySequence())
+    private static boolean isInvalidArity(long numOfItems, SequenceType sequenceType) {
+        return (numOfItems != 0 && sequenceType.isEmptySequence())
             ||
             (numOfItems == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
+                && (sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                    sequenceType.getArity() == SequenceType.Arity.OneOrMore))
             ||
             (numOfItems > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
+                && (sequenceType.getArity() == SequenceType.Arity.One
                     ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+                    sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 
     /**

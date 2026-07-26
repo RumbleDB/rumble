@@ -66,7 +66,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new UserDefinedCallLocalCursor(this, context);
+        return new UserDefinedCallLocalCursor(
+                this.functionIdentifier,
+                this.functionArguments,
+                this.tailCallOptimizationCandidate,
+                this.staticContext,
+                context
+        );
     }
 
     @Override
@@ -136,7 +142,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     private static final class UserDefinedCallLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final StaticUserDefinedFunctionCallIterator plan;
+        private final FunctionIdentifier functionIdentifier;
+        private final List<RuntimeIterator> functionArguments;
+        private final boolean tailCallOptimizationCandidate;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private LocalCursor<Item> delegate;
         private List<Item> exitResults;
@@ -144,11 +153,17 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         private Item nextResult;
 
         private UserDefinedCallLocalCursor(
-                StaticUserDefinedFunctionCallIterator plan,
+                FunctionIdentifier functionIdentifier,
+                List<RuntimeIterator> functionArguments,
+                boolean tailCallOptimizationCandidate,
+                RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
-            super(plan.getMetadata());
-            this.plan = plan;
+            super(staticContext.getMetadata());
+            this.functionIdentifier = functionIdentifier;
+            this.functionArguments = functionArguments;
+            this.tailCallOptimizationCandidate = tailCallOptimizationCandidate;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
@@ -156,21 +171,21 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         protected void openLocal() {
             RuntimeIterator call = this.context.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(
-                    this.plan.functionIdentifier,
-                    this.plan.staticContext,
-                    this.plan.functionArguments,
-                    this.plan.tailCallOptimizationCandidate
+                    this.functionIdentifier,
+                    this.staticContext,
+                    this.functionArguments,
+                    this.tailCallOptimizationCandidate
                 );
             openDelegate(call);
             advance();
             while (
-                !this.plan.tailCallOptimizationCandidate
+                !this.tailCallOptimizationCandidate
                     && isTailCall(this.nextResult)
             ) {
                 closeDelegate();
                 RuntimeIterator tailCall = NamedFunctions.buildFunctionItemCallIterator(
                     this.nextResult,
-                    this.plan.staticContext,
+                    this.staticContext,
                     ExecutionMode.LOCAL,
                     Collections.emptyList(),
                     false

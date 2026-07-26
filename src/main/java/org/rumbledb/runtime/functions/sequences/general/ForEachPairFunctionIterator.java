@@ -44,7 +44,13 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ForEachPairLocalCursor(this, context);
+        return new ForEachPairLocalCursor(
+                this.sequenceIterator1,
+                this.sequenceIterator2,
+                this.actionIterator,
+                this.staticContext,
+                context
+        );
     }
 
     @Serial
@@ -67,43 +73,48 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         this.actionIterator = arguments.get(2);
     }
 
-    private Item resolveAction(DynamicContext context) {
-        List<Item> functionItems = LocalCursorUtils.materialize(this.actionIterator, context);
+    private static Item resolveAction(
+            RuntimeIterator actionPlan,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
+        List<Item> functionItems = LocalCursorUtils.materialize(actionPlan, context);
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The third argument of fn:for-each-pair must be a single function item [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
         Item actionFunction = functionItems.get(0);
         if (actionFunction.getIdentifier().getArity() != 2) {
             throw new UnexpectedTypeException(
                     "The function passed to fn:for-each-pair must accept exactly two arguments [err:XPTY0004].",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
 
         return actionFunction;
     }
 
-    private RuntimeStaticContext argumentContext() {
+    private static RuntimeStaticContext argumentContext(RuntimeStaticContext staticContext) {
         return RuntimeStaticContext.builder()
-            .configuration(getConfiguration())
+            .configuration(staticContext.getConfiguration())
             .staticType(SequenceType.createSequenceType("item"))
             .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
+            .metadata(staticContext.getMetadata())
             .build();
     }
 
-    private RuntimeIterator buildCallback(
+    private static RuntimeIterator buildCallback(
             Item action,
             Item first,
             Item second,
-            RuntimeStaticContext argumentContext
+            RuntimeStaticContext argumentContext,
+            RuntimeStaticContext staticContext
     ) {
         return NamedFunctions.buildFunctionItemCallIterator(
             action,
-            this.staticContext,
+            staticContext,
             ExecutionMode.LOCAL,
             List.of(
                 new ConstantRuntimeIterator(first, argumentContext),
@@ -130,7 +141,10 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final ForEachPairFunctionIterator plan;
+        private final RuntimeIterator firstPlan;
+        private final RuntimeIterator secondPlan;
+        private final RuntimeIterator actionPlan;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private List<Item> firstItems;
         private List<Item> secondItems;
@@ -140,26 +154,32 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
         private LocalCursor<Item> callbackCursor;
 
         private ForEachPairLocalCursor(
-                ForEachPairFunctionIterator plan,
+                RuntimeIterator firstPlan,
+                RuntimeIterator secondPlan,
+                RuntimeIterator actionPlan,
+                RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
-            super(plan.getMetadata());
-            this.plan = plan;
+            super(staticContext.getMetadata());
+            this.firstPlan = firstPlan;
+            this.secondPlan = secondPlan;
+            this.actionPlan = actionPlan;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
             this.firstItems = LocalCursorUtils.materialize(
-                this.plan.sequenceIterator1,
+                this.firstPlan,
                 this.context
             );
             this.secondItems = LocalCursorUtils.materialize(
-                this.plan.sequenceIterator2,
+                this.secondPlan,
                 this.context
             );
-            this.action = this.plan.resolveAction(this.context);
-            this.argumentContext = this.plan.argumentContext();
+            this.action = resolveAction(this.actionPlan, this.staticContext, this.context);
+            this.argumentContext = argumentContext(this.staticContext);
             this.pairIndex = 0;
         }
 
@@ -170,11 +190,12 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
                 if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
                     return false;
                 }
-                RuntimeIterator callback = this.plan.buildCallback(
+                RuntimeIterator callback = buildCallback(
                     this.action,
                     this.firstItems.get(this.pairIndex),
                     this.secondItems.get(this.pairIndex),
-                    this.argumentContext
+                    this.argumentContext,
+                    this.staticContext
                 );
                 this.pairIndex++;
                 this.callbackCursor = callback.createLocalCursor(this.context);

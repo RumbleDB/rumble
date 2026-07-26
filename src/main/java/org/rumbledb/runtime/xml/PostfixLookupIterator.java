@@ -48,36 +48,59 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new LookupLocalCursor(this, context);
+        return new LookupLocalCursor(
+                this.iterator,
+                this.lookupIterator,
+                this.wildcard,
+                context,
+                getRuntimeStaticContext()
+        );
     }
 
     private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final PostfixLookupIterator plan;
+        private final RuntimeIterator inputPlan;
+        private final RuntimeIterator lookupPlan;
+        private final boolean wildcard;
         private final DynamicContext context;
+        private final RuntimeStaticContext staticContext;
         private LocalCursor<Item> inputCursor;
         private List<Item> keys;
         private Iterator<Item> currentResults;
 
-        private LookupLocalCursor(PostfixLookupIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private LookupLocalCursor(
+                RuntimeIterator inputPlan,
+                RuntimeIterator lookupPlan,
+                boolean wildcard,
+                DynamicContext context,
+                RuntimeStaticContext staticContext
+        ) {
+            super(staticContext.getMetadata());
+            this.inputPlan = inputPlan;
+            this.lookupPlan = lookupPlan;
+            this.wildcard = wildcard;
             this.context = context;
+            this.staticContext = staticContext;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = this.plan.wildcard
+            this.keys = this.wildcard
                 ? List.of()
-                : LocalCursorUtils.materialize(this.plan.lookupIterator, this.context);
-            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
+                : LocalCursorUtils.materialize(this.lookupPlan, this.context);
+            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
             this.currentResults = Collections.emptyIterator();
         }
 
         @Override
         protected boolean hasNextLocal() {
             while (!this.currentResults.hasNext() && this.inputCursor.hasNext()) {
-                this.currentResults = this.plan.lookupLocally(this.inputCursor.next(), this.keys).iterator();
+                this.currentResults = lookupLocally(
+                    this.inputCursor.next(),
+                    this.keys,
+                    this.wildcard,
+                    this.staticContext
+                ).iterator();
             }
             return this.currentResults.hasNext();
         }
@@ -101,10 +124,15 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         }
     }
 
-    private List<Item> lookupLocally(Item item, List<Item> keys) {
+    private static List<Item> lookupLocally(
+            Item item,
+            List<Item> keys,
+            boolean wildcard,
+            RuntimeStaticContext staticContext
+    ) {
         List<Item> results = new java.util.ArrayList<>();
         if (item.isMap()) {
-            if (this.wildcard) {
+            if (wildcard) {
                 if (item.isObject()) {
                     results.addAll(item.getItemValues());
                 } else {
@@ -119,7 +147,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                     throw new UnexpectedTypeException(
                             "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                            getMetadata()
+                            staticContext.getMetadata()
                     );
                 }
                 Item key = atomized.get(0);
@@ -138,7 +166,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
             return results;
         }
         if (item.isArray()) {
-            if (this.wildcard) {
+            if (wildcard) {
                 if (item.isArrayOfItems()) {
                     results.addAll(item.getItemMembers());
                 } else {
@@ -152,7 +180,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 if (key.isString()) {
                     throw new UnexpectedTypeException(
                             "Type error; Lookup with String on Arrays is not possible",
-                            getMetadata()
+                            staticContext.getMetadata()
                     );
                 }
                 if (key.isNumeric()) {
@@ -170,7 +198,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                 "Type error; Lookup is only possible on Maps and Arrays, "
                     + item.getDynamicType()
                     + " detected instead",
-                getMetadata()
+                staticContext.getMetadata()
         );
     }
 

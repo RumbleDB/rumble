@@ -17,14 +17,13 @@
 
 package org.rumbledb.runtime.control;
 
-import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
 /**
@@ -32,13 +31,12 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  *
  * @param <T> the branch value type
  */
-final class ConditionalLocalCursor<T> extends AbstractLocalCursor<T> {
+final class ConditionalLocalCursor<T> extends AbstractDelegatingLocalCursor<T> {
 
     private final RuntimePlan<Item> conditionPlan;
     private final RuntimePlan<T> thenPlan;
     private final RuntimePlan<T> elsePlan;
     private final DynamicContext context;
-    private LocalCursor<T> selectedCursor;
 
     public ConditionalLocalCursor(
             RuntimePlan<Item> conditionPlan,
@@ -53,31 +51,10 @@ final class ConditionalLocalCursor<T> extends AbstractLocalCursor<T> {
     }
 
     @Override
-    protected void openLocal() {
+    protected LocalCursor<T> createDelegateCursor() {
         RuntimePlan<T> selectedPlan = EffectiveBooleanValue.evaluate(this.conditionPlan, this.context)
             ? this.thenPlan
             : this.elsePlan;
-        this.selectedCursor = selectedPlan.createLocalCursor(this.context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.selectedCursor.hasNext();
-    }
-
-    @Override
-    protected T nextLocal() {
-        if (!this.selectedCursor.hasNext()) {
-            throw new NoSuchElementException("Conditional cursor is exhausted.");
-        }
-        return this.selectedCursor.next();
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.selectedCursor != null) {
-            this.selectedCursor.close();
-            this.selectedCursor = null;
-        }
+        return selectedPlan.createLocalCursor(this.context);
     }
 }

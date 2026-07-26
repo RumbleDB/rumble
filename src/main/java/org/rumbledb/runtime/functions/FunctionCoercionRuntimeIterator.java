@@ -11,7 +11,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
@@ -49,41 +49,51 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new CoercionLocalCursor(this, context);
+        return new CoercionLocalCursor(
+                this.callableItem,
+                this.parameterNames,
+                this.expectedReturnType,
+                this.exceptionMessage,
+                getRuntimeStaticContext(),
+                context
+        );
     }
 
-    private static final class CoercionLocalCursor extends AbstractLocalCursor<Item> {
-        private final FunctionCoercionRuntimeIterator plan;
+    private static final class CoercionLocalCursor extends AbstractDelegatingLocalCursor<Item> {
+        private final Item callableItem;
+        private final List<Name> parameterNames;
+        private final SequenceType expectedReturnType;
+        private final String exceptionMessage;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
-        private LocalCursor<Item> delegate;
 
-        private CoercionLocalCursor(FunctionCoercionRuntimeIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private CoercionLocalCursor(
+                Item callableItem,
+                List<Name> parameterNames,
+                SequenceType expectedReturnType,
+                String exceptionMessage,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.callableItem = callableItem;
+            this.parameterNames = parameterNames;
+            this.expectedReturnType = expectedReturnType;
+            this.exceptionMessage = exceptionMessage;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         @Override
-        protected void openLocal() {
-            this.delegate = this.plan.buildDelegate(this.context).createLocalCursor(this.context);
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.delegate.hasNext();
-        }
-
-        @Override
-        protected Item nextLocal() {
-            return this.delegate.next();
-        }
-
-        @Override
-        protected void closeLocal() {
-            if (this.delegate != null) {
-                this.delegate.close();
-                this.delegate = null;
-            }
+        protected LocalCursor<Item> createDelegateCursor() {
+            return buildDelegate(
+                this.callableItem,
+                this.parameterNames,
+                this.expectedReturnType,
+                this.exceptionMessage,
+                this.staticContext,
+                this.context
+            ).createLocalCursor(this.context);
         }
     }
 
@@ -92,39 +102,61 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     public ExecutionMode getWrappedCallableExecutionMode() {
-        if (!this.callableItem.isFunction()) {
+        return getWrappedCallableExecutionMode(this.callableItem);
+    }
+
+    private static ExecutionMode getWrappedCallableExecutionMode(Item callableItem) {
+        if (!callableItem.isFunction()) {
             return ExecutionMode.LOCAL;
         }
-        return this.callableItem.getBodyIterator().getHighestExecutionMode();
+        return callableItem.getBodyIterator().getHighestExecutionMode();
     }
 
     private RuntimeIterator buildDelegate(DynamicContext context) {
-        List<RuntimeIterator> arguments = new ArrayList<>(this.parameterNames.size());
-        for (Name parameterName : this.parameterNames) {
-            arguments.add(buildArgumentIterator(parameterName, context));
+        return buildDelegate(
+            this.callableItem,
+            this.parameterNames,
+            this.expectedReturnType,
+            this.exceptionMessage,
+            getRuntimeStaticContext(),
+            context
+        );
+    }
+
+    private static RuntimeIterator buildDelegate(
+            Item callableItem,
+            List<Name> parameterNames,
+            SequenceType expectedReturnType,
+            String exceptionMessage,
+            RuntimeStaticContext staticContext,
+            DynamicContext context
+    ) {
+        List<RuntimeIterator> arguments = new ArrayList<>(parameterNames.size());
+        for (Name parameterName : parameterNames) {
+            arguments.add(buildArgumentIterator(parameterName, context, staticContext));
         }
 
-        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
-        RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
+        ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode(callableItem);
+        RuntimeStaticContext callStaticContext = staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(wrappedCallableExecutionMode)
             .build();
 
-        if (this.callableItem.isArray()) {
-            return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
+        if (callableItem.isArray()) {
+            return new ArrayFunctionCallIterator(callableItem, arguments.get(0), callStaticContext);
         }
-        if (this.callableItem.isMap()) {
-            return new MapFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
+        if (callableItem.isMap()) {
+            return new MapFunctionCallIterator(callableItem, arguments.get(0), callStaticContext);
         }
-        if (!this.callableItem.isFunction()) {
+        if (!callableItem.isFunction()) {
             throw new OurBadException(
                     "Function coercion can only wrap functions, maps, or arrays.",
-                    getMetadata()
+                    staticContext.getMetadata()
             );
         }
         RuntimeIterator callIterator = NamedFunctions.buildFunctionItemCallIterator(
-            this.callableItem,
+            callableItem,
             callStaticContext,
             wrappedCallableExecutionMode,
             arguments,
@@ -132,22 +164,26 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
         );
         return FunctionCallArgumentConversion.wrapForFunctionConversion(
             callIterator,
-            this.expectedReturnType,
-            this.exceptionMessage,
-            callStaticContext.toBuilder().staticType(this.expectedReturnType).build()
+            expectedReturnType,
+            exceptionMessage,
+            callStaticContext.toBuilder().staticType(expectedReturnType).build()
         );
     }
 
-    private RuntimeIterator buildArgumentIterator(Name parameterName, DynamicContext context) {
+    private static RuntimeIterator buildArgumentIterator(
+            Name parameterName,
+            DynamicContext context,
+            RuntimeStaticContext staticContext
+    ) {
         ExecutionMode parameterExecutionMode = ExecutionMode.LOCAL;
         if (context.getVariableValues().contains(parameterName)) {
-            if (context.getVariableValues().isDataFrame(parameterName, getMetadata())) {
+            if (context.getVariableValues().isDataFrame(parameterName, staticContext.getMetadata())) {
                 parameterExecutionMode = ExecutionMode.DATAFRAME;
-            } else if (context.getVariableValues().isRDD(parameterName, getMetadata())) {
+            } else if (context.getVariableValues().isRDD(parameterName, staticContext.getMetadata())) {
                 parameterExecutionMode = ExecutionMode.RDD;
             }
         }
-        RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
+        RuntimeStaticContext parameterStaticContext = staticContext
             .toBuilder()
             .staticType(SequenceType.createSequenceType("item*"))
             .executionMode(parameterExecutionMode)

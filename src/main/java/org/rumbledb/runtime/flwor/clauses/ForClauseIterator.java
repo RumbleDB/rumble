@@ -123,12 +123,27 @@ public class ForClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new ForLocalCursor(this, context);
+        return new ForLocalCursor(
+                this.child,
+                this.evaluationDepthLimit,
+                this.assignmentIterator,
+                this.variableName,
+                this.positionalVariableName,
+                this.allowingEmpty,
+                getRuntimeStaticContext(),
+                context
+        );
     }
 
     private static final class ForLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final ForClauseIterator plan;
+        private final RuntimeTupleIterator childPlan;
+        private final int evaluationDepthLimit;
+        private final RuntimeIterator assignmentPlan;
+        private final Name variableName;
+        private final Name positionalVariableName;
+        private final boolean allowingEmpty;
+        private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private DynamicContext tupleContext;
         private LocalCursor<FlworTuple> childCursor;
@@ -138,14 +153,29 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         private long position;
         private boolean firstItem;
 
-        private ForLocalCursor(ForClauseIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private ForLocalCursor(
+                RuntimeTupleIterator childPlan,
+                int evaluationDepthLimit,
+                RuntimeIterator assignmentPlan,
+                Name variableName,
+                Name positionalVariableName,
+                boolean allowingEmpty,
+                RuntimeStaticContext staticContext,
+                DynamicContext context
+        ) {
+            super(staticContext.getMetadata());
+            this.childPlan = childPlan;
+            this.evaluationDepthLimit = evaluationDepthLimit;
+            this.assignmentPlan = assignmentPlan;
+            this.variableName = variableName;
+            this.positionalVariableName = positionalVariableName;
+            this.allowingEmpty = allowingEmpty;
+            this.staticContext = staticContext;
             this.context = context;
         }
 
         private boolean hasActiveChild() {
-            return this.plan.child != null && this.plan.evaluationDepthLimit != 0;
+            return this.childPlan != null && this.evaluationDepthLimit != 0;
         }
 
         @Override
@@ -153,7 +183,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             this.position = 1;
             this.firstItem = true;
             if (hasActiveChild()) {
-                this.childCursor = this.plan.child.createLocalCursor(this.context);
+                this.childCursor = this.childPlan.createLocalCursor(this.context);
                 this.tupleContext = new DynamicContext(this.context);
                 advanceTuple();
             } else {
@@ -163,7 +193,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         }
 
         private void openAssignment(DynamicContext assignmentContext) {
-            this.assignmentCursor = this.plan.assignmentIterator.createLocalCursor(assignmentContext);
+            this.assignmentCursor = this.assignmentPlan.createLocalCursor(assignmentContext);
         }
 
         private void advanceTuple() {
@@ -177,7 +207,8 @@ public class ForClauseIterator extends RuntimeTupleIterator {
             while (this.childCursor.hasNext()) {
                 this.inputTuple = this.childCursor.next();
                 this.tupleContext.getVariableValues().removeAllVariables();
-                this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, this.plan.getMetadata());
+                this.tupleContext.getVariableValues()
+                    .setBindingsFromTuple(this.inputTuple, this.staticContext.getMetadata());
                 openAssignment(this.tupleContext);
                 this.position = 1;
                 this.firstItem = true;
@@ -193,25 +224,25 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         private boolean advanceAssignment() {
             if (this.assignmentCursor.hasNext()) {
                 this.nextTuple = baseTuple();
-                this.nextTuple.putValue(this.plan.variableName, this.assignmentCursor.next());
-                if (this.plan.positionalVariableName != null) {
+                this.nextTuple.putValue(this.variableName, this.assignmentCursor.next());
+                if (this.positionalVariableName != null) {
                     this.nextTuple.putValue(
-                        this.plan.positionalVariableName,
+                        this.positionalVariableName,
                         ItemFactory.getInstance().createLongItem(this.position++)
                     );
                 }
                 this.firstItem = false;
                 return true;
             }
-            if (!this.firstItem || !this.plan.allowingEmpty) {
+            if (!this.firstItem || !this.allowingEmpty) {
                 this.nextTuple = null;
                 return false;
             }
             this.nextTuple = baseTuple();
-            this.nextTuple.putValue(this.plan.variableName, Collections.emptyList());
-            if (this.plan.positionalVariableName != null) {
+            this.nextTuple.putValue(this.variableName, Collections.emptyList());
+            if (this.positionalVariableName != null) {
                 this.nextTuple.putValue(
-                    this.plan.positionalVariableName,
+                    this.positionalVariableName,
                     ItemFactory.getInstance().createLongItem(0)
                 );
             }
@@ -222,7 +253,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         private FlworTuple baseTuple() {
             return hasActiveChild()
                 ? new FlworTuple(this.inputTuple)
-                : new FlworTuple(this.plan.getConfiguration());
+                : new FlworTuple(this.staticContext.getConfiguration());
         }
 
         @Override
