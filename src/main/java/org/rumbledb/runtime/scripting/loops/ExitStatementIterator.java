@@ -4,6 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -33,7 +34,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ExitLocalCursor(this.childIterator, context, this);
+        return new ExitLocalCursor(this.childIterator, context, getMetadata());
     }
 
     @Override
@@ -114,18 +115,18 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
 
         private final RuntimeIterator childPlan;
         private final DynamicContext context;
-        private final ExitStatementIterator plan;
+        private final ExceptionMetadata metadata;
         private boolean hasNext;
 
         private ExitLocalCursor(
                 RuntimeIterator childPlan,
                 DynamicContext context,
-                ExitStatementIterator plan
+                ExceptionMetadata metadata
         ) {
-            super(plan.getMetadata());
+            super(metadata);
             this.childPlan = childPlan;
             this.context = context;
-            this.plan = plan;
+            this.metadata = metadata;
         }
 
         @Override
@@ -153,7 +154,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
                     result,
                     null,
                     null,
-                    this.plan.getMetadata()
+                    this.metadata
             );
         }
 

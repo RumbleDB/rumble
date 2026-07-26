@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -67,23 +68,35 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SwitchLocalCursor(this, context);
+        return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final SwitchRuntimeIterator plan;
+        private final RuntimeIterator testPlan;
+        private final Map<RuntimeIterator, RuntimeIterator> cases;
+        private final RuntimeIterator defaultPlan;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<Item> selected;
 
-        private SwitchLocalCursor(SwitchRuntimeIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private SwitchLocalCursor(
+                RuntimeIterator testPlan,
+                Map<RuntimeIterator, RuntimeIterator> cases,
+                RuntimeIterator defaultPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.testPlan = testPlan;
+            this.cases = cases;
+            this.defaultPlan = defaultPlan;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            this.selected = this.plan.selectApplicableIterator(this.context).createLocalCursor(this.context);
+            this.selected = selectApplicablePlan().createLocalCursor(this.context);
             this.selected.open();
         }
 
@@ -102,6 +115,36 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             if (this.selected != null) {
                 this.selected.close();
                 this.selected = null;
+            }
+        }
+
+        private RuntimeIterator selectApplicablePlan() {
+            Item testValue = LocalCursorUtils.materializeFirst(this.testPlan, this.context);
+            validateAtomic(testValue, "Switch condition");
+            for (RuntimeIterator caseKey : this.cases.keySet()) {
+                Item caseValue = LocalCursorUtils.materializeFirst(caseKey, this.context);
+                validateAtomic(caseValue, "Switch case");
+                if (testValue == null) {
+                    if (caseValue == null) {
+                        return this.cases.get(caseKey);
+                    }
+                    break;
+                }
+                if (
+                    ComparisonIterator.compareItems(testValue, caseValue, ComparisonOperator.VC_EQ, this.metadata) == 0
+                ) {
+                    return this.cases.get(caseKey);
+                }
+            }
+            return this.defaultPlan;
+        }
+
+        private void validateAtomic(Item item, String role) {
+            if (item != null && item.isArray()) {
+                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an array type", this.metadata);
+            }
+            if (item != null && item.isObject()) {
+                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an object type", this.metadata);
             }
         }
     }

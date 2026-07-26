@@ -51,23 +51,33 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new TypeswitchLocalCursor(this, context);
+        return new TypeswitchLocalCursor(this.testField, this.cases, this.defaultCase, context, getMetadata());
     }
 
     private static final class TypeswitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final TypeswitchRuntimeIterator plan;
+        private final RuntimeIterator testPlan;
+        private final List<TypeswitchRuntimeIteratorCase> cases;
+        private final TypeswitchRuntimeIteratorCase defaultCase;
         private final DynamicContext context;
         private LocalCursor<Item> selected;
 
-        private TypeswitchLocalCursor(TypeswitchRuntimeIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private TypeswitchLocalCursor(
+                RuntimeIterator testPlan,
+                List<TypeswitchRuntimeIteratorCase> cases,
+                TypeswitchRuntimeIteratorCase defaultCase,
+                DynamicContext context,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.testPlan = testPlan;
+            this.cases = cases;
+            this.defaultCase = defaultCase;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            Match match = this.plan.selectMatch(this.context);
+            Match match = selectMatch();
             bindMatch(match, this.context);
             this.selected = match.typeSwitchCase.getReturnIterator().createLocalCursor(this.context);
             this.selected.open();
@@ -89,6 +99,16 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
                 this.selected.close();
                 this.selected = null;
             }
+        }
+
+        private Match selectMatch() {
+            Item testValue = LocalCursorUtils.materializeFirst(this.testPlan, this.context);
+            for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+                if (doesTypeMatch(typeSwitchCase, testValue)) {
+                    return new Match(typeSwitchCase, testValue);
+                }
+            }
+            return new Match(this.defaultCase, testValue);
         }
     }
 

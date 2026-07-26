@@ -93,34 +93,60 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new LetLocalCursor(this, context);
+        return new LetLocalCursor(
+                this.child,
+                this.variableName,
+                this.assignmentIterator,
+                getEvaluationDepthLimit(),
+                getConfiguration(),
+                context,
+                getMetadata()
+        );
     }
 
     private static final class LetLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final LetClauseIterator plan;
+        private final RuntimeTupleIterator childPlan;
+        private final Name variableName;
+        private final RuntimeIterator assignmentPlan;
+        private final int evaluationDepthLimit;
+        private final RumbleRuntimeConfiguration configuration;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<FlworTuple> childCursor;
         private DynamicContext tupleContext;
         private FlworTuple nextTuple;
         private boolean startingClause;
 
-        private LetLocalCursor(LetClauseIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private LetLocalCursor(
+                RuntimeTupleIterator childPlan,
+                Name variableName,
+                RuntimeIterator assignmentPlan,
+                int evaluationDepthLimit,
+                RumbleRuntimeConfiguration configuration,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.variableName = variableName;
+            this.assignmentPlan = assignmentPlan;
+            this.evaluationDepthLimit = evaluationDepthLimit;
+            this.configuration = configuration;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            this.startingClause = this.plan.child == null
-                || this.plan.evaluationDepthLimit == 0;
+            this.startingClause = this.childPlan == null
+                || this.evaluationDepthLimit == 0;
             if (this.startingClause) {
                 this.tupleContext = this.context;
                 this.nextTuple = generateTuple(null);
                 return;
             }
-            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.createLocalCursor(this.context);
             this.childCursor.open();
             this.tupleContext = new DynamicContext(this.context);
             advance();
@@ -133,30 +159,30 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             }
             FlworTuple inputTuple = this.childCursor.next();
             this.tupleContext.getVariableValues().removeAllVariables();
-            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, this.plan.getMetadata());
+            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, this.metadata);
             this.nextTuple = generateTuple(inputTuple);
         }
 
         private FlworTuple generateTuple(FlworTuple inputTuple) {
             FlworTuple result = inputTuple == null
-                ? new FlworTuple(this.plan.getConfiguration())
+                ? new FlworTuple(this.configuration)
                 : new FlworTuple(inputTuple);
-            if (this.plan.assignmentIterator.isDataFrame()) {
+            if (this.assignmentPlan.isDataFrame()) {
                 result.putValue(
-                    this.plan.variableName,
-                    this.plan.assignmentIterator.getDataFrame(this.tupleContext)
+                    this.variableName,
+                    this.assignmentPlan.getDataFrame(this.tupleContext)
                 );
                 this.tupleContext = new DynamicContext(this.context);
-            } else if (this.plan.assignmentIterator.isRDDOrDataFrame()) {
+            } else if (this.assignmentPlan.isRDDOrDataFrame()) {
                 result.putValue(
-                    this.plan.variableName,
-                    this.plan.assignmentIterator.getRDD(this.tupleContext)
+                    this.variableName,
+                    this.assignmentPlan.getRDD(this.tupleContext)
                 );
                 this.tupleContext = new DynamicContext(this.context);
             } else {
                 result.putValue(
-                    this.plan.variableName,
-                    LocalCursorUtils.materialize(this.plan.assignmentIterator, this.tupleContext)
+                    this.variableName,
+                    LocalCursorUtils.materialize(this.assignmentPlan, this.tupleContext)
                 );
             }
             return result;

@@ -11,6 +11,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -53,7 +54,15 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new TransformLocalCursor(this, context);
+        return new TransformLocalCursor(
+                this.copyDeclMap,
+                this.modifyIterator,
+                this.returnIterator,
+                this.mutabilityLevel,
+                this.mutable,
+                context,
+                getMetadata()
+        );
     }
 
     @Override
@@ -90,21 +99,39 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final TransformExpressionIterator plan;
+        private final Map<Name, RuntimeIterator> copyDeclarations;
+        private final RuntimeIterator modifyPlan;
+        private final RuntimeIterator returnPlan;
+        private final int mutabilityLevel;
+        private final boolean resultMutable;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<Item> returnCursor;
 
-        private TransformLocalCursor(TransformExpressionIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private TransformLocalCursor(
+                Map<Name, RuntimeIterator> copyDeclarations,
+                RuntimeIterator modifyPlan,
+                RuntimeIterator returnPlan,
+                int mutabilityLevel,
+                boolean resultMutable,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.copyDeclarations = copyDeclarations;
+            this.modifyPlan = modifyPlan;
+            this.returnPlan = returnPlan;
+            this.mutabilityLevel = mutabilityLevel;
+            this.resultMutable = resultMutable;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            PendingUpdateList updates = this.plan.getPendingUpdateList(this.context);
-            updates.applyUpdates(this.plan.getMetadata());
-            this.returnCursor = this.plan.returnIterator.createLocalCursor(this.context);
+            PendingUpdateList updates = getPendingUpdateList();
+            updates.applyUpdates(this.metadata);
+            this.returnCursor = this.returnPlan.createLocalCursor(this.context);
             this.returnCursor.open();
         }
 
@@ -116,7 +143,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             Item result = this.returnCursor.next();
-            if (this.plan.mutable) {
+            if (this.resultMutable) {
                 result.setMutabilityLevel(this.context.getCurrentMutabilityLevel());
             }
             return result;
@@ -128,8 +155,28 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
                 this.returnCursor.close();
                 this.returnCursor = null;
             }
-            for (Name copyVariable : this.plan.copyDeclMap.keySet()) {
+            for (Name copyVariable : this.copyDeclarations.keySet()) {
                 this.context.getVariableValues().removeVariable(copyVariable);
+            }
+        }
+
+        private PendingUpdateList getPendingUpdateList() {
+            bindCopyDeclarations();
+            DynamicContext modifyContext = new DynamicContext(this.context);
+            modifyContext.setCurrentMutabilityLevel(this.mutabilityLevel);
+            return this.modifyPlan.getPendingUpdateList(modifyContext);
+        }
+
+        private void bindCopyDeclarations() {
+            for (Map.Entry<Name, RuntimeIterator> declaration : this.copyDeclarations.entrySet()) {
+                List<Item> copy = new ArrayList<>();
+                for (Item item : LocalCursorUtils.materialize(declaration.getValue(), this.context)) {
+                    Item copiedItem = item.copy(true);
+                    copiedItem.setMutabilityLevel(this.mutabilityLevel);
+                    copiedItem.setCollection(null);
+                    copy.add(copiedItem);
+                }
+                this.context.getVariableValues().addVariableValue(declaration.getKey(), copy);
             }
         }
     }

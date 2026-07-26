@@ -43,19 +43,25 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        return evaluate(dynamicContext);
+        return evaluate(this.child, this.sequenceType, this.staticContext, getMetadata(), dynamicContext);
     }
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this, context);
+        return new Cursor(this.child, this.sequenceType, this.staticContext, getMetadata(), context);
     }
 
-    private Item evaluate(DynamicContext dynamicContext) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+    private static Item evaluate(
+            RuntimeIterator child,
+            SequenceType sequenceType,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext
+    ) {
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        ItemType targetItemType = this.sequenceType.getItemType();
+        ItemType targetItemType = sequenceType.getItemType();
         boolean validCastTarget =
             targetItemType.isAtomicItemType()
                 || (targetItemType.isUnionType()
@@ -65,14 +71,14 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
                     "The type "
                         + targetItemType.getIdentifierString()
                         + " is not atomic. Castable can only be used with atomic types.",
-                    getMetadata()
+                    metadata
             );
         }
         Item item;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(this.child, dynamicContext);
+            item = LocalCursorUtils.materializeAtMostOne(child, dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, getMetadata());
+                item.getDynamicType().resolve(dynamicContext, metadata);
             }
         } catch (MoreThanOneItemException e) {
             return ItemFactory.getInstance().createBooleanItem(false);
@@ -80,16 +86,16 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (item == null) {
             return ItemFactory.getInstance()
-                .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
+                .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
         }
 
-        checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
+        checkInvalidCastable(item, metadata, sequenceType.getItemType());
         try {
             Item res = CastIterator.castItemToType(
                 item,
-                this.sequenceType.getItemType(),
-                getMetadata(),
-                this.staticContext
+                sequenceType.getItemType(),
+                metadata,
+                staticContext
             );
             return ItemFactory.getInstance()
                 .createBooleanItem(res != null);
@@ -102,17 +108,29 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final class Cursor extends AtMostOneLocalCursor<Item> {
 
-        private final CastableIterator plan;
+        private final RuntimeIterator childPlan;
+        private final SequenceType sequenceType;
+        private final RuntimeStaticContext staticContext;
+        private final ExceptionMetadata metadata;
         private final DynamicContext context;
 
-        private Cursor(CastableIterator plan, DynamicContext context) {
-            this.plan = plan;
+        private Cursor(
+                RuntimeIterator childPlan,
+                SequenceType sequenceType,
+                RuntimeStaticContext staticContext,
+                ExceptionMetadata metadata,
+                DynamicContext context
+        ) {
+            this.childPlan = childPlan;
+            this.sequenceType = sequenceType;
+            this.staticContext = staticContext;
+            this.metadata = metadata;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return this.plan.evaluate(this.context);
+            return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.metadata, this.context);
         }
     }
 

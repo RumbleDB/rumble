@@ -25,6 +25,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -46,26 +47,35 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ProjectionLocalCursor(this, context);
+        return new ProjectionLocalCursor(this.iterator, this.getChild(1), context, getMetadata());
     }
 
     private static final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final ObjectProjectFunctionIterator plan;
+        private final RuntimeIterator inputPlan;
+        private final RuntimeIterator keysPlan;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<Item> inputCursor;
         private List<Item> keys;
 
-        private ProjectionLocalCursor(ObjectProjectFunctionIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private ProjectionLocalCursor(
+                RuntimeIterator inputPlan,
+                RuntimeIterator keysPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.inputPlan = inputPlan;
+            this.keysPlan = keysPlan;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = this.plan.getProjectionKeys(this.context);
-            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
+            this.keys = getProjectionKeys();
+            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
             this.inputCursor.open();
         }
 
@@ -77,7 +87,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             Item item = this.inputCursor.next();
-            return item.isObject() ? this.plan.getProjection(item, this.keys) : item;
+            return item.isObject() ? getProjection(item) : item;
         }
 
         @Override
@@ -87,6 +97,31 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
                 this.inputCursor = null;
             }
             this.keys = null;
+        }
+
+        private List<Item> getProjectionKeys() {
+            List<Item> keys = LocalCursorUtils.materialize(this.keysPlan, this.context);
+            if (keys.isEmpty()) {
+                throw new InvalidSelectorException(
+                        "Invalid Projection Key; Object projection can't be performed with zero keys: ",
+                        this.metadata
+                );
+            }
+            return keys;
+        }
+
+        private Item getProjection(Item object) {
+            ArrayList<String> finalKeys = new ArrayList<>();
+            ArrayList<Item> finalValues = new ArrayList<>();
+            for (Item keyItem : this.keys) {
+                String key = keyItem.getStringValue();
+                Item value = object.getItemByKey(key);
+                if (value != null) {
+                    finalKeys.add(key);
+                    finalValues.add(value);
+                }
+            }
+            return ItemFactory.getInstance().createObjectItem(finalKeys, finalValues, this.metadata, true);
         }
     }
 

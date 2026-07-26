@@ -25,6 +25,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -43,26 +44,35 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RemovalLocalCursor(this, context);
+        return new RemovalLocalCursor(this.iterator, this.getChild(1), context, getMetadata());
     }
 
     private static final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final ObjectRemoveKeysFunctionIterator plan;
+        private final RuntimeIterator inputPlan;
+        private final RuntimeIterator keysPlan;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<Item> inputCursor;
         private List<String> keys;
 
-        private RemovalLocalCursor(ObjectRemoveKeysFunctionIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private RemovalLocalCursor(
+                RuntimeIterator inputPlan,
+                RuntimeIterator keysPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.inputPlan = inputPlan;
+            this.keysPlan = keysPlan;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            this.keys = this.plan.getRemovalKeys(this.context);
-            this.inputCursor = this.plan.iterator.createLocalCursor(this.context);
+            this.keys = getRemovalKeys();
+            this.inputCursor = this.inputPlan.createLocalCursor(this.context);
             this.inputCursor.open();
         }
 
@@ -74,7 +84,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             Item item = this.inputCursor.next();
-            return item.isObject() ? this.plan.removeKeys(item, this.keys) : item;
+            return item.isObject() ? removeKeys(item) : item;
         }
 
         @Override
@@ -84,6 +94,36 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
                 this.inputCursor = null;
             }
             this.keys = null;
+        }
+
+        private List<String> getRemovalKeys() {
+            List<Item> removalKeys = LocalCursorUtils.materialize(this.keysPlan, this.context);
+            if (removalKeys.isEmpty()) {
+                throw new InvalidSelectorException(
+                        "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
+                        this.metadata
+                );
+            }
+            List<String> result = new ArrayList<>();
+            for (Item removalKeyItem : removalKeys) {
+                if (!removalKeyItem.isString()) {
+                    throw new UnexpectedTypeException("Remove-keys function has non-string key args.", this.metadata);
+                }
+                result.add(removalKeyItem.getStringValue());
+            }
+            return result;
+        }
+
+        private Item removeKeys(Item object) {
+            ArrayList<String> finalKeys = new ArrayList<>();
+            ArrayList<Item> finalValues = new ArrayList<>();
+            for (String objectKey : object.getStringKeys()) {
+                if (!this.keys.contains(objectKey)) {
+                    finalKeys.add(objectKey);
+                    finalValues.add(object.getItemByKey(objectKey));
+                }
+            }
+            return ItemFactory.getInstance().createObjectItem(finalKeys, finalValues, this.metadata, true);
         }
     }
 

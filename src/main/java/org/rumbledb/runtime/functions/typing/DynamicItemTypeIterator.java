@@ -24,16 +24,16 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return evaluate(context);
+        return evaluate(this.getChild(0), context);
     }
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this, context);
+        return new Cursor(this.getChild(0), context);
     }
 
-    private Item evaluate(DynamicContext context) {
-        List<Item> argument = LocalCursorUtils.materialize(getChild(0), context);
+    private static Item evaluate(RuntimeIterator argumentPlan, DynamicContext context) {
+        List<Item> argument = LocalCursorUtils.materialize(argumentPlan, context);
         ItemType itemType = argument.get(0).getDynamicType();
         List<Item> structureItems = getStructureItems(argument, itemType);
         ItemType commonType = getLeastCommonSupertype(structureItems);
@@ -57,17 +57,17 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final class Cursor extends AtMostOneLocalCursor<Item> {
 
-        private final DynamicItemTypeIterator plan;
+        private final RuntimeIterator argumentPlan;
         private final DynamicContext context;
 
-        private Cursor(DynamicItemTypeIterator plan, DynamicContext context) {
-            this.plan = plan;
+        private Cursor(RuntimeIterator argumentPlan, DynamicContext context) {
+            this.argumentPlan = argumentPlan;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return this.plan.evaluate(this.context);
+            return evaluate(this.argumentPlan, this.context);
         }
     }
 }

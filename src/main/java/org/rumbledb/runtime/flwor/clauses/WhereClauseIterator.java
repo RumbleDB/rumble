@@ -71,29 +71,38 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new WhereLocalCursor(this, context);
+        return new WhereLocalCursor(this.child, this.expression, context, getMetadata());
     }
 
     private static final class WhereLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final WhereClauseIterator plan;
+        private final RuntimeTupleIterator childPlan;
+        private final RuntimeIterator expressionPlan;
         private final DynamicContext context;
+        private final ExceptionMetadata metadata;
         private LocalCursor<FlworTuple> childCursor;
         private DynamicContext tupleContext;
         private FlworTuple nextTuple;
 
-        private WhereLocalCursor(WhereClauseIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private WhereLocalCursor(
+                RuntimeTupleIterator childPlan,
+                RuntimeIterator expressionPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.expressionPlan = expressionPlan;
             this.context = context;
+            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            if (this.plan.child == null) {
+            if (this.childPlan == null) {
                 throw new OurBadException("Invalid where clause.");
             }
-            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.createLocalCursor(this.context);
             this.childCursor.open();
             this.tupleContext = new DynamicContext(this.context);
             advance();
@@ -104,8 +113,8 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
             while (this.childCursor.hasNext()) {
                 FlworTuple candidate = this.childCursor.next();
                 this.tupleContext.getVariableValues().removeAllVariables();
-                this.tupleContext.getVariableValues().setBindingsFromTuple(candidate, this.plan.getMetadata());
-                if (this.plan.expression.getEffectiveBooleanValue(this.tupleContext)) {
+                this.tupleContext.getVariableValues().setBindingsFromTuple(candidate, this.metadata);
+                if (this.expressionPlan.getEffectiveBooleanValue(this.tupleContext)) {
                     this.nextTuple = candidate;
                     return;
                 }

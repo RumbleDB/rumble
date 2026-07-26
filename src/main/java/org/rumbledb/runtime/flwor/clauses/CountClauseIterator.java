@@ -72,28 +72,35 @@ public class CountClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new CountLocalCursor(this, context);
+        return new CountLocalCursor(this.child, this.variableName, context, getMetadata());
     }
 
     private static final class CountLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final CountClauseIterator plan;
+        private final RuntimeTupleIterator childPlan;
+        private final Name variableName;
         private final DynamicContext context;
         private LocalCursor<FlworTuple> childCursor;
         private int count;
 
-        private CountLocalCursor(CountClauseIterator plan, DynamicContext context) {
-            super(plan.getMetadata());
-            this.plan = plan;
+        private CountLocalCursor(
+                RuntimeTupleIterator childPlan,
+                Name variableName,
+                DynamicContext context,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.variableName = variableName;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            if (this.plan.child == null) {
+            if (this.childPlan == null) {
                 throw new OurBadException("Invalid count clause.");
             }
-            this.childCursor = this.plan.child.createLocalCursor(this.context);
+            this.childCursor = this.childPlan.createLocalCursor(this.context);
             this.childCursor.open();
             this.count = 1;
         }
@@ -110,7 +117,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
             }
             FlworTuple tuple = this.childCursor.next();
             List<Item> value = Collections.singletonList(ItemFactory.getInstance().createIntItem(this.count++));
-            return new FlworTuple(tuple).putValue(this.plan.variableName, value);
+            return new FlworTuple(tuple).putValue(this.variableName, value);
         }
 
         @Override
