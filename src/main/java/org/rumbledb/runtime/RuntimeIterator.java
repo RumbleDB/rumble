@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
@@ -265,8 +266,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
                 );
             }
         }
-        List<Item> items = new ArrayList<>();
-        materialize(context, items);
+        List<Item> items = LocalCursorUtils.materialize(this, context);
         if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
@@ -313,59 +313,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
-        try {
-            List<Item> result = new ArrayList<>();
-            this.open(context);
-            while (this.hasNext()) {
-                result.add(this.next());
-            }
-            return result;
-        } finally {
-            this.close();
-        }
-    }
-
-    /**
-     * Materialize the items of the iterator into the result list.
-     * 
-     * @param context the dynamic context
-     * @param result the list to materialize the items into. The list is cleared before the materialization.
-     */
-    public void materialize(DynamicContext context, List<Item> result) {
-        result.clear();
-        try {
-            this.open(context);
-            while (this.hasNext()) {
-                result.add(this.next());
-            }
-        } finally {
-            this.close();
-        }
-    }
-
-    public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
-        result.clear();
-        try {
-            this.open(context);
-            int i = 0;
-            while (this.hasNext() && i < n) {
-                result.add(this.next());
-                ++i;
-            }
-        } finally {
-            this.close();
-        }
+        return LocalCursorUtils.materialize(this, context);
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        try {
-            this.open(context);
-            return this.hasNext() ? this.next() : null;
-        } finally {
-            this.close();
-        }
+        return LocalCursorUtils.materializeFirst(this, context);
     }
 
     public Item materializeExactlyOneItem(
@@ -373,51 +327,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        try {
-            this.open(context);
-            if (!this.hasNext()) {
-                throw new NoItemException();
-            }
-            Item result = this.next();
-            if (this.hasNext()) {
-                throw new MoreThanOneItemException();
-            }
-            return result;
-        } finally {
-            this.close();
+        Item result = LocalCursorUtils.materializeAtMostOne(this, context);
+        if (result == null) {
+            throw new NoItemException();
         }
+        return result;
     }
 
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        try {
-            this.open(context);
-            if (!this.hasNext()) {
-                return null;
-            }
-            Item result = this.next();
-            if (this.hasNext()) {
-                throw new MoreThanOneItemException();
-            }
-            return result;
-        } finally {
-            this.close();
-        }
-    }
-
-    public Item materializeAtMostOneItemOrDefault(
-            DynamicContext context,
-            Item item
-    )
-            throws MoreThanOneItemException {
-        Item result = materializeAtMostOneItemOrNull(context);
-        if (result == null) {
-            return item;
-        } else {
-            return result;
-        }
+        return LocalCursorUtils.materializeAtMostOne(this, context);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

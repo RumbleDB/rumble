@@ -118,27 +118,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public void materialize(DynamicContext dynamicContext, List<Item> result) {
-        result.clear();
-        Item item = materializeFirstItemOrNull(dynamicContext);
-        if (item != null) {
-            result.add(item);
-        }
-    }
-
-    @Override
-    public void materializeNFirstItems(DynamicContext dynamicContext, List<Item> result, int n) {
-        result.clear();
-        if (n == 0) {
-            return;
-        }
-        Item item = materializeFirstItemOrNull(dynamicContext);
-        if (item != null) {
-            result.add(item);
-        }
-    }
-
-    @Override
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
         Item item = materializeFirstItemOrNull(dynamicContext);
         if (item == null) {

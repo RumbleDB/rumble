@@ -195,29 +195,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     @Override
-    public void materialize(DynamicContext context, List<Item> result) {
-        if (!isRDDOrDataFrame()) {
-            super.materialize(context, result);
-            return;
-        }
-        JavaRDD<Item> items = this.getRDD(context);
-        List<Item> collectedItems = collectRDDwithLimit(items, this.getConfiguration(), this.getMetadata());
-        result.clear();
-        result.addAll(collectedItems);
-    }
-
-    @Override
-    public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
-        if (!isRDDOrDataFrame()) {
-            super.materializeNFirstItems(context, result, n);
-            return;
-        }
-        JavaRDD<Item> items = this.getRDD(context);
-        result.clear();
-        result.addAll(items.take(n));
-    }
-
-    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
