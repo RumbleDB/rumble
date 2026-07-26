@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.cursor;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import lombok.NonNull;
@@ -27,6 +29,25 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 public final class LocalCursorUtils {
 
     private LocalCursorUtils() {
+    }
+
+    /**
+     * Evaluates a plan locally and materializes all its values.
+     *
+     * @param plan the plan to evaluate
+     * @param context the dynamic context for the evaluation
+     * @param <T> the value type
+     * @return the materialized values
+     */
+    public static <T> List<T> materialize(@NonNull RuntimePlan<T> plan, @NonNull DynamicContext context) {
+        List<T> result = new ArrayList<>();
+        try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
+            cursor.open();
+            while (cursor.hasNext()) {
+                result.add(cursor.next());
+            }
+        }
+        return result;
     }
 
     /**
