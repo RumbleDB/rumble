@@ -26,13 +26,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -46,20 +46,51 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ObjectProjectFunctionIterator::new,
-            getMetadata()
-        );
+        return new ProjectionLocalCursor(context);
+    }
+
+    private final class ProjectionLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final DynamicContext context;
+        private LocalCursor<Item> inputCursor;
+        private List<Item> keys;
+
+        private ProjectionLocalCursor(DynamicContext context) {
+            super(ObjectProjectFunctionIterator.this.getMetadata());
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.keys = getProjectionKeys(this.context);
+            this.inputCursor = ObjectProjectFunctionIterator.this.iterator.createLocalCursor(this.context);
+            this.inputCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.inputCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            Item item = this.inputCursor.next();
+            return item.isObject() ? getProjection(item, this.keys) : item;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+                this.inputCursor = null;
+            }
+            this.keys = null;
+        }
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item nextResult;
-    private List<Item> projectionKeys;
 
     public ObjectProjectFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -69,50 +100,15 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         this.iterator = arguments.get(0);
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.projectionKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
-        if (this.projectionKeys.isEmpty()) {
+    private List<Item> getProjectionKeys(DynamicContext context) {
+        List<Item> keys = LocalCursorUtils.materialize(this.getChild(1), context);
+        if (keys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",
                     getMetadata()
             );
         }
-
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " PROJECT function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) {
-                this.nextResult = getProjection(item, this.projectionKeys);
-            } else {
-                this.nextResult = item;
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+        return keys;
     }
 
     private Item getProjection(Item objItem, List<Item> keys) {
@@ -131,21 +127,11 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        this.projectionKeys = this.getChild(1).materialize(context);
+        List<Item> projectionKeys = getProjectionKeys(context);
         FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
-                this.projectionKeys,
+                projectionKeys,
                 getMetadata()
         );
         return childRDD.flatMap(transformation);
@@ -166,8 +152,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         List<String> fieldNames = childDataFrame.getKeys();
 
         List<String> keys = new ArrayList<>();
-        this.projectionKeys = this.getChild(1).materialize(context);
-        for (Item keyItem : this.projectionKeys) {
+        for (Item keyItem : getProjectionKeys(context)) {
             String key = keyItem.getStringValue();
             if (fieldNames.contains(key)) {
                 keys.add(key);

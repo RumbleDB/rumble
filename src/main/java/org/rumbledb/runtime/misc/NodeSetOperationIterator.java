@@ -28,9 +28,10 @@ import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -44,14 +45,8 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new NodeSetOperationIterator(
-                        CursorRuntimeIteratorAdapter.adapt(this.leftIterator),
-                        CursorRuntimeIteratorAdapter.adapt(this.rightIterator),
-                        this.operator,
-                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
-                ),
-                context,
+        return new IteratorLocalCursor<>(
+                () -> computeNodeSet(context).iterator(),
                 getMetadata()
         );
     }
@@ -62,8 +57,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
     private NodeSetExpression.NodeSetOperator operator;
-    private List<Item> localResults;
-    private int nextResultIndex;
 
     public NodeSetOperationIterator(
             RuntimeIterator leftIterator,
@@ -75,28 +68,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.operator = operator;
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("Invalid next call in node set operation", getMetadata());
-        }
-        Item result = this.localResults.get(this.nextResultIndex++);
-        this.hasNext = this.nextResultIndex < this.localResults.size();
-        return result;
-    }
-
-    @Override
-    public void openLocal() {
-        this.localResults = computeNodeSet(this.currentDynamicContextForLocalExecution);
-        this.nextResultIndex = 0;
-        this.hasNext = !this.localResults.isEmpty();
     }
 
     @Override
@@ -127,12 +98,6 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
         return result.sortBy(Item::getXmlDocumentPosition, true, 1);
     }
 
-    @Override
-    protected void closeLocal() {
-        this.localResults = null;
-        this.nextResultIndex = 0;
-    }
-
     private List<Item> computeNodeSet(DynamicContext context) {
         Set<Item> leftNodes = buildNodeSet(this.leftIterator, context, "left");
         Set<Item> rightNodes = buildNodeSet(this.rightIterator, context, "right");
@@ -156,12 +121,12 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
      * Builds an ordered set of nodes while validating that every item is an XML node with a document position.
      */
     private Set<Item> buildNodeSet(
-            RuntimeIterator iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             String side
     ) {
         Set<Item> nodes = new TreeSet<>(Comparator.comparing(Item::getXmlDocumentPosition));
-        for (Item item : iterator.materialize(context)) {
+        for (Item item : LocalCursorUtils.materialize(iterator, context)) {
             validateAndGetNodePosition(item, side, getMetadata());
             nodes.add(item);
         }

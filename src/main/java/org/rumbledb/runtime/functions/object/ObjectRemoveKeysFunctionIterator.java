@@ -26,14 +26,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -43,21 +43,51 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ObjectRemoveKeysFunctionIterator::new,
-            getMetadata()
-        );
+        return new RemovalLocalCursor(context);
     }
 
+    private final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final DynamicContext context;
+        private LocalCursor<Item> inputCursor;
+        private List<String> keys;
+
+        private RemovalLocalCursor(DynamicContext context) {
+            super(ObjectRemoveKeysFunctionIterator.this.getMetadata());
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.keys = getRemovalKeys(this.context);
+            this.inputCursor = ObjectRemoveKeysFunctionIterator.this.iterator.createLocalCursor(this.context);
+            this.inputCursor.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.inputCursor.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            Item item = this.inputCursor.next();
+            return item.isObject() ? removeKeys(item, this.keys) : item;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.inputCursor != null) {
+                this.inputCursor.close();
+                this.inputCursor = null;
+            }
+            this.keys = null;
+        }
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item nextResult;
-    private List<String> removalKeys;
 
     public ObjectRemoveKeysFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -67,62 +97,23 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         this.iterator = arguments.get(0);
     }
 
-    @Override
-    public void openLocal() {
-        startLocal();
-    }
-
-    private void startLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        List<Item> removalKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+    private List<String> getRemovalKeys(DynamicContext context) {
+        List<Item> removalKeys = LocalCursorUtils.materialize(this.getChild(1), context);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
                     getMetadata()
             );
         }
-        this.removalKeys = new ArrayList<>();
+        List<String> result = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
                 throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
             }
             String removalKey = removalKeyItem.getStringValue();
-            this.removalKeys.add(removalKey);
+            result.add(removalKey);
         }
-
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " REMOVE-KEYS function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) {
-                this.nextResult = removeKeys(item, this.removalKeys);
-            } else {
-                this.nextResult = item;
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+        return result;
     }
 
     private Item removeKeys(Item objItem, List<String> removalKeys) {
@@ -140,36 +131,11 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        List<Item> removalKeys = this.getChild(1).materialize(context);
-        if (removalKeys.isEmpty()) {
-            throw new InvalidSelectorException(
-                    "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                    getMetadata()
-            );
-        }
-
-        this.removalKeys = new ArrayList<>();
-        for (Item removalKeyItem : removalKeys) {
-            if (!removalKeyItem.isString()) {
-                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
-            }
-            String removalKey = removalKeyItem.getStringValue();
-            this.removalKeys.add(removalKey);
-        }
+        List<String> removalKeys = getRemovalKeys(context);
         FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(
-                this.removalKeys,
+                removalKeys,
                 getMetadata()
         );
         return childRDD.flatMap(transformation);
@@ -178,7 +144,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.iterator.getDataFrame(context);
-        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
+        List<Item> columnsToDropItems = LocalCursorUtils.materialize(this.getChild(1), context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",

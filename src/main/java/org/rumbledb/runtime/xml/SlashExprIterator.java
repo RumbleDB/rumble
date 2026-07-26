@@ -28,13 +28,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -44,13 +43,8 @@ public class SlashExprIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new SlashExprIterator(
-                        CursorRuntimeIteratorAdapter.adapt(this.leftIterator),
-                        CursorRuntimeIteratorAdapter.adapt(this.rightIterator),
-                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
-                ),
-                context,
+        return new IteratorLocalCursor<>(
+                () -> computeLocalResults(context).iterator(),
                 getMetadata()
         );
     }
@@ -63,9 +57,6 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     );
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
-    private List<Item> results = null;
-    private int nextResultCounter = 0;
-    private Item nextResult;
 
 
     public SlashExprIterator(
@@ -151,79 +142,37 @@ public class SlashExprIterator extends HybridRuntimeIterator {
 
     }
 
-    @Override
-    public void openLocal() {
-        setNextResult();
-    }
-
-    @Override
-    public void closeLocal() {
-        this.hasNext = false;
-        this.results = null;
-        this.nextResult = null;
-        this.nextResultCounter = 0;
-        this.leftIterator.close();
-        this.rightIterator.close();
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item nextResult = this.nextResult;
-            setNextResult();
-            return nextResult;
+    private List<Item> computeLocalResults(DynamicContext context) {
+        List<Item> left = LocalCursorUtils.materialize(this.leftIterator, context);
+        List<Item> localResults = new ArrayList<>();
+        long last = left.size();
+        long position = 0;
+        for (Item currentItem : left) {
+            DynamicContext currentContext = new DynamicContext(context);
+            currentContext.getVariableValues()
+                .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
+            currentContext.getVariableValues().setPosition(++position);
+            currentContext.getVariableValues().setLast(last);
+            localResults.addAll(LocalCursorUtils.materialize(this.rightIterator, currentContext));
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in Slash Expression",
-                getMetadata()
-        );
-    }
-
-    private void setNextResult() {
-        if (this.results == null) {
-            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
-            this.results = new ArrayList<>();
-            long last = left.size();
-            long position = 0;
-            for (Item currentItem : left) {
-                DynamicContext currentContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-                currentContext.getVariableValues()
-                    .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
-                currentContext.getVariableValues().setPosition(++position);
-                currentContext.getVariableValues().setLast(last);
-                this.results.addAll(this.rightIterator.materialize(currentContext));
-            }
-            boolean allNodes = true;
-            boolean allNonNodes = true;
-            for (Item current : this.results) {
-                if (current.isNode()) {
-                    allNonNodes = false;
-                } else {
-                    allNodes = false;
-                }
-            }
-
-            if (allNodes) {
-                // take unique
-                this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
-                // Sort values in document order.
-                this.results.sort(DOCUMENT_ORDER_COMPARATOR);
-            } else if (!allNonNodes) {
-                throw new NodeAndNonNodeException(
-                        "A mix of nodes and non-nodes was encountered as a result of a step expression.",
-                        getMetadata()
-                );
+        boolean allNodes = true;
+        boolean allNonNodes = true;
+        for (Item current : localResults) {
+            if (current.isNode()) {
+                allNonNodes = false;
+            } else {
+                allNodes = false;
             }
         }
-        if (this.nextResultCounter < this.results.size()) {
-            this.nextResult = this.results.get(this.nextResultCounter++);
-        } else {
-            this.hasNext = false;
+        if (allNodes) {
+            localResults = new ArrayList<>(new LinkedHashSet<>(localResults));
+            localResults.sort(DOCUMENT_ORDER_COMPARATOR);
+        } else if (!allNonNodes) {
+            throw new NodeAndNonNodeException(
+                    "A mix of nodes and non-nodes was encountered as a result of a step expression.",
+                    getMetadata()
+            );
         }
+        return localResults;
     }
 }
