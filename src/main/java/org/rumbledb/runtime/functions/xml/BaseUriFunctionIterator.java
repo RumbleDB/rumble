@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -72,31 +74,37 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.flatMapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
         this.currentIndex = 0;
 
         Item node = getContextNode();
 
-        // If the argument is supplied and is the empty sequence, return the empty sequence.
-        if (node == null) {
-            this.resultItems = null;
-            this.hasNext = false;
-            return;
-        }
+        this.resultItems = evaluate(node);
+        this.hasNext = this.resultItems != null && !this.resultItems.isEmpty();
+    }
 
-        // Check if the item is an XML node; otherwise, raise a type error.
+    private List<Item> evaluate(Item node) {
+        if (node == null) {
+            return List.of();
+        }
         if (!node.isNode()) {
             throw new UnexpectedTypeException(
                     "The argument must be a reference to an XML node",
                     getMetadata()
             );
         }
-
-        // Delegate to the XDM 3.1 dm:base-uri accessor implemented by XML node item classes.
-        // See Item.baseUri() and XDM 3.1 Section 5.2.
-        this.resultItems = node.baseUri();
-        this.hasNext = this.resultItems != null && !this.resultItems.isEmpty();
+        return node.baseUri();
     }
 
     @Override
@@ -132,5 +140,3 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
         return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
-
-

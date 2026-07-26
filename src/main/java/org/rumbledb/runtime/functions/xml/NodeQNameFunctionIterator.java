@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -77,42 +79,37 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
 
         Item node = getContextNode();
 
-        // Spec: "If the argument is supplied and is the empty sequence, the function returns the empty sequence."
-        if (node == null) {
-            this.resultItem = null;
-            this.hasNext = false;
-            return;
-        }
+        this.resultItem = evaluate(node);
+        this.hasNext = this.resultItem != null;
+    }
 
-        // Check if the item is an XML node; otherwise, raise a type error.
+    private Item evaluate(Item node) {
+        if (node == null) {
+            return null;
+        }
         if (!node.isNode()) {
             throw new UnexpectedTypeException(
                     "The argument must be a reference to an XML node",
                     getMetadata()
             );
         }
-
-        // Spec: "The dm:node-name accessor returns the name of the node as an xs:QName, or the empty
-        // sequence if the node does not have a name."
-        //
-        // Here we use the generic XDM 3.1 node-name accessor defined on Item and implemented
-        // by XML node item classes (see Item.nodeName()).
         Name nodeName = node.nodeName();
-
-        // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty
-        // sequence."
-        if (nodeName == null) {
-            this.resultItem = null;
-            this.hasNext = false;
-        } else {
-            this.resultItem = ItemFactory.getInstance().createQNameItem(nodeName);
-            this.hasNext = true;
-        }
+        return nodeName == null ? null : ItemFactory.getInstance().createQNameItem(nodeName);
     }
 
     @Override
@@ -146,5 +143,3 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
-
-

@@ -23,10 +23,15 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,6 +49,15 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new StringToCodepointsLocalCursor(
+                this.getChild(0),
+                context,
+                getMetadata()
+        );
     }
 
     @Override
@@ -88,6 +102,51 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             this.hasNext = true;
         } else {
             this.hasNext = false;
+        }
+    }
+
+    private static final class StringToCodepointsLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<Item> argumentPlan;
+        private final DynamicContext context;
+        private String input;
+        private int position;
+
+        private StringToCodepointsLocalCursor(
+                RuntimePlan<Item> argumentPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.argumentPlan = argumentPlan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            Item argument = LocalCursorUtils.materializeFirst(this.argumentPlan, this.context);
+            this.input = argument == null ? null : argument.getStringValue();
+            this.position = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.input != null && this.position < this.input.length();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw invalidState("String-to-codepoints cursor is exhausted.");
+            }
+            int codepoint = this.input.codePointAt(this.position);
+            this.position = this.input.offsetByCodePoints(this.position, 1);
+            return ItemFactory.getInstance().createIntItem(codepoint);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.input = null;
         }
     }
 }

@@ -6,6 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
@@ -23,8 +25,21 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapArgument(
+            this.getChild(0),
+            context,
+            EscapeHTMLURIFunctionIterator::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item item = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private static Item evaluate(Item item) {
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }

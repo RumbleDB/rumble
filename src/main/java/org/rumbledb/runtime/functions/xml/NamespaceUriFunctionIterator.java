@@ -8,6 +8,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,8 +26,21 @@ public class NamespaceUriFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item node = getContextNode(context);
+        return evaluate(getContextNode(context));
+    }
+
+    private Item evaluate(Item node) {
         if (node == null) {
             return ItemFactory.getInstance().createAnyURIItem("");
         }

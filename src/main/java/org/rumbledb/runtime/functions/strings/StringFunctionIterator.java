@@ -28,6 +28,8 @@ import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -42,6 +44,16 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            item -> item == null ? null : stringResultFromItem(item),
+            getMetadata()
+        );
     }
 
     private Item stringResultFromItem(Item item) {
@@ -60,14 +72,8 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return stringResultFromItem(contextItem);
         }
 
-        Item item = this.getChild(0)
-            .materializeFirstItemOrNull(context);
-
-        if (item == null) {
-            return null;
-        }
-
-        return stringResultFromItem(item);
+        Item item = this.getChild(0).materializeFirstItemOrNull(context);
+        return item == null ? null : stringResultFromItem(item);
     }
 
 }

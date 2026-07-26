@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -62,6 +64,16 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
 
     public InScopePrefixesFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.flatMapArgument(
+            this.getChild(0),
+            context,
+            this::computeInScopePrefixes,
+            getMetadata()
+        );
     }
 
     @Override

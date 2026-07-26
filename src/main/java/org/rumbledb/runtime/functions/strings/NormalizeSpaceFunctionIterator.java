@@ -28,6 +28,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,20 +47,28 @@ public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            NormalizeSpaceFunctionIterator::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return ItemFactory.getInstance()
-                .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
+            return evaluate(items.get(0));
         }
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
 
+    private static Item evaluate(Item stringItem) {
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-
         return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
     }
-
 }

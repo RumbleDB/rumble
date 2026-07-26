@@ -7,6 +7,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.nio.charset.StandardCharsets;
@@ -24,9 +26,21 @@ public class IRIToURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapArgument(
+            this.getChild(0),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
 
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+    }
+
+    private Item evaluate(Item inputItem) {
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }

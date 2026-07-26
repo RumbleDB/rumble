@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -65,6 +67,16 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
+            this.getChildren(),
+            context,
+            this::evaluate,
+            getMetadata()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
         this.hasNext = true;
@@ -74,36 +86,23 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item node = getContextNode();
-
-            // If the argument is supplied and is the empty sequence, return zero-length string
-            if (node == null) {
-                return new StringItem("");
-            }
-
-            // Check if the item is an XML node; otherwise, raise a type error.
-            if (!node.isNode()) {
-                throw new UnexpectedTypeException(
-                        "The argument must be a reference to an XML node",
-                        getMetadata()
-                );
-            }
-
-            // Use the generic XDM 3.1 node-name accessor defined on Item and implemented
-            // by XML node item classes (see Item.nodeName()).
-            Name nodeName = node.nodeName();
-
-            // If the node has no name (document, comment, text, or a namespace node with empty prefix),
-            // dm:node-name is the empty sequence (null here). fn:name returns the zero-length string.
-            if (nodeName == null) {
-                return new StringItem("");
-            }
-
-            // For named nodes (elements, attributes, processing instructions, namespace nodes with
-            // a non-empty name), return the lexical form of the QName (fn:string(fn:node-name($arg))).
-            return new StringItem(nodeName.toString());
+            return evaluate(getContextNode());
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " name function", getMetadata());
+    }
+
+    private Item evaluate(Item node) {
+        if (node == null) {
+            return new StringItem("");
+        }
+        if (!node.isNode()) {
+            throw new UnexpectedTypeException(
+                    "The argument must be a reference to an XML node",
+                    getMetadata()
+            );
+        }
+        Name nodeName = node.nodeName();
+        return new StringItem(nodeName == null ? "" : nodeName.toString());
     }
 
     /**
