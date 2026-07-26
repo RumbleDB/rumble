@@ -11,12 +11,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.context.DynamicContext;
 
 /**
- * Native RDD execution capability.
+ * RDD execution capability.
  *
  * <p>
- * A plan must implement this interface only when it has a native RDD implementation. Implementations must not
- * materialize a local cursor merely to satisfy this contract; execution-mode fallback belongs to the runtime
- * execution layer.
+ * The runtime may use a native RDD implementation or centrally convert local execution.
  * </p>
  *
  * @param <T> the RDD element type
@@ -29,5 +27,5 @@ public interface RDDRuntimePlan<T> {
      * @param context the dynamic context for that evaluation
      * @return the resulting RDD
      */
-    JavaRDD<T> executeRDD(DynamicContext context);
+    JavaRDD<T> getRDD(DynamicContext context);
 }

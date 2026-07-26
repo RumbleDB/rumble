@@ -26,8 +26,8 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  * </p>
  *
  * <p>
- * Implementations advertise native distributed execution by also implementing {@link RDDRuntimePlan} or
- * {@link DataFrameRuntimePlan}. Conversion between execution modes is deliberately outside this interface.
+ * Item plans may also implement {@link RDDRuntimePlan} or {@link DataFrameRuntimePlan} to request distributed
+ * execution with centrally managed conversion.
  * </p>
  *
  * @param <T> the type produced by local execution of this plan
