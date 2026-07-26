@@ -9,6 +9,8 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.io.Serial;
@@ -32,6 +34,37 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
         this.clauseIterator = clauseIterator;
         this.expression = expression;
         setInputAndOutputTupleVariableDependencies();
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> executeLocally(context),
+                getMetadata()
+        );
+    }
+
+    private Item executeLocally(DynamicContext context) {
+        DynamicContext tupleContext = new DynamicContext(context);
+        try (LocalCursor<FlworTuple> tuples = this.clauseIterator.createLocalCursor(context)) {
+            tuples.open();
+            while (tuples.hasNext()) {
+                FlworTuple tuple = tuples.next();
+                tupleContext.getVariableValues().removeAllVariables();
+                tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                try (LocalCursor<Item> results = this.expression.createLocalCursor(tupleContext)) {
+                    results.open();
+                    while (results.hasNext()) {
+                        results.next();
+                    }
+                } catch (BreakStatementException ignored) {
+                    break;
+                } catch (ContinueStatementException ignored) {
+                    // Continue with the next tuple.
+                }
+            }
+        }
+        return null;
     }
 
     private void setInputAndOutputTupleVariableDependencies() {

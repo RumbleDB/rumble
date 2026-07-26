@@ -32,6 +32,8 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -242,6 +244,11 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         public Item materializeFirstItemOrNull(DynamicContext context) {
             return this.currentKey;
         }
+
+        @Override
+        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+            return new SingletonLocalCursor<>(this.currentKey);
+        }
     }
 
     /**
@@ -265,6 +272,12 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             if (valueSequence != null && !valueSequence.isEmpty()) {
                 this.items.addAll(valueSequence);
             }
+        }
+
+        @Override
+        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+            List<Item> snapshot = List.copyOf(this.items);
+            return new IteratorLocalCursor<>(snapshot::iterator, getMetadata());
         }
 
         @Override

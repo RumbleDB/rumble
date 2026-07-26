@@ -31,6 +31,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -60,6 +62,17 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            this.staticContext,
+            GetEstimatorFunctionIterator::new,
+            getMetadata()
+        );
     }
 
     @Override

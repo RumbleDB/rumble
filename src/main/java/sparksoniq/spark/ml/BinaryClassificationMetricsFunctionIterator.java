@@ -17,6 +17,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
@@ -31,6 +33,17 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return RecreatedRuntimeIteratorCursor.fromArguments(
+            getChildren(),
+            context,
+            this.staticContext,
+            BinaryClassificationMetricsFunctionIterator::new,
+            getMetadata()
+        );
     }
 
     @Override

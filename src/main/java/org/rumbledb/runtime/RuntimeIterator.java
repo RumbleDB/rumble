@@ -38,7 +38,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.cursor.LegacyRuntimeIteratorCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -71,14 +70,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
 
-    /**
-     * Compatibility bridge for runtime iterators whose mutable state has not yet been extracted into a cursor.
-     * Migrated plans should override this method and return a purpose-built cursor without cloning the plan.
-     */
     @Override
-    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new LegacyRuntimeIteratorCursor(this, context);
-    }
+    public abstract LocalCursor<Item> createLocalCursor(DynamicContext context);
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.

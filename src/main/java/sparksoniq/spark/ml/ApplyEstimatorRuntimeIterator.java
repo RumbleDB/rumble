@@ -20,6 +20,8 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -59,6 +61,19 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
     public Estimator<?> getEstimator() {
         return this.estimator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeIteratorCursor(
+                () -> new ApplyEstimatorRuntimeIterator(
+                        this.estimatorShortName,
+                        this.estimator,
+                        RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
+                ),
+                context,
+                getMetadata()
+        );
     }
 
     @Override

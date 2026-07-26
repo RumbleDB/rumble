@@ -24,8 +24,8 @@ import org.rumbledb.runtime.plan.RuntimePlan;
  * Compatibility cursor backed by an explicitly recreated, evaluation-owned legacy iterator.
  *
  * <p>
- * Unlike {@link LegacyRuntimeIteratorCursor}, this bridge performs no serialization. The supplied iterator must be a
- * fresh object and its children must be {@link CursorRuntimeIteratorAdapter}s.
+ * This bridge performs no serialization. The supplied iterator must be a fresh object and its children must be
+ * {@link CursorRuntimeIteratorAdapter}s.
  * </p>
  */
 public final class RecreatedRuntimeIteratorCursor extends AbstractLocalCursor<Item> {

@@ -9,10 +9,12 @@ package org.rumbledb.runtime.cursor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -59,6 +61,14 @@ public final class CursorRuntimeIteratorAdapter extends LocalRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return this.plan.createLocalCursor(context);
+    }
+
+    @Override
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (this.plan instanceof RuntimeIterator iterator) {
+            return iterator.getVariableDependencies();
+        }
+        return super.getVariableDependencies();
     }
 
     @Override

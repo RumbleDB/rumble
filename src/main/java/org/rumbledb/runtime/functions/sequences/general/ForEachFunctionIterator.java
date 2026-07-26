@@ -35,6 +35,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -218,6 +219,11 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
         @Override
         public Item materializeFirstItemOrNull(DynamicContext context) {
             return this.currentItem;
+        }
+
+        @Override
+        public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+            return new SingletonLocalCursor<>(this.currentItem);
         }
     }
 }
