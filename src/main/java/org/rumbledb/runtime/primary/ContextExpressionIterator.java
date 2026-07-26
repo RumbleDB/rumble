@@ -29,6 +29,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextValueLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
@@ -49,6 +51,11 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {
         super(null, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextValueLocalCursor.contextItem(context, getMetadata());
     }
 
     @Override

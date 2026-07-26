@@ -27,6 +27,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ContextValueLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,6 +46,11 @@ public class PositionFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ContextValueLocalCursor.position(context, getMetadata());
     }
 
     @Override

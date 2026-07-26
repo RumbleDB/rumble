@@ -27,16 +27,20 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
@@ -47,7 +51,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
+    private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
@@ -57,6 +61,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     ) {
         super(null, staticContext);
         this.variableName = variableName;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(this.variableName, context, getMetadata());
     }
 
     @Override
@@ -171,5 +180,58 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
+    }
+
+    private static final class Cursor extends AbstractLocalCursor<Item> {
+
+        private final Name variableName;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private List<Item> items;
+        private int currentIndex;
+
+        private Cursor(
+                @NonNull Name variableName,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            this.variableName = variableName;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.items = this.context.getVariableValues()
+                .getLocalVariableValue(this.variableName, this.metadata);
+            this.currentIndex = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentIndex < this.items.size();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw new IteratorFlowException(
+                        RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
+                        this.metadata
+                );
+            }
+            return this.items.get(this.currentIndex++);
+        }
+
+        @Override
+        protected void closeLocal() {
+            this.items = null;
+            this.currentIndex = 0;
+        }
+
+        @Override
+        protected RuntimeException invalidState(String message) {
+            return new IteratorFlowException(message, this.metadata);
+        }
     }
 }
