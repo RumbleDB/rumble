@@ -93,6 +93,16 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         this.dataFrameContext = new DataFrameContext();
     }
 
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new JoinClauseIterator(
+                createChildLocalExecution(),
+                null,
+                this.isLeftOuterJoin,
+                getLocalRuntimeStaticContext()
+        );
+    }
+
     /**
      * Joins two input tuples.
      * 

@@ -23,6 +23,7 @@ import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -88,13 +89,41 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
             RuntimeIterator endCondition,
             RuntimeStaticContext staticContext
     ) {
+        this(
+            child,
+            clause.getWindowType(),
+            clause.getWindowVariable(),
+            clause.getActualSequenceType(),
+            clause.getStartCondition().variables(),
+            clause.getEndCondition() == null ? null : clause.getEndCondition().variables(),
+            clause.getEndCondition() != null && clause.getEndCondition().only(),
+            sourceIterator,
+            startCondition,
+            endCondition,
+            staticContext
+        );
+    }
+
+    private WindowClauseIterator(
+            RuntimeTupleIterator child,
+            WindowClause.WindowType windowType,
+            Name windowVariable,
+            SequenceType declaredWindowType,
+            WindowClause.WindowVars startVariables,
+            WindowClause.WindowVars endVariables,
+            boolean endConditionOnly,
+            RuntimeIterator sourceIterator,
+            RuntimeIterator startCondition,
+            RuntimeIterator endCondition,
+            RuntimeStaticContext staticContext
+    ) {
         super(child, staticContext);
-        this.windowType = clause.getWindowType();
-        this.windowVariable = clause.getWindowVariable();
-        this.declaredWindowType = clause.getActualSequenceType();
-        this.startVariables = clause.getStartCondition().variables();
-        this.endVariables = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
-        this.endConditionOnly = clause.getEndCondition() != null && clause.getEndCondition().only();
+        this.windowType = windowType;
+        this.windowVariable = windowVariable;
+        this.declaredWindowType = declaredWindowType;
+        this.startVariables = startVariables;
+        this.endVariables = endVariables;
+        this.endConditionOnly = endConditionOnly;
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
@@ -103,6 +132,23 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
         if (this.endCondition != null) {
             this.endCondition.getVariableDependencies();
         }
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new WindowClauseIterator(
+                createChildLocalExecution(),
+                this.windowType,
+                this.windowVariable,
+                this.declaredWindowType,
+                this.startVariables,
+                this.endVariables,
+                this.endConditionOnly,
+                CursorRuntimeIteratorAdapter.adapt(this.sourceIterator),
+                CursorRuntimeIteratorAdapter.adapt(this.startCondition),
+                this.endCondition == null ? null : CursorRuntimeIteratorAdapter.adapt(this.endCondition),
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override

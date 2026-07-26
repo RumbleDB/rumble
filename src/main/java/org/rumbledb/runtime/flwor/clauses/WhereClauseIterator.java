@@ -38,6 +38,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -68,6 +69,15 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
         super(child, staticContext);
         this.expression = whereExpression;
         this.expression.getVariableDependencies();
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new WhereClauseIterator(
+                createChildLocalExecution(),
+                CursorRuntimeIteratorAdapter.adapt(this.expression),
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override

@@ -40,6 +40,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -96,6 +97,26 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                 );
             }
         }
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        List<GroupByClauseSparkIteratorExpression> adaptedExpressions = this.groupingExpressions.stream()
+            .map(
+                expression -> new GroupByClauseSparkIteratorExpression(
+                        expression.getExpression() == null
+                            ? null
+                            : CursorRuntimeIteratorAdapter.adapt(expression.getExpression()),
+                        expression.getVariableName(),
+                        expression.getIteratorMetadata()
+                )
+            )
+            .toList();
+        return new GroupByClauseIterator(
+                createChildLocalExecution(),
+                adaptedExpressions,
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override

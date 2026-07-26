@@ -39,6 +39,9 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -83,6 +86,110 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
         this.child = child;
         this.expression = expression;
         setInputAndOutputTupleVariableDependencies();
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ReturnLocalCursor(
+                this.child,
+                this.expression,
+                context,
+                getMetadata()
+        );
+    }
+
+    private static final class ReturnLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final RuntimePlan<FlworTuple> tuplePlan;
+        private final RuntimePlan<Item> expressionPlan;
+        private final DynamicContext context;
+        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private LocalCursor<FlworTuple> tupleCursor;
+        private LocalCursor<Item> expressionCursor;
+        private DynamicContext tupleContext;
+        private Item nextResult;
+        private boolean hasNext;
+
+        private ReturnLocalCursor(
+                RuntimePlan<FlworTuple> tuplePlan,
+                RuntimePlan<Item> expressionPlan,
+                DynamicContext context,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.tuplePlan = tuplePlan;
+            this.expressionPlan = expressionPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.tupleCursor = this.tuplePlan.createLocalCursor(this.context);
+            this.tupleCursor.open();
+            this.tupleContext = new DynamicContext(this.context);
+            advance();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.hasNext;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!this.hasNext) {
+                throw new IteratorFlowException("Invalid next() call in return clause", this.metadata);
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        private void advance() {
+            if (this.expressionCursor != null) {
+                if (this.expressionCursor.hasNext()) {
+                    this.nextResult = this.expressionCursor.next();
+                    this.hasNext = true;
+                    return;
+                }
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+
+            while (this.tupleCursor.hasNext()) {
+                FlworTuple tuple = this.tupleCursor.next();
+                this.tupleContext.getVariableValues().removeAllVariables();
+                this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, this.metadata);
+                this.expressionCursor = this.expressionPlan.createLocalCursor(this.tupleContext);
+                this.expressionCursor.open();
+                if (this.expressionCursor.hasNext()) {
+                    this.nextResult = this.expressionCursor.next();
+                    this.hasNext = true;
+                    return;
+                }
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+
+            this.nextResult = null;
+            this.hasNext = false;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.expressionCursor != null) {
+                this.expressionCursor.close();
+                this.expressionCursor = null;
+            }
+            if (this.tupleCursor != null) {
+                this.tupleCursor.close();
+                this.tupleCursor = null;
+            }
+            this.tupleContext = null;
+            this.nextResult = null;
+            this.hasNext = false;
+        }
     }
 
     @Override

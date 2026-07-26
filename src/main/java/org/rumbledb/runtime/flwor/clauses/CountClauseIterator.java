@@ -74,6 +74,15 @@ public class CountClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new CountClauseIterator(
+                createChildLocalExecution(),
+                this.variableName,
+                getLocalRuntimeStaticContext()
+        );
+    }
+
+    @Override
     public void open(DynamicContext context) {
         super.open(context);
         if (this.child != null) {

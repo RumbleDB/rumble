@@ -43,6 +43,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -125,6 +126,18 @@ public class ForClauseIterator extends RuntimeTupleIterator {
 
     public boolean isAllowingEmpty() {
         return this.allowingEmpty;
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new ForClauseIterator(
+                createChildLocalExecution(),
+                this.variableName,
+                this.positionalVariableName,
+                this.allowingEmpty,
+                CursorRuntimeIteratorAdapter.adapt(this.assignmentIterator),
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override

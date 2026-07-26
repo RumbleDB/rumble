@@ -40,6 +40,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -83,6 +84,26 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
         this.localTupleResults = new ArrayList<>();
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        List<OrderByClauseAnnotatedChildIterator> adaptedExpressions = this.expressionsWithIterator.stream()
+            .map(
+                expression -> new OrderByClauseAnnotatedChildIterator(
+                        CursorRuntimeIteratorAdapter.adapt(expression.getIterator()),
+                        expression.isAscending(),
+                        expression.getUri(),
+                        expression.getEmptyOrder()
+                )
+            )
+            .toList();
+        return new OrderByClauseIterator(
+                createChildLocalExecution(),
+                adaptedExpressions,
+                false,
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override

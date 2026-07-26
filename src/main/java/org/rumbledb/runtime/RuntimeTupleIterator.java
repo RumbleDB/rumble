@@ -34,6 +34,9 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.RecreatedRuntimeTupleIteratorCursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -43,7 +46,10 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
+public abstract class RuntimeTupleIterator
+        implements
+            RuntimeIteratorInterface<FlworTuple>,
+            RuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -70,6 +76,41 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
 
     public RuntimeTupleIterator getChildIterator() {
         return this.child;
+    }
+
+    @Override
+    public final LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
+        return new RecreatedRuntimeTupleIteratorCursor(
+                this::createConfiguredLocalExecution,
+                context,
+                getMetadata()
+        );
+    }
+
+    /**
+     * Recreates this tuple operation with fresh children for one local evaluation.
+     */
+    protected abstract RuntimeTupleIterator createLocalExecution();
+
+    protected final RuntimeTupleIterator createChildLocalExecution() {
+        return this.child == null ? null : this.child.createConfiguredLocalExecution();
+    }
+
+    protected final RuntimeStaticContext getLocalRuntimeStaticContext() {
+        return this.staticContext.toBuilder().executionMode(ExecutionMode.LOCAL).build();
+    }
+
+    private RuntimeTupleIterator createConfiguredLocalExecution() {
+        RuntimeTupleIterator execution = createLocalExecution();
+        execution.evaluationDepthLimit = this.evaluationDepthLimit;
+        execution.inputTupleProjection = this.inputTupleProjection;
+        execution.outputTupleProjection = this.outputTupleProjection;
+        return execution;
+    }
+
+    @Override
+    public final RuntimeStaticContext getRuntimeStaticContext() {
+        return this.staticContext;
     }
 
     @Override

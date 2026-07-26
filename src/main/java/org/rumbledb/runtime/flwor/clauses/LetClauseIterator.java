@@ -42,6 +42,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -92,6 +93,17 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
+    }
+
+    @Override
+    protected RuntimeTupleIterator createLocalExecution() {
+        return new LetClauseIterator(
+                createChildLocalExecution(),
+                this.variableName,
+                this.sequenceType,
+                CursorRuntimeIteratorAdapter.adapt(this.assignmentIterator),
+                getLocalRuntimeStaticContext()
+        );
     }
 
     @Override
