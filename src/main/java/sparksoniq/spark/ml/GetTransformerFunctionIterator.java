@@ -32,8 +32,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -68,12 +69,9 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            this.staticContext,
-            GetTransformerFunctionIterator::new,
-            getMetadata()
+        return new ComputedLocalCursor<>(
+                () -> materializeFirstItemOrNull(context),
+                getMetadata()
         );
     }
 
@@ -81,10 +79,11 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String transformerShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String transformerShortName = LocalCursorUtils.materializeFirst(this.getChild(0), dynamicContext)
+            .getStringValue();
         Item paramMapItem = null;
         if (this.getChildren().size() >= 2) {
-            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
+            paramMapItem = LocalCursorUtils.materializeFirst(this.getChild(1), dynamicContext);
         }
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(

@@ -17,8 +17,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
@@ -37,23 +38,20 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            this.staticContext,
-            BinaryClassificationMetricsFunctionIterator::new,
-            getMetadata()
+        return new ComputedLocalCursor<>(
+                () -> materializeFirstItemOrNull(context),
+                getMetadata()
         );
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         JavaRDD<Item> scoresAndLabels = this.getChild(0).getRDD(context);
-        String scoreCol = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
-        String labelCol = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
+        String scoreCol = LocalCursorUtils.materializeFirst(this.getChild(1), context).getStringValue();
+        String labelCol = LocalCursorUtils.materializeFirst(this.getChild(2), context).getStringValue();
         int numBins = -1;
         if (this.getChildren().size() > 3) {
-            numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
+            numBins = LocalCursorUtils.materializeFirst(this.getChild(3), context).getIntValue();
         }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
             p -> new Tuple2<>(

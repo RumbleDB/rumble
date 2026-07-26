@@ -30,9 +30,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -43,8 +41,9 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.types.SequenceType;
 
@@ -57,13 +56,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ArraySortFunctionIterator::new,
-            getMetadata()
-        );
+        return new ComputedLocalCursor<>(() -> computeResult(context), getMetadata());
     }
 
     @Serial
@@ -72,9 +65,6 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator collationIterator;
     private final RuntimeIterator keyIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
 
     public ArraySortFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -88,29 +78,20 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator = arguments.get(0);
         this.collationIterator = n >= 2 ? arguments.get(1) : null;
         this.keyIterator = n == 3 ? arguments.get(2) : null;
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private Item computeResult(DynamicContext context) {
         Item arrayItem;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:sort expects exactly one array argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem == null) {
+            return null;
         }
 
         if (!arrayItem.isArray()) {
@@ -155,19 +136,18 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : sortedMembers) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(sortedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
-        List<Item> c = this.collationIterator.materialize(context);
+        List<Item> c = LocalCursorUtils.materialize(this.collationIterator, context);
         if (c.isEmpty()) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
@@ -184,7 +164,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (this.keyIterator == null) {
             return (member, ctx) -> fnDataKeySequence(member, ctx);
         }
-        List<Item> keySpec = this.keyIterator.materialize(context);
+        List<Item> keySpec = LocalCursorUtils.materialize(this.keyIterator, context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:sort must be exactly one item.",
@@ -312,16 +292,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
-        iterator.open(context);
-        try {
-            List<Item> out = new ArrayList<>();
-            while (iterator.hasNext()) {
-                out.add(iterator.next());
-            }
-            return out;
-        } finally {
-            iterator.close();
-        }
+        return LocalCursorUtils.materialize(iterator, context);
     }
 
     private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
@@ -349,36 +320,6 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
             childIterators.add(new ConstantRuntimeIterator(item, localStaticContext()));
         }
         return new CommaExpressionIterator(childIterators, localStaticContext());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.collationIterator != null && this.collationIterator.isOpen()) {
-            this.collationIterator.close();
-        }
-        if (this.keyIterator != null && this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

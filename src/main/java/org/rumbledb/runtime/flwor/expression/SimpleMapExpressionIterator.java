@@ -32,14 +32,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
@@ -49,37 +48,22 @@ import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.TreeMap;
 
 public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new SimpleMapExpressionIterator(
-                        CursorRuntimeIteratorAdapter.adapt(this.leftIterator),
-                        CursorRuntimeIteratorAdapter.adapt(this.rightIterator),
-                        RecreatedRuntimeIteratorCursor.localStaticContext(getRuntimeStaticContext())
-                ),
-                context,
-                getMetadata()
-        );
+        return new SimpleMapLocalCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
-    private Item nextResult;
-    private DynamicContext mapDynamicContext;
-    private Queue<Item> mapValues;
-    private long position;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
 
     public SimpleMapExpressionIterator(
@@ -90,7 +74,82 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         super(Arrays.asList(sequence, mapExpression), staticContext);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
-        this.mapDynamicContext = null;
+    }
+
+    private static final class SimpleMapLocalCursor extends AbstractLocalCursor<Item> {
+        private final RuntimeIterator leftPlan;
+        private final RuntimeIterator rightPlan;
+        private final DynamicContext context;
+        private final org.rumbledb.exceptions.ExceptionMetadata metadata;
+        private List<Item> inputs;
+        private int inputIndex;
+        private LocalCursor<Item> currentResults;
+
+        private SimpleMapLocalCursor(
+                RuntimeIterator leftPlan,
+                RuntimeIterator rightPlan,
+                DynamicContext context,
+                org.rumbledb.exceptions.ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.inputs = LocalCursorUtils.materialize(this.leftPlan, this.context);
+            this.inputIndex = 0;
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            while (this.currentResults == null || !this.currentResults.hasNext()) {
+                closeCurrentResults();
+                if (this.inputIndex >= this.inputs.size()) {
+                    return false;
+                }
+                DynamicContext mapContext = new DynamicContext(this.context);
+                mapContext.getVariableValues()
+                    .addVariableValue(
+                        Name.CONTEXT_ITEM,
+                        List.of(this.inputs.get(this.inputIndex))
+                    );
+                mapContext.getVariableValues().setPosition(this.inputIndex + 1L);
+                mapContext.getVariableValues().setLast(this.inputs.size());
+                this.inputIndex++;
+                this.currentResults = this.rightPlan.createLocalCursor(mapContext);
+                this.currentResults.open();
+            }
+            return true;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw new org.rumbledb.exceptions.IteratorFlowException(
+                        "Invalid next() call in simple map expression",
+                        this.metadata
+                );
+            }
+            return this.currentResults.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            closeCurrentResults();
+            this.inputs = null;
+            this.inputIndex = 0;
+        }
+
+        private void closeCurrentResults() {
+            if (this.currentResults != null) {
+                this.currentResults.close();
+                this.currentResults = null;
+            }
+        }
     }
 
     @Override
@@ -104,84 +163,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 count
         );
         return zippedChildRDD.flatMap(transformation);
-    }
-
-    private void setLast() {
-        long last = 0;
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        while (this.leftIterator.hasNext()) {
-            this.leftIterator.next();
-            ++last;
-        }
-        this.leftIterator.close();
-        this.mapDynamicContext.getVariableValues().setLast(last);
-    }
-
-    @Override
-    protected void openLocal() {
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        setLast();
-        this.mapValues = new LinkedList<>();
-        this.position = 0;
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.leftIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in simple map expression", getMetadata());
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-
-        if (this.mapValues.size() > 0) {
-            this.nextResult = this.mapValues.poll();
-            this.hasNext = true;
-        } else if (this.leftIterator.hasNext()) {
-            List<Item> mapValuesRaw = getRightIteratorValues();
-            while (mapValuesRaw.size() == 0 && this.leftIterator.hasNext()) { // Discard all empty sequences
-                mapValuesRaw = getRightIteratorValues();
-            }
-
-            if (mapValuesRaw.size() == 1) {
-                this.nextResult = mapValuesRaw.get(0);
-            } else {
-                this.mapValues.addAll(mapValuesRaw);
-                this.nextResult = this.mapValues.poll();
-            }
-        }
-        if (this.nextResult != null) {
-            this.hasNext = true;
-        } else {
-            this.hasNext = false;
-        }
-    }
-
-    private List<Item> getRightIteratorValues() {
-        Item item = this.leftIterator.next();
-        List<Item> currentItems = new ArrayList<>();
-        this.mapDynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
-        this.mapDynamicContext.getVariableValues().setPosition(++this.position);
-        currentItems.add(item);
-        List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
-        this.mapDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
-        return mapValuesRaw;
     }
 
     @Override

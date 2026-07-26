@@ -11,28 +11,24 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ArrayInvalidSubarrayLengthException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ArraySubarrayFunctionIterator::new,
-            getMetadata()
+        return new ComputedLocalCursor<>(
+                () -> computeResult(context),
+                getMetadata()
         );
     }
 
@@ -42,9 +38,6 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator startIterator;
     private final RuntimeIterator lengthIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
 
     public ArraySubarrayFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -57,36 +50,21 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator = arguments.get(0);
         this.startIterator = arguments.get(1);
         this.lengthIterator = arguments.size() == 3 ? arguments.get(2) : null;
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        this.startIterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.lengthIterator != null) {
-            this.lengthIterator.open(this.currentDynamicContextForLocalExecution);
-        }
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
+    private Item computeResult(DynamicContext context) {
+        Item arrayItem = null;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one array argument.",
                     getMetadata()
             );
         }
-
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; first argument to array:subarray must be an array.",
@@ -142,31 +120,30 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             }
             // TODO: optimization: if the subarray contains only singleton members, we can create an array of items
             // instead.
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
-            List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
-            for (int i = fromIndex; i < toIndex; i++) {
-                slicedMembers.add(originalMembers.get(i));
-            }
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        List<List<Item>> originalMembers = arrayItem.getSequenceMembers();
+        List<List<Item>> slicedMembers = new ArrayList<>(Math.max(0, toIndex - fromIndex));
+        for (int i = fromIndex; i < toIndex; i++) {
+            slicedMembers.add(originalMembers.get(i));
+        }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {
-        Item item;
+        Item item = null;
         try {
-            item = iterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+            item = LocalCursorUtils.materializeAtMostOne(iterator, context);
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one " + label + " argument.",
                     getMetadata()
             );
         }
 
-        if (!item.isNumeric()) {
+        if (item == null || !item.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; " + label + " argument to array:subarray must be numeric.",
                     getMetadata()
@@ -177,36 +154,6 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
             return item.castToIntegerValue();
         }
         return BigInteger.valueOf(item.castToIntValue());
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.startIterator.isOpen()) {
-            this.startIterator.close();
-        }
-        if (this.lengthIterator != null && this.lengthIterator.isOpen()) {
-            this.lengthIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

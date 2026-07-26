@@ -26,9 +26,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -38,8 +36,9 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -51,12 +50,9 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ArrayFilterFunctionIterator::new,
-            getMetadata()
+        return new ComputedLocalCursor<>(
+                () -> computeResult(context),
+                getMetadata()
         );
     }
 
@@ -65,8 +61,6 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator predicateIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
 
     public ArrayFilterFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -78,31 +72,21 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
         }
         this.arrayIterator = arguments.get(0);
         this.predicateIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
+    private Item computeResult(DynamicContext context) {
+        Item arrayItem = null;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:filter expects exactly one array argument.",
                     getMetadata()
             );
         }
-
+        if (arrayItem == null) {
+            return null;
+        }
         if (!arrayItem.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; argument to array:filter must be an array.",
@@ -112,7 +96,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
-        List<Item> predicateItems = this.predicateIterator.materialize(context);
+        List<Item> predicateItems = LocalCursorUtils.materialize(this.predicateIterator, context);
         if (predicateItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:filter must be exactly one item.",
@@ -143,12 +127,11 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : kept) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private boolean predicateHoldsForCallableItem(
@@ -170,7 +153,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
                 arguments,
                 functionItemContext
         );
-        List<Item> result = functionCall.materialize(context);
+        List<Item> result = LocalCursorUtils.materialize(functionCall, context);
         return booleanValueFromFilterResult(result);
     }
 
@@ -228,33 +211,6 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
             .metadata(getMetadata())
             .build();
         return new CommaExpressionIterator(childIterators, staticContext);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.predicateIterator.isOpen()) {
-            this.predicateIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

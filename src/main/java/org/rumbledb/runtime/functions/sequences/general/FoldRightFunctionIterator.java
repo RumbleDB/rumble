@@ -5,7 +5,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -13,8 +12,9 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -27,13 +27,7 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            FoldRightFunctionIterator::new,
-            getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
     }
 
     @Serial
@@ -42,9 +36,6 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator sequenceIterator;
     private final RuntimeIterator zeroIterator;
     private final RuntimeIterator functionIterator;
-
-    private List<Item> resultSequence;
-    private int resultIndex;
 
     public FoldRightFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -59,17 +50,10 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
         this.functionIterator = arguments.get(2);
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
-    }
-
-    private void initializeResult(DynamicContext context) {
-        List<Item> inputItems = this.sequenceIterator.materialize(context);
-        List<Item> accumulator = this.zeroIterator.materialize(context);
-        Item functionItem = this.functionIterator.materialize(context).get(0);
+    private List<Item> computeResult(DynamicContext context) {
+        List<Item> inputItems = LocalCursorUtils.materialize(this.sequenceIterator, context);
+        List<Item> accumulator = LocalCursorUtils.materialize(this.zeroIterator, context);
+        Item functionItem = LocalCursorUtils.materialize(this.functionIterator, context).get(0);
 
         ReusableFunctionCall reusableCall = null;
 
@@ -103,7 +87,7 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
                     reusableCall.currentItemArgument.setItemForReuse(inputItem);
                     reusableCall.accumulatorArgument.setItemForReuse(accumulator.get(0));
                 }
-                accumulator = reusableCall.functionCall.materialize(context);
+                accumulator = LocalCursorUtils.materialize(reusableCall.functionCall, context);
             } else {
                 accumulator = applyFunction(
                     functionItem,
@@ -114,7 +98,7 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
             }
         }
 
-        this.resultSequence = accumulator;
+        return accumulator;
     }
 
     private static final class ReusableFunctionCall {
@@ -168,30 +152,7 @@ public class FoldRightFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return functionCall.materialize(context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.resultSequence.get(this.resultIndex++);
-        if (this.resultIndex >= this.resultSequence.size()) {
-            this.hasNext = false;
-        }
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.resultSequence = null;
-        this.resultIndex = 0;
+        return LocalCursorUtils.materialize(functionCall, context);
     }
 
     @Override

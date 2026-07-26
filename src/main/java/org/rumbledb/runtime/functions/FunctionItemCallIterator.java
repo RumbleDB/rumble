@@ -32,7 +32,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -41,8 +40,9 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -62,11 +62,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     // calculated fields
     private boolean isPartialApplication;
     private boolean isTailOptimization;
-
-    // Only used for local execution.
-    private transient RuntimeIterator functionBodyIterator;
-
-    private transient Item nextResult;
 
     public FunctionItemCallIterator(
             Item functionItem,
@@ -88,8 +83,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
-        this.functionBodyIterator = null;
-
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
@@ -97,18 +90,52 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            this.functionArguments,
-            context,
-            this.staticContext,
-            (arguments, staticContext) -> new FunctionItemCallIterator(
-                    this.functionItem,
-                    arguments,
-                    staticContext,
-                    this.isTailOptimization
-            ),
-            getMetadata()
-        );
+        return new FunctionCallLocalCursor(this, context);
+    }
+
+    private static final class FunctionCallLocalCursor extends AbstractLocalCursor<Item> {
+        private final FunctionItemCallIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> body;
+
+        private FunctionCallLocalCursor(FunctionItemCallIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            RuntimeIterator bodyPlan;
+            DynamicContext bodyContext;
+            if (this.plan.isPartialApplication) {
+                bodyPlan = this.plan.generatePartiallyAppliedFunction(this.context);
+                bodyContext = this.context;
+            } else {
+                bodyPlan = this.plan.functionItem.getBodyIterator();
+                bodyContext = this.plan.createCallContext(this.context);
+            }
+            this.body = bodyPlan.createLocalCursor(bodyContext);
+            this.body.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.body.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.body.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.body != null) {
+                this.body.close();
+                this.body = null;
+            }
+        }
     }
 
     private DynamicContext createCallContext(DynamicContext context) {
@@ -204,27 +231,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    public void openLocal() {
-        DynamicContext callContext = this.currentDynamicContextForLocalExecution;
-        if (this.isPartialApplication) {
-            this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
-        } else {
-            callContext = createCallContext(callContext);
-            if (this.functionBodyIterator == null) {
-                // The previous body was discarded, or this is the first invocation at this call site.
-                this.functionBodyIterator = createFunctionBodyIterator();
-            }
-        }
-        try {
-            this.functionBodyIterator.open(callContext);
-            setNextResult();
-        } catch (RuntimeException exception) {
-            discardBody();
-            throw exception;
-        }
-    }
-
     /**
      * Partial application generates a new function:
      * 
@@ -265,7 +271,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 } else if (argIterator.isRDDOrDataFrame()) {
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
-                    localArgumentValues.put(argName, argIterator.materialize(context));
+                    localArgumentValues.put(argName, LocalCursorUtils.materialize(argIterator, context));
                 }
             }
         }
@@ -317,94 +323,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
             } else {
                 callContext.getVariableValues()
-                    .addVariableValue(argName, argIterator.materialize(context));
+                    .addVariableValue(argName, LocalCursorUtils.materialize(argIterator, context));
             }
-        }
-    }
-
-    /**
-     * Creates an execution instance without exposing the shared function-body prototype to mutation.
-     * FunctionItem uses its cached snapshot; other Item implementations retain the generic deep-copy fallback.
-     */
-    private RuntimeIterator createFunctionBodyIterator() {
-        if (this.functionItem instanceof FunctionItem concreteFunctionItem) {
-            return concreteFunctionItem.createBodyIterator();
-        }
-        return this.functionItem.getBodyIterator().deepCopy();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE
-                    + " in "
-                    + this.functionItem.getIdentifier().getName()
-                    + "  function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.nextResult = null;
-        this.hasNext = false;
-        // Preserve a normally exhausted body for reuse; discard an execution that is still active.
-        if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
-            discardBody();
-        }
-    }
-
-    private void setNextResult() {
-        try {
-            this.nextResult = null;
-            if (this.functionBodyIterator.hasNext()) {
-                this.nextResult = this.functionBodyIterator.next();
-            }
-
-            if (this.nextResult == null) {
-                // Reaching the end through normal iteration is the only path that can make a body reusable.
-                this.hasNext = false;
-                this.functionBodyIterator.close();
-                if (this.isPartialApplication || !canReuseBody()) {
-                    discardBody();
-                }
-            } else {
-                this.hasNext = true;
-            }
-        } catch (RuntimeException exception) {
-            discardBody();
-            throw exception;
-        }
-    }
-
-    /**
-     * Sequential and updating bodies can retain statement or mutation state even after normal exhaustion.
-     */
-    private boolean canReuseBody() {
-        return !this.staticContext.isSequential() && !this.staticContext.isUpdating();
-    }
-
-    /**
-     * Closes an active execution and removes it from this call site.
-     */
-    private void discardBody() {
-        RuntimeIterator iterator = this.functionBodyIterator;
-        try {
-            if (iterator != null && iterator.isOpen()) {
-                iterator.close();
-            }
-        } finally {
-            this.functionBodyIterator = null;
         }
     }
 
@@ -417,7 +337,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
+        RuntimeIterator bodyIterator = this.functionItem.getBodyIterator();
         return bodyIterator.getRDD(callContext);
     }
 
@@ -435,7 +355,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
 
         DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
+        RuntimeIterator bodyIterator = this.functionItem.getBodyIterator();
         return bodyIterator.getDataFrame(callContext);
     }
 
@@ -447,7 +367,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         DynamicContext callContext = createCallContext(context);
         DynamicContext contextForUpdates = new DynamicContext(callContext);
         contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
+        RuntimeIterator bodyIterator = this.functionItem.getBodyIterator();
         return bodyIterator.getPendingUpdateList(contextForUpdates);
     }
 }

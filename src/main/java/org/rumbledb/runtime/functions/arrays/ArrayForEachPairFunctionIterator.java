@@ -27,9 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -40,8 +38,9 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -52,13 +51,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ArrayForEachPairFunctionIterator::new,
-            getMetadata()
-        );
+        return new ComputedLocalCursor<>(() -> computeResult(context), getMetadata());
     }
 
     @Serial
@@ -67,9 +60,6 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator arrayIterator1;
     private final RuntimeIterator arrayIterator2;
     private final RuntimeIterator functionIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
 
     public ArrayForEachPairFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -82,29 +72,20 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator1 = arguments.get(0);
         this.arrayIterator2 = arguments.get(1);
         this.functionIterator = arguments.get(2);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private Item computeResult(DynamicContext context) {
         Item arrayItem1;
         try {
-            arrayItem1 = this.arrayIterator1.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem1 = LocalCursorUtils.materializeAtMostOne(this.arrayIterator1, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the first argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem1 == null) {
+            return null;
         }
 
         if (!arrayItem1.isArray()) {
@@ -116,15 +97,15 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         Item arrayItem2;
         try {
-            arrayItem2 = this.arrayIterator2.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
+            arrayItem2 = LocalCursorUtils.materializeAtMostOne(this.arrayIterator2, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the second argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem2 == null) {
+            return null;
         }
 
         if (!arrayItem2.isArray()) {
@@ -139,7 +120,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         int n = Math.min(members1.size(), members2.size());
 
-        List<Item> functionItems = this.functionIterator.materialize(context);
+        List<Item> functionItems = LocalCursorUtils.materialize(this.functionIterator, context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:for-each-pair must be a function item.",
@@ -170,12 +151,11 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             for (List<Item> member : resultMemberSequences) {
                 items.add(member.get(0));
             }
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createSequenceArrayItem(resultMemberSequences, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
@@ -229,37 +209,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return functionCall.materialize(context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator1.isOpen()) {
-            this.arrayIterator1.close();
-        }
-        if (this.arrayIterator2.isOpen()) {
-            this.arrayIterator2.close();
-        }
-        if (this.functionIterator.isOpen()) {
-            this.functionIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
+        return LocalCursorUtils.materialize(functionCall, context);
     }
 
     @Override

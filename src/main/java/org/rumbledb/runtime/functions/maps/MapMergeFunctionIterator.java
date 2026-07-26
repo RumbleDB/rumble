@@ -17,10 +17,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapSameKeyWrapper;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -68,14 +67,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> new MapMergeFunctionIterator(
-                        CursorRuntimeIteratorAdapter.adaptItems(this.getChildren()),
-                        getRuntimeStaticContext().toBuilder().executionMode(ExecutionMode.LOCAL).build()
-                ),
-                context,
-                getMetadata()
-        );
+        return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 
     private final RuntimeIterator mapsIterator;
@@ -112,7 +104,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         // 2. Resolve options and duplicates policy.
         DuplicatePolicy policy = DuplicatePolicy.USE_FIRST; // spec default
         if (this.optionsIterator != null) {
-            List<Item> optionsSeq = this.optionsIterator.materialize(context);
+            List<Item> optionsSeq = LocalCursorUtils.materialize(this.optionsIterator, context);
             if (optionsSeq.isEmpty()) {
                 // map-merge-026: second argument must not be empty -> XPTY0004.
                 throw new UnexpectedTypeException(
@@ -165,10 +157,10 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
-        this.mapsIterator.open(context);
-        try {
-            while (this.mapsIterator.hasNext()) {
-                Item mapItem = this.mapsIterator.next();
+        try (LocalCursor<Item> maps = this.mapsIterator.createLocalCursor(context)) {
+            maps.open();
+            while (maps.hasNext()) {
+                Item mapItem = maps.next();
                 if (!mapItem.isMap()) {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].",
@@ -234,8 +226,6 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
                     }
                 }
             }
-        } finally {
-            this.mapsIterator.close();
         }
 
         // Empty input -> empty map.

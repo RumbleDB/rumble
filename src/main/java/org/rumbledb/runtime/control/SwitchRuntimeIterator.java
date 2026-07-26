@@ -24,19 +24,17 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.CursorRuntimeIteratorAdapter;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -48,7 +46,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
     private final RuntimeIterator defaultReturn;
-    private RuntimeIterator matchingIterator = null;
 
     public SwitchRuntimeIterator(
             RuntimeIterator test,
@@ -70,56 +67,49 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new RecreatedRuntimeIteratorCursor(
-                () -> {
-                    Map<RuntimeIterator, RuntimeIterator> adaptedCases = new LinkedHashMap<>();
-                    this.cases.forEach(
-                        (key, value) -> adaptedCases.put(
-                            CursorRuntimeIteratorAdapter.adapt(key),
-                            CursorRuntimeIteratorAdapter.adapt(value)
-                        )
-                    );
-                    return new SwitchRuntimeIterator(
-                            CursorRuntimeIteratorAdapter.adapt(this.testField),
-                            adaptedCases,
-                            CursorRuntimeIteratorAdapter.adapt(this.defaultReturn),
-                            RecreatedRuntimeIteratorCursor.localStaticContext(this.staticContext)
-                    );
-                },
-                context,
-                getMetadata()
-        );
+        return new SwitchLocalCursor(this, context);
     }
 
-    @Override
-    public void openLocal() {
-        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.matchingIterator.hasNext();
-    }
+    private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
+        private final SwitchRuntimeIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> selected;
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item nextItem = this.matchingIterator.next();
-            this.hasNext = this.matchingIterator.hasNext();
-            return nextItem;
+        private SwitchLocalCursor(SwitchRuntimeIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in switch statement",
-                getMetadata()
-        );
-    }
 
-    @Override
-    public void closeLocal() {
-        this.matchingIterator.close();
+        @Override
+        protected void openLocal() {
+            this.selected = this.plan.selectApplicableIterator(this.context).createLocalCursor(this.context);
+            this.selected.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.selected.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.selected.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.selected != null) {
+                this.selected.close();
+                this.selected = null;
+            }
+        }
     }
 
     private RuntimeIterator selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        Item testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
+        Item testValue = LocalCursorUtils.materializeFirst(this.testField, dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -136,7 +126,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : this.cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(dynamicContext);
+            Item caseValue = LocalCursorUtils.materializeFirst(caseKey, dynamicContext);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
@@ -172,11 +162,6 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         return this.defaultReturn;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
     }
 
     @Override

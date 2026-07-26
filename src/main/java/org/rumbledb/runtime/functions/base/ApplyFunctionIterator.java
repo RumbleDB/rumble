@@ -5,7 +5,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -16,8 +15,9 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -29,57 +29,53 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ApplyFunctionIterator::new,
-            getMetadata()
-        );
+        return new ApplyLocalCursor(this, context);
+    }
+
+    private static final class ApplyLocalCursor extends AbstractLocalCursor<Item> {
+        private final ApplyFunctionIterator plan;
+        private final DynamicContext context;
+        private LocalCursor<Item> delegate;
+
+        private ApplyLocalCursor(ApplyFunctionIterator plan, DynamicContext context) {
+            super(plan.getMetadata());
+            this.plan = plan;
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.delegate = this.plan.buildDelegate(this.context).createLocalCursor(this.context);
+            this.delegate.open();
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            return this.delegate.hasNext();
+        }
+
+        @Override
+        protected Item nextLocal() {
+            return this.delegate.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.delegate != null) {
+                this.delegate.close();
+                this.delegate = null;
+            }
+        }
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator delegate;
-    private Item nextResult;
 
     public ApplyFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-    }
-
-    @Override
-    protected void openLocal() {
-        this.delegate = buildDelegate(this.currentDynamicContextForLocalExecution);
-        this.delegate.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "in fn:apply",
-                    getMetadata()
-            );
-        }
-        Item result = this.nextResult;
-        setNextResult();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.delegate != null && this.delegate.isOpen()) {
-            this.delegate.close();
-        }
     }
 
     @Override
@@ -101,8 +97,8 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         Item functionItem;
         Item argumentsArray;
         try {
-            functionItem = this.getChild(0).materializeAtMostOneItemOrNull(context);
-            argumentsArray = this.getChild(1).materializeAtMostOneItemOrNull(context);
+            functionItem = LocalCursorUtils.materializeAtMostOne(this.getChild(0), context);
+            argumentsArray = LocalCursorUtils.materializeAtMostOne(this.getChild(1), context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",
@@ -164,16 +160,4 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         return new CommaExpressionIterator(sequenceItems, localItemStarContext);
     }
 
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.delegate.hasNext()) {
-            this.nextResult = this.delegate.next();
-        }
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.delegate.close();
-        } else {
-            this.hasNext = true;
-        }
-    }
 }

@@ -22,9 +22,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
@@ -34,7 +32,8 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
@@ -47,13 +46,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            ArrayFoldRightFunctionIterator::new,
-            getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
     }
 
     @Serial
@@ -62,9 +55,6 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator arrayIterator;
     private final RuntimeIterator zeroIterator;
     private final RuntimeIterator functionIterator;
-
-    private List<Item> resultSequence;
-    private int resultIndex;
 
     public ArrayFoldRightFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -77,29 +67,20 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
         this.arrayIterator = arguments.get(0);
         this.zeroIterator = arguments.get(1);
         this.functionIterator = arguments.get(2);
-        this.resultSequence = null;
-        this.resultIndex = 0;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.resultIndex = 0;
-        this.hasNext = this.resultSequence != null && !this.resultSequence.isEmpty();
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private List<Item> computeResult(DynamicContext context) {
         Item arrayItem;
         try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultSequence = null;
-            return;
+            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:fold-right expects exactly one array argument.",
                     getMetadata()
             );
+        }
+        if (arrayItem == null) {
+            return Collections.emptyList();
         }
 
         if (!arrayItem.isArray()) {
@@ -111,9 +92,9 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
-        List<Item> accumulator = this.zeroIterator.materialize(context);
+        List<Item> accumulator = LocalCursorUtils.materialize(this.zeroIterator, context);
 
-        List<Item> functionItems = this.functionIterator.materialize(context);
+        List<Item> functionItems = LocalCursorUtils.materialize(this.functionIterator, context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:fold-right must be a function item.",
@@ -134,7 +115,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
             accumulator = applyFunction(functionItem, memberSequence, accumulator, context);
         }
 
-        this.resultSequence = accumulator;
+        return accumulator;
     }
 
     private RuntimeIterator createSequenceIterator(List<Item> items) {
@@ -188,30 +169,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return functionCall.materialize(context);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.resultSequence.get(this.resultIndex++);
-        if (this.resultIndex >= this.resultSequence.size()) {
-            this.hasNext = false;
-        }
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.resultSequence = null;
-        this.resultIndex = 0;
+        return LocalCursorUtils.materialize(functionCall, context);
     }
 
     @Override

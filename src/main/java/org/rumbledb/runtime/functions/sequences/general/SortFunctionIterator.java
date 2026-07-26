@@ -6,7 +6,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -15,8 +14,9 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
@@ -36,13 +36,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            SortFunctionIterator::new,
-            getMetadata()
-        );
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
     }
 
     @Serial
@@ -51,9 +45,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     private final RuntimeIterator inputIterator;
     private final RuntimeIterator collationIterator;
     private final RuntimeIterator keyIterator;
-
-    private List<Item> sortedItems;
-    private int nextIndex;
 
     public SortFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -69,15 +60,8 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         this.keyIterator = n == 3 ? arguments.get(2) : null;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.nextIndex = 0;
-        this.hasNext = !this.sortedItems.isEmpty();
-    }
-
-    private void initializeResult(DynamicContext context) {
-        List<Item> inputItems = this.inputIterator.materialize(context);
+    private List<Item> computeResult(DynamicContext context) {
+        List<Item> inputItems = LocalCursorUtils.materialize(this.inputIterator, context);
         String collationUri = resolveCollationUri(context);
         SortKeyComparison.checkCollationSupported(collationUri, getMetadata());
 
@@ -103,17 +87,18 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         };
         rows.sort(comparator);
 
-        this.sortedItems = new ArrayList<>(rows.size());
+        List<Item> sortedItems = new ArrayList<>(rows.size());
         for (SortRow row : rows) {
-            this.sortedItems.add(row.item);
+            sortedItems.add(row.item);
         }
+        return sortedItems;
     }
 
     private String resolveCollationUri(DynamicContext context) {
         if (this.collationIterator == null) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
-        List<Item> collation = this.collationIterator.materialize(context);
+        List<Item> collation = LocalCursorUtils.materialize(this.collationIterator, context);
         if (collation.isEmpty()) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
@@ -130,7 +115,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (this.keyIterator == null) {
             return (item, ctx) -> fnDataKeySequence(item);
         }
-        List<Item> keySpec = this.keyIterator.materialize(context);
+        List<Item> keySpec = LocalCursorUtils.materialize(this.keyIterator, context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to fn:sort must be exactly one item.",
@@ -237,16 +222,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
-        iterator.open(context);
-        try {
-            List<Item> out = new ArrayList<>();
-            while (iterator.hasNext()) {
-                out.add(iterator.next());
-            }
-            return out;
-        } finally {
-            iterator.close();
-        }
+        return LocalCursorUtils.materialize(iterator, context);
     }
 
     private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
@@ -265,36 +241,6 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
             .executionMode(ExecutionMode.LOCAL)
             .metadata(getMetadata())
             .build();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.sortedItems.get(this.nextIndex++);
-        this.hasNext = this.nextIndex < this.sortedItems.size();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.inputIterator.isOpen()) {
-            this.inputIterator.close();
-        }
-        if (this.collationIterator != null && this.collationIterator.isOpen()) {
-            this.collationIterator.close();
-        }
-        if (this.keyIterator != null && this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.sortedItems = null;
-        this.nextIndex = 0;
     }
 
     @Override

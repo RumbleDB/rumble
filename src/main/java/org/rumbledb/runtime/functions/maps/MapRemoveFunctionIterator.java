@@ -9,9 +9,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -19,8 +17,9 @@ import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -33,12 +32,9 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            MapRemoveFunctionIterator::new,
-            getMetadata()
+        return new ComputedLocalCursor<>(
+                () -> computeResult(context),
+                getMetadata()
         );
     }
 
@@ -47,9 +43,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
 
     private final RuntimeIterator mapIterator;
     private final RuntimeIterator keysIterator;
-
-    private Item resultItem;
-    private boolean hasProducedResult;
 
     public MapRemoveFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,22 +54,13 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         }
         this.mapIterator = arguments.get(0);
         this.keysIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item mapItem;
+    private Item computeResult(DynamicContext context) {
+        Item mapItem = null;
         try {
-            mapItem = this.mapIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException | MoreThanOneItemException e) {
+            mapItem = LocalCursorUtils.materializeAtMostOne(this.mapIterator, context);
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "map:remove expects exactly one map argument [err:XPTY0004].",
                     getMetadata()
@@ -90,12 +74,10 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<Item> rawKeys = new ArrayList<>();
-        this.keysIterator.materialize(context, rawKeys);
+        List<Item> rawKeys = LocalCursorUtils.materialize(this.keysIterator, context);
 
         if (rawKeys.isEmpty()) {
-            this.resultItem = mapItem;
-            return;
+            return mapItem;
         }
 
         List<Item> keysToRemove = new ArrayList<>();
@@ -113,12 +95,10 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
         }
 
         if (keysToRemove.isEmpty()) {
-            this.resultItem = mapItem;
-            return;
+            return mapItem;
         }
         if (mapItem.getMutabilityLevel() == -1) {
-            this.resultItem = ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
-            return;
+            return ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
         }
         List<Item> mapKeys = mapItem.getItemKeys();
         List<List<Item>> mapValueSequences = mapItem.getSequenceValues();
@@ -151,15 +131,14 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             newKeyValuePairs.put(mapKey, seq);
         }
         if (allKeysString && allValuesSingletons) {
-            this.resultItem = ItemFactory.getInstance()
+            return ItemFactory.getInstance()
                 .createObjectItemOptimized(
                     newStringKeyValuePairs,
                     this.getRuntimeStaticContext().isQuerySideEffecting()
                 );
-        } else {
-            this.resultItem = ItemFactory.getInstance()
-                .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
         }
+        return ItemFactory.getInstance()
+            .createMapItem(newKeyValuePairs, getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
     private static boolean shouldRemoveKey(Item mapKey, List<Item> keysToRemove) {
@@ -169,33 +148,6 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return false;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.mapIterator.isOpen()) {
-            this.mapIterator.close();
-        }
-        if (this.keysIterator.isOpen()) {
-            this.keysIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

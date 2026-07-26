@@ -4,14 +4,14 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -22,19 +22,13 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            InnermostFunctionIterator::new,
-            getMetadata()
+        return new IteratorLocalCursor<>(
+                () -> computeResults(context).iterator(),
+                getMetadata()
         );
     }
 
     private static final long serialVersionUID = 1L;
-
-    private List<Item> results;
-    private int currentIndex;
 
     public InnermostFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -43,13 +37,8 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
         super(arguments, staticContext);
     }
 
-    @Override
-    protected void openLocal() {
-        computeResults();
-    }
-
-    private void computeResults() {
-        List<Item> nodes = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
+    private List<Item> computeResults(DynamicContext context) {
+        List<Item> nodes = LocalCursorUtils.materialize(this.getChild(0), context);
         for (Item node : nodes) {
             if (!node.isNode()) {
                 throw new UnexpectedTypeException("fn:innermost requires a sequence of nodes", getMetadata());
@@ -74,28 +63,7 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
             }
         }
         distinctResult.sort((a, b) -> a.getXmlDocumentPosition().compareTo(b.getXmlDocumentPosition()));
-        this.results = distinctResult;
-        this.currentIndex = 0;
-        this.hasNext = !this.results.isEmpty();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " fn:innermost", getMetadata());
-        }
-        Item result = this.results.get(this.currentIndex++);
-        this.hasNext = this.currentIndex < this.results.size();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
+        return distinctResult;
     }
 
     @Override

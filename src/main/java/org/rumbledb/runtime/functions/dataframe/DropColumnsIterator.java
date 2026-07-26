@@ -9,8 +9,9 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.RecreatedRuntimeIteratorCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -19,13 +20,7 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return RecreatedRuntimeIteratorCursor.fromArguments(
-            getChildren(),
-            context,
-            getRuntimeStaticContext(),
-            DropColumnsIterator::new,
-            getMetadata()
-        );
+        return new EmptyLocalCursor<>();
     }
 
     @Serial
@@ -41,29 +36,9 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-
-    }
-
-    @Override
-    public void closeLocal() {
-
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    public Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.getChild(0).getDataFrame(context);
-        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
+        List<Item> columnsToDropItems = LocalCursorUtils.materialize(this.getChild(1), context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",
