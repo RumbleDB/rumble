@@ -12,6 +12,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -26,10 +29,9 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private RuntimeIterator iterator;
-    private SequenceType sequenceType;
-
-    private ItemType itemType;
+    private final RuntimeIterator iterator;
+    private final SequenceType sequenceType;
+    private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimeIterator iterator,
@@ -60,12 +62,21 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(context);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new Cursor(context);
+    }
+
+    private Item evaluate(DynamicContext context) {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(context, getMetadata());
         }
         Item item = null;
         try {
-            item = this.iterator.materializeAtMostOneItemOrNull(context);
+            item = LocalCursorUtils.materializeAtMostOne(this.iterator, context);
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(context, getMetadata());
             }
@@ -94,6 +105,20 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
             item = checkTypePromotion(item);
         }
         return item;
+    }
+
+    private final class Cursor extends AtMostOneLocalCursor<Item> {
+
+        private final DynamicContext context;
+
+        private Cursor(DynamicContext context) {
+            this.context = context;
+        }
+
+        @Override
+        protected Item materializeFirstItemOrNull() {
+            return evaluate(this.context);
+        }
     }
 
     private Item checkTypePromotion(Item item) {

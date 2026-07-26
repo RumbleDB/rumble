@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.typing;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,6 +35,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -99,13 +99,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item evaluateLocal(DynamicContext dynamicContext) {
-        List<Item> items = new ArrayList<>();
-        try (LocalCursor<Item> childCursor = this.child.createLocalCursor(dynamicContext)) {
-            childCursor.open();
-            while (childCursor.hasNext()) {
-                items.add(childCursor.next());
-            }
-        }
+        List<Item> items = LocalCursorUtils.materialize(this.child, dynamicContext);
 
         if (this.sequenceType.isEmptySequence()) {
             return ItemFactory.getInstance().createBooleanItem(items.isEmpty());
