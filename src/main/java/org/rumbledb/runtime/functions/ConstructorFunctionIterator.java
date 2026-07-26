@@ -9,6 +9,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -34,12 +35,20 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return createCastIterator().createLocalCursor(context);
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator castIterator = new CastIterator(
+        return createCastIterator().materializeFirstItemOrNull(dynamicContext);
+    }
+
+    private RuntimeIterator createCastIterator() {
+        return new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
                 this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
         );
-        return castIterator.materializeFirstItemOrNull(dynamicContext);
     }
 }

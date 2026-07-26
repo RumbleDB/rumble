@@ -7,6 +7,8 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.io.Serial;
@@ -23,19 +25,26 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
 
-        Item languageItem = this.getChildren().size() > 2
-            ? this.getChild(2).materializeFirstItemOrNull(context)
-            : null;
-        Item calendarItem = this.getChildren().size() > 3
-            ? this.getChild(3).materializeFirstItemOrNull(context)
-            : null;
-        Item placeItem = this.getChildren().size() > 4
-            ? this.getChild(4).materializeFirstItemOrNull(context)
-            : null;
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item valueItem = arguments.get(0);
+        Item pictureItem = arguments.get(1);
+        Item languageItem = arguments.size() > 2 ? arguments.get(2) : null;
+        Item calendarItem = arguments.size() > 3 ? arguments.get(3) : null;
+        Item placeItem = arguments.size() > 4 ? arguments.get(4) : null;
 
         // If $value is the empty sequence, the functions return the empty sequence
         if (valueItem == null) {

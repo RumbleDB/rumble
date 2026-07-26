@@ -20,6 +20,7 @@ package org.rumbledb.runtime.primary;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -30,6 +31,9 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 /**
@@ -56,12 +60,9 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private static Item atomizeSingleMapKey(
-            RuntimeIterator keyIterator,
-            DynamicContext dynamicContext,
+            List<Item> keySequence,
             org.rumbledb.exceptions.ExceptionMetadata metadata
     ) {
-        List<Item> keySequence = new ArrayList<>();
-        keyIterator.materialize(dynamicContext, keySequence);
         List<Item> atomized = new ArrayList<>();
         for (Item item : keySequence) {
             atomized.addAll(item.atomizedValue());
@@ -83,17 +84,27 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(iterator -> LocalCursorUtils.materialize(iterator, context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return evaluate(iterator -> iterator.materialize(dynamicContext));
+    }
+
+    private Item evaluate(Function<RuntimeIterator, List<Item>> materialize) {
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
         for (int i = 0; i < this.keys.size(); i++) {
-            Item key = atomizeSingleMapKey(this.keys.get(i), dynamicContext, getMetadata());
+            Item key = atomizeSingleMapKey(materialize.apply(this.keys.get(i)), getMetadata());
             mapKeys.add(key);
-            RuntimeIterator valueIterator = this.values.get(i);
-            List<Item> valueSeq = new ArrayList<>();
-            valueIterator.materialize(dynamicContext, valueSeq);
+            List<Item> valueSeq = materialize.apply(this.values.get(i));
             if (!key.isString()) {
                 allKeysString = false;
             }
@@ -102,7 +113,6 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             }
             valueSequences.add(valueSeq);
         }
-        this.hasNext = false;
         if (allKeysString && allValuesSingletons) {
             return ItemFactory.getInstance()
                 .createObjectItem(

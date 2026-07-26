@@ -25,6 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -46,11 +48,18 @@ public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalR
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new SingletonLocalCursor<>(createComment());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createComment();
+    }
+
+    private Item createComment() {
         // The DirCommentContents of a comment must not contain two consecutive hyphens
         // or end with a hyphen. These rules are syntactically enforced by the grammar.
-        this.hasNext = false;
         return ItemFactory.getInstance().createXmlCommentNode(this.content);
     }
 }
-

@@ -25,6 +25,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -46,8 +48,28 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(
+            this.getChildren(),
+            context,
+            arguments -> evaluate(arguments, context),
+            getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            ),
+            context
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments, DynamicContext context) {
+        Item nameItem = arguments.get(0);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
                     "function-lookup: first argument must be xs:QName",
@@ -56,7 +78,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
         Name fnName = nameItem.getQNameValue();
 
-        Item arityItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item arityItem = arguments.get(1);
         if (arityItem == null) {
             throw new UnexpectedTypeException(
                     "function-lookup: second argument must be xs:integer",

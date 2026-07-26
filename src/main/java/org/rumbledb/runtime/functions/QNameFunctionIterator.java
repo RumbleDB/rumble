@@ -25,6 +25,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import java.io.Serial;
@@ -46,11 +48,25 @@ public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
+        return evaluate(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            )
+        );
+    }
+
+    private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
+        Item uriItem = arguments.get(0);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 
-        Item lexicalItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item lexicalItem = arguments.get(1);
         if (lexicalItem == null) {
             throw new UnexpectedTypeException(
                     "fn:QName: second argument must be xs:string (got empty sequence).",

@@ -26,6 +26,8 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 
@@ -42,6 +44,11 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
     ) {
         super(null, staticContext);
         this.functionIdentifier = functionIdentifier;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 
     @Override

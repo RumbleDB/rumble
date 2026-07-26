@@ -25,6 +25,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 
 import java.io.Serial;
 
@@ -55,9 +57,16 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new SingletonLocalCursor<>(createTextNode());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        // Create and return the element item
-        this.hasNext = false;
+        return createTextNode();
+    }
+
+    private Item createTextNode() {
         return ItemFactory.getInstance()
             .createXmlTextNode(
                 this.content

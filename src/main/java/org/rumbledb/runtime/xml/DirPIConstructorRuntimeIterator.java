@@ -27,6 +27,9 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionContentException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -59,7 +62,27 @@ public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> createProcessingInstruction(
+                    this.contentIterator == null
+                        ? List.of()
+                        : LocalCursorUtils.materialize(this.contentIterator, context)
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return createProcessingInstruction(
+            this.contentIterator == null
+                ? List.of()
+                : this.contentIterator.materialize(dynamicContext)
+        );
+    }
+
+    private Item createProcessingInstruction(List<Item> materialized) {
         // "The resulting NCName is then used as the target property of the newly constructed processing instruction
         // node. However, a dynamic error is raised if the NCName is equal to "XML" (in any combination of upper and
         // lower case) [err:XQDY0064]."
@@ -72,10 +95,6 @@ public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
         // "Atomization is applied to the value of the content expression, converting it to a sequence of atomic values.
         // (If the content expression is absent, the result of this step is an empty sequence.)"
-        List<Item> materialized = this.contentIterator != null
-            ? this.contentIterator.materialize(dynamicContext)
-            : Collections.emptyList();
-
         // "If the result of atomization is an empty sequence, it is replaced by a zero-length string. Otherwise, each
         // atomic value in the atomized sequence is cast into a string. If any of the resulting strings contains the
         // string "?>", a dynamic error [err:XQDY0026] is raised."
@@ -102,7 +121,6 @@ public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIt
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
 
-        this.hasNext = false;
         return ItemFactory.getInstance()
             .createXmlProcessingInstructionNode(
                 this.target,
@@ -118,4 +136,3 @@ public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIt
         return value.substring(index);
     }
 }
-

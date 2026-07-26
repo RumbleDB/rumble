@@ -32,6 +32,9 @@ import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -62,15 +65,31 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> {
+                    validateCollation(
+                        this.getChildren().size() == 3
+                            ? LocalCursorUtils.materializeFirst(this.getChild(2), context)
+                            : null
+                    );
+                    List<Item> items1 = LocalCursorUtils.materialize(this.getChild(0), context);
+                    List<Item> items2 = LocalCursorUtils.materialize(this.getChild(1), context);
+                    return booleanItem(checkDeepEqual(items1, items2));
+                },
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator sequenceIterator1 = this.getChild(0);
         RuntimeIterator sequenceIterator2 = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+        validateCollation(
+            this.getChildren().size() == 3
+                ? this.getChild(2).materializeFirstItemOrNull(context)
+                : null
+        );
 
         if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
@@ -79,7 +98,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
                     new SameElementsAndLengthClosure();
                 JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
-                return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+                return booleanItem(differences.isEmpty());
             } else {
                 JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
                 JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
@@ -89,14 +108,27 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
                     tuple -> !tuple._2()._1().equals(tuple._2()._2())
                 );
-                return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
+                return booleanItem(rddFiltered.isEmpty());
             }
         }
         List<Item> items1 = sequenceIterator1.materialize(context);
         List<Item> items2 = sequenceIterator2.materialize(context);
 
-        boolean res = checkDeepEqual(items1, items2);
-        return ItemFactory.getInstance().createBooleanItem(res);
+        return booleanItem(checkDeepEqual(items1, items2));
+    }
+
+    private void validateCollation(Item collationItem) {
+        if (
+            collationItem != null
+                && !collationItem.getStringValue()
+                    .equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")
+        ) {
+            throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+        }
+    }
+
+    private static Item booleanItem(boolean value) {
+        return ItemFactory.getInstance().createBooleanItem(value);
     }
 
     /**

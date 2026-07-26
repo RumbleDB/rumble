@@ -23,6 +23,7 @@ package org.rumbledb.runtime.primary;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -36,6 +37,9 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -77,32 +81,36 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(iterator -> LocalCursorUtils.materialize(iterator, context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return evaluate(iterator -> iterator.materialize(dynamicContext));
+    }
+
+    private Item evaluate(Function<RuntimeIterator, List<Item>> materialize) {
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
             for (RuntimeIterator iterator : this.getChildren()) {
-                iterator.open(dynamicContext);
-                while (iterator.hasNext()) {
-                    ObjectItem item = (ObjectItem) iterator.next();
+                for (Item materializedItem : materialize.apply(iterator)) {
+                    ObjectItem item = (ObjectItem) materializedItem;
                     keys.addAll(item.getStringKeys());
                     values.addAll(item.getItemValues());
                 }
-                iterator.close();
             }
-            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
 
         } else {
 
             for (RuntimeIterator valueIterator : this.values) {
-                List<Item> currentResults = new ArrayList<>();
-                valueIterator.open(dynamicContext);
-                while (valueIterator.hasNext()) {
-                    currentResults.add(valueIterator.next());
-                }
-                valueIterator.close();
+                List<Item> currentResults = materialize.apply(valueIterator);
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
                     values.add(
@@ -117,11 +125,11 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
 
             for (RuntimeIterator keyIterator : this.keys) {
-                keyIterator.open(dynamicContext);
-                if (!keyIterator.hasNext()) {
+                List<Item> keyItems = materialize.apply(keyIterator);
+                if (keyItems.isEmpty()) {
                     throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                 }
-                Item key = keyIterator.next();
+                Item key = keyItems.get(0);
                 if (!key.isString() && !key.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                     throw new UnexpectedTypeException(
                             "Key provided for object creation must be of type String",
@@ -129,15 +137,13 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     );
                 }
                 keys.add(key.getStringValue());
-                if (keyIterator.hasNext()) {
+                if (keyItems.size() > 1) {
                     throw new IteratorFlowException(
                             "A key cannot be a sequence of more than one item",
                             getMetadata()
                     );
                 }
-                keyIterator.close();
             }
-            this.hasNext = false;
             return ItemFactory.getInstance()
                 .createObjectItem(keys, values, getMetadata(), this.mutable);
         }

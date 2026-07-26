@@ -8,6 +8,9 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -21,8 +24,41 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> raiseError(
+                    ComputedLocalCursor.arguments(
+                        this.getChildren().size(),
+                        index -> index == 2
+                            ? null
+                            : LocalCursorUtils.materializeFirst(this.getChild(index), context)
+                    ),
+                    this.getChildren().size() == 3
+                        ? () -> LocalCursorUtils.materialize(this.getChild(2), context)
+                        : List::of
+                ),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().isEmpty() || this.getChild(0).materializeFirstItemOrNull(context) == null) {
+        return raiseError(
+            ComputedLocalCursor.arguments(
+                this.getChildren().size(),
+                index -> this.getChild(index).materializeFirstItemOrNull(context)
+            ),
+            this.getChildren().size() == 3
+                ? () -> this.getChild(2).materialize(context)
+                : List::of
+        );
+    }
+
+    private Item raiseError(
+            ComputedLocalCursor.Arguments<Item> arguments,
+            java.util.function.Supplier<List<Item>> errorValue
+    ) {
+        if (arguments.size() == 0 || arguments.get(0) == null) {
             // No argument case.
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
@@ -31,26 +67,28 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Name errorCode = this.getChild(0).materializeFirstItemOrNull(context).getQNameValue();
+        Name errorCode = arguments.get(0).getQNameValue();
 
-        if (this.getChildren().size() == 1) {
+        if (arguments.size() == 1) {
             // Error code argument case.
             throw new RumbleException(
                     "An error has been raised without an error description.",
                     new ErrorCode(errorCode),
                     this.getMetadata()
             );
-        } else if (this.getChildren().size() == 2) {
+        } else if (arguments.size() == 2) {
             // Error code and description arguments case.
-            String description = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+            String description = arguments.get(1).getStringValue();
             throw new RumbleException(description, new ErrorCode(errorCode), this.getMetadata());
         } else {
             // Error code, description, and object case.
-            String description = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
-            List<Item> value = this.getChild(2).materialize(context);
-            String message = description;
-
-            throw new RumbleException(message, new ErrorCode(errorCode), this.getMetadata(), value);
+            String description = arguments.get(1).getStringValue();
+            throw new RumbleException(
+                    description,
+                    new ErrorCode(errorCode),
+                    this.getMetadata(),
+                    errorValue.get()
+            );
         }
     }
 }

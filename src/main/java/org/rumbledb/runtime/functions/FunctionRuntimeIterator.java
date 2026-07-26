@@ -27,6 +27,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -53,6 +55,11 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
     }
 
     @Override

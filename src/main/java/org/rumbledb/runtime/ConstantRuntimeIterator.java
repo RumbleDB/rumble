@@ -23,6 +23,8 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 
@@ -43,6 +45,12 @@ public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     // Only for reuse as a cached argument iterator; call only while closed.
     public void setItemForReuse(Item item) {
         this.item = item;
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        Item value = this.item;
+        return new ComputedLocalCursor<>(() -> value, getMetadata());
     }
 
     @Override

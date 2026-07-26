@@ -6,6 +6,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -19,14 +22,25 @@ public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(LocalCursorUtils.materialize(this.getChild(0), context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> materializedItems = this.getChild(0).materialize(context);
-        if (materializedItems == null || materializedItems.isEmpty()) {
+        return evaluate(this.getChild(0).materialize(context));
+    }
+
+    private Item evaluate(List<Item> items) {
+        if (items.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        if (materializedItems.size() > 1) {
+        if (items.size() > 1) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        return ItemFactory.getInstance().createBooleanItem(materializedItems.get(0).isNull());
+        return ItemFactory.getInstance().createBooleanItem(items.get(0).isNull());
     }
 }

@@ -23,6 +23,7 @@ package org.rumbledb.runtime.primary;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,6 +32,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -71,14 +75,26 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> evaluate(index -> LocalCursorUtils.materialize(this.getChild(index), context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        return evaluate(index -> this.getChild(index).materialize(dynamicContext));
+    }
+
+    private Item evaluate(IntFunction<List<Item>> materializeChild) {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
-            for (RuntimeIterator child : this.getChildren()) {
-                List<Item> member = child.materialize(dynamicContext);
+            for (int i = 0; i < this.getChildren().size(); i++) {
+                List<Item> member = materializeChild.apply(i);
                 if (allSingleton && member.size() != 1) {
                     allSingleton = false;
                 }
@@ -97,8 +113,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         List<Item> result = new ArrayList<>();
-        for (RuntimeIterator child : this.getChildren()) {
-            result.addAll(child.materialize(dynamicContext));
+        for (int i = 0; i < this.getChildren().size(); i++) {
+            result.addAll(materializeChild.apply(i));
         }
         return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }

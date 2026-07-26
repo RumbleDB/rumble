@@ -29,6 +29,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -50,35 +53,21 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(
+                () -> accumulate(LocalCursorUtils.materialize(this.getChild(0), context)),
+                getMetadata()
+        );
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator iterator = this.getChild(0);
 
         if (!iterator.isDataFrame()) {
             if (this.hasNext) {
-                List<Item> items = iterator.materialize(context);
-                LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-                for (Item item : items) {
-                    // ignore non-object items
-                    if (item.isObject()) {
-                        for (String key : item.getStringKeys()) {
-                            Item value = item.getItemByKey(key);
-                            if (!keyValuePairs.containsKey(key)) {
-                                List<Item> valueList = new ArrayList<>();
-                                valueList.add(value);
-                                keyValuePairs.put(key, valueList);
-                            }
-                            // store values for key collisions in a list
-                            else {
-                                keyValuePairs.get(key).add(value);
-                            }
-                        }
-                    }
-                }
-
-                Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
-
                 this.hasNext = false;
-                return result;
+                return accumulate(iterator.materialize(context));
             }
         }
 
@@ -94,6 +83,19 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         return result;
 
 
+    }
+
+    private Item accumulate(List<Item> items) {
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        for (Item item : items) {
+            if (item.isObject()) {
+                for (String key : item.getStringKeys()) {
+                    keyValuePairs.computeIfAbsent(key, ignored -> new ArrayList<>())
+                        .add(item.getItemByKey(key));
+                }
+            }
+        }
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
 
 }

@@ -6,6 +6,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -23,9 +25,17 @@ public class TimeInMillis extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(this::currentTime, getMetadata());
+    }
+
+    @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        long time = System.currentTimeMillis();
-        return ItemFactory.getInstance().createLongItem(time);
+        return currentTime();
+    }
+
+    private Item currentTime() {
+        return ItemFactory.getInstance().createLongItem(System.currentTimeMillis());
     }
 
 }
