@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -38,19 +40,38 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final RuntimeIterator yIterator;
+    private final RuntimeIterator xIterator;
+
     public ATan2FunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.yIterator = arguments.get(0);
+        this.xIterator = arguments.get(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return BinaryMappingLocalCursor.eager(
+            this.yIterator,
+            this.xIterator,
+            context,
+            ATan2FunctionIterator::evaluate
+        );
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item valuey = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
-        Item valuex = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
-        double y = valuey.getDoubleValue();
-        double x = valuex.getDoubleValue();
+        Item y = this.yIterator.materializeFirstItemOrNull(dynamicContext);
+        Item x = this.xIterator.materializeFirstItemOrNull(dynamicContext);
+        return evaluate(y, x);
+    }
+
+    private static Item evaluate(Item yItem, Item xItem) {
+        double y = yItem.getDoubleValue();
+        double x = xItem.getDoubleValue();
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
@@ -59,11 +80,11 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext yQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext yQuery = this.yIterator.generateNativeQuery(nativeClauseContext);
         if (yQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext xQuery = this.getChild(1)
+        NativeClauseContext xQuery = this.xIterator
             .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
         if (xQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;

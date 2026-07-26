@@ -26,6 +26,8 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -34,42 +36,44 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private String input1;
-    private String input2;
-    private Item nextResult;
+
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public CodepointEqualFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.leftIterator = arguments.get(0);
+        this.rightIterator = arguments.get(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        return BinaryMappingLocalCursor.eager(
+            this.leftIterator,
+            this.rightIterator,
+            context,
+            CodepointEqualFunctionIterator::evaluate
+        );
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        this.input1 = null;
-        this.input2 = null;
-        setNextResult(context);
-        Item result = this.nextResult;
-        return result;
+        Item left = this.leftIterator.materializeFirstItemOrNull(context);
+        if (left == null) {
+            return null;
+        }
+        Item right = this.rightIterator.materializeFirstItemOrNull(context);
+        if (right == null) {
+            return null;
+        }
+        return evaluate(left, right);
     }
 
-    public void setNextResult(DynamicContext context) {
-        if (this.input1 == null || this.input2 == null) {
-            Item operandOneItem = this.getChild(0)
-                .materializeFirstItemOrNull(context);
-            Item operandTwoItem = this.getChild(1)
-                .materializeFirstItemOrNull(context);
-            if (operandOneItem == null || operandTwoItem == null) {
-                this.hasNext = false;
-                return;
-            }
-            this.hasNext = true;
-            this.input1 = operandOneItem.getStringValue();
-            this.input2 = operandTwoItem.getStringValue();
-            this.nextResult = ItemFactory.getInstance().createBooleanItem(this.input1.equals(this.input2));
-        } else {
-            this.hasNext = false;
-        }
+    private static Item evaluate(Item left, Item right) {
+        return ItemFactory.getInstance()
+            .createBooleanItem(left.getStringValue().equals(right.getStringValue()));
     }
 }

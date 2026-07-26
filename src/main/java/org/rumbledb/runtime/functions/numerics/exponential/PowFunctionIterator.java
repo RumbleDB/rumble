@@ -23,10 +23,13 @@ package org.rumbledb.runtime.functions.numerics.exponential;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
+import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -40,24 +43,43 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final RuntimeIterator baseIterator;
+    private final RuntimeIterator exponentIterator;
+
     public PowFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
+        this.baseIterator = arguments.get(0);
+        this.exponentIterator = arguments.get(1);
+    }
+
+    @Override
+    public LocalCursor<Item> createLocalCursor(DynamicContext context) {
+        ExceptionMetadata metadata = getMetadata();
+        return BinaryMappingLocalCursor.shortCircuiting(
+            this.baseIterator,
+            this.exponentIterator,
+            context,
+            (base, exponent) -> evaluate(base, exponent, metadata)
+        );
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item base = this.getChild(0).materializeFirstItemOrNull(context);
+        Item base = this.baseIterator.materializeFirstItemOrNull(context);
         if (base == null) {
             return null;
         }
-        Item exponent = this.getChild(1)
-            .materializeFirstItemOrNull(context);
+        Item exponent = this.exponentIterator.materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
         }
+        return evaluate(base, exponent, getMetadata());
+    }
+
+    private static Item evaluate(Item base, Item exponent, ExceptionMetadata metadata) {
         try {
             double baseDouble = base.castToDoubleValue();
             double exponentDouble = exponent.castToDoubleValue();
@@ -75,18 +97,17 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance()
                 .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
         } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), metadata);
         }
-
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext baseQuery = this.baseIterator.generateNativeQuery(nativeClauseContext);
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = this.getChild(1)
+        NativeClauseContext exponentQuery = this.exponentIterator
             .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
