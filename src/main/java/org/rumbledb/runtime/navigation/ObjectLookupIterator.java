@@ -54,7 +54,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -94,7 +93,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 .get(0)
                 .getStringValue();
         } else {
-            key = requireLookupKey(LocalCursorUtils.materialize(this.getChild(1), context));
+            key = requireLookupKey(this.getChild(1).materialize(context));
         }
         return new FlatMappingLocalCursor<>(
                 this.iterator,

@@ -34,7 +34,6 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -65,7 +64,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ResourceLocalCursor<>(
                 () -> {
-                    Item path = LocalCursorUtils.materializeFirst(this.getChild(0), context);
+                    Item path = this.getChild(0).materializeFirstOrNull(context);
                     try {
                         URI uri = FileSystemUtil.resolveURI(
                             this.staticContext.getStaticURI(),

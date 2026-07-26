@@ -30,7 +30,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -85,7 +84,7 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
         @Override
         protected Item materializeFirstItemOrNull() {
             try {
-                return LocalCursorUtils.materializeAtMostOne(this.childPlan, this.context);
+                return this.childPlan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {
                 throw new SequenceExceptionZeroOrOne(
                         "fn:zero-or-one() called with a sequence containing more than one item",

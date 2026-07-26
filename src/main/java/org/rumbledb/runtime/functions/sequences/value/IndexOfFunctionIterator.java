@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
@@ -183,12 +182,12 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             if (this.collationPlan != null) {
-                String collation = LocalCursorUtils.materializeFirst(this.collationPlan, this.context).getStringValue();
+                String collation = this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
                 if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                     throw new UnsupportedCollationException("Wrong collation parameter", this.metadata);
                 }
             }
-            this.search = LocalCursorUtils.materializeFirst(this.searchPlan, this.context);
+            this.search = this.searchPlan.materializeFirstOrNull(this.context);
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);
             this.index = 0;
             advance();

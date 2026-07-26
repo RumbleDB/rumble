@@ -19,7 +19,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -59,7 +58,7 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item mapItem = null;
         try {
-            mapItem = LocalCursorUtils.materializeAtMostOne(this.mapIterator, context);
+            mapItem = this.mapIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "map:remove expects exactly one map argument [err:XPTY0004].",
@@ -74,7 +73,7 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<Item> rawKeys = LocalCursorUtils.materialize(this.keysIterator, context);
+        List<Item> rawKeys = this.keysIterator.materialize(context);
 
         if (rawKeys.isEmpty()) {
             return mapItem;

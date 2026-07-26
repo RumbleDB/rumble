@@ -27,7 +27,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -76,7 +75,7 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return LocalCursorUtils.materializeFirst(this.childPlan, this.context);
+            return this.childPlan.materializeFirstOrNull(this.context);
         }
     }
 }

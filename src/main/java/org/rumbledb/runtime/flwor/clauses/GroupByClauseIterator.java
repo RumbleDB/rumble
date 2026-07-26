@@ -41,7 +41,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -126,7 +125,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         }
                         Item key;
                         try {
-                            key = LocalCursorUtils.materializeAtMostOne(keyExpression, tupleContext);
+                            key = keyExpression.materializeAtMostOne(tupleContext);
                         } catch (MoreThanOneItemException e) {
                             throw new UnexpectedTypeException(
                                     "Keys in a group-by clause must be at most one item.",

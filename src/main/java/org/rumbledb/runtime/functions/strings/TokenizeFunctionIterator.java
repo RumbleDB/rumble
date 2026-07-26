@@ -31,7 +31,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.Serial;
@@ -176,7 +175,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
         @Override
         protected void openLocal() {
-            Item inputItem = LocalCursorUtils.materializeFirst(this.arguments.get(0), this.context);
+            Item inputItem = this.arguments.get(0).materializeFirstOrNull(this.context);
             if (inputItem == null) {
                 this.results = new String[0];
                 return;
@@ -186,7 +185,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             if (this.arguments.size() > 1) {
                 separator = materializeSeparator();
                 if (this.arguments.size() == 3) {
-                    Item flagsItem = LocalCursorUtils.materializeFirst(this.arguments.get(2), this.context);
+                    Item flagsItem = this.arguments.get(2).materializeFirstOrNull(this.context);
                     flags = flagsItem == null ? null : flagsItem.getStringValue();
                 }
             }

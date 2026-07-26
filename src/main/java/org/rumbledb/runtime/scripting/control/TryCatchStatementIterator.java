@@ -13,7 +13,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.Map;
@@ -43,7 +42,7 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
         return new ComputedLocalCursor<>(
                 () -> execute(
                     context,
-                    (iterator, childContext) -> LocalCursorUtils.materialize(iterator, childContext)
+                    (iterator, childContext) -> iterator.materialize(childContext)
                 ),
                 getMetadata()
         );

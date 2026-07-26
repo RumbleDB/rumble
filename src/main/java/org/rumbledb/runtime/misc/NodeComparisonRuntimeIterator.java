@@ -34,7 +34,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -208,7 +207,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
         private Item materializeOperand(RuntimePlan<Item> plan, boolean isLeftOperand) {
             try {
-                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+                return plan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         (isLeftOperand ? "Left" : "Right")

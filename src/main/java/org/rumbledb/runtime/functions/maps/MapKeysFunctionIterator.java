@@ -28,7 +28,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -67,7 +66,7 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
-                () -> getKeys(LocalCursorUtils.materialize(this.mapIterator, context)).iterator(),
+                () -> getKeys(this.mapIterator.materialize(context)).iterator(),
                 getMetadata()
         );
     }

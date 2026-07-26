@@ -54,7 +54,7 @@ public final class ComputedLocalCursor<T> extends AtMostOneLocalCursor<T> {
                 () -> computation.apply(
                     arguments(
                         plans.size(),
-                        index -> LocalCursorUtils.materializeFirst(plans.get(index), context)
+                        index -> plans.get(index).materializeFirstOrNull(context)
                     )
                 ),
                 metadata

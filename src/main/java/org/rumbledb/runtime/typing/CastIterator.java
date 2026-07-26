@@ -14,7 +14,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
@@ -98,7 +97,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
         Item item;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(child, dynamicContext);
+            item = child.materializeAtMostOne(dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(dynamicContext, metadata);
             }

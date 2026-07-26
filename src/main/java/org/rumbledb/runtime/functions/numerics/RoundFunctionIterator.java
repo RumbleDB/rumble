@@ -30,7 +30,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -57,9 +56,9 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> evaluate(
-                    LocalCursorUtils.materializeFirst(this.getChild(0), context),
+                    this.getChild(0).materializeFirstOrNull(context),
                     () -> this.getChildren().size() > 1
-                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context).getIntValue()
+                        ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
                         : 0
                 ),
                 getMetadata()

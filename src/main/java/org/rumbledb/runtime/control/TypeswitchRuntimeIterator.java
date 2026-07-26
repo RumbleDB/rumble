@@ -9,7 +9,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
@@ -101,7 +100,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         private Match selectMatch() {
-            Item testValue = LocalCursorUtils.materializeFirst(this.testPlan, this.context);
+            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
             for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
                 if (doesTypeMatch(typeSwitchCase, testValue)) {
                     return new Match(typeSwitchCase, testValue);
@@ -122,7 +121,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     private Match selectMatch(DynamicContext context) {
-        Item testValue = LocalCursorUtils.materializeFirst(this.testField, context);
+        Item testValue = this.testField.materializeFirstOrNull(context);
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
             if (doesTypeMatch(typeSwitchCase, testValue)) {
                 return new Match(typeSwitchCase, testValue);

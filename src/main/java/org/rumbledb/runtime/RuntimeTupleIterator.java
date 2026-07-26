@@ -46,9 +46,10 @@ import java.util.Set;
 import java.util.TreeMap;
 
 public abstract class RuntimeTupleIterator
+        extends
+            RuntimePlan<FlworTuple>
         implements
-            RuntimeIteratorInterface<FlworTuple>,
-            RuntimePlan<FlworTuple> {
+            RuntimeIteratorInterface<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;

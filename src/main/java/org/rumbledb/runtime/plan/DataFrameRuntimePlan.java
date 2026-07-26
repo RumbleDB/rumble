@@ -7,7 +7,6 @@
 
 package org.rumbledb.runtime.plan;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
@@ -20,7 +19,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
  * execution layer.
  * </p>
  */
-public interface DataFrameRuntimePlan extends RuntimePlan<Item> {
+public interface DataFrameRuntimePlan {
 
     /**
      * Builds the DataFrame for one evaluation.

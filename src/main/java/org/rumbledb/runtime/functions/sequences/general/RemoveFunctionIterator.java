@@ -31,7 +31,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -158,7 +157,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            Item positionItem = LocalCursorUtils.materializeFirst(this.positionPlan, this.context);
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
             this.removePosition = positionItem.getIntValue();
             this.currentPosition = 1;
             this.sequenceCursor = this.sequencePlan.createLocalCursor(this.context);

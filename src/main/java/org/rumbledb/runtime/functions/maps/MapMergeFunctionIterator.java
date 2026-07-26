@@ -19,7 +19,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * W3C XPath/XQuery {@code map:merge}:
@@ -104,7 +103,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         // 2. Resolve options and duplicates policy.
         DuplicatePolicy policy = DuplicatePolicy.USE_FIRST; // spec default
         if (this.optionsIterator != null) {
-            List<Item> optionsSeq = LocalCursorUtils.materialize(this.optionsIterator, context);
+            List<Item> optionsSeq = this.optionsIterator.materialize(context);
             if (optionsSeq.isEmpty()) {
                 // map-merge-026: second argument must not be empty -> XPTY0004.
                 throw new UnexpectedTypeException(

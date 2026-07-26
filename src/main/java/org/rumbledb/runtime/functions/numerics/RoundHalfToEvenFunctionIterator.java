@@ -30,7 +30,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -55,9 +54,9 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> evaluate(
-                    LocalCursorUtils.materializeFirst(this.getChild(0), context),
+                    this.getChild(0).materializeFirstOrNull(context),
                     () -> this.getChildren().size() > 1
-                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context).getIntValue()
+                        ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
                         : 0
                 ),
                 getMetadata()

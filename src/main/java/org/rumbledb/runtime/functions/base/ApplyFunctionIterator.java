@@ -17,7 +17,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -100,8 +99,8 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator {
         Item functionItem;
         Item argumentsArray;
         try {
-            functionItem = LocalCursorUtils.materializeAtMostOne(functionPlan, context);
-            argumentsArray = LocalCursorUtils.materializeAtMostOne(argumentsPlan, context);
+            functionItem = functionPlan.materializeAtMostOne(context);
+            argumentsArray = argumentsPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:apply expects exactly one function item and exactly one array item.",

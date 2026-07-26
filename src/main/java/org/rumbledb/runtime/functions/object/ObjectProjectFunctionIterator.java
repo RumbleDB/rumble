@@ -33,7 +33,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -99,7 +98,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         }
 
         private List<Item> getProjectionKeys() {
-            List<Item> keys = LocalCursorUtils.materialize(this.keysPlan, this.context);
+            List<Item> keys = this.keysPlan.materialize(this.context);
             if (keys.isEmpty()) {
                 throw new InvalidSelectorException(
                         "Invalid Projection Key; Object projection can't be performed with zero keys: ",
@@ -137,7 +136,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> getProjectionKeys(DynamicContext context) {
-        List<Item> keys = LocalCursorUtils.materialize(this.getChild(1), context);
+        List<Item> keys = this.getChild(1).materialize(context);
         if (keys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",

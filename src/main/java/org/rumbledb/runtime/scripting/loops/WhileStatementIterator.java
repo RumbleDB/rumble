@@ -10,7 +10,6 @@ import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -40,7 +39,7 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
                 () -> {
                     while (EffectiveBooleanValue.evaluate(this.testConditionIterator, context)) {
                         try {
-                            LocalCursorUtils.materialize(this.bodyIterator, new DynamicContext(context));
+                            this.bodyIterator.materialize(new DynamicContext(context));
                         } catch (BreakStatementException exception) {
                             break;
                         } catch (ContinueStatementException ignored) {

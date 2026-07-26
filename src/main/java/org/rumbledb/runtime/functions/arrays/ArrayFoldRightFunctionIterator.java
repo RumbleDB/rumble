@@ -33,7 +33,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
@@ -72,7 +71,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
     private List<Item> computeResult(DynamicContext context) {
         Item arrayItem;
         try {
-            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:fold-right expects exactly one array argument.",
@@ -92,9 +91,9 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
-        List<Item> accumulator = LocalCursorUtils.materialize(this.zeroIterator, context);
+        List<Item> accumulator = this.zeroIterator.materialize(context);
 
-        List<Item> functionItems = LocalCursorUtils.materialize(this.functionIterator, context);
+        List<Item> functionItems = this.functionIterator.materialize(context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:fold-right must be a function item.",
@@ -169,7 +168,7 @@ public class ArrayFoldRightFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return LocalCursorUtils.materialize(functionCall, context);
+        return functionCall.materialize(context);
     }
 
     @Override

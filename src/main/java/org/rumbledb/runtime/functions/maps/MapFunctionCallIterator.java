@@ -28,7 +28,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -56,7 +55,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
             );
         }
         List<Item> atomized = new ArrayList<>();
-        for (Item item : LocalCursorUtils.materialize(this.keyIterator, context)) {
+        for (Item item : this.keyIterator.materialize(context)) {
             atomized.addAll(item.atomizedValue());
         }
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {

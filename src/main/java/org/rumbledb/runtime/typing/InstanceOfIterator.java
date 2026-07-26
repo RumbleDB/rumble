@@ -35,7 +35,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -109,7 +108,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             ExceptionMetadata metadata,
             DynamicContext dynamicContext
     ) {
-        List<Item> items = LocalCursorUtils.materialize(child, dynamicContext);
+        List<Item> items = child.materialize(dynamicContext);
 
         if (sequenceType.isEmptySequence()) {
             return ItemFactory.getInstance().createBooleanItem(items.isEmpty());

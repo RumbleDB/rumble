@@ -24,7 +24,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -213,7 +212,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
                     spec.staticContext.getMetadata()
             );
         }
-        List<Item> items = LocalCursorUtils.materialize(spec.sourcePlan, sourceContext);
+        List<Item> items = spec.sourcePlan.materialize(sourceContext);
         List<FlworTuple> results = new ArrayList<>();
         if (spec.windowType == WindowClause.WindowType.TUMBLING) {
             int start = 0;

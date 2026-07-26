@@ -7,7 +7,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
 import java.io.Serial;
@@ -48,7 +47,7 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        for (Item item : LocalCursorUtils.materialize(this.expression, this.dataFrameContext.getContext())) {
+        for (Item item : this.expression.materialize(this.dataFrameContext.getContext())) {
             this.results.add(toDFValue(item));
         }
 

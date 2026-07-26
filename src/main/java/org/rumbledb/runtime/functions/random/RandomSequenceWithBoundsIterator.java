@@ -31,10 +31,7 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
                 () -> createRandomNumberStream(
                     ComputedLocalCursor.arguments(
                         this.getChildren().size(),
-                        index -> org.rumbledb.runtime.cursor.LocalCursorUtils.materializeFirst(
-                            this.getChild(index),
-                            context
-                        )
+                        index -> this.getChild(index).materializeFirstOrNull(context)
                     )
                 ),
                 getMetadata()

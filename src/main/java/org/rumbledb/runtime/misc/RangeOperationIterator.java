@@ -41,7 +41,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TreatIterator;
@@ -274,7 +273,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
         private Item materializeBound(RuntimePlan<Item> plan) {
             try {
-                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+                return plan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Range expression must have integer input, but instead received more than one item",

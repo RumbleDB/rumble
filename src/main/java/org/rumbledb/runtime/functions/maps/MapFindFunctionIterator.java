@@ -35,7 +35,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
@@ -71,7 +70,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item keyItem = null;
         try {
-            keyItem = LocalCursorUtils.materializeAtMostOne(this.keyIterator, context);
+            keyItem = this.keyIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "map:find expects exactly one atomic key as second argument.",
@@ -85,7 +84,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        List<Item> inputItems = LocalCursorUtils.materialize(this.inputIterator, context);
+        List<Item> inputItems = this.inputIterator.materialize(context);
         List<List<Item>> foundMembers = new ArrayList<>();
         scanItems(inputItems, keyItem, foundMembers);
         return ItemFactory.getInstance()

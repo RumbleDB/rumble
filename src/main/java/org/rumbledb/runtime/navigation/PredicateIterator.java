@@ -41,7 +41,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -169,10 +168,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 }
                 Item filterResult;
                 try {
-                    filterResult = LocalCursorUtils.materializeAtMostOne(
-                        this.filterPlan,
-                        this.filterContext
-                    );
+                    filterResult = this.filterPlan.materializeAtMostOne(this.filterContext);
                 } catch (MoreThanOneItemException e) {
                     throw new InvalidArgumentTypeException(
                             "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",

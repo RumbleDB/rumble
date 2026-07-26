@@ -10,7 +10,6 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.w3c.dom.Document;
@@ -41,7 +40,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> loadDocument(LocalCursorUtils.materializeFirst(this.getChild(0), context), context),
+                () -> loadDocument(this.getChild(0).materializeFirstOrNull(context), context),
                 getMetadata()
         );
     }

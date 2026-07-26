@@ -9,7 +9,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.io.Serial;
@@ -33,10 +32,10 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> evaluate(
-                    LocalCursorUtils.materializeFirst(this.getChild(0), context),
-                    LocalCursorUtils.materializeFirst(this.getChild(1), context),
+                    this.getChild(0).materializeFirstOrNull(context),
+                    this.getChild(1).materializeFirstOrNull(context),
                     this.getChildren().size() > 2
-                        ? LocalCursorUtils.materializeFirst(this.getChild(2), context)
+                        ? this.getChild(2).materializeFirstOrNull(context)
                         : null
                 ),
                 getMetadata()

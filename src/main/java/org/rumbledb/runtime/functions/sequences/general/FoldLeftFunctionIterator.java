@@ -14,7 +14,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -51,9 +50,9 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> computeResult(DynamicContext context) {
-        List<Item> inputItems = LocalCursorUtils.materialize(this.sequenceIterator, context);
-        List<Item> accumulator = LocalCursorUtils.materialize(this.zeroIterator, context);
-        Item functionItem = LocalCursorUtils.materialize(this.functionIterator, context).get(0);
+        List<Item> inputItems = this.sequenceIterator.materialize(context);
+        List<Item> accumulator = this.zeroIterator.materialize(context);
+        Item functionItem = this.functionIterator.materialize(context).get(0);
 
         ReusableFunctionCall reusableCall = null;
 
@@ -86,7 +85,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
                     reusableCall.accumulatorArgument.setItemForReuse(accumulator.get(0));
                     reusableCall.currentItemArgument.setItemForReuse(inputItem);
                 }
-                accumulator = LocalCursorUtils.materialize(reusableCall.functionCall, context);
+                accumulator = reusableCall.functionCall.materialize(context);
             } else {
                 accumulator = applyFunction(functionItem, accumulator, Collections.singletonList(inputItem), context);
             }
@@ -146,7 +145,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return LocalCursorUtils.materialize(functionCall, context);
+        return functionCall.materialize(context);
     }
 
     @Override

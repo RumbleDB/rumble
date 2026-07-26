@@ -29,7 +29,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -51,9 +50,9 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         return new ComputedLocalCursor<>(
                 () -> {
                     Item separator = this.getChildren().size() > 1
-                        ? LocalCursorUtils.materializeFirst(this.getChild(1), context)
+                        ? this.getChild(1).materializeFirstOrNull(context)
                         : ItemFactory.getInstance().createStringItem("");
-                    return join(LocalCursorUtils.materialize(this.getChild(0), context), separator);
+                    return join(this.getChild(0).materialize(context), separator);
                 },
                 getMetadata()
         );

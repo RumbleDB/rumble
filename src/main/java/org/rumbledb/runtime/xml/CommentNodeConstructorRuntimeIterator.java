@@ -29,7 +29,6 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -60,7 +59,7 @@ public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRun
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> createComment(LocalCursorUtils.materialize(this.contentIterator, context), context),
+                () -> createComment(this.contentIterator.materialize(context), context),
                 getMetadata()
         );
     }

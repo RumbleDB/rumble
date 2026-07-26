@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -79,7 +78,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
-        List<Item> mapArguments = LocalCursorUtils.materialize(mapPlan, context);
+        List<Item> mapArguments = mapPlan.materialize(context);
         if (mapArguments.size() != 1 || !mapArguments.get(0).isMap()) {
             throw new UnexpectedTypeException(
                     "The first argument of map:for-each must be a single map item [err:XPTY0004].",
@@ -88,7 +87,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
         }
         Item mapItem = mapArguments.get(0);
 
-        List<Item> functionArguments = LocalCursorUtils.materialize(actionPlan, context);
+        List<Item> functionArguments = actionPlan.materialize(context);
         if (functionArguments.size() != 1 || !functionArguments.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The second argument of map:for-each must be a single function item [err:XPTY0004].",

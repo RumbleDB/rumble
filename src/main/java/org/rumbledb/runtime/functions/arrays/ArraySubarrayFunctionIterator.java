@@ -20,7 +20,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
 
@@ -55,7 +54,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
-            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one array argument.",
@@ -135,7 +134,7 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator {
     private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {
         Item item = null;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(iterator, context);
+            item = iterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:subarray expects exactly one " + label + " argument.",

@@ -23,7 +23,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * Local cursor for testing whether a sequence is empty or non-empty.
@@ -54,7 +53,7 @@ final class ExistenceLocalCursor extends AtMostOneLocalCursor<Item> {
 
     @Override
     protected Item materializeFirstItemOrNull() {
-        boolean exists = LocalCursorUtils.materializeFirst(this.childPlan, this.context) != null;
+        boolean exists = this.childPlan.materializeFirstOrNull(this.context) != null;
         return ItemFactory.getInstance().createBooleanItem(exists == this.expectedToExist);
     }
 }

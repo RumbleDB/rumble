@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -124,7 +123,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
 
         @Override
         protected void openLocal() {
-            Item argument = LocalCursorUtils.materializeFirst(this.argumentPlan, this.context);
+            Item argument = this.argumentPlan.materializeFirstOrNull(this.context);
             this.input = argument == null ? null : argument.getStringValue();
             this.position = 0;
         }

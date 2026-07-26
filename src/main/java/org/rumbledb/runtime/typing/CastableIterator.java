@@ -13,7 +13,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -76,7 +75,7 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item item;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(child, dynamicContext);
+            item = child.materializeAtMostOne(dynamicContext);
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(dynamicContext, metadata);
             }

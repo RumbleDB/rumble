@@ -43,7 +43,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
@@ -112,7 +111,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     ) {
         Item functionItem;
         try {
-            functionItem = LocalCursorUtils.materializeAtMostOne(functionItemPlan, context);
+            functionItem = functionItemPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "A dynamic function call can not be performed on a sequence of more than one item.",

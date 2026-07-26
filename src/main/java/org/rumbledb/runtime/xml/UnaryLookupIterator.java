@@ -29,7 +29,6 @@ import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -72,7 +71,7 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
                     context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata()),
                     this.wildcard
                         ? List.of()
-                        : LocalCursorUtils.materialize(this.lookupIterator, context)
+                        : this.lookupIterator.materialize(context)
                 ).iterator(),
                 getMetadata()
         );

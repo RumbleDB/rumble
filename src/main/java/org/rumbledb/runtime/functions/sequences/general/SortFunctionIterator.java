@@ -16,7 +16,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.SortKeyComparison;
@@ -61,7 +60,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> computeResult(DynamicContext context) {
-        List<Item> inputItems = LocalCursorUtils.materialize(this.inputIterator, context);
+        List<Item> inputItems = this.inputIterator.materialize(context);
         String collationUri = resolveCollationUri(context);
         SortKeyComparison.checkCollationSupported(collationUri, getMetadata());
 
@@ -98,7 +97,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (this.collationIterator == null) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
-        List<Item> collation = LocalCursorUtils.materialize(this.collationIterator, context);
+        List<Item> collation = this.collationIterator.materialize(context);
         if (collation.isEmpty()) {
             return getRuntimeStaticContext().getDefaultCollation();
         }
@@ -115,7 +114,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (this.keyIterator == null) {
             return (item, ctx) -> fnDataKeySequence(item);
         }
-        List<Item> keySpec = LocalCursorUtils.materialize(this.keyIterator, context);
+        List<Item> keySpec = this.keyIterator.materialize(context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to fn:sort must be exactly one item.",
@@ -222,7 +221,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
-        return LocalCursorUtils.materialize(iterator, context);
+        return iterator.materialize(context);
     }
 
     private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {

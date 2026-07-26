@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -38,7 +37,7 @@ public class DropColumnsIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.getChild(0).getDataFrame(context);
-        List<Item> columnsToDropItems = LocalCursorUtils.materialize(this.getChild(1), context);
+        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",

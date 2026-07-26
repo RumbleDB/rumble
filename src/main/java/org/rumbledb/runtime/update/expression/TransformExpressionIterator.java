@@ -16,7 +16,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class TransformExpressionIterator extends HybridRuntimeIterator {
@@ -83,7 +82,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     private void bindCopyDeclarations(DynamicContext context) {
         for (Name copyVar : this.copyDeclMap.keySet()) {
             RuntimeIterator copyIterator = this.copyDeclMap.get(copyVar);
-            List<Item> toCopy = LocalCursorUtils.materialize(copyIterator, context);
+            List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
@@ -169,7 +168,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
         private void bindCopyDeclarations() {
             for (Map.Entry<Name, RuntimeIterator> declaration : this.copyDeclarations.entrySet()) {
                 List<Item> copy = new ArrayList<>();
-                for (Item item : LocalCursorUtils.materialize(declaration.getValue(), this.context)) {
+                for (Item item : declaration.getValue().materialize(this.context)) {
                     Item copiedItem = item.copy(true);
                     copiedItem.setMutabilityLevel(this.mutabilityLevel);
                     copiedItem.setCollection(null);

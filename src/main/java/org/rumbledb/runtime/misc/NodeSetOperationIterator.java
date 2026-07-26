@@ -30,7 +30,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -126,7 +125,7 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
             String side
     ) {
         Set<Item> nodes = new TreeSet<>(Comparator.comparing(Item::getXmlDocumentPosition));
-        for (Item item : LocalCursorUtils.materialize(iterator, context)) {
+        for (Item item : iterator.materialize(context)) {
             validateAndGetNodePosition(item, side, getMetadata());
             nodes.add(item);
         }

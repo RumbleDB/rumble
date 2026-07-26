@@ -34,7 +34,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -70,11 +69,11 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 () -> {
                     validateCollation(
                         this.getChildren().size() == 3
-                            ? LocalCursorUtils.materializeFirst(this.getChild(2), context)
+                            ? this.getChild(2).materializeFirstOrNull(context)
                             : null
                     );
-                    List<Item> items1 = LocalCursorUtils.materialize(this.getChild(0), context);
-                    List<Item> items2 = LocalCursorUtils.materialize(this.getChild(1), context);
+                    List<Item> items1 = this.getChild(0).materialize(context);
+                    List<Item> items2 = this.getChild(1).materialize(context);
                     return booleanItem(checkDeepEqual(items1, items2));
                 },
                 getMetadata()

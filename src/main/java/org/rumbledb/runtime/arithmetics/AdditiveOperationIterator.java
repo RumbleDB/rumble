@@ -43,7 +43,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -178,7 +177,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
 
         private Item materializeOperand(RuntimePlan<Item> plan, String side) {
             try {
-                return LocalCursorUtils.materializeAtMostOne(plan, this.context);
+                return plan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Addition expression requires at most one item in its " + side + " input sequence.",

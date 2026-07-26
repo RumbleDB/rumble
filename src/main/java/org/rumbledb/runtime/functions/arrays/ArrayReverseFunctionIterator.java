@@ -37,7 +37,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
 
@@ -64,7 +63,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> reverseArgument(LocalCursorUtils.materialize(this.arrayIterator, context)),
+                () -> reverseArgument(this.arrayIterator.materialize(context)),
                 getMetadata()
         );
     }

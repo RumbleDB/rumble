@@ -31,7 +31,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.SequenceType;
@@ -143,7 +142,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         protected Item materializeFirstItemOrNull() {
             Item item;
             try {
-                item = LocalCursorUtils.materializeAtMostOne(this.childPlan, this.context);
+                item = this.childPlan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Unary expression requires at most one item in its input sequence.",

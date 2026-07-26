@@ -37,7 +37,6 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -71,7 +70,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (!this.iterator.isRDDOrDataFrame()) {
-            return LocalCursorUtils.materializeFirst(this, context);
+            return this.materializeFirstOrNull(context);
         }
         validateCollation(context);
 
@@ -117,7 +116,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (collationPlan == null) {
             return;
         }
-        Item collation = LocalCursorUtils.materializeFirst(collationPlan, context);
+        Item collation = collationPlan.materializeFirstOrNull(context);
         if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
             throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
         }

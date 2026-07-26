@@ -14,7 +14,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -97,7 +96,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
         Item item = null;
         try {
-            item = LocalCursorUtils.materializeAtMostOne(iterator, context);
+            item = iterator.materializeAtMostOne(context);
             if (item != null && !item.getDynamicType().isResolved()) {
                 item.getDynamicType().resolve(context, staticContext.getMetadata());
             }

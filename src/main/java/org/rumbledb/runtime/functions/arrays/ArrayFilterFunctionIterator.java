@@ -38,7 +38,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -77,7 +76,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
-            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:filter expects exactly one array argument.",
@@ -96,7 +95,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
-        List<Item> predicateItems = LocalCursorUtils.materialize(this.predicateIterator, context);
+        List<Item> predicateItems = this.predicateIterator.materialize(context);
         if (predicateItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:filter must be exactly one item.",
@@ -153,7 +152,7 @@ public class ArrayFilterFunctionIterator extends HybridRuntimeIterator {
                 arguments,
                 functionItemContext
         );
-        List<Item> result = LocalCursorUtils.materialize(functionCall, context);
+        List<Item> result = functionCall.materialize(context);
         return booleanValueFromFilterResult(result);
     }
 

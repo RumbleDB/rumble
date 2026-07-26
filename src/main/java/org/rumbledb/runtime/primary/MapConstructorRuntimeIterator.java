@@ -33,7 +33,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 /**
@@ -86,7 +85,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> evaluate(iterator -> LocalCursorUtils.materialize(iterator, context)),
+                () -> evaluate(iterator -> iterator.materialize(context)),
                 getMetadata()
         );
     }

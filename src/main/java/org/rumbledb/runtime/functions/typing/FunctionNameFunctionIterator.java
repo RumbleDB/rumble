@@ -12,7 +12,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -34,7 +33,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
         return new ComputedLocalCursor<>(
                 () -> {
                     validateStaticType();
-                    return evaluate(LocalCursorUtils.materializeFirst(this.getChild(0), context));
+                    return evaluate(this.getChild(0).materializeFirstOrNull(context));
                 },
                 getMetadata()
         );

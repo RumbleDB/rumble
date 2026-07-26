@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 
@@ -183,7 +182,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         @Override
         protected void openLocal() {
             if (this.collationPlan != null) {
-                String collation = LocalCursorUtils.materializeFirst(this.collationPlan, this.context).getStringValue();
+                String collation = this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
                 if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                     throw new DefaultCollationException("Wrong collation parameter", this.metadata);
                 }

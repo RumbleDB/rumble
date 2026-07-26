@@ -28,7 +28,6 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -79,7 +78,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        int numberPartitions = LocalCursorUtils.materializeFirst(this.partitionCountIterator, dynamicContext)
+        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(dynamicContext)
             .getIntValue();
         return childRDD.repartition(numberPartitions);
     }
@@ -97,7 +96,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.iterator.getDataFrame(context);
-        int numberPartitions = LocalCursorUtils.materializeFirst(this.partitionCountIterator, context).getIntValue();
+        int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
         return childDataFrame.repartition(numberPartitions);
     }
 }

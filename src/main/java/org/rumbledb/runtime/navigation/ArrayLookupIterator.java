@@ -39,7 +39,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -75,7 +74,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         int position = requireLookupPosition(
-            LocalCursorUtils.materialize(this.getChild(1), context)
+            this.getChild(1).materialize(context)
         );
         return new FlatMappingLocalCursor<>(
                 this.iterator,

@@ -7,7 +7,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
 import java.io.Serial;
@@ -49,7 +48,7 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
         this.dataFrameContext.setFromRow(row);
 
         this.nextResult.clear();
-        this.nextResult.addAll(LocalCursorUtils.materialize(this.expression, this.dataFrameContext.getContext()));
+        this.nextResult.addAll(this.expression.materialize(this.dataFrameContext.getContext()));
 
         return toDFValue();
     }

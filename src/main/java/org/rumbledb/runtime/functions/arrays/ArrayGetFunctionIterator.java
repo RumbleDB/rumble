@@ -13,7 +13,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.LinkedList;
@@ -46,8 +45,8 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator {
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
                 () -> getMember(
-                    LocalCursorUtils.materialize(this.arrayIterator, context),
-                    LocalCursorUtils.materialize(this.positionIterator, context)
+                    this.arrayIterator.materialize(context),
+                    this.positionIterator.materialize(context)
                 ).iterator(),
                 getMetadata()
         );

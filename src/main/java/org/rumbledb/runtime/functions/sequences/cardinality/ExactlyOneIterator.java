@@ -30,7 +30,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
@@ -96,7 +95,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
         @Override
         protected Item materializeFirstItemOrNull() {
             try {
-                Item value = LocalCursorUtils.materializeAtMostOne(this.childPlan, this.context);
+                Item value = this.childPlan.materializeAtMostOne(this.context);
                 if (value == null) {
                     throw invalidCardinality();
                 }

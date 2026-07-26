@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -80,7 +79,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
                 getNumberOfPartitions(this.partitionsIterator, context, getMetadata()).getIntValue()
             );
         }
-        List<Item> contents = LocalCursorUtils.materialize(this.sequenceIterator, context);
+        List<Item> contents = this.sequenceIterator.materialize(context);
         if (this.partitionsIterator == null) {
             return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
@@ -97,7 +96,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     ) {
         Item partitions;
         try {
-            partitions = LocalCursorUtils.materializeAtMostOne(partitionsPlan, context);
+            partitions = partitionsPlan.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",

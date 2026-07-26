@@ -40,7 +40,6 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -105,7 +104,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                     tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
                     Item key;
                     try {
-                        key = LocalCursorUtils.materializeAtMostOne(expression.getIterator(), tupleContext);
+                        key = expression.getIterator().materializeAtMostOne(tupleContext);
                     } catch (MoreThanOneItemException e) {
                         throw new UnexpectedTypeException(
                                 "Keys in an order-by clause must be at most one item.",

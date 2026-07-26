@@ -9,7 +9,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
@@ -111,9 +110,9 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         return new ComputedLocalCursor<>(
                 () -> {
                     RuntimeIterator matchingIterator = selectApplicableIterator(
-                        iterator -> LocalCursorUtils.materializeFirst(iterator, context)
+                        iterator -> iterator.materializeFirstOrNull(context)
                     );
-                    LocalCursorUtils.materialize(matchingIterator, new DynamicContext(context));
+                    matchingIterator.materialize(new DynamicContext(context));
                     return null;
                 },
                 getMetadata()

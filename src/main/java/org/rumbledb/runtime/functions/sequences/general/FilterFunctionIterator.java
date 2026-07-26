@@ -13,7 +13,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -56,7 +55,7 @@ public class FilterFunctionIterator extends HybridRuntimeIterator {
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
-        List<Item> predicateItems = LocalCursorUtils.materialize(predicateIterator, context);
+        List<Item> predicateItems = predicateIterator.materialize(context);
         if (predicateItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:filter must be a single function item [err:XPTY0004].",

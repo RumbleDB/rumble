@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -34,7 +33,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        List<Item> selectors = LocalCursorUtils.materialize(this.indexIterator, context);
+        List<Item> selectors = this.indexIterator.materialize(context);
         if (selectors.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid array function call; array lookup can't be performed with no key.",

@@ -33,7 +33,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -143,7 +142,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> computeLocalResults(DynamicContext context) {
-        List<Item> left = LocalCursorUtils.materialize(this.leftIterator, context);
+        List<Item> left = this.leftIterator.materialize(context);
         List<Item> localResults = new ArrayList<>();
         long last = left.size();
         long position = 0;
@@ -153,7 +152,7 @@ public class SlashExprIterator extends HybridRuntimeIterator {
                 .addVariableValue(Name.CONTEXT_ITEM, Collections.singletonList(currentItem));
             currentContext.getVariableValues().setPosition(++position);
             currentContext.getVariableValues().setLast(last);
-            localResults.addAll(LocalCursorUtils.materialize(this.rightIterator, currentContext));
+            localResults.addAll(this.rightIterator.materialize(currentContext));
         }
         boolean allNodes = true;
         boolean allNonNodes = true;

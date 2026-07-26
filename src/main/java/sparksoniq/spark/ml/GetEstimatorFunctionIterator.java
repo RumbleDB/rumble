@@ -33,7 +33,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -77,11 +76,12 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String estimatorShortName = LocalCursorUtils.materializeFirst(this.getChild(0), dynamicContext)
+        String estimatorShortName = this.getChild(0)
+            .materializeFirstOrNull(dynamicContext)
             .getStringValue();
         Item paramMapItem = null;
         if (this.getChildren().size() >= 2) {
-            paramMapItem = LocalCursorUtils.materializeFirst(this.getChild(1), dynamicContext);
+            paramMapItem = this.getChild(1).materializeFirstOrNull(dynamicContext);
         }
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(

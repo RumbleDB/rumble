@@ -32,7 +32,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
@@ -118,10 +117,10 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         private RuntimeIterator selectApplicablePlan() {
-            Item testValue = LocalCursorUtils.materializeFirst(this.testPlan, this.context);
+            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
             validateAtomic(testValue, "Switch condition");
             for (RuntimeIterator caseKey : this.cases.keySet()) {
-                Item caseValue = LocalCursorUtils.materializeFirst(caseKey, this.context);
+                Item caseValue = caseKey.materializeFirstOrNull(this.context);
                 validateAtomic(caseValue, "Switch case");
                 if (testValue == null) {
                     if (caseValue == null) {
@@ -151,7 +150,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
-        Item testValue = LocalCursorUtils.materializeFirst(this.testField, dynamicContext);
+        Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -168,7 +167,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : this.cases.keySet()) {
-            Item caseValue = LocalCursorUtils.materializeFirst(caseKey, dynamicContext);
+            Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {

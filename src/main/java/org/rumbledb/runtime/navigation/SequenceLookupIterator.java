@@ -32,7 +32,6 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 
@@ -123,11 +122,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupSmallPosition(DynamicContext dynamicContext) {
-        List<Item> materializedItems = LocalCursorUtils.materializeFirst(
-            this.iterator,
-            dynamicContext,
-            this.position
-        );
+        List<Item> materializedItems = this.iterator.materializeAtMost(dynamicContext, this.position);
         if (materializedItems.size() >= this.position) {
             return materializedItems.get(this.position - 1);
         } else {

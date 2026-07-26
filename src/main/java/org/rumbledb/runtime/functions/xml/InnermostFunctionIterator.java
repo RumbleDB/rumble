@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,7 +37,7 @@ public class InnermostFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<Item> computeResults(DynamicContext context) {
-        List<Item> nodes = LocalCursorUtils.materialize(this.getChild(0), context);
+        List<Item> nodes = this.getChild(0).materialize(context);
         for (Item node : nodes) {
             if (!node.isNode()) {
                 throw new UnexpectedTypeException("fn:innermost requires a sequence of nodes", getMetadata());

@@ -38,7 +38,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
@@ -48,7 +47,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>, RuntimePlan<Item> {
+public abstract class RuntimeIterator extends RuntimePlan<Item> implements RuntimeIteratorInterface<Item> {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
@@ -266,7 +265,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
                 );
             }
         }
-        List<Item> items = LocalCursorUtils.materialize(this, context);
+        List<Item> items = this.materialize(context);
         if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
@@ -312,14 +311,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     @Override
     public abstract Item next();
 
-    public List<Item> materialize(DynamicContext context) {
-        return LocalCursorUtils.materialize(this, context);
-    }
-
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        return LocalCursorUtils.materializeFirst(this, context);
+        return materializeFirstOrNull(context);
     }
 
     public Item materializeExactlyOneItem(
@@ -327,7 +322,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        Item result = LocalCursorUtils.materializeAtMostOne(this, context);
+        Item result = materializeAtMostOne(context);
         if (result == null) {
             throw new NoItemException();
         }
@@ -338,7 +333,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        return LocalCursorUtils.materializeAtMostOne(this, context);
+        return materializeAtMostOne(context);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

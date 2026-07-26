@@ -8,7 +8,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
@@ -33,7 +32,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item evaluate(RuntimeIterator argumentPlan, DynamicContext context) {
-        List<Item> argument = LocalCursorUtils.materialize(argumentPlan, context);
+        List<Item> argument = argumentPlan.materialize(context);
         ItemType itemType = argument.get(0).getDynamicType();
         List<Item> structureItems = getStructureItems(argument, itemType);
         ItemType commonType = getLeastCommonSupertype(structureItems);

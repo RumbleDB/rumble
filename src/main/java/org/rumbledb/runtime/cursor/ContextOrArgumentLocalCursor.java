@@ -121,7 +121,7 @@ public final class ContextOrArgumentLocalCursor<O> extends AbstractLocalCursor<O
             ? this.context.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata)
                 .get(0)
-            : LocalCursorUtils.materializeFirst(this.argumentPlan, this.context);
+            : this.argumentPlan.materializeFirstOrNull(this.context);
         List<? extends O> mappedResults = this.mapper.apply(argument);
         this.results = mappedResults == null ? Collections.emptyList() : mappedResults;
         this.position = 0;

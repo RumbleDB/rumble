@@ -8,7 +8,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -33,7 +32,7 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
                 () -> createRandomNumberStream(
                     ComputedLocalCursor.arguments(
                         this.getChildren().size(),
-                        index -> LocalCursorUtils.materializeFirst(this.getChild(index), context)
+                        index -> this.getChild(index).materializeFirstOrNull(context)
                     )
                 ),
                 getMetadata()

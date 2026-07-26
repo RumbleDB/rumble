@@ -36,7 +36,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
@@ -76,7 +75,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
-            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each expects exactly one array argument.",
@@ -95,7 +94,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
 
         List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
 
-        List<Item> actionItems = LocalCursorUtils.materialize(this.functionIterator, context);
+        List<Item> actionItems = this.functionIterator.materialize(context);
         if (actionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to array:for-each must be a function item.",
@@ -196,7 +195,7 @@ public class ArrayForEachFunctionIterator extends HybridRuntimeIterator {
                 arguments,
                 functionItemContext
         );
-        return LocalCursorUtils.materialize(functionCall, context);
+        return functionCall.materialize(context);
     }
 
     @Override

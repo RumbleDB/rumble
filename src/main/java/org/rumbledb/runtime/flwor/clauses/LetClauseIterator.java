@@ -40,7 +40,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -181,7 +180,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             } else {
                 result.putValue(
                     this.variableName,
-                    LocalCursorUtils.materialize(this.assignmentPlan, this.tupleContext)
+                    this.assignmentPlan.materialize(this.tupleContext)
                 );
             }
             return result;

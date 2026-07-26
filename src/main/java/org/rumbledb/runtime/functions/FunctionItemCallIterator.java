@@ -42,7 +42,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -312,7 +311,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 } else if (argIterator.isRDDOrDataFrame()) {
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
-                    localArgumentValues.put(argName, LocalCursorUtils.materialize(argIterator, context));
+                    localArgumentValues.put(argName, argIterator.materialize(context));
                 }
             }
         }
@@ -369,7 +368,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
             } else {
                 callContext.getVariableValues()
-                    .addVariableValue(argName, LocalCursorUtils.materialize(argIterator, context));
+                    .addVariableValue(argName, argIterator.materialize(context));
             }
         }
     }

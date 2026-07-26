@@ -10,7 +10,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -31,10 +30,10 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
                         this.getChildren().size(),
                         index -> index == 2
                             ? null
-                            : LocalCursorUtils.materializeFirst(this.getChild(index), context)
+                            : this.getChild(index).materializeFirstOrNull(context)
                     ),
                     this.getChildren().size() == 3
-                        ? () -> LocalCursorUtils.materialize(this.getChild(2), context)
+                        ? () -> this.getChild(2).materialize(context)
                         : List::of
                 ),
                 getMetadata()

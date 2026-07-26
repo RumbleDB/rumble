@@ -38,7 +38,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 /**
  * Postfix lookup with XQuery 3.1 semantics. Array index out of bounds yields err:FOAY0001
@@ -87,7 +86,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         protected void openLocal() {
             this.keys = this.wildcard
                 ? List.of()
-                : LocalCursorUtils.materialize(this.lookupPlan, this.context);
+                : this.lookupPlan.materialize(this.context);
             this.inputCursor = this.inputPlan.createLocalCursor(this.context);
             this.currentResults = Collections.emptyIterator();
         }
@@ -227,7 +226,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         List<Item> keys = this.wildcard
             ? List.of()
-            : LocalCursorUtils.materialize(this.lookupIterator, dynamicContext);
+            : this.lookupIterator.materialize(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new PostfixLookupClosure(
                 keys,
                 this.wildcard,

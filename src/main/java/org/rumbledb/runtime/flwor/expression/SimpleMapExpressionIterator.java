@@ -38,7 +38,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.navigation.SimpleMapExpressionClosureZipped;
@@ -100,7 +99,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            this.inputs = LocalCursorUtils.materialize(this.leftPlan, this.context);
+            this.inputs = this.leftPlan.materialize(this.context);
             this.inputIndex = 0;
         }
 

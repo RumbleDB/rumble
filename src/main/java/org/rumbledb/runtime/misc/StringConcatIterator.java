@@ -35,7 +35,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -64,8 +63,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item left = null;
         try {
-            left = LocalCursorUtils.materializeAtMostOneOrDefault(
-                this.leftIterator,
+            left = this.leftIterator.materializeAtMostOneOrDefault(
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );
@@ -77,8 +75,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         Item right = null;
         try {
-            right = LocalCursorUtils.materializeAtMostOneOrDefault(
-                this.rightIterator,
+            right = this.rightIterator.materializeAtMostOneOrDefault(
                 dynamicContext,
                 ItemFactory.getInstance().createStringItem("")
             );
@@ -137,7 +134,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
         private Item materializeOperand(RuntimePlan<Item> plan, Item defaultValue, String side) {
             try {
-                return LocalCursorUtils.materializeAtMostOneOrDefault(plan, this.context, defaultValue);
+                return plan.materializeAtMostOneOrDefault(this.context, defaultValue);
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "String concatenation expression requires at most one item in its "

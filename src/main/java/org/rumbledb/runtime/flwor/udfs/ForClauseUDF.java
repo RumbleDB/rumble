@@ -26,7 +26,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
@@ -69,7 +68,7 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        for (Item nextItem : LocalCursorUtils.materialize(this.expression, this.dataFrameContext.getContext())) {
+        for (Item nextItem : this.expression.materialize(this.dataFrameContext.getContext())) {
             this.nextResult.clear();
             this.nextResult.add(nextItem);
             this.results.add(

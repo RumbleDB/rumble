@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -155,7 +154,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         protected void openLocal() {
             this.label = this.labelPlan == null
                 ? ""
-                : LocalCursorUtils.materializeFirst(this.labelPlan, this.context).getStringValue();
+                : this.labelPlan.materializeFirstOrNull(this.context).getStringValue();
             this.position = 0;
             this.valueCursor = this.valuePlan.createLocalCursor(this.context);
         }

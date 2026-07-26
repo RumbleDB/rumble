@@ -32,7 +32,6 @@ import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
 import com.google.gson.stream.JsonReader;
@@ -55,7 +54,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     }
 
     private JsonLinesResourceIterator openJsonLines(DynamicContext context) {
-        Item path = LocalCursorUtils.materializeFirst(this.iterator, context);
+        Item path = this.iterator.materializeFirstOrNull(context);
         URI uri = FileSystemUtil.resolveFileSystemURI(
             this.staticContext.getStaticURI(),
             path.getStringValue(),
@@ -88,12 +87,12 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = LocalCursorUtils.materializeFirst(this.getChild(0), context).getStringValue();
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = -1;
         if (this.getChildren().size() > 1) {
-            partitions = LocalCursorUtils.materializeFirst(this.getChild(1), context).getIntValue();
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
 
         JavaRDD<String> strings;

@@ -40,7 +40,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -77,7 +76,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item arrayItem1;
         try {
-            arrayItem1 = LocalCursorUtils.materializeAtMostOne(this.arrayIterator1, context);
+            arrayItem1 = this.arrayIterator1.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the first argument.",
@@ -97,7 +96,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         Item arrayItem2;
         try {
-            arrayItem2 = LocalCursorUtils.materializeAtMostOne(this.arrayIterator2, context);
+            arrayItem2 = this.arrayIterator2.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:for-each-pair expects exactly one array as the second argument.",
@@ -120,7 +119,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         int n = Math.min(members1.size(), members2.size());
 
-        List<Item> functionItems = LocalCursorUtils.materialize(this.functionIterator, context);
+        List<Item> functionItems = this.functionIterator.materialize(context);
         if (functionItems.isEmpty()) {
             throw new UnexpectedTypeException(
                     "Type error; third argument to array:for-each-pair must be a function item.",
@@ -209,7 +208,7 @@ public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
             arguments,
             false
         );
-        return LocalCursorUtils.materialize(functionCall, context);
+        return functionCall.materialize(context);
     }
 
     @Override

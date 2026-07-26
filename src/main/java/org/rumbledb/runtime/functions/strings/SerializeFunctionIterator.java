@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
@@ -56,7 +55,7 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> serialize(
-                    LocalCursorUtils.materialize(this.getChild(0), context),
+                    this.getChild(0).materialize(context),
                     resolveSerializationParameters(context)
                 ),
                 getMetadata()
@@ -87,7 +86,7 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     private SerializationParameters resolveSerializationParameters(DynamicContext context) {
         List<Item> options = this.getChildren().size() < 2
             ? null
-            : LocalCursorUtils.materialize(this.getChild(1), context);
+            : this.getChild(1).materialize(context);
         return resolveSerializationParameters(options);
     }
 

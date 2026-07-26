@@ -8,7 +8,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.Collections;
@@ -33,7 +32,7 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> assign(LocalCursorUtils.materialize(this.assignExpression, context), context),
+                () -> assign(this.assignExpression.materialize(context), context),
                 getMetadata()
         );
     }

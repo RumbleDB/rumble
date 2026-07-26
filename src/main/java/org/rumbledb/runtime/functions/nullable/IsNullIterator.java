@@ -8,7 +8,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -24,7 +23,7 @@ public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> evaluate(LocalCursorUtils.materialize(this.getChild(0), context)),
+                () -> evaluate(this.getChild(0).materialize(context)),
                 getMetadata()
         );
     }

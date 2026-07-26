@@ -34,7 +34,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 /**
@@ -66,7 +65,7 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
-                () -> createAttribute(iterator -> LocalCursorUtils.materialize(iterator, context)),
+                () -> createAttribute(iterator -> iterator.materialize(context)),
                 getMetadata()
         );
     }

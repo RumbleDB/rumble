@@ -35,7 +35,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -322,12 +321,12 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            Item positionItem = LocalCursorUtils.materializeFirst(this.positionPlan, this.context);
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
             this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
             this.currentLength = -1;
             if (this.lengthPlan != null) {
-                Item lengthItem = LocalCursorUtils.materializeFirst(this.lengthPlan, this.context);
+                Item lengthItem = this.lengthPlan.materializeFirstOrNull(this.context);
                 this.currentLength = (int) Math.round(lengthItem.getDoubleValue());
             }
             if (this.startPosition <= 0 && this.currentLength != -1) {

@@ -31,7 +31,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -75,7 +74,7 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
     private Item computeResult(DynamicContext context) {
         Item arrayItem = null;
         try {
-            arrayItem = LocalCursorUtils.materializeAtMostOne(this.arrayIterator, context);
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:put expects exactly one array as the first argument.",
@@ -91,7 +90,7 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
 
         Item positionItem = null;
         try {
-            positionItem = LocalCursorUtils.materializeAtMostOne(this.positionIterator, context);
+            positionItem = this.positionIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "array:put expects exactly one position argument.",
@@ -126,7 +125,7 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
         }
 
         int replaceIndex = positionInteger.intValue() - 1;
-        List<Item> memberSequence = LocalCursorUtils.materialize(this.memberIterator, context);
+        List<Item> memberSequence = this.memberIterator.materialize(context);
 
         if (arrayItem.isArrayOfItems() && memberSequence.size() == 1) {
             List<Item> newItems = new ArrayList<>(size);

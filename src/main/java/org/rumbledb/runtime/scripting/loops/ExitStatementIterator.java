@@ -11,7 +11,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -145,7 +144,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
                 throw invalidState("No more values are available.");
             }
             this.hasNext = false;
-            List<Item> result = LocalCursorUtils.materialize(this.childPlan, this.context);
+            List<Item> result = this.childPlan.materialize(this.context);
             PendingUpdateList updates = this.childPlan.isUpdating()
                 ? this.childPlan.getPendingUpdateList(this.context)
                 : new PendingUpdateList();

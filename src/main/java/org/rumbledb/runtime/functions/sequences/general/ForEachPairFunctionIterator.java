@@ -34,7 +34,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -78,7 +77,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
-        List<Item> functionItems = LocalCursorUtils.materialize(actionPlan, context);
+        List<Item> functionItems = actionPlan.materialize(context);
         if (functionItems.size() != 1 || !functionItems.get(0).isFunction()) {
             throw new UnexpectedTypeException(
                     "The third argument of fn:for-each-pair must be a single function item [err:XPTY0004].",
@@ -170,14 +169,8 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator {
 
         @Override
         protected void openLocal() {
-            this.firstItems = LocalCursorUtils.materialize(
-                this.firstPlan,
-                this.context
-            );
-            this.secondItems = LocalCursorUtils.materialize(
-                this.secondPlan,
-                this.context
-            );
+            this.firstItems = this.firstPlan.materialize(this.context);
+            this.secondItems = this.secondPlan.materialize(this.context);
             this.action = resolveAction(this.actionPlan, this.staticContext, this.context);
             this.argumentContext = argumentContext(this.staticContext);
             this.pairIndex = 0;

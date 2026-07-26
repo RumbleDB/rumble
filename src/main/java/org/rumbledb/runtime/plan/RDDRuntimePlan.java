@@ -21,7 +21,7 @@ import org.rumbledb.context.DynamicContext;
  *
  * @param <T> the RDD element type
  */
-public interface RDDRuntimePlan<T> extends RuntimePlan<T> {
+public interface RDDRuntimePlan<T> {
 
     /**
      * Builds the RDD for one evaluation.

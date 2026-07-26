@@ -17,7 +17,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -117,7 +116,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private Item materializeWithCursors(DynamicContext context) {
         Item input;
         try {
-            input = LocalCursorUtils.materializeAtMostOne(this.getChild(0), context);
+            input = this.getChild(0).materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:xml-to-json expects at most one input item [err:XPTY0004].",
@@ -132,7 +131,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (this.getChildren().size() >= 2) {
             Item options;
             try {
-                options = LocalCursorUtils.materializeAtMostOne(this.getChild(1), context);
+                options = this.getChild(1).materializeAtMostOne(context);
             } catch (MoreThanOneItemException e) {
                 throw new UnexpectedTypeException(
                         "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",

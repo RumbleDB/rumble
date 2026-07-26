@@ -34,7 +34,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -96,7 +95,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         }
 
         private List<String> getRemovalKeys() {
-            List<Item> removalKeys = LocalCursorUtils.materialize(this.keysPlan, this.context);
+            List<Item> removalKeys = this.keysPlan.materialize(this.context);
             if (removalKeys.isEmpty()) {
                 throw new InvalidSelectorException(
                         "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
@@ -139,7 +138,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private List<String> getRemovalKeys(DynamicContext context) {
-        List<Item> removalKeys = LocalCursorUtils.materialize(this.getChild(1), context);
+        List<Item> removalKeys = this.getChild(1).materialize(context);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
@@ -185,7 +184,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.iterator.getDataFrame(context);
-        List<Item> columnsToDropItems = LocalCursorUtils.materialize(this.getChild(1), context);
+        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",

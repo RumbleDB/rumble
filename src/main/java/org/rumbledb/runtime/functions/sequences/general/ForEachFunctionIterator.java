@@ -33,7 +33,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -78,7 +77,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
-        List<Item> functionItems = LocalCursorUtils.materialize(actionIterator, context);
+        List<Item> functionItems = actionIterator.materialize(context);
         if (functionItems.size() != 1) {
             throw new UnexpectedTypeException(
                     "The second argument of fn:for-each must be a single function item [err:XPTY0004].",
@@ -121,7 +120,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
                 callbackArguments,
                 functionItemContext
         );
-        return LocalCursorUtils.materialize(callback, context);
+        return callback.materialize(context);
     }
 
     private static boolean acceptsSingleArgument(Item item) {

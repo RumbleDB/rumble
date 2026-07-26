@@ -90,11 +90,11 @@ public final class BinaryMappingLocalCursor<L, R, O> extends AtMostOneLocalCurso
 
     @Override
     protected O materializeFirstItemOrNull() {
-        L left = LocalCursorUtils.materializeFirst(this.leftPlan, this.context);
+        L left = this.leftPlan.materializeFirstOrNull(this.context);
         if (left == null && !this.evaluateRightWhenLeftIsEmpty) {
             return null;
         }
-        R right = LocalCursorUtils.materializeFirst(this.rightPlan, this.context);
+        R right = this.rightPlan.materializeFirstOrNull(this.context);
         if (left == null || right == null) {
             return null;
         }

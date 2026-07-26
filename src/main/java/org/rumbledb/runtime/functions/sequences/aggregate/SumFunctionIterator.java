@@ -34,7 +34,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -254,7 +253,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         protected Item materializeFirstItemOrNull() {
             Item zeroElement = this.zeroPlan == null
                 ? ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO)
-                : LocalCursorUtils.materializeFirst(this.zeroPlan, this.context);
+                : this.zeroPlan.materializeFirstOrNull(this.context);
             return computeLocalSum(zeroElement, this.childPlan, this.context, this.metadata);
         }
     }

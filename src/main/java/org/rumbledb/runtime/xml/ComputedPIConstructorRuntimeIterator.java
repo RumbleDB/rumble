@@ -33,7 +33,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -95,7 +94,7 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new ComputedLocalCursor<>(
                 () -> createProcessingInstruction(
-                    iterator -> LocalCursorUtils.materialize(iterator, context),
+                    iterator -> iterator.materialize(context),
                     context
                 ),
                 getMetadata()

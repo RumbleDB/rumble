@@ -8,7 +8,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.cursor.LocalCursorUtils;
 
 import java.io.Serial;
 import java.util.List;
@@ -29,7 +28,7 @@ public class ConditionalStatementIterator extends AtMostOneItemLocalRuntimeItera
                     RuntimeIterator selected = EffectiveBooleanValue.evaluate(this.getChild(0), context)
                         ? this.getChild(1)
                         : this.getChild(2);
-                    LocalCursorUtils.materialize(selected, new DynamicContext(context));
+                    selected.materialize(new DynamicContext(context));
                     return null;
                 },
                 getMetadata()
