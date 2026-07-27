@@ -19,6 +19,7 @@ package org.rumbledb.runtime.misc;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.ItemFactory;
 
 /**
  * Atom-only {@code fn:deep-equal} behavior shared by {@code op:same-key} (FO 3.1, section 17.1.1)
@@ -38,6 +39,12 @@ public final class AtomicDeepEqual {
     public static boolean deepEqual(Item item1, Item item2) {
         if (bothFloatOrDoubleNaN(item1, item2)) {
             return true;
+        }
+        if (item1.isUntypedAtomic()) {
+            item1 = ItemFactory.getInstance().createStringItem(item1.getStringValue());
+        }
+        if (item2.isUntypedAtomic()) {
+            item2 = ItemFactory.getInstance().createStringItem(item2.getStringValue());
         }
         try {
             return ComparisonIterator.compareItems(

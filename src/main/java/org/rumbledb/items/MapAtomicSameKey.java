@@ -78,8 +78,9 @@ public final class MapAtomicSameKey {
         if (k.isDuration() || k.isYearMonthDuration() || k.isDayTimeDuration()) {
             return true;
         }
-        ItemType t = k.getDynamicType();
-        return BuiltinTypesCatalogue.QNameItem.equals(t) || BuiltinTypesCatalogue.NOTATIONItem.equals(t);
+        ItemType primitiveType = k.getDynamicType().getPrimitiveType();
+        return BuiltinTypesCatalogue.QNameItem.equals(primitiveType)
+            || BuiltinTypesCatalogue.NOTATIONItem.equals(primitiveType);
     }
 
     /**
