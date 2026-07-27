@@ -19,6 +19,9 @@ public abstract class AbstractNodeItem implements Item {
         if (!(other instanceof Item otherItem) || !otherItem.isNode()) {
             return false;
         }
+
+        // Note: we do not check if `this` and `other` has the same Java class
+        // Because XMLDocumentPosition should uniquely identify a node across all node kinds
         XMLDocumentPosition position = getXmlDocumentPosition();
         XMLDocumentPosition otherPosition = otherItem.getXmlDocumentPosition();
         return position != null && position.equals(otherPosition);
