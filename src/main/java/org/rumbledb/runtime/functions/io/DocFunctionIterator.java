@@ -38,7 +38,7 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.pathIterator = this.children.get(0);
+        this.pathIterator = this.getChild(0);
         this.pathIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.pathIterator.hasNext();
         this.pathIterator.close();

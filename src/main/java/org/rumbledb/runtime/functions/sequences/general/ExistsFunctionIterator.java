@@ -48,17 +48,17 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.children.get(0).isDataFrame()) {
+        if (this.getChild(0).isDataFrame()) {
             return ItemFactory.getInstance()
                 .createBooleanItem(
-                    !this.children.get(0).getDataFrame(dynamicContext).take(1).isEmpty()
+                    !this.getChild(0).getDataFrame(dynamicContext).take(1).isEmpty()
                 );
         }
-        if (this.children.get(0).isRDDOrDataFrame()) {
-            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
+        if (this.getChild(0).isRDDOrDataFrame()) {
+            List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
         }
-        Item first = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        Item first = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
         if (first == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -67,7 +67,7 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childQuery != NativeClauseContext.NoNativeQuery) {
             if (
                 childQuery.getResultingType().getItemType().isArrayItemType()
