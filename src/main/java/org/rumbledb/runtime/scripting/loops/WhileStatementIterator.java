@@ -20,13 +20,14 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     public WhileStatementIterator(
             RuntimeIterator testConditionIterator,
             RuntimeIterator bodyIterator,
-            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(testConditionIterator, bodyIterator), staticContext);
+        super(
+            Arrays.asList(testConditionIterator, bodyIterator),
+            staticContext
+        );
         this.testConditionIterator = testConditionIterator;
         this.bodyIterator = bodyIterator;
-        this.isSequential = isSequential;
     }
 
     @Override

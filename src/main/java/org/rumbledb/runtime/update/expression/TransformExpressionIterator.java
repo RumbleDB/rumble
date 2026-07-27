@@ -39,14 +39,13 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
                 copyDeclMap.values().stream(),
                 Stream.of(modifyIterator, returnIterator)
             ).toList(),
-            staticContext
+            staticContext.toBuilder().isUpdating(false).build()
         );
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
-        this.isUpdating = false;
         this.mutable = resultMutable;
     }
 

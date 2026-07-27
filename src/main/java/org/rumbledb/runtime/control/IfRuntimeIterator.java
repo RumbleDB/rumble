@@ -44,23 +44,16 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(
-            List.of(condition, branch, elseBranch),
+            List.of(
+                condition,
+                branch,
+                elseBranch
+            ),
             staticContext
         );
-        this.isUpdating = isUpdating;
-    }
-
-    public IfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
-            RuntimeStaticContext staticContext
-    ) {
-        this(condition, branch, elseBranch, false, staticContext);
     }
 
     @Override
