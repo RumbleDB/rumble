@@ -23,9 +23,9 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.EqualsAndHashCode;
-
 import org.rumbledb.exceptions.OurBadException;
+
+import lombok.EqualsAndHashCode;
 
 /**
  * This class represents expanded names, corresponding to QNames in the W3C XQuery standard.

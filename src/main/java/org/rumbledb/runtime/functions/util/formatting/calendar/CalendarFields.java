@@ -11,7 +11,8 @@ import java.time.temporal.IsoFields;
 import java.time.temporal.WeekFields;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 
 public final class CalendarFields {
 
@@ -64,6 +65,7 @@ public final class CalendarFields {
         }
     }
 
+    @EqualsAndHashCode
     private static final class CalendarKey {
         private final String tzid;
         private final ULocale locale;
@@ -73,22 +75,6 @@ public final class CalendarFields {
             this.locale = locale;
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (!(o instanceof CalendarKey)) {
-                return false;
-            }
-            CalendarKey other = (CalendarKey) o;
-            return this.tzid.equals(other.tzid) && this.locale.equals(other.locale);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(this.tzid, this.locale);
-        }
     }
 
     // ISO requires Gregorian fields and ISO week rules; keep these

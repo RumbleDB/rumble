@@ -28,6 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public final class ErrorCode implements Serializable {
 
     @Serial
@@ -62,19 +65,6 @@ public final class ErrorCode implements Serializable {
             return this.name.getLocalName();
         }
         return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ErrorCode errorCode)) {
-            return false;
-        }
-        return this.name.equals(errorCode.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
     }
 
     public static final ErrorCode DivisionByZero = registerBuiltIn("FOAR0001");
