@@ -122,7 +122,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 atomizedGroupingKey.addAll(item.atomizedValue());
             } catch (CannotAtomizeException e) {
                 throw new UnexpectedTypeException(
-                        "Group by variable can not contain arrays or objects.",
+                        "Group by variable must atomize to a supported atomic value.",
                         this.metadata
                 );
             }
@@ -231,7 +231,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             return;
         }
         throw new UnexpectedTypeException(
-                "Group by variable can not contain arrays or objects.",
+                "Group by variable must atomize to a supported atomic value.",
                 this.metadata
         );
     }
