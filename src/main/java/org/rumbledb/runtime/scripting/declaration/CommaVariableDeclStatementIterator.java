@@ -26,8 +26,8 @@ public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntim
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.childIndex = 0;
 
-        if (!this.children.isEmpty()) {
-            this.currentChild = this.children.get(this.childIndex);
+        if (!this.getChildren().isEmpty()) {
+            this.currentChild = this.getChild(this.childIndex);
             this.currentChild.open(this.currentDynamicContextForLocalExecution);
             materializeChildren();
         } else {
@@ -42,10 +42,10 @@ public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntim
                 this.currentChild.next();
             } else {
                 this.currentChild.close();
-                if (++this.childIndex == this.children.size()) {
+                if (++this.childIndex == this.getChildren().size()) {
                     this.currentChild = null;
                 } else {
-                    this.currentChild = this.children.get(this.childIndex);
+                    this.currentChild = this.getChild(this.childIndex);
                     this.currentChild.open(this.currentDynamicContextForLocalExecution);
                 }
             }

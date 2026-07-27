@@ -26,7 +26,7 @@ public class FunctionArityFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item function = this.children.get(0).materializeFirstItemOrNull(context);
+        Item function = this.getChild(0).materializeFirstItemOrNull(context);
         if (function == null || !function.isFunction()) {
             throw new UnexpectedTypeException(
                     "The argument of fn:function-arity must be a single function item [err:XPTY0004].",
