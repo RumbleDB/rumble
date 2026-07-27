@@ -30,6 +30,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -100,6 +101,14 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
+        this.nextItem = CollationSupport.normalizeItemForCollation(
+            this.nextItem,
+            CollationSupport.resolveCollation(
+                expressionWithIterator.getUri(),
+                expressionWithIterator.getIterator().getRuntimeStaticContext()
+            ),
+            expressionWithIterator.getIterator().getMetadata()
+        );
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

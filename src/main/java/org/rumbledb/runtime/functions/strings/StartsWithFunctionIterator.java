@@ -23,10 +23,10 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,12 +45,9 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+        String collation = this.children.size() == 3
+            ? this.children.get(2).materializeFirstItemOrNull(context).getStringValue()
+            : getRuntimeStaticContext().getDefaultCollation();
 
         Item substringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
@@ -62,10 +59,12 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        boolean result = stringItem.getStringValue()
-            .startsWith(
-                substringItem.getStringValue()
-            );
+        boolean result = CollationSupport.startsWith(
+            stringItem.getStringValue(),
+            substringItem.getStringValue(),
+            collation,
+            getMetadata()
+        );
         return ItemFactory.getInstance().createBooleanItem(result);
     }
 

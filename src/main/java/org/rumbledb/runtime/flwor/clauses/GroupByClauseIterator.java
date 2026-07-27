@@ -49,6 +49,7 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -187,13 +188,32 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         );
                     }
                     if (resultItem != null) {
-                        if (!resultItem.isAtomic()) {
+                        List<Item> atomizedResults = resultItem.atomizedValue();
+                        if (atomizedResults.size() > 1) {
                             throw new UnexpectedTypeException(
-                                    "Keys in a group-by clause must be atomics.",
+                                    "Keys in a group-by clause must atomize to at most one item.",
                                     getMetadata()
                             );
                         }
-                        newVariableResults = Collections.singletonList(resultItem);
+                        if (atomizedResults.isEmpty()) {
+                            newVariableResults = Collections.emptyList();
+                        } else {
+                            Item atomizedResult = atomizedResults.get(0);
+                            if (!atomizedResult.isAtomic()) {
+                                throw new UnexpectedTypeException(
+                                        "Keys in a group-by clause must atomize to atomic values.",
+                                        getMetadata()
+                                );
+                            }
+                            atomizedResult = CollationSupport.normalizeItemForCollation(
+                                atomizedResult,
+                                expression.getCollationURI() == null
+                                    ? getStaticContext().getDefaultCollation()
+                                    : expression.getCollationURI(),
+                                getMetadata()
+                            );
+                            newVariableResults = Collections.singletonList(atomizedResult);
+                        }
                     } else {
                         newVariableResults = Collections.emptyList();
                     }
@@ -223,6 +243,18 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         throw new UnexpectedTypeException(
                                 "Keys in a group-by clause must atomize to at most one item.",
                                 getMetadata()
+                        );
+                    }
+                    if (atomizedGroupValues.size() == 1) {
+                        atomizedGroupValues.set(
+                            0,
+                            CollationSupport.normalizeItemForCollation(
+                                atomizedGroupValues.get(0),
+                                expression.getCollationURI() == null
+                                    ? getStaticContext().getDefaultCollation()
+                                    : expression.getCollationURI(),
+                                getMetadata()
+                            )
                         );
                     }
                     inputTuple.putValue(groupVariableName, atomizedGroupValues);

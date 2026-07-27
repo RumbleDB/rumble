@@ -47,6 +47,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -207,7 +208,15 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        return atomizedItem;
+        String collationUri = CollationSupport.resolveCollation(
+            expressionWithIterator.getUri(),
+            expressionWithIterator.getIterator().getRuntimeStaticContext()
+        );
+        return CollationSupport.normalizeItemForCollation(
+            atomizedItem,
+            collationUri,
+            expressionWithIterator.getIterator().getMetadata()
+        );
     }
 
     @Override

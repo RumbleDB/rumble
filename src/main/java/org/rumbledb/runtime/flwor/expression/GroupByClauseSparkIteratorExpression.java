@@ -36,15 +36,18 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     private final Name variableName;
     private final RuntimeIterator expression;
     private final ExceptionMetadata iteratorMetadata;
+    private final String collationURI;
 
     public GroupByClauseSparkIteratorExpression(
             RuntimeIterator expression,
             Name variableName,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            String collationURI
     ) {
         this.expression = expression;
         this.variableName = variableName;
         this.iteratorMetadata = iteratorMetadata;
+        this.collationURI = collationURI;
     }
 
     public Name getVariableName() {
@@ -57,5 +60,9 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
 
     public RuntimeIterator getExpression() {
         return this.expression;
+    }
+
+    public String getCollationURI() {
+        return this.collationURI;
     }
 }
