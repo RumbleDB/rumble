@@ -313,7 +313,7 @@ public class MapEntryItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         throw new CannotAtomizeException("tried to atomize Map", ExceptionMetadata.EMPTY_METADATA);
     }
 

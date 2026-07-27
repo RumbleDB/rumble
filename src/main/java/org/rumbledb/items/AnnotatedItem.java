@@ -784,7 +784,8 @@ public class AnnotatedItem implements Item {
 
     @Override
     public List<Item> typedValue() {
-        return this.itemToAnnotate.typedValue();
+        // An annotated atomic item yields itself as typed value so its annotation is preserved.
+        return this.isAtomic() ? List.of(this) : this.itemToAnnotate.typedValue();
     }
 
     @Override
@@ -880,13 +881,6 @@ public class AnnotatedItem implements Item {
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
         this.itemToAnnotate.setTopLevelOrder(topLevelOrder);
-    }
-
-    @Override
-    public List<Item> atomizedValue() {
-        // An annotated atomic item atomizes to itself. Delegating to the
-        // wrapped item would discard the annotation and lose its subtype.
-        return this.isAtomic() ? List.of(this) : this.itemToAnnotate.atomizedValue();
     }
 
     @Override

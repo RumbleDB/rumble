@@ -64,7 +64,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         keyIterator.materialize(dynamicContext, keySequence);
         List<Item> atomized = new ArrayList<>();
         for (Item item : keySequence) {
-            atomized.addAll(item.atomizedValue());
+            atomized.addAll(item.typedValue());
         }
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(

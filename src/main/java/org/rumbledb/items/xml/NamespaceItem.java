@@ -162,7 +162,7 @@ public class NamespaceItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         // Spec: "dm: typed-value Returns the value of the uri property as an xs:string ."
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.uri));
     }

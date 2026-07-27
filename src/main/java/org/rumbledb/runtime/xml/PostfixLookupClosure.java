@@ -66,7 +66,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                 }
             } else {
                 for (Item rawKey : this.keys) {
-                    List<Item> atomized = rawKey.atomizedValue();
+                    List<Item> atomized = rawKey.typedValue();
                     if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                         throw new UnexpectedTypeException(
                                 "Map lookup key must atomize to a single atomic value [err:XPTY0004].",

@@ -146,7 +146,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
             try {
-                List<Item> atomized = item.atomizedValue();
+                List<Item> atomized = item.typedValue();
                 if (atomized.size() > 1) {
                     throw new UnexpectedTypeException(
                             "Atomization in cast resulted in more than one item.",

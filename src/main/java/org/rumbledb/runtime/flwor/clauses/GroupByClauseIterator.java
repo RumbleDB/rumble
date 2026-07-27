@@ -217,7 +217,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         .getLocalVariableValue(groupVariableName, getMetadata());
                     List<Item> atomizedGroupValues = new ArrayList<>();
                     for (Item groupVariableValue : groupVariableValues) {
-                        atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                        atomizedGroupValues.addAll(groupVariableValue.typedValue());
                     }
                     if (atomizedGroupValues.size() > 1) {
                         throw new UnexpectedTypeException(

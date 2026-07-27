@@ -74,7 +74,7 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
-            atomized.addAll(it.atomizedValue());
+            atomized.addAll(it.typedValue());
         }
 
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
@@ -126,4 +126,3 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 }
-

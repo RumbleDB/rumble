@@ -167,7 +167,7 @@ public class TextItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.content));
     }
 

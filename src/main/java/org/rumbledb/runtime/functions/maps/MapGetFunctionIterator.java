@@ -84,7 +84,7 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
 
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
-            atomized.addAll(it.atomizedValue());
+            atomized.addAll(it.typedValue());
         }
 
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
@@ -146,4 +146,3 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator {
         throw new OurBadException("map:get is currently supported only in local execution mode.");
     }
 }
-

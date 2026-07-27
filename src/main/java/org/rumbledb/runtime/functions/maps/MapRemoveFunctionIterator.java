@@ -87,7 +87,7 @@ public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
 
         List<Item> keysToRemove = new ArrayList<>();
         for (Item it : rawKeys) {
-            List<Item> atomized = it.atomizedValue();
+            List<Item> atomized = it.typedValue();
             for (Item a : atomized) {
                 if (a == null || !a.isAtomic()) {
                     throw new UnexpectedTypeException(

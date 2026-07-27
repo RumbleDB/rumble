@@ -118,7 +118,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 return;
             }
             try {
-                this.nextResults = this.sequenceIterator.next().atomizedValue();
+                this.nextResults = this.sequenceIterator.next().typedValue();
                 if (this.nextResults.isEmpty()) {
                     this.hasNext = false;
                 } else {
@@ -137,7 +137,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
             if (items.size() != 1) {
                 throw new OurBadException("The context item is not a singleton.", getMetadata());
             }
-            this.nextResults = items.get(0).atomizedValue();
+            this.nextResults = items.get(0).typedValue();
             if (this.nextResults.isEmpty()) {
                 this.hasNext = false;
             } else {

@@ -952,9 +952,13 @@ public interface Item extends Serializable, KryoSerializable {
     // endregion arrays
 
     /**
-     * Returns the string value of the item, if it is an atomic item.
+     * XDM 3.1 string-value Accessor.
      *
-     * @return the string value.
+     * For node items, this method corresponds to the {@code dm:string-value} accessor and
+     * returns the node's string value as defined by its node kind. For atomic items, it
+     * returns the lexical string value of the atomic item.
+     *
+     * @return the string value of the item.
      */
     default String getStringValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
@@ -1463,6 +1467,8 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:attributes accessor returns the dynamic, unordered set of attribute nodes that
      * have the node as their parent. It is defined only on element and document nodes; for
      * other node kinds it returns the empty sequence."
+     *
+     * This method corresponds directly to that accessor.
      */
     default List<Item> attributes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
@@ -1476,6 +1482,8 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:children accessor returns the dynamic, ordered sequence of child nodes of the
      * node. It is defined on all node kinds except attribute and namespace nodes; for those
      * node kinds it returns the empty sequence."
+     *
+     * This method corresponds directly to that accessor.
      */
     default List<Item> children() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
@@ -1489,20 +1497,22 @@ public interface Item extends Serializable, KryoSerializable {
      * "The dm:namespace-nodes accessor returns the dynamic, unordered set of Namespace Nodes. It
      * is defined on all seven node kinds."
      *
-     * This default implementation is only a placeholder on the generic Item interface and must
-     * be overridden by XML node implementations that support namespaces.
+     * This method corresponds directly to that accessor. The default implementation is only a
+     * placeholder on the generic Item interface and must be overridden by XML node
+     * implementations that support namespaces.
      */
     default List<Item> namespaceNodes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
-     * Helper accessor for XML element nodes: returns namespace nodes for the namespace bindings
-     * declared directly on the element. This does not include inherited or statically known
-     * namespaces — only the bindings explicitly declared on the element (for example via
-     * xmlns attributes).
+     * Helper derived from the XDM 3.1 {@code dm:namespace-nodes} accessor for XML element
+     * nodes: returns namespace nodes for the namespace bindings declared directly on the
+     * element. This does not include inherited or statically known namespaces, only the
+     * bindings explicitly declared on the element (for example via {@code xmlns} attributes).
      *
-     * Non-element nodes must override this to return the empty sequence.
+     * Unlike {@link #namespaceNodes()}, this is not a standard XDM accessor; it exposes the
+     * subset of namespace nodes that are locally declared on the element.
      */
     default List<Item> declaredNamespaceNodes() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
@@ -1612,7 +1622,10 @@ public interface Item extends Serializable, KryoSerializable {
      * atomic items in the XDM sense.
      */
     default List<Item> typedValue() {
-        return this.atomizedValue();
+        if (isAtomic()) {
+            return Collections.singletonList(this);
+        }
+        throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
     }
 
     /**
@@ -1668,24 +1681,6 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default Item parent() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * XDM 3.1 Section 5.12 string-value Accessor.
-     *
-     * dm:string-value($n as node()) as xs:string
-     *
-     * "The dm:string-value accessor returns the string-value of the node as defined for each
-     * node kind."
-     *
-     * In this API, node string values are exposed via getStringValue() and the default
-     * implementation of dm:typed-value delegates to atomizedValue().
-     */
-    default List<Item> atomizedValue() {
-        if (isAtomic())
-            return Collections.singletonList(this);
-        else
-            throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
     }
 
     default void setParent(Item parent) {

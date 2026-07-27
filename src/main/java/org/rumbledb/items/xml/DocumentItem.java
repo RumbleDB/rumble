@@ -271,11 +271,14 @@ public class DocumentItem implements Item {
      * For a Document Node, dm:typed-value returns the typed value of the document node as a
      * sequence of zero or more atomic values.
      *
-     * This implementation delegates to atomizedValue().
+     * This implementation delegates to the typed value of the document element.
      */
     @Override
     public List<Item> typedValue() {
-        return this.atomizedValue();
+        if (this.documentElement != null) {
+            return this.documentElement.typedValue();
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     /**
@@ -314,14 +317,6 @@ public class DocumentItem implements Item {
             return System.identityHashCode(this);
         }
         return this.documentPos.hashCode();
-    }
-
-    @Override
-    public List<Item> atomizedValue() {
-        if (this.documentElement != null) {
-            return this.documentElement.typedValue();
-        }
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override

@@ -449,7 +449,7 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);
     }
 

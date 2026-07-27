@@ -79,7 +79,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
         this.keyIterator.materialize(context, rawKey);
         List<Item> atomized = new ArrayList<>();
         for (Item it : rawKey) {
-            atomized.addAll(it.atomizedValue());
+            atomized.addAll(it.typedValue());
         }
         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
             throw new UnexpectedTypeException(

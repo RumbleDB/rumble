@@ -169,7 +169,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (item.isObject() || item.isFunction()) {
             throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
         }
-        out.addAll(item.atomizedValue());
+        out.addAll(item.typedValue());
     }
 
     private List<Item> invokeKeyFunction(
