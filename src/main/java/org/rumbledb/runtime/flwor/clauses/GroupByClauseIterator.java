@@ -207,7 +207,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                                         getMetadata()
                                 );
                             }
-                            atomizedResult = CollationSupport.normalizeItemForCollation(
+                            Item normalizedGroupingKey = CollationSupport.normalizeItemForCollation(
                                 atomizedResult,
                                 expression.getCollationURI() == null
                                     ? getStaticContext().getDefaultCollation()
@@ -215,15 +215,16 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                                 getMetadata()
                             );
                             newVariableResults = Collections.singletonList(atomizedResult);
+                            results.add(normalizedGroupingKey);
                         }
                     } else {
                         newVariableResults = Collections.emptyList();
+                        results.addAll(newVariableResults);
                     }
                     validateGroupingKeySequenceType(expression.getSequenceType(), newVariableResults, tupleContext);
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
                     inputTuple.putValue(expression.getVariableName(), newVariableResults);
-                    results.addAll(newVariableResults);
 
                 } else { // if grouping on a variable reference
                     Name groupVariableName = expression.getVariableName();
@@ -248,9 +249,10 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                                 getMetadata()
                         );
                     }
+                    validateGroupingKeySequenceType(expression.getSequenceType(), atomizedGroupValues, tupleContext);
+                    inputTuple.putValue(groupVariableName, atomizedGroupValues);
                     if (atomizedGroupValues.size() == 1) {
-                        atomizedGroupValues.set(
-                            0,
+                        results.add(
                             CollationSupport.normalizeItemForCollation(
                                 atomizedGroupValues.get(0),
                                 expression.getCollationURI() == null
@@ -259,10 +261,9 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                                 getMetadata()
                             )
                         );
+                    } else {
+                        results.addAll(atomizedGroupValues);
                     }
-                    validateGroupingKeySequenceType(expression.getSequenceType(), atomizedGroupValues, tupleContext);
-                    inputTuple.putValue(groupVariableName, atomizedGroupValues);
-                    results.addAll(atomizedGroupValues);
                 }
             }
             FlworKey key = new FlworKey(results);
@@ -508,7 +509,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessNames, context, inputSchema, UDFcolumns, getMetadata()),
+                new GroupClauseCreateColumnsUDF(this.groupingExpressions, context, inputSchema, UDFcolumns, getMetadata()),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -663,6 +664,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             DynamicContext context,
             String input
     ) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return null;
+            }
+        }
+
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
         for (Name groupingVar : groupingVariables) {
@@ -793,6 +800,11 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
         List<FlworDataFrameColumn> dfColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
             null,

@@ -30,6 +30,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<Name> groupingVariableNames;
+    private final List<SequenceType> groupingSequenceTypes;
 
     private final List<Object> results;
     private final ExceptionMetadata metadata;
@@ -58,14 +62,19 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final int dateTimeGroupIndex = 5;
 
     public GroupClauseCreateColumnsUDF(
-            List<Name> groupingVariableNames,
+            List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             DynamicContext context,
             StructType schema,
             List<FlworDataFrameColumn> columns,
             ExceptionMetadata metadata
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
-        this.groupingVariableNames = groupingVariableNames;
+        this.groupingVariableNames = new ArrayList<>();
+        this.groupingSequenceTypes = new ArrayList<>();
+        for (GroupByClauseSparkIteratorExpression expression : groupingExpressions) {
+            this.groupingVariableNames.add(expression.getVariableName());
+            this.groupingSequenceTypes.add(expression.getSequenceType());
+        }
         this.results = new ArrayList<>();
         this.metadata = metadata;
     }
@@ -76,7 +85,9 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
         this.results.clear();
 
-        for (Name groupingVariableName : this.groupingVariableNames) {
+        for (int i = 0; i < this.groupingVariableNames.size(); i++) {
+            Name groupingVariableName = this.groupingVariableNames.get(i);
+            SequenceType declaredType = this.groupingSequenceTypes.get(i);
             List<Item> items = this.dataFrameContext.getContext()
                 .getVariableValues()
                 .getLocalVariableValue(
@@ -91,6 +102,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 );
             }
 
+            validateGroupingKeySequenceType(declaredType, items);
+
             if (items.isEmpty()) {
                 this.results.add(emptySequenceGroupIndex);
                 this.results.add(null);
@@ -104,6 +117,40 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
         }
 
         return RowFactory.create(this.results.toArray());
+    }
+
+    private void validateGroupingKeySequenceType(SequenceType declaredType, List<Item> groupingKey) {
+        if (declaredType == null) {
+            return;
+        }
+        if (!declaredType.isResolved()) {
+            declaredType.resolve(this.dataFrameContext.getContext(), this.metadata);
+        }
+
+        boolean validCardinality = switch (declaredType.getArity()) {
+            case Zero -> groupingKey.isEmpty();
+            case One -> groupingKey.size() == 1;
+            case OneOrZero -> groupingKey.size() <= 1;
+            case OneOrMore -> !groupingKey.isEmpty();
+            case ZeroOrMore -> true;
+        };
+        if (!validCardinality) {
+            throw new UnexpectedTypeException(
+                    "The grouping key has cardinality "
+                        + groupingKey.size()
+                        + ", but the expected type is "
+                        + declaredType,
+                    this.metadata
+            );
+        }
+        for (Item item : groupingKey) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+                throw new UnexpectedTypeException(
+                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
+                        this.metadata
+                );
+            }
+        }
     }
 
     private void createColumnsForItem(Item nextItem) {
