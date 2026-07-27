@@ -84,7 +84,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.comparator = new ItemComparator(
                 false,
                 new InvalidArgumentTypeException(
@@ -96,8 +96,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 2) {
-            String collation = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        if (this.getChildren().size() == 2) {
+            String collation = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
@@ -516,7 +516,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MAX);
@@ -541,11 +541,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.children.size() > 1) {
+        if (this.getChildren().size() > 1) {
             // for now, only consider max over a sequence
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

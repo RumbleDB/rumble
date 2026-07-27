@@ -45,7 +45,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
     }
 
     @Override

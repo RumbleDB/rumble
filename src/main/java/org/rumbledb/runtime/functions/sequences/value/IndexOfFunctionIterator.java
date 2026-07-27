@@ -51,13 +51,13 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.searchIterator = this.children.get(1);
+        this.sequenceIterator = this.getChild(0);
+        this.searchIterator = this.getChild(1);
     }
 
     private void checkCollation(DynamicContext context) {
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2)
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
