@@ -509,7 +509,13 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(this.groupingExpressions, context, inputSchema, UDFcolumns, getMetadata()),
+                new GroupClauseCreateColumnsUDF(
+                        this.groupingExpressions,
+                        context,
+                        inputSchema,
+                        UDFcolumns,
+                        getMetadata()
+                ),
                 DataTypes.createStructType(typedFields)
             );
 
