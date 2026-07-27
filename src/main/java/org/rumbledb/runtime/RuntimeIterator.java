@@ -23,11 +23,9 @@ package org.rumbledb.runtime;
 import java.io.*;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -67,11 +65,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
     protected transient boolean isOpen;
     protected boolean isUpdating;
     protected transient boolean isSequential;
-    protected List<RuntimeIterator> children;
+    private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -81,11 +79,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
         this.isOpen = false;
         this.isUpdating = false;
         this.isSequential = false;
-
-        this.children = new ArrayList<>();
-        if (children != null && !children.isEmpty()) {
-            this.children.addAll(children);
-        }
+        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
     }
 
     /**
@@ -241,6 +235,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item>,
 
     public boolean isOpen() {
         return this.isOpen;
+    }
+
+    protected final RuntimeIterator getChild(int index) {
+        return this.children.get(index);
+    }
+
+    protected final List<RuntimeIterator> getChildren() {
+        return this.children;
     }
 
     public ExceptionMetadata getMetadata() {

@@ -44,8 +44,8 @@ public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.children.get(0).materializeFirstItemOrNull(context);
-        Item key = this.children.get(1).materializeFirstItemOrNull(context);
+        Item map = this.getChild(0).materializeFirstItemOrNull(context);
+        Item key = this.getChild(1).materializeFirstItemOrNull(context);
         boolean contains = map.getSequenceByKey(key) != null;
         return ItemFactory.getInstance().createBooleanItem(contains);
     }

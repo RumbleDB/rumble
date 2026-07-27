@@ -29,7 +29,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private void materializeArgument(DynamicContext context) {
-        this.materializedArgument = this.children.get(0).materialize(context);
+        this.materializedArgument = this.getChild(0).materialize(context);
     }
 
     private void setArgumentType() {

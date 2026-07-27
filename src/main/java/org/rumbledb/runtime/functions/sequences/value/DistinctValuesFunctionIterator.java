@@ -53,8 +53,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void checkCollation(DynamicContext context) {
-        if (this.children.size() == 2) {
-            String collation = this.children.get(1)
+        if (this.getChildren().size() == 2) {
+            String collation = this.getChild(1)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {

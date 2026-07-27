@@ -59,11 +59,11 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     }
 
     private Item getContextNode() {
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

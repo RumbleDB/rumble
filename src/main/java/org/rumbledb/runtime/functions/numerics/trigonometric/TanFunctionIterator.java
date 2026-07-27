@@ -48,7 +48,7 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        Item value = this.getChild(0).materializeFirstItemOrNull(context);
         if (value == null) {
             return null;
         }
@@ -62,7 +62,7 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
