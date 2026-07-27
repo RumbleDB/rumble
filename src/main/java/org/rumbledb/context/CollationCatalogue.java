@@ -48,9 +48,9 @@ public final class CollationCatalogue {
     }
 
     public static String normalizeString(String value, String collationUri) {
-        if (isCaseInsensitiveCollation(collationUri)) {
-            return value.toLowerCase(Locale.ROOT);
+        if (value == null || !isCaseInsensitiveCollation(collationUri)) {
+            return value;
         }
-        return value;
+        return value.toLowerCase(Locale.ROOT);
     }
 }
