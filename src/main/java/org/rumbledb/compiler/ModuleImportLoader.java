@@ -43,6 +43,7 @@ final class ModuleImportLoader {
             try {
                 LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
                     location,
+                    namespaceURI.toString(),
                     importingModuleContext,
                     compilationConfiguration,
                     metadata

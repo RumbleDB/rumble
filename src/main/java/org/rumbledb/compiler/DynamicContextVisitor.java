@@ -357,6 +357,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
             DynamicContext newContext = new DynamicContext(this.configuration);
             newContext.setNamedFunctions(argument.getNamedFunctions());
+            this.importedModuleContexts.put(module.getNamespace(), newContext);
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }

@@ -50,6 +50,10 @@ public class LibraryModule extends Module {
         return this.namespace;
     }
 
+    public void setNamespace(String namespace) {
+        this.namespace = namespace;
+    }
+
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
     }
@@ -92,4 +96,3 @@ public class LibraryModule extends Module {
         this.prolog.serializeToJSONiq(sb, indent);
     }
 }
-

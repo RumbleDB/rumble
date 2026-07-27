@@ -25,6 +25,8 @@ import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.ModuleDependencyCycleException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -44,6 +46,7 @@ import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -68,6 +71,7 @@ import org.rumbledb.expressions.update.TransformExpression;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -556,6 +560,28 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
+    public Void visitMainModule(org.rumbledb.expressions.module.MainModule mainModule, Void argument) {
+        visit(mainModule.getProlog(), null);
+        for (LibraryModule importedModule : mainModule.getProlog().getImportedModules()) {
+            visit(importedModule, null);
+        }
+        visit(mainModule.getProgram(), null);
+        return null;
+    }
+
+    @Override
+    public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
+        visitImportedModules(libraryModule.getProlog().getImportedModules());
+        visit(libraryModule.getProlog(), null);
+        if (isXQuery10Like()) {
+            validateModuleDependencyCycles(libraryModule);
+        } else {
+            validateDynamicContextCycles(libraryModule);
+        }
+        return null;
+    }
+
+    @Override
     public Void visitVariableDeclaration(VariableDeclaration expression, Void argument) {
         if (expression.getExpression() != null) {
             visit(expression.getExpression(), null);
@@ -563,6 +589,154 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             return null;
         }
         return null;
+    }
+
+    private void visitImportedModules(List<LibraryModule> importedModules) {
+        for (LibraryModule importedModule : importedModules) {
+            visit(importedModule, null);
+        }
+    }
+
+    private boolean isXQuery10Like() {
+        String queryLanguage = this.rumbleRuntimeConfiguration.getQueryLanguage();
+        return "xquery10".equals(queryLanguage) || "jsoniq10".equals(queryLanguage);
+    }
+
+    private void validateModuleDependencyCycles(LibraryModule rootModule) {
+        DirectedAcyclicGraph<LibraryModule, DefaultEdge> dependencyGraph = new DirectedAcyclicGraph<>(
+                DefaultEdge.class
+        );
+        addModuleDependencyEdges(
+            rootModule,
+            dependencyGraph,
+            Collections.newSetFromMap(new IdentityHashMap<>())
+        );
+    }
+
+    private void addModuleDependencyEdges(
+            LibraryModule module,
+            DirectedAcyclicGraph<LibraryModule, DefaultEdge> dependencyGraph,
+            Set<LibraryModule> visitedModules
+    ) {
+        if (!visitedModules.add(module)) {
+            return;
+        }
+        dependencyGraph.addVertex(module);
+        Prolog prolog = module.getProlog();
+        for (LibraryModule importedModule : prolog.getImportedModules()) {
+            addModuleDependencyEdges(importedModule, dependencyGraph, visitedModules);
+            if (dependsDirectlyOnModule(module, importedModule)) {
+                dependencyGraph.addVertex(importedModule);
+                try {
+                    dependencyGraph.addEdge(importedModule, module);
+                } catch (IllegalArgumentException e) {
+                    throw new ModuleDependencyCycleException(
+                            "There is a cycle in the direct dependencies between imported modules.",
+                            module.getMetadata()
+                    );
+                }
+            }
+        }
+    }
+
+    private boolean dependsDirectlyOnModule(LibraryModule module, LibraryModule importedModule) {
+        Set<Name> importedNames = collectDirectDeclarationNames(importedModule.getProlog());
+        for (VariableDeclaration variableDeclaration : module.getProlog().getVariableDeclarations()) {
+            if (!Collections.disjoint(getInputVariableDependencies(variableDeclaration), importedNames)) {
+                return true;
+            }
+        }
+        for (FunctionDeclaration functionDeclaration : module.getProlog().getFunctionDeclarations()) {
+            if (!Collections.disjoint(getInputVariableDependencies(functionDeclaration), importedNames)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Set<Name> collectDirectDeclarationNames(Prolog prolog) {
+        Set<Name> names = new TreeSet<>();
+        for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
+            names.add(variableDeclaration.getVariableName());
+        }
+        for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
+            names.add(functionDeclaration.getFunctionIdentifier().getNameWithArity());
+        }
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            names.add(typeDeclaration.getDefinition().getName());
+        }
+        return names;
+    }
+
+    private void validateDynamicContextCycles(LibraryModule rootModule) {
+        Map<Name, Node> reachableDeclarations = new TreeMap<>();
+        collectReachableDeclarations(
+            rootModule,
+            reachableDeclarations,
+            Collections.newSetFromMap(new IdentityHashMap<>())
+        );
+        DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
+        for (Node declaration : reachableDeclarations.values()) {
+            dependencyGraph.addVertex(declaration);
+        }
+        for (Node declaration : reachableDeclarations.values()) {
+            if (!(declaration instanceof VariableDeclaration) && !(declaration instanceof FunctionDeclaration)) {
+                continue;
+            }
+            for (Name name : getInputVariableDependencies(declaration)) {
+                Node dependency = reachableDeclarations.get(name);
+                if (dependency == null) {
+                    continue;
+                }
+                if (dependency instanceof FunctionDeclaration && declaration instanceof FunctionDeclaration) {
+                    continue;
+                }
+                try {
+                    dependencyGraph.addEdge(dependency, declaration);
+                } catch (IllegalArgumentException e) {
+                    throw new CycleInVariableDeclarationsException(
+                            "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
+                            declaration.getMetadata()
+                    );
+                }
+            }
+        }
+    }
+
+    private void collectReachableDeclarations(
+            LibraryModule module,
+            Map<Name, Node> nameToNodeMap,
+            Set<LibraryModule> visitedModules
+    ) {
+        if (!visitedModules.add(module)) {
+            return;
+        }
+        Prolog prolog = module.getProlog();
+        for (LibraryModule importedModule : prolog.getImportedModules()) {
+            collectReachableDeclarations(importedModule, nameToNodeMap, visitedModules);
+        }
+        for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
+            Node previous = nameToNodeMap.putIfAbsent(variableDeclaration.getVariableName(), variableDeclaration);
+            if (previous != null && previous != variableDeclaration) {
+                throw new VariableAlreadyExistsException(
+                        variableDeclaration.getVariableName(),
+                        variableDeclaration.getMetadata()
+                );
+            }
+        }
+        for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
+            Name key = functionDeclaration.getFunctionIdentifier().getNameWithArity();
+            Node previous = nameToNodeMap.putIfAbsent(key, functionDeclaration);
+            if (previous != null && previous != functionDeclaration) {
+                throw new DuplicateFunctionIdentifierException(
+                        functionDeclaration.getFunctionIdentifier(),
+                        functionDeclaration.getMetadata()
+                );
+            }
+        }
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            nameToNodeMap.putIfAbsent(typeDeclaration.getDefinition().getName(), typeDeclaration);
+        }
     }
 
     @Override

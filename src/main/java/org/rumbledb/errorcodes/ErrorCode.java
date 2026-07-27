@@ -188,6 +188,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidJsoniqVersionErrorCode = registerBuiltIn("XQST0031");
     public static final ErrorCode MultipleBaseURIExceptionCode = registerBuiltIn("XQST0032");
     public static final ErrorCode NamespacePrefixBoundTwiceCode = registerBuiltIn("XQST0033");
+    public static final ErrorCode ModuleDependencyCycleErrorCode = registerBuiltIn("XQST0093");
     public static final ErrorCode DuplicateFunctionIdentifier = registerBuiltIn("XQST0034");
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");

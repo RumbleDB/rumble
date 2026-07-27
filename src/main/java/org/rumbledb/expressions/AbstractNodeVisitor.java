@@ -20,6 +20,10 @@
 
 package org.rumbledb.expressions;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
@@ -126,6 +130,8 @@ import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
+    private final Set<LibraryModule> activeLibraryModules = Collections.newSetFromMap(new IdentityHashMap<>());
+
     public T visit(Node node, T argument) {
         return node.accept(this, argument);
     }
@@ -152,7 +158,14 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitLibraryModule(LibraryModule expression, T argument) {
-        return defaultAction(expression, argument);
+        if (!this.activeLibraryModules.add(expression)) {
+            return argument;
+        }
+        try {
+            return defaultAction(expression, argument);
+        } finally {
+            this.activeLibraryModules.remove(expression);
+        }
     }
 
     public T visitProlog(Prolog expression, T argument) {
