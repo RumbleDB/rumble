@@ -1,5 +1,5 @@
 (:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
-module namespace my-module = "modulerepeatedimport.jq";
+module namespace my-module = "http://example.com/modulerepeatedimport.jq";
 import module namespace mod1 = "moduleimportingmodule.jq";
 import module namespace mod2 = "module.jq";
 
