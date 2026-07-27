@@ -46,17 +46,14 @@ public final class AtomicDeepEqual {
         if (item2.isUntypedAtomic()) {
             item2 = ItemFactory.getInstance().createStringItem(item2.getStringValue());
         }
-        try {
-            return ComparisonIterator.compareItems(
-                item1,
-                item2,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            ) == 0;
-        } catch (RuntimeException e) {
-            // Deep-equal is false for atomic values that cannot be value-compared.
-            return false;
-        }
+        long comparison = ComparisonIterator.compareItems(
+            item1,
+            item2,
+            ComparisonOperator.VC_EQ,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        // The low-level comparator reports non-comparable types with Long.MIN_VALUE.
+        return comparison != Long.MIN_VALUE && comparison == 0;
     }
 
     private static boolean bothFloatOrDoubleNaN(Item item1, Item item2) {

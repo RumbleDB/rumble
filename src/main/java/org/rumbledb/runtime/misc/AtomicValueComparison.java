@@ -22,16 +22,20 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 
 /**
- * Atomic value-comparison semantics for operations such as {@code distinct-values} and grouping.
+ * Atomic equivalence semantics for operations such as {@code distinct-values} and grouping.
  *
- * This is intentionally separate from Java equality and map {@code op:same-key}: numeric value
- * comparison applies type promotion and is not transitive across mixed numeric types.
+ * This uses atomic deep equality, including NaN equality. It is intentionally separate from Java
+ * equality and map {@code op:same-key}: numeric comparison applies type promotion and is not
+ * transitive across mixed numeric types.
  */
 public final class AtomicValueComparison {
 
     private AtomicValueComparison() {
     }
 
+    /**
+     * Returns whether two atomic values belong to the same distinct/grouping equivalence class.
+     */
     public static boolean equal(Item left, Item right) {
         if (left == right) {
             return true;

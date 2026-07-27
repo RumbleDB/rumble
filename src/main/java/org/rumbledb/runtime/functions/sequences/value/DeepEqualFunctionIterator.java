@@ -28,7 +28,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -132,15 +134,15 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
      * @return true if the items are deep-equal, false otherwise
      */
     private boolean checkItemsDeepEqual(Item item1, Item item2) {
-        // Specific to deep-equal but does not apply to eq operator
-        // Special handling for NaN values - NaN is deep-equal to NaN
         if (
-            ((item1.isFloat() && Float.isNaN(item1.getFloatValue()))
-                || (item1.isDouble() && Double.isNaN(item1.getDoubleValue())))
-                && ((item2.isFloat() && Float.isNaN(item2.getFloatValue()))
-                    || (item2.isDouble() && Double.isNaN(item2.getDoubleValue())))
+            (item1.isFunction() && !item1.isMap() && !item1.isArray())
+                || (item2.isFunction() && !item2.isMap() && !item2.isArray())
         ) {
-            return true;
+            throw new RumbleException(
+                    "fn:deep-equal cannot compare function items other than maps or arrays.",
+                    ErrorCode.UnexpectedFunctionItem,
+                    getMetadata()
+            );
         }
 
         if (item1.isMap() && item2.isMap()) {
