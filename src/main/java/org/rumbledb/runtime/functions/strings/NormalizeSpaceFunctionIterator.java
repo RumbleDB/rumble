@@ -46,12 +46,12 @@ public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 0) {
+        if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return ItemFactory.getInstance()
                 .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
         }
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
 
         if (stringItem == null) {

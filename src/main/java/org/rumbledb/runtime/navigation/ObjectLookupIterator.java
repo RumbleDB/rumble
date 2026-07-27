@@ -82,8 +82,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     private void initLookupKey(DynamicContext context) {
-
-        RuntimeIterator lookupIterator = this.children.get(1);
+        RuntimeIterator lookupIterator = this.getChild(1);
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
@@ -199,7 +198,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
@@ -228,7 +227,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
             .getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
@@ -293,7 +292,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
-            if (this.children.get(1) instanceof StringRuntimeIterator) {
+            if (this.getChild(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
@@ -361,7 +360,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             );
             newContext.setSchema(field.dataType());
         } else {
-            if (this.children.get(1) instanceof StringRuntimeIterator) {
+            if (this.getChild(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")
                     .warn(
                         "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
@@ -384,7 +383,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {

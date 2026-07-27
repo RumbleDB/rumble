@@ -43,17 +43,7 @@ public class PINodeItemType implements ItemType {
         return this.normalizedTarget;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        output.writeString(this.normalizedTarget);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.normalizedTarget = input.readString();
-    }
 
     @Override
     public boolean equals(Object other) {

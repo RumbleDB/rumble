@@ -46,12 +46,12 @@ public class CompareFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String collation = this.children.size() == 3
-            ? this.children.get(2).materializeFirstItemOrNull(context).getStringValue()
+        String collation = this.getChildren().size() == 3
+            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
-        Item firstStringItem = this.children.get(0)
+        Item firstStringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
-        Item secondStringItem = this.children.get(1)
+        Item secondStringItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
         if (firstStringItem == null || secondStringItem == null) {
             return null;

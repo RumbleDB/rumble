@@ -124,7 +124,9 @@ public final class CollationSupport {
                 : Collator.NO_DECOMPOSITION
         );
         ruleBasedCollator.setCaseLevel(parameters.caseLevel);
-        ruleBasedCollator.setFrenchCollation(parameters.backwards);
+        if (parameters.backwards != null) {
+            ruleBasedCollator.setFrenchCollation(parameters.backwards);
+        }
         if (parameters.alternateShifted != null) {
             ruleBasedCollator.setAlternateHandlingShifted(parameters.alternateShifted);
         }
@@ -178,6 +180,9 @@ public final class CollationSupport {
                     break;
                 case "fallback":
                 case "version":
+                    if ("version".equals(key) && "no".equals(queryParameters.get("fallback"))) {
+                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+                    }
                     break;
                 default:
                     if ("no".equals(queryParameters.get("fallback"))) {
@@ -233,7 +238,7 @@ public final class CollationSupport {
         private String languageTag;
         private int strength = Collator.TERTIARY;
         private boolean normalization;
-        private boolean backwards;
+        private Boolean backwards;
         private boolean caseLevel;
         private Boolean alternateShifted;
     }

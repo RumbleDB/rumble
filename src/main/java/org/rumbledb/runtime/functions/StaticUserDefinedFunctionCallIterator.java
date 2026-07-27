@@ -62,7 +62,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isUpdating,
             boolean tailCallOptimization
     ) {
         super(null, staticContext);
@@ -70,7 +69,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
-        this.isUpdating = isUpdating;
         this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 

@@ -16,11 +16,9 @@ public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public ApplyStatementIterator(
             RuntimeIterator exprIterator,
-            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(exprIterator), staticContext);
-        this.isSequential = isSequential;
         this.exprIterator = exprIterator;
     }
 
