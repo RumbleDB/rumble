@@ -1,8 +1,5 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 import java.io.Serial;
@@ -56,15 +53,5 @@ public class NameTest implements NodeTest {
         return this.wildcardWithNCName;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.qname);
-        kryo.writeObject(output, this.wildcardWithNCName);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.qname = kryo.readObject(input, Name.class);
-        this.wildcardWithNCName = kryo.readObject(input, String.class);
-    }
 }

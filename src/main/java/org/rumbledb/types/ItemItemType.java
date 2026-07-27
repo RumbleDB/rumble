@@ -30,13 +30,7 @@ public class ItemItemType implements ItemType {
         return true;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
 
     @Override
     public boolean equals(Object other) {
