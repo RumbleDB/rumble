@@ -17,13 +17,13 @@ public abstract class AbstractMapItem implements Item {
         if (this == other) {
             return true;
         }
-        if (!(other instanceof Item otherItem) || !otherItem.isMap() || getSize() != otherItem.getSize()) {
+        if (!(other instanceof Item otherItem) || !otherItem.isMap() || this.getSize() != otherItem.getSize()) {
             return false;
         }
-        for (Item key : getItemKeys()) {
-            List<Item> value = getSequenceByKey(key);
+        for (Item key : this.getItemKeys()) {
+            List<Item> value = this.getSequenceByKey(key);
             List<Item> otherValue = otherItem.getSequenceByKey(key);
-            if (otherValue == null || !value.equals(otherValue)) {
+            if (!value.equals(otherValue)) {
                 return false;
             }
         }
@@ -32,9 +32,9 @@ public abstract class AbstractMapItem implements Item {
 
     @Override
     public final int hashCode() {
-        int result = getSize();
-        for (Item key : getItemKeys()) {
-            result += 31 * key.hashCode() + getSequenceByKey(key).hashCode();
+        int result = this.getSize();
+        for (Item key : this.getItemKeys()) {
+            result += 31 * key.hashCode() + this.getSequenceByKey(key).hashCode();
         }
         return result;
     }
