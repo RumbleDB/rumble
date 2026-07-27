@@ -89,22 +89,22 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.argumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.argumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.itemIndex = 0;
         this.mutableArgumentIterator = new MutableArgumentIterator(this.argumentContext);
         List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(this.mutableArgumentIterator);
-        RuntimeStaticContext functionItemContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.currentCallbackIterator = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(this.actionFunction, functionItemContext),
                 callbackArguments,

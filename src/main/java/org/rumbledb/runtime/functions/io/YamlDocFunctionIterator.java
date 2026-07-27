@@ -65,7 +65,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
         Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         try {
             URI uri = FileSystemUtil.resolveURI(
-                this.staticURI,
+                this.staticContext.getStaticURI(),
                 path.getStringValue(),
                 getMetadata()
             );

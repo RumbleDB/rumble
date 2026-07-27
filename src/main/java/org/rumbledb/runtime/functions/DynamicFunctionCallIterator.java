@@ -182,12 +182,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new ArrayFunctionCallIterator(
                     this.functionItem,
                     keyIterator,
@@ -209,12 +209,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                 );
             }
             RuntimeIterator keyIterator = this.functionArguments.get(0);
-            RuntimeStaticContext staticContext = new RuntimeStaticContext(
-                    getConfiguration(),
-                    SequenceType.createSequenceType("item*"),
-                    ExecutionMode.LOCAL,
-                    getMetadata()
-            );
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
             this.functionCallIterator = new MapFunctionCallIterator(
                     this.functionItem,
                     keyIterator,

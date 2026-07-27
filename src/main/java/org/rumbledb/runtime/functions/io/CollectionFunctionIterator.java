@@ -38,7 +38,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
