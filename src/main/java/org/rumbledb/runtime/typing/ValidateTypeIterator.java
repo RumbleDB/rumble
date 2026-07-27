@@ -418,6 +418,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return item.getFloatValue();
             }
             if (dataType instanceof DecimalType) {
+                // Preserve the concise lexical decimal form rather than an exact binary-derived value.
                 return new BigDecimal(item.getStringValue());
             }
             if (dataType.equals(DataTypes.StringType)) {
