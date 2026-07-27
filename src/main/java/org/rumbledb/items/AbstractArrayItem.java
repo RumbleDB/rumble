@@ -34,15 +34,10 @@ public abstract class AbstractArrayItem implements Item {
         if (this == other) {
             return true;
         }
-        if (!(other instanceof Item otherItem) || !otherItem.isArray() || this.getSize() != otherItem.getSize()) {
+        if (!(other instanceof Item otherItem) || !otherItem.isArray()) {
             return false;
         }
-        for (int i = 0; i < this.getSize(); i++) {
-            if (!this.getSequenceAt(i).equals(otherItem.getSequenceAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        return this.getSequenceMembers().equals(otherItem.getSequenceMembers());
     }
 
     @Override
