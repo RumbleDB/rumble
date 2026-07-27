@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -32,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
+import org.rumbledb.runtime.misc.CollationSupport;
 
 
 import java.io.Serial;
@@ -45,6 +45,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator sequenceIterator;
     private Item nextResult;
     private List<Item> prevResults;
+    private String activeCollation;
 
     public DistinctValuesFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -54,15 +55,16 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         this.sequenceIterator = arguments.get(0);
     }
 
-    private void checkCollation(DynamicContext context) {
+    private String resolveCollation(DynamicContext context) {
+        String explicitCollation = null;
         if (this.getChildren().size() == 2) {
-            String collation = this.getChild(1)
+            explicitCollation = this.getChild(1)
                 .materializeFirstItemOrNull(context)
                 .getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
         }
+        String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
+        CollationSupport.checkCollationSupported(collation, getMetadata());
+        return collation;
     }
 
     @Override
@@ -89,7 +91,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.prevResults = new ArrayList<>();
-        checkCollation(this.currentDynamicContextForLocalExecution);
+        this.activeCollation = resolveCollation(this.currentDynamicContextForLocalExecution);
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -116,7 +118,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     private boolean containsEquivalentValue(Item candidate) {
         for (Item previous : this.prevResults) {
-            if (AtomicValueComparison.equal(previous, candidate)) {
+            if (AtomicValueComparison.equal(previous, candidate, this.activeCollation, getMetadata())) {
                 return true;
             }
         }
@@ -125,9 +127,9 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        checkCollation(dynamicContext);
+        String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(AtomicValueComparisonKey::new)
+        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation))
             .distinct()
             .map(AtomicValueComparisonKey::getItem);
     }
@@ -140,7 +142,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        checkCollation(dynamicContext);
+        resolveCollation(dynamicContext);
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         return df.distinct();
     }
