@@ -5,9 +5,8 @@ import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.context.CollationCatalogue;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnsupportedCollationException;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -37,11 +36,7 @@ public final class CollationResolver {
         if (CollationCatalogue.isUCACollation(collationUri)) {
             return buildUCAComparator(collationUri, metadata);
         }
-        throw new RumbleException(
-                "Unsupported collation: " + collationUri,
-                ErrorCode.UnsupportedCollationExceptionCode,
-                metadata
-        );
+        throw new UnsupportedCollationException("Unsupported collation: " + collationUri, metadata);
     }
 
     public static boolean equals(String a, String b, String collationUri, ExceptionMetadata metadata) {
@@ -66,11 +61,7 @@ public final class CollationResolver {
         if (CollationCatalogue.isUCACollation(collationUri)) {
             return buildICUCollator(collationUri, metadata).getCollationKey(value).toByteArray();
         }
-        throw new RumbleException(
-                "Unsupported collation: " + collationUri,
-                ErrorCode.UnsupportedCollationExceptionCode,
-                metadata
-        );
+        throw new UnsupportedCollationException("Unsupported collation: " + collationUri, metadata);
     }
 
     private static int compareCodepoints(String a, String b) {
@@ -122,9 +113,8 @@ public final class CollationResolver {
             case "secondary" -> Collator.SECONDARY;
             case "tertiary" -> Collator.TERTIARY;
             case "identical" -> Collator.IDENTICAL;
-            default -> throw new RumbleException(
+            default -> throw new UnsupportedCollationException(
                     "Unsupported collation strength: " + strength,
-                    ErrorCode.UnsupportedCollationExceptionCode,
                     metadata
             );
         };
@@ -150,11 +140,7 @@ public final class CollationResolver {
                 String value = URLDecoder.decode(pair.substring(equalsIndex + 1), "UTF-8");
                 params.put(key, value);
             } catch (UnsupportedEncodingException e) {
-                throw new RumbleException(
-                        "Invalid collation URI: " + collationUri,
-                        ErrorCode.UnsupportedCollationExceptionCode,
-                        metadata
-                );
+                throw new UnsupportedCollationException("Invalid collation URI: " + collationUri, metadata);
             }
         }
         return params;

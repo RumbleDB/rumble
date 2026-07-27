@@ -9,10 +9,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.InvalidOptionException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
@@ -151,9 +150,8 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                     String childKey = reader.nextName();
                     boolean isDuplicate = !seenKeys.add(childKey);
                     if (isDuplicate && DUPLICATES_REJECT.equals(duplicates)) {
-                        throw new RumbleException(
-                                "fn:json-to-xml: duplicate key '" + childKey + "' [err:FOJS0003]",
-                                ErrorCode.DuplicateJSONKeyErrorCode,
+                        throw new DuplicateJSONKeyException(
+                                "fn:json-to-xml: duplicate key '" + childKey + "'",
                                 getMetadata()
                         );
                     }
@@ -214,9 +212,8 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 && !DUPLICATES_USE_FIRST.equals(value)
                 && !DUPLICATES_RETAIN.equals(value)
         ) {
-            throw new RumbleException(
-                    "fn:json-to-xml: invalid value for option 'duplicates': '" + value + "' [err:FOJS0005]",
-                    ErrorCode.InvalidOptionErrorCode,
+            throw new InvalidOptionException(
+                    "fn:json-to-xml: invalid value for option 'duplicates': '" + value + "'",
                     getMetadata()
             );
         }
