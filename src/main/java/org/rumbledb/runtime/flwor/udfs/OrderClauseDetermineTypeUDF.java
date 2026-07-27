@@ -82,9 +82,21 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
             this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
             return;
         }
-        if (this.nextItem.isArray() || this.nextItem.isObject()) {
+        List<Item> atomized = this.nextItem.atomizedValue();
+        if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
-                    "Order by variable can not contain arrays or objects.",
+                    "Order by variable must atomize to at most one item.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        if (atomized.isEmpty()) {
+            this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
+            return;
+        }
+        this.nextItem = atomized.get(0);
+        if (!this.nextItem.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Order by variable must atomize to an atomic value.",
                     expressionWithIterator.getIterator().getMetadata()
             );
         }

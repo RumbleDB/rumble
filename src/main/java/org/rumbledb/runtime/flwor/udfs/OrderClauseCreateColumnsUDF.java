@@ -98,6 +98,22 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             }
             while (iterator.hasNext()) {
                 Item nextItem = iterator.next();
+                List<Item> atomized = nextItem.atomizedValue();
+                if (atomized.size() > 1) {
+                    throw new OurBadException(
+                            "Invalid sort key: order by expression must atomize to at most one item."
+                    );
+                }
+                if (atomized.isEmpty()) {
+                    if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
+                        this.results.add(emptySequenceOrderIndexLast);
+                    } else {
+                        this.results.add(emptySequenceOrderIndexFirst);
+                    }
+                    this.results.add(null);
+                    continue;
+                }
+                nextItem = atomized.get(0);
                 createColumnsForItem(nextItem, expressionIndex);
             }
             iterator.close();
