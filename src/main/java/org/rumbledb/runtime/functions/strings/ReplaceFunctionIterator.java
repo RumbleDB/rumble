@@ -48,9 +48,9 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.children.get(1)
+        Item patternStringItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
 
         if (patternStringItem == null) {
@@ -58,8 +58,8 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         String pattern = patternStringItem.getStringValue();
         String flags = null;
-        if (this.children.size() == 4) {
-            Item flagsItem = this.children.get(3)
+        if (this.getChildren().size() == 4) {
+            Item flagsItem = this.getChild(3)
                 .materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
@@ -73,7 +73,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Item replacementStringItem = this.children.get(2)
+        Item replacementStringItem = this.getChild(2)
             .materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
         if (compiledRegex.isQuote()) {

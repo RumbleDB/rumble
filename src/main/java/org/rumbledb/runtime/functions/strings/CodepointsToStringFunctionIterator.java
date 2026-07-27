@@ -48,7 +48,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
 
     public Item materializeFirstItemOrNull(DynamicContext context) {
         String xmlVersion = getConfiguration().getXmlVersion();
-        RuntimeIterator argumentIterator = this.children.get(0);
+        RuntimeIterator argumentIterator = this.getChild(0);
 
         argumentIterator.open(context);
         try {
@@ -68,7 +68,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
             if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
                 throw new CodepointNotValidException(
                         "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                        this.children.get(0).getMetadata()
+                        this.getChild(0).getMetadata()
                 );
             }
             sb.appendCodePoint(codepoint);
@@ -82,7 +82,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
         } catch (ArithmeticException e) {
             CodepointNotValidException ex = new CodepointNotValidException(
                     "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                    this.children.get(0).getMetadata()
+                    this.getChild(0).getMetadata()
             );
             ex.initCause(e);
             throw ex;

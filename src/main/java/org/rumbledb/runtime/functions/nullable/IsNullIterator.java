@@ -20,7 +20,7 @@ public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> materializedItems = this.children.get(0).materialize(context);
+        List<Item> materializedItems = this.getChild(0).materialize(context);
         if (materializedItems == null || materializedItems.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }

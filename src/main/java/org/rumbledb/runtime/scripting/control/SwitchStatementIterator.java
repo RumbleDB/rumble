@@ -11,6 +11,8 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
 import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
@@ -25,11 +27,13 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeIterator defaultReturn,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(testField);
-        this.children.addAll(cases.keySet());
-        this.children.addAll(cases.values());
-        this.children.add(defaultReturn);
+        super(
+            Stream.of(Stream.of(testField), cases.keySet().stream(), cases.values().stream(), Stream.of(defaultReturn))
+                .flatMap(Function.identity())
+                .toList(),
+            staticContext
+        );
+
         this.testField = testField;
         this.cases = cases;
         this.defaultReturn = defaultReturn;

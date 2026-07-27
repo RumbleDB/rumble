@@ -24,7 +24,7 @@ public class HoursFromDurationFunctionIterator extends AtMostOneItemLocalRuntime
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item durationItem = this.children.get(0)
+        Item durationItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (durationItem == null) {
             return null;

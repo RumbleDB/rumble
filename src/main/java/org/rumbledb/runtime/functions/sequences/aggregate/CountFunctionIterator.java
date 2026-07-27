@@ -56,7 +56,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.children.get(0);
+        RuntimeIterator iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
@@ -145,7 +145,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator expr) {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
             Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
@@ -156,7 +156,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(
