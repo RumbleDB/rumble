@@ -2,10 +2,14 @@ package org.rumbledb.items.xml;
 
 import org.rumbledb.api.Item;
 
+import java.io.Serial;
+
 /**
  * Centralizes XDM node identity for Java collections.
  */
 public abstract class AbstractNodeItem implements Item {
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     @Override
     public final boolean equals(Object other) {
