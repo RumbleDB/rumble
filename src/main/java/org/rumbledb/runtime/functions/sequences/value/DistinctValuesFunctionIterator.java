@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -138,13 +137,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     protected boolean implementsDataFrames() {
         // SQL DISTINCT does not implement XDM numeric promotion or NaN equality.
         return false;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        resolveCollation(dynamicContext);
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
-        return df.distinct();
     }
 
     @Override
