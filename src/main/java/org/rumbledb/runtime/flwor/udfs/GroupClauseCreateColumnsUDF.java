@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -45,6 +46,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<Name> groupingVariableNames;
+    private final List<String> groupingCollationURIs;
     private final List<SequenceType> groupingSequenceTypes;
 
     private final List<Object> results;
@@ -71,9 +73,11 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.groupingVariableNames = new ArrayList<>();
+        this.groupingCollationURIs = new ArrayList<>();
         this.groupingSequenceTypes = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression expression : groupingExpressions) {
             this.groupingVariableNames.add(expression.getVariableName());
+            this.groupingCollationURIs.add(expression.getCollationURI());
             this.groupingSequenceTypes.add(expression.getSequenceType());
         }
         this.results = new ArrayList<>();
@@ -88,6 +92,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
         for (int i = 0; i < this.groupingVariableNames.size(); i++) {
             Name groupingVariableName = this.groupingVariableNames.get(i);
+            String collationURI = this.groupingCollationURIs.get(i);
             SequenceType declaredType = this.groupingSequenceTypes.get(i);
             List<Item> items = this.dataFrameContext.getContext()
                 .getVariableValues()
@@ -108,7 +113,11 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 continue;
             }
 
-            Item nextItem = atomizedGroupingKey.get(0);
+            Item nextItem = CollationSupport.normalizeItemForCollation(
+                atomizedGroupingKey.get(0),
+                collationURI,
+                this.metadata
+            );
             this.createColumnsForItem(nextItem);
         }
 
