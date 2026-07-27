@@ -20,6 +20,7 @@ package org.rumbledb.runtime.misc;
 import java.io.Serializable;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Serializable adapter for using atomic value comparison in distributed hash operations.
@@ -29,12 +30,23 @@ public final class AtomicValueComparisonKey implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private Item item;
+    private Item comparisonItem;
 
     public AtomicValueComparisonKey() {
     }
 
     public AtomicValueComparisonKey(Item item) {
         this.item = item;
+        this.comparisonItem = item;
+    }
+
+    public AtomicValueComparisonKey(Item item, String collationUri) {
+        this.item = item;
+        this.comparisonItem = CollationSupport.normalizeItemForCollation(
+            item,
+            collationUri,
+            ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     public Item getItem() {
@@ -47,11 +59,11 @@ public final class AtomicValueComparisonKey implements Serializable {
             return true;
         }
         return other instanceof AtomicValueComparisonKey otherKey
-            && AtomicValueComparison.equal(this.item, otherKey.item);
+            && AtomicValueComparison.equal(this.comparisonItem, otherKey.comparisonItem);
     }
 
     @Override
     public int hashCode() {
-        return AtomicValueComparison.hash(this.item);
+        return AtomicValueComparison.hash(this.comparisonItem);
     }
 }

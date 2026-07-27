@@ -20,6 +20,8 @@ package org.rumbledb.runtime.misc;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * Atomic equivalence semantics for operations such as {@code distinct-values} and grouping.
@@ -37,11 +39,28 @@ public final class AtomicValueComparison {
      * Returns whether two atomic values belong to the same distinct/grouping equivalence class.
      */
     public static boolean equal(Item left, Item right) {
+        return equal(left, right, Name.DEFAULT_COLLATION_NS, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public static boolean equal(
+            Item left,
+            Item right,
+            String collationUri,
+            ExceptionMetadata metadata
+    ) {
         if (left == right) {
             return true;
         }
         if (left == null || right == null) {
             return false;
+        }
+        if (CollationSupport.isStringCollationType(left) && CollationSupport.isStringCollationType(right)) {
+            return CollationSupport.compareStrings(
+                left.getStringValue(),
+                right.getStringValue(),
+                collationUri,
+                metadata
+            ) == 0;
         }
         return AtomicDeepEqual.deepEqual(left, right);
     }
@@ -55,9 +74,14 @@ public final class AtomicValueComparison {
      * timezone normalization or subtype promotion.
      */
     public static int hash(Item item) {
+        return hash(item, Name.DEFAULT_COLLATION_NS, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public static int hash(Item item, String collationUri, ExceptionMetadata metadata) {
         if (item == null) {
             return 0;
         }
+        item = CollationSupport.normalizeItemForCollation(item, collationUri, metadata);
         if (item.isNumeric()) {
             float value = item.castToFloatValue();
             return value == 0.0f ? 0 : Float.hashCode(value);
