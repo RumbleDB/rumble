@@ -401,7 +401,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                             groupByExpressionIterator,
                             variableName,
                             clause.getMetadata(),
-                            var.getCollationURI()
+                            var.getCollationURI(),
+                            var.getActualSequenceType()
                     )
                 );
             }

@@ -24,6 +24,7 @@ package org.rumbledb.runtime.flwor.expression;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -37,17 +38,20 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
     private final RuntimeIterator expression;
     private final ExceptionMetadata iteratorMetadata;
     private final String collationURI;
+    private final SequenceType sequenceType;
 
     public GroupByClauseSparkIteratorExpression(
             RuntimeIterator expression,
             Name variableName,
             ExceptionMetadata iteratorMetadata,
-            String collationURI
+            String collationURI,
+            SequenceType sequenceType
     ) {
         this.expression = expression;
         this.variableName = variableName;
         this.iteratorMetadata = iteratorMetadata;
         this.collationURI = collationURI;
+        this.sequenceType = sequenceType;
     }
 
     public Name getVariableName() {
@@ -64,5 +68,9 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
 
     public String getCollationURI() {
         return this.collationURI;
+    }
+
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
     }
 }

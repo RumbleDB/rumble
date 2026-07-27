@@ -1228,10 +1228,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-
         }
 
 

@@ -50,6 +50,8 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -217,6 +219,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                     } else {
                         newVariableResults = Collections.emptyList();
                     }
+                    validateGroupingKeySequenceType(expression.getSequenceType(), newVariableResults, tupleContext);
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
                     inputTuple.putValue(expression.getVariableName(), newVariableResults);
@@ -257,6 +260,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                             )
                         );
                     }
+                    validateGroupingKeySequenceType(expression.getSequenceType(), atomizedGroupValues, tupleContext);
                     inputTuple.putValue(groupVariableName, atomizedGroupValues);
                     results.addAll(atomizedGroupValues);
                 }
@@ -270,6 +274,44 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             values.add(inputTuple);
         }
         return keyValuePairs;
+    }
+
+    private void validateGroupingKeySequenceType(
+            SequenceType declaredType,
+            List<Item> groupingKey,
+            DynamicContext dynamicContext
+    ) {
+        if (declaredType == null) {
+            return;
+        }
+        if (!declaredType.isResolved()) {
+            declaredType.resolve(dynamicContext, getMetadata());
+        }
+
+        boolean validCardinality = switch (declaredType.getArity()) {
+            case Zero -> groupingKey.isEmpty();
+            case One -> groupingKey.size() == 1;
+            case OneOrZero -> groupingKey.size() <= 1;
+            case OneOrMore -> !groupingKey.isEmpty();
+            case ZeroOrMore -> true;
+        };
+        if (!validCardinality) {
+            throw new UnexpectedTypeException(
+                    "The grouping key has cardinality "
+                        + groupingKey.size()
+                        + ", but the expected type is "
+                        + declaredType,
+                    getMetadata()
+            );
+        }
+        for (Item item : groupingKey) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+                throw new UnexpectedTypeException(
+                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
+                        getMetadata()
+                );
+            }
+        }
     }
 
     /**
