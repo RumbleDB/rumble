@@ -31,6 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -190,7 +191,15 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         );
                     }
                     if (resultItem != null) {
-                        List<Item> atomizedResults = resultItem.atomizedValue();
+                        List<Item> atomizedResults;
+                        try {
+                            atomizedResults = resultItem.atomizedValue();
+                        } catch (CannotAtomizeException e) {
+                            throw new UnexpectedTypeException(
+                                    "Group by variable must atomize to a supported atomic value.",
+                                    getMetadata()
+                            );
+                        }
                         if (atomizedResults.size() > 1) {
                             throw new UnexpectedTypeException(
                                     "Keys in a group-by clause must atomize to at most one item.",
@@ -241,7 +250,14 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         .getLocalVariableValue(groupVariableName, getMetadata());
                     List<Item> atomizedGroupValues = new ArrayList<>();
                     for (Item groupVariableValue : groupVariableValues) {
-                        atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                        try {
+                            atomizedGroupValues.addAll(groupVariableValue.atomizedValue());
+                        } catch (CannotAtomizeException e) {
+                            throw new UnexpectedTypeException(
+                                    "Group by variable must atomize to a supported atomic value.",
+                                    getMetadata()
+                            );
+                        }
                     }
                     if (atomizedGroupValues.size() > 1) {
                         throw new UnexpectedTypeException(
