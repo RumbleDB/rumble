@@ -174,12 +174,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(
             df.isEmptySequence() ? 0 : 1,

@@ -84,17 +84,12 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return this.iterator.generateNativeQuery(nativeClauseContext);
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.iterator.getDataFrame(context);
         int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
         return childDataFrame.repartition(numberPartitions);

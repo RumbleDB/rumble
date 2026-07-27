@@ -49,7 +49,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
 
         String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
 

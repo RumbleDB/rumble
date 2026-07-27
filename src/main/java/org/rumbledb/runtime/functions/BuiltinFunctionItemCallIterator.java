@@ -127,12 +127,7 @@ public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator delegate = newBuiltinDelegate();
         return delegate.getDataFrame(dynamicContext);
     }

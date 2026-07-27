@@ -327,12 +327,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("array:sort is currently supported only in local execution mode.");
     }
 

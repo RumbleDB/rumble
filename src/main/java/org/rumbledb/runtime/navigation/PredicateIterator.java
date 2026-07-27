@@ -269,12 +269,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         RuntimeIterator filter = this.getChild(1);
         NativeClauseContext nativeClauseContext = new NativeClauseContext(

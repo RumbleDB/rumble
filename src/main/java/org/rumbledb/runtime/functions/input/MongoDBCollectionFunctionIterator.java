@@ -48,7 +48,7 @@ public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator 
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
 
         String uri = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
         String collection = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();

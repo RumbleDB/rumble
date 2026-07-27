@@ -43,6 +43,14 @@ public abstract class RuntimePlan<T> implements Serializable {
     public abstract LocalCursor<T> createLocalCursor(DynamicContext context);
 
     /**
+     * Creates the cursor used by terminal local operations. Subclasses may select an execution representation before
+     * adapting it to a local cursor; the default is the plan's native local cursor.
+     */
+    protected LocalCursor<T> createExecutionCursor(DynamicContext context) {
+        return createLocalCursor(context);
+    }
+
+    /**
      * Evaluates this plan locally and materializes every result.
      *
      * @param context the dynamic context for the evaluation
@@ -51,7 +59,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     public final List<T> materialize(DynamicContext context) {
         Objects.requireNonNull(context, "dynamic context cannot be null");
         List<T> result = new ArrayList<>();
-        try (LocalCursor<T> cursor = createLocalCursor(context)) {
+        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -67,7 +75,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeFirstOrNull(DynamicContext context) {
         Objects.requireNonNull(context, "dynamic context cannot be null");
-        try (LocalCursor<T> cursor = createLocalCursor(context)) {
+        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
             return cursor.hasNext() ? cursor.next() : null;
         }
     }
@@ -85,7 +93,7 @@ public abstract class RuntimePlan<T> implements Serializable {
             throw new IllegalArgumentException("limit cannot be negative");
         }
         List<T> result = new ArrayList<>(limit);
-        try (LocalCursor<T> cursor = createLocalCursor(context)) {
+        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
             while (result.size() < limit && cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -102,7 +110,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final T materializeAtMostOne(DynamicContext context) throws MoreThanOneItemException {
         Objects.requireNonNull(context, "dynamic context cannot be null");
-        try (LocalCursor<T> cursor = createLocalCursor(context)) {
+        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
             if (!cursor.hasNext()) {
                 return null;
             }

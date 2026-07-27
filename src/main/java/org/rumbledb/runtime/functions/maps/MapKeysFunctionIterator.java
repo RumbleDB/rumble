@@ -134,12 +134,7 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("map:keys is currently supported only in local execution mode.");
     }
 }

@@ -78,7 +78,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }

@@ -51,7 +51,7 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         String path = null;
         if (this.getChildren().size() > 1) {

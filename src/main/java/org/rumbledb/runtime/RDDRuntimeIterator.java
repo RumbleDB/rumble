@@ -46,7 +46,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public final LocalCursor<Item> createLocalCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
-                () -> collectRDDwithLimit(getRDD(context), getConfiguration(), getMetadata()).iterator(),
+                () -> collectRDDwithLimit(getNativeRDD(context), getConfiguration(), getMetadata()).iterator(),
                 getMetadata()
         );
     }
@@ -54,16 +54,6 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
-    }
-
-    @Override
-    protected boolean implementsLocal() {
-        return false;
-    }
-
-    @Override
-    protected boolean implementsRDD() {
-        return false;
     }
 
     @Override

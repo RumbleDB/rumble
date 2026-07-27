@@ -132,12 +132,7 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("map:find is currently supported only in local execution mode.");
     }
 }

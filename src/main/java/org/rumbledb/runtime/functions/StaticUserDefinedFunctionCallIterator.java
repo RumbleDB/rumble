@@ -76,11 +76,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         try {
             RuntimeIterator call = dynamicContext.getNamedFunctions()
@@ -97,7 +92,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
             RuntimeIterator call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(

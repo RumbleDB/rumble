@@ -149,17 +149,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         throw new OurBadException("fn:fold-left is currently supported only in local execution mode.");
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:fold-left is currently supported only in local execution mode.");
     }
 }

@@ -51,12 +51,7 @@ public class ProgramIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
             return this.statementsAndExprIterator.getDataFrame(dynamicContext);
         } catch (ExitStatementException exitStatementException) {

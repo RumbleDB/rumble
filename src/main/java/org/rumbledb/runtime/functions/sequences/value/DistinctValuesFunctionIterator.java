@@ -133,12 +133,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         checkCollation(dynamicContext);
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         return df.distinct();

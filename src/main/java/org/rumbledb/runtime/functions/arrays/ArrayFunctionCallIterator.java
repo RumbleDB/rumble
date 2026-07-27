@@ -99,12 +99,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "Array function calls are currently supported only in local execution mode."
         );

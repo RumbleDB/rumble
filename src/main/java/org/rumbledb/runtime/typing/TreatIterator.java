@@ -151,11 +151,6 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
-    @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
     public static ItemType getItemType(Dataset<Row> df) {
         StructType type = df.schema();
         DataType dataType = type;
@@ -167,7 +162,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         this.validator.resolve(dynamicContext);
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
         this.validator.validateEmpty(df.isEmptySequence() ? 0 : 1);

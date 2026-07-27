@@ -252,11 +252,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         try {
             return resolveFunctionCall(dynamicContext).iterator.getRDD(dynamicContext);
@@ -266,7 +261,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
             return resolveFunctionCall(dynamicContext).iterator.getDataFrame(dynamicContext);
         } catch (InvalidRumbleMLParamException e) {

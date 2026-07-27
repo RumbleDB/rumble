@@ -21,6 +21,8 @@
 package org.rumbledb.runtime;
 
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.api.Item;
+import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serial;
 import java.util.List;
@@ -38,7 +40,7 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
+    protected JavaRDD<Item> getNativeRDD(org.rumbledb.context.DynamicContext context) {
+        return dataFrameToRDDOfItems(getNativeDataFrame(context), getMetadata());
     }
 }

@@ -75,12 +75,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame childDF = this.sequenceIterator.getDataFrame(dynamicContext);
         if (childDF.getItemType().isAtomicItemType()) {
             return childDF;

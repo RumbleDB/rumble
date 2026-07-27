@@ -49,7 +49,7 @@ public class PostgreSQLTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
 
         String connectionString = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
         String table = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();

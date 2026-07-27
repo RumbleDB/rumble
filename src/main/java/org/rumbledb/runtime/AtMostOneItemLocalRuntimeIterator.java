@@ -60,7 +60,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    protected JavaRDD<Item> getNativeRDD(DynamicContext context) {
         Item i = materializeFirstItemOrNull(context);
         List<Item> result = new ArrayList<>();
         if (i != null) {

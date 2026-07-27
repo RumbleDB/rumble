@@ -90,12 +90,7 @@ public class ExitStatementIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {

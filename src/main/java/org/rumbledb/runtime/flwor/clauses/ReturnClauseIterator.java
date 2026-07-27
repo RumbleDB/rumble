@@ -247,12 +247,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())

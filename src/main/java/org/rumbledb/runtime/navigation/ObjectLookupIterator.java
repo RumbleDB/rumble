@@ -283,11 +283,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
@@ -446,7 +441,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupKey(context);
         String key;

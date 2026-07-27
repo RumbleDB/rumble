@@ -25,5 +25,5 @@ public interface DataFrameRuntimePlan {
      * @param context the dynamic context for that evaluation
      * @return the resulting DataFrame
      */
-    JSoundDataFrame getDataFrame(DynamicContext context);
+    JSoundDataFrame getNativeDataFrame(DynamicContext context);
 }

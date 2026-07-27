@@ -37,6 +37,8 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -45,6 +47,8 @@ import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+
+import sparksoniq.spark.SparkSessionManager;
 
 
 public abstract class RuntimeIterator extends RuntimePlan<Item> implements RuntimeIteratorInterface<Item> {
@@ -195,9 +199,27 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         return this.staticContext.getExecutionMode().isLocal();
     }
 
-    public JavaRDD<Item> getRDD(DynamicContext context) {
+    /**
+     * Returns this plan as an RDD, executing the representation selected by compilation first and converting only at
+     * this boundary.
+     */
+    public final JavaRDD<Item> getRDD(DynamicContext context) {
+        return switch (getHighestExecutionMode()) {
+            case LOCAL -> SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelize(materializeNativeLocal(context));
+            case RDD -> getNativeRDD(context);
+            case DATAFRAME -> dataFrameToRDD(getNativeDataFrame(context));
+            case UNSET -> throw new OurBadException("Cannot execute an iterator whose execution mode is unset.");
+        };
+    }
+
+    /**
+     * Native RDD implementation. It must not convert through local or DataFrame execution.
+     */
+    protected JavaRDD<Item> getNativeRDD(DynamicContext context) {
         throw new OurBadException(
-                "RDDs are not implemented for the iterator " + getClass().getCanonicalName(),
+                "Native RDDs are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
         );
     }
@@ -224,9 +246,25 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    /**
+     * Returns this plan as a DataFrame, executing the representation selected by compilation first and converting
+     * only at this boundary.
+     */
+    public final JSoundDataFrame getDataFrame(DynamicContext context) {
+        return switch (getHighestExecutionMode()) {
+            case LOCAL -> localToDataFrame(materializeNativeLocal(context), context);
+            case RDD -> rddToDataFrame(getNativeRDD(context), context);
+            case DATAFRAME -> getNativeDataFrame(context);
+            case UNSET -> throw new OurBadException("Cannot execute an iterator whose execution mode is unset.");
+        };
+    }
+
+    /**
+     * Native DataFrame implementation. It must not convert through local or RDD execution.
+     */
+    protected JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         throw new OurBadException(
-                "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
+                "Native DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
                 getMetadata()
         );
     }
@@ -237,35 +275,53 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      * @return the DataFrame.
      */
     public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
-        if (isDataFrame()) {
-            return this.getDataFrame(context);
-        }
-        if (isRDD()) {
-            if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    this.getRDD(context),
-                    this.getStaticType().getItemType(),
-                    context,
-                    true,
-                    this.staticContext
-                );
-            } else {
-                JavaRDD<Item> rdd = this.getRDD(context);
-                ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                    rdd,
-                    getMetadata(),
-                    TypeInferrenceUtils.TypeMergeMode.LAX
-                );
-                return ValidateTypeIterator.convertRDDToValidDataFrame(
-                    rdd,
-                    type,
-                    context,
-                    true,
-                    this.staticContext
-                );
+        return getDataFrame(context);
+    }
+
+    @Override
+    protected final LocalCursor<Item> createExecutionCursor(DynamicContext context) {
+        return switch (getHighestExecutionMode()) {
+            case LOCAL -> createLocalCursor(context);
+            case RDD -> collectingCursor(getNativeRDD(context));
+            case DATAFRAME -> collectingCursor(dataFrameToRDD(getNativeDataFrame(context)));
+            case UNSET -> throw new OurBadException("Cannot execute an iterator whose execution mode is unset.");
+        };
+    }
+
+    private List<Item> materializeNativeLocal(DynamicContext context) {
+        List<Item> items = new ArrayList<>();
+        try (LocalCursor<Item> cursor = createLocalCursor(context)) {
+            while (cursor.hasNext()) {
+                items.add(cursor.next());
             }
         }
-        List<Item> items = this.materialize(context);
+        return items;
+    }
+
+    private LocalCursor<Item> collectingCursor(JavaRDD<Item> rdd) {
+        return new IteratorLocalCursor<>(
+                () -> HybridRuntimeIterator.collectRDDwithLimit(rdd, getConfiguration(), getMetadata()).iterator(),
+                getMetadata()
+        );
+    }
+
+    private JavaRDD<Item> dataFrameToRDD(JSoundDataFrame dataFrame) {
+        return dataFrame.javaRDD().map(new RowToItemMapper(getMetadata(), dataFrame.getItemType()));
+    }
+
+    private JSoundDataFrame rddToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
+        ItemType itemType = this.getStaticType().getItemType();
+        if (!itemType.isCompatibleWithDataFrames(this.getConfiguration())) {
+            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                rdd,
+                getMetadata(),
+                TypeInferrenceUtils.TypeMergeMode.LAX
+            );
+        }
+        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, this.staticContext);
+    }
+
+    private JSoundDataFrame localToDataFrame(List<Item> items, DynamicContext context) {
         if (this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration())) {
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,

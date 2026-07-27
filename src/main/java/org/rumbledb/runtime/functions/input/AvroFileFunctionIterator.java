@@ -52,7 +52,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();

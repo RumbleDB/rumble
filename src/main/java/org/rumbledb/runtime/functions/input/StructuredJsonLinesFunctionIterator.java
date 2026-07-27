@@ -51,7 +51,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();

@@ -28,7 +28,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
     // TODO: implement collection function
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         if (this.getChildren().isEmpty()) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }

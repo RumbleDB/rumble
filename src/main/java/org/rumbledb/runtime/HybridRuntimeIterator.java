@@ -31,12 +31,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
-
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
 import java.util.List;
@@ -54,33 +51,14 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-        fallbackToRDDIfDFNotImplemented(getHighestExecutionMode());
-    }
-
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    protected boolean implementsLocal() {
-        return true;
-    }
-
-    protected boolean implementsRDD() {
-        return true;
-    }
-
-    protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
-        if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
-            this.staticContext = this.staticContext.toBuilder().executionMode(ExecutionMode.RDD).build();
-        }
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!isRDDOrDataFrame() && implementsLocal()) {
-            this.localCursor = createLocalCursor(context);
+        if (isLocal()) {
             try {
+                this.localCursor = createLocalCursor(context);
             } catch (RuntimeException exception) {
                 this.localCursor = null;
                 super.close();
@@ -92,11 +70,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDDOrDataFrame() && implementsLocal()) {
-            if (this.localCursor != null) {
-                this.localCursor.close();
-                this.localCursor = null;
-            }
+        if (this.localCursor != null) {
+            this.localCursor.close();
+            this.localCursor = null;
             return;
         }
         this.result = null;
@@ -104,20 +80,12 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (isLocal() && implementsLocal()) {
+        if (isLocal()) {
             return this.localCursor != null && this.localCursor.hasNext();
         }
         if (this.result == null) {
             this.currentResultIndex = 0;
-            JavaRDD<Item> rdd = null;
-            if (!isRDD() && implementsDataFrames()) {
-                rdd = dataFrameToRDDOfItems(
-                    this.getDataFrame(this.currentDynamicContextForLocalExecution),
-                    this.getMetadata()
-                );
-            } else {
-                rdd = this.getRDDAux(this.currentDynamicContextForLocalExecution);
-            }
+            JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
             this.result = collectRDDwithLimit(rdd, this.getConfiguration(), this.getMetadata());
             this.hasNext = !this.result.isEmpty();
         }
@@ -126,7 +94,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDDOrDataFrame() && implementsLocal()) {
+        if (isLocal()) {
             if (this.localCursor == null) {
                 throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
             }
@@ -153,16 +121,8 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
 
     @Override
-    public JavaRDD<Item> getRDD(DynamicContext context) {
-        if ((isDataFrame() && implementsDataFrames()) || (isRDD() && implementsDataFrames() && !implementsRDD())) {
-            JSoundDataFrame df = this.getDataFrame(context);
-            return dataFrameToRDDOfItems(df, getMetadata());
-        }
-        if (isRDDOrDataFrame()) {
-            return getRDDAux(context);
-        }
-        List<Item> contents = this.materialize(context);
-        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
+    protected JavaRDD<Item> getNativeRDD(DynamicContext context) {
+        return getRDDAux(context);
     }
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {

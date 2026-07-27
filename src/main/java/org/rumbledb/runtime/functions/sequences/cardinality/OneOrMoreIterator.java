@@ -71,12 +71,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(

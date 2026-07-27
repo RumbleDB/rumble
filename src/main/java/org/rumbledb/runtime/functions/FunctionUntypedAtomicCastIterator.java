@@ -56,12 +56,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         return this.iterator.getDataFrame(dynamicContext);
     }
 

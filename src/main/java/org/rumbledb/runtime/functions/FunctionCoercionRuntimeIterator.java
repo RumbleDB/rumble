@@ -198,12 +198,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator call = buildDelegate(dynamicContext);
         return call.getDataFrame(dynamicContext);
     }

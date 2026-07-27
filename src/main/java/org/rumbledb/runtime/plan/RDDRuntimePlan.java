@@ -27,5 +27,5 @@ public interface RDDRuntimePlan<T> {
      * @param context the dynamic context for that evaluation
      * @return the resulting RDD
      */
-    JavaRDD<T> getRDD(DynamicContext context);
+    JavaRDD<T> getNativeRDD(DynamicContext context);
 }
