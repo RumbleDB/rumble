@@ -5,10 +5,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.NodeNotInDocumentException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -28,9 +27,6 @@ public class ElementWithIdFunctionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
-    private static final ErrorCode NOT_IN_DOCUMENT_ERROR_CODE = new ErrorCode(
-            new Name(Name.ERROR_NS, "err", "FODC0001")
-    );
 
     private List<Item> results;
     private int currentIndex;
@@ -74,9 +70,8 @@ public class ElementWithIdFunctionIterator extends HybridRuntimeIterator {
             root = root.parent();
         }
         if (!root.isDocumentNode()) {
-            throw new RumbleException(
+            throw new NodeNotInDocumentException(
                     "fn:element-with-id: the node is not part of a tree rooted in a document node",
-                    NOT_IN_DOCUMENT_ERROR_CODE,
                     getMetadata()
             );
         }
