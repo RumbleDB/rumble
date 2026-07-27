@@ -39,6 +39,10 @@ public class DecimalItem extends AbstractAtomicItem {
     private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
+    // Float/double casts retain their exact decimal value for op:same-key while serializing
+    // with the concise lexical representation users expect from the source numeric value.
+    private String displayValue;
+
     public DecimalItem() {
         super();
     }
@@ -48,9 +52,15 @@ public class DecimalItem extends AbstractAtomicItem {
         this.value = decimal;
     }
 
+    public DecimalItem(BigDecimal decimal, String displayValue) {
+        super();
+        this.value = decimal;
+        this.displayValue = displayValue;
+    }
+
     @Override
     public Item copy(boolean mutable) {
-        return new DecimalItem(this.value);
+        return new DecimalItem(this.value, this.displayValue);
     }
 
     public BigDecimal getValue() {
@@ -69,6 +79,9 @@ public class DecimalItem extends AbstractAtomicItem {
 
     @Override
     public String getStringValue() {
+        if (this.displayValue != null) {
+            return this.displayValue;
+        }
         return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 

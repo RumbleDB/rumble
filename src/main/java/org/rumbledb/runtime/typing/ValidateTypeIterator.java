@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.typing;
 
 import java.io.Serial;
+import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -417,7 +418,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return item.getFloatValue();
             }
             if (dataType instanceof DecimalType) {
-                return item.getDecimalValue();
+                return new BigDecimal(item.getStringValue());
             }
             if (dataType.equals(DataTypes.StringType)) {
                 if (item.isAtomic()) {

@@ -123,7 +123,7 @@ public class FloatItem extends AbstractAtomicItem {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
         }
-        return new BigDecimal(this.value);
+        return BigDecimal.valueOf(this.value);
     }
 
     @Override

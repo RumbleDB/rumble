@@ -133,7 +133,7 @@ public class DoubleItem extends AbstractAtomicItem {
         if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
         }
-        return new BigDecimal(this.value);
+        return BigDecimal.valueOf(this.value);
     }
 
     @Override
