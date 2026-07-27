@@ -16,12 +16,16 @@ public class CatchPattern implements Serializable {
 
     @EqualsAndHashCode.Include
     private final String namespace;
+
     @EqualsAndHashCode.Include
     private final String localName;
+
     @EqualsAndHashCode.Include
     private final boolean namespaceWildcard;
+
     @EqualsAndHashCode.Include
     private final boolean localNameWildcard;
+
     private final String displayText;
 
     private CatchPattern(
