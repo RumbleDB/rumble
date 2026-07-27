@@ -52,7 +52,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.reader = null;
         this.nextItem = null;
         this.path = null;
@@ -60,12 +60,12 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = 32;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
         JavaPairRDD<String, String> strings;

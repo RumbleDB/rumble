@@ -11,9 +11,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 
 public class DateTimeStampItem implements Item {
@@ -95,15 +92,7 @@ public class DateTimeStampItem implements Item {
         return this.value.hashCode();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        this.value.write(kryo, output);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value.read(kryo, input);
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -47,10 +47,10 @@ public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item uriItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 
-        Item lexicalItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item lexicalItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (lexicalItem == null) {
             throw new UnexpectedTypeException(
                     "fn:QName: second argument must be xs:string (got empty sequence).",

@@ -46,12 +46,12 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         String result;
-        Item stringItem = this.children.get(0)
+        Item stringItem = this.getChild(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = this.children.get(1)
+        Item indexItem = this.getChild(1)
             .materializeFirstItemOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
@@ -63,8 +63,8 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (index >= stringItem.getStringValue().length()) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        if (this.children.size() > 2) {
-            Item endIndexItem = this.children.get(2)
+        if (this.getChildren().size() > 2) {
+            Item endIndexItem = this.getChild(2)
                 .materializeFirstItemOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(

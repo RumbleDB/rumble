@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -107,20 +104,6 @@ public class DocumentItem implements Item {
         });
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.stringValue);
-        kryo.writeObject(output, this.children);
-        kryo.writeObject(output, this.documentPos);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.stringValue = input.readString();
-        this.children = kryo.readObject(input, ArrayList.class);
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-    }
 
 
     @Override

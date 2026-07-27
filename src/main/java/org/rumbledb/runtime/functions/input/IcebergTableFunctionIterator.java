@@ -29,7 +29,7 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.children.get(0);
+        RuntimeIterator collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);

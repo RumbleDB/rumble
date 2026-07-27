@@ -24,7 +24,7 @@ public class EscapeHTMLURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item item = this.children.get(0).materializeFirstItemOrNull(context);
+        Item item = this.getChild(0).materializeFirstItemOrNull(context);
         if (item == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
