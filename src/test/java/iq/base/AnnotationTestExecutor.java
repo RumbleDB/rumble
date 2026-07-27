@@ -210,7 +210,11 @@ public final class AnnotationTestExecutor {
             materializeSequence(sequence, applyUpdates, resultSizeCap);
             Assertions.fail(withTestFile(path, unexpectedSuccessMessage(TestStage.RUNTIME)));
         } catch (Throwable exception) {
-            checkErrorCode(errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
+            try {
+                checkErrorCode(errorOutput(exception), annotation.errorCode(), annotation.errorMetadata());
+            } catch (AssertionError assertionError) {
+                Assertions.fail(withTestFile(path, assertionError.getMessage()), assertionError);
+            }
         }
     }
 
