@@ -3,7 +3,6 @@ package org.rumbledb.types;
 import java.io.Serial;
 import java.util.Set;
 
-import lombok.EqualsAndHashCode;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
