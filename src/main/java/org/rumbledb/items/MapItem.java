@@ -37,9 +37,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapItem implements Item {
 
@@ -324,37 +321,7 @@ public class MapItem implements Item {
 
     // endregion maps
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.values);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        output.writeDouble(this.topLevelOrder);
-        output.writeBoolean(this.allKeysString);
-        output.writeBoolean(this.allValuesSingletons);
-        output.writeBoolean(this.recomputeObjectShapeCache);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.keys = (List<Item>) kryo.readObject(input, ArrayList.class);
-        this.values = (List<List<Item>>) kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.topLevelOrder = input.readDouble();
-        this.allKeysString = input.readBoolean();
-        this.allValuesSingletons = input.readBoolean();
-        this.recomputeObjectShapeCache = input.readBoolean();
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-        rebuildKeyStringIndex();
-    }
 
     @Override
     public ItemType getDynamicType() {

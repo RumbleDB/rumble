@@ -11,12 +11,8 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
-public class InScopeSchemaTypes implements Serializable, KryoSerializable {
+public class InScopeSchemaTypes implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -64,16 +60,7 @@ public class InScopeSchemaTypes implements Serializable, KryoSerializable {
         return new ArrayList<ItemType>(this.inScopeSchemaTypes.values());
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.inScopeSchemaTypes);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.inScopeSchemaTypes = kryo.readObject(input, HashMap.class);
-    }
 
     public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes) {
         for (Name name : inScopeSchemaTypes.inScopeSchemaTypes.keySet()) {

@@ -20,10 +20,6 @@
 
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -35,7 +31,7 @@ import java.util.UUID;
  * It provides information about the document's path and the item's position within the document.
  * This class is used to ensure the uniqueness and ordering of items across XML documents.
  */
-public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable, KryoSerializable {
+public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private String path;
@@ -54,17 +50,7 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
         return "constructed:" + UUID.randomUUID();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.path);
-        output.writeInt(this.docPosition);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.path = input.readString();
-        this.docPosition = input.readInt();
-    }
 
     public String getPath() {
         return this.path;
