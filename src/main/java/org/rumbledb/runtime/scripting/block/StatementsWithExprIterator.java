@@ -32,15 +32,11 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
             staticContext.toBuilder()
                 .isUpdating(exprIterator.isUpdating())
-                .isSequential(isSequential(statements, exprIterator))
+                .isSequential(statements.stream().anyMatch(RuntimeIterator::isSequential) || exprIterator.isSequential())
                 .build()
         );
     }
-
-    private static boolean isSequential(List<RuntimeIterator> statements, RuntimeIterator exprIterator) {
-        return exprIterator.isSequential() || statements.stream().anyMatch(RuntimeIterator::isSequential);
-    }
-
+    
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.currentDynamicContextForLocalExecution = context;
