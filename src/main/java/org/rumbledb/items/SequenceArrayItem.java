@@ -1,8 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -240,26 +237,7 @@ public class SequenceArrayItem implements Item {
 
     // endregion arrays
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.memberSequences);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.memberSequences = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-    }
 
     @Override
     public int hashCode() {

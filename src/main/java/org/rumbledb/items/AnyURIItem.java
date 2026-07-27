@@ -31,9 +31,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class AnyURIItem implements Item {
 
@@ -104,15 +101,7 @@ public class AnyURIItem implements Item {
         return getStringValue();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, URI.class);
-    }
 
     @Override
     public boolean isAnyURI() {

@@ -1,19 +1,14 @@
 package org.rumbledb.runtime.control;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-public class TypeswitchRuntimeIteratorCase implements Serializable, KryoSerializable {
+public class TypeswitchRuntimeIteratorCase implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private Name variableName;
@@ -48,18 +43,5 @@ public class TypeswitchRuntimeIteratorCase implements Serializable, KryoSerializ
         return this.returnIterator;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, Name.class);
-        kryo.writeObject(output, ArrayList.class);
-        kryo.writeObject(output, RuntimeIterator.class);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.variableName = kryo.readObject(input, Name.class);
-        this.sequenceTypeUnion = kryo.readObject(input, ArrayList.class);
-        this.returnIterator = kryo.readObject(input, RuntimeIterator.class);
-    }
 }
