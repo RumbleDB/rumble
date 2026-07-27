@@ -8,9 +8,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 
 public class DateTimeStampItem extends AbstractAtomicItem {
@@ -71,16 +68,6 @@ public class DateTimeStampItem extends AbstractAtomicItem {
     @Override
     public boolean getEffectiveBooleanValue() {
         return false;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        this.value.write(kryo, output);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value.read(kryo, input);
     }
 
     @Override

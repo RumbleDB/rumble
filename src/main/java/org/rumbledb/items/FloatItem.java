@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
@@ -144,15 +141,7 @@ public class FloatItem extends AbstractAtomicItem {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeFloat(this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readFloat();
-    }
 
     @Override
     public ItemType getDynamicType() {

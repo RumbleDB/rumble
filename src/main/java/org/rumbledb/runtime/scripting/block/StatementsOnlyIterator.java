@@ -18,12 +18,10 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     private int childIndex;
 
     public StatementsOnlyIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
-        super(children, staticContext);
-        for (RuntimeIterator child : children) {
-            if (child.isSequential()) {
-                this.isSequential = child.isSequential();
-            }
-        }
+        super(
+            children,
+            staticContext.toBuilder().isSequential(children.stream().anyMatch(RuntimeIterator::isSequential)).build()
+        );
     }
 
     @Override
@@ -34,12 +32,12 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private void startLocal(DynamicContext dynamicContext) {
         // Case exists for when an empty bracket is provided for some statement
-        if (this.children.isEmpty()) {
+        if (this.getChildren().isEmpty()) {
             this.hasNext = false;
             return;
         }
         this.childIndex = 0;
-        this.currentChild = this.children.get(this.childIndex);
+        this.currentChild = this.getChild(this.childIndex);
         this.currentDynamicContextForLocalExecution = dynamicContext;
         this.currentChild.open(this.currentDynamicContextForLocalExecution);
 
@@ -50,10 +48,10 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
         while (this.currentChild != null) {
             if (!this.currentChild.hasNext()) {
                 this.currentChild.close();
-                if (++this.childIndex == this.children.size()) {
+                if (++this.childIndex == this.getChildren().size()) {
                     this.currentChild = null;
                 } else {
-                    this.currentChild = this.children.get(this.childIndex);
+                    this.currentChild = this.getChild(this.childIndex);
                     this.currentChild.open(this.currentDynamicContextForLocalExecution);
                 }
             } else {

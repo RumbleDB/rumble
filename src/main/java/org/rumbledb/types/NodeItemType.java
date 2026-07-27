@@ -26,13 +26,7 @@ public class NodeItemType extends AbstractItemType {
         this.name = Name.createVariableInDefaultTypeNamespace("node");
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
 
     @Override
     public boolean hasName() {

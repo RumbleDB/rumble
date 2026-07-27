@@ -17,7 +17,6 @@ public abstract class Statement extends Node {
         super(metadata);
     }
 
-
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -62,6 +61,7 @@ public abstract class Statement extends Node {
             .staticType(getStaticSequenceType())
             .executionMode(getHighestExecutionMode(visitorConfig))
             .metadata(getMetadata())
+            .isSequential(isSequential())
             .build();
     }
 

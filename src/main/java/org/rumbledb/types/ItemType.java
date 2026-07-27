@@ -35,9 +35,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-import com.esotericsoftware.kryo.KryoSerializable;
 
-public interface ItemType extends Serializable, KryoSerializable {
+public interface ItemType extends Serializable {
 
     @Serial
     long serialVersionUID = 1L;

@@ -20,6 +20,8 @@
 
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
@@ -27,6 +29,7 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@NoArgsConstructor() // For Kryo serialization
 public class FunctionSignature implements Serializable {
     @EqualsAndHashCode.Include
     private List<SequenceType> parameterTypes;

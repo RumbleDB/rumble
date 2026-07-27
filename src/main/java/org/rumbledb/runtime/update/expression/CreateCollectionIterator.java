@@ -38,11 +38,10 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.mode = mode;
-        this.isUpdating = true;
 
     }
 

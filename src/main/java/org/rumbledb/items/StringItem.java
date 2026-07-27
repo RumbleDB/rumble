@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -127,15 +124,7 @@ public class StringItem extends AbstractAtomicItem {
         return !this.getStringValue().isEmpty();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readString();
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -1,8 +1,5 @@
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -85,19 +82,6 @@ public class HexBinaryItem extends AbstractAtomicItem {
     @Override
     public boolean isHexBinary() {
         return true;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = Hex.encodeHexString(this.value);
     }
 
     @Override

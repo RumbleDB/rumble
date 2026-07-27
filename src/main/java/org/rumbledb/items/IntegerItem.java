@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -114,15 +111,7 @@ public class IntegerItem extends AbstractAtomicItem {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, BigInteger.class);
-    }
 
     @Override
     public ItemType getDynamicType() {

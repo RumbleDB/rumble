@@ -83,6 +83,8 @@ public abstract class Expression extends Node {
             .staticType(getStaticSequenceType())
             .executionMode(getHighestExecutionMode(visitorConfig))
             .metadata(getMetadata())
+            .isUpdating(isUpdating())
+            .isSequential(isSequential())
             .build();
     }
 

@@ -1,8 +1,5 @@
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -107,16 +104,6 @@ public class CommentItem extends AbstractNodeItem {
     @Override
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.content);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.content = input.readString();
     }
 
     @Override

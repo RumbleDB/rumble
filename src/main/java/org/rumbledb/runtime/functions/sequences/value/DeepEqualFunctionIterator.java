@@ -63,10 +63,10 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator sequenceIterator1 = this.children.get(0);
-        RuntimeIterator sequenceIterator2 = this.children.get(1);
-        if (this.children.size() == 3) {
-            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        RuntimeIterator sequenceIterator1 = this.getChild(0);
+        RuntimeIterator sequenceIterator2 = this.getChild(1);
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new DefaultCollationException("Wrong collation parameter", getMetadata());
             }

@@ -35,9 +35,6 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithRemovedEntryItem extends AbstractMapItem {
 
@@ -241,23 +238,9 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
     // endregion maps
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.original);
-        kryo.writeObject(output, this.removedKeys);
-    }
-
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = (Set<Item>) kryo.readObject(input, HashSet.class);
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.mapItem;
     }
-
 
     @Override
     public boolean getEffectiveBooleanValue() {

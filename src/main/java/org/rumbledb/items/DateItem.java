@@ -15,9 +15,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DateItem extends AbstractAtomicItem {
 
@@ -117,24 +114,7 @@ public class DateItem extends AbstractAtomicItem {
         return true;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        String formatted = this.value.format(
-            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
-        );
-        if (formatted.startsWith("+")) {
-            formatted = formatted.substring(1);
-        }
-        output.writeString(formatted);
-        output.writeBoolean(this.hasTimeZone);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getDateFromString(dateString);
-    }
 
     @Override
     public ItemType getDynamicType() {

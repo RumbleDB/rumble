@@ -21,9 +21,6 @@ package org.rumbledb.items;
 import java.io.Serial;
 import java.util.Objects;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -64,15 +61,7 @@ public class QNameItem extends AbstractAtomicItem {
         return this.name;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.name);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.name = kryo.readObject(input, Name.class);
-    }
 
     @Override
     public boolean isQName() {
