@@ -43,7 +43,7 @@ public abstract class Clause extends Node {
     /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
     protected Clause nextClause;
-    protected FLWOR_CLAUSES clauseType;
+    protected final FLWOR_CLAUSES clauseType;
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {

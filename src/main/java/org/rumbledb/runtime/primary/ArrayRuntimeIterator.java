@@ -40,8 +40,8 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private boolean isFixedSlotsArrayConstructor;
-    private boolean mutable;
+    private final boolean isFixedSlotsArrayConstructor;
+    private final boolean mutable;
 
     /**
      * Curly array constructor: single child whose items become singleton members.

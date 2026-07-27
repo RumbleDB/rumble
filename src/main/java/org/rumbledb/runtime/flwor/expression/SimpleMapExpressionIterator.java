@@ -58,8 +58,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;

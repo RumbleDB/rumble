@@ -37,7 +37,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private int numberPartitions;
 
     public RepartitionFunctionIterator(

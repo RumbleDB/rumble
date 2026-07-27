@@ -48,10 +48,10 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name elementName;
-    private List<RuntimeIterator> content;
-    private List<AttributeNodeRuntimeIterator> attributes;
-    private List<NamespaceDeclaration> namespaceDeclarations;
+    private final Name elementName;
+    private final List<RuntimeIterator> content;
+    private final List<AttributeNodeRuntimeIterator> attributes;
+    private final List<NamespaceDeclaration> namespaceDeclarations;
 
     public DirElemConstructorRuntimeIterator(
             Name elementName,

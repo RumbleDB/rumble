@@ -42,9 +42,9 @@ public class FlworTuple implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private LinkedHashMap<Name, List<Item>> localVariables;
-    private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private final LinkedHashMap<Name, List<Item>> localVariables;
+    private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
+    private final LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
     private RumbleRuntimeConfiguration configuration;
 
     public FlworTuple() {

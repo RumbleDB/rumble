@@ -32,7 +32,7 @@ import java.util.List;
 public class LibraryModule extends Module {
 
     protected StaticContext staticContext;
-    private String namespace;
+    private final String namespace;
     private final Prolog prolog;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {

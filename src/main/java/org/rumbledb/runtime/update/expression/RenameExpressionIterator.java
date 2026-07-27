@@ -24,9 +24,9 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator locatorIterator;
-    private RuntimeIterator nameIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator locatorIterator;
+    private final RuntimeIterator nameIterator;
 
     public RenameExpressionIterator(
             RuntimeIterator mainIterator,

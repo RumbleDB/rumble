@@ -15,7 +15,7 @@ public class FunctionItemType implements ItemType {
     private final boolean isGeneric;
     private final FunctionSignature signature;
 
-    static FunctionItemType anyFunctionItem = new FunctionItemType(true);
+    static final FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     FunctionItemType(FunctionSignature signature) {
         if (signature == null) {

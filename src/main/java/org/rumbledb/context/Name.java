@@ -48,7 +48,7 @@ public class Name implements Comparable<Name>, Serializable {
     @EqualsAndHashCode.Include
     private String namespace;
 
-    private String prefix;
+    private final String prefix;
 
     @EqualsAndHashCode.Include
     private String localName;
