@@ -4063,6 +4063,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
+        ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        if (namespace.isEmpty()) {
+            throw new EmptyModuleURIException("Module URI is empty.", metadata);
+        }
+        if (ctx.ncName() != null) {
+            String prefix = ctx.ncName().getText();
+            if (prefix.equals("xml") || prefix.equals("xmlns")) {
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Module import prefix " + prefix + " is reserved.",
+                        metadata
+                );
+            }
+        }
         List<String> locationHints = ctx.locations.stream()
             .map(this::processURILiteral)
             .collect(Collectors.toList());
@@ -4071,13 +4084,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             locationHints,
             this.moduleContext,
             this.compilationConfiguration,
-            createMetadataFromContext(ctx)
+            metadata
         );
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
                 libraryModule.getNamespace(),
-                createMetadataFromContext(ctx)
+                metadata
             );
         }
         return libraryModule;
