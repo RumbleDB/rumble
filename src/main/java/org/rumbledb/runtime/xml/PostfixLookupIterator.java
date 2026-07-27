@@ -117,7 +117,7 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
                     }
                 } else {
                     for (Item rawKey : this.lookupKeys) {
-                        List<Item> atomized = rawKey.atomizedValue();
+                        List<Item> atomized = rawKey.typedValue();
                         if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
                             throw new UnexpectedTypeException(
                                     "Map lookup key must atomize to a single atomic value [err:XPTY0004].",

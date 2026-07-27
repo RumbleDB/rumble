@@ -341,7 +341,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         // 4b: The typed value of $i1 is deep-equal to the typed value of $i2.
         // Note: we do not support type annotations on attribute nodes yet.
         // For now, the typed value of the attribute node is the same as its string value
-        return checkDeepEqual(attr1.atomizedValue(), attr2.atomizedValue());
+        return checkDeepEqual(attr1.typedValue(), attr2.typedValue());
     }
 
     /**

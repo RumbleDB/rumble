@@ -102,7 +102,7 @@ public class CommentItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
     }
 

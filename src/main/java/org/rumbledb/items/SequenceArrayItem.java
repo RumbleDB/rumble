@@ -379,11 +379,11 @@ public class SequenceArrayItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         List<Item> result = new ArrayList<>();
         for (List<Item> memberSequence : this.memberSequences) {
             for (Item item : memberSequence) {
-                result.addAll(item.atomizedValue());
+                result.addAll(item.typedValue());
             }
         }
         return result;

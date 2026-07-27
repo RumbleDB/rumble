@@ -328,10 +328,10 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         List<Item> result = new ArrayList<>();
         for (Item member : this.arrayItems) {
-            result.addAll(member.atomizedValue());
+            result.addAll(member.typedValue());
         }
         return result;
     }

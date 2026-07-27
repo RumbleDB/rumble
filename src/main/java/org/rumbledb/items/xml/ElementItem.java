@@ -369,13 +369,26 @@ public class ElementItem implements Item {
      * "For an Element Node, dm:typed-value returns the typed value of the element node as a
      * sequence of zero or more atomic values."
      *
-     * This implementation delegates to atomizedValue(), which currently computes a
-     * best-effort typed value by concatenating the atomized values of the element's
-     * children in document order.
+     * This implementation computes a best-effort typed value from the element's string value
+     * and optional type annotation.
      */
     @Override
     public List<Item> typedValue() {
-        return this.atomizedValue();
+        if (this.typeAnnotation != null) {
+            Item typedValue = CastIterator.castItemToType(
+                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
+                this.typeAnnotation,
+                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
+            );
+            return Collections.singletonList(typedValue);
+        }
+        // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
+        // For element nodes, typed-value is based on the element's string value, which is the
+        // concatenation of descendant text nodes in document order and therefore excludes comment
+        // and processing-instruction content.
+        return Collections.singletonList(
+            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
+        );
     }
 
     @Override
@@ -462,25 +475,6 @@ public class ElementItem implements Item {
     @Override
     public int hashCode() {
         return this.documentPos.hashCode();
-    }
-
-    @Override
-    public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
-            return Collections.singletonList(typedValue);
-        }
-        // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
-        // For element nodes, typed-value is based on the element's string value, which is the
-        // concatenation of descendant text nodes in document order and therefore excludes comment
-        // and processing-instruction content.
-        return Collections.singletonList(
-            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
-        );
     }
 
     @Override

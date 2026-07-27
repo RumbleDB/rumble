@@ -185,7 +185,7 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public List<Item> atomizedValue() {
+    public List<Item> typedValue() {
         if (this.typeAnnotation != null) {
             Item typedValue = CastIterator.castItemToType(
                 ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),

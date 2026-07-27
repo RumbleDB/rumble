@@ -232,7 +232,7 @@ public class ArraySortFunctionIterator extends HybridRuntimeIterator {
         if (item.isFunction()) {
             throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
         }
-        out.addAll(item.atomizedValue());
+        out.addAll(item.typedValue());
     }
 
     private List<Item> invokeKeyFunction(
