@@ -100,6 +100,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
+        this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(this.nextItem);
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

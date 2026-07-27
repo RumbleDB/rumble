@@ -31,6 +31,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -113,7 +114,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(null);
                     continue;
                 }
-                nextItem = atomized.get(0);
+                nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(atomized.get(0));
                 createColumnsForItem(nextItem, expressionIndex);
             }
             iterator.close();

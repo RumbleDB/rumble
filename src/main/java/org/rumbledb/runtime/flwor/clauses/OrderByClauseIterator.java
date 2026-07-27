@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -206,6 +207,13 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                     "Keys in an order-by clause must atomize to atomic values.",
                     expressionWithIterator.getIterator().getMetadata()
             );
+        }
+        return normalizeOrderKeyAtomic(atomizedItem);
+    }
+
+    public static Item normalizeOrderKeyAtomic(Item atomizedItem) {
+        if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
+            return ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
         }
         return atomizedItem;
     }
