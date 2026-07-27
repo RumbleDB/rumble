@@ -28,11 +28,15 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
             RuntimeIterator exprIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(), staticContext);
-        // Expect an expression to be present
-        assert exprIterator != null;
-
-        this.isSequential = this.getChildren().stream().anyMatch(RuntimeIterator::isSequential);
+        super(
+            Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
+            staticContext.toBuilder()
+                .isUpdating(exprIterator.isUpdating())
+                .isSequential(
+                    statements.stream().anyMatch(RuntimeIterator::isSequential) || exprIterator.isSequential()
+                )
+                .build()
+        );
     }
 
     @Override
@@ -145,12 +149,6 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator {
         }
         RuntimeIterator exprIterator = this.getChild(childIndex);
         return exprIterator.getDataFrame(dynamicContext);
-    }
-
-    @Override
-    public boolean isUpdating() {
-        this.isUpdating = this.getChild(this.getChildren().size() - 1).isUpdating();
-        return this.isUpdating;
     }
 
     @Override

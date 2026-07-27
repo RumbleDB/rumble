@@ -28,12 +28,10 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator matchingIterator;
     private Item testValue;
 
-
     public TypeswitchRuntimeIterator(
             RuntimeIterator test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
-            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -48,19 +46,8 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
-        this.isUpdating = isUpdating;
         this.matchingIterator = null;
     }
-
-    public TypeswitchRuntimeIterator(
-            RuntimeIterator test,
-            List<TypeswitchRuntimeIteratorCase> cases,
-            TypeswitchRuntimeIteratorCase defaultCase,
-            RuntimeStaticContext staticContext
-    ) {
-        this(test, cases, defaultCase, false, staticContext);
-    }
-
 
     @Override
     public void openLocal() {

@@ -339,8 +339,6 @@ public class FunctionItem implements Item {
             + this.signature.hashCode();
     }
 
-
-
     @Override
     public ItemType getDynamicType() {
         return ItemTypeFactory.createFunctionItemType(this.signature);
