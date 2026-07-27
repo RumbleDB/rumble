@@ -33,6 +33,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.io.Serial;
@@ -114,7 +115,14 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(null);
                     continue;
                 }
-                nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(atomized.get(0));
+                nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
+                    atomized.get(0),
+                    CollationSupport.resolveCollation(
+                        expressionWithIterator.getUri(),
+                        expressionWithIterator.getIterator().getRuntimeStaticContext()
+                    ),
+                    expressionWithIterator.getIterator().getMetadata()
+                );
                 createColumnsForItem(nextItem, expressionIndex);
             }
             iterator.close();

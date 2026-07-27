@@ -661,7 +661,8 @@ public class StaticContext {
     }
 
     public boolean isStaticallyKnownCollation(String uri) {
-        return getStaticallyKnownCollations().contains(uri);
+        return getStaticallyKnownCollations().contains(uri)
+            || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
     }
 
     public Set<String> getStaticallyKnownCollations() {
@@ -677,7 +678,7 @@ public class StaticContext {
             throw new OurBadException("Default collation can only be set in the root static context.");
         }
         ensureRootCollationsInitialized();
-        if (!this.staticallyKnownCollations.contains(uri)) {
+        if (!isStaticallyKnownCollation(uri)) {
             throw new OurBadException("Default collation must be statically known.");
         }
         this.defaultCollation = uri;

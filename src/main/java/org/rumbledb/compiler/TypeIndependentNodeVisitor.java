@@ -136,7 +136,8 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                         variable.getActualSequenceType(),
                         (variable.getExpression() == null)
                             ? variable.getExpression()
-                            : (Expression) visit(variable.getExpression(), argument)
+                            : (Expression) visit(variable.getExpression(), argument),
+                        variable.getCollationURI()
                 )
             );
         }

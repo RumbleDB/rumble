@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.time.*;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
@@ -154,6 +155,25 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (!this.left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
+        }
+
+        String activeCollation = getRuntimeStaticContext().getDefaultCollation();
+        if (
+            !Name.DEFAULT_COLLATION_NS.equals(activeCollation)
+                && CollationSupport.isStringCollationType(this.left)
+                && CollationSupport.isStringCollationType(this.right)
+        ) {
+            int comparison = CollationSupport.compareStrings(
+                this.left.getStringValue(),
+                this.right.getStringValue(),
+                activeCollation,
+                getMetadata()
+            );
+            return comparisonResultToBooleanItem(
+                comparison,
+                this.comparisonOperator,
+                getMetadata()
+            );
         }
 
         long comparison = compareItems(this.left, this.right, this.comparisonOperator, getMetadata());
