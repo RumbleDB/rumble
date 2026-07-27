@@ -17,11 +17,11 @@ public abstract class AbstractArrayItem implements Item {
         if (this == other) {
             return true;
         }
-        if (!(other instanceof Item otherItem) || !otherItem.isArray() || getSize() != otherItem.getSize()) {
+        if (!(other instanceof Item otherItem) || !otherItem.isArray() || this.getSize() != otherItem.getSize()) {
             return false;
         }
-        for (int i = 0; i < getSize(); i++) {
-            if (!getSequenceAt(i).equals(otherItem.getSequenceAt(i))) {
+        for (int i = 0; i < this.getSize(); i++) {
+            if (!this.getSequenceAt(i).equals(otherItem.getSequenceAt(i))) {
                 return false;
             }
         }
@@ -31,7 +31,7 @@ public abstract class AbstractArrayItem implements Item {
     @Override
     public final int hashCode() {
         int result = 1;
-        for (List<Item> member : getSequenceMembers()) {
+        for (List<Item> member : this.getSequenceMembers()) {
             result = 31 * result + member.hashCode();
         }
         return result;
