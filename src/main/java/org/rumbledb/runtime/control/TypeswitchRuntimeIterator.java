@@ -15,6 +15,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
@@ -34,13 +35,11 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(
-            Stream.concat(
-                Stream.concat(
-                    Stream.of(test),
-                    cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator)
-                ),
+            Stream.of(
+                Stream.of(test),
+                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator),
                 Stream.of(defaultCase.getReturnIterator())
-            ).toList(),
+            ).flatMap(Function.identity()).toList(),
             staticContext
         );
 

@@ -24,17 +24,17 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item valueItem = this.children.get(0).materializeFirstItemOrNull(context);
-        Item pictureItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
 
-        Item languageItem = this.children.size() > 2
-            ? this.children.get(2).materializeFirstItemOrNull(context)
+        Item languageItem = this.getChildren().size() > 2
+            ? this.getChild(2).materializeFirstItemOrNull(context)
             : null;
-        Item calendarItem = this.children.size() > 3
-            ? this.children.get(3).materializeFirstItemOrNull(context)
+        Item calendarItem = this.getChildren().size() > 3
+            ? this.getChild(3).materializeFirstItemOrNull(context)
             : null;
-        Item placeItem = this.children.size() > 4
-            ? this.children.get(4).materializeFirstItemOrNull(context)
+        Item placeItem = this.getChildren().size() > 4
+            ? this.getChild(4).materializeFirstItemOrNull(context)
             : null;
 
         // If $value is the empty sequence, the functions return the empty sequence

@@ -53,7 +53,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item materializeInput(DynamicContext context) {
         try {
-            return this.children.get(0).materializeAtMostOneItemOrNull(context);
+            return this.getChild(0).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "fn:xml-to-json expects at most one input item [err:XPTY0004].",
@@ -63,13 +63,13 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private boolean resolveIndentOption(DynamicContext context) {
-        if (this.children.size() < 2) {
+        if (this.getChildren().size() < 2) {
             return false;
         }
 
         Item options;
         try {
-            options = this.children.get(1).materializeAtMostOneItemOrNull(context);
+            options = this.getChild(1).materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The options argument of fn:xml-to-json must be a single map item [err:XPTY0004].",

@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -164,14 +165,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
                 try {
                     Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
-                    if (resultItem != null && !resultItem.isAtomic()) {
-                        throw new UnexpectedTypeException(
-                                "Keys in an order-by clause must be atomics.",
-                                expressionWithIterator.getIterator().getMetadata()
-                        );
-                    }
-                    // possibly null for empty sequence.
-                    results.add(resultItem);
+                    results.add(atomizeOrderKey(resultItem, expressionWithIterator));
                 } catch (MoreThanOneItemException e) {
                     throw new UnexpectedTypeException(
                             "Keys in an order-by clause must be at most one item.",
@@ -188,6 +182,40 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             values.add(inputTuple);
         }
         return keyValuePairs;
+    }
+
+    private Item atomizeOrderKey(
+            Item resultItem,
+            OrderByClauseAnnotatedChildIterator expressionWithIterator
+    ) {
+        if (resultItem == null) {
+            return null;
+        }
+        List<Item> atomized = resultItem.atomizedValue();
+        if (atomized.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "Keys in an order-by clause must atomize to at most one item.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        if (atomized.isEmpty()) {
+            return null;
+        }
+        Item atomizedItem = atomized.get(0);
+        if (!atomizedItem.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Keys in an order-by clause must atomize to atomic values.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        return normalizeOrderKeyAtomic(atomizedItem);
+    }
+
+    public static Item normalizeOrderKeyAtomic(Item atomizedItem) {
+        if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
+            return ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
+        }
+        return atomizedItem;
     }
 
     @Override

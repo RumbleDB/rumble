@@ -13,9 +13,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class Base64BinaryItem implements Item {
 
@@ -117,18 +114,7 @@ public class Base64BinaryItem implements Item {
         return Arrays.hashCode(this.getValue());
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
-    }
 
     @Override
     public ItemType getDynamicType() {

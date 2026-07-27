@@ -7,7 +7,7 @@ final class ParsedTimezonePicture {
     final int hourWidth;
     final int minuteWidth;
     final int zeroDigit;
-    final boolean useZForZero;
+    final boolean zuluForZeroOffset;
     final boolean minutesOptionalIfZero;
     final boolean compactNoSeparator;
     final boolean military;
@@ -23,7 +23,7 @@ final class ParsedTimezonePicture {
             int hourWidth,
             int minuteWidth,
             int zeroDigit,
-            boolean useZForZero,
+            boolean zuluForZeroOffset,
             boolean minutesOptionalIfZero,
             boolean compactNoSeparator,
             boolean military,
@@ -36,7 +36,7 @@ final class ParsedTimezonePicture {
         this.hourWidth = hourWidth;
         this.minuteWidth = minuteWidth;
         this.zeroDigit = zeroDigit;
-        this.useZForZero = useZForZero;
+        this.zuluForZeroOffset = zuluForZeroOffset;
         this.minutesOptionalIfZero = minutesOptionalIfZero;
         this.compactNoSeparator = compactNoSeparator;
         this.military = military;
@@ -50,10 +50,6 @@ final class ParsedTimezonePicture {
 
     static ParsedTimezonePicture defaultNumeric() {
         return new ParsedTimezonePicture(false, true, ":", 2, 2, '0', false, false, false, false, false, null);
-    }
-
-    static ParsedTimezonePicture defaultGmt() {
-        return new ParsedTimezonePicture(true, true, ":", 2, 2, '0', false, false, false, false, false, null);
     }
 
     static ParsedTimezonePicture named(String namePresentation) {
@@ -80,7 +76,7 @@ final class ParsedTimezonePicture {
             int hourWidth,
             int minuteWidth,
             int zeroDigit,
-            boolean useZForZero,
+            boolean zuluForZeroOffset,
             boolean minutesOptionalIfZero,
             boolean compactNoSeparator
     ) {
@@ -91,7 +87,7 @@ final class ParsedTimezonePicture {
                 hourWidth,
                 minuteWidth,
                 zeroDigit,
-                useZForZero,
+                zuluForZeroOffset,
                 minutesOptionalIfZero,
                 compactNoSeparator,
                 false,

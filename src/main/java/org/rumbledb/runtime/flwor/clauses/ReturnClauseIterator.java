@@ -87,7 +87,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator expression = this.children.get(0);
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
@@ -148,7 +148,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator expression = this.children.get(0);
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
@@ -597,7 +597,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
             // execution reaches here when there are no more results
         }
 
-        RuntimeIterator expression = this.children.get(0);
+        RuntimeIterator expression = this.getChild(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
