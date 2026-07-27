@@ -16,15 +16,22 @@ import java.net.URI;
 
 public final class URILiteralUtils {
 
+    private static final String XML_WHITESPACE_SEQUENCE = "[\\t\\n\\r ]+";
+
     private URILiteralUtils() {
     }
 
+    public static String normalizeAsAnyURI(String literal) {
+        return literal.replaceAll(XML_WHITESPACE_SEQUENCE, " ").trim();
+    }
+
     public static URI resolve(URI baseURI, String literal, ExceptionMetadata metadata) {
+        String normalizedLiteral = normalizeAsAnyURI(literal);
         try {
-            return FileSystemUtil.resolveURI(baseURI, literal, metadata);
+            return FileSystemUtil.resolveURI(baseURI, normalizedLiteral, metadata);
         } catch (CannotRetrieveResourceException exception) {
             InvalidURILiteralException result = new InvalidURILiteralException(
-                    "Invalid URI literal: " + literal,
+                    "Invalid URI literal: " + normalizedLiteral,
                     metadata
             );
             result.initCause(exception);

@@ -371,24 +371,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         String prefix = ctx.ncName().getText();
-        String namespace = processURILiteral(ctx.uriLiteral());
+        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.uriLiteral()));
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = URILiteralUtils.resolve(
-            this.moduleContext.getStaticBaseURI(),
-            namespace,
-            createMetadataFromContext(ctx)
-        );
-        this.libraryModuleNamespace = resolvedURI.toString();
+        this.libraryModuleNamespace = namespace;
         bindNamespace(
             prefix,
-            resolvedURI.toString(),
+            namespace,
             createMetadataFromContext(ctx)
         );
 
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
+        LibraryModule module = new LibraryModule(prolog, namespace, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
@@ -4062,9 +4057,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
-        String namespace = processURILiteral(ctx.targetNamespace);
+        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.targetNamespace));
         List<String> locationHints = ctx.locations.stream()
             .map(this::processURILiteral)
+            .map(URILiteralUtils::normalizeAsAnyURI)
             .collect(Collectors.toList());
         LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
