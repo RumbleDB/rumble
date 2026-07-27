@@ -1264,9 +1264,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
         String uri = null;
         if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
+            String collation = resolveCollationUri(ctx.uriLiteral());
             if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
-                throw new DefaultCollationException(
+                throw new UnknownCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
@@ -1294,14 +1294,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+        String collationUri = null;
         if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
+            String collation = resolveCollationUri(ctx.uriLiteral());
             if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
-                throw new DefaultCollationException(
+                throw new UnknownCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
             }
+            collationUri = collation;
         }
         SequenceType seq = null;
         Expression expr = null;
@@ -1313,14 +1315,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-
         }
 
 
-        return new GroupByVariableDeclaration(var, seq, expr);
+        return new GroupByVariableDeclaration(var, seq, expr, collationUri);
     }
 
     @Override
@@ -4043,7 +4041,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
-        String uri = processURILiteral(ctx.uriLiteral());
+        String uri = resolveCollationUri(ctx.uriLiteral());
         if (!this.moduleContext.isStaticallyKnownCollation(uri)) {
             throw new DefaultCollationException(
                     "Unknown collation: " + uri,
@@ -4051,6 +4049,16 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             );
         }
         this.moduleContext.setDefaultCollation(uri);
+    }
+
+    private String resolveCollationUri(UriLiteralContext ctx) {
+        String uriString = processURILiteral(ctx);
+        URI uri = URILiteralUtils.resolve(
+            this.moduleContext.getStaticBaseURI(),
+            uriString,
+            createMetadataFromContext(ctx)
+        );
+        return uri.toString();
     }
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
