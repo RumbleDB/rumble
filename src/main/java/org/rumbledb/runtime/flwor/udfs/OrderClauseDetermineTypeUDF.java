@@ -101,7 +101,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        this.nextItem = CollationSupport.normalizeItemForCollation(
+        this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
             this.nextItem,
             CollationSupport.resolveCollation(
                 expressionWithIterator.getUri(),

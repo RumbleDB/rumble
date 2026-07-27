@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -212,10 +213,25 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             expressionWithIterator.getUri(),
             expressionWithIterator.getIterator().getRuntimeStaticContext()
         );
-        return CollationSupport.normalizeItemForCollation(
+        return normalizeOrderKeyAtomic(
             atomizedItem,
             collationUri,
             expressionWithIterator.getIterator().getMetadata()
+        );
+    }
+
+    public static Item normalizeOrderKeyAtomic(
+            Item atomizedItem,
+            String collationUri,
+            org.rumbledb.exceptions.ExceptionMetadata metadata
+    ) {
+        if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
+            atomizedItem = ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
+        }
+        return CollationSupport.normalizeItemForCollation(
+            atomizedItem,
+            collationUri,
+            metadata
         );
     }
 
