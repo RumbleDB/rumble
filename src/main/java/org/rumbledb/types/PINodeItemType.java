@@ -47,8 +47,6 @@ public class PINodeItemType extends AbstractItemType {
         return this.normalizedTarget;
     }
 
-
-
     @Override
     public boolean hasName() {
         return this.catalogueName != null;

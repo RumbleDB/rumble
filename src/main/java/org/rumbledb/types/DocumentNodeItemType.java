@@ -46,8 +46,6 @@ public class DocumentNodeItemType extends AbstractItemType {
         return this.elementTestType;
     }
 
-
-
     @Override
     public boolean hasName() {
         return this.catalogueName != null;

@@ -3,6 +3,8 @@ package org.rumbledb.types;
 import java.io.Serial;
 import java.util.Set;
 
+import lombok.EqualsAndHashCode;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
@@ -19,8 +21,6 @@ public class ErrorItemType extends AbstractItemType {
     @Serial
     private static final long serialVersionUID = 1L;
     private static final Name name = new Name(Name.XS_NS, "xs", "error");
-
-
 
     @Override
     public boolean hasName() {
