@@ -71,7 +71,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
-        this.numberPartitions = this.children.get(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
+        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue();
         JavaRDD<Item> resultRDD = childRDD.repartition(this.numberPartitions);
         return resultRDD;
     }
@@ -88,8 +88,8 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        this.numberPartitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        this.numberPartitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         JSoundDataFrame result = childDataFrame.repartition(this.numberPartitions);
         return result;
     }

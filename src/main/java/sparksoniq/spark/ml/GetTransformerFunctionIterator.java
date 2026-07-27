@@ -68,10 +68,10 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String transformerShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String transformerShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.children.size() >= 2) {
-            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        if (this.getChildren().size() >= 2) {
+            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(

@@ -34,12 +34,14 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator nameIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), staticContext);
+        super(
+            Arrays.asList(mainIterator, locatorIterator, nameIterator),
+            staticContext.toBuilder().isUpdating(true).build()
+        );
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
-        this.isUpdating = true;
     }
 
     @Override

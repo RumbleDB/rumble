@@ -24,7 +24,7 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.children.size() == 3) {
+        if (this.getChildren().size() == 3) {
             throw new UnimplementedFunctionException("fn:contains-token#3", getMetadata());
         }
 
@@ -37,7 +37,7 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private String getNormalizedToken(DynamicContext context) {
-        Item tokenItem = this.children.get(1).materializeFirstItemOrNull(context);
+        Item tokenItem = this.getChild(1).materializeFirstItemOrNull(context);
         return trimXmlWhitespace(tokenItem.getStringValue());
     }
 
@@ -58,7 +58,7 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private boolean inputContainsToken(DynamicContext context, String token) {
-        RuntimeIterator inputIterator = this.children.get(0);
+        RuntimeIterator inputIterator = this.getChild(0);
         inputIterator.open(context);
         try {
             return iteratorContainsToken(inputIterator, token);

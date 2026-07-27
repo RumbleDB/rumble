@@ -35,12 +35,12 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        JavaRDD<Item> scoresAndLabels = this.children.get(0).getRDD(context);
-        String scoreCol = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
-        String labelCol = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        JavaRDD<Item> scoresAndLabels = this.getChild(0).getRDD(context);
+        String scoreCol = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String labelCol = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
         int numBins = -1;
-        if (this.children.size() > 3) {
-            numBins = this.children.get(3).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 3) {
+            numBins = this.getChild(3).materializeFirstItemOrNull(context).getIntValue();
         }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
             p -> new Tuple2<>(

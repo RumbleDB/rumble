@@ -27,7 +27,7 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item uriItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (uriItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

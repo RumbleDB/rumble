@@ -56,9 +56,9 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     public void setNextResult(DynamicContext context) {
         if (this.input1 == null || this.input2 == null) {
-            Item operandOneItem = this.children.get(0)
+            Item operandOneItem = this.getChild(0)
                 .materializeFirstItemOrNull(context);
-            Item operandTwoItem = this.children.get(1)
+            Item operandTwoItem = this.getChild(1)
                 .materializeFirstItemOrNull(context);
             if (operandOneItem == null || operandTwoItem == null) {
                 this.hasNext = false;

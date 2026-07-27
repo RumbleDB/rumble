@@ -66,10 +66,10 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String estimatorShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String estimatorShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.children.size() >= 2) {
-            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        if (this.getChildren().size() >= 2) {
+            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
         }
 
         String estimatorFullClassName = RumbleMLCatalog.getEstimatorFullClassName(

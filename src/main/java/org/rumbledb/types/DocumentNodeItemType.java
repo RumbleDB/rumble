@@ -42,17 +42,7 @@ public class DocumentNodeItemType implements ItemType {
         return this.elementTestType;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        kryo.writeObjectOrNull(output, this.elementTestType, ElementNodeItemType.class);
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.elementTestType = kryo.readObjectOrNull(input, ElementNodeItemType.class);
-    }
 
     @Override
     public boolean equals(Object other) {
