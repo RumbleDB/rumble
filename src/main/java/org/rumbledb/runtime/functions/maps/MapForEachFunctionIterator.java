@@ -105,18 +105,18 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator {
             );
         }
 
-        this.keyArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("anyAtomicType"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
-        this.valueArgumentContext = new RuntimeStaticContext(
-                getConfiguration(),
-                SequenceType.createSequenceType("item*"),
-                ExecutionMode.LOCAL,
-                getMetadata()
-        );
+        this.keyArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("anyAtomicType"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
+        this.valueArgumentContext = RuntimeStaticContext.builder()
+            .configuration(getConfiguration())
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(ExecutionMode.LOCAL)
+            .metadata(getMetadata())
+            .build();
         this.mapKeys = this.mapItem.getItemKeys();
         this.keyIndex = 0;
 

@@ -38,7 +38,7 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
         RuntimeIterator castIterator = new CastIterator(
                 this.argumentIterator,
                 this.targetSequenceType,
-                this.staticContext.withStaticType(this.targetSequenceType)
+                this.staticContext.toBuilder().staticType(this.targetSequenceType).build()
         );
         return castIterator.materializeFirstItemOrNull(dynamicContext);
     }

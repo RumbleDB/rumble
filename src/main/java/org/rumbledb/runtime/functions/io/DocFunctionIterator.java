@@ -50,7 +50,11 @@ public class DocFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             Item path = this.pathIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                URI uri = FileSystemUtil.resolveURI(this.staticURI, path.getStringValue(), getMetadata());
+                URI uri = FileSystemUtil.resolveURI(
+                    this.staticContext.getStaticURI(),
+                    path.getStringValue(),
+                    getMetadata()
+                );
                 DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
                 documentBuilderFactory.setNamespaceAware(true);
                 DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();

@@ -104,8 +104,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
 
         ExecutionMode wrappedCallableExecutionMode = getWrappedCallableExecutionMode();
         RuntimeStaticContext callStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(wrappedCallableExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(wrappedCallableExecutionMode)
+            .build();
 
         if (this.callableItem.isArray()) {
             return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
@@ -130,7 +132,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             callIterator,
             this.expectedReturnType,
             this.exceptionMessage,
-            callStaticContext.withStaticType(this.expectedReturnType)
+            callStaticContext.toBuilder().staticType(this.expectedReturnType).build()
         );
     }
 
@@ -144,8 +146,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
             }
         }
         RuntimeStaticContext parameterStaticContext = getRuntimeStaticContext()
-            .withStaticType(SequenceType.createSequenceType("item*"))
-            .withExecutionMode(parameterExecutionMode);
+            .toBuilder()
+            .staticType(SequenceType.createSequenceType("item*"))
+            .executionMode(parameterExecutionMode)
+            .build();
         return new VariableReferenceIterator(parameterName, parameterStaticContext);
     }
 
