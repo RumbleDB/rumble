@@ -24,10 +24,6 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import org.rumbledb.exceptions.OurBadException;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 import lombok.EqualsAndHashCode;
 
@@ -45,14 +41,18 @@ import lombok.EqualsAndHashCode;
  *
  */
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-public class Name implements Comparable<Name>, Serializable, KryoSerializable {
+public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
     @EqualsAndHashCode.Include
     private String namespace;
+
     private String prefix;
+
     @EqualsAndHashCode.Include
     private String localName;
+
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
@@ -265,17 +265,4 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return this.localName.compareTo(other.localName);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.namespace);
-        output.writeString(this.prefix);
-        output.writeString(this.localName);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.namespace = input.readString();
-        this.prefix = input.readString();
-        this.localName = input.readString();
-    }
 }

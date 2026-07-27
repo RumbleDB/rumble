@@ -19,6 +19,9 @@
  */
 package org.rumbledb.expressions.xml;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
@@ -28,7 +31,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * contribute namespace nodes and static namespace bindings, but do not construct
  * attribute nodes.
  */
-public class NamespaceDeclaration {
+public class NamespaceDeclaration implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final String prefix;
     private final String uri;

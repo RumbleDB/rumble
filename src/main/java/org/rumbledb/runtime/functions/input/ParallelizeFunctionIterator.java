@@ -45,10 +45,10 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = null;
-        if (this.children.size() > 1) {
-            this.partitionsIterator = this.children.get(1);
+        if (this.getChildren().size() > 1) {
+            this.partitionsIterator = this.getChild(1);
         }
     }
 
@@ -59,14 +59,14 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
             rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
-            if (this.children.size() == 1) {
+            if (this.getChildren().size() == 1) {
                 return rdd;
             } else {
                 return rdd.repartition(getNumberOfPartitions(context).getIntValue());
             }
         }
         this.sequenceIterator.materialize(context, contents);
-        if (this.children.size() == 1) {
+        if (this.getChildren().size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             Item partitions = getNumberOfPartitions(context);
@@ -107,24 +107,24 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
-        if (this.children.size() > 1) {
+        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
+        if (this.getChildren().size() > 1) {
             getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
         }
     }
 
     @Override
     protected void closeLocal() {
-        this.children.get(0).close();
+        this.getChild(0).close();
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.children.get(0).hasNext();
+        return this.getChild(0).hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return this.children.get(0).next();
+        return this.getChild(0).next();
     }
 }

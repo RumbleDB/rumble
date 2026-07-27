@@ -35,9 +35,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class DoubleItem implements Item {
 
@@ -176,15 +173,7 @@ public class DoubleItem implements Item {
         return Double.isNaN(this.value);
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeDouble(this.value);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readDouble();
-    }
 
     public int hashCode() {
         return (int) Math.round(getDoubleValue());

@@ -48,7 +48,7 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
+        this.iterator = this.getChild(0);
         this.nextResults = new LinkedList<>();
     }
 

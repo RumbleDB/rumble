@@ -34,11 +34,10 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator toAppendIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext);
+        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext.toBuilder().isUpdating(true).build());
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
-        this.isUpdating = true;
     }
 
     @Override

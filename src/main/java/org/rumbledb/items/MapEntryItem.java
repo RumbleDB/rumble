@@ -36,9 +36,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapEntryItem implements Item {
 
@@ -184,18 +181,7 @@ public class MapEntryItem implements Item {
 
     // endregion maps
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.key);
-        kryo.writeClassAndObject(output, this.value);
-    }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.key = (Item) kryo.readClassAndObject(input);
-        this.value = (List<Item>) kryo.readClassAndObject(input);
-    }
 
     @Override
     public ItemType getDynamicType() {

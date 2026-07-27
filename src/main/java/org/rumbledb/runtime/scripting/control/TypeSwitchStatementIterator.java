@@ -12,6 +12,8 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
@@ -28,13 +30,14 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.children.add(testField);
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            this.children.add(typeSwitchCase.getReturnIterator());
-        }
-        this.children.add(defaultCase.getReturnIterator());
-
+        super(
+            Stream.of(
+                Stream.of(testField),
+                cases.stream().map(TypeswitchRuntimeIteratorCase::getReturnIterator),
+                Stream.of(defaultCase.getReturnIterator())
+            ).flatMap(Function.identity()).toList(),
+            staticContext
+        );
         this.testField = testField;
         this.cases = cases;
         this.defaultCase = defaultCase;
