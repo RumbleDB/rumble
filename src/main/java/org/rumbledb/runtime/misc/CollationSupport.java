@@ -14,6 +14,7 @@ import org.rumbledb.items.ItemFactory;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
+import java.text.StringCharacterIterator;
 import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Locale;
@@ -84,7 +85,7 @@ public final class CollationSupport {
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            StringSearch stringSearch = new StringSearch(prefix, value, collator);
+            StringSearch stringSearch = new StringSearch(prefix, new StringCharacterIterator(value), collator);
             return stringSearch.first() == 0;
         }
         return CollationCatalogue.normalizeString(value, collationUri)
@@ -97,7 +98,7 @@ public final class CollationSupport {
                 collationUri,
                 uri -> buildUcaCollator(uri, metadata)
             );
-            return (RuleBasedCollator) prototype.clone();
+            return prototype.cloneAsThawed();
         } catch (RuntimeException e) {
             if (e instanceof UnsupportedCollationException) {
                 throw e;

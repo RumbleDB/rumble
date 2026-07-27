@@ -47,6 +47,15 @@ public final class CollationCatalogue {
             || uri.startsWith(UCA_COLLATION_BASE + "?");
     }
 
+    public static boolean isUCACollation(String uri) {
+        return UCA_COLLATION_BASE.equals(uri)
+            || uri.startsWith(UCA_COLLATION_BASE + "?");
+    }
+
+    public static boolean isHTMLAsciiCaseInsensitiveCollation(String uri) {
+        return HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(uri);
+    }
+
     public static String normalizeString(String value, String collationUri) {
         if (value == null || !isCaseInsensitiveCollation(collationUri)) {
             return value;
