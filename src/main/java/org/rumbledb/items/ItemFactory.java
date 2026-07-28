@@ -57,7 +57,7 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
-        if (s.equals("")) {
+        if (s == null || s.isEmpty()) {
             return this.emptyStringItem;
         }
         return new StringItem(s);
