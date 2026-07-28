@@ -21,13 +21,11 @@
 package sparksoniq.jsoniq.tuple;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
@@ -137,8 +135,7 @@ public class FlworTuple implements Serializable {
         }
         if (this.dataFrameVariables.containsKey(key)) {
             JSoundDataFrame df = this.dataFrameVariables.get(key);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+            return df.toRDD(metadata);
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }

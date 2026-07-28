@@ -58,7 +58,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         List<Item> contents = new ArrayList<>();
         if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
-            rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
+            rdd = dataFrame.toRDD(this.getMetadata());
             if (this.getChildren().size() == 1) {
                 return rdd;
             } else {

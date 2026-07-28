@@ -138,10 +138,6 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
         this.dataFrame.show();
     }
 
-    public JavaRDD<Row> javaRDD() {
-        return this.dataFrame.javaRDD();
-    }
-
     /**
      * Converts this JSONiq DataFrame to its logical item representation.
      *

@@ -44,7 +44,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 if (actualSchemaType.isSubtypeOf(schemaType)) {
                     return inputDataAsDataFrame;
                 }
-                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                JavaRDD<Item> inputDataAsRDDOfItems = inputDataAsDataFrame.toRDD(getMetadata());
                 return ValidateTypeIterator.convertRDDToValidDataFrame(
                     inputDataAsRDDOfItems,
                     schemaType,
