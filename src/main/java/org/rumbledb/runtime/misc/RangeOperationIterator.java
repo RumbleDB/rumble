@@ -110,6 +110,12 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (left == null || right == null) {
             return false;
         }
+        if (left.isUntypedAtomic()) {
+            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
+        }
+        if (right.isUntypedAtomic()) {
+            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
+        }
         if (
             !(left.isInteger())
                 || !(right.isInteger())
