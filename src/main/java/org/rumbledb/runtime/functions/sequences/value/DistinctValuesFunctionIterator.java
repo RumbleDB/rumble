@@ -25,12 +25,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.AtomicValueComparison;
 import org.rumbledb.runtime.misc.AtomicValueComparisonKey;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.types.ItemType;
 
 
 import java.io.Serial;
@@ -137,6 +141,27 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     protected boolean implementsDataFrames() {
         // SQL DISTINCT does not implement XDM numeric promotion or NaN equality.
         return false;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        // Function-call paths can request a DataFrame directly even though this iterator falls back to RDD execution.
+        JavaRDD<Item> rdd = getRDDAux(dynamicContext);
+        ItemType itemType = getStaticType().getItemType();
+        if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
+            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                rdd,
+                getMetadata(),
+                TypeInferrenceUtils.TypeMergeMode.LAX
+            );
+        }
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            itemType,
+            dynamicContext,
+            true,
+            getRuntimeStaticContext()
+        );
     }
 
     @Override
