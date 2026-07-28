@@ -132,7 +132,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation))
+        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
             .distinct()
             .map(AtomicValueComparisonKey::getItem);
     }

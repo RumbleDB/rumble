@@ -36,12 +36,12 @@ public final class AtomicValueComparisonKey implements Serializable {
     private final Item item;
     private final Item comparisonItem;
 
-    public AtomicValueComparisonKey(Item item, String collationUri) {
+    public AtomicValueComparisonKey(Item item, String collationUri, ExceptionMetadata exceptionMetadata) {
         this.item = item;
         this.comparisonItem = CollationSupport.normalizeItemForCollation(
             item,
             collationUri,
-            ExceptionMetadata.EMPTY_METADATA
+            exceptionMetadata
         );
     }
 
