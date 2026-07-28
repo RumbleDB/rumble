@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidAttributeNameException;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
+import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 
 import org.w3c.dom.Node;
@@ -356,6 +357,38 @@ public final class NamespaceBindingUtils {
             return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
         }
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /**
+     * fn:resolve-QName (Functions and Operators 3.1 10.1.1): like {@link #parseLexicalQName}, but raises
+     * err:FONS0004 ({@link NoNamespaceFoundForPrefixException}) rather than err:FOCA0002 when the prefix is
+     * present but unbound.
+     */
+    public static Name parseLexicalQNameForResolveQName(
+            String lexical,
+            NamespaceResolver namespaceResolver,
+            ExceptionMetadata metadata
+    ) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace binding for prefix \"" + split.prefix + "\".",
+                    metadata
+            );
+        }
+        if (getReservedNamespaceBindingError(split.prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \""
+                        + split.prefix
+                        + "\".",
+                    metadata
+            );
+        }
+        return new Name(uri, split.prefix, split.local);
     }
 
     /**

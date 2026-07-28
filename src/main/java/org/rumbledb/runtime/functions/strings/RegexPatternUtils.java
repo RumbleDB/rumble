@@ -76,6 +76,9 @@ public final class RegexPatternUtils {
             pattern = normalizeCaseInsensitivePattern(pattern);
             flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
         }
+        if (!quote) {
+            pattern = translateUnicodeBlockEscapes(pattern);
+        }
         try {
             return new CompiledRegex(Pattern.compile(pattern, flags), quote, pattern);
         } catch (PatternSyntaxException e) {
@@ -250,6 +253,46 @@ public final class RegexPatternUtils {
         }
         tokens.add(input.substring(lastEnd));
         return tokens.toArray(new String[0]);
+    }
+
+    /**
+     * XPath/XSD regex uses the "Is" prefix exclusively for Unicode block names (F&amp;O 3.1
+     * &sect;5.6.1.5, e.g. \p{IsBasicLatin}), whereas java.util.regex reserves "Is" for scripts and
+     * binary properties and requires the "In" prefix for blocks (e.g. \p{InBasicLatin}). Translate
+     * every \p{Is...}/\P{Is...} escape accordingly before compiling with Pattern.compile.
+     */
+    static String translateUnicodeBlockEscapes(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        int i = 0;
+        while (i < pattern.length()) {
+            char current = pattern.charAt(i);
+            if (
+                current == '\\'
+                    && i + 2 < pattern.length()
+                    && (pattern.charAt(i + 1) == 'p' || pattern.charAt(i + 1) == 'P')
+                    && pattern.charAt(i + 2) == '{'
+            ) {
+                int end = pattern.indexOf('}', i + 3);
+                if (end < 0) {
+                    result.append(current);
+                    i++;
+                    continue;
+                }
+                String name = pattern.substring(i + 3, end);
+                result.append(pattern, i, i + 3);
+                if (name.startsWith("Is") && name.length() > 2) {
+                    result.append("In").append(name, 2, name.length());
+                } else {
+                    result.append(name);
+                }
+                result.append('}');
+                i = end + 1;
+                continue;
+            }
+            result.append(current);
+            i++;
+        }
+        return result.toString();
     }
 
     static String normalizeCaseInsensitivePattern(String pattern) {
