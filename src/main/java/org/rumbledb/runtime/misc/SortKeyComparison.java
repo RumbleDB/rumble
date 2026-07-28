@@ -133,7 +133,7 @@ public final class SortKeyComparison {
         String sa = normalizeUntypedAtomic(a).getStringValue();
         String sb = normalizeUntypedAtomic(b).getStringValue();
         if (collationUri.equals(Name.DEFAULT_COLLATION_NS)) {
-            return sa.compareTo(sb);
+            return CollationSupport.compareByCodePoint(sa, sb);
         }
         return String.CASE_INSENSITIVE_ORDER.compare(sa, sb);
     }

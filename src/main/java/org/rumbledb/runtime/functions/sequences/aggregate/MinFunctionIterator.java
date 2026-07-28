@@ -40,6 +40,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -317,10 +318,17 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.activeType = 6;
                             this.returnType = BuiltinTypesCatalogue.stringItem;
                             this.currentMinString = this.currentMinURI;
-                            if (candidateItem.getStringValue().compareTo(this.currentMinURI) < 0) {
+                            if (
+                                CollationSupport.compareByCodePoint(
+                                    candidateItem.getStringValue(),
+                                    this.currentMinURI
+                                ) < 0
+                            ) {
                                 this.currentMinString = candidateItem.getStringValue();
                             }
-                        } else if (candidateItem.getStringValue().compareTo(this.currentMinURI) < 0) {
+                        } else if (
+                            CollationSupport.compareByCodePoint(candidateItem.getStringValue(), this.currentMinURI) < 0
+                        ) {
                             this.currentMinURI = candidateItem.getStringValue();
 
                         }
@@ -332,7 +340,12 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getStringValue().compareTo(this.currentMinString) < 0) {
+                        if (
+                            CollationSupport.compareByCodePoint(
+                                candidateItem.getStringValue(),
+                                this.currentMinString
+                            ) < 0
+                        ) {
                             this.currentMinString = candidateItem.getStringValue();
                             this.returnType = candidateType;
                         }

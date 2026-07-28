@@ -69,13 +69,36 @@ public final class CollationSupport {
     public static int compareStrings(String left, String right, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
-            return left.compareTo(right);
+            return compareByCodePoint(left, right);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             return getUcaCollator(collationUri, metadata).compare(left, right);
         }
         return CollationCatalogue.normalizeString(left, collationUri)
             .compareTo(CollationCatalogue.normalizeString(right, collationUri));
+    }
+
+    /**
+     * Compares two strings by Unicode code point value, as required by the Unicode Codepoint Collation
+     * (http://www.w3.org/2005/xpath-functions/collation/codepoint), which is Rumble's default collation.
+     * Unlike {@link String#compareTo}, which orders by UTF-16 code unit, this orders supplementary
+     * characters (encoded as surrogate pairs) correctly relative to BMP characters above U+E000.
+     */
+    public static int compareByCodePoint(String left, String right) {
+        int leftLength = left.length();
+        int rightLength = right.length();
+        int i = 0;
+        int j = 0;
+        while (i < leftLength && j < rightLength) {
+            int leftCodePoint = left.codePointAt(i);
+            int rightCodePoint = right.codePointAt(j);
+            if (leftCodePoint != rightCodePoint) {
+                return leftCodePoint - rightCodePoint;
+            }
+            i += Character.charCount(leftCodePoint);
+            j += Character.charCount(rightCodePoint);
+        }
+        return (leftLength - i) - (rightLength - j);
     }
 
     public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
