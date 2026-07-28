@@ -144,7 +144,12 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        // Function-call paths can request a DataFrame directly even though this iterator falls back to RDD execution.
+        // Spark SQL DISTINCT cannot be used here because its equality semantics differ from XDM for values such as
+        // promoted numerics and NaN.
+        // Compute distinctness with AtomicValueComparisonKey through the RDD path, then
+        // convert the result back to a DataFrame.
+        // Since distinct-values commonly has the static type xs:anyAtomicType,
+        // infer the concrete runtime type when the static type cannot be represented by a Spark schema.
         JavaRDD<Item> rdd = getRDDAux(dynamicContext);
         ItemType itemType = getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(getConfiguration())) {
