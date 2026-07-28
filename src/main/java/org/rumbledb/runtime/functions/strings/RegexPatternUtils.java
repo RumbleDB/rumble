@@ -93,15 +93,17 @@ public final class RegexPatternUtils {
 
         int nextCaptureGroupNumber = 1;
         Deque<GroupContext> openGroups = new ArrayDeque<>();
+        boolean previousWasAtom = false;
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
             if (current == '[') {
-                i = skipCharacterClass(pattern, i);
+                i = skipCharacterClass(pattern, i, metadata);
+                previousWasAtom = true;
                 continue;
             }
             if (current == '\\') {
                 if (i + 1 >= pattern.length()) {
-                    continue;
+                    throw new InvalidRegexPatternException("Trailing unescaped backslash", metadata);
                 }
                 char next = pattern.charAt(i + 1);
                 if (Character.isDigit(next)) {
@@ -117,28 +119,146 @@ public final class RegexPatternUtils {
                         metadata
                     );
                     i = end - 1;
+                    previousWasAtom = true;
                     continue;
                 }
-                if ((next == 'p' || next == 'P') && i + 2 < pattern.length() && pattern.charAt(i + 2) == '{') {
-                    i = skipUnicodeEscape(pattern, i);
+                if (next == 'p' || next == 'P') {
+                    if (i + 2 >= pattern.length() || pattern.charAt(i + 2) != '{') {
+                        throw new InvalidRegexPatternException(
+                                "Invalid Unicode category or block escape \\" + next,
+                                metadata
+                        );
+                    }
+                    int end = skipUnicodeEscape(pattern, i);
+                    if (pattern.charAt(end) != '}') {
+                        throw new InvalidRegexPatternException(
+                                "Unterminated Unicode category or block escape",
+                                metadata
+                        );
+                    }
+                    i = end;
+                    previousWasAtom = true;
                     continue;
+                }
+                if (!isLegalRegexEscape(next)) {
+                    throw new InvalidRegexPatternException("Invalid regular expression escape \\" + next, metadata);
                 }
                 i++;
+                previousWasAtom = true;
                 continue;
             }
             if (current == '(') {
-                boolean capturing = !(i + 1 < pattern.length() && pattern.charAt(i + 1) == '?');
-                if (capturing) {
+                if (i + 1 < pattern.length() && pattern.charAt(i + 1) == '?') {
+                    if (i + 2 >= pattern.length() || pattern.charAt(i + 2) != ':') {
+                        throw new InvalidRegexPatternException("Invalid group syntax starting with '(?'", metadata);
+                    }
+                    openGroups.push(GroupContext.nonCapturingGroup());
+                    i += 2;
+                } else {
                     openGroups.push(new GroupContext(nextCaptureGroupNumber));
                     nextCaptureGroupNumber++;
-                } else {
-                    openGroups.push(GroupContext.nonCapturingGroup());
                 }
+                previousWasAtom = false;
                 continue;
             }
-            if (current == ')' && !openGroups.isEmpty()) {
-                openGroups.pop();
+            if (current == ')') {
+                if (!openGroups.isEmpty()) {
+                    openGroups.pop();
+                }
+                previousWasAtom = true;
+                continue;
             }
+            if (current == '|') {
+                previousWasAtom = false;
+                continue;
+            }
+            if (current == ']') {
+                throw new InvalidRegexPatternException("Unmatched ']' outside a character class", metadata);
+            }
+            if (current == '?' || current == '*' || current == '+') {
+                if (!previousWasAtom) {
+                    throw new InvalidRegexPatternException(
+                            "Quantifier '" + current + "' with no preceding atom",
+                            metadata
+                    );
+                }
+                if (i + 1 < pattern.length() && pattern.charAt(i + 1) == '?') {
+                    i++;
+                }
+                previousWasAtom = false;
+                continue;
+            }
+            if (current == '{') {
+                int j = i + 1;
+                int digitsBeforeComma = 0;
+                while (j < pattern.length() && Character.isDigit(pattern.charAt(j))) {
+                    j++;
+                    digitsBeforeComma++;
+                }
+                if (digitsBeforeComma == 0) {
+                    throw new InvalidRegexPatternException("Invalid quantifier '{...}'", metadata);
+                }
+                if (j < pattern.length() && pattern.charAt(j) == ',') {
+                    j++;
+                    while (j < pattern.length() && Character.isDigit(pattern.charAt(j))) {
+                        j++;
+                    }
+                }
+                if (j >= pattern.length() || pattern.charAt(j) != '}') {
+                    throw new InvalidRegexPatternException("Unterminated quantifier '{...}'", metadata);
+                }
+                if (!previousWasAtom) {
+                    throw new InvalidRegexPatternException("Quantifier '{...}' with no preceding atom", metadata);
+                }
+                i = j;
+                if (i + 1 < pattern.length() && pattern.charAt(i + 1) == '?') {
+                    i++;
+                }
+                previousWasAtom = false;
+                continue;
+            }
+            previousWasAtom = true;
+        }
+    }
+
+    /**
+     * Legal escapes per F&amp;O 3.1 &sect;5.6.1 / XSD Part 2 Appendix F: SingleCharEsc
+     * ({@code n r t \ | . ? * + ( ) { } - [ ] ^ $}) union MultiCharEsc ({@code s S i I c C d D w W}).
+     * {@code \p{...}}/{@code \P{...}} and digit back-references are validated separately by their callers.
+     */
+    private static boolean isLegalRegexEscape(char c) {
+        switch (c) {
+            case 'n':
+            case 'r':
+            case 't':
+            case '\\':
+            case '|':
+            case '.':
+            case '?':
+            case '*':
+            case '+':
+            case '(':
+            case ')':
+            case '{':
+            case '}':
+            case '-':
+            case '[':
+            case ']':
+            case '^':
+            case '$':
+            case 's':
+            case 'S':
+            case 'i':
+            case 'I':
+            case 'c':
+            case 'C':
+            case 'd':
+            case 'D':
+            case 'w':
+            case 'W':
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -532,28 +652,67 @@ public final class RegexPatternUtils {
         return Math.min(index, pattern.length() - 1);
     }
 
-    private static int skipCharacterClass(String pattern, int startIndex) {
+    /**
+     * Parses a {@code charClassExpr} per XSD Appendix F: {@code charGroup ::= posCharGroup | negCharGroup |
+     * charClassSub}, {@code charClassSub ::= (posCharGroup|negCharGroup) '-' charClassExpr}. A {@code '['}
+     * inside the class body has no legal role except opening the trailing subtraction's nested class,
+     * immediately after a {@code '-'} that isn't itself the class's leading literal dash.
+     */
+    private static int skipCharacterClass(String pattern, int startIndex, ExceptionMetadata metadata) {
         int index = startIndex + 1;
-        boolean firstToken = true;
+        if (index < pattern.length() && pattern.charAt(index) == '^') {
+            index++;
+        }
+        int contentStart = index;
         while (index < pattern.length()) {
             char current = pattern.charAt(index);
             if (current == '\\') {
                 if (index + 1 >= pattern.length()) {
                     return index;
                 }
-                if (
-                    index + 2 < pattern.length()
-                        && (pattern.charAt(index + 1) == 'p' || pattern.charAt(index + 1) == 'P')
-                        && pattern.charAt(index + 2) == '{'
-                ) {
-                    index = skipUnicodeEscape(pattern, index);
+                char next = pattern.charAt(index + 1);
+                if (next == 'p' || next == 'P') {
+                    if (index + 2 >= pattern.length() || pattern.charAt(index + 2) != '{') {
+                        throw new InvalidRegexPatternException(
+                                "Invalid Unicode category or block escape \\" + next + " in character class",
+                                metadata
+                        );
+                    }
+                    int end = skipUnicodeEscape(pattern, index);
+                    if (pattern.charAt(end) != '}') {
+                        throw new InvalidRegexPatternException(
+                                "Unterminated Unicode category or block escape in character class",
+                                metadata
+                        );
+                    }
+                    index = end;
+                } else if (!isLegalRegexEscape(next)) {
+                    throw new InvalidRegexPatternException(
+                            "Invalid regular expression escape \\" + next + " in character class",
+                            metadata
+                    );
                 } else {
                     index++;
                 }
-            } else if (current == ']' && !firstToken) {
+            } else if (current == '-' && index + 1 < pattern.length() && pattern.charAt(index + 1) == '[') {
+                if (index == contentStart) {
+                    throw new InvalidRegexPatternException("Invalid character class subtraction", metadata);
+                }
+                int nestedEnd = skipCharacterClass(pattern, index + 1, metadata);
+                if (nestedEnd + 1 >= pattern.length() || pattern.charAt(nestedEnd + 1) != ']') {
+                    throw new InvalidRegexPatternException(
+                            "Character class subtraction must be the last element of the class",
+                            metadata
+                    );
+                }
+                return nestedEnd + 1;
+            } else if (current == '[') {
+                throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
+            } else if (current == ']') {
+                // XSD Appendix F: ']' is not a valid character range on its own (unlike '-', it has no
+                // "literal at the start of the group" exception), so it always closes the class here.
                 return index;
             }
-            firstToken = false;
             index++;
         }
         return pattern.length() - 1;
