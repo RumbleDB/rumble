@@ -231,6 +231,12 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                     getMetadata()
             );
         }
+        if (sequence.get(0).getBooleanValue()) {
+            throw new UnsupportedFeatureException(
+                    "fn:json-to-xml: option 'validate' is not supported yet.",
+                    getMetadata()
+            );
+        }
     }
 
     private void checkFallbackOption(Item optionsItem, boolean escape) {
