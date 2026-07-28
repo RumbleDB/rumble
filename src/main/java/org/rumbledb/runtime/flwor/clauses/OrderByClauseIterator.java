@@ -67,9 +67,9 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private final Map<Name, DynamicContext.VariableDependency> dependencies;
 
-    private List<FlworTuple> localTupleResults;
+    private final List<FlworTuple> localTupleResults;
     private int resultIndex;
 
     public OrderByClauseIterator(

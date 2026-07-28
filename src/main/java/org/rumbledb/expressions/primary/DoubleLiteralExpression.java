@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class DoubleLiteralExpression extends Expression {
 
-    private double value;
+    private final double value;
 
     public DoubleLiteralExpression(double value, ExceptionMetadata metadata) {
         super(metadata);

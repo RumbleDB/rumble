@@ -21,7 +21,7 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
 
     private final Item arrayItem;
     private final RuntimeIterator indexIterator;
-    private Queue<Item> pendingResults;
+    private final Queue<Item> pendingResults;
 
     public ArrayFunctionCallIterator(
             Item arrayItem,

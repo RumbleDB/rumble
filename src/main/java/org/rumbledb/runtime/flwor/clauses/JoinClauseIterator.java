@@ -66,9 +66,9 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
     // Properties
     @SuppressWarnings("unused")
-    private boolean isLeftOuterJoin;
+    private final boolean isLeftOuterJoin;
     @SuppressWarnings("unused")
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     // Computation state
     @SuppressWarnings("unused")

@@ -39,9 +39,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
-    private RuntimeIterator insertIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
+    private final RuntimeIterator insertIterator;
     private Item nextResult;
     private int insertPosition; // position to start inserting
     private int currentPosition; // current position

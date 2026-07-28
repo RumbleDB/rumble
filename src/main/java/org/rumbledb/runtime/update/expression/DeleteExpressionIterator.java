@@ -24,8 +24,8 @@ public class DeleteExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator lookupIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator lookupIterator;
 
     public DeleteExpressionIterator(
             RuntimeIterator mainIterator,

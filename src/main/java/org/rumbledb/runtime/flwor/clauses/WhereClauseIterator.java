@@ -56,7 +56,7 @@ public class WhereClauseIterator extends RuntimeTupleIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator expression;
+    private final RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
 

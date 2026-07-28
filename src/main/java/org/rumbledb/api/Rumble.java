@@ -28,7 +28,7 @@ public class Rumble {
 
     @Getter
     private RumbleRuntimeConfiguration configuration;
-    private CompilationConfiguration compilationConfiguration;
+    private final CompilationConfiguration compilationConfiguration;
 
     /**
      * Creates a new Rumble instance. This initializes a brand new Spark session.

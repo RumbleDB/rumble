@@ -32,7 +32,7 @@ import java.util.List;
 // clone of ObjectLookupExpression but for xquery lookup
 public class UnaryLookupExpression extends Expression {
 
-    private Expression lookupExpression;
+    private final Expression lookupExpression;
     // lookupexpression is null if we have a wildcard!!
 
     public UnaryLookupExpression(Expression lookupExpression, ExceptionMetadata metadata) {

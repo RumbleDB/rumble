@@ -105,16 +105,16 @@ import java.util.TreeSet;
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
      * Input variable dependencies are lists of variables and functions that an expression depends on.
      */
-    Map<Node, Set<Name>> inputVariableDependencies;
+    final Map<Node, Set<Name>> inputVariableDependencies;
     /**
      * Output variable dependencies are lists of variables in the tuples that a clause produces.
      */
-    Map<Node, Set<Name>> outputVariableDependenciesForClauses;
+    final Map<Node, Set<Name>> outputVariableDependenciesForClauses;
 
     /**
      * Builds a new visitor.
