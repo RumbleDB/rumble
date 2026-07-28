@@ -35,7 +35,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public DoubleRuntimeIterator(Double value, RuntimeStaticContext staticContext) {
         super(null, staticContext);

@@ -44,8 +44,8 @@ public class MapWithRemovedEntryItem implements Item {
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Set<Item> removedKeys;
+    private final Item original;
+    private final Set<Item> removedKeys;
 
     public MapWithRemovedEntryItem() {
         this.original = null;

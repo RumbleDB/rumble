@@ -35,7 +35,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public IntegerRuntimeIterator(
             String lexicalValue,

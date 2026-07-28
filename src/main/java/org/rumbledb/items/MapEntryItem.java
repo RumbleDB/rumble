@@ -45,8 +45,8 @@ public class MapEntryItem implements Item {
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item key;
-    private List<Item> value;
+    private final Item key;
+    private final List<Item> value;
 
     public MapEntryItem() {
         this.key = null;

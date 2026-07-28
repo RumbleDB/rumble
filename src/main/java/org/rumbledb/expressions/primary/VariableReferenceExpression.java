@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class VariableReferenceExpression extends Expression {
-    private Name name;
+    private final Name name;
     private SequenceType type;
 
 

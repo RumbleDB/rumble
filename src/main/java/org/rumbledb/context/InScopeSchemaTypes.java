@@ -17,7 +17,7 @@ public class InScopeSchemaTypes implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private HashMap<Name, ItemType> inScopeSchemaTypes;
+    private final HashMap<Name, ItemType> inScopeSchemaTypes;
 
     public InScopeSchemaTypes() {
         this.inScopeSchemaTypes = new HashMap<>();

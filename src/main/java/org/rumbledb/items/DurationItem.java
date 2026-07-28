@@ -155,7 +155,7 @@ public class DurationItem implements Item {
         return BuiltinTypesCatalogue.durationItem;
     }
 
-    public static Comparator<Period> periodComparator = (p1, p2) -> {
+    public static final Comparator<Period> periodComparator = (p1, p2) -> {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };

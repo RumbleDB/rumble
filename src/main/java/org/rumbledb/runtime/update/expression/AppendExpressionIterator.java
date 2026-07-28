@@ -26,8 +26,8 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator arrayIterator;
-    private RuntimeIterator toAppendIterator;
+    private final RuntimeIterator arrayIterator;
+    private final RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,

@@ -26,10 +26,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private RuntimeIterator iterator;
-    private SequenceType sequenceType;
+    private final RuntimeIterator iterator;
+    private final SequenceType sequenceType;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimeIterator iterator,

@@ -33,7 +33,7 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressions;
-    private ExceptionMetadata metadata;
+    private final ExceptionMetadata metadata;
 
     public FlworKeyComparator(
             List<OrderByClauseAnnotatedChildIterator> expressions,

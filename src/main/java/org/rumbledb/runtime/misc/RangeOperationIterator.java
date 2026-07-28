@@ -49,8 +49,8 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;

@@ -35,7 +35,7 @@ public class BooleanRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public BooleanRuntimeIterator(boolean value, RuntimeStaticContext staticContext) {
         super(null, staticContext);

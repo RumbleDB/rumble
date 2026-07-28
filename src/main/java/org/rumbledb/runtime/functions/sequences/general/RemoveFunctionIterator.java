@@ -37,8 +37,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
     private Item nextResult;
     private int removePosition; // position to remove the item
     private int currentPosition; // current position
