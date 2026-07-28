@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -18,12 +19,12 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Map<Name, RuntimeIterator> copyDeclMap;
-    private RuntimeIterator modifyIterator;
-    private RuntimeIterator returnIterator;
-    private boolean mutable;
+    private final Map<Name, RuntimeIterator> copyDeclMap;
+    private final RuntimeIterator modifyIterator;
+    private final RuntimeIterator returnIterator;
+    private final boolean mutable;
 
-    private int mutabilityLevel;
+    private final int mutabilityLevel;
 
     public TransformExpressionIterator(
             Map<Name, RuntimeIterator> copyDeclMap,
@@ -33,16 +34,18 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             int mutabilityLevel,
             boolean resultMutable
     ) {
-        super(null, staticContext);
-        this.children.addAll(copyDeclMap.values());
-        this.children.add(modifyIterator);
-        this.children.add(returnIterator);
+        super(
+            Stream.concat(
+                copyDeclMap.values().stream(),
+                Stream.of(modifyIterator, returnIterator)
+            ).toList(),
+            staticContext.toBuilder().isUpdating(false).build()
+        );
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
-        this.isUpdating = false;
         this.mutable = resultMutable;
     }
 

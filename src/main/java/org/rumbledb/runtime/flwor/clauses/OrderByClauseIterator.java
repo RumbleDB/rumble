@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
@@ -47,6 +48,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -65,9 +67,9 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private final Map<Name, DynamicContext.VariableDependency> dependencies;
 
-    private List<FlworTuple> localTupleResults;
+    private final List<FlworTuple> localTupleResults;
     private int resultIndex;
 
     public OrderByClauseIterator(
@@ -164,14 +166,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
                 try {
                     Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
-                    if (resultItem != null && !resultItem.isAtomic()) {
-                        throw new UnexpectedTypeException(
-                                "Keys in an order-by clause must be atomics.",
-                                expressionWithIterator.getIterator().getMetadata()
-                        );
-                    }
-                    // possibly null for empty sequence.
-                    results.add(resultItem);
+                    results.add(atomizeOrderKey(resultItem, expressionWithIterator));
                 } catch (MoreThanOneItemException e) {
                     throw new UnexpectedTypeException(
                             "Keys in an order-by clause must be at most one item.",
@@ -188,6 +183,56 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             values.add(inputTuple);
         }
         return keyValuePairs;
+    }
+
+    private Item atomizeOrderKey(
+            Item resultItem,
+            OrderByClauseAnnotatedChildIterator expressionWithIterator
+    ) {
+        if (resultItem == null) {
+            return null;
+        }
+        List<Item> atomized = resultItem.atomizedValue();
+        if (atomized.size() > 1) {
+            throw new UnexpectedTypeException(
+                    "Keys in an order-by clause must atomize to at most one item.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        if (atomized.isEmpty()) {
+            return null;
+        }
+        Item atomizedItem = atomized.get(0);
+        if (!atomizedItem.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Keys in an order-by clause must atomize to atomic values.",
+                    expressionWithIterator.getIterator().getMetadata()
+            );
+        }
+        String collationUri = CollationSupport.resolveCollation(
+            expressionWithIterator.getUri(),
+            expressionWithIterator.getIterator().getRuntimeStaticContext()
+        );
+        return normalizeOrderKeyAtomic(
+            atomizedItem,
+            collationUri,
+            expressionWithIterator.getIterator().getMetadata()
+        );
+    }
+
+    public static Item normalizeOrderKeyAtomic(
+            Item atomizedItem,
+            String collationUri,
+            org.rumbledb.exceptions.ExceptionMetadata metadata
+    ) {
+        if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
+            atomizedItem = ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
+        }
+        return CollationSupport.normalizeItemForCollation(
+            atomizedItem,
+            collationUri,
+            metadata
+        );
     }
 
     @Override

@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -52,13 +53,13 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private RuntimeIterator functionItemIterator;
-    private List<RuntimeIterator> functionArguments;
+    private final RuntimeIterator functionItemIterator;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private Item functionItem;
     private RuntimeIterator functionCallIterator;
-    private boolean isPartialApplication;
+    private final boolean isPartialApplication;
     private Item nextResult;
 
     // Exit statement fields
@@ -74,19 +75,19 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext
     ) {
-        super(null, staticContext);
-        this.isPartialApplication = false;
+        super(
+            Stream.concat(
+                functionArguments.stream().filter(arg -> arg != null),
+                functionArguments.contains(functionItemIterator)
+                    ? Stream.empty()
+                    : Stream.of(functionItemIterator)
+            ).toList(),
+            staticContext
+        );
+
+        this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
         this.nextExitStatementResult = 0;
-        for (RuntimeIterator arg : functionArguments) {
-            if (arg != null) {
-                this.children.add(arg);
-            } else {
-                this.isPartialApplication = true;
-            }
-        }
-        if (!this.children.contains(functionItemIterator)) {
-            this.children.add(functionItemIterator);
-        }
+
         this.functionItemIterator = functionItemIterator;
         this.functionArguments = functionArguments;
     }

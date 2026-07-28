@@ -14,8 +14,8 @@ public final class NumericPictureParser {
         private NumericPictureKind() {
         }
 
-        public static String DATE = "DATE";
-        public static String INTEGER = "INTEGER";
+        public static final String DATE = "DATE";
+        public static final String INTEGER = "INTEGER";
     }
 
     private NumericPictureParser() {

@@ -54,8 +54,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     // parametrized fields
-    private Item functionItem;
-    private List<RuntimeIterator> functionArguments;
+    private final Item functionItem;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private boolean isPartialApplication;
@@ -72,14 +72,15 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext,
             boolean isTailOptimization
     ) {
-        super(null, staticContext);
-        for (RuntimeIterator arg : functionArguments) {
-            if (arg == null) {
-                this.isPartialApplication = true;
-            } else {
-                this.children.add(arg);
-            }
-        }
+        super(
+            functionArguments.stream().filter(arg -> arg != null).toList(),
+            staticContext.toBuilder()
+                .isUpdating(functionItem.getSignature().isUpdating())
+                .isSequential(functionItem.getBodyIterator().isSequential())
+                .build()
+        );
+
+        this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
         if (isTailOptimization) {
             this.isPartialApplication = true;
             this.isTailOptimization = true;
@@ -87,8 +88,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
         this.functionBodyIterator = null;
-        this.isUpdating = functionItem.getSignature().isUpdating();
-        this.isSequential = functionItem.getBodyIterator().isSequential();
 
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
@@ -375,7 +374,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * Sequential and updating bodies can retain statement or mutation state even after normal exhaustion.
      */
     private boolean canReuseBody() {
-        return !this.isSequential && !this.isUpdating;
+        return !this.staticContext.isSequential() && !this.staticContext.isUpdating();
     }
 
     /**

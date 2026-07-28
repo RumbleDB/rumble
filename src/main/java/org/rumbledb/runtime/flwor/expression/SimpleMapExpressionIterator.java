@@ -58,8 +58,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
@@ -79,7 +79,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
         JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
         long count = childRDD.count();
         FlatMapFunction<Tuple2<Item, Long>, Item> transformation = new SimpleMapExpressionClosureZipped(

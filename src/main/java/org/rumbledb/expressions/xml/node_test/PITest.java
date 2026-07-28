@@ -1,8 +1,5 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serial;
@@ -18,7 +15,7 @@ import java.util.Objects;
 public class PITest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
-    private String targetName;
+    private final String targetName;
 
     /**
      * Creates a PITest that matches any processing-instruction node.
@@ -54,14 +51,6 @@ public class PITest implements NodeTest {
         return sb.toString();
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.targetName);
-    }
 
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.targetName = input.readString();
-    }
 }
 

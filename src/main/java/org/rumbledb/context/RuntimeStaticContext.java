@@ -24,6 +24,7 @@ public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final URI staticURI;
+    private final String staticURIString;
 
     /**
      * Query language associated with this context, which is used for error reporting and to determine the
@@ -88,6 +89,12 @@ public class RuntimeStaticContext implements Serializable {
     @Builder.Default
     private final boolean copyNamespacesInherit = true;
 
+    @Builder.Default
+    private final boolean isUpdating = false;
+
+    @Builder.Default
+    private final boolean isSequential = false;
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -106,6 +113,8 @@ public class RuntimeStaticContext implements Serializable {
         sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
         sb.append("  serializationParameters: ").append(this.serializationParameters).append("\n");
         sb.append("  isQuerySideEffecting: ").append(this.isQuerySideEffecting).append("\n");
+        sb.append("  isUpdating: ").append(this.isUpdating).append("\n");
+        sb.append("  isSequential: ").append(this.isSequential).append("\n");
         sb.append("}");
         return sb.toString();
     }
@@ -126,6 +135,7 @@ public class RuntimeStaticContext implements Serializable {
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
             .staticURI(staticContext.getStaticBaseURI())
+            .staticURIString(staticContext.getStaticBaseUriString())
             .queryLanguage(staticContext.getQueryLanguage())
             .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
             .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())

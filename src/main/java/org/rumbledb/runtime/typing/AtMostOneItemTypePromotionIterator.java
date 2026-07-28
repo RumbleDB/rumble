@@ -26,10 +26,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private RuntimeIterator iterator;
-    private SequenceType sequenceType;
+    private final RuntimeIterator iterator;
+    private final SequenceType sequenceType;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimeIterator iterator,
@@ -141,7 +141,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }

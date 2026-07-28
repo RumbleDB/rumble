@@ -25,7 +25,7 @@ public class TimezoneFromDateFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        Item dateItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateItem == null || !dateItem.hasTimeZone()) {
             return null;
         }

@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
@@ -44,14 +41,14 @@ public class LazyObjectItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<String> keys;
-    private Map<String, Item> values;
-    transient private Map<String, LazyValue> lazyValues;
+    private final List<String> keys;
+    private final Map<String, Item> values;
+    final transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private RuntimeIterator iterator;
-        private DynamicContext context;
-        private boolean isArray;
+        private final RuntimeIterator iterator;
+        private final DynamicContext context;
+        private final boolean isArray;
 
         public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;
@@ -313,20 +310,7 @@ public class LazyObjectItem implements Item {
         }
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        materialize();
-        kryo.writeObject(output, this.values);
-    }
 
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, HashMap.class);
-        this.lazyValues = new HashMap<>();
-    }
 
     public int hashCode() {
         int result = 0;

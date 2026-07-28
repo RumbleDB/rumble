@@ -35,9 +35,6 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 
 public class MapWithRemovedEntryItem implements Item {
 
@@ -47,8 +44,8 @@ public class MapWithRemovedEntryItem implements Item {
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Set<Item> removedKeys;
+    private final Item original;
+    private final Set<Item> removedKeys;
 
     public MapWithRemovedEntryItem() {
         this.original = null;
@@ -240,18 +237,7 @@ public class MapWithRemovedEntryItem implements Item {
 
     // endregion maps
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.original);
-        kryo.writeObject(output, this.removedKeys);
-    }
 
-    @Override
-    @SuppressWarnings("unchecked")
-    public void read(Kryo kryo, Input input) {
-        this.original = (Item) kryo.readClassAndObject(input);
-        this.removedKeys = (Set<Item>) kryo.readObject(input, TreeSet.class);
-    }
 
     @Override
     public ItemType getDynamicType() {

@@ -15,7 +15,7 @@ public class ItemItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     static final ItemType item = new ItemItemType();
-    private Name name;
+    private final Name name;
 
     public ItemItemType() {
         this.name = Name.createVariableInDefaultTypeNamespace("item");
@@ -30,13 +30,7 @@ public class ItemItemType implements ItemType {
         return true;
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-    }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-    }
 
     @Override
     public boolean equals(Object other) {

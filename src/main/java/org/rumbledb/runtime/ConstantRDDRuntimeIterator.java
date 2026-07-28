@@ -31,7 +31,7 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private JavaRDD<Item> items;
+    private final JavaRDD<Item> items;
 
     public ConstantRDDRuntimeIterator(
             JavaRDD<Item> items,

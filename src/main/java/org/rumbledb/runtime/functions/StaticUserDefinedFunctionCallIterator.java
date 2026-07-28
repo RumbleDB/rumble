@@ -47,8 +47,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionIdentifier functionIdentifier;
-    private List<RuntimeIterator> functionArguments;
+    private final FunctionIdentifier functionIdentifier;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private RuntimeIterator userDefinedFunctionCallIterator;
@@ -56,13 +56,12 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     private List<Item> exitStatementLocalResult;
     private boolean encounteredExitStatement;
     private int nextExitStatementResult;
-    private boolean tailCallOptimizationCandidate;
+    private final boolean tailCallOptimizationCandidate;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<RuntimeIterator> functionArguments,
             RuntimeStaticContext staticContext,
-            boolean isUpdating,
             boolean tailCallOptimization
     ) {
         super(null, staticContext);
@@ -70,7 +69,6 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;
         this.nextExitStatementResult = 0;
-        this.isUpdating = isUpdating;
         this.tailCallOptimizationCandidate = tailCallOptimization;
     }
 

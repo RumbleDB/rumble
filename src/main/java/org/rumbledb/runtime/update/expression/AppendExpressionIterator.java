@@ -26,19 +26,18 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator arrayIterator;
-    private RuntimeIterator toAppendIterator;
+    private final RuntimeIterator arrayIterator;
+    private final RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,
             RuntimeIterator toAppendIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext);
+        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext.toBuilder().isUpdating(true).build());
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
-        this.isUpdating = true;
     }
 
     @Override

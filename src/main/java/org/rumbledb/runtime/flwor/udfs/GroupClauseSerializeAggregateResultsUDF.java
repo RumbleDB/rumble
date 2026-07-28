@@ -34,9 +34,9 @@ public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<by
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> nextResult;
-    private List<List<Item>> deserializedParams;
-    private DataFrameContext dataFrameContext;
+    private final List<Item> nextResult;
+    private final List<List<Item>> deserializedParams;
+    private final DataFrameContext dataFrameContext;
 
     public GroupClauseSerializeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();

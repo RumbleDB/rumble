@@ -50,6 +50,7 @@ public class StaticContext {
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
+    private String staticBaseUriString;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
     private boolean copyNamespacesPreserve;
@@ -96,11 +97,12 @@ public class StaticContext {
     public StaticContext() {
         this.parent = null;
         this.staticBaseURI = null;
+        this.staticBaseUriString = null;
         this.queryLanguage = null;
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
+        this.boundarySpacePreserve = false;
         this.copyNamespacesPreserve = true;
         this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
@@ -118,6 +120,7 @@ public class StaticContext {
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
         this.queryLanguage = configuration.getQueryLanguage() != null
             ? configuration.getQueryLanguage()
             : this.queryLanguage;
@@ -125,7 +128,7 @@ public class StaticContext {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = true;
+        this.boundarySpacePreserve = false;
         this.copyNamespacesPreserve = true;
         this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
@@ -212,8 +215,24 @@ public class StaticContext {
         throw new OurBadException("Static base URI not set.");
     }
 
+    public String getStaticBaseUriString() {
+        if (this.staticBaseUriString != null) {
+            return this.staticBaseUriString;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseUriString();
+        }
+        throw new OurBadException("Static base URI not set.");
+    }
+
     public void setStaticBaseUri(URI staticBaseURI) {
         this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI, String staticBaseUriString) {
+        this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseUriString;
     }
 
     public boolean isInScope(Name varName) {
@@ -661,7 +680,8 @@ public class StaticContext {
     }
 
     public boolean isStaticallyKnownCollation(String uri) {
-        return getStaticallyKnownCollations().contains(uri);
+        return getStaticallyKnownCollations().contains(uri)
+            || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
     }
 
     public Set<String> getStaticallyKnownCollations() {
@@ -677,7 +697,7 @@ public class StaticContext {
             throw new OurBadException("Default collation can only be set in the root static context.");
         }
         ensureRootCollationsInitialized();
-        if (!this.staticallyKnownCollations.contains(uri)) {
+        if (!isStaticallyKnownCollation(uri)) {
             throw new OurBadException("Default collation must be statically known.");
         }
         this.defaultCollation = uri;

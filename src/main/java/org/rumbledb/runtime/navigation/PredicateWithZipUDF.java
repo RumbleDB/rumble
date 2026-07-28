@@ -47,7 +47,7 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
     private final long contextSize;
-    List<Item> currentItems = new ArrayList<>();
+    final List<Item> currentItems = new ArrayList<>();
 
     public PredicateWithZipUDF(
             RuntimeIterator expression,

@@ -30,7 +30,7 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private Mode mode;
+    private final Mode mode;
 
     public CreateCollectionIterator(
             RuntimeIterator targetIterator,
@@ -38,11 +38,10 @@ public class CreateCollectionIterator extends HybridRuntimeIterator {
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext);
+        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.mode = mode;
-        this.isUpdating = true;
 
     }
 

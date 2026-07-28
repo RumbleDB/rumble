@@ -49,11 +49,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item base = this.children.get(0).materializeFirstItemOrNull(context);
+        Item base = this.getChild(0).materializeFirstItemOrNull(context);
         if (base == null) {
             return null;
         }
-        Item exponent = this.children.get(1)
+        Item exponent = this.getChild(1)
             .materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
@@ -82,11 +82,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext baseQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = this.children.get(1)
+        NativeClauseContext exponentQuery = this.getChild(1)
             .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;

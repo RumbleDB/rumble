@@ -96,7 +96,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    private Map<String, StaticContext> importedModuleContexts;
+    private final Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();

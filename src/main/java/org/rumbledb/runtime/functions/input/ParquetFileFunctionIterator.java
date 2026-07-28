@@ -51,15 +51,15 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
 
-        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
 
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         int partitions = -1;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()

@@ -29,11 +29,21 @@ public class GroupByVariableDeclaration {
     protected Name variableName;
     protected Expression expression;
     protected SequenceType sequenceType;
+    protected String collationURI;
 
     public GroupByVariableDeclaration(
             Name variableName,
             SequenceType sequenceType,
             Expression expression
+    ) {
+        this(variableName, sequenceType, expression, null);
+    }
+
+    public GroupByVariableDeclaration(
+            Name variableName,
+            SequenceType sequenceType,
+            Expression expression,
+            String collationURI
     ) {
         if (variableName == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
@@ -41,6 +51,7 @@ public class GroupByVariableDeclaration {
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
+        this.collationURI = collationURI;
     }
 
     public Name getVariableName() {
@@ -57,5 +68,9 @@ public class GroupByVariableDeclaration {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
+    }
+
+    public String getCollationURI() {
+        return this.collationURI;
     }
 }

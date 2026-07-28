@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class SimpleMapExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
     public SimpleMapExpression(
             Expression leftExpression,

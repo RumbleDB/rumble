@@ -44,7 +44,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
@@ -53,7 +53,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
+        this.sequenceIterator = this.getChild(0);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")
