@@ -300,10 +300,6 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier) {
-        return getBuiltinFunction(identifier, null);
-    }
-
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
@@ -332,10 +328,6 @@ public class BuiltinFunctionCatalogue {
             return builtinFunctions.get(resolved);
         }
         return null;
-    }
-
-    public static boolean exists(FunctionIdentifier identifier) {
-        return exists(identifier, null);
     }
 
     public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
