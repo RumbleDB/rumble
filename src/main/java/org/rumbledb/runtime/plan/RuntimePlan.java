@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import lombok.NonNull;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -46,8 +47,8 @@ public abstract class RuntimePlan<T> implements Serializable {
      * Creates the cursor used by terminal local operations. Subclasses may select an execution representation before
      * adapting it to a local cursor; the default is the plan's native local cursor.
      */
-    protected LocalCursor<T> createExecutionCursor(DynamicContext context) {
-        return createLocalCursor(context);
+    protected LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
+        return this.createLocalCursor(context);
     }
 
     /**
@@ -56,10 +57,9 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @param context the dynamic context for the evaluation
      * @return the materialized result sequence
      */
-    public final List<T> materialize(DynamicContext context) {
-        Objects.requireNonNull(context, "dynamic context cannot be null");
+    public final List<T> materialize(@NonNull DynamicContext context) {
         List<T> result = new ArrayList<>();
-        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
+        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
             while (cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -73,9 +73,8 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @param context the dynamic context for the evaluation
      * @return the first result, or {@code null}
      */
-    public final T materializeFirstOrNull(DynamicContext context) {
-        Objects.requireNonNull(context, "dynamic context cannot be null");
-        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
+    public final T materializeFirstOrNull(@NonNull DynamicContext context) {
+        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
             return cursor.hasNext() ? cursor.next() : null;
         }
     }
@@ -87,13 +86,13 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @param limit the maximum number of results to materialize
      * @return the materialized prefix
      */
-    public final List<T> materializeAtMost(DynamicContext context, int limit) {
+    public final List<T> materializeAtMost(@NonNull DynamicContext context, int limit) {
         Objects.requireNonNull(context, "dynamic context cannot be null");
         if (limit < 0) {
             throw new IllegalArgumentException("limit cannot be negative");
         }
         List<T> result = new ArrayList<>(limit);
-        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
+        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
             while (result.size() < limit && cursor.hasNext()) {
                 result.add(cursor.next());
             }
@@ -108,9 +107,8 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @return the only result, or {@code null}
      * @throws MoreThanOneItemException if more than one result is produced
      */
-    public final T materializeAtMostOne(DynamicContext context) throws MoreThanOneItemException {
-        Objects.requireNonNull(context, "dynamic context cannot be null");
-        try (LocalCursor<T> cursor = createExecutionCursor(context)) {
+    public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
+        try (LocalCursor<T> cursor = this.createExecutionCursor(context)) {
             if (!cursor.hasNext()) {
                 return null;
             }
@@ -130,9 +128,9 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @return the only result or {@code defaultValue}
      * @throws MoreThanOneItemException if more than one result is produced
      */
-    public final T materializeAtMostOneOrDefault(DynamicContext context, T defaultValue)
+    public final T materializeAtMostOneOrDefault(@NonNull DynamicContext context, @NonNull T defaultValue)
             throws MoreThanOneItemException {
-        T result = materializeAtMostOne(context);
+        T result = this.materializeAtMostOne(context);
         return result == null ? defaultValue : result;
     }
 
