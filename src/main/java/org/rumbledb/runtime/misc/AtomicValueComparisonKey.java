@@ -19,6 +19,7 @@ package org.rumbledb.runtime.misc;
 
 import java.io.Serializable;
 
+import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
@@ -29,16 +30,9 @@ public final class AtomicValueComparisonKey implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Item item;
-    private Item comparisonItem;
-
-    public AtomicValueComparisonKey() {
-    }
-
-    public AtomicValueComparisonKey(Item item) {
-        this.item = item;
-        this.comparisonItem = item;
-    }
+    @Getter
+    private final Item item;
+    private final Item comparisonItem;
 
     public AtomicValueComparisonKey(Item item, String collationUri) {
         this.item = item;
@@ -47,10 +41,6 @@ public final class AtomicValueComparisonKey implements Serializable {
             collationUri,
             ExceptionMetadata.EMPTY_METADATA
         );
-    }
-
-    public Item getItem() {
-        return this.item;
     }
 
     @Override

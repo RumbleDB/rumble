@@ -33,12 +33,8 @@ public class AnnotatedItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item itemToAnnotate;
-    private ItemType type;
-
-    public AnnotatedItem() {
-        super();
-    }
+    private final Item itemToAnnotate;
+    private final ItemType type;
 
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
