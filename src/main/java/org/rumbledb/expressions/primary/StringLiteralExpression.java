@@ -32,7 +32,7 @@ import org.rumbledb.expressions.Node;
 
 public class StringLiteralExpression extends Expression {
 
-    private String value;
+    private final String value;
 
     public StringLiteralExpression(String value, ExceptionMetadata metadata) {
         super(metadata);

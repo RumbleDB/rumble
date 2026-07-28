@@ -19,12 +19,12 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Map<Name, RuntimeIterator> copyDeclMap;
-    private RuntimeIterator modifyIterator;
-    private RuntimeIterator returnIterator;
-    private boolean mutable;
+    private final Map<Name, RuntimeIterator> copyDeclMap;
+    private final RuntimeIterator modifyIterator;
+    private final RuntimeIterator returnIterator;
+    private final boolean mutable;
 
-    private int mutabilityLevel;
+    private final int mutabilityLevel;
 
     public TransformExpressionIterator(
             Map<Name, RuntimeIterator> copyDeclMap,

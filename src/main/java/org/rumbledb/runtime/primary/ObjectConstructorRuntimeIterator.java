@@ -52,7 +52,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     private List<RuntimeIterator> keys;
     private List<RuntimeIterator> values;
     private boolean isMergedObject = false;
-    private boolean mutable;
+    private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,

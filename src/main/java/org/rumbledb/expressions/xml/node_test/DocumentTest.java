@@ -7,7 +7,7 @@ public class DocumentTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
     // TODO: schemaElement test unsupported yet.
-    private NodeTest nodeTest;
+    private final NodeTest nodeTest;
 
     public DocumentTest(NodeTest nodeTest) {
         this.nodeTest = nodeTest;

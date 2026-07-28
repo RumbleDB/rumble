@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 
 
 public class JsoniqQueryExecutor {
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleRuntimeConfiguration configuration;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;

@@ -17,7 +17,7 @@ public class SequenceArrayItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<List<Item>> memberSequences;
+    private final List<List<Item>> memberSequences;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;

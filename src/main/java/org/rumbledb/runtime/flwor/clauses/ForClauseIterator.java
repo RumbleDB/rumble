@@ -81,11 +81,11 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
 
     // Properties
-    private Name variableName; // for efficient use in local iteration
-    private Name positionalVariableName; // for efficient use in local iteration
-    private RuntimeIterator assignmentIterator;
-    private boolean allowingEmpty;
-    private DataFrameContext dataFrameContext;
+    private final Name variableName; // for efficient use in local iteration
+    private final Name positionalVariableName; // for efficient use in local iteration
+    private final RuntimeIterator assignmentIterator;
+    private final boolean allowingEmpty;
+    private final DataFrameContext dataFrameContext;
 
     // Computation state
     private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency

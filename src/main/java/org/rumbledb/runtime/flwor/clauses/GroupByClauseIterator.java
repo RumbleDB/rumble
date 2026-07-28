@@ -80,7 +80,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
     private final List<GroupByClauseSparkIteratorExpression> groupingExpressions;
     private List<FlworTuple> localTupleResults;
     private int resultIndex;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private final Map<Name, DynamicContext.VariableDependency> dependencies;
 
     public GroupByClauseIterator(
             RuntimeTupleIterator child,

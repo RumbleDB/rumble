@@ -58,9 +58,9 @@ public class NodeSetExpression extends Expression {
         }
     }
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private NodeSetOperator operator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final NodeSetOperator operator;
 
     public NodeSetExpression(
             Expression leftExpression,

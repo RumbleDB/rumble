@@ -46,11 +46,11 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
-    private Queue<Item> nextResult;
-    private boolean wildcard;
+    private final Queue<Item> nextResult;
+    private final boolean wildcard;
 
     public PostfixLookupIterator(
             RuntimeIterator object,

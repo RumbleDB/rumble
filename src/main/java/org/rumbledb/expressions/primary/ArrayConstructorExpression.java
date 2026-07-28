@@ -31,9 +31,9 @@ import java.util.List;
 
 public class ArrayConstructorExpression extends Expression {
 
-    private Expression expression;
-    private List<Expression> memberExpressions;
-    private boolean isFixedSlotsArrayConstructor;
+    private final Expression expression;
+    private final List<Expression> memberExpressions;
+    private final boolean isFixedSlotsArrayConstructor;
 
     /**
      * Curly array constructor: {@code array { expr }}.

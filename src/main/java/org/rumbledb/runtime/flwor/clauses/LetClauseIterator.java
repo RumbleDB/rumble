@@ -75,9 +75,9 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName; // for efficient use in local iteration
-    private SequenceType sequenceType;
-    private RuntimeIterator assignmentIterator;
+    private final Name variableName; // for efficient use in local iteration
+    private final SequenceType sequenceType;
+    private final RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
 

@@ -13,8 +13,8 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class CastableExpression extends Expression {
 
-    protected Expression mainExpression;
-    private SequenceType sequenceType;
+    protected final Expression mainExpression;
+    private final SequenceType sequenceType;
 
     public CastableExpression(Expression mainExpression, SequenceType type, ExceptionMetadata metadata) {
         super(metadata);

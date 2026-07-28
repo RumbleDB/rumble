@@ -34,8 +34,8 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final RuntimeIterator expression;
 
     public WhereClauseUDF(
             RuntimeIterator expression,

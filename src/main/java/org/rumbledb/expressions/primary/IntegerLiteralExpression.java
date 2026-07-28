@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class IntegerLiteralExpression extends Expression {
 
-    private String lexicalValue;
+    private final String lexicalValue;
 
     public IntegerLiteralExpression(String lexicalValue, ExceptionMetadata metadata) {
         super(metadata);

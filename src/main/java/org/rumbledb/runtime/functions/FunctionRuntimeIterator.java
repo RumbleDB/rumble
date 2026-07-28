@@ -36,10 +36,10 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name functionName;
-    private Map<Name, SequenceType> paramNameToSequenceTypes;
-    SequenceType returnType;
-    RuntimeIterator bodyIterator;
+    private final Name functionName;
+    private final Map<Name, SequenceType> paramNameToSequenceTypes;
+    final SequenceType returnType;
+    final RuntimeIterator bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,

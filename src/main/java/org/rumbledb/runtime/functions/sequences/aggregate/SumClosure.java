@@ -12,7 +12,7 @@ public class SumClosure implements Function2<Item, Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private ExceptionMetadata metadata;
+    private final ExceptionMetadata metadata;
 
     public SumClosure(ExceptionMetadata metadata) {
         this.metadata = metadata;
