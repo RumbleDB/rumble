@@ -13,6 +13,7 @@ import org.rumbledb.exceptions.InvalidURILiteralException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 public final class URILiteralUtils {
 
@@ -36,6 +37,16 @@ public final class URILiteralUtils {
             );
             result.initCause(exception);
             throw result;
+        }
+    }
+
+    public static String toStaticBaseUriString(URI resolvedURI, String literal) {
+        String normalizedLiteral = normalizeAsAnyURI(literal);
+        try {
+            URI parsedLiteral = new URI(normalizedLiteral);
+            return parsedLiteral.isAbsolute() ? normalizedLiteral : resolvedURI.toString();
+        } catch (URISyntaxException e) {
+            return normalizedLiteral;
         }
     }
 }

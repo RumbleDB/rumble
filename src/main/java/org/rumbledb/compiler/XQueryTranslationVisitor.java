@@ -569,7 +569,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 uriString,
                 createMetadataFromContext(setterContext.baseURIDecl())
             );
-            this.moduleContext.setStaticBaseUri(uri, URILiteralUtils.normalizeAsAnyURI(uriString));
+            this.moduleContext.setStaticBaseUri(uri, URILiteralUtils.toStaticBaseUriString(uri, uriString));
             flags.baseURISet = true;
             return;
         }
