@@ -37,6 +37,7 @@ public class AnyURIItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private String lexicalValue;
     private URI value;
 
     public AnyURIItem() {
@@ -45,12 +46,16 @@ public class AnyURIItem implements Item {
 
     public AnyURIItem(String value) {
         super();
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        this.lexicalValue = value;
         this.value = parseAnyURIString(value);
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new AnyURIItem(this.value.toString());
+        return new AnyURIItem(this.lexicalValue);
     }
 
     @Override
@@ -73,23 +78,23 @@ public class AnyURIItem implements Item {
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e.getMessage());
+            return null;
         }
     }
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return this.lexicalValue;
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.value.toString().isEmpty();
+        return !this.lexicalValue.isEmpty();
     }
 
     @Override
     public int hashCode() {
-        return this.value.hashCode();
+        return this.lexicalValue.hashCode();
     }
 
     public URI getValue() {

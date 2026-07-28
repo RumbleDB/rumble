@@ -355,24 +355,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Node visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
         String prefix = ctx.ncName().getText();
-        String namespace = processURILiteral(ctx.uriLiteral());
+        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.uriLiteral()));
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = URILiteralUtils.resolve(
-            this.moduleContext.getStaticBaseURI(),
-            namespace,
-            createMetadataFromContext(ctx)
-        );
-        this.libraryModuleNamespace = resolvedURI.toString();
+        this.libraryModuleNamespace = namespace;
         bindNamespace(
             prefix,
-            resolvedURI.toString(),
+            namespace,
             createMetadataFromContext(ctx)
         );
 
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
+        LibraryModule module = new LibraryModule(prolog, namespace, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
@@ -574,7 +569,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 uriString,
                 createMetadataFromContext(setterContext.baseURIDecl())
             );
-            this.moduleContext.setStaticBaseUri(uri);
+            this.moduleContext.setStaticBaseUri(uri, URILiteralUtils.normalizeAsAnyURI(uriString));
             flags.baseURISet = true;
             return;
         }
@@ -3754,8 +3749,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
-        String namespace = processURILiteral(ctx.targetNamespace);
         ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        String namespace = processURILiteral(ctx.targetNamespace);
         if (namespace.isEmpty()) {
             throw new EmptyModuleURIException("Module URI is empty.", metadata);
         }
@@ -3768,8 +3763,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
         }
+        namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> locationHints = ctx.locations.stream()
             .map(this::processURILiteral)
+            .map(URILiteralUtils::normalizeAsAnyURI)
             .collect(Collectors.toList());
         LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,

@@ -34,24 +34,31 @@ final class ModuleImportLoader {
             ExceptionMetadata metadata
     ) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
-        URI namespaceURI = URILiteralUtils.resolve(baseURI, namespace, metadata);
-        List<String> candidates = locationHints.isEmpty() ? List.of(namespace) : locationHints;
+        String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
+        List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
         Exception lastFailure = null;
 
         for (String candidate : candidates) {
-            URI location = URILiteralUtils.resolve(baseURI, candidate, metadata);
+            URI location;
+            try {
+                location = URILiteralUtils.resolve(baseURI, candidate, metadata);
+            } catch (RumbleException e) {
+                lastFailure = e;
+                continue;
+            }
             try {
                 LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
                     location,
+                    namespaceURI.toString(),
                     importingModuleContext,
                     compilationConfiguration,
                     metadata
                 );
 
-                if (!namespaceURI.toString().equals(module.getNamespace())) {
+                if (!normalizedNamespace.equals(module.getNamespace())) {
                     throw new ModuleNotFoundException(
                             "A module with namespace "
-                                + namespaceURI
+                                + normalizedNamespace
                                 + " was not found. The namespace of the module at this location was: "
                                 + module.getNamespace(),
                             metadata
@@ -66,7 +73,7 @@ final class ModuleImportLoader {
 
         RumbleException exception = new ModuleNotFoundException(
                 "Module not found: %s, cause: %s".formatted(
-                    namespaceURI,
+                    normalizedNamespace,
                     lastFailure != null ? lastFailure.getMessage() : "unknown"
                 ),
                 metadata

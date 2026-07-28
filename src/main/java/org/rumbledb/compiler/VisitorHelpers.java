@@ -23,6 +23,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.parser.jsoniq.JsoniqLexer;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryLexer;
@@ -213,18 +214,35 @@ public class VisitorHelpers {
 
     static LibraryModule parseLibraryModuleFromLocation(
             URI location,
+            String expectedNamespace,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration,
             ExceptionMetadata metadata
     )
             throws IOException {
+        LibraryModule cachedModule = compilationConfiguration.getLibraryModule(location);
+        if (cachedModule != null) {
+            return cachedModule;
+        }
+        LibraryModule placeholder = createPlaceholderLibraryModule(expectedNamespace, location, importingModuleContext);
+        LibraryModule installedModule = compilationConfiguration.cacheLibraryModule(location, placeholder);
+        if (installedModule != placeholder) {
+            return installedModule;
+        }
         ModuleSource source = readModuleSource(location, compilationConfiguration, metadata);
-        return parseLibraryModule(
-            source.query(),
-            source.systemId(),
-            importingModuleContext,
-            compilationConfiguration
-        );
+        try {
+            LibraryModule parsedModule = parseLibraryModule(
+                source.query(),
+                source.systemId(),
+                importingModuleContext,
+                compilationConfiguration
+            );
+            populatePlaceholderLibraryModule(placeholder, parsedModule);
+            return placeholder;
+        } catch (RuntimeException e) {
+            compilationConfiguration.removeLibraryModule(location, placeholder);
+            throw e;
+        }
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
@@ -537,6 +555,38 @@ public class VisitorHelpers {
             e.initCause(ex);
             throw e;
         }
+    }
+
+    private static LibraryModule createPlaceholderLibraryModule(
+            String expectedNamespace,
+            URI location,
+            StaticContext importingModuleContext
+    ) {
+        Prolog prolog = new Prolog(
+                new ArrayList<>(),
+                new ArrayList<>(),
+                new ArrayList<>(),
+                ExceptionMetadata.EMPTY_METADATA
+        );
+        LibraryModule placeholder = new LibraryModule(prolog, expectedNamespace, ExceptionMetadata.EMPTY_METADATA);
+        StaticContext moduleContext = new StaticContext(
+                location,
+                importingModuleContext.getRumbleConfiguration()
+        );
+        moduleContext.setUserDefinedFunctionsExecutionModes(
+            importingModuleContext.getUserDefinedFunctionsExecutionModes()
+        );
+        placeholder.setStaticContext(moduleContext);
+        return placeholder;
+    }
+
+    private static void populatePlaceholderLibraryModule(LibraryModule placeholder, LibraryModule parsedModule) {
+        placeholder.setNamespace(parsedModule.getNamespace());
+        placeholder.setStaticContext(parsedModule.getStaticContext());
+        Prolog targetProlog = placeholder.getProlog();
+        targetProlog.getImportedModules().clear();
+        targetProlog.getImportedModules().addAll(parsedModule.getProlog().getImportedModules());
+        targetProlog.setDeclarations(new ArrayList<>(parsedModule.getProlog().getDeclarations()));
     }
 
     private static void populateExecutionModes(Module module, RumbleRuntimeConfiguration conf) {
