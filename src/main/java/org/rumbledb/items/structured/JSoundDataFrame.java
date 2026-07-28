@@ -18,6 +18,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -25,7 +27,7 @@ import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class JSoundDataFrame implements Serializable {
+public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -126,6 +128,7 @@ public class JSoundDataFrame implements Serializable {
         );
     }
 
+    @Override
     public Dataset<Row> getDataFrame() {
         return this.dataFrame;
     }
@@ -135,8 +138,15 @@ public class JSoundDataFrame implements Serializable {
         this.dataFrame.show();
     }
 
-    public JavaRDD<Row> javaRDD() {
-        return this.dataFrame.javaRDD();
+    /**
+     * Converts this JSONiq DataFrame to its logical item representation.
+     *
+     * @param metadata query metadata used if a row cannot be decoded
+     * @return an RDD containing the represented items
+     */
+    @Override
+    public JavaRDD<Item> toRDD(ExceptionMetadata metadata) {
+        return this.dataFrame.javaRDD().map(new RowToItemMapper(metadata, this.itemType));
     }
 
     public long count() {

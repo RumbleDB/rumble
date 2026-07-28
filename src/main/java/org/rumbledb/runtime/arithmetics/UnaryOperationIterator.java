@@ -82,6 +82,9 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (item == null) {
             return null;
         }
+        if (item.isUntypedAtomic()) {
+            item = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        }
 
         if (!negated) {
             if (!item.isNumeric()) {

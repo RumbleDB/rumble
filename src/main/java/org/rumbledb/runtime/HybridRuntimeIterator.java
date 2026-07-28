@@ -21,7 +21,6 @@
 package org.rumbledb.runtime;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -29,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -130,8 +128,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator implements R
     }
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
-        JavaRDD<Row> rowRDD = df.javaRDD();
-        return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+        return df.toRDD(metadata);
     }
 
     @Override

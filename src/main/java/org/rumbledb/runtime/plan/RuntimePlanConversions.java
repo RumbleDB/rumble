@@ -17,7 +17,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -78,7 +77,7 @@ public final class RuntimePlanConversions {
     }
 
     public static JavaRDD<Item> dataFrameToRDD(JSoundDataFrame dataFrame, ExceptionMetadata metadata) {
-        return dataFrame.javaRDD().map(new RowToItemMapper(metadata, dataFrame.getItemType()));
+        return dataFrame.toRDD(metadata);
     }
 
     public static JSoundDataFrame rddToDataFrame(

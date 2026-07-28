@@ -21,13 +21,11 @@
 package org.rumbledb.context;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
@@ -224,7 +222,7 @@ public class VariableValues implements Serializable {
             }
             JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
             return RuntimePlanConversions.collectRDDWithLimit(
-                HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata),
+                df.toRDD(metadata),
                 this.configuration,
                 metadata
             );
@@ -272,8 +270,7 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+            return df.toRDD(metadata);
         }
 
         if (this.parent != null) {

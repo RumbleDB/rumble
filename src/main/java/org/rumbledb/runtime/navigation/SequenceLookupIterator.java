@@ -44,8 +44,6 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
-
 public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
@@ -141,10 +139,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             ),
             df.getItemType()
         );
-        JavaRDD<Item> rdd = dataFrameToRDDOfItems(
-            df,
-            this.getMetadata()
-        );
+        JavaRDD<Item> rdd = df.toRDD(this.getMetadata());
 
         List<Item> results = rdd.take(1);
         if (results.isEmpty()) {

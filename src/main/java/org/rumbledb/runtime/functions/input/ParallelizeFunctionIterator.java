@@ -71,7 +71,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
-            JavaRDD<Item> rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
+            JavaRDD<Item> rdd = dataFrame.toRDD(this.getMetadata());
             if (this.partitionsIterator == null) {
                 return rdd;
             }
