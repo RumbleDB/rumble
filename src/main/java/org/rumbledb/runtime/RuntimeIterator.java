@@ -499,12 +499,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         return result;
     }
 
-    public void printToStandardError() {
-        StringBuilder sb = new StringBuilder();
-        this.print(sb, 0);
-        System.err.println(sb);
-    }
-
     public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

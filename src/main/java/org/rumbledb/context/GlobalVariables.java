@@ -23,15 +23,9 @@ public class GlobalVariables implements Serializable {
         this.globalVariables.add(globalVariable);
     }
 
-    public boolean isGlobalVariable(Name globalVariable) {
-        return this.globalVariables.contains(globalVariable);
-    }
-
     public Set<Name> getGlobalVariables() {
         return this.globalVariables;
     }
-
-
 
     @Override
     public String toString() {

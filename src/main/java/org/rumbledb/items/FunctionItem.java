@@ -417,11 +417,6 @@ public class FunctionItem implements Item {
         throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
     }
 
-
-    public void setModuleDynamicContext(DynamicContext dynamicModuleContext) {
-        this.dynamicModuleContext = dynamicModuleContext;
-    }
-
     @Override
     public List<Item> atomizedValue() {
         throw new CannotAtomizeException("tried to atomize Function", ExceptionMetadata.EMPTY_METADATA);

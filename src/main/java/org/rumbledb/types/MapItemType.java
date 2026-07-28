@@ -28,13 +28,6 @@ public class MapItemType implements ItemType {
     private SequenceType valueSequenceType;
     private int typeTreeDepth;
 
-    MapItemType() {
-        this.name = null;
-        this.baseType = null;
-        this.keyType = null;
-        this.valueSequenceType = null;
-    }
-
     /**
      * @param name null for anonymous typed maps
      * @param baseType {@link BuiltinTypesCatalogue#anyFunctionItem} for primitive map(*), else

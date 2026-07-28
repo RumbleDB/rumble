@@ -46,12 +46,6 @@ public class MapWithAdditionalEntryItem implements Item {
     private final List<Item> additionalValue;
     private final ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
 
-    public MapWithAdditionalEntryItem() {
-        this.original = null;
-        this.additionalKey = null;
-        this.additionalValue = null;
-    }
-
     public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;

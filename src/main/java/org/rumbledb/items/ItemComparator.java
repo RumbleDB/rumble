@@ -41,10 +41,6 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     // than any other number for this purpose.
     private boolean compareMin = false;
 
-    public ItemComparator(RumbleException exception) {
-        this.exception = exception;
-    }
-
     public ItemComparator(boolean compareMin, RumbleException exception) {
         this.compareMin = compareMin;
         this.exception = exception;

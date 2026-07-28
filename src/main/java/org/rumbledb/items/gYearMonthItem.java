@@ -27,10 +27,6 @@ public class gYearMonthItem implements Item {
     );
 
 
-    public gYearMonthItem() {
-        super();
-    }
-
     gYearMonthItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.year = Year.of(dateTime.getYear());
         this.month = Month.from(dateTime.getMonth());

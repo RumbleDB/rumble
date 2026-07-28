@@ -45,9 +45,6 @@ public class ObjectItemType implements ItemType {
     private ItemType baseType;
     private int typeTreeDepth;
 
-    ObjectItemType() {
-    }
-
     ObjectItemType(
             Name name,
             ItemType baseType,

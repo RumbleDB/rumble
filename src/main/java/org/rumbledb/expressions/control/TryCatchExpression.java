@@ -59,26 +59,8 @@ public class TryCatchExpression extends Expression {
         return this.catchExpressions;
     }
 
-    public boolean catchesAll() {
-        for (CatchPattern pattern : this.catchExpressions.keySet()) {
-            if (pattern.isCatchAll()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public Expression getExpressionCatching(CatchPattern pattern) {
         return this.catchExpressions.get(pattern);
-    }
-
-    public Expression getExpressionCatchingAll() {
-        for (Map.Entry<CatchPattern, Expression> entry : this.catchExpressions.entrySet()) {
-            if (entry.getKey().isCatchAll()) {
-                return entry.getValue();
-            }
-        }
-        return null;
     }
 
     @Override

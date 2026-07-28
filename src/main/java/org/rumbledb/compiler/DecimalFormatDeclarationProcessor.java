@@ -126,10 +126,6 @@ public final class DecimalFormatDeclarationProcessor {
         }
     }
 
-    public static String parseStringLiteral(String text, boolean isJSONiq) {
-        return parseStringLiteral(text, isJSONiq, ExceptionMetadata.EMPTY_METADATA);
-    }
-
     private static String parseStringLiteral(String text, boolean isJSONiq, ExceptionMetadata metadata) {
         return isJSONiq
             ? StringLiteralUtils.parseJsoniq(text, metadata)

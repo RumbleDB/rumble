@@ -27,10 +27,6 @@ public class gMonthItem implements Item {
         "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public gMonthItem() {
-        super();
-    }
-
     gMonthItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.month = Month.of(dateTime.getMonthValue());
         if (hasTimeZone) {

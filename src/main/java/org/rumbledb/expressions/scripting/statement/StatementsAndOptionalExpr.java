@@ -13,12 +13,6 @@ public class StatementsAndOptionalExpr extends Expression {
     private final List<Statement> statements;
     private final Expression expression;
 
-    public StatementsAndOptionalExpr(ExceptionMetadata metadata) {
-        super(metadata);
-        this.statements = new ArrayList<>();
-        this.expression = new CommaExpression(metadata);
-    }
-
     public StatementsAndOptionalExpr(
             List<Statement> statements,
             Expression expression,

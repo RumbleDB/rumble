@@ -30,7 +30,4 @@ public class IntegerFormatModifier {
         return this.formatSpecifier;
     }
 
-    public String getNumberingVariant() {
-        return this.numberingVariant;
-    }
 }

@@ -38,9 +38,6 @@ public abstract class Node {
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
     protected boolean isInSequentialBlock;
 
-    protected Node() {
-    }
-
     protected Node(ExceptionMetadata metadata) {
         this.metadata = metadata;
     }

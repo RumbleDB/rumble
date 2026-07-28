@@ -42,10 +42,6 @@ public class FlworKey {
 
     }
 
-    List<Item> getKeyItems() {
-        return this.keyItems;
-    }
-
     @Override
     public int hashCode() {
         StringBuilder result = new StringBuilder();

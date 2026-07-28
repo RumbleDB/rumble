@@ -17,10 +17,6 @@ public class UntypedAtomicItem implements Item {
     private static final long serialVersionUID = 1L;
     private String value;
 
-    public UntypedAtomicItem() {
-        super();
-    }
-
     public UntypedAtomicItem(String value) {
         super();
         this.value = value;

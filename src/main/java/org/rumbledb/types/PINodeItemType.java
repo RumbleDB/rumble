@@ -42,12 +42,6 @@ public class PINodeItemType implements ItemType {
         return this.normalizedTarget == null;
     }
 
-    public String getNormalizedTarget() {
-        return this.normalizedTarget;
-    }
-
-
-
     @Override
     public boolean isEqualTo(ItemType otherType) {
         if (!(otherType instanceof PINodeItemType other)) {

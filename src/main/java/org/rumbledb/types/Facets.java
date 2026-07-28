@@ -117,32 +117,16 @@ public class Facets {
         return this.length;
     }
 
-    public void setLength(Integer length) {
-        this.length = length;
-    }
-
     public Integer getMinLength() {
         return this.minLength;
-    }
-
-    public void setMinLength(Integer minLength) {
-        this.minLength = minLength;
     }
 
     public Integer getMaxLength() {
         return this.maxLength;
     }
 
-    public void setMaxLength(Integer maxLength) {
-        this.maxLength = maxLength;
-    }
-
     public Integer getTotalDigits() {
         return this.totalDigits;
-    }
-
-    public void setTotalDigits(Integer totalDigits) {
-        this.totalDigits = totalDigits;
     }
 
     public Integer getFractionDigits() {
@@ -157,16 +141,8 @@ public class Facets {
         return this.constraints;
     }
 
-    public void setConstraints(List<String> constraints) {
-        this.constraints = constraints;
-    }
-
     public List<Item> getEnumeration() {
         return this.enumeration;
-    }
-
-    public void setEnumeration(List<Item> enumeration) {
-        this.enumeration = enumeration;
     }
 
     public TimezoneFacet getExplicitTimezone() {
@@ -197,10 +173,6 @@ public class Facets {
         return this.ordered;
     }
 
-    public void setOrdered(OrderedFacetValue ordered) {
-        this.ordered = ordered;
-    }
-
     public Boolean getBounded() {
         return this.bounded;
     }
@@ -219,10 +191,6 @@ public class Facets {
 
     public Boolean getNumeric() {
         return this.numeric;
-    }
-
-    public void setNumeric(Boolean numeric) {
-        this.numeric = numeric;
     }
 
     /**

@@ -93,28 +93,6 @@ public class StaticContext {
 
     private RumbleRuntimeConfiguration configuration;
 
-    public StaticContext() {
-        this.parent = null;
-        this.staticBaseURI = null;
-        this.queryLanguage = null;
-        this.inScopeVariables = null;
-        this.userDefinedFunctionExecutionModes = null;
-        this.emptySequenceOrderLeast = true;
-        this.boundarySpacePreserve = false;
-        this.copyNamespacesPreserve = true;
-        this.copyNamespacesInherit = true;
-        this.contextItemStaticType = null;
-        this.configuration = null;
-        this.inScopeSchemaTypes = null;
-        this.currentMutabilityLevel = 0;
-        this.serializationParameters = null;
-        this.explicitSerializationParameterNames = null;
-        this.defaultDecimalFormat = null;
-        this.decimalFormats = new HashMap<>();
-        this.isQuerySideEffecting = false;
-        initializeRootCollations();
-    }
-
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
@@ -172,10 +150,6 @@ public class StaticContext {
         } else if (this.defaultCollation == null) {
             this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
         }
-    }
-
-    public StaticContext getParent() {
-        return this.parent;
     }
 
     public RumbleRuntimeConfiguration getRumbleConfiguration() {
@@ -283,10 +257,6 @@ public class StaticContext {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExceptionMetadata getVariableMetadata(Name varName) {
-        return getInScopeVariable(varName).getMetadata();
-    }
-
     public ExecutionMode getVariableStorageMode(Name varName) {
         return getInScopeVariable(varName).getStorageMode();
     }
@@ -324,10 +294,6 @@ public class StaticContext {
 
     public Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
-    }
-
-    public void show() {
-        System.err.println(this);
     }
 
     @Override
@@ -370,16 +336,6 @@ public class StaticContext {
             stringBuilder.append(this.parent.toString());
         }
         return stringBuilder.toString();
-    }
-
-    public boolean hasVariable(Name variableName) {
-        if (this.inScopeVariables.containsKey(variableName)) {
-            return true;
-        }
-        if (this.parent != null) {
-            return this.parent.hasVariable(variableName);
-        }
-        return false;
     }
 
     public boolean hasVariableInScopeOnly(Name variableName) {
@@ -464,25 +420,6 @@ public class StaticContext {
         // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
         this.serializationParameters = SerializationParameters.defaults();
         return this.serializationParameters;
-    }
-
-    /**
-     * Sets the default serialization parameters at this static context level.
-     */
-    public void setSerializationParameters(SerializationParameters serializationParameters) {
-        this.serializationParameters = serializationParameters;
-    }
-
-    /**
-     * Override the serialization parameters with the provided parameter name and value.
-     * Throws InvalidSerializationParameterValueException for invalid inputs.
-     *
-     * @param name the name of the parameter to update
-     * @param value the value of the parameter to update
-     * @throws org.rumbledb.exceptions.InvalidSerializationParameterValueException if the parameter value is invalid
-     */
-    public void overrideSerializationParameter(String name, String value) {
-        overrideSerializationParameter(name, value, ExceptionMetadata.EMPTY_METADATA);
     }
 
     public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
@@ -652,14 +589,6 @@ public class StaticContext {
         return this.copyNamespacesInherit;
     }
 
-    public void addStaticallyKnownCollation(String uri) {
-        if (this.parent != null) {
-            throw new OurBadException("Statically known collations can only be set in the root static context.");
-        }
-        ensureRootCollationsInitialized();
-        this.staticallyKnownCollations.add(uri);
-    }
-
     public boolean isStaticallyKnownCollation(String uri) {
         return getStaticallyKnownCollations().contains(uri)
             || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
@@ -690,13 +619,6 @@ public class StaticContext {
         }
         ensureRootCollationsInitialized();
         return this.defaultCollation;
-    }
-
-    public StaticContext getModuleContext() {
-        if (this.parent != null) {
-            return this.parent.getModuleContext();
-        }
-        return this;
     }
 
     public SequenceType getContextItemStaticType() {

@@ -38,15 +38,6 @@ public class TryCatchStatement extends Statement {
         return new ArrayList<>(this.catchStatements.keySet());
     }
 
-    public boolean catchesAll() {
-        for (CatchPattern pattern : this.catchStatements.keySet()) {
-            if (pattern.isCatchAll()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     public BlockStatement getCatchAllStatement() {
         for (Map.Entry<CatchPattern, BlockStatement> entry : this.catchStatements.entrySet()) {
             if (entry.getKey().isCatchAll()) {

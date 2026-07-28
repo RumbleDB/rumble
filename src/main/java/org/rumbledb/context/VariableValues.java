@@ -55,15 +55,6 @@ public class VariableValues implements Serializable {
     private VariableValues parent;
     private RumbleRuntimeConfiguration configuration;
 
-    public VariableValues() {
-        this.parent = null;
-        this.localVariableCounts = new HashMap<>();
-        this.localVariableValues = new HashMap<>();
-        this.rddVariableValues = new HashMap<>();
-        this.dataFrameVariableValues = new HashMap<>();
-        this.nestedQuery = false;
-    }
-
     public VariableValues(RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
@@ -137,14 +128,6 @@ public class VariableValues implements Serializable {
 
     public Set<Name> getDataFrameVariableNames() {
         return this.dataFrameVariableValues.keySet();
-    }
-
-    public boolean isParallelAccessAllowed() {
-        return this.nestedQuery;
-    }
-
-    public void setParallelAccess(boolean b) {
-        this.nestedQuery = b;
     }
 
     public boolean contains(Name varName) {

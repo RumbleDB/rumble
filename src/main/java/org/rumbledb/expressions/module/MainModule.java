@@ -28,7 +28,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.Program;
-import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,10 +62,6 @@ public class MainModule extends Module {
 
     public Expression getExpression() {
         return this.program.getStatementsAndOptionalExpr().getExpression();
-    }
-
-    public StatementsAndOptionalExpr getStatementsAndOptionalExpr() {
-        return this.program.getStatementsAndOptionalExpr();
     }
 
     public Program getProgram() {

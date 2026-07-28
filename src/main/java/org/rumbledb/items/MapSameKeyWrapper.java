@@ -68,10 +68,6 @@ public final class MapSameKeyWrapper {
         }
     }
 
-    public Item getKey() {
-        return this.key;
-    }
-
     @Override
     public int hashCode() {
         return this.hash;

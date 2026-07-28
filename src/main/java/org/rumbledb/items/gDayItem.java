@@ -27,10 +27,6 @@ public class gDayItem implements Item {
         "---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public gDayItem() {
-        super();
-    }
-
     gDayItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.day = dateTime.getMonthValue();
         if (hasTimeZone) {

@@ -40,14 +40,6 @@ public class RumbleException extends RuntimeException {
     private final List<Item> errorValue;
     private ExceptionMetadata metadata;
 
-    RumbleException(String message) {
-        super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
-        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
-        this.errorMessage = message;
-        this.errorValue = Collections.emptyList();
-        this.metadata = ExceptionMetadata.EMPTY_METADATA;
-    }
-
     public RumbleException(String message, ErrorCode errorCode) {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = errorCode == null ? ErrorCode.RuntimeExceptionErrorCode : errorCode;

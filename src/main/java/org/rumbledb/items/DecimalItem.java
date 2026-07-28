@@ -70,10 +70,6 @@ public class DecimalItem implements Item {
         return false;
     }
 
-    public BigDecimal getValue() {
-        return this.value;
-    }
-
     @Override
     public BigDecimal getDecimalValue() {
         return this.value;

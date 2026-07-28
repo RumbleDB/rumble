@@ -29,10 +29,6 @@ public class gMonthDayItem implements Item {
     private int day;
     private ZoneOffset offset;
 
-    public gMonthDayItem() {
-        super();
-    }
-
     gMonthDayItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.month = Month.of(dateTime.getMonthValue());
         this.day = dateTime.getDayOfMonth();

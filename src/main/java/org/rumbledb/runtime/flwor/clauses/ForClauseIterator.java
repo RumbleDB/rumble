@@ -119,10 +119,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         return this.positionalVariableName;
     }
 
-    public RuntimeIterator getAssignmentIterator() {
-        return this.assignmentIterator;
-    }
-
     public boolean isAllowingEmpty() {
         return this.allowingEmpty;
     }

@@ -58,10 +58,6 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
         return this.variableName;
     }
 
-    public ExceptionMetadata getIteratorMetadata() {
-        return this.iteratorMetadata;
-    }
-
     public RuntimeIterator getExpression() {
         return this.expression;
     }

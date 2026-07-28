@@ -130,11 +130,6 @@ public class JSoundDataFrame implements Serializable {
         return this.dataFrame;
     }
 
-    public void show() {
-        System.out.println("Item type: " + this.itemType);
-        this.dataFrame.show();
-    }
-
     public JavaRDD<Row> javaRDD() {
         return this.dataFrame.javaRDD();
     }

@@ -56,18 +56,6 @@ public class LazyObjectItem implements Item {
             this.isArray = isArray;
         }
 
-        public RuntimeIterator getIterator() {
-            return this.iterator;
-        }
-
-        public DynamicContext getDynamicContext() {
-            return this.context;
-        }
-
-        public boolean isArray() {
-            return this.isArray();
-        }
-
         public Item getItem() {
             List<Item> items = this.iterator.materialize(this.context);
             if (!this.isArray) {

@@ -34,14 +34,6 @@ public class GroupByVariableDeclaration {
     public GroupByVariableDeclaration(
             Name variableName,
             SequenceType sequenceType,
-            Expression expression
-    ) {
-        this(variableName, sequenceType, expression, null);
-    }
-
-    public GroupByVariableDeclaration(
-            Name variableName,
-            SequenceType sequenceType,
             Expression expression,
             String collationURI
     ) {
@@ -60,10 +52,6 @@ public class GroupByVariableDeclaration {
 
     public Expression getExpression() {
         return this.expression;
-    }
-
-    public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {

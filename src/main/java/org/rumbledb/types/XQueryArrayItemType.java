@@ -29,12 +29,6 @@ public class XQueryArrayItemType implements ItemType {
     private SequenceType memberSequenceType;
     private int typeTreeDepth;
 
-    XQueryArrayItemType() {
-        this.name = null;
-        this.baseType = null;
-        this.memberSequenceType = null;
-    }
-
     /**
      * @param name null for anonymous typed arrays
      * @param baseType {@link BuiltinTypesCatalogue#anyFunctionItem} for primitive array(*),

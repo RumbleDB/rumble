@@ -38,9 +38,6 @@ public class DerivedAtomicItemType implements ItemType {
     private CardinalityFacetValue cardinality;
     private Boolean numeric;
 
-    DerivedAtomicItemType() {
-    }
-
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
     }
@@ -88,19 +85,6 @@ public class DerivedAtomicItemType implements ItemType {
         }
 
     }
-
-    DerivedAtomicItemType(
-            Name name,
-            ItemType baseType,
-            Facets facets,
-            boolean isUserDefined
-    ) {
-        // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
-        // to baseType
-        this(name, baseType, null, facets, isUserDefined);
-    }
-
-
 
     @Override
     public boolean equals(Object other) {

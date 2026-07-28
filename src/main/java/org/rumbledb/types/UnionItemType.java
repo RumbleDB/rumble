@@ -40,10 +40,6 @@ public class UnionItemType implements ItemType {
         this.userDefined = userDefined;
     }
 
-    UnionItemType(Name name, List<ItemType> types) {
-        this(name, types, true);
-    }
-
     UnionItemType(Name name, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
@@ -51,8 +47,6 @@ public class UnionItemType implements ItemType {
         this.types = types;
         this.userDefined = userDefined;
     }
-
-
 
     @Override
     public boolean equals(Object other) {

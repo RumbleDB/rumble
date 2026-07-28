@@ -39,10 +39,6 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     private String path;
     private int docPosition;
 
-    // needed for kryo
-    public XMLDocumentPosition() {
-    }
-
     public XMLDocumentPosition(String path, int docPosition) {
         this.path = path;
         this.docPosition = docPosition;
@@ -51,8 +47,6 @@ public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Ser
     public static String generateConstructedTreePath() {
         return "constructed:" + UUID.randomUUID();
     }
-
-
 
     public String getPath() {
         return this.path;

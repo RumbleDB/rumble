@@ -21,7 +21,6 @@
 package org.rumbledb.context;
 
 
-import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serial;
@@ -244,13 +243,6 @@ public class DynamicContext implements Serializable {
             return this.parent.getCurrentDateTime();
         }
         return this.currentDateTime;
-    }
-
-    public static void printDependencies(Map<Name, VariableDependency> exprDependency) {
-        LogManager.getLogger("DynamicContext").debug("System.err Variable dependencies:");
-        for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
-            LogManager.getLogger("DynamicContext").debug(e.getKey() + " : " + e.getValue());
-        }
     }
 
 
