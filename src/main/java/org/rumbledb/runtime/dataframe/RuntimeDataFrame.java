@@ -12,7 +12,7 @@ import java.io.Serializable;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
  * A Spark DataFrame whose rows represent runtime values of type {@code T}.
@@ -34,8 +34,8 @@ public interface RuntimeDataFrame<T> extends Serializable {
     /**
      * Converts this DataFrame to its logical runtime representation.
      *
-     * @param staticContext runtime metadata and configuration needed by the conversion
+     * @param metadata query metadata used if a row cannot be decoded
      * @return an RDD of logical runtime values
      */
-    JavaRDD<T> toRDD(RuntimeStaticContext staticContext);
+    JavaRDD<T> toRDD(ExceptionMetadata metadata);
 }
