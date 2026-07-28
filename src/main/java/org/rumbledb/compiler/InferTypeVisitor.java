@@ -782,7 +782,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveFileSystemURI(
-                staticContext.getStaticBaseURI(),
+                staticContext.getStaticBaseURIOrNull(),
                 path,
                 expression.getMetadata()
             );
@@ -812,7 +812,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ) {
             String path = stringLiteralExpr.getValue();
             URI uri = FileSystemUtil.resolveFileSystemURI(
-                staticContext.getStaticBaseURI(),
+                staticContext.getStaticBaseURIOrNull(),
                 path,
                 expression.getMetadata()
             );

@@ -134,8 +134,8 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
-            .staticURI(staticContext.getStaticBaseURI())
-            .staticURIString(staticContext.getStaticBaseUriString())
+            .staticURI(staticContext.getStaticBaseURIOrNull())
+            .staticURIString(staticContext.getStaticBaseUriStringOrNull())
             .queryLanguage(staticContext.getQueryLanguage())
             .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
             .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())

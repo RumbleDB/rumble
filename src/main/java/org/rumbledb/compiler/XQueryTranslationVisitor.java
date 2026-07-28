@@ -564,8 +564,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 );
             }
             String uriString = processURILiteral(setterContext.baseURIDecl().uriLiteral());
-            URI uri = URILiteralUtils.resolve(
-                this.moduleContext.getStaticBaseURI(),
+            URI uri = URILiteralUtils.resolveStaticBaseUri(
+                this.moduleContext.getStaticBaseURIOrNull(),
                 uriString,
                 createMetadataFromContext(setterContext.baseURIDecl())
             );
@@ -3741,7 +3741,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String resolveCollationUri(UriLiteralContext ctx) {
         String uriString = processURILiteral(ctx);
         URI uri = URILiteralUtils.resolve(
-            this.moduleContext.getStaticBaseURI(),
+            this.moduleContext.getStaticBaseURIOrNull(),
             uriString,
             createMetadataFromContext(ctx)
         );
@@ -3786,7 +3786,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {
-        return ExceptionMetadata.fromTokens(this.moduleContext.getStaticBaseURI().toString(), start, end, this.code);
+        String location = this.moduleContext.getStaticBaseUriStringOrNull();
+        return ExceptionMetadata.fromTokens(location == null ? "unknown" : location, start, end, this.code);
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {

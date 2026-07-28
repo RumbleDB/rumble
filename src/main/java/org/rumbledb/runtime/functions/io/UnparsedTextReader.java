@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.io;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.AbsentStaticBaseUriException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidEncodingException;
 import org.rumbledb.exceptions.RumbleException;
@@ -22,6 +23,12 @@ public final class UnparsedTextReader {
 
     private static URI resolveHref(URI staticBaseUri, String href, ExceptionMetadata metadata) {
         if (href.isEmpty()) {
+            if (staticBaseUri == null) {
+                throw new AbsentStaticBaseUriException(
+                        "Static base URI is absent, so the relative URI reference cannot be resolved.",
+                        metadata
+                );
+            }
             return staticBaseUri;
         }
         return FileSystemUtil.resolveURI(staticBaseUri, href, metadata);

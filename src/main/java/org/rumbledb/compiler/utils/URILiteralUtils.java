@@ -40,6 +40,24 @@ public final class URILiteralUtils {
         }
     }
 
+    public static URI resolveStaticBaseUri(URI baseURI, String literal, ExceptionMetadata metadata) {
+        String normalizedLiteral = normalizeAsAnyURI(literal);
+        try {
+            URI parsedLiteral = FileSystemUtil.parseURIReference(normalizedLiteral);
+            if (!parsedLiteral.isAbsolute() && baseURI == null) {
+                return null;
+            }
+            return FileSystemUtil.resolveURI(baseURI, normalizedLiteral, metadata);
+        } catch (CannotRetrieveResourceException | URISyntaxException exception) {
+            InvalidURILiteralException result = new InvalidURILiteralException(
+                    "Invalid URI literal: " + normalizedLiteral,
+                    metadata
+            );
+            result.initCause(exception);
+            throw result;
+        }
+    }
+
     public static String toStaticBaseUriString(URI resolvedURI, String literal) {
         String normalizedLiteral = normalizeAsAnyURI(literal);
         try {

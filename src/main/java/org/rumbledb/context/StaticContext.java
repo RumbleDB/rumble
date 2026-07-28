@@ -215,6 +215,16 @@ public class StaticContext {
         throw new OurBadException("Static base URI not set.");
     }
 
+    public URI getStaticBaseURIOrNull() {
+        if (this.staticBaseURI != null) {
+            return this.staticBaseURI;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseURIOrNull();
+        }
+        return null;
+    }
+
     public String getStaticBaseUriString() {
         if (this.staticBaseUriString != null) {
             return this.staticBaseUriString;
@@ -223,6 +233,16 @@ public class StaticContext {
             return this.parent.getStaticBaseUriString();
         }
         throw new OurBadException("Static base URI not set.");
+    }
+
+    public String getStaticBaseUriStringOrNull() {
+        if (this.staticBaseUriString != null) {
+            return this.staticBaseUriString;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseUriStringOrNull();
+        }
+        return null;
     }
 
     public void setStaticBaseUri(URI staticBaseURI) {

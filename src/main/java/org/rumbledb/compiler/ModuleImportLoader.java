@@ -33,7 +33,7 @@ final class ModuleImportLoader {
             CompilationConfiguration compilationConfiguration,
             ExceptionMetadata metadata
     ) {
-        URI baseURI = importingModuleContext.getStaticBaseURI();
+        URI baseURI = importingModuleContext.getStaticBaseURIOrNull();
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
         Exception lastFailure = null;
