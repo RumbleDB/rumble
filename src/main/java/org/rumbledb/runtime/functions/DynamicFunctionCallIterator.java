@@ -53,13 +53,13 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private RuntimeIterator functionItemIterator;
-    private List<RuntimeIterator> functionArguments;
+    private final RuntimeIterator functionItemIterator;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private Item functionItem;
     private RuntimeIterator functionCallIterator;
-    private boolean isPartialApplication;
+    private final boolean isPartialApplication;
     private Item nextResult;
 
     // Exit statement fields

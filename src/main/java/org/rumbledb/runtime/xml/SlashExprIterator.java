@@ -45,8 +45,8 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         Item::getXmlDocumentPosition,
         Comparator.nullsLast(Comparator.naturalOrder())
     );
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
     private List<Item> results = null;
     private int nextResultCounter = 0;
     private Item nextResult;

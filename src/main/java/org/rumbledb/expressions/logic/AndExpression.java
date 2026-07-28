@@ -29,8 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AndExpression extends Expression {
-    private Expression leftExpression;
-    private Expression rightExpression;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
 
     public AndExpression(
             Expression leftExpression,

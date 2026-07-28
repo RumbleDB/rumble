@@ -45,7 +45,7 @@ public class MapFunctionCallIterator extends HybridRuntimeIterator {
 
     private final Item mapItem;
     private final RuntimeIterator keyIterator;
-    private Queue<Item> pendingResults;
+    private final Queue<Item> pendingResults;
 
     public MapFunctionCallIterator(
             Item mapItem,

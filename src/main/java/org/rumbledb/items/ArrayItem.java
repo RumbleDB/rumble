@@ -41,7 +41,7 @@ public class ArrayItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> arrayItems;
+    private final List<Item> arrayItems;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;

@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 public class Profiler {
 
     public static int counter = 0;
-    public static Map<String, Integer> stacks = new HashMap<>();
+    public static final Map<String, Integer> stacks = new HashMap<>();
 
     public static void increase() {
         ++counter;

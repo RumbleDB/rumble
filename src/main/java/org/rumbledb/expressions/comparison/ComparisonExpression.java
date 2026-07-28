@@ -45,8 +45,8 @@ public class ComparisonExpression extends Expression {
         GC_GT(">"),
         GC_GE(">=");
 
-        private String name;
-        private boolean isValueComparison;
+        private final String name;
+        private final boolean isValueComparison;
 
         ComparisonOperator(String name) {
             switch (name) {
@@ -158,9 +158,9 @@ public class ComparisonExpression extends Expression {
         }
     };
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private ComparisonOperator comparisonOperator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final ComparisonOperator comparisonOperator;
 
     public ComparisonExpression(
             Expression leftExpression,

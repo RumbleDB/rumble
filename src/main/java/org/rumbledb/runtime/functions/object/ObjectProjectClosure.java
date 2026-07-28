@@ -15,8 +15,8 @@ public class ObjectProjectClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> projectionKeys;
-    private ExceptionMetadata itemMetadata;
+    private final List<Item> projectionKeys;
+    private final ExceptionMetadata itemMetadata;
 
     public ObjectProjectClosure(List<Item> projectionKeys, ExceptionMetadata itemMetadata) {
         this.projectionKeys = projectionKeys;

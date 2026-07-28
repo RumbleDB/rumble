@@ -44,7 +44,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 

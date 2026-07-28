@@ -15,7 +15,7 @@ import java.util.Objects;
 public class PITest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
-    private String targetName;
+    private final String targetName;
 
     /**
      * Creates a PITest that matches any processing-instruction node.

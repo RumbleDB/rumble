@@ -56,7 +56,7 @@ public class NamedFunctions implements Serializable {
     // two maps for User defined function are needed as execution mode is known at
     // static analysis phase
     // but functions items are fully known at runtimeIterator generation
-    private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+    private final HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();

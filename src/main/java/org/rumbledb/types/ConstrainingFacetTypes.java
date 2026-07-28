@@ -29,7 +29,7 @@ public enum ConstrainingFacetTypes {
     METADATA("metadata"),
     CONSTRAINTS("constraints");
 
-    private String facetName;
+    private final String facetName;
 
     ConstrainingFacetTypes(String facetName) {
         this.facetName = facetName;

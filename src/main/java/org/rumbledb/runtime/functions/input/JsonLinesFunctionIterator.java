@@ -46,7 +46,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    RuntimeIterator iterator;
+    final RuntimeIterator iterator;
     BufferedReader reader;
     Item path;
     Item nextItem;

@@ -43,8 +43,8 @@ public class VariableDeclaration extends Node {
     private final boolean DEFAULT_ASSIGNABLE = false;
     private final Name variableName;
     private final boolean external;
-    protected SequenceType sequenceType;
-    protected Expression expression;
+    protected final SequenceType sequenceType;
+    protected final Expression expression;
     private final List<Annotation> annotations;
     private final boolean isAssignable;
 

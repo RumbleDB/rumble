@@ -37,7 +37,7 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item nextResult;
 
     public UnorderedFunctionIterator(
