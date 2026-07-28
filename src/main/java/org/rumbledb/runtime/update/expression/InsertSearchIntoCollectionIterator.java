@@ -25,7 +25,7 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private boolean isBefore;
+    private final boolean isBefore;
 
     public InsertSearchIntoCollectionIterator(
             RuntimeIterator targetIterator,

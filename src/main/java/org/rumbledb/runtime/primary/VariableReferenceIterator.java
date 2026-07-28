@@ -47,7 +47,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
+    private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 

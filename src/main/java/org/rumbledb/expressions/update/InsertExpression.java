@@ -11,9 +11,9 @@ import java.util.List;
 
 public class InsertExpression extends Expression {
 
-    private Expression mainExpression;
-    private Expression toInsertExpression;
-    private Expression positionExpression;
+    private final Expression mainExpression;
+    private final Expression toInsertExpression;
+    private final Expression positionExpression;
 
     public InsertExpression(
             Expression mainExpression,

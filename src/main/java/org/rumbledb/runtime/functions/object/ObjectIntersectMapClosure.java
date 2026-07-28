@@ -35,7 +35,7 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private boolean mutable;
+    private final boolean mutable;
 
     public ObjectIntersectMapClosure(boolean mutable) {
         this.mutable = mutable;

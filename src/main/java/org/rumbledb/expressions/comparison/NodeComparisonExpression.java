@@ -43,7 +43,7 @@ public class NodeComparisonExpression extends Expression {
         NC_FOLLOWS(">>"),
         NC_IS("is");
 
-        private String symbol;
+        private final String symbol;
 
         NodeComparisonOperator(String symbol) {
             this.symbol = symbol;
@@ -68,9 +68,9 @@ public class NodeComparisonExpression extends Expression {
         }
     }
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private NodeComparisonOperator operator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final NodeComparisonOperator operator;
 
     public NodeComparisonExpression(
             Expression leftExpression,

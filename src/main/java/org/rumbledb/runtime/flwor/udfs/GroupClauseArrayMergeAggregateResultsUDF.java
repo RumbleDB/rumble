@@ -38,8 +38,8 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> nextResult;
-    private List<List<Item>> deserializedParams;
+    private final List<Item> nextResult;
+    private final List<List<Item>> deserializedParams;
 
     public GroupClauseArrayMergeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();

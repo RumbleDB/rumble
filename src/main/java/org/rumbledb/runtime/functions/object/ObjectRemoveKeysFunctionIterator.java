@@ -42,7 +42,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Item nextResult;
     private List<String> removalKeys;
 

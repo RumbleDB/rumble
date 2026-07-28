@@ -10,7 +10,7 @@ import java.util.Set;
 public class GlobalVariables implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Set<Name> globalVariables;
+    private final Set<Name> globalVariables;
 
     public GlobalVariables() {
         this.globalVariables = new HashSet<>();

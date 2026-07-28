@@ -17,7 +17,7 @@ import java.util.Map;
  * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
  */
 public class NativeClauseContext {
-    public static NativeClauseContext NoNativeQuery = new NativeClauseContext();
+    public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private NativeClauseContext parent;
     private FLWOR_CLAUSES clauseType;

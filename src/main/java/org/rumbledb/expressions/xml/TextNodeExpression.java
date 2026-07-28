@@ -37,8 +37,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 public class TextNodeExpression extends Expression {
 
     /** The content of the text node */
-    private String content;
-    private boolean boundaryWhitespace;
+    private final String content;
+    private final boolean boundaryWhitespace;
 
     /**
      * Constructor for a text node.

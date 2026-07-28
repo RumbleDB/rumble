@@ -210,13 +210,13 @@ import java.util.stream.Collectors;
  */
 public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
-    private StaticContext moduleContext;
-    private RumbleRuntimeConfiguration configuration;
-    private CompilationConfiguration compilationConfiguration;
-    private boolean isMainModule;
+    private final StaticContext moduleContext;
+    private final RumbleRuntimeConfiguration configuration;
+    private final CompilationConfiguration compilationConfiguration;
+    private final boolean isMainModule;
     private String libraryModuleNamespace;
-    private String code;
-    private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private final String code;
+    private final ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream jsoniqTokenStream;
 
     public TranslationVisitor(
@@ -371,24 +371,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         String prefix = ctx.ncName().getText();
-        String namespace = processURILiteral(ctx.uriLiteral());
+        String namespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(ctx.uriLiteral()));
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
-        URI resolvedURI = URILiteralUtils.resolve(
-            this.moduleContext.getStaticBaseURI(),
-            namespace,
-            createMetadataFromContext(ctx)
-        );
-        this.libraryModuleNamespace = resolvedURI.toString();
+        this.libraryModuleNamespace = namespace;
         bindNamespace(
             prefix,
-            resolvedURI.toString(),
+            namespace,
             createMetadataFromContext(ctx)
         );
 
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
+        LibraryModule module = new LibraryModule(prolog, namespace, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
@@ -480,7 +475,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     uriString,
                     createMetadataFromContext(setterContext.baseURIDecl())
                 );
-                this.moduleContext.setStaticBaseUri(uri);
+                this.moduleContext.setStaticBaseUri(uri, URILiteralUtils.toStaticBaseUriString(uri, uriString));
                 baseURISet = true;
                 continue;
             }
@@ -4062,8 +4057,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
-        String namespace = processURILiteral(ctx.targetNamespace);
         ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        String namespace = processURILiteral(ctx.targetNamespace);
         if (namespace.isEmpty()) {
             throw new EmptyModuleURIException("Module URI is empty.", metadata);
         }
@@ -4076,8 +4071,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 );
             }
         }
+        namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> locationHints = ctx.locations.stream()
             .map(this::processURILiteral)
+            .map(URILiteralUtils::normalizeAsAnyURI)
             .collect(Collectors.toList());
         LibraryModule libraryModule = ModuleImportLoader.load(
             namespace,
