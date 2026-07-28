@@ -7,16 +7,21 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.SequenceType;
 
-public class FlworDataFrame implements Serializable {
+import sparksoniq.jsoniq.tuple.FlworTuple;
+
+public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -37,8 +42,17 @@ public class FlworDataFrame implements Serializable {
         }
     }
 
+    @Override
     public Dataset<Row> getDataFrame() {
         return this.dataFrame;
+    }
+
+    @Override
+    public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
+        throw new OurBadException(
+                "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.",
+                metadata
+        );
     }
 
     public List<FlworDataFrameColumn> getColumns() {
