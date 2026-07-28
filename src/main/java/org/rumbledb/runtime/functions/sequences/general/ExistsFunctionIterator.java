@@ -49,7 +49,7 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return ExistenceLocalCursor.exists(getChild(0), context);
+        return ExistenceLocalCursor.exists(getChild(0), context, this.getMetadata());
     }
 
     @Override

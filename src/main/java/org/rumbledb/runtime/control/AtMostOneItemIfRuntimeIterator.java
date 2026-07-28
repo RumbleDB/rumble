@@ -54,7 +54,8 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
                 getChild(0),
                 getChild(1),
                 getChild(2),
-                context
+                context,
+                this.getMetadata()
         );
     }
 

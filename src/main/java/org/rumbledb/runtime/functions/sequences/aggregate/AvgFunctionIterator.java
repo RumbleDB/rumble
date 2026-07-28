@@ -138,6 +138,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.context = context;
             this.metadata = metadata;

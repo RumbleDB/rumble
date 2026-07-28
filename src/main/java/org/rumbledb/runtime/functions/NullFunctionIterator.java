@@ -47,7 +47,7 @@ public class NullFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(ItemFactory.getInstance().createNullItem());
+        return new SingletonLocalCursor<>(ItemFactory.getInstance().createNullItem(), this.getMetadata());
     }
 
     @Override

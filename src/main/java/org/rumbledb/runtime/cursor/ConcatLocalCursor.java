@@ -22,6 +22,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
@@ -38,7 +39,12 @@ public final class ConcatLocalCursor<T> extends AbstractLocalCursor<T> {
     private T nextValue;
     private boolean hasNext;
 
-    public ConcatLocalCursor(List<? extends RuntimePlan<T>> childPlans, DynamicContext context) {
+    public ConcatLocalCursor(
+            List<? extends RuntimePlan<T>> childPlans,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        super(metadata);
         this.childPlans = List.copyOf(Objects.requireNonNull(childPlans, "child plans cannot be null"));
         this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
     }

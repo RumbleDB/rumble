@@ -17,12 +17,18 @@
 
 package org.rumbledb.runtime.cursor;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+
 /**
  * Cursor over an empty local sequence.
  *
  * @param <T> the value type
  */
 public final class EmptyLocalCursor<T> extends AtMostOneLocalCursor<T> {
+
+    public EmptyLocalCursor(ExceptionMetadata metadata) {
+        super(metadata);
+    }
 
     @Override
     protected T materializeFirstItemOrNull() {

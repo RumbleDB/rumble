@@ -49,7 +49,7 @@ public class PiFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(ItemFactory.getInstance().createDoubleItem(Math.PI));
+        return new SingletonLocalCursor<>(ItemFactory.getInstance().createDoubleItem(Math.PI), this.getMetadata());
     }
 
     @Override

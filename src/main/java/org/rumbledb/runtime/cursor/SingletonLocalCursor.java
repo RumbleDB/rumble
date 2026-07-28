@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.cursor;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+
 import java.util.Objects;
 
 /**
@@ -28,7 +30,8 @@ public final class SingletonLocalCursor<T> extends AtMostOneLocalCursor<T> {
 
     private final T value;
 
-    public SingletonLocalCursor(T value) {
+    public SingletonLocalCursor(T value, ExceptionMetadata metadata) {
+        super(metadata);
         this.value = Objects.requireNonNull(value, "value cannot be null");
     }
 

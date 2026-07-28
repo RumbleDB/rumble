@@ -55,7 +55,8 @@ public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterat
             this.mapIterator,
             this.keyIterator,
             context,
-            MapContainsFunctionIterator::evaluate
+            MapContainsFunctionIterator::evaluate,
+            getMetadata()
         );
     }
 

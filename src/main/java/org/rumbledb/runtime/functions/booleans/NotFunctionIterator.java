@@ -46,7 +46,7 @@ public class NotFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return BooleanLocalCursor.not(getChild(0), context);
+        return BooleanLocalCursor.not(getChild(0), context, this.getMetadata());
     }
 
     @Override

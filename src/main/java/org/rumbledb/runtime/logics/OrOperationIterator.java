@@ -54,7 +54,7 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return BooleanLocalCursor.or(this.leftIterator, this.rightIterator, context);
+        return BooleanLocalCursor.or(this.leftIterator, this.rightIterator, context, this.getMetadata());
     }
 
     @Override

@@ -55,7 +55,8 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
             this.leftIterator,
             this.rightIterator,
             context,
-            CodepointEqualFunctionIterator::evaluate
+            CodepointEqualFunctionIterator::evaluate,
+            getMetadata()
         );
     }
 

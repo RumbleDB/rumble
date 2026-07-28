@@ -243,6 +243,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.zeroPlan = zeroPlan;
             this.context = context;

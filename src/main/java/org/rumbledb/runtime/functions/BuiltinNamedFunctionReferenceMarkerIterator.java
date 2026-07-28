@@ -43,7 +43,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>();
+        return new EmptyLocalCursor<>(this.getMetadata());
     }
 
     @Override

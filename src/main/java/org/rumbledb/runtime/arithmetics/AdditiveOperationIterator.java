@@ -25,12 +25,12 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.OffsetTime;
 import java.util.Arrays;
-import java.util.Objects;
 
 import java.time.OffsetDateTime;
 import java.time.Period;
 import java.time.Duration;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -152,27 +152,26 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         private final RuntimePlan<Item> rightPlan;
         private final boolean isMinus;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
 
         private Cursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
+                @NonNull RuntimePlan<Item> leftPlan,
+                @NonNull RuntimePlan<Item> rightPlan,
                 boolean isMinus,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
-            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
             this.isMinus = isMinus;
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
             Item left = materializeOperand(this.leftPlan, "left");
             Item right = materializeOperand(this.rightPlan, "right");
-            return applyOperator(left, right, this.isMinus, this.metadata);
+            return applyOperator(left, right, this.isMinus, this.getMetadata());
         }
 
         private Item materializeOperand(RuntimePlan<Item> plan, String side) {
@@ -181,7 +180,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Addition expression requires at most one item in its " + side + " input sequence.",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
         }

@@ -26,7 +26,7 @@ public class StaticBaseURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(materializeFirstItemOrNull(context));
+        return new SingletonLocalCursor<>(materializeFirstItemOrNull(context), this.getMetadata());
     }
 
     @Override

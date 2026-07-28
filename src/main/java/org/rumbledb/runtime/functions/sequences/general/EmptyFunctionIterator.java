@@ -49,7 +49,7 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return ExistenceLocalCursor.empty(getChild(0), context);
+        return ExistenceLocalCursor.empty(getChild(0), context, this.getMetadata());
     }
 
     @Override

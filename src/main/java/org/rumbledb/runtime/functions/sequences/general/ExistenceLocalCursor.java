@@ -20,6 +20,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
@@ -36,19 +37,29 @@ final class ExistenceLocalCursor extends AtMostOneLocalCursor<Item> {
     private ExistenceLocalCursor(
             @NonNull RuntimePlan<Item> childPlan,
             @NonNull DynamicContext context,
-            boolean expectedToExist
+            boolean expectedToExist,
+            ExceptionMetadata metadata
     ) {
+        super(metadata);
         this.childPlan = childPlan;
         this.context = context;
         this.expectedToExist = expectedToExist;
     }
 
-    public static ExistenceLocalCursor empty(RuntimePlan<Item> childPlan, DynamicContext context) {
-        return new ExistenceLocalCursor(childPlan, context, false);
+    public static ExistenceLocalCursor empty(
+            RuntimePlan<Item> childPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return new ExistenceLocalCursor(childPlan, context, false, metadata);
     }
 
-    public static ExistenceLocalCursor exists(RuntimePlan<Item> childPlan, DynamicContext context) {
-        return new ExistenceLocalCursor(childPlan, context, true);
+    public static ExistenceLocalCursor exists(
+            RuntimePlan<Item> childPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return new ExistenceLocalCursor(childPlan, context, true, metadata);
     }
 
     @Override

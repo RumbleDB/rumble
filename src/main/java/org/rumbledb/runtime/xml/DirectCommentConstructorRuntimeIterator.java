@@ -49,7 +49,7 @@ public class DirectCommentConstructorRuntimeIterator extends AtMostOneItemLocalR
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(createComment());
+        return new SingletonLocalCursor<>(createComment(), this.getMetadata());
     }
 
     @Override

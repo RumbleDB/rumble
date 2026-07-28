@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -47,8 +48,10 @@ public final class BooleanLocalCursor extends AtMostOneLocalCursor<Item> {
             Operator operator,
             RuntimePlan<Item> leftPlan,
             RuntimePlan<Item> rightPlan,
-            DynamicContext context
+            DynamicContext context,
+            ExceptionMetadata metadata
     ) {
+        super(metadata);
         this.operator = operator;
         this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
         this.rightPlan = rightPlan;
@@ -58,35 +61,39 @@ public final class BooleanLocalCursor extends AtMostOneLocalCursor<Item> {
     public static BooleanLocalCursor and(
             RuntimePlan<Item> leftPlan,
             RuntimePlan<Item> rightPlan,
-            DynamicContext context
+            DynamicContext context,
+            ExceptionMetadata metadata
     ) {
         return new BooleanLocalCursor(
                 Operator.AND,
                 leftPlan,
                 Objects.requireNonNull(rightPlan, "right plan cannot be null"),
-                context
+                context,
+                metadata
         );
     }
 
     public static BooleanLocalCursor or(
             RuntimePlan<Item> leftPlan,
             RuntimePlan<Item> rightPlan,
-            DynamicContext context
+            DynamicContext context,
+            ExceptionMetadata metadata
     ) {
         return new BooleanLocalCursor(
                 Operator.OR,
                 leftPlan,
                 Objects.requireNonNull(rightPlan, "right plan cannot be null"),
-                context
+                context,
+                metadata
         );
     }
 
-    public static BooleanLocalCursor not(RuntimePlan<Item> plan, DynamicContext context) {
-        return new BooleanLocalCursor(Operator.NOT, plan, null, context);
+    public static BooleanLocalCursor not(RuntimePlan<Item> plan, DynamicContext context, ExceptionMetadata metadata) {
+        return new BooleanLocalCursor(Operator.NOT, plan, null, context, metadata);
     }
 
-    public static BooleanLocalCursor value(RuntimePlan<Item> plan, DynamicContext context) {
-        return new BooleanLocalCursor(Operator.VALUE, plan, null, context);
+    public static BooleanLocalCursor value(RuntimePlan<Item> plan, DynamicContext context, ExceptionMetadata metadata) {
+        return new BooleanLocalCursor(Operator.VALUE, plan, null, context, metadata);
     }
 
     @Override

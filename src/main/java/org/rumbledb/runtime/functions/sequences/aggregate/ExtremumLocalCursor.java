@@ -58,6 +58,7 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind
     ) {
+        super(metadata);
         this.childPlan = childPlan;
         this.collationPlan = collationPlan;
         this.context = context;

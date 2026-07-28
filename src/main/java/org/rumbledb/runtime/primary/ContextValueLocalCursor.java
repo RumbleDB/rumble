@@ -40,7 +40,6 @@ public final class ContextValueLocalCursor extends AtMostOneLocalCursor<Item> {
     }
 
     private final DynamicContext context;
-    private final ExceptionMetadata metadata;
     private final Kind kind;
 
     private ContextValueLocalCursor(
@@ -48,8 +47,8 @@ public final class ContextValueLocalCursor extends AtMostOneLocalCursor<Item> {
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind
     ) {
+        super(metadata);
         this.context = context;
-        this.metadata = metadata;
         this.kind = kind;
     }
 
@@ -79,11 +78,11 @@ public final class ContextValueLocalCursor extends AtMostOneLocalCursor<Item> {
         switch (this.kind) {
             case ITEM:
                 List<Item> items = this.context.getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, this.metadata);
+                    .getLocalVariableValue(Name.CONTEXT_ITEM, this.getMetadata());
                 if (items.isEmpty()) {
                     throw new UnexpectedTypeException(
                             "The context item cannot be an empty sequence.",
-                            this.metadata
+                            this.getMetadata()
                     );
                 }
                 return items.get(0);
@@ -104,7 +103,7 @@ public final class ContextValueLocalCursor extends AtMostOneLocalCursor<Item> {
 
     private Item requireContextValue(Item value, String message) {
         if (value == null) {
-            throw new AbsentPartOfDynamicContextException(message, this.metadata);
+            throw new AbsentPartOfDynamicContextException(message, this.getMetadata());
         }
         return value;
     }

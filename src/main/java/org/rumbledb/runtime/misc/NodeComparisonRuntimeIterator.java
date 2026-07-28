@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.misc;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -38,7 +39,6 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * Runtime iterator for node comparisons.
@@ -182,27 +182,26 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         private final RuntimePlan<Item> rightPlan;
         private final NodeComparisonExpression.NodeComparisonOperator operator;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
 
         private Cursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
-                NodeComparisonExpression.NodeComparisonOperator operator,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull RuntimePlan<Item> leftPlan,
+                @NonNull RuntimePlan<Item> rightPlan,
+                @NonNull NodeComparisonExpression.NodeComparisonOperator operator,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
-            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
-            this.operator = Objects.requireNonNull(operator, "operator cannot be null");
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.operator = operator;
+            this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
             Item leftItem = materializeOperand(this.leftPlan, true);
             Item rightItem = materializeOperand(this.rightPlan, false);
-            return applyComparison(leftItem, rightItem, this.operator, this.metadata);
+            return applyComparison(leftItem, rightItem, this.operator, this.getMetadata());
         }
 
         private Item materializeOperand(RuntimePlan<Item> plan, boolean isLeftOperand) {
@@ -212,7 +211,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 throw new UnexpectedTypeException(
                         (isLeftOperand ? "Left" : "Right")
                             + " operand of node comparison must be a single node or empty sequence, got more than one item",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
         }

@@ -85,7 +85,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public LocalCursor<FlworTuple> createLocalCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>();
+        return new EmptyLocalCursor<>(this.getMetadata());
     }
 
     /**

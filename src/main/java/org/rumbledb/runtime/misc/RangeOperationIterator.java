@@ -24,9 +24,9 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.LongStream;
 
+import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -203,21 +203,20 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
         private long rightBound;
         private long position;
         private boolean hasNext;
 
         private Cursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull RuntimePlan<Item> leftPlan,
+                @NonNull RuntimePlan<Item> rightPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
-            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.context = context;
         }
 
         @Override
@@ -234,7 +233,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
                             + left.getDynamicType()
                             + " and "
                             + right.getDynamicType(),
-                        this.metadata
+                        this.getMetadata()
                 );
             }
             this.position = left.castToIntegerValue().longValue();
@@ -250,7 +249,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         @Override
         protected Item nextLocal() {
             if (!this.hasNext) {
-                throw new IteratorFlowException("Invalid next call in Range Operation", this.metadata);
+                throw new IteratorFlowException("Invalid next call in Range Operation", this.getMetadata());
             }
             long result = this.position;
             if (this.position == this.rightBound) {
@@ -272,7 +271,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Range expression must have integer input, but instead received more than one item",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
         }

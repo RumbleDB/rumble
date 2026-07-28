@@ -58,7 +58,8 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             this.yIterator,
             this.xIterator,
             context,
-            ATan2FunctionIterator::evaluate
+            ATan2FunctionIterator::evaluate,
+            getMetadata()
         );
     }
 

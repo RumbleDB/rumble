@@ -211,6 +211,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 @NonNull DynamicContext context,
                 @NonNull ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.countedVariable = countedVariable;
             this.context = context;

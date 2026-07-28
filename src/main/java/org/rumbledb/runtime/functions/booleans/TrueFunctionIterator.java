@@ -26,7 +26,7 @@ public class TrueFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(ItemFactory.getInstance().createBooleanItem(true));
+        return new SingletonLocalCursor<>(ItemFactory.getInstance().createBooleanItem(true), this.getMetadata());
     }
 
     @Override

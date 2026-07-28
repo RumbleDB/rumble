@@ -133,7 +133,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
         private final RuntimeIterator child;
         private final SequenceType sequenceType;
-        private final ExceptionMetadata metadata;
         private final DynamicContext context;
 
         private Cursor(
@@ -142,15 +141,15 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
                 ExceptionMetadata metadata,
                 DynamicContext context
         ) {
+            super(metadata);
             this.child = child;
             this.sequenceType = sequenceType;
-            this.metadata = metadata;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return evaluate(this.child, this.sequenceType, this.metadata, this.context);
+            return evaluate(this.child, this.sequenceType, this.getMetadata(), this.context);
         }
     }
 

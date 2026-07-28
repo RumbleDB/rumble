@@ -59,7 +59,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new ConcatLocalCursor<>(getChildren(), context);
+        return new ConcatLocalCursor<>(getChildren(), context, getMetadata());
     }
 
     @Override

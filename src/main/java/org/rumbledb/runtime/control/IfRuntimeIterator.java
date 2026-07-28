@@ -63,7 +63,8 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
                 getChild(0),
                 getChild(1),
                 getChild(2),
-                context
+                context,
+                this.getMetadata()
         );
     }
 

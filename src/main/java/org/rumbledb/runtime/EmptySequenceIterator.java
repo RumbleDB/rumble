@@ -40,7 +40,7 @@ public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>();
+        return new EmptyLocalCursor<>(this.getMetadata());
     }
 
     @Override

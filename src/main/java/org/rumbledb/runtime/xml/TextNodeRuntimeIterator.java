@@ -58,7 +58,7 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(createTextNode());
+        return new SingletonLocalCursor<>(createTextNode(), this.getMetadata());
     }
 
     @Override

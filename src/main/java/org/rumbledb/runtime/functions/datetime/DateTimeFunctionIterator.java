@@ -37,7 +37,8 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
             this.dateIterator,
             this.timeIterator,
             context,
-            (date, time) -> evaluate(date, time, metadata)
+            (date, time) -> evaluate(date, time, metadata),
+            metadata
         );
     }
 

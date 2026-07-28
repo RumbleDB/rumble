@@ -62,7 +62,8 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             this.baseIterator,
             this.exponentIterator,
             context,
-            (base, exponent) -> evaluate(base, exponent, metadata)
+            (base, exponent) -> evaluate(base, exponent, metadata),
+            metadata
         );
     }
 

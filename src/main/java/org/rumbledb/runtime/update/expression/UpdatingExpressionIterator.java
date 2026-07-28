@@ -31,6 +31,6 @@ abstract class UpdatingExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     public final LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>();
+        return new EmptyLocalCursor<>(this.getMetadata());
     }
 }

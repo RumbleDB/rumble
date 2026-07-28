@@ -19,9 +19,6 @@ public abstract class AbstractDelegatingLocalCursor<T> extends AbstractLocalCurs
 
     private LocalCursor<T> delegate;
 
-    protected AbstractDelegatingLocalCursor() {
-    }
-
     protected AbstractDelegatingLocalCursor(@NonNull ExceptionMetadata metadata) {
         super(metadata);
     }

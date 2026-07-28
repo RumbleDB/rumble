@@ -110,7 +110,6 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         private final RuntimeIterator childPlan;
         private final SequenceType sequenceType;
         private final RuntimeStaticContext staticContext;
-        private final ExceptionMetadata metadata;
         private final DynamicContext context;
 
         private Cursor(
@@ -120,16 +119,16 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
                 ExceptionMetadata metadata,
                 DynamicContext context
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.sequenceType = sequenceType;
             this.staticContext = staticContext;
-            this.metadata = metadata;
             this.context = context;
         }
 
         @Override
         protected Item materializeFirstItemOrNull() {
-            return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.metadata, this.context);
+            return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.getMetadata(), this.context);
         }
     }
 

@@ -23,6 +23,7 @@ package org.rumbledb.runtime.misc;
 import java.io.Serial;
 import java.time.*;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -47,7 +48,6 @@ import org.rumbledb.types.SequenceType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
-import java.util.Objects;
 
 /**
  * This class performs value or general comparison of two items.
@@ -222,20 +222,19 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         private final RuntimePlan<Item> rightPlan;
         private final ComparisonOperator operator;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
 
         private Cursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
-                ComparisonOperator operator,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull RuntimePlan<Item> leftPlan,
+                @NonNull RuntimePlan<Item> rightPlan,
+                @NonNull ComparisonOperator operator,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
-            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
-            this.operator = Objects.requireNonNull(operator, "operator cannot be null");
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.operator = operator;
+            this.context = context;
         }
 
         @Override
@@ -248,7 +247,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             if (right == null) {
                 return null;
             }
-            return applyComparison(left, right, this.operator, this.metadata);
+            return applyComparison(left, right, this.operator, this.getMetadata());
         }
 
         private Item materializeOperand(RuntimePlan<Item> plan) {
@@ -257,7 +256,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
         }

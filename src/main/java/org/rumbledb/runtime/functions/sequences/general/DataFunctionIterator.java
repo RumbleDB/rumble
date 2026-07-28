@@ -198,7 +198,7 @@ public class DataFunctionIterator extends HybridRuntimeIterator {
                 if (contextItems.size() != 1) {
                     throw new OurBadException("The context item is not a singleton.", this.metadata);
                 }
-                this.inputCursor = new SingletonLocalCursor<>(contextItems.get(0));
+                this.inputCursor = new SingletonLocalCursor<>(contextItems.get(0), this.metadata);
             }
         }
 

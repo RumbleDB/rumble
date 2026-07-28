@@ -32,10 +32,6 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
     private T result;
     private boolean hasNext;
 
-    protected AtMostOneLocalCursor() {
-        super();
-    }
-
     protected AtMostOneLocalCursor(@NonNull ExceptionMetadata metadata) {
         super(metadata);
     }

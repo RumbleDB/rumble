@@ -46,7 +46,7 @@ public class FalseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(ItemFactory.getInstance().createBooleanItem(false));
+        return new SingletonLocalCursor<>(ItemFactory.getInstance().createBooleanItem(false), this.getMetadata());
     }
 
     @Override

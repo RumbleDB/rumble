@@ -49,7 +49,7 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(this.item);
+        return new SingletonLocalCursor<>(this.item, this.getMetadata());
     }
 
     @Override

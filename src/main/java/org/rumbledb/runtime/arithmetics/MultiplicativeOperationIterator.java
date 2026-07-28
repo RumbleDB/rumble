@@ -154,6 +154,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
             this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
             this.operator = Objects.requireNonNull(operator, "operator cannot be null");

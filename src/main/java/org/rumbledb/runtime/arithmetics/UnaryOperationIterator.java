@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.arithmetics;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -40,7 +41,6 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
-import java.util.Objects;
 
 public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -124,18 +124,17 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         private final RuntimePlan<Item> childPlan;
         private final boolean negated;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
 
         private Cursor(
-                RuntimePlan<Item> childPlan,
+                @NonNull RuntimePlan<Item> childPlan,
                 boolean negated,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
+            super(metadata);
+            this.childPlan = childPlan;
             this.negated = negated;
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            this.context = context;
         }
 
         @Override
@@ -146,10 +145,10 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
             } catch (MoreThanOneItemException exception) {
                 throw new UnexpectedTypeException(
                         "Unary expression requires at most one item in its input sequence.",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
-            return applyOperator(item, this.negated, this.metadata);
+            return applyOperator(item, this.negated, this.getMetadata());
         }
     }
 

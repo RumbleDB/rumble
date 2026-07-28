@@ -26,7 +26,7 @@ public class CurrentTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(materializeFirstItemOrNull(context));
+        return new SingletonLocalCursor<>(materializeFirstItemOrNull(context), this.getMetadata());
     }
 
     @Override

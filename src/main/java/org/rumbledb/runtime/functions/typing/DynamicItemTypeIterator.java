@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.typing;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -28,7 +29,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new Cursor(this.getChild(0), context);
+        return new Cursor(this.getChild(0), context, this.getMetadata());
     }
 
     private static Item evaluate(RuntimeIterator argumentPlan, DynamicContext context) {
@@ -59,7 +60,8 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
         private final RuntimeIterator argumentPlan;
         private final DynamicContext context;
 
-        private Cursor(RuntimeIterator argumentPlan, DynamicContext context) {
+        private Cursor(RuntimeIterator argumentPlan, DynamicContext context, ExceptionMetadata metadata) {
+            super(metadata);
             this.argumentPlan = argumentPlan;
             this.context = context;
         }

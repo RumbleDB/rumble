@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -35,7 +36,6 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
-import java.util.Objects;
 
 public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -86,10 +86,15 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
 
-        private Cursor(RuntimePlan<Item> childPlan, DynamicContext context, ExceptionMetadata metadata) {
-            this.childPlan = Objects.requireNonNull(childPlan, "child plan cannot be null");
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+        private Cursor(
+                @NonNull RuntimePlan<Item> childPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
+        ) {
+            super(metadata);
+            this.childPlan = childPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
 
         @Override

@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
@@ -42,8 +43,10 @@ final class ConditionalLocalCursor<T> extends AbstractDelegatingLocalCursor<T> {
             RuntimePlan<Item> conditionPlan,
             RuntimePlan<T> thenPlan,
             RuntimePlan<T> elsePlan,
-            DynamicContext context
+            DynamicContext context,
+            ExceptionMetadata metadata
     ) {
+        super(metadata);
         this.conditionPlan = Objects.requireNonNull(conditionPlan, "condition plan cannot be null");
         this.thenPlan = Objects.requireNonNull(thenPlan, "then plan cannot be null");
         this.elsePlan = Objects.requireNonNull(elsePlan, "else plan cannot be null");

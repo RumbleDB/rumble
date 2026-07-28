@@ -21,6 +21,7 @@ import java.util.function.BiFunction;
 
 import lombok.NonNull;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 /**
@@ -43,8 +44,10 @@ public final class BinaryMappingLocalCursor<L, R, O> extends AtMostOneLocalCurso
             RuntimePlan<R> rightPlan,
             DynamicContext context,
             BiFunction<? super L, ? super R, ? extends O> mapper,
-            boolean evaluateRightWhenLeftIsEmpty
+            boolean evaluateRightWhenLeftIsEmpty,
+            ExceptionMetadata metadata
     ) {
+        super(metadata);
         this.leftPlan = leftPlan;
         this.rightPlan = rightPlan;
         this.context = context;
@@ -65,9 +68,10 @@ public final class BinaryMappingLocalCursor<L, R, O> extends AtMostOneLocalCurso
             @NonNull RuntimePlan<L> leftPlan,
             @NonNull RuntimePlan<R> rightPlan,
             @NonNull DynamicContext context,
-            @NonNull BiFunction<? super L, ? super R, ? extends O> mapper
+            @NonNull BiFunction<? super L, ? super R, ? extends O> mapper,
+            @NonNull ExceptionMetadata metadata
     ) {
-        return new BinaryMappingLocalCursor<>(leftPlan, rightPlan, context, mapper, false);
+        return new BinaryMappingLocalCursor<>(leftPlan, rightPlan, context, mapper, false, metadata);
     }
 
     /**
@@ -83,9 +87,10 @@ public final class BinaryMappingLocalCursor<L, R, O> extends AtMostOneLocalCurso
             @NonNull RuntimePlan<L> leftPlan,
             @NonNull RuntimePlan<R> rightPlan,
             @NonNull DynamicContext context,
-            @NonNull BiFunction<? super L, ? super R, ? extends O> mapper
+            @NonNull BiFunction<? super L, ? super R, ? extends O> mapper,
+            @NonNull ExceptionMetadata metadata
     ) {
-        return new BinaryMappingLocalCursor<>(leftPlan, rightPlan, context, mapper, true);
+        return new BinaryMappingLocalCursor<>(leftPlan, rightPlan, context, mapper, true, metadata);
     }
 
     @Override

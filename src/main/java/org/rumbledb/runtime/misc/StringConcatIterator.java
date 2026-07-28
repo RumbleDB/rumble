@@ -22,8 +22,8 @@ package org.rumbledb.runtime.misc;
 
 import java.io.Serial;
 import java.util.Arrays;
-import java.util.Objects;
 
+import lombok.NonNull;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -110,18 +110,17 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         private final RuntimePlan<Item> leftPlan;
         private final RuntimePlan<Item> rightPlan;
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
 
         private Cursor(
-                RuntimePlan<Item> leftPlan,
-                RuntimePlan<Item> rightPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata
+                @NonNull RuntimePlan<Item> leftPlan,
+                @NonNull RuntimePlan<Item> rightPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata
         ) {
-            this.leftPlan = Objects.requireNonNull(leftPlan, "left plan cannot be null");
-            this.rightPlan = Objects.requireNonNull(rightPlan, "right plan cannot be null");
-            this.context = Objects.requireNonNull(context, "dynamic context cannot be null");
-            this.metadata = Objects.requireNonNull(metadata, "metadata cannot be null");
+            super(metadata);
+            this.leftPlan = leftPlan;
+            this.rightPlan = rightPlan;
+            this.context = context;
         }
 
         @Override
@@ -129,7 +128,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
             Item emptyString = ItemFactory.getInstance().createStringItem("");
             Item left = materializeOperand(this.leftPlan, emptyString, "left");
             Item right = materializeOperand(this.rightPlan, emptyString, "right");
-            return concatenate(left, right, this.metadata);
+            return concatenate(left, right, this.getMetadata());
         }
 
         private Item materializeOperand(RuntimePlan<Item> plan, Item defaultValue, String side) {
@@ -140,7 +139,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
                         "String concatenation expression requires at most one item in its "
                             + side
                             + " input sequence.",
-                        this.metadata
+                        this.getMetadata()
                 );
             }
         }

@@ -17,6 +17,7 @@
 
 package org.rumbledb.runtime.cursor;
 
+import lombok.Getter;
 import lombok.NonNull;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -33,6 +34,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
  */
 public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
+    @Getter
     private final ExceptionMetadata metadata;
 
     private enum State {
@@ -42,10 +44,6 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
     }
 
     private State state = State.CREATED;
-
-    protected AbstractLocalCursor() {
-        this.metadata = null;
-    }
 
     protected AbstractLocalCursor(@NonNull ExceptionMetadata metadata) {
         this.metadata = metadata;
@@ -116,9 +114,6 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
      * @return the exception to throw
      */
     protected final RuntimeException invalidState(String message) {
-        if (this.metadata != null) {
-            return new IteratorFlowException(message, this.metadata);
-        }
-        return new IllegalStateException(message);
+        return new IteratorFlowException(message, this.metadata);
     }
 }

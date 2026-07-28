@@ -4,6 +4,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -79,7 +80,8 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
                 this.itemType,
                 this.exceptionMessage,
                 getRuntimeStaticContext(),
-                context
+                context,
+                this.getMetadata()
         );
     }
 
@@ -142,8 +144,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
                 ItemType itemType,
                 String exceptionMessage,
                 RuntimeStaticContext staticContext,
-                DynamicContext context
+                DynamicContext context,
+                ExceptionMetadata metadata
         ) {
+            super(metadata);
             this.iterator = iterator;
             this.sequenceType = sequenceType;
             this.itemType = itemType;

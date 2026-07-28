@@ -146,6 +146,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 ExceptionMetadata metadata,
                 DynamicContext context
         ) {
+            super(metadata);
             this.childPlan = childPlan;
             this.sequenceType = sequenceType;
             this.staticContext = staticContext;

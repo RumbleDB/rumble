@@ -50,7 +50,7 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return BooleanLocalCursor.not(this.child, context);
+        return BooleanLocalCursor.not(this.child, context, this.getMetadata());
     }
 
     @Override
