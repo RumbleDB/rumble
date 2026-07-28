@@ -238,7 +238,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item left = materializeOperand(this.leftPlan);
             if (left == null) {
                 return null;

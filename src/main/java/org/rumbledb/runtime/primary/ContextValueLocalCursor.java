@@ -74,7 +74,7 @@ public final class ContextValueLocalCursor extends AtMostOneLocalCursor<Item> {
     }
 
     @Override
-    protected Item materializeFirstItemOrNull() {
+    protected Item materializeOneItemOrNull() {
         switch (this.kind) {
             case ITEM:
                 List<Item> items = this.context.getVariableValues()

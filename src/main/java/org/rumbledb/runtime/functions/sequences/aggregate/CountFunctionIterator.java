@@ -219,7 +219,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             if (this.countedVariable != null) {
                 return this.context.getVariableValues()
                     .getVariableCount(this.countedVariable, this.metadata);

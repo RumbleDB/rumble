@@ -148,7 +148,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return evaluate(this.child, this.sequenceType, this.getMetadata(), this.context);
         }
     }

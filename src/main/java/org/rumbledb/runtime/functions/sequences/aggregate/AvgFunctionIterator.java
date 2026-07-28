@@ -145,7 +145,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return computeLocalAverage(this.childPlan, this.context, this.metadata);
         }
     }

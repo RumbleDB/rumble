@@ -67,7 +67,7 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return evaluate(this.argumentPlan, this.context);
         }
     }

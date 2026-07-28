@@ -85,7 +85,7 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
     }
 
     @Override
-    protected Item materializeFirstItemOrNull() {
+    protected Item materializeOneItemOrNull() {
         validateCollation();
 
         Item selected = null;

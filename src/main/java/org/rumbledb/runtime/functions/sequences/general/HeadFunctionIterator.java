@@ -80,7 +80,7 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return this.childPlan.materializeFirstOrNull(this.context);
         }
     }

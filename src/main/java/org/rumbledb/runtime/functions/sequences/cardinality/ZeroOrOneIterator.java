@@ -87,7 +87,7 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             try {
                 return this.childPlan.materializeAtMostOne(this.context);
             } catch (MoreThanOneItemException exception) {

@@ -97,7 +97,7 @@ public final class BooleanLocalCursor extends AtMostOneLocalCursor<Item> {
     }
 
     @Override
-    protected Item materializeFirstItemOrNull() {
+    protected Item materializeOneItemOrNull() {
         boolean left = EffectiveBooleanValue.evaluate(this.leftPlan, this.context);
         if (this.operator == Operator.VALUE) {
             return ItemFactory.getInstance().createBooleanItem(left);

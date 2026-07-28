@@ -69,7 +69,7 @@ public final class ComputedLocalCursor<T> extends AtMostOneLocalCursor<T> {
     }
 
     @Override
-    protected T materializeFirstItemOrNull() {
+    protected T materializeOneItemOrNull() {
         return this.computation.get();
     }
 

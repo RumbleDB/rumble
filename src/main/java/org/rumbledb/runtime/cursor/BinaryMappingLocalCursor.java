@@ -94,7 +94,7 @@ public final class BinaryMappingLocalCursor<L, R, O> extends AtMostOneLocalCurso
     }
 
     @Override
-    protected O materializeFirstItemOrNull() {
+    protected O materializeOneItemOrNull() {
         L left = this.leftPlan.materializeFirstOrNull(this.context);
         if (left == null && !this.evaluateRightWhenLeftIsEmpty) {
             return null;

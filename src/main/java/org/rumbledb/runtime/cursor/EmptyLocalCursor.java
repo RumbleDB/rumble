@@ -31,7 +31,7 @@ public final class EmptyLocalCursor<T> extends AtMostOneLocalCursor<T> {
     }
 
     @Override
-    protected T materializeFirstItemOrNull() {
+    protected T materializeOneItemOrNull() {
         return null;
     }
 }

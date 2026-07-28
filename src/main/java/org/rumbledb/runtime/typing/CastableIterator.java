@@ -127,7 +127,7 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return evaluate(this.childPlan, this.sequenceType, this.staticContext, this.getMetadata(), this.context);
         }
     }

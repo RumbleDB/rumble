@@ -251,7 +251,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item zeroElement = this.zeroPlan == null
                 ? ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO)
                 : this.zeroPlan.materializeFirstOrNull(this.context);

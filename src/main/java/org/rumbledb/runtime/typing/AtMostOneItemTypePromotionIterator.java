@@ -157,7 +157,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             return evaluate(
                 this.iterator,
                 this.sequenceType,

@@ -63,7 +63,7 @@ final class ExistenceLocalCursor extends AtMostOneLocalCursor<Item> {
     }
 
     @Override
-    protected Item materializeFirstItemOrNull() {
+    protected Item materializeOneItemOrNull() {
         boolean exists = this.childPlan.materializeFirstOrNull(this.context) != null;
         return ItemFactory.getInstance().createBooleanItem(exists == this.expectedToExist);
     }

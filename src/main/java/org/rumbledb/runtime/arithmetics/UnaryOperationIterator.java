@@ -138,7 +138,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item item;
             try {
                 item = this.childPlan.materializeAtMostOne(this.context);

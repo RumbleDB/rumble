@@ -38,7 +38,7 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
 
     @Override
     protected final void openLocal() {
-        this.result = materializeFirstItemOrNull();
+        this.result = materializeOneItemOrNull();
         this.hasNext = this.result != null;
     }
 
@@ -62,5 +62,5 @@ public abstract class AtMostOneLocalCursor<T> extends AbstractLocalCursor<T> {
         this.hasNext = false;
     }
 
-    protected abstract T materializeFirstItemOrNull();
+    protected abstract T materializeOneItemOrNull();
 }

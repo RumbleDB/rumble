@@ -124,7 +124,7 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item emptyString = ItemFactory.getInstance().createStringItem("");
             Item left = materializeOperand(this.leftPlan, emptyString, "left");
             Item right = materializeOperand(this.rightPlan, emptyString, "right");

@@ -198,7 +198,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item leftItem = materializeOperand(this.leftPlan, true);
             Item rightItem = materializeOperand(this.rightPlan, false);
             return applyComparison(leftItem, rightItem, this.operator, this.getMetadata());

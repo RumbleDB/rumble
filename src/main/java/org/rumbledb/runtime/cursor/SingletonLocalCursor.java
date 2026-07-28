@@ -36,7 +36,7 @@ public final class SingletonLocalCursor<T> extends AtMostOneLocalCursor<T> {
     }
 
     @Override
-    protected T materializeFirstItemOrNull() {
+    protected T materializeOneItemOrNull() {
         return this.value;
     }
 }

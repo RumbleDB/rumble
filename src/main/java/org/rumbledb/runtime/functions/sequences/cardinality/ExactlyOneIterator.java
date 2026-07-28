@@ -98,7 +98,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             try {
                 Item value = this.childPlan.materializeAtMostOne(this.context);
                 if (value == null) {

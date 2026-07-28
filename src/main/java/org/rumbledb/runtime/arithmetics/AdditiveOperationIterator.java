@@ -168,7 +168,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         }
 
         @Override
-        protected Item materializeFirstItemOrNull() {
+        protected Item materializeOneItemOrNull() {
             Item left = materializeOperand(this.leftPlan, "left");
             Item right = materializeOperand(this.rightPlan, "right");
             return applyOperator(left, right, this.isMinus, this.getMetadata());
