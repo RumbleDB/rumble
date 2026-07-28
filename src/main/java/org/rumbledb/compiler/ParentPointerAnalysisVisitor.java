@@ -43,6 +43,8 @@ public class ParentPointerAnalysisVisitor extends AbstractNodeVisitor<Boolean> {
             || ("outermost".equals(localName) && arity == 1)
             || ("id".equals(localName) && (arity == 1 || arity == 2))
             || ("idref".equals(localName) && (arity == 1 || arity == 2))
-            || ("element-with-id".equals(localName) && (arity == 1 || arity == 2));
+            || ("element-with-id".equals(localName) && (arity == 1 || arity == 2))
+            || ("path".equals(localName) && (arity == 0 || arity == 1))
+            || ("resolve-QName".equals(localName) && arity == 2);
     }
 }
