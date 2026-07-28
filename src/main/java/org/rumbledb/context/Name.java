@@ -23,9 +23,9 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.EqualsAndHashCode;
-
 import org.rumbledb.exceptions.OurBadException;
+
+import lombok.EqualsAndHashCode;
 
 /**
  * This class represents expanded names, corresponding to QNames in the W3C XQuery standard.
@@ -48,7 +48,7 @@ public class Name implements Comparable<Name>, Serializable {
     @EqualsAndHashCode.Include
     private String namespace;
 
-    private String prefix;
+    private final String prefix;
 
     @EqualsAndHashCode.Include
     private String localName;

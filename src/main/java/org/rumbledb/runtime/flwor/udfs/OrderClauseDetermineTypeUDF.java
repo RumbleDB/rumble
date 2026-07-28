@@ -39,11 +39,11 @@ import java.util.List;
 public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     @Serial
     private static final long serialVersionUID = 1L;
-    private DataFrameContext dataFrameContext;
-    private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
+    private final DataFrameContext dataFrameContext;
+    private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
     private Item nextItem;
-    private List<String> result;
+    private final List<String> result;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,

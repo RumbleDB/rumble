@@ -46,9 +46,9 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private NodeComparisonExpression.NodeComparisonOperator operator;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private final NodeComparisonExpression.NodeComparisonOperator operator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
 
     public NodeComparisonRuntimeIterator(
             RuntimeIterator leftIterator,

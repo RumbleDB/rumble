@@ -43,7 +43,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
      */
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
 
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> children,

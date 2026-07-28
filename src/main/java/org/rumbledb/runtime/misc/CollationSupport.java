@@ -80,9 +80,6 @@ public final class CollationSupport {
 
     /**
      * Compares two strings by Unicode code point value, as required by the Unicode Codepoint Collation
-     * (http://www.w3.org/2005/xpath-functions/collation/codepoint), which is Rumble's default collation.
-     * Unlike {@link String#compareTo}, which orders by UTF-16 code unit, this orders supplementary
-     * characters (encoded as surrogate pairs) correctly relative to BMP characters above U+E000.
      */
     public static int compareByCodePoint(String left, String right) {
         int leftLength = left.length();

@@ -63,13 +63,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private RuntimeIterator filter;
+    private final RuntimeIterator iterator;
+    private final RuntimeIterator filter;
     private Item nextResult;
     private long position;
     private boolean mustMaintainPosition;
     private DynamicContext filterDynamicContext;
-    private boolean isBooleanOnlyFilter;
+    private final boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(

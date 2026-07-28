@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ForwardStepExpr extends StepExpr {
-    private ForwardAxis forwardAxis;
-    private NodeTest nodeTest;
+    private final ForwardAxis forwardAxis;
+    private final NodeTest nodeTest;
 
     public ForwardStepExpr(ForwardAxis forwardAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);

@@ -34,7 +34,7 @@ import java.util.List;
 
 public class FlworKey {
 
-    private List<Item> keyItems;
+    private final List<Item> keyItems;
 
     public FlworKey(List<Item> contents) {
         this.keyItems = new ArrayList<>();

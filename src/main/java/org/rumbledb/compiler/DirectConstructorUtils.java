@@ -81,6 +81,76 @@ final class DirectConstructorUtils {
         }
     }
 
+    private static final class ElementContentBuilder {
+        private final boolean preserveBoundarySpace;
+        private final List<Expression> expressions = new ArrayList<>();
+        private StringBuilder text;
+        private ExceptionMetadata firstTextMetadata;
+        private boolean boundaryWhitespaceOnly;
+
+        ElementContentBuilder(boolean preserveBoundarySpace) {
+            this.preserveBoundarySpace = preserveBoundarySpace;
+        }
+
+        /** Adds source text that the lexer placed on the hidden channel. */
+        void appendHiddenText(String value, ExceptionMetadata metadata) {
+            if (value.isEmpty()) {
+                return;
+            }
+            ensureText(metadata);
+            this.text.append(value);
+            this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly && isWhitespaceOnly(value);
+        }
+
+        /** Adds a child expression, merging text nodes and preserving non-text boundaries. */
+        void append(Expression expression) {
+            if (expression instanceof TextNodeExpression textExpression) {
+                String value = textExpression.getContent();
+                if (value.isEmpty()) {
+                    return;
+                }
+                ensureText(textExpression.getMetadata());
+                this.text.append(value);
+                this.boundaryWhitespaceOnly = this.boundaryWhitespaceOnly
+                    && textExpression.isBoundaryWhitespace()
+                    && isWhitespaceOnly(value);
+                return;
+            }
+            flushText();
+            this.expressions.add(expression);
+        }
+
+        /** Flushes the final text run and returns the normalized element content. */
+        List<Expression> finish() {
+            flushText();
+            return this.expressions;
+        }
+
+        private void ensureText(ExceptionMetadata metadata) {
+            if (this.text != null) {
+                return;
+            }
+            this.text = new StringBuilder();
+            this.firstTextMetadata = metadata;
+            this.boundaryWhitespaceOnly = true;
+        }
+
+        private void flushText() {
+            if (this.text == null) {
+                return;
+            }
+            if (
+                this.text.length() > 0
+                    && (this.preserveBoundarySpace || !this.boundaryWhitespaceOnly)
+            ) {
+                this.expressions.add(new TextNodeExpression(this.text.toString(), this.firstTextMetadata));
+            }
+            this.text = null;
+            this.firstTextMetadata = null;
+            this.boundaryWhitespaceOnly = true;
+        }
+    }
+
     /**
      * Converts a quoted direct attribute value into its ordered content expressions.
      *
@@ -183,90 +253,24 @@ final class DirectConstructorUtils {
             boolean preserveBoundarySpace,
             Function<T, Expression> contentProcessor
     ) {
-        List<Expression> content = new ArrayList<>();
-        StringBuilder text = null;
-        ExceptionMetadata firstTextMetadata = null;
-        boolean boundaryWhitespaceOnly = true;
+        ElementContentBuilder result = new ElementContentBuilder(preserveBoundarySpace);
         Token previousToken = firstContentToken;
 
         for (T child : children) {
             Expression expression = contentProcessor.apply(child);
-            if (expression instanceof TextNodeExpression textNode) {
-                if (textNode.getContent().isEmpty()) {
-                    previousToken = child.getStop();
-                    continue;
-                }
-                if (text == null) {
-                    text = new StringBuilder();
-                    firstTextMetadata = textNode.getMetadata();
-                    boundaryWhitespaceOnly = true;
-                }
-                boundaryWhitespaceOnly = appendBoundarySegment(
-                    text,
-                    getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                    true,
-                    boundaryWhitespaceOnly
-                );
-                text.append(textNode.getContent());
-                boundaryWhitespaceOnly = boundaryWhitespaceOnly
-                    && textNode.isBoundaryWhitespace()
-                    && isWhitespaceOnly(textNode.getContent());
-            } else {
-                if (text != null) {
-                    boundaryWhitespaceOnly = appendBoundarySegment(
-                        text,
-                        getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                        true,
-                        boundaryWhitespaceOnly
-                    );
-                    flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
-                    text = null;
-                    firstTextMetadata = null;
-                }
-                content.add(expression);
-            }
+            result.appendHiddenText(
+                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+                expression.getMetadata()
+            );
+            result.append(expression);
             previousToken = child.getStop();
         }
 
-        if (text != null) {
-            boundaryWhitespaceOnly = appendBoundarySegment(
-                text,
-                getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
-                true,
-                boundaryWhitespaceOnly
-            );
-            flushTextNode(content, text, firstTextMetadata, boundaryWhitespaceOnly, preserveBoundarySpace);
-        }
-        return content;
-    }
-
-    private static void flushTextNode(
-            List<Expression> content,
-            StringBuilder text,
-            ExceptionMetadata metadata,
-            boolean boundaryWhitespaceOnly,
-            boolean preserveBoundarySpace
-    ) {
-        if (text.length() == 0) {
-            return;
-        }
-        if (!preserveBoundarySpace && boundaryWhitespaceOnly && isWhitespaceOnly(text.toString())) {
-            return;
-        }
-        content.add(new TextNodeExpression(text.toString(), metadata));
-    }
-
-    private static boolean appendBoundarySegment(
-            StringBuilder text,
-            String segment,
-            boolean boundaryCandidate,
-            boolean boundaryWhitespaceOnly
-    ) {
-        if (segment.isEmpty()) {
-            return boundaryWhitespaceOnly;
-        }
-        text.append(segment);
-        return boundaryWhitespaceOnly && boundaryCandidate && isWhitespaceOnly(segment);
+        result.appendHiddenText(
+            getHiddenTextAfter(tokenStream, previousToken.getTokenIndex()),
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        return result.finish();
     }
 
     private static boolean isWhitespaceOnly(String value) {

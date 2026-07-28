@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class BooleanLiteralExpression extends Expression {
 
-    private boolean value;
+    private final boolean value;
 
     public BooleanLiteralExpression(boolean value, ExceptionMetadata metadata) {
         super(metadata);

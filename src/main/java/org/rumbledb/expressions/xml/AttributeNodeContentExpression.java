@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public class AttributeNodeContentExpression extends Expression {
 
-    private String content;
+    private final String content;
 
     public AttributeNodeContentExpression(String content, ExceptionMetadata metadata) {
         super(metadata);

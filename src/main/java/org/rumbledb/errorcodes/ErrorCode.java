@@ -28,6 +28,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import lombok.EqualsAndHashCode;
+
+@EqualsAndHashCode
 public final class ErrorCode implements Serializable {
 
     @Serial
@@ -64,19 +67,6 @@ public final class ErrorCode implements Serializable {
         return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ErrorCode errorCode)) {
-            return false;
-        }
-        return this.name.equals(errorCode.name);
-    }
-
-    @Override
-    public int hashCode() {
-        return this.name.hashCode();
-    }
-
     public static final ErrorCode DivisionByZero = registerBuiltIn("FOAR0001");
     public static final ErrorCode NumericOverflowOrUnderflow = registerBuiltIn("FOAR0002");
     public static final ErrorCode ApplyFunctionArityMismatch = registerBuiltIn("FOAP0001");
@@ -91,7 +81,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CodepointNotValidErrorCode = registerBuiltIn("FOCH0001");
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
+    public static final ErrorCode NodeNotInDocumentErrorCode = registerBuiltIn("FODC0001");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode InvalidXmlDocumentErrorCode = registerBuiltIn("FODC0006");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
 
