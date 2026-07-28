@@ -49,6 +49,7 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -73,6 +74,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient Duration currentMaxDayTimeDuration;
     private transient Period currentMaxYearMonthDuration;
     private transient OffsetTime currentMaxTime;
+    private transient Item currentMaxBinary;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -121,6 +123,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.currentMaxDayTimeDuration = null;
         this.currentMaxYearMonthDuration = null;
         this.currentMaxTime = null;
+        this.currentMaxBinary = null;
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
@@ -183,6 +186,12 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+                            this.activeType = 13;
+                            this.currentMaxBinary = candidateItem;
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+                            this.activeType = 14;
+                            this.currentMaxBinary = candidateItem;
                         } else {
                             throw new OurBadException("Inconsistent state in state iteration");
                         }
@@ -415,6 +424,32 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
+                    case 13:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (
+                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMaxBinary.getBinaryValue()) > 0
+                        ) {
+                            this.currentMaxBinary = candidateItem;
+                        }
+                        break;
+                    case 14:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (
+                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMaxBinary.getBinaryValue()) > 0
+                        ) {
+                            this.currentMaxBinary = candidateItem;
+                        }
+                        break;
                     default:
                         throw new OurBadException("Inconsistent state in state iteration");
                 }
@@ -468,6 +503,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 case 12:
                     itemResult = ItemFactory.getInstance()
                         .createTimeItem(this.currentMaxTime, this.hasTimeZone);
+                    break;
+                case 13:
+                case 14:
+                    itemResult = this.currentMaxBinary;
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
