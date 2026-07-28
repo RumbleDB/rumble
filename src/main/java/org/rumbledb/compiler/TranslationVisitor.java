@@ -475,7 +475,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                     uriString,
                     createMetadataFromContext(setterContext.baseURIDecl())
                 );
-                this.moduleContext.setStaticBaseUri(uri);
+                this.moduleContext.setStaticBaseUri(uri, URILiteralUtils.normalizeAsAnyURI(uriString));
                 baseURISet = true;
                 continue;
             }
