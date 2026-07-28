@@ -23,6 +23,8 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.EqualsAndHashCode;
+
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
@@ -32,6 +34,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
+@EqualsAndHashCode
 public class FlworDataFrameColumn implements Serializable {
 
     @Serial
@@ -83,37 +86,6 @@ public class FlworDataFrameColumn implements Serializable {
         } else {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof FlworDataFrameColumn other)) {
-            return false;
-        }
-        if (this.tableName == null && other.tableName != null) {
-            return false;
-        }
-        if (this.tableName != null && other.tableName == null) {
-            return false;
-        }
-        if (this.tableName != null && !this.tableName.equals(other.tableName)) {
-            return false;
-        }
-        if (!this.variableName.equals(other.variableName)) {
-            return false;
-        }
-        if (!this.columnFormat.equals(other.columnFormat)) {
-            return false;
-        }
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        if (this.tableName == null) {
-            return this.variableName.hashCode() + this.columnFormat.hashCode();
-        }
-        return this.tableName.hashCode() + this.variableName.hashCode() + this.columnFormat.hashCode();
     }
 
     public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
