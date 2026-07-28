@@ -10,6 +10,7 @@ import java.time.Period;
 import java.util.List;
 import java.util.Map;
 
+import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -27,7 +28,7 @@ import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-
+@NoArgsConstructor(force = true)
 public class AnnotatedItem implements Item {
 
     @Serial
