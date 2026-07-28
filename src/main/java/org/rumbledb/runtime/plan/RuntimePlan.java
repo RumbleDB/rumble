@@ -47,113 +47,91 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public abstract LocalCursor<T> createLocalCursor(DynamicContext context);
 
-    /**
-     * Creates the cursor used by terminal local operations. Subclasses may select an execution representation before
-     * adapting it to a local cursor; the default is the plan's native local cursor.
-     */
-    protected final LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
-        return switch (getExecutionMode()) {
+    private LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
+        return switch (this.getExecutionMode()) {
             case LOCAL -> this.createLocalCursor(context);
-            case RDD -> this.createRDDExecutionCursor(context);
-            case DATAFRAME -> this.createDataFrameExecutionCursor(context);
-            case UNSET -> throw unsetExecutionMode();
+            case RDD -> RuntimePlanConversions.rddToLocalCursor(
+                this.getRDD(context),
+                this.getRuntimeStaticContext()
+            );
+            case DATAFRAME -> RuntimePlanConversions.rddToLocalCursor(
+                this.getDataFrameResult(context).toRDD(this.getRuntimeStaticContext().getMetadata()),
+                this.getRuntimeStaticContext()
+            );
+            case UNSET -> throw this.unsetExecutionMode();
         };
-    }
-
-    /**
-     * Executes through the RDD representation selected by {@link #getRDD(DynamicContext)} and adapts it to a cursor.
-     */
-    protected final LocalCursor<T> createRDDExecutionCursor(DynamicContext context) {
-        return this.createLocalCursorFromRDD(this.getRDD(context));
-    }
-
-    /**
-     * Executes through the selected DataFrame representation and adapts it to a cursor.
-     */
-    protected final LocalCursor<T> createDataFrameExecutionCursor(DynamicContext context) {
-        return this.createLocalCursorFromDataFrame(this.getDataFrameResult(context));
-    }
-
-    /**
-     * Converts an already selected RDD representation to a local cursor.
-     */
-    protected final LocalCursor<T> createLocalCursorFromRDD(JavaRDD<T> rdd) {
-        return RuntimePlanConversions.rddToLocalCursor(rdd, getRuntimeStaticContext());
-    }
-
-    /**
-     * Converts an already selected DataFrame representation to a local cursor.
-     */
-    protected final LocalCursor<T> createLocalCursorFromDataFrame(RuntimeDataFrame<T> dataFrame) {
-        return this.createLocalCursorFromRDD(dataFrame.toRDD(getRuntimeStaticContext().getMetadata()));
     }
 
     /**
      * Returns this plan as an RDD, executing its compiled representation first and converting only at this boundary.
      */
     public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
-        return switch (getExecutionMode()) {
-            case LOCAL -> this.convertLocalToRDD(context);
+        return switch (this.getExecutionMode()) {
+            case LOCAL -> RuntimePlanConversions.localToRDD(this, context);
             case RDD -> {
                 if (this.hasNativeRDD()) {
-                    yield this.nativeRDD(context);
+                    yield this.getNativeRDD(context);
                 }
                 if (this.hasNativeDataFrame()) {
-                    yield this.nativeDataFrame(context).toRDD(getRuntimeStaticContext().getMetadata());
+                    yield this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata());
                 }
-                yield this.convertLocalToRDD(context);
+                yield RuntimePlanConversions.localToRDD(this, context);
             }
             case DATAFRAME -> {
                 if (this.hasNativeDataFrame()) {
-                    yield this.nativeDataFrame(context).toRDD(getRuntimeStaticContext().getMetadata());
+                    yield this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata());
                 }
                 if (this.hasNativeRDD()) {
-                    yield this.nativeRDD(context);
+                    yield this.getNativeRDD(context);
                 }
-                yield this.convertLocalToRDD(context);
+                yield RuntimePlanConversions.localToRDD(this, context);
             }
-            case UNSET -> throw unsetExecutionMode();
+            case UNSET -> throw this.unsetExecutionMode();
         };
-    }
-
-    protected final JavaRDD<T> convertLocalToRDD(DynamicContext context) {
-        return RuntimePlanConversions.localToRDD(this, context);
     }
 
     /**
      * Executes this plan in its compiled representation and exposes the result as a typed runtime DataFrame.
      */
     protected final RuntimeDataFrame<T> getDataFrameResult(@NonNull DynamicContext context) {
-        return switch (getExecutionMode()) {
+        return switch (this.getExecutionMode()) {
             case LOCAL -> this.convertLocalToDataFrame(context);
             case RDD -> {
                 if (this.hasNativeRDD()) {
-                    yield this.convertRDDToDataFrame(this.nativeRDD(context), context);
+                    yield this.convertRDDToDataFrame(this.getNativeRDD(context), context);
                 }
                 if (this.hasNativeDataFrame()) {
-                    yield this.nativeDataFrame(context);
+                    yield this.getNativeDataFrame(context);
                 }
                 yield this.convertLocalToDataFrame(context);
             }
             case DATAFRAME -> {
                 if (this.hasNativeDataFrame()) {
-                    yield this.nativeDataFrame(context);
+                    yield this.getNativeDataFrame(context);
                 }
                 if (this.hasNativeRDD()) {
-                    yield this.convertRDDToDataFrame(this.nativeRDD(context), context);
+                    yield this.convertRDDToDataFrame(this.getNativeRDD(context), context);
                 }
                 yield this.convertLocalToDataFrame(context);
             }
-            case UNSET -> throw unsetExecutionMode();
+            case UNSET -> throw this.unsetExecutionMode();
         };
     }
 
     protected RuntimeDataFrame<T> convertLocalToDataFrame(DynamicContext context) {
-        throw unsupportedRepresentation(ExecutionMode.DATAFRAME);
+        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
     protected RuntimeDataFrame<T> convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
-        throw unsupportedRepresentation(ExecutionMode.RDD);
+        throw this.unsupportedRepresentation(ExecutionMode.RDD);
+    }
+
+    protected JavaRDD<T> getNativeRDD(DynamicContext context) {
+        throw this.unsupportedRepresentation(ExecutionMode.RDD);
+    }
+
+    protected RuntimeDataFrame<T> getNativeDataFrame(DynamicContext context) {
+        throw this.unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
     private boolean hasNativeRDD() {
@@ -164,18 +142,8 @@ public abstract class RuntimePlan<T> implements Serializable {
         return this instanceof DataFrameRuntimePlan<?>;
     }
 
-    @SuppressWarnings("unchecked")
-    private JavaRDD<T> nativeRDD(DynamicContext context) {
-        return ((RDDRuntimePlan<T>) this).getNativeRDD(context);
-    }
-
-    @SuppressWarnings("unchecked")
-    private RuntimeDataFrame<T> nativeDataFrame(DynamicContext context) {
-        return ((DataFrameRuntimePlan<T>) this).getNativeDataFrame(context);
-    }
-
     private ExecutionMode getExecutionMode() {
-        return getRuntimeStaticContext().getExecutionMode();
+        return this.getRuntimeStaticContext().getExecutionMode();
     }
 
     private OurBadException unsetExecutionMode() {
@@ -185,7 +153,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     private OurBadException unsupportedRepresentation(ExecutionMode representation) {
         return new OurBadException(
                 "The runtime plan "
-                    + getClass().getCanonicalName()
+                    + this.getClass().getCanonicalName()
                     + " does not support "
                     + representation
                     + " execution."

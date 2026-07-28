@@ -88,7 +88,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      */
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
         try {
-            open(dynamicContext);
+            this.open(dynamicContext);
             return EffectiveBooleanValue.evaluateOpenSequence(
                 this::hasNext,
                 this::next,
@@ -119,11 +119,11 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         if (context == null) {
             throw new IteratorFlowException(
                     "No dynamic context was provided when opening an interator.",
-                    getMetadata()
+                    this.getMetadata()
             );
         }
         if (this.isOpen) {
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", getMetadata());
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", this.getMetadata());
         }
         this.isOpen = true;
         this.hasNext = true;
@@ -213,19 +213,19 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      * @return true if it can, false otherwise.
      */
     public boolean canProduceDataFrame() {
-        return isDataFrame()
+        return this.isDataFrame()
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
     public final JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeDataFrame<Item> dataFrame = getDataFrameResult(context);
+        RuntimeDataFrame<Item> dataFrame = this.getDataFrameResult(context);
         if (dataFrame instanceof JSoundDataFrame result) {
             return result;
         }
         throw new OurBadException(
                 "An item runtime plan produced an incompatible DataFrame: "
                     + dataFrame.getClass().getCanonicalName(),
-                getMetadata()
+                this.getMetadata()
         );
     }
 
@@ -235,7 +235,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      * @return the DataFrame.
      */
     public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
-        return getDataFrame(context);
+        return this.getDataFrame(context);
     }
 
     @Override
@@ -258,8 +258,8 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         throw new OurBadException(
-                "Pending Update Lists are not implemented for the iterator " + getClass().getCanonicalName(),
-                getMetadata()
+                "Pending Update Lists are not implemented for the iterator " + this.getClass().getCanonicalName(),
+                this.getMetadata()
         );
     }
 
@@ -273,7 +273,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        return materializeFirstOrNull(context);
+        return this.materializeFirstOrNull(context);
     }
 
     public Item materializeExactlyOneItem(
@@ -281,7 +281,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        Item result = materializeAtMostOne(context);
+        Item result = this.materializeAtMostOne(context);
         if (result == null) {
             throw new NoItemException();
         }
@@ -292,7 +292,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        return materializeAtMostOne(context);
+        return this.materializeAtMostOne(context);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
@@ -314,11 +314,11 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
-        buffer.append(getClass().getSimpleName());
+        buffer.append(this.getClass().getSimpleName());
         buffer.append(" | ");
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
-        buffer.append(getStaticType());
+        buffer.append(this.getStaticType());
         buffer.append(" | ");
         buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
@@ -326,7 +326,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> dependencies = this.getVariableDependencies();
         for (Name v : dependencies.keySet()) {
             buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
