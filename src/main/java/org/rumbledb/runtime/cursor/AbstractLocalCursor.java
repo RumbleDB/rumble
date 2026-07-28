@@ -54,12 +54,12 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
             return;
         }
         try {
-            openLocal();
+            this.openLocal();
             this.state = State.OPEN;
         } catch (RuntimeException | Error exception) {
             this.state = State.CLOSED;
             try {
-                closeLocal();
+                this.closeLocal();
             } catch (RuntimeException | Error closeException) {
                 exception.addSuppressed(closeException);
             }
@@ -69,20 +69,20 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
 
     @Override
     public final boolean hasNext() {
-        openIfNeeded();
+        this.openIfNeeded();
         if (this.state != State.OPEN) {
-            throw invalidState("Local cursor is not open.");
+            throw this.invalidState("Local cursor is not open.");
         }
-        return hasNextLocal();
+        return this.hasNextLocal();
     }
 
     @Override
     public final T next() {
-        openIfNeeded();
+        this.openIfNeeded();
         if (this.state != State.OPEN) {
-            throw invalidState("Local cursor is not open.");
+            throw this.invalidState("Local cursor is not open.");
         }
-        return nextLocal();
+        return this.nextLocal();
     }
 
     @Override
@@ -90,7 +90,7 @@ public abstract class AbstractLocalCursor<T> implements LocalCursor<T> {
         boolean wasOpen = this.state == State.OPEN;
         this.state = State.CLOSED;
         if (wasOpen) {
-            closeLocal();
+            this.closeLocal();
         }
     }
 
