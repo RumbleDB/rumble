@@ -38,10 +38,11 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.plan.ItemRuntimePlanConversions;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanConversions;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
@@ -239,12 +240,16 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
 
     @Override
     protected final JSoundDataFrame convertRDDToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
-        return ItemRuntimePlanConversions.rddToDataFrame(rdd, context, this.staticContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(rdd, context, this.staticContext);
     }
 
     @Override
     protected final JSoundDataFrame convertLocalToDataFrame(DynamicContext context) {
-        return ItemRuntimePlanConversions.localToDataFrame(this, context);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromLocal(
+            RuntimePlanConversions.materializeLocal(this, context),
+            context,
+            this.staticContext
+        );
     }
 
     public boolean isUpdating() {

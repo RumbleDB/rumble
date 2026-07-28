@@ -71,7 +71,7 @@ public final class RuntimePlanConversions {
             .parallelize(materializeLocal(plan, context));
     }
 
-    private static <T> List<T> materializeLocal(RuntimePlan<T> plan, DynamicContext context) {
+    public static <T> List<T> materializeLocal(RuntimePlan<T> plan, DynamicContext context) {
         List<T> items = new ArrayList<>();
         try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
             while (cursor.hasNext()) {
