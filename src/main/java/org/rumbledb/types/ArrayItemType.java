@@ -35,10 +35,6 @@ public class ArrayItemType implements ItemType {
     private List<Item> enumeration;
     private Integer minLength, maxLength;
 
-    ArrayItemType() {
-        super();
-    }
-
     ArrayItemType(
             Name name,
             ItemType baseType,

@@ -56,19 +56,8 @@ public class AtomicItemType implements ItemType {
      */
     private List<String> lexicalSpacePatterns;
 
-    public AtomicItemType() {
-    }
-
     AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
         this(name, allowedFacets, WhitespaceFacet.COLLAPSE, null);
-    }
-
-    AtomicItemType(
-            Name name,
-            Set<ConstrainingFacetTypes> allowedFacets,
-            WhitespaceFacet whiteSpace
-    ) {
-        this(name, allowedFacets, whiteSpace, null);
     }
 
     AtomicItemType(
