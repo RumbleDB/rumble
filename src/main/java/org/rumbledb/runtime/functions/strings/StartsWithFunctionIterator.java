@@ -23,12 +23,12 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.misc.CollationSupport;
 
 import java.io.Serial;
 import java.util.List;
@@ -61,12 +61,9 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     private Item evaluate(ComputedLocalCursor.Arguments<Item> arguments) {
-        if (arguments.size() == 3) {
-            String collation = arguments.get(2).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+        String collation = arguments.size() == 3
+            ? arguments.get(2).getStringValue()
+            : getRuntimeStaticContext().getDefaultCollation();
 
         Item substringItem = arguments.get(1);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
@@ -76,10 +73,12 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        boolean result = stringItem.getStringValue()
-            .startsWith(
-                substringItem.getStringValue()
-            );
+        boolean result = CollationSupport.startsWith(
+            stringItem.getStringValue(),
+            substringItem.getStringValue(),
+            collation,
+            getMetadata()
+        );
         return ItemFactory.getInstance().createBooleanItem(result);
     }
 

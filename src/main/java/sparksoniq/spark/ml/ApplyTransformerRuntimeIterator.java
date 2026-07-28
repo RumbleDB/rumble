@@ -34,12 +34,12 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private String transformerShortName;
-    private Transformer transformer;
+    private final String transformerShortName;
+    private final Transformer transformer;
 
     private JSoundDataFrame inputDataset;
     private Item paramMapItem;
-    private List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
+    private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
     public ApplyTransformerRuntimeIterator(
             String transformerShortName,

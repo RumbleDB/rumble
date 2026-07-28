@@ -44,7 +44,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private static final long serialVersionUID = 1L;
     private final List<RuntimeIterator> keys;
     private final List<RuntimeIterator> values;
-    private boolean mutable;
+    private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
             List<RuntimeIterator> keys,

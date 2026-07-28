@@ -43,7 +43,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
+    private final RuntimeIterator sequenceIterator;
     private Item nextResult;
     private List<Item> prevResults;
 

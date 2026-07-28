@@ -5,6 +5,8 @@ import org.rumbledb.context.Name;
 
 import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -13,6 +15,7 @@ import java.util.Set;
  * Wildcard element() is represented with no node-name restriction.
  * element(QName) is represented with a concrete node-name restriction.
  */
+@EqualsAndHashCode
 public class ElementNodeItemType implements ItemType {
 
     @Serial

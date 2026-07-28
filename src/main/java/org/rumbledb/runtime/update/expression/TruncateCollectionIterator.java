@@ -25,7 +25,7 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
-    private Mode mode;
+    private final Mode mode;
 
     public TruncateCollectionIterator(
             RuntimeIterator targetIterator,

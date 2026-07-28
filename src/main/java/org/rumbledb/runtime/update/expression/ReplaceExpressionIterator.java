@@ -27,9 +27,9 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator locatorIterator;
-    private RuntimeIterator replacerIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator locatorIterator;
+    private final RuntimeIterator replacerIterator;
 
     public ReplaceExpressionIterator(
             RuntimeIterator mainIterator,

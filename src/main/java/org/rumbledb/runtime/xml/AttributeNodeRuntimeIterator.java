@@ -45,8 +45,8 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name attributeName;
-    private List<DataFunctionIterator> atomizedValues;
+    private final Name attributeName;
+    private final List<DataFunctionIterator> atomizedValues;
 
     public AttributeNodeRuntimeIterator(
             Name attributeName,

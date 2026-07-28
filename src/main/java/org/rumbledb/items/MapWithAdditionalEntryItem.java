@@ -41,10 +41,10 @@ public class MapWithAdditionalEntryItem implements Item {
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Item additionalKey;
-    private List<Item> additionalValue;
-    private ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
+    private final Item original;
+    private final Item additionalKey;
+    private final List<Item> additionalValue;
+    private final ItemSameKeyComparator itemSameKeyComparator = new ItemSameKeyComparator();
 
     public MapWithAdditionalEntryItem() {
         this.original = null;

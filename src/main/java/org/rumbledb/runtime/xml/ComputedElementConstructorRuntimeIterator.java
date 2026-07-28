@@ -55,9 +55,9 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name staticElementName;
-    private DataFunctionIterator nameIterator;
-    private RuntimeIterator contentIterator;
+    private final Name staticElementName;
+    private final DataFunctionIterator nameIterator;
+    private final RuntimeIterator contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }

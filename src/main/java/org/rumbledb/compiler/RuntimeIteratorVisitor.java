@@ -267,8 +267,8 @@ import org.rumbledb.types.SequenceType;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
-    private VisitorConfig visitorConfig;
-    private RumbleRuntimeConfiguration config;
+    private final VisitorConfig visitorConfig;
+    private final RumbleRuntimeConfiguration config;
 
     public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {
         this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
@@ -397,7 +397,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
                             variableName,
-                            clause.getMetadata()
+                            clause.getMetadata(),
+                            var.getCollationURI(),
+                            var.getActualSequenceType()
                     )
                 );
             }

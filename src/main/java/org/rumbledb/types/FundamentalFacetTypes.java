@@ -14,7 +14,7 @@ public enum FundamentalFacetTypes {
     CARDINALITY("cardinality"),
     NUMERIC("numeric");
 
-    private String facetName;
+    private final String facetName;
 
     FundamentalFacetTypes(String facetName) {
         this.facetName = facetName;

@@ -26,9 +26,9 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator mainIterator;
-    private RuntimeIterator toInsertIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator mainIterator;
+    private final RuntimeIterator toInsertIterator;
+    private final RuntimeIterator positionIterator;
 
     public InsertExpressionIterator(
             RuntimeIterator mainIterator,

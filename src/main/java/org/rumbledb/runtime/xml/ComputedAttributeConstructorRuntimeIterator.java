@@ -50,9 +50,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AtMostOneItemLo
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name staticAttributeName;
-    private DataFunctionIterator nameIterator;
-    private DataFunctionIterator contentExpression;
+    private final Name staticAttributeName;
+    private final DataFunctionIterator nameIterator;
+    private final DataFunctionIterator contentExpression;
 
     /**
      * Constructor for static attribute name: attribute attributeName { value }

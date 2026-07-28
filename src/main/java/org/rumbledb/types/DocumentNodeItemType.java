@@ -5,6 +5,8 @@ import org.rumbledb.context.Name;
 
 import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -13,6 +15,7 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
+@EqualsAndHashCode
 public class DocumentNodeItemType implements ItemType {
 
     @Serial

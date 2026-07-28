@@ -6,6 +6,8 @@ import org.rumbledb.context.Name;
 
 import java.io.Serial;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 import java.util.Set;
 
 /**
@@ -14,6 +16,7 @@ import java.util.Set;
  * Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
+@EqualsAndHashCode
 public class PINodeItemType implements ItemType {
 
     @Serial

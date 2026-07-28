@@ -40,7 +40,7 @@ public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     /** The string content of the text node */
-    private String content;
+    private final String content;
 
     /**
      * Constructor for text node runtime iterator.

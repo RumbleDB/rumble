@@ -29,7 +29,7 @@ public class CreateCollectionIterator extends UpdatingExpressionIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
-    private Mode mode;
+    private final Mode mode;
 
     public CreateCollectionIterator(
             RuntimeIterator targetIterator,

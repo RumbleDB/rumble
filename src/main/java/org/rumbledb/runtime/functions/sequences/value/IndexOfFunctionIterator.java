@@ -42,8 +42,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator searchIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator searchIterator;
     private Item search;
     private Item nextResult;
     private int currentIndex;

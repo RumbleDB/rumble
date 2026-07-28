@@ -68,8 +68,8 @@ import java.util.Map;
  */
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
-    private RumbleRuntimeConfiguration configuration;
-    private Map<String, DynamicContext> importedModuleContexts;
+    private final RumbleRuntimeConfiguration configuration;
+    private final Map<String, DynamicContext> importedModuleContexts;
 
     DynamicContextVisitor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;

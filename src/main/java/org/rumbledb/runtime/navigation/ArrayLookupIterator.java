@@ -57,7 +57,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private int lookup;
     private Item nextResult;
     private java.util.Queue<Item> lookupResultQueue;

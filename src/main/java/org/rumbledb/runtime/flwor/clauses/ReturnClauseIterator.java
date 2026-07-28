@@ -72,9 +72,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeTupleIterator child;
+    private final RuntimeTupleIterator child;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private RuntimeIterator expression;
+    private final RuntimeIterator expression;
     private Item nextResult;
 
     public ReturnClauseIterator(

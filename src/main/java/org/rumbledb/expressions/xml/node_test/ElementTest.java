@@ -7,9 +7,9 @@ import java.io.Serial;
 public class ElementTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name elementName;
-    private boolean hasWildcard;
-    private Name typeName;
+    private final Name elementName;
+    private final boolean hasWildcard;
+    private final Name typeName;
     // TODO: add support for optional type
 
 

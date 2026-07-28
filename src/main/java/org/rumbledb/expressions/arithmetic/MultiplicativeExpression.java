@@ -38,7 +38,7 @@ public class MultiplicativeExpression extends Expression {
         MOD("mod"),
         IDIV("idiv");
 
-        private String name;
+        private final String name;
 
         MultiplicativeOperator(String name) {
             this.name = name;
@@ -66,9 +66,9 @@ public class MultiplicativeExpression extends Expression {
         }
     };
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private MultiplicativeOperator multiplicativeOperator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final MultiplicativeOperator multiplicativeOperator;
 
     public MultiplicativeExpression(
             Expression leftExpression,

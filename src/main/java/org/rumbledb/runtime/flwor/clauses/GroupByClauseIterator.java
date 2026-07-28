@@ -50,6 +50,8 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -134,7 +136,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                         }
                         if (key != null && !key.isAtomic()) {
                             throw new UnexpectedTypeException(
-                                    "Keys in a group-by clause must be atomics.",
+                                    "Group by variable must atomize to a supported atomic value.",
                                     getMetadata()
                             );
                         }
@@ -173,6 +175,44 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         List<FlworTuple> results = new ArrayList<>();
         tuplesByKey.values().forEach(group -> linearizeTuples(group, results));
         return results;
+    }
+
+    private void validateGroupingKeySequenceType(
+            SequenceType declaredType,
+            List<Item> groupingKey,
+            DynamicContext dynamicContext
+    ) {
+        if (declaredType == null) {
+            return;
+        }
+        if (!declaredType.isResolved()) {
+            declaredType.resolve(dynamicContext, getMetadata());
+        }
+
+        boolean validCardinality = switch (declaredType.getArity()) {
+            case Zero -> groupingKey.isEmpty();
+            case One -> groupingKey.size() == 1;
+            case OneOrZero -> groupingKey.size() <= 1;
+            case OneOrMore -> !groupingKey.isEmpty();
+            case ZeroOrMore -> true;
+        };
+        if (!validCardinality) {
+            throw new UnexpectedTypeException(
+                    "The grouping key has cardinality "
+                        + groupingKey.size()
+                        + ", but the expected type is "
+                        + declaredType,
+                    getMetadata()
+            );
+        }
+        for (Item item : groupingKey) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+                throw new UnexpectedTypeException(
+                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
+                        getMetadata()
+                );
+            }
+        }
     }
 
     /**
@@ -369,7 +409,13 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessNames, context, inputSchema, UDFcolumns, getMetadata()),
+                new GroupClauseCreateColumnsUDF(
+                        this.groupingExpressions,
+                        context,
+                        inputSchema,
+                        UDFcolumns,
+                        getMetadata()
+                ),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -524,6 +570,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             DynamicContext context,
             String input
     ) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return null;
+            }
+        }
+
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
         for (Name groupingVar : groupingVariables) {
@@ -654,6 +706,11 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
+            if (expression.getSequenceType() != null) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
         List<FlworDataFrameColumn> dfColumns = FlworDataFrameUtils.getColumns(
             (StructType) nativeClauseContext.getSchema(),
             null,

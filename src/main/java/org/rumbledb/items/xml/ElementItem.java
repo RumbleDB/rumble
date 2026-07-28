@@ -475,14 +475,11 @@ public class ElementItem implements Item {
             return Collections.singletonList(typedValue);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
-        // We still approximate typed-value by concatenating children for now, but preserve the
-        // untypedAtomic dynamic type instead of collapsing to xs:string.
-        StringBuilder stringValueBuilder = new StringBuilder();
-        for (Item child : this.children) {
-            stringValueBuilder.append(child.atomizedValue().get(0).getStringValue());
-        }
+        // For element nodes, typed-value is based on the element's string value, which is the
+        // concatenation of descendant text nodes in document order and therefore excludes comment
+        // and processing-instruction content.
         return Collections.singletonList(
-            ItemFactory.getInstance().createUntypedAtomicItem(stringValueBuilder.toString())
+            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
         );
     }
 

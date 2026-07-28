@@ -48,8 +48,8 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
     private final RuntimeIterator lookupIterator;
     private List<Item> lookupKeys;
     private List<Item> contextItem;
-    private Queue<Item> nextResult;
-    private boolean wildcard;
+    private final Queue<Item> nextResult;
+    private final boolean wildcard;
 
     public UnaryLookupIterator(
             RuntimeIterator lookupIterator,

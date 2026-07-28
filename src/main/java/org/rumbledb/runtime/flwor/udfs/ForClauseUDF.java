@@ -38,8 +38,8 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final RuntimeIterator expression;
 
     private List<Item> nextResult;
     private List<byte[]> results;

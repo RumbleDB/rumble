@@ -39,7 +39,7 @@ public class AttributeNodeContentRuntimeIterator extends AtMostOneItemLocalRunti
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+    private final Item item;
 
     public AttributeNodeContentRuntimeIterator(String content, RuntimeStaticContext staticContext) {
         super(null, staticContext);
