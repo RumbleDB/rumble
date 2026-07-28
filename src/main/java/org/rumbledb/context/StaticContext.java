@@ -50,6 +50,7 @@ public class StaticContext {
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
+    private String staticBaseUriString;
     private boolean emptySequenceOrderLeast;
     private boolean boundarySpacePreserve;
     private boolean copyNamespacesPreserve;
@@ -96,6 +97,7 @@ public class StaticContext {
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
         this.queryLanguage = configuration.getQueryLanguage() != null
             ? configuration.getQueryLanguage()
             : this.queryLanguage;
@@ -186,8 +188,24 @@ public class StaticContext {
         throw new OurBadException("Static base URI not set.");
     }
 
+    public String getStaticBaseUriString() {
+        if (this.staticBaseUriString != null) {
+            return this.staticBaseUriString;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseUriString();
+        }
+        throw new OurBadException("Static base URI not set.");
+    }
+
     public void setStaticBaseUri(URI staticBaseURI) {
         this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI, String staticBaseUriString) {
+        this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseUriString;
     }
 
     public boolean isInScope(Name varName) {
