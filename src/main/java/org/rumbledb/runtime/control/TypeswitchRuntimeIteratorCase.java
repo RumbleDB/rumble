@@ -11,9 +11,9 @@ import java.util.List;
 public class TypeswitchRuntimeIteratorCase implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name variableName;
-    private List<SequenceType> sequenceTypeUnion;
-    private RuntimeIterator returnIterator;
+    private final Name variableName;
+    private final List<SequenceType> sequenceTypeUnion;
+    private final RuntimeIterator returnIterator;
 
     public TypeswitchRuntimeIteratorCase(
             Name variableName,

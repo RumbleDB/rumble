@@ -41,14 +41,14 @@ public class LazyObjectItem extends AbstractMapItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<String> keys;
-    private Map<String, Item> values;
-    transient private Map<String, LazyValue> lazyValues;
+    private final List<String> keys;
+    private final Map<String, Item> values;
+    final transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private RuntimeIterator iterator;
-        private DynamicContext context;
-        private boolean isArray;
+        private final RuntimeIterator iterator;
+        private final DynamicContext context;
+        private final boolean isArray;
 
         public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;

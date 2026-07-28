@@ -38,14 +38,14 @@ public class AttributeNodeExpression extends Expression {
     /**
      * Resolved expanded name of the attribute (compile-time).
      */
-    private Name attributeName;
+    private final Name attributeName;
     /**
      * The value of the attribute node.
      * 
      * The value is a list of expressions. This is because an attribute node can be
      * constructed from multiple expressions and literals, which are materialized at runtime.
      */
-    private List<Expression> value;
+    private final List<Expression> value;
 
     public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
         super(metadata);

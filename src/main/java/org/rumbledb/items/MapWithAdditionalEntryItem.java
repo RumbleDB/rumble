@@ -41,9 +41,9 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     /**
      * This is an optimization version of maps when there is exactly one key-value pair.
      */
-    private Item original;
-    private Item additionalKey;
-    private List<Item> additionalValue;
+    private final Item original;
+    private final Item additionalKey;
+    private final List<Item> additionalValue;
 
     public MapWithAdditionalEntryItem() {
         this.original = null;

@@ -34,9 +34,9 @@ public class LongSerializeUDF implements UDF1<Long, byte[]> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<Item> nextResult;
+    private final List<Item> nextResult;
 
-    private DataFrameContext dataFrameContext;
+    private final DataFrameContext dataFrameContext;
 
     public LongSerializeUDF() {
         this.dataFrameContext = new DataFrameContext();

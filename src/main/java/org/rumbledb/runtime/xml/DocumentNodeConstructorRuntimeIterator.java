@@ -47,7 +47,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator contentIterator;
+    private final RuntimeIterator contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator

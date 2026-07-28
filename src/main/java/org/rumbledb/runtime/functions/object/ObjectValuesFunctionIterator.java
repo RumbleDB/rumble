@@ -38,7 +38,7 @@ public class ObjectValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private final RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectValuesFunctionIterator(

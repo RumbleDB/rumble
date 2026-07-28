@@ -18,15 +18,15 @@ public class UnionItemType extends AbstractItemType {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
+    private static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(ConstrainingFacetTypes.CONTENT)
     );
 
-    private Name name;
-    private ItemType baseType;
-    private int typeTreeDepth;
-    private List<ItemType> types;
-    private boolean userDefined;
+    private final Name name;
+    private final ItemType baseType;
+    private final int typeTreeDepth;
+    private final List<ItemType> types;
+    private final boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this(name, baseType, types, true);

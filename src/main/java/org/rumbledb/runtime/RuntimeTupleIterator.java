@@ -49,7 +49,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final RuntimeStaticContext staticContext;
-    protected RuntimeTupleIterator child;
+    protected final RuntimeTupleIterator child;
     protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;

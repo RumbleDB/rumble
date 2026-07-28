@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ReverseStepExpr extends StepExpr {
-    private ReverseAxis reverseAxis;
-    private NodeTest nodeTest;
+    private final ReverseAxis reverseAxis;
+    private final NodeTest nodeTest;
 
     public ReverseStepExpr(ReverseAxis reverseAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);

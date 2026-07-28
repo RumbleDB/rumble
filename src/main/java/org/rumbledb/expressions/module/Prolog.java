@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class Prolog extends Node {
 
     private List<Node> declarations;
-    private List<LibraryModule> importedModules;
+    private final List<LibraryModule> importedModules;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,

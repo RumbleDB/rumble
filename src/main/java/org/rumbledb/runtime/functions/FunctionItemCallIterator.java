@@ -54,8 +54,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     // parametrized fields
-    private Item functionItem;
-    private List<RuntimeIterator> functionArguments;
+    private final Item functionItem;
+    private final List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private boolean isPartialApplication;

@@ -11,7 +11,7 @@ import static org.apache.spark.sql.functions.lit;
 
 
 public class EditTuplePrimitive implements UpdatePrimitive {
-    private Item target;
+    private final Item target;
     private Dataset<Row> contents;
     // private Row targetRow;
     private final Collection collection;

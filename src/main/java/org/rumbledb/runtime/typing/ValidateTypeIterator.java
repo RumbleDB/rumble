@@ -48,9 +48,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType itemType;
+    private final ItemType itemType;
 
-    private boolean isValidate;
+    private final boolean isValidate;
 
     public ValidateTypeIterator(
             RuntimeIterator instance,

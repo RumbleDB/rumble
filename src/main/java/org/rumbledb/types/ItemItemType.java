@@ -15,7 +15,7 @@ public class ItemItemType extends AbstractItemType {
     private static final long serialVersionUID = 1L;
 
     static final ItemType item = new ItemItemType();
-    private Name name;
+    private final Name name;
 
     public ItemItemType() {
         this.name = Name.createVariableInDefaultTypeNamespace("item");

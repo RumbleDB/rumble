@@ -45,8 +45,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
+    private final RuntimeIterator sequenceIterator;
+    private final RuntimeIterator positionIterator;
     private RuntimeIterator lengthIterator;
     private Item nextResult;
     private int startPosition;

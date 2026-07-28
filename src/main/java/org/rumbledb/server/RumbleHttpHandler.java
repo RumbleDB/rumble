@@ -28,14 +28,14 @@ import com.sun.net.httpserver.HttpHandler;
 
 public class RumbleHttpHandler implements HttpHandler {
 
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     private enum StatusCode {
         SUCCESS(200),
         METHOD_NOT_SUPPORTED(405),
         SERVER_ERROR(500);
 
-        private int code;
+        private final int code;
 
         StatusCode(int code) {
             this.code = code;
