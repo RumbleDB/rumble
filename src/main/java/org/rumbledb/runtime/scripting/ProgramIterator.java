@@ -18,7 +18,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

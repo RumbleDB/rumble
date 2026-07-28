@@ -43,7 +43,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

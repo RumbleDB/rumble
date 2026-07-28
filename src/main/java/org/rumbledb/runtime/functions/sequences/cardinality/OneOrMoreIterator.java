@@ -39,7 +39,7 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
 
-public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

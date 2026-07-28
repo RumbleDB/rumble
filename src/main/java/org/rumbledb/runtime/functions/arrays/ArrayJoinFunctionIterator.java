@@ -39,7 +39,7 @@ import java.util.List;
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
  */
-public class ArrayJoinFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayJoinFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -50,7 +50,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-public class FunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class FunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

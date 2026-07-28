@@ -35,7 +35,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.io.Serial;
 import java.util.List;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class IfRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

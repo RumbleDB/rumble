@@ -11,18 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
-import org.rumbledb.types.ItemType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -76,51 +71,6 @@ public final class RuntimePlanConversions {
             .parallelize(materializeLocal(plan, context));
     }
 
-    public static JavaRDD<Item> dataFrameToRDD(JSoundDataFrame dataFrame, ExceptionMetadata metadata) {
-        return dataFrame.toRDD(metadata);
-    }
-
-    public static JSoundDataFrame rddToDataFrame(
-            JavaRDD<Item> rdd,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
-        ItemType itemType = staticContext.getStaticType().getItemType();
-        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
-            itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-        }
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
-    }
-
-    public static JSoundDataFrame localToDataFrame(RuntimePlan<Item> plan, DynamicContext context) {
-        RuntimeStaticContext staticContext = plan.getRuntimeStaticContext();
-        List<Item> items = materializeLocal(plan, context);
-        ItemType itemType = staticContext.getStaticType().getItemType();
-
-        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
-            itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-            if (staticContext.getConfiguration().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + itemType);
-            }
-        }
-
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(
-            items,
-            itemType,
-            context,
-            true,
-            staticContext
-        );
-    }
-
     private static <T> List<T> materializeLocal(RuntimePlan<T> plan, DynamicContext context) {
         List<T> items = new ArrayList<>();
         try (LocalCursor<T> cursor = plan.createLocalCursor(context)) {
@@ -130,4 +80,5 @@ public final class RuntimePlanConversions {
         }
         return items;
     }
+
 }

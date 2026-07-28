@@ -50,7 +50,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class RangeOperationIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

@@ -53,7 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

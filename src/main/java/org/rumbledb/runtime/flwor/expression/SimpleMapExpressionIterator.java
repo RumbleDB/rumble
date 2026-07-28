@@ -53,7 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class SimpleMapExpressionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

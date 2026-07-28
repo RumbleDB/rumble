@@ -17,7 +17,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

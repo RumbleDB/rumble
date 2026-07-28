@@ -18,7 +18,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ExitStatementIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ExitStatementIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;

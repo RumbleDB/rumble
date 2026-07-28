@@ -45,7 +45,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReverseFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ReverseFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

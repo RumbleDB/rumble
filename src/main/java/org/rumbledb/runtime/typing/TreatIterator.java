@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class TreatIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class TreatIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -27,7 +27,7 @@ import java.util.Collections;
  * Function conversion step for arguments: cast runtime xs:untypedAtomic values to the requested atomic type
  * before the generic type-promotion layer runs. Non-untyped values flow through unchanged.
  */
-public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

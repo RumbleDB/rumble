@@ -28,7 +28,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  * Removes all entries whose key is the same-key as any supplied key (op:same-key).
  * This built-in is local execution only (consistent with other map/array accessors).
  */
-public class MapRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class MapRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

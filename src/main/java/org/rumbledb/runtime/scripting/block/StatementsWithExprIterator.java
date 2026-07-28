@@ -18,7 +18,7 @@ import java.io.Serial;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class StatementsWithExprIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class StatementsWithExprIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;

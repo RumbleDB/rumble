@@ -45,7 +45,7 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ValidateTypeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ValidateTypeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

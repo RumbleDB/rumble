@@ -24,7 +24,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

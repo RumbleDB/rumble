@@ -30,7 +30,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator implements DataFrameRuntimePlan {
+public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -44,7 +44,7 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator implem
 
     @Override
     protected final JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return dataFrameToRDDOfItems(getNativeDataFrame(context), getMetadata());
+        return getNativeDataFrame(context).toRDD(getMetadata());
     }
 
     @Override

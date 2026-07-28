@@ -44,7 +44,7 @@ import java.util.Queue;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapKeysFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class MapKeysFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

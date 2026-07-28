@@ -46,7 +46,7 @@ import org.rumbledb.types.SequenceType;
  * XPath and XQuery Functions and Operators 3.1 {@code array:filter}:
  * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
  */
-public class ArrayFilterFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayFilterFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

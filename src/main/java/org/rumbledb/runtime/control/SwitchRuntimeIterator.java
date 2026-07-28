@@ -40,7 +40,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 
-public class SwitchRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class SwitchRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

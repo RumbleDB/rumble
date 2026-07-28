@@ -43,7 +43,7 @@ import java.util.List;
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class MapForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

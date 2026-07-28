@@ -35,6 +35,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -49,7 +50,8 @@ public abstract class RuntimeTupleIterator
         extends
             RuntimePlan<FlworTuple>
         implements
-            RuntimeIteratorInterface<FlworTuple> {
+            RuntimeIteratorInterface<FlworTuple>,
+            DataFrameRuntimePlan<FlworTuple> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -161,6 +163,11 @@ public abstract class RuntimeTupleIterator
     public abstract FlworDataFrame getDataFrame(
             DynamicContext context
     );
+
+    @Override
+    public final FlworDataFrame getNativeDataFrame(DynamicContext context) {
+        return getDataFrame(context);
+    }
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.

@@ -22,7 +22,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
-public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

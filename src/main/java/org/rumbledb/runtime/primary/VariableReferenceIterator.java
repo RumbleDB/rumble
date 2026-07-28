@@ -47,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VariableReferenceIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class VariableReferenceIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

@@ -43,7 +43,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
-public class ArrayTailFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayTailFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

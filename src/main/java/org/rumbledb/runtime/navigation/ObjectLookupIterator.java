@@ -67,7 +67,7 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ObjectLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ObjectLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

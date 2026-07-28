@@ -46,7 +46,7 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class SubsequenceFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class SubsequenceFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

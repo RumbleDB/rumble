@@ -38,9 +38,10 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlanConversions;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.plan.RuntimePlanConversions;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
@@ -216,7 +217,15 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     }
 
     public final JSoundDataFrame getDataFrame(DynamicContext context) {
-        return getDataFrameResult(context);
+        RuntimeDataFrame<Item> dataFrame = getDataFrameResult(context);
+        if (dataFrame instanceof JSoundDataFrame result) {
+            return result;
+        }
+        throw new OurBadException(
+                "An item runtime plan produced an incompatible DataFrame: "
+                    + dataFrame.getClass().getCanonicalName(),
+                getMetadata()
+        );
     }
 
     /**
@@ -229,18 +238,13 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     }
 
     @Override
-    protected final JavaRDD<Item> convertDataFrameToRDD(JSoundDataFrame dataFrame) {
-        return RuntimePlanConversions.dataFrameToRDD(dataFrame, getMetadata());
-    }
-
-    @Override
     protected final JSoundDataFrame convertRDDToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
-        return RuntimePlanConversions.rddToDataFrame(rdd, context, this.staticContext);
+        return ItemRuntimePlanConversions.rddToDataFrame(rdd, context, this.staticContext);
     }
 
     @Override
     protected final JSoundDataFrame convertLocalToDataFrame(DynamicContext context) {
-        return RuntimePlanConversions.localToDataFrame(this, context);
+        return ItemRuntimePlanConversions.localToDataFrame(this, context);
     }
 
     public boolean isUpdating() {

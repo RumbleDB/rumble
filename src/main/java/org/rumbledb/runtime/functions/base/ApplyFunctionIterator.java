@@ -25,7 +25,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ApplyFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

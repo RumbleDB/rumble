@@ -16,7 +16,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 import java.io.Serial;
 import java.util.List;
 
-public class DropColumnsIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class DropColumnsIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

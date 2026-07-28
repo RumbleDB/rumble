@@ -34,7 +34,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class UnorderedFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

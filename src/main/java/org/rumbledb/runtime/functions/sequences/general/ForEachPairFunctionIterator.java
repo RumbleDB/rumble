@@ -40,7 +40,7 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 import java.util.List;
 
-public class ForEachPairFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ForEachPairFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

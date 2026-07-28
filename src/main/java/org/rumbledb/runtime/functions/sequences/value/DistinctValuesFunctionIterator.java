@@ -40,7 +40,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

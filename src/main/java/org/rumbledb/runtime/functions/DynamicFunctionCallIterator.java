@@ -48,7 +48,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-public class DynamicFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 

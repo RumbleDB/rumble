@@ -45,7 +45,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class DataFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class DataFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
 
     @Serial

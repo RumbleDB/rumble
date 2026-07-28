@@ -45,7 +45,7 @@ import org.rumbledb.types.SequenceType;
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each}:
  * {@code array:for-each($array as array(*), $action as function(item()*) as item()*) as array(*)}.
  */
-public class ArrayForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

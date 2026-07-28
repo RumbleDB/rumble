@@ -20,7 +20,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ArrayGetFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayGetFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

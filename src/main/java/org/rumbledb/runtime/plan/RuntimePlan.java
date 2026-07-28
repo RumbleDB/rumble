@@ -18,9 +18,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 
 /**
  * Immutable, reusable description of a runtime computation.
@@ -31,8 +31,8 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  * </p>
  *
  * <p>
- * Item plans may also implement {@link RDDRuntimePlan} or {@link DataFrameRuntimePlan} to request distributed
- * execution with centrally managed conversion.
+ * Plans may also implement {@link RDDRuntimePlan} or {@link DataFrameRuntimePlan} to request distributed execution
+ * with centrally managed conversion.
  * </p>
  *
  * @param <T> the type produced by local execution of this plan
@@ -84,8 +84,8 @@ public abstract class RuntimePlan<T> implements Serializable {
     /**
      * Converts an already selected DataFrame representation to a local cursor.
      */
-    protected final LocalCursor<T> createLocalCursorFromDataFrame(JSoundDataFrame dataFrame) {
-        return this.createLocalCursorFromRDD(this.convertDataFrameToRDD(dataFrame));
+    protected final LocalCursor<T> createLocalCursorFromDataFrame(RuntimeDataFrame<T> dataFrame) {
+        return this.createLocalCursorFromRDD(dataFrame.toRDD(getRuntimeStaticContext().getMetadata()));
     }
 
     /**
@@ -99,13 +99,13 @@ public abstract class RuntimePlan<T> implements Serializable {
                     yield this.nativeRDD(context);
                 }
                 if (this.hasNativeDataFrame()) {
-                    yield this.convertDataFrameToRDD(this.nativeDataFrame(context));
+                    yield this.nativeDataFrame(context).toRDD(getRuntimeStaticContext().getMetadata());
                 }
                 yield this.convertLocalToRDD(context);
             }
             case DATAFRAME -> {
                 if (this.hasNativeDataFrame()) {
-                    yield this.convertDataFrameToRDD(this.nativeDataFrame(context));
+                    yield this.nativeDataFrame(context).toRDD(getRuntimeStaticContext().getMetadata());
                 }
                 if (this.hasNativeRDD()) {
                     yield this.nativeRDD(context);
@@ -120,18 +120,10 @@ public abstract class RuntimePlan<T> implements Serializable {
         return RuntimePlanConversions.localToRDD(this, context);
     }
 
-    protected JavaRDD<T> convertDataFrameToRDD(JSoundDataFrame dataFrame) {
-        throw unsupportedRepresentation(ExecutionMode.DATAFRAME);
-    }
-
     /**
-     * Executes this plan in its compiled representation and exposes the result as a JSONiq DataFrame.
-     *
-     * <p>
-     * Tuple plans use their own FLWOR DataFrame API; item plans expose this result through RuntimeIterator.
-     * </p>
+     * Executes this plan in its compiled representation and exposes the result as a typed runtime DataFrame.
      */
-    protected final JSoundDataFrame getDataFrameResult(@NonNull DynamicContext context) {
+    protected final RuntimeDataFrame<T> getDataFrameResult(@NonNull DynamicContext context) {
         return switch (getExecutionMode()) {
             case LOCAL -> this.convertLocalToDataFrame(context);
             case RDD -> {
@@ -156,11 +148,11 @@ public abstract class RuntimePlan<T> implements Serializable {
         };
     }
 
-    protected JSoundDataFrame convertLocalToDataFrame(DynamicContext context) {
+    protected RuntimeDataFrame<T> convertLocalToDataFrame(DynamicContext context) {
         throw unsupportedRepresentation(ExecutionMode.DATAFRAME);
     }
 
-    protected JSoundDataFrame convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
+    protected RuntimeDataFrame<T> convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
         throw unsupportedRepresentation(ExecutionMode.RDD);
     }
 
@@ -169,7 +161,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     private boolean hasNativeDataFrame() {
-        return this instanceof DataFrameRuntimePlan;
+        return this instanceof DataFrameRuntimePlan<?>;
     }
 
     @SuppressWarnings("unchecked")
@@ -177,8 +169,9 @@ public abstract class RuntimePlan<T> implements Serializable {
         return ((RDDRuntimePlan<T>) this).getNativeRDD(context);
     }
 
-    private JSoundDataFrame nativeDataFrame(DynamicContext context) {
-        return ((DataFrameRuntimePlan) this).getNativeDataFrame(context);
+    @SuppressWarnings("unchecked")
+    private RuntimeDataFrame<T> nativeDataFrame(DynamicContext context) {
+        return ((DataFrameRuntimePlan<T>) this).getNativeDataFrame(context);
     }
 
     private ExecutionMode getExecutionMode() {

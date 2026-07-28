@@ -21,7 +21,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
-public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

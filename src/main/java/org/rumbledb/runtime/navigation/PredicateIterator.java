@@ -61,7 +61,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class PredicateIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class PredicateIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

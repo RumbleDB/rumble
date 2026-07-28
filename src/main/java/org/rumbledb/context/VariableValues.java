@@ -27,7 +27,6 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;

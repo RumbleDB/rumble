@@ -39,7 +39,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
  */
-public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

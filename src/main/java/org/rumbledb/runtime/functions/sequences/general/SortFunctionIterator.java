@@ -32,7 +32,7 @@ import java.util.List;
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class SortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

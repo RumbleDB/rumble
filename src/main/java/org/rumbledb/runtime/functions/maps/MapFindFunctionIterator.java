@@ -40,7 +40,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
-public class MapFindFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class MapFindFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

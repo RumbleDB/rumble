@@ -52,7 +52,7 @@ import org.rumbledb.types.SequenceType;
  * {@code array:sort($array)}, {@code array:sort($array, $collation?)},
  * {@code array:sort($array, $collation?, $key)}.
  */
-public class ArraySortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArraySortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

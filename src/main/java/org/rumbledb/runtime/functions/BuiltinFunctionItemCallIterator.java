@@ -36,7 +36,7 @@ import java.util.List;
 /**
  * Dynamic invocation of a function item that represents a builtin named function reference.
  */
-public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

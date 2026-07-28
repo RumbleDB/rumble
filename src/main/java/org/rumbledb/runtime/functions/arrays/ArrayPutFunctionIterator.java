@@ -42,7 +42,7 @@ import java.util.List;
  * F&amp;O 3.1 array:put — returns a new array with the member at a 1-based position replaced
  * by a given sequence (FOAY0001 if position is out of bounds).
  */
-public class ArrayPutFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayPutFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

@@ -44,7 +44,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
  * (distinct positions; order preserved). Raises FOAY0001 if any position is out of bounds.
  */
-public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -43,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
     // static: functionIdentifier known at compile time
 
     @Serial

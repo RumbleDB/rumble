@@ -38,7 +38,7 @@ import java.util.List;
 /**
  * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
  */
-public class MapFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
+public class MapFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {
