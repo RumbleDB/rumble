@@ -312,7 +312,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                         variable.getActualSequenceType(),
                         (variable.getExpression() == null)
                             ? variable.getExpression()
-                            : (Expression) visit(variable.getExpression(), argument)
+                            : (Expression) visit(variable.getExpression(), argument),
+                        variable.getCollationURI()
                 )
             );
         }

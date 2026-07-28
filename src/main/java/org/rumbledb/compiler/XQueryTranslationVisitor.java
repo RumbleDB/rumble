@@ -1177,9 +1177,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public OrderByClauseSortingKey processOrderByExpr(XQueryParser.OrderByExprContext ctx) {
         String uri = null;
         if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
+            String collation = resolveCollationUri(ctx.uriLiteral());
             if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
-                throw new DefaultCollationException(
+                throw new UnknownCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
@@ -1207,14 +1207,16 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public GroupByVariableDeclaration processGroupByVar(XQueryParser.GroupByVarContext ctx) {
+        String collationUri = null;
         if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
+            String collation = resolveCollationUri(ctx.uriLiteral());
             if (!this.moduleContext.isStaticallyKnownCollation(collation)) {
-                throw new DefaultCollationException(
+                throw new UnknownCollationException(
                         "Unknown collation: " + collation,
                         createMetadataFromContext(ctx.uriLiteral())
                 );
             }
+            collationUri = collation;
         }
         SequenceType seq = null;
         Expression expr = null;
@@ -1226,14 +1228,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
-            if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-
         }
 
 
-        return new GroupByVariableDeclaration(var, seq, expr);
+        return new GroupByVariableDeclaration(var, seq, expr, collationUri);
     }
 
     @Override
@@ -3735,7 +3733,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
-        String uri = processURILiteral(ctx.uriLiteral());
+        String uri = resolveCollationUri(ctx.uriLiteral());
         if (!this.moduleContext.isStaticallyKnownCollation(uri)) {
             throw new DefaultCollationException(
                     "Unknown collation: " + uri,
@@ -3745,8 +3743,31 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.moduleContext.setDefaultCollation(uri);
     }
 
+    private String resolveCollationUri(UriLiteralContext ctx) {
+        String uriString = processURILiteral(ctx);
+        URI uri = URILiteralUtils.resolve(
+            this.moduleContext.getStaticBaseURI(),
+            uriString,
+            createMetadataFromContext(ctx)
+        );
+        return uri.toString();
+    }
+
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.targetNamespace);
+        ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        if (namespace.isEmpty()) {
+            throw new EmptyModuleURIException("Module URI is empty.", metadata);
+        }
+        if (ctx.ncName() != null) {
+            String prefix = ctx.ncName().getText();
+            if (prefix.equals("xml") || prefix.equals("xmlns")) {
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Module import prefix " + prefix + " is reserved.",
+                        metadata
+                );
+            }
+        }
         List<String> locationHints = ctx.locations.stream()
             .map(this::processURILiteral)
             .collect(Collectors.toList());
@@ -3755,13 +3776,13 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             locationHints,
             this.moduleContext,
             this.compilationConfiguration,
-            createMetadataFromContext(ctx)
+            metadata
         );
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
                 libraryModule.getNamespace(),
-                createMetadataFromContext(ctx)
+                metadata
             );
         }
         return libraryModule;

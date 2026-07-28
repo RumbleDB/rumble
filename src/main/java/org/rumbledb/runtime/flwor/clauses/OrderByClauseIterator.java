@@ -48,6 +48,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -208,14 +209,30 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        return normalizeOrderKeyAtomic(atomizedItem);
+        String collationUri = CollationSupport.resolveCollation(
+            expressionWithIterator.getUri(),
+            expressionWithIterator.getIterator().getRuntimeStaticContext()
+        );
+        return normalizeOrderKeyAtomic(
+            atomizedItem,
+            collationUri,
+            expressionWithIterator.getIterator().getMetadata()
+        );
     }
 
-    public static Item normalizeOrderKeyAtomic(Item atomizedItem) {
+    public static Item normalizeOrderKeyAtomic(
+            Item atomizedItem,
+            String collationUri,
+            org.rumbledb.exceptions.ExceptionMetadata metadata
+    ) {
         if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
-            return ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
+            atomizedItem = ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
         }
-        return atomizedItem;
+        return CollationSupport.normalizeItemForCollation(
+            atomizedItem,
+            collationUri,
+            metadata
+        );
     }
 
     @Override

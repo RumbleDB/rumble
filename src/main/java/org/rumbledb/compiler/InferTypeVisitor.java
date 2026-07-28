@@ -2645,7 +2645,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = inferredType;
                 } else {
-                    inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getStaticSequenceType();
+                    inferredType = groupByVarExpr.getStaticSequenceType();
                     expectedType = declaredType;
                 }
                 checkAndUpdateVariableStaticType(
