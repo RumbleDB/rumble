@@ -139,8 +139,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean implementsDataFrames() {
-        // SQL DISTINCT does not implement XDM numeric promotion or NaN equality.
-        return false;
+        return true;
     }
 
     @Override
