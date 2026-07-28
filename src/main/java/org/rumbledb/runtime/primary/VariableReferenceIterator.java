@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VariableReferenceIterator extends HybridRuntimeIterator {
+public class VariableReferenceIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

@@ -40,6 +40,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -47,7 +48,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 

@@ -13,6 +13,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -31,7 +32,7 @@ import java.util.List;
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends HybridRuntimeIterator {
+public class SortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

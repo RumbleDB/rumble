@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -33,14 +32,11 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import sparksoniq.spark.SparkSessionManager;
-
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
@@ -57,16 +53,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
         if (getHighestExecutionMode() != ExecutionMode.LOCAL) {
             throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
         }
-    }
-
-    @Override
-    protected JavaRDD<Item> getNativeRDD(DynamicContext context) {
-        Item i = materializeFirstItemOrNull(context);
-        List<Item> result = new ArrayList<>();
-        if (i != null) {
-            result.add(i);
-        }
-        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(result);
     }
 
     @Override

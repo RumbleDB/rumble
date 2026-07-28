@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
@@ -44,7 +45,7 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ValidateTypeIterator extends HybridRuntimeIterator {
+public class ValidateTypeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

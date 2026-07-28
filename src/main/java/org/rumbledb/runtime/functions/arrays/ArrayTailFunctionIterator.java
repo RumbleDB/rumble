@@ -38,11 +38,12 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
-public class ArrayTailFunctionIterator extends HybridRuntimeIterator {
+public class ArrayTailFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -17,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class InnermostFunctionIterator extends HybridRuntimeIterator {
+public class InnermostFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

@@ -11,11 +11,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.context.DynamicContext;
 
 /**
- * RDD execution capability.
- *
- * <p>
- * The runtime may use a native RDD implementation or centrally convert local execution.
- * </p>
+ * Native RDD execution capability. Plans that do not implement this interface are converted centrally from another
+ * supported representation.
  *
  * @param <T> the RDD element type
  */

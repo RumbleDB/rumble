@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -38,7 +39,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
  */
-public class ArrayAppendFunctionIterator extends HybridRuntimeIterator {
+public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

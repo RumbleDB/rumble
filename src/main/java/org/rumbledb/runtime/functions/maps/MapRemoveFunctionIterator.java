@@ -16,6 +16,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -27,7 +28,7 @@ import org.rumbledb.runtime.cursor.LocalCursor;
  * Removes all entries whose key is the same-key as any supplied key (op:same-key).
  * This built-in is local execution only (consistent with other map/array accessors).
  */
-public class MapRemoveFunctionIterator extends HybridRuntimeIterator {
+public class MapRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

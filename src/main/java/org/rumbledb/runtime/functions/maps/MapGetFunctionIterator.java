@@ -9,6 +9,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -29,7 +30,7 @@ import java.util.Queue;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapGetFunctionIterator extends HybridRuntimeIterator {
+public class MapGetFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -36,6 +36,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -52,7 +53,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ArrayLookupIterator extends HybridRuntimeIterator {
+public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

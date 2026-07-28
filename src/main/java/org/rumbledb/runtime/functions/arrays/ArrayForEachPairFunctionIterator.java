@@ -37,6 +37,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -46,7 +47,7 @@ import org.rumbledb.types.SequenceType;
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each-pair}:
  * {@code array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)}.
  */
-public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator {
+public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -44,7 +45,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReverseFunctionIterator extends HybridRuntimeIterator {
+public class ReverseFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

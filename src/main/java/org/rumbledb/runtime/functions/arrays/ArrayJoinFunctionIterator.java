@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -38,7 +39,7 @@ import java.util.List;
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
  */
-public class ArrayJoinFunctionIterator extends HybridRuntimeIterator {
+public class ArrayJoinFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

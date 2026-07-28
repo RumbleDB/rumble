@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -42,7 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator {
+public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
     // static: functionIdentifier known at compile time
 
     @Serial

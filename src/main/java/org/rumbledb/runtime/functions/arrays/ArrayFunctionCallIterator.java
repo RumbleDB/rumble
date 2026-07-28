@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -16,7 +17,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFunctionCallIterator extends HybridRuntimeIterator {
+public class ArrayFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

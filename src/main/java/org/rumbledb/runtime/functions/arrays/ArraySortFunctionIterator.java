@@ -40,6 +40,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -51,7 +52,7 @@ import org.rumbledb.types.SequenceType;
  * {@code array:sort($array)}, {@code array:sort($array, $collation?)},
  * {@code array:sort($array, $collation?, $key)}.
  */
-public class ArraySortFunctionIterator extends HybridRuntimeIterator {
+public class ArraySortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

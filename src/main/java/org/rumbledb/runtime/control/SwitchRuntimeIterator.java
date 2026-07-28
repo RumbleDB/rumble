@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -39,7 +40,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 
-public class SwitchRuntimeIterator extends HybridRuntimeIterator {
+public class SwitchRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

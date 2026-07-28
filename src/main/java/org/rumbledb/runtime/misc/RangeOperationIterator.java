@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -49,7 +50,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends HybridRuntimeIterator {
+public class RangeOperationIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

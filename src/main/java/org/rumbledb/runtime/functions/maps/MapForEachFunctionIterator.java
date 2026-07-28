@@ -29,6 +29,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -42,7 +43,7 @@ import java.util.List;
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends HybridRuntimeIterator {
+public class MapForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

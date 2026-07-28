@@ -20,14 +20,17 @@
 
 package org.rumbledb.runtime;
 
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.api.Item;
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
 
-public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
+public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -40,7 +43,10 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
     }
 
     @Override
-    protected JavaRDD<Item> getNativeRDD(org.rumbledb.context.DynamicContext context) {
+    protected final JavaRDD<Item> getRDDAux(DynamicContext context) {
         return dataFrameToRDDOfItems(getNativeDataFrame(context), getMetadata());
     }
+
+    @Override
+    public abstract JSoundDataFrame getNativeDataFrame(DynamicContext context);
 }

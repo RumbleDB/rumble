@@ -10,6 +10,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -23,7 +24,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator {
+public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

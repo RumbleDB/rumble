@@ -27,6 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -34,7 +35,7 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.io.Serial;
 import java.util.List;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator {
+public class IfRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

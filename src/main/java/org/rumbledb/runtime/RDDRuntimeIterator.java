@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
@@ -45,10 +44,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public final LocalCursor<Item> createLocalCursor(DynamicContext context) {
-        return new IteratorLocalCursor<>(
-                () -> collectRDDwithLimit(getNativeRDD(context), getConfiguration(), getMetadata()).iterator(),
-                getMetadata()
-        );
+        return createLocalCursorFromRDD(getNativeRDD(context));
     }
 
     @Override

@@ -26,6 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -33,7 +34,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import java.io.Serial;
 import java.util.List;
 
-public class RepartitionFunctionIterator extends HybridRuntimeIterator {
+public class RepartitionFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

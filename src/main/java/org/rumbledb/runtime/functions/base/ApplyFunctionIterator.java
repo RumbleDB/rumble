@@ -14,6 +14,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -24,7 +25,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ApplyFunctionIterator extends HybridRuntimeIterator {
+public class ApplyFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

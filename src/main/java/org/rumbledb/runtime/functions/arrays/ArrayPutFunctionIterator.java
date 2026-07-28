@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -41,7 +42,7 @@ import java.util.List;
  * F&amp;O 3.1 array:put — returns a new array with the member at a 1-based position replaced
  * by a given sequence (FOAY0001 if position is out of bounds).
  */
-public class ArrayPutFunctionIterator extends HybridRuntimeIterator {
+public class ArrayPutFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -52,7 +53,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ArrayUnboxingIterator extends HybridRuntimeIterator {
+public class ArrayUnboxingIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

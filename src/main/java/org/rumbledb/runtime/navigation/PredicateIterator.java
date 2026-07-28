@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -60,7 +61,7 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class PredicateIterator extends HybridRuntimeIterator {
+public class PredicateIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

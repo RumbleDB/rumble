@@ -27,13 +27,14 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends HybridRuntimeIterator {
+public class UnorderedFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

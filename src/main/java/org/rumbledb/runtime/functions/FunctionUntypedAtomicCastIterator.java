@@ -10,6 +10,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
@@ -26,7 +27,7 @@ import java.util.Collections;
  * Function conversion step for arguments: cast runtime xs:untypedAtomic values to the requested atomic type
  * before the generic type-promotion layer runs. Non-untyped values flow through unchanged.
  */
-public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator {
+public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

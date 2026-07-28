@@ -13,8 +13,12 @@ import java.util.List;
 import java.util.Objects;
 
 import lombok.NonNull;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.runtime.cursor.LocalCursor;
 
@@ -47,8 +51,152 @@ public abstract class RuntimePlan<T> implements Serializable {
      * Creates the cursor used by terminal local operations. Subclasses may select an execution representation before
      * adapting it to a local cursor; the default is the plan's native local cursor.
      */
-    protected LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
-        return this.createLocalCursor(context);
+    protected final LocalCursor<T> createExecutionCursor(@NonNull DynamicContext context) {
+        return switch (getExecutionMode()) {
+            case LOCAL -> this.createLocalCursor(context);
+            case RDD -> this.createRDDExecutionCursor(context);
+            case DATAFRAME -> this.createDataFrameExecutionCursor(context);
+            case UNSET -> throw unsetExecutionMode();
+        };
+    }
+
+    /**
+     * Executes through the RDD representation selected by {@link #getRDD(DynamicContext)} and adapts it to a cursor.
+     */
+    protected final LocalCursor<T> createRDDExecutionCursor(DynamicContext context) {
+        return this.createLocalCursorFromRDD(this.getRDD(context));
+    }
+
+    /**
+     * Executes through the selected DataFrame representation and adapts it to a cursor.
+     */
+    protected final LocalCursor<T> createDataFrameExecutionCursor(DynamicContext context) {
+        return this.createLocalCursorFromDataFrame(this.getDataFrameResult(context));
+    }
+
+    /**
+     * Converts an already selected RDD representation to a local cursor.
+     */
+    protected final LocalCursor<T> createLocalCursorFromRDD(JavaRDD<T> rdd) {
+        return RuntimePlanConversions.rddToLocalCursor(rdd, getRuntimeStaticContext());
+    }
+
+    /**
+     * Converts an already selected DataFrame representation to a local cursor.
+     */
+    protected final LocalCursor<T> createLocalCursorFromDataFrame(JSoundDataFrame dataFrame) {
+        return this.createLocalCursorFromRDD(this.convertDataFrameToRDD(dataFrame));
+    }
+
+    /**
+     * Returns this plan as an RDD, executing its compiled representation first and converting only at this boundary.
+     */
+    public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
+        return switch (getExecutionMode()) {
+            case LOCAL -> this.convertLocalToRDD(context);
+            case RDD -> {
+                if (this.hasNativeRDD()) {
+                    yield this.nativeRDD(context);
+                }
+                if (this.hasNativeDataFrame()) {
+                    yield this.convertDataFrameToRDD(this.nativeDataFrame(context));
+                }
+                yield this.convertLocalToRDD(context);
+            }
+            case DATAFRAME -> {
+                if (this.hasNativeDataFrame()) {
+                    yield this.convertDataFrameToRDD(this.nativeDataFrame(context));
+                }
+                if (this.hasNativeRDD()) {
+                    yield this.nativeRDD(context);
+                }
+                yield this.convertLocalToRDD(context);
+            }
+            case UNSET -> throw unsetExecutionMode();
+        };
+    }
+
+    protected final JavaRDD<T> convertLocalToRDD(DynamicContext context) {
+        return RuntimePlanConversions.localToRDD(this, context);
+    }
+
+    protected JavaRDD<T> convertDataFrameToRDD(JSoundDataFrame dataFrame) {
+        throw unsupportedRepresentation(ExecutionMode.DATAFRAME);
+    }
+
+    /**
+     * Executes this plan in its compiled representation and exposes the result as a JSONiq DataFrame.
+     *
+     * <p>
+     * Tuple plans use their own FLWOR DataFrame API; item plans expose this result through RuntimeIterator.
+     * </p>
+     */
+    protected final JSoundDataFrame getDataFrameResult(@NonNull DynamicContext context) {
+        return switch (getExecutionMode()) {
+            case LOCAL -> this.convertLocalToDataFrame(context);
+            case RDD -> {
+                if (this.hasNativeRDD()) {
+                    yield this.convertRDDToDataFrame(this.nativeRDD(context), context);
+                }
+                if (this.hasNativeDataFrame()) {
+                    yield this.nativeDataFrame(context);
+                }
+                yield this.convertLocalToDataFrame(context);
+            }
+            case DATAFRAME -> {
+                if (this.hasNativeDataFrame()) {
+                    yield this.nativeDataFrame(context);
+                }
+                if (this.hasNativeRDD()) {
+                    yield this.convertRDDToDataFrame(this.nativeRDD(context), context);
+                }
+                yield this.convertLocalToDataFrame(context);
+            }
+            case UNSET -> throw unsetExecutionMode();
+        };
+    }
+
+    protected JSoundDataFrame convertLocalToDataFrame(DynamicContext context) {
+        throw unsupportedRepresentation(ExecutionMode.DATAFRAME);
+    }
+
+    protected JSoundDataFrame convertRDDToDataFrame(JavaRDD<T> rdd, DynamicContext context) {
+        throw unsupportedRepresentation(ExecutionMode.RDD);
+    }
+
+    private boolean hasNativeRDD() {
+        return this instanceof RDDRuntimePlan<?>;
+    }
+
+    private boolean hasNativeDataFrame() {
+        return this instanceof DataFrameRuntimePlan;
+    }
+
+    @SuppressWarnings("unchecked")
+    private JavaRDD<T> nativeRDD(DynamicContext context) {
+        return ((RDDRuntimePlan<T>) this).getNativeRDD(context);
+    }
+
+    private JSoundDataFrame nativeDataFrame(DynamicContext context) {
+        return ((DataFrameRuntimePlan) this).getNativeDataFrame(context);
+    }
+
+    private ExecutionMode getExecutionMode() {
+        return getRuntimeStaticContext().getExecutionMode();
+    }
+
+    private OurBadException unsetExecutionMode() {
+        return new OurBadException("Cannot execute a runtime plan whose execution mode is unset.");
+    }
+
+    private OurBadException unsupportedRepresentation(ExecutionMode representation) {
+        return new OurBadException(
+                "The runtime plan "
+                    + getClass().getCanonicalName()
+                    + " does not support "
+                    + representation
+                    + " execution."
+        );
     }
 
     /**

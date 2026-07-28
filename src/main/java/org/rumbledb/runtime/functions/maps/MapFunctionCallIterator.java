@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -37,7 +38,7 @@ import java.util.List;
 /**
  * Dynamic function call when the function item is an XDM map ({@code $map($key)}), equivalent to {@code map:get}.
  */
-public class MapFunctionCallIterator extends HybridRuntimeIterator {
+public class MapFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Override
     public LocalCursor<Item> createLocalCursor(DynamicContext context) {

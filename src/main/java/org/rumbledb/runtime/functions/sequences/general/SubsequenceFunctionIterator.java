@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -45,7 +46,7 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
+public class SubsequenceFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
 
     @Serial

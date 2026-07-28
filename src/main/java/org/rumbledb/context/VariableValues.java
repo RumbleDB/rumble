@@ -30,6 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlanConversions;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -214,7 +215,7 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(rdd, this.configuration, metadata);
+            return RuntimePlanConversions.collectRDDWithLimit(rdd, this.configuration, metadata);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
@@ -222,7 +223,7 @@ public class VariableValues implements Serializable {
                 throw new JobWithinAJobException(metadata);
             }
             JSoundDataFrame df = this.getDataFrameVariableValue(varName, metadata);
-            return HybridRuntimeIterator.collectRDDwithLimit(
+            return RuntimePlanConversions.collectRDDWithLimit(
                 HybridRuntimeIterator.dataFrameToRDDOfItems(df, metadata),
                 this.configuration,
                 metadata
@@ -466,4 +467,3 @@ public class VariableValues implements Serializable {
         nodeWithVariableDecl.dataFrameVariableValues.put(varName, value);
     }
 }
-

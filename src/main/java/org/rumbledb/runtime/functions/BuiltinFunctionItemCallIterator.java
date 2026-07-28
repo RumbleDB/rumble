@@ -23,6 +23,7 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -35,7 +36,7 @@ import java.util.List;
 /**
  * Dynamic invocation of a function item that represents a builtin named function reference.
  */
-public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator {
+public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

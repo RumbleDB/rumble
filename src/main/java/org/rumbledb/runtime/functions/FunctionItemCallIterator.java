@@ -39,6 +39,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -49,7 +50,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-public class FunctionItemCallIterator extends HybridRuntimeIterator {
+public class FunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

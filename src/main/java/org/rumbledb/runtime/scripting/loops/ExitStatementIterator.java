@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -17,7 +18,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ExitStatementIterator extends HybridRuntimeIterator {
+public class ExitStatementIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;

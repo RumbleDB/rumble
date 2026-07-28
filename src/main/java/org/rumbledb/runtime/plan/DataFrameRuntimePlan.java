@@ -11,11 +11,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
 /**
- * DataFrame execution capability for item plans.
- *
- * <p>
- * The runtime may use a native DataFrame implementation or centrally convert local or RDD execution.
- * </p>
+ * Native DataFrame execution capability for item plans. Plans that do not implement this interface are converted
+ * centrally from another supported representation.
  */
 public interface DataFrameRuntimePlan {
 
