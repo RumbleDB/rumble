@@ -30,7 +30,7 @@ import org.rumbledb.expressions.Node;
 
 
 public class CountClause extends Clause {
-    private Name variableName;
+    private final Name variableName;
 
     public CountClause(Name variableName, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);

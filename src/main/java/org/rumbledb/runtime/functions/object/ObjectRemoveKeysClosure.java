@@ -14,8 +14,8 @@ public class ObjectRemoveKeysClosure implements FlatMapFunction<Item, Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<String> removalKeys;
-    private ExceptionMetadata itemMetadata;
+    private final List<String> removalKeys;
+    private final ExceptionMetadata itemMetadata;
 
     public ObjectRemoveKeysClosure(List<String> removalKeys, ExceptionMetadata itemMetadata) {
         this.removalKeys = removalKeys;

@@ -8,8 +8,8 @@ import java.io.Serial;
 public class NameTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name qname;
-    private String wildcardWithNCName;
+    private final Name qname;
+    private final String wildcardWithNCName;
 
     public NameTest(Name qname) {
         this.qname = qname;

@@ -18,8 +18,8 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final RuntimeIterator expression;
     private String classSimpleName;
 
     private List<Item> nextResult;

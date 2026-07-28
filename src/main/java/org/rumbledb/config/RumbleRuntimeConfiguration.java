@@ -48,7 +48,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
 
     private static final String SHORTCUT_PREFIX = "-";
     private static final String ARGUMENT_PREFIX = "--";
-    private HashMap<String, String> arguments;
+    private final HashMap<String, String> arguments;
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;

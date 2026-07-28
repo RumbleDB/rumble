@@ -97,7 +97,7 @@ import java.util.Map.Entry;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleRuntimeConfiguration configuration;
     private List<Statement> exitStatementChildren;
 
     ExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {

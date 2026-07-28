@@ -32,7 +32,7 @@ import java.util.List;
 
 public class DecimalLiteralExpression extends Expression {
 
-    private BigDecimal value;
+    private final BigDecimal value;
 
     public DecimalLiteralExpression(BigDecimal value, ExceptionMetadata metadata) {
         super(metadata);

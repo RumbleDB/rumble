@@ -7,9 +7,9 @@ import java.io.Serial;
 public class AttributeTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Name attributeName;
-    private boolean hasWildcard;
-    private Name typeName;
+    private final Name attributeName;
+    private final boolean hasWildcard;
+    private final Name typeName;
 
     public AttributeTest(Name attributeName, Name typeName) {
         this.attributeName = attributeName;

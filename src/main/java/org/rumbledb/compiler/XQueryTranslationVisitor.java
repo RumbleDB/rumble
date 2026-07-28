@@ -190,13 +190,13 @@ import java.util.stream.Collectors;
  */
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
-    private StaticContext moduleContext;
-    private RumbleRuntimeConfiguration configuration;
-    private CompilationConfiguration compilationConfiguration;
-    private boolean isMainModule;
+    private final StaticContext moduleContext;
+    private final RumbleRuntimeConfiguration configuration;
+    private final CompilationConfiguration compilationConfiguration;
+    private final boolean isMainModule;
     private String libraryModuleNamespace;
-    private String code;
-    private ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
+    private final String code;
+    private final ArrayDeque<Map<String, String>> dirElemNamespaceFrames;
     private final CommonTokenStream xQueryTokenStream;
 
     public XQueryTranslationVisitor(

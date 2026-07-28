@@ -41,8 +41,8 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private String estimatorShortName;
-    private Estimator<?> estimator;
+    private final String estimatorShortName;
+    private final Estimator<?> estimator;
 
     private JSoundDataFrame inputDataset;
     private Item paramMapItem;

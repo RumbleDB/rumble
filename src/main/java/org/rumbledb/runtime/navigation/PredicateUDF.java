@@ -42,7 +42,7 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
-    List<Item> currentItems = new ArrayList<>();
+    final List<Item> currentItems = new ArrayList<>();
 
     public PredicateUDF(
             RuntimeIterator expression,

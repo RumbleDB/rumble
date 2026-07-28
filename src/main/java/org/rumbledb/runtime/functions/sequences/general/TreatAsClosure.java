@@ -14,9 +14,9 @@ import org.rumbledb.types.SequenceType;
 import java.io.Serial;
 
 public class TreatAsClosure implements Function<Item, Boolean> {
-    private SequenceType sequenceType;
-    private ExceptionMetadata metadata;
-    private ErrorCode errorCode;
+    private final SequenceType sequenceType;
+    private final ExceptionMetadata metadata;
+    private final ErrorCode errorCode;
     @Serial
     private static final long serialVersionUID = 1L;
 

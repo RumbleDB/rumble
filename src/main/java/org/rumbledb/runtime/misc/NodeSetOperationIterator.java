@@ -41,9 +41,9 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
-    private NodeSetExpression.NodeSetOperator operator;
+    private final RuntimeIterator leftIterator;
+    private final RuntimeIterator rightIterator;
+    private final NodeSetExpression.NodeSetOperator operator;
     private List<Item> localResults;
     private int nextResultIndex;
 

@@ -30,8 +30,8 @@ import java.util.List;
  */
 public class MapConstructorExpression extends Expression {
 
-    private List<Expression> keys;
-    private List<Expression> values;
+    private final List<Expression> keys;
+    private final List<Expression> values;
 
     public MapConstructorExpression(
             List<Expression> keys,

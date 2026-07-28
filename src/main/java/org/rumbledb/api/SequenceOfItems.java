@@ -47,9 +47,9 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class SequenceOfItems {
 
-    private RuntimeIterator iterator;
-    private DynamicContext dynamicContext;
-    private RumbleRuntimeConfiguration configuration;
+    private final RuntimeIterator iterator;
+    private final DynamicContext dynamicContext;
+    private final RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
     private List<Item> cachedItems;
 
