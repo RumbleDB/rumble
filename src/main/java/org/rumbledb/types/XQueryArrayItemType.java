@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -19,6 +20,7 @@ import java.util.Set;
  * The primitive array(*) type is modeled as a subtype of function(*)
  * by using {@link BuiltinTypesCatalogue#anyFunctionItem} as its base type.
  */
+@NoArgsConstructor
 public class XQueryArrayItemType implements ItemType {
 
     @Serial
