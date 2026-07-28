@@ -34,6 +34,7 @@ public class AnyURIItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private String lexicalValue;
     private URI value;
 
     public AnyURIItem() {
@@ -42,12 +43,16 @@ public class AnyURIItem extends AbstractAtomicItem {
 
     public AnyURIItem(String value) {
         super();
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        this.lexicalValue = value;
         this.value = parseAnyURIString(value);
     }
 
     @Override
     public Item copy(boolean mutable) {
-        return new AnyURIItem(this.value.toString());
+        return new AnyURIItem(this.lexicalValue);
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
@@ -56,18 +61,18 @@ public class AnyURIItem extends AbstractAtomicItem {
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException(e.getMessage());
+            return null;
         }
     }
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return this.lexicalValue;
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.value.toString().isEmpty();
+        return !this.lexicalValue.isEmpty();
     }
 
     public URI getValue() {
