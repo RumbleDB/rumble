@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.AbsentStaticBaseUriException;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -55,14 +56,23 @@ public class FileSystemUtil {
     }
 
     private static URI resolve(URI base, String url, ExceptionMetadata metadata, boolean fileSystemPath) {
-        if (!base.isAbsolute()) {
-            throw new OurBadException(
-                    "The base URI is not absolute!",
-                    metadata
-            );
-        }
         try {
             URI relativeURI = fileSystemPath ? parseFileSystemURI(url) : parseURI(url);
+            if (relativeURI.isAbsolute()) {
+                return relativeURI;
+            }
+            if (base == null) {
+                throw new AbsentStaticBaseUriException(
+                        "Static base URI is absent, so the relative URI reference cannot be resolved: " + url,
+                        metadata
+                );
+            }
+            if (!base.isAbsolute()) {
+                throw new OurBadException(
+                        "The base URI is not absolute!",
+                        metadata
+                );
+            }
             URI resolvedURI = base.resolve(relativeURI);
             if (url.endsWith("/")) {
                 // preserve trailing slash if any for correct resolution against it as a directory in the future.
@@ -73,6 +83,8 @@ public class FileSystemUtil {
                 }
             }
             return resolvedURI;
+        } catch (AbsentStaticBaseUriException e) {
+            throw e;
         } catch (Exception e) {
             RumbleException rumbleException = new CannotRetrieveResourceException(
                     "Malformed URI: " + url + " Cause: " + e.getMessage(),
@@ -81,6 +93,10 @@ public class FileSystemUtil {
             rumbleException.initCause(e);
             throw rumbleException;
         }
+    }
+
+    public static URI parseURIReference(String value) throws URISyntaxException {
+        return parseURI(value);
     }
 
     private static URI parseURI(String value) throws URISyntaxException {

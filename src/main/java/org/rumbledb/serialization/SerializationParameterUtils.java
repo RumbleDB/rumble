@@ -80,7 +80,7 @@ public final class SerializationParameterUtils {
             ExceptionMetadata metadata
     ) {
         try {
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), location, metadata);
+            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURIOrNull(), location, metadata);
             DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
             documentBuilderFactory.setNamespaceAware(true);
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();

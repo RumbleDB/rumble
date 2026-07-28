@@ -24,6 +24,7 @@ public class RuntimeStaticContext implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private final URI staticURI;
+    private final String staticURIString;
 
     /**
      * Query language associated with this context, which is used for error reporting and to determine the
@@ -133,7 +134,8 @@ public class RuntimeStaticContext implements Serializable {
      */
     public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
         return builder()
-            .staticURI(staticContext.getStaticBaseURI())
+            .staticURI(staticContext.getStaticBaseURIOrNull())
+            .staticURIString(staticContext.getStaticBaseUriStringOrNull())
             .queryLanguage(staticContext.getQueryLanguage())
             .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
             .staticallyKnownCollations(staticContext.getStaticallyKnownCollations())

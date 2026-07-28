@@ -149,6 +149,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DynamicTypeTreatErrorCode = registerBuiltIn("XPDY0050");
     public static final ErrorCode RuntimeExceptionErrorCode = registerBuiltIn("XPDY0130");
 
+    public static final ErrorCode StaticBaseUriAbsentErrorCode = registerBuiltIn("XPST0001");
     public static final ErrorCode ParsingErrorCode = registerBuiltIn("XPST0003");
     public static final ErrorCode StaticallyInferredEmptySequenceNotFromCommaExpression = registerBuiltIn("XPST0005");
     public static final ErrorCode UndeclaredVariableErrorCode = registerBuiltIn("XPST0008");
