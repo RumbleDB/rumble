@@ -25,9 +25,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -135,17 +138,30 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String moduleLocation = libraryModule.getLocation();
+        if (!this.importedModuleContexts.containsKey(moduleLocation)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.importedModuleContexts.put(moduleLocation, moduleContext);
         }
-        argument.importModuleContext(
-            this.importedModuleContexts.get(libraryModule.getNamespace())
-        );
+        StaticContext importedContext = this.importedModuleContexts.get(moduleLocation);
+        for (Name variableName : importedContext.getInScopeVariables().keySet()) {
+            if (argument.hasVariableInScopeOnly(variableName)) {
+                throw new VariableAlreadyExistsException(variableName, libraryModule.getMetadata());
+            }
+        }
+        for (FunctionIdentifier functionIdentifier : importedContext.getStaticallyKnownFunctionSignatures().keySet()) {
+            if (
+                BuiltinFunctionCatalogue.exists(functionIdentifier, argument.getQueryLanguage())
+                    || argument.hasFunctionSignatureInScopeOnly(functionIdentifier)
+            ) {
+                throw new DuplicateFunctionIdentifierException(functionIdentifier, libraryModule.getMetadata());
+            }
+        }
+        argument.importModuleContext(importedContext);
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
-                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes()
+                importedContext.getInScopeSchemaTypes()
             );
         return argument;
     }
@@ -194,6 +210,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         populateFunctionDeclarationStaticContext(functionDeclarationContext, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
+        if (
+            BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), argument.getQueryLanguage())
+                || argument.hasFunctionSignatureInScopeOnly(expression.getFunctionIdentifier())
+        ) {
+            throw new DuplicateFunctionIdentifierException(
+                    expression.getFunctionIdentifier(),
+                    declaration.getMetadata()
+            );
+        }
         argument.addFunctionSignature(
             expression.getFunctionIdentifier(),
             new FunctionSignature(
@@ -432,7 +457,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
-        // first pass.
+        if (argument.hasVariableInScopeOnly(variableDeclaration.getVariableName())) {
+            throw new VariableAlreadyExistsException(
+                    variableDeclaration.getVariableName(),
+                    variableDeclaration.getMetadata()
+            );
+        }
         argument.addVariable(
             variableDeclaration.getVariableName(),
             variableDeclaration.getActualSequenceType(),

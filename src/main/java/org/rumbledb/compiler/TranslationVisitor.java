@@ -487,15 +487,15 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         List<LibraryModule> libraryModules = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
         for (JsoniqParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            LibraryModule libraryModule = this.processModuleImport(namespace);
-            libraryModules.add(libraryModule);
-            if (namespaces.contains(libraryModule.getNamespace())) {
+            String importedNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(namespace.targetNamespace));
+            if (namespaces.contains(importedNamespace)) {
                 throw new DuplicateModuleTargetNamespaceException(
-                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                        "Duplicate module target namespace: " + importedNamespace,
                         createMetadataFromContext(namespace)
                 );
             }
-            namespaces.add(libraryModule.getNamespace());
+            namespaces.add(importedNamespace);
+            libraryModules.addAll(this.processModuleImport(namespace));
         }
 
         // parse variables and function
@@ -4056,7 +4056,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return uri.toString();
     }
 
-    public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
+    public List<LibraryModule> processModuleImport(JsoniqParser.ModuleImportContext ctx) {
         ExceptionMetadata metadata = createMetadataFromContext(ctx);
         String namespace = processURILiteral(ctx.targetNamespace);
         if (namespace.isEmpty()) {
@@ -4076,7 +4076,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             .map(this::processURILiteral)
             .map(URILiteralUtils::normalizeAsAnyURI)
             .collect(Collectors.toList());
-        LibraryModule libraryModule = ModuleImportLoader.load(
+        List<LibraryModule> libraryModules = ModuleImportLoader.load(
             namespace,
             locationHints,
             this.moduleContext,
@@ -4086,11 +4086,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.ncName() != null) {
             bindNamespace(
                 ctx.ncName().getText(),
-                libraryModule.getNamespace(),
+                namespace,
                 metadata
             );
         }
-        return libraryModule;
+        return libraryModules;
     }
 
     public ExceptionMetadata generateMetadata(Token start, Token end) {

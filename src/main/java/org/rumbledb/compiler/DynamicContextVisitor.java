@@ -354,19 +354,20 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
+        String moduleLocation = module.getLocation();
+        if (!this.importedModuleContexts.containsKey(moduleLocation)) {
             DynamicContext newContext = new DynamicContext(this.configuration);
             newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
-            this.importedModuleContexts.put(module.getNamespace(), importedContext);
+            this.importedModuleContexts.put(moduleLocation, importedContext);
         }
         argument.getVariableValues()
             .importModuleValues(
-                this.importedModuleContexts.get(module.getNamespace()).getVariableValues()
+                this.importedModuleContexts.get(moduleLocation).getVariableValues()
             );
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
-                this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes()
+                this.importedModuleContexts.get(moduleLocation).getInScopeSchemaTypes()
             );
         return argument;
     }

@@ -341,8 +341,16 @@ public class StaticContext {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
+    public boolean hasFunctionSignatureInScopeOnly(FunctionIdentifier identifier) {
+        return this.staticallyKnownFunctionSignatures.containsKey(identifier);
+    }
+
     public Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
+    }
+
+    public Map<FunctionIdentifier, FunctionSignature> getStaticallyKnownFunctionSignatures() {
+        return this.staticallyKnownFunctionSignatures;
     }
 
     public void show() {
