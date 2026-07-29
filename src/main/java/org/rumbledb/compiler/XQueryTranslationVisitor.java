@@ -395,7 +395,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             } else if (child instanceof XQueryParser.SchemaImportContext) {
                 // Not supported yet; previously skipped as well.
             } else if (child instanceof XQueryParser.ModuleImportContext namespace) {
-                String importedNamespace = URILiteralUtils.normalizeAsAnyURI(processURILiteral(namespace.targetNamespace));
+                String importedNamespace = URILiteralUtils.normalizeAsAnyURI(
+                    processURILiteral(namespace.targetNamespace)
+                );
                 if (namespaces.contains(importedNamespace)) {
                     throw new DuplicateModuleTargetNamespaceException(
                             "Duplicate module target namespace: " + importedNamespace,
