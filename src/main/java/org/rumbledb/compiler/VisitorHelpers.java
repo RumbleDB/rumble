@@ -476,6 +476,7 @@ public class VisitorHelpers {
             // TODO Handle module extras
             JsoniqParser.ModuleContext main = parser.moduleAndThisIsIt().module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            libraryModule.setLocation(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
@@ -521,6 +522,7 @@ public class VisitorHelpers {
             // TODO Handle module extras
             XQueryParser.ModuleContext main = parser.module();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            libraryModule.setLocation(uri.toString());
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;

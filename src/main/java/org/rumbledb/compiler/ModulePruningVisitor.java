@@ -20,8 +20,8 @@
 
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -38,7 +38,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
     private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
-    private final List<String> visitedModules;
+    private final Set<String> visitedModules;
 
     /**
      * Builds a new visitor.
@@ -47,17 +47,18 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
      */
     ModulePruningVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
-        this.visitedModules = new ArrayList<>();
+        this.visitedModules = new HashSet<>();
     }
 
     @Override
     public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
-        if (this.visitedModules.contains(libraryModule.getNamespace())) {
+        String moduleOrigin = libraryModule.getLocation();
+        if (this.visitedModules.contains(moduleOrigin)) {
             Prolog prolog = libraryModule.getProlog();
             prolog.clearDeclarations();
         }
         visitDescendants(libraryModule, argument);
-        this.visitedModules.add(libraryModule.getNamespace());
+        this.visitedModules.add(moduleOrigin);
         return argument;
     }
 

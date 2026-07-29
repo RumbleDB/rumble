@@ -34,6 +34,7 @@ public class LibraryModule extends Module {
     protected StaticContext staticContext;
     private final String namespace;
     private final Prolog prolog;
+    private String location;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
         super(metadata);
@@ -56,6 +57,14 @@ public class LibraryModule extends Module {
 
     public Prolog getProlog() {
         return this.prolog;
+    }
+
+    public String getLocation() {
+        return this.location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 
     @Override
@@ -92,4 +101,3 @@ public class LibraryModule extends Module {
         this.prolog.serializeToJSONiq(sb, indent);
     }
 }
-
