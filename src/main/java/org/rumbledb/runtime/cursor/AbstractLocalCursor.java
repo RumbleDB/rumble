@@ -49,9 +49,12 @@ public abstract class AbstractLocalCursor<T> implements Cursor<T> {
         this.metadata = metadata;
     }
 
-    private void openIfNeeded() {
-        if (this.state != State.CREATED) {
+    private void ensureOpen() {
+        if (this.state == State.OPEN) {
             return;
+        }
+        if (this.state == State.CLOSED) {
+            throw this.invalidState("Local cursor is not open.");
         }
         try {
             this.openLocal();
@@ -69,19 +72,13 @@ public abstract class AbstractLocalCursor<T> implements Cursor<T> {
 
     @Override
     public final boolean hasNext() {
-        this.openIfNeeded();
-        if (this.state != State.OPEN) {
-            throw this.invalidState("Local cursor is not open.");
-        }
+        this.ensureOpen();
         return this.hasNextLocal();
     }
 
     @Override
     public final T next() {
-        this.openIfNeeded();
-        if (this.state != State.OPEN) {
-            throw this.invalidState("Local cursor is not open.");
-        }
+        this.ensureOpen();
         return this.nextLocal();
     }
 
