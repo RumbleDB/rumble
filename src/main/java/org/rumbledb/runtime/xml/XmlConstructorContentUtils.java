@@ -30,14 +30,6 @@ final class XmlConstructorContentUtils {
     private XmlConstructorContentUtils() {
     }
 
-    static List<Item> expandArrayItems(List<Item> items) {
-        List<Item> result = new ArrayList<>();
-        for (Item item : items) {
-            appendExpandedItem(item, result);
-        }
-        return result;
-    }
-
     static void appendExpandedItem(Item item, List<Item> result) {
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
