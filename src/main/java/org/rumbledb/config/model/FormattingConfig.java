@@ -18,15 +18,12 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.config.FormattingCalendarModeSupport;
 import org.rumbledb.config.FormattingLanguageSupport;
 import org.rumbledb.exceptions.CliException;
@@ -37,15 +34,15 @@ import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 
 @Value
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = FormattingConfig.FormattingConfigBuilder.class)
-public class FormattingConfig implements Serializable, KryoSerializable {
+public class FormattingConfig implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -56,8 +53,7 @@ public class FormattingConfig implements Serializable, KryoSerializable {
      * place is supplied. The initial default is {@code UTC}.
      * </p>
      */
-    @NonFinal
-    private String defaultFormattingPlace;
+    String defaultFormattingPlace;
 
     /**
      * The default calendar used for formatting date and time values.
@@ -69,8 +65,7 @@ public class FormattingConfig implements Serializable, KryoSerializable {
      * </p>
      *
      */
-    @NonFinal
-    private String defaultFormattingCalendar;
+    String defaultFormattingCalendar;
 
     /**
      * The default language used for formatting date and time values.
@@ -82,8 +77,7 @@ public class FormattingConfig implements Serializable, KryoSerializable {
      * </p>
      *
      */
-    @NonFinal
-    private String defaultFormattingLanguage;
+    String defaultFormattingLanguage;
 
     @Builder(toBuilder = true)
     private FormattingConfig(
@@ -100,20 +94,6 @@ public class FormattingConfig implements Serializable, KryoSerializable {
             defaultFormattingLanguage,
             FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
         );
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.defaultFormattingPlace);
-        output.writeString(this.defaultFormattingCalendar);
-        output.writeString(this.defaultFormattingLanguage);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.defaultFormattingPlace = input.readString();
-        this.defaultFormattingCalendar = input.readString();
-        this.defaultFormattingLanguage = input.readString();
     }
 
     private static String normalizeFormattingCalendar(String calendar) {

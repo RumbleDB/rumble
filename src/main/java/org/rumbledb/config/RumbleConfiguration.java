@@ -20,15 +20,10 @@ package org.rumbledb.config;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 import org.rumbledb.config.model.AnalysisConfig;
 import org.rumbledb.config.model.DebugConfig;
@@ -52,39 +47,30 @@ import java.util.function.Consumer;
 @Value
 @Jacksonized
 @Accessors(fluent = true)
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @JsonDeserialize(builder = RumbleConfiguration.RumbleConfigurationBuilder.class)
-public class RumbleConfiguration implements Serializable, KryoSerializable {
+public class RumbleConfiguration implements Serializable {
     private static final long serialVersionUID = 1L;
 
     /**
      * Application execution mode.
      */
-    @NonFinal
     private RumbleMode mode;
 
-    @NonFinal
     private InputConfig input;
 
-    @NonFinal
     private OutputConfig output;
 
-    @NonFinal
     private RuntimeConfig runtime;
 
-    @NonFinal
     private DebugConfig debug;
 
-    @NonFinal
     private AnalysisConfig analysis;
 
-    @NonFinal
     private OptimizationConfig optimization;
 
-    @NonFinal
     private SemanticsConfig semantics;
 
-    @NonFinal
     private FormattingConfig formatting;
 
     public static RumbleConfiguration defaultConfiguration() {
@@ -112,56 +98,6 @@ public class RumbleConfiguration implements Serializable, KryoSerializable {
         this.optimization = Objects.requireNonNullElseGet(optimization, () -> OptimizationConfig.builder().build());
         this.semantics = Objects.requireNonNullElseGet(semantics, () -> SemanticsConfig.builder().build());
         this.formatting = Objects.requireNonNullElseGet(formatting, () -> FormattingConfig.builder().build());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObjectOrNull(output, this.mode, RumbleMode.class);
-        kryo.writeObjectOrNull(output, this.input, InputConfig.class);
-        kryo.writeObjectOrNull(output, this.output, OutputConfig.class);
-        kryo.writeObjectOrNull(output, this.runtime, RuntimeConfig.class);
-        kryo.writeObjectOrNull(output, this.debug, DebugConfig.class);
-        kryo.writeObjectOrNull(output, this.analysis, AnalysisConfig.class);
-        kryo.writeObjectOrNull(output, this.optimization, OptimizationConfig.class);
-        kryo.writeObjectOrNull(output, this.semantics, SemanticsConfig.class);
-        kryo.writeObjectOrNull(output, this.formatting, FormattingConfig.class);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.mode = kryo.readObjectOrNull(input, RumbleMode.class);
-        this.input = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, InputConfig.class),
-            () -> InputConfig.builder().build()
-        );
-        this.output = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, OutputConfig.class),
-            () -> OutputConfig.builder().build()
-        );
-        this.runtime = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, RuntimeConfig.class),
-            () -> RuntimeConfig.builder().build()
-        );
-        this.debug = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, DebugConfig.class),
-            () -> DebugConfig.builder().build()
-        );
-        this.analysis = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, AnalysisConfig.class),
-            () -> AnalysisConfig.builder().build()
-        );
-        this.optimization = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, OptimizationConfig.class),
-            () -> OptimizationConfig.builder().build()
-        );
-        this.semantics = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, SemanticsConfig.class),
-            () -> SemanticsConfig.builder().build()
-        );
-        this.formatting = Objects.requireNonNullElseGet(
-            kryo.readObjectOrNull(input, FormattingConfig.class),
-            () -> FormattingConfig.builder().build()
-        );
     }
 
     @JsonPOJOBuilder(withPrefix = "")
