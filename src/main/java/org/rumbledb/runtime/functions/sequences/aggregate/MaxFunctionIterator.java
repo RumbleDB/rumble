@@ -41,6 +41,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -330,10 +331,17 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.activeType = 6;
                             this.returnType = BuiltinTypesCatalogue.stringItem;
                             this.currentMaxString = this.currentMaxURI;
-                            if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                            if (
+                                CollationSupport.compareByCodePoint(
+                                    candidateItem.getStringValue(),
+                                    this.currentMaxURI
+                                ) > 0
+                            ) {
                                 this.currentMaxString = candidateItem.getStringValue();
                             }
-                        } else if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                        } else if (
+                            CollationSupport.compareByCodePoint(candidateItem.getStringValue(), this.currentMaxURI) > 0
+                        ) {
                             this.currentMaxURI = candidateItem.getStringValue();
 
                         }
@@ -345,7 +353,12 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (candidateItem.getStringValue().compareTo(this.currentMaxString) > 0) {
+                        if (
+                            CollationSupport.compareByCodePoint(
+                                candidateItem.getStringValue(),
+                                this.currentMaxString
+                            ) > 0
+                        ) {
                             this.currentMaxString = candidateItem.getStringValue();
                             this.returnType = candidateType;
                         }

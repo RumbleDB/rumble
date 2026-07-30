@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.postfix;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class ArrayUnboxingExpression extends Expression {
 
     private Expression mainExpression;
@@ -60,10 +62,6 @@ public class ArrayUnboxingExpression extends Expression {
         sb.append("(");
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
     }
 
 }

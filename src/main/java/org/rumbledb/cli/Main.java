@@ -181,12 +181,4 @@ public class Main {
         server.start();
     }
 
-    public static void printMessageToLog(String message) {
-        if (Main.terminal == null) {
-            ConsoleOutput.out(message);
-        } else {
-            Main.terminal.output(message);
-        }
-    }
-
 }

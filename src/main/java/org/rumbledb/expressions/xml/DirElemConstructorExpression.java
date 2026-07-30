@@ -19,6 +19,7 @@
  */
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -37,11 +38,17 @@ import java.util.List;
 public class DirElemConstructorExpression extends Expression {
     /** Resolved expanded name of the element (compile-time). */
     private final Name elementName;
+
     /** The content of the element */
+    @Getter
     private final List<Expression> content;
+
     /** The attributes of the element */
+    @Getter
     private final List<Expression> attributes;
+
     /** Namespace declaration entries (xmlns / xmlns:prefix) in source order. */
+    @Getter
     private final List<NamespaceDeclaration> namespaceDeclarations;
 
     /**
@@ -72,28 +79,6 @@ public class DirElemConstructorExpression extends Expression {
      */
     public Name getNodeName() {
         return this.elementName;
-    }
-
-    /**
-     * Get the content of the element
-     * 
-     * @return The content of the element
-     */
-    public List<Expression> getContent() {
-        return this.content;
-    }
-
-    /**
-     * Get the attributes of the element
-     * 
-     * @return The attributes of the element
-     */
-    public List<Expression> getAttributes() {
-        return this.attributes;
-    }
-
-    public List<NamespaceDeclaration> getNamespaceDeclarations() {
-        return this.namespaceDeclarations;
     }
 
     @Override

@@ -397,7 +397,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
                             variableName,
-                            clause.getMetadata(),
                             var.getCollationURI(),
                             var.getActualSequenceType()
                     )

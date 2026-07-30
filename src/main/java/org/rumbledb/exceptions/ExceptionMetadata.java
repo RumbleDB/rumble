@@ -23,6 +23,7 @@ package org.rumbledb.exceptions;
 import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.Getter;
 import org.antlr.v4.runtime.Token;
 
 /**
@@ -30,12 +31,16 @@ import org.antlr.v4.runtime.Token;
  *
  * @author Stefan Irimescu, Ghislain Fourny
  */
+@Getter
 public class ExceptionMetadata implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final String location;
     private final SourceRange range;
+    /**
+     * The the query code around the error.
+     */
     private final String code;
     public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(
             "none",
@@ -101,34 +106,12 @@ public class ExceptionMetadata implements Serializable {
         );
     }
 
-    /**
-     * Returns the location.
-     * 
-     * @return the location.
-     */
-    public String getLocation() {
-        return this.location;
-    }
-
-    public SourceRange getRange() {
-        return this.range;
-    }
-
     public SourcePosition getStart() {
         return this.range.start();
     }
 
     public SourcePosition getEnd() {
         return this.range.end();
-    }
-
-    /**
-     * Returns the the query code around the error.
-     *
-     * @return the the query code around the error.
-     */
-    public String getCode() {
-        return this.code;
     }
 
     /**

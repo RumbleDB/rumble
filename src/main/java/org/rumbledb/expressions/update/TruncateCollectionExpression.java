@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -10,6 +11,7 @@ import org.rumbledb.runtime.update.primitives.Mode;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class TruncateCollectionExpression extends Expression {
     private Expression collectionName;
     private Mode mode;
@@ -25,14 +27,6 @@ public class TruncateCollectionExpression extends Expression {
         }
         this.mode = mode;
         this.collectionName = collectionName;
-    }
-
-    public Expression getCollectionName() {
-        return this.collectionName;
-    }
-
-    public Mode getMode() {
-        return this.mode;
     }
 
     @Override

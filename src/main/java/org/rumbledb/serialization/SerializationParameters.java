@@ -18,6 +18,9 @@
 package org.rumbledb.serialization;
 
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -38,17 +41,20 @@ import java.util.Set;
  * </ul>
  *
  */
+@Setter
 public class SerializationParameters implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
+    // Getters and setters
     /**
      * Serialization method.
      * "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      * Note: RumbleDB supports additional methods in addition to the XQuery 3.1 specification.
      */
+    @Getter
     private String method;
 
     /**
@@ -56,6 +62,7 @@ public class SerializationParameters implements Serializable {
      * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String encoding;
 
     /**
@@ -63,6 +70,7 @@ public class SerializationParameters implements Serializable {
      * "version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String version;
 
     /**
@@ -81,6 +89,7 @@ public class SerializationParameters implements Serializable {
      * "standalone" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private Standalone standalone;
 
     /**
@@ -88,6 +97,7 @@ public class SerializationParameters implements Serializable {
      * "doctype-system" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String doctypeSystem;
 
     /**
@@ -95,6 +105,7 @@ public class SerializationParameters implements Serializable {
      * "doctype-public" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String doctypePublic;
 
     /**
@@ -102,6 +113,7 @@ public class SerializationParameters implements Serializable {
      * "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String mediaType;
 
     /**
@@ -109,6 +121,7 @@ public class SerializationParameters implements Serializable {
      * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String normalizationForm;
 
     /**
@@ -123,6 +136,7 @@ public class SerializationParameters implements Serializable {
      * "use-character-maps" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private Map<String, String> characterMaps;
 
     /**
@@ -130,6 +144,7 @@ public class SerializationParameters implements Serializable {
      * "cdata-section-elements" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private Set<String> cdataSectionElements;
 
     /**
@@ -151,6 +166,7 @@ public class SerializationParameters implements Serializable {
      * "html-version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String htmlVersion;
 
     /**
@@ -172,6 +188,7 @@ public class SerializationParameters implements Serializable {
      * "indent-spaces" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private int indentSpaces; // -1 means unspecified
 
     /**
@@ -179,6 +196,7 @@ public class SerializationParameters implements Serializable {
      * "suppress-indentation" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private Set<String> suppressIndentation;
 
     /**
@@ -186,6 +204,7 @@ public class SerializationParameters implements Serializable {
      * "item-separator" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private String itemSeparator;
 
     /**
@@ -204,17 +223,20 @@ public class SerializationParameters implements Serializable {
      * "json-node-output-method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter
     private JsonNodeOutputMethod jsonNodeOutputMethod;
 
     /**
      * Extension/unknown parameters preserved for forward compatibility.
      */
+    @Getter
     private Map<String, String> extensionParameters;
 
     /**
      * Spark-specific options for DataFrameWriter (e.g., CSV delimiter, compression, etc.).
      * These are passed directly to Spark's DataFrameWriter.option() method.
      */
+    @Getter
     private Map<String, String> sparkOptions;
 
     public SerializationParameters() {
@@ -262,125 +284,20 @@ public class SerializationParameters implements Serializable {
         return "xml-json-hybrid";
     }
 
-    // Getters and setters
-    public String getMethod() {
-        return this.method;
-    }
-
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public String getEncoding() {
-        return this.encoding;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-
-    public String getVersion() {
-        return this.version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
     public boolean getOmitXmlDeclaration() {
         return this.omitXmlDeclaration;
-    }
-
-    public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
-        this.omitXmlDeclaration = omitXmlDeclaration;
-    }
-
-    public Standalone getStandalone() {
-        return this.standalone;
-    }
-
-    public void setStandalone(Standalone standalone) {
-        this.standalone = standalone;
-    }
-
-    public String getDoctypeSystem() {
-        return this.doctypeSystem;
-    }
-
-    public void setDoctypeSystem(String doctypeSystem) {
-        this.doctypeSystem = doctypeSystem;
-    }
-
-    public String getDoctypePublic() {
-        return this.doctypePublic;
-    }
-
-    public void setDoctypePublic(String doctypePublic) {
-        this.doctypePublic = doctypePublic;
-    }
-
-    public String getMediaType() {
-        return this.mediaType;
-    }
-
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
-    }
-
-    public String getNormalizationForm() {
-        return this.normalizationForm;
-    }
-
-    public void setNormalizationForm(String normalizationForm) {
-        this.normalizationForm = normalizationForm;
     }
 
     public boolean getUndeclarePrefixes() {
         return this.undeclarePrefixes;
     }
 
-    public void setUndeclarePrefixes(boolean undeclarePrefixes) {
-        this.undeclarePrefixes = undeclarePrefixes;
-    }
-
-    public Map<String, String> getCharacterMaps() {
-        return this.characterMaps;
-    }
-
-    public void setCharacterMaps(Map<String, String> characterMaps) {
-        this.characterMaps = characterMaps;
-    }
-
-    public Set<String> getCdataSectionElements() {
-        return this.cdataSectionElements;
-    }
-
-    public void setCdataSectionElements(Set<String> cdataSectionElements) {
-        this.cdataSectionElements = cdataSectionElements;
-    }
-
     public boolean getIncludeContentType() {
         return this.includeContentType;
     }
 
-    public void setIncludeContentType(boolean includeContentType) {
-        this.includeContentType = includeContentType;
-    }
-
     public boolean getEscapeUriAttributes() {
         return this.escapeUriAttributes;
-    }
-
-    public void setEscapeUriAttributes(boolean escapeUriAttributes) {
-        this.escapeUriAttributes = escapeUriAttributes;
-    }
-
-    public String getHtmlVersion() {
-        return this.htmlVersion;
-    }
-
-    public void setHtmlVersion(String htmlVersion) {
-        this.htmlVersion = htmlVersion;
     }
 
     /**
@@ -418,74 +335,13 @@ public class SerializationParameters implements Serializable {
         return this.byteOrderMark;
     }
 
-    public void setByteOrderMark(boolean byteOrderMark) {
-        this.byteOrderMark = byteOrderMark;
-    }
-
     public boolean getIndent() {
         return this.indent;
-    }
-
-    public void setIndent(boolean indent) {
-        this.indent = indent;
-    }
-
-    public int getIndentSpaces() {
-        return this.indentSpaces;
-    }
-
-    public void setIndentSpaces(int indentSpaces) {
-        this.indentSpaces = indentSpaces;
-    }
-
-    public Set<String> getSuppressIndentation() {
-        return this.suppressIndentation;
-    }
-
-    public void setSuppressIndentation(Set<String> suppressIndentation) {
-        this.suppressIndentation = suppressIndentation;
-    }
-
-    public String getItemSeparator() {
-        return this.itemSeparator;
-    }
-
-    public void setItemSeparator(String itemSeparator) {
-        this.itemSeparator = itemSeparator;
     }
 
     public boolean getAllowDuplicateNames() {
         return this.allowDuplicateNames;
     }
-
-    public void setAllowDuplicateNames(boolean allowDuplicateNames) {
-        this.allowDuplicateNames = allowDuplicateNames;
-    }
-
-    public JsonNodeOutputMethod getJsonNodeOutputMethod() {
-        return this.jsonNodeOutputMethod;
-    }
-
-    public void setJsonNodeOutputMethod(JsonNodeOutputMethod jsonNodeOutputMethod) {
-        this.jsonNodeOutputMethod = jsonNodeOutputMethod;
-    }
-
-    public Map<String, String> getExtensionParameters() {
-        return this.extensionParameters;
-    }
-
-    public void setExtensionParameters(Map<String, String> extensionParameters) {
-        this.extensionParameters = extensionParameters;
-    }
-
-    public Map<String, String> getSparkOptions() {
-        return this.sparkOptions;
-    }
-
-    public void setSparkOptions(Map<String, String> sparkOptions) {
-        this.sparkOptions = sparkOptions;
-    }
-
 
 
     /**

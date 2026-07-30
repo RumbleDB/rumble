@@ -20,32 +20,28 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
-public class AnyURIItem implements Item {
-
+@NoArgsConstructor // For Kryo serialization
+public class AnyURIItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private String lexicalValue;
+
+    @Getter
     private URI value;
 
-    public AnyURIItem() {
-        super();
-    }
-
     public AnyURIItem(String value) {
-        super();
         if (value == null) {
             throw new IllegalArgumentException();
         }
@@ -56,20 +52,6 @@ public class AnyURIItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new AnyURIItem(this.lexicalValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
@@ -93,20 +75,9 @@ public class AnyURIItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return this.lexicalValue.hashCode();
-    }
-
-    public URI getValue() {
-        return this.value;
-    }
-
-    @Override
     public Object getVariantValue() {
         return getStringValue();
     }
-
-
 
     @Override
     public boolean isAnyURI() {

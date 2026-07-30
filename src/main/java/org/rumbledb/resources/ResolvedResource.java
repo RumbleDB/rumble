@@ -7,11 +7,14 @@
 
 package org.rumbledb.resources;
 
+import lombok.Getter;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.Objects;
 
+@Getter
 public final class ResolvedResource implements AutoCloseable {
 
     private final URI systemId;
@@ -20,14 +23,6 @@ public final class ResolvedResource implements AutoCloseable {
     public ResolvedResource(URI systemId, InputStream inputStream) {
         this.systemId = Objects.requireNonNull(systemId, "systemId must not be null");
         this.inputStream = Objects.requireNonNull(inputStream, "inputStream must not be null");
-    }
-
-    public URI getSystemId() {
-        return this.systemId;
-    }
-
-    public InputStream getInputStream() {
-        return this.inputStream;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.rumbledb.expressions.control;
 
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
@@ -13,6 +14,7 @@ import java.util.List;
  * From a tree perspective, all expressions in there are considered
  * to be direct children of the TypeswitchExpression.
  */
+@Getter
 public class TypeswitchCase {
 
     private final Name variableName;
@@ -36,18 +38,6 @@ public class TypeswitchCase {
         this.variableName = variableName;
         this.union = null;
         this.returnExpression = returnExpression;
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public List<SequenceType> getUnion() {
-        return this.union;
-    }
-
-    public Expression getReturnExpression() {
-        return this.returnExpression;
     }
 
 }

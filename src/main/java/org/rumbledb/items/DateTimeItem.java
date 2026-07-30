@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -12,13 +13,11 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
-public class DateTimeItem implements Item {
+@NoArgsConstructor // For Kryo serialization
+public class DateTimeItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -28,12 +27,7 @@ public class DateTimeItem implements Item {
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public DateTimeItem() {
-        super();
-    }
-
     DateTimeItem(OffsetDateTime value, boolean hasTimeZone) {
-        super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }
@@ -95,20 +89,6 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public String getStringValue() {
         String stringValue = this.value.format(
             this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE_TIME : DateTimeFormatter.ISO_LOCAL_DATE_TIME
@@ -144,13 +124,6 @@ public class DateTimeItem implements Item {
     public boolean getEffectiveBooleanValue() {
         return false;
     }
-
-    @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-
 
     @Override
     public ItemType getDynamicType() {

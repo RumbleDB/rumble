@@ -41,10 +41,6 @@ public class InsertSearchIntoCollectionIterator extends HybridRuntimeIterator {
 
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

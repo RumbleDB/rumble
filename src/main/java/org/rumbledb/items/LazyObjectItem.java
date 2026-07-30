@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class LazyObjectItem implements Item {
+public class LazyObjectItem extends AbstractMapItem {
 
 
     @Serial
@@ -56,18 +56,6 @@ public class LazyObjectItem implements Item {
             this.isArray = isArray;
         }
 
-        public RuntimeIterator getIterator() {
-            return this.iterator;
-        }
-
-        public DynamicContext getDynamicContext() {
-            return this.context;
-        }
-
-        public boolean isArray() {
-            return this.isArray();
-        }
-
         public Item getItem() {
             List<Item> items = this.iterator.materialize(this.context);
             if (!this.isArray) {
@@ -83,7 +71,6 @@ public class LazyObjectItem implements Item {
     }
 
     public LazyObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new HashMap<>();
         this.lazyValues = new HashMap<>();
@@ -104,35 +91,6 @@ public class LazyObjectItem implements Item {
         return result;
 
     }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
-            return false;
-        }
-        if (!otherItem.isObject()) {
-            return false;
-        }
-        for (String s : this.getStringKeys()) {
-            Item v = otherItem.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : otherItem.getStringKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!otherItem.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
 
     // region maps
 
@@ -311,15 +269,6 @@ public class LazyObjectItem implements Item {
     }
 
 
-
-    public int hashCode() {
-        int result = 0;
-        result += getStringKeys().size();
-        for (String s : getStringKeys()) {
-            result += getItemByKey(s).hashCode();
-        }
-        return result;
-    }
 
     @Override
     public ItemType getDynamicType() {

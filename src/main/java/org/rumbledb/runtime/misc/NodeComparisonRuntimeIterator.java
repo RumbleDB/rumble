@@ -62,18 +62,6 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         this.operator = operator;
     }
 
-    public NodeComparisonExpression.NodeComparisonOperator getOperator() {
-        return this.operator;
-    }
-
-    public RuntimeIterator getLeftIterator() {
-        return this.leftIterator;
-    }
-
-    public RuntimeIterator getRightIterator() {
-        return this.rightIterator;
-    }
-
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         // 1. The operands of a node comparison are evaluated in implementation-dependent order.
