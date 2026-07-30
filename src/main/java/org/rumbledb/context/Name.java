@@ -46,12 +46,12 @@ public class Name implements Comparable<Name>, Serializable {
     private static final long serialVersionUID = 1L;
 
     @EqualsAndHashCode.Include
-    private String namespace;
+    private final String namespace;
 
     private final String prefix;
 
     @EqualsAndHashCode.Include
-    private String localName;
+    private final String localName;
 
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
