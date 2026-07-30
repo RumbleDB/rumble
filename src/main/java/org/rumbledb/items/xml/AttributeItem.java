@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -13,6 +14,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+@NoArgsConstructor // For Kryo serialization
 public class AttributeItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -22,10 +24,6 @@ public class AttributeItem implements Item {
     private XMLDocumentPosition documentPos;
     private ItemType typeAnnotation;
     // TODO: add is-id, is-idrefs
-
-    // needed for kryo
-    public AttributeItem() {
-    }
 
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);

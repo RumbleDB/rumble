@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -34,6 +35,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@NoArgsConstructor // For Kryo serialization
 public class StringItem implements Item {
 
 
@@ -41,12 +43,7 @@ public class StringItem implements Item {
     private static final long serialVersionUID = 1L;
     private String value;
 
-    public StringItem() {
-        super();
-    }
-
     public StringItem(String value) {
-        super();
         this.value = value;
     }
 

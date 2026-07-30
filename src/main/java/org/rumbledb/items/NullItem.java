@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -30,15 +31,12 @@ import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 
+@NoArgsConstructor // For Kryo serialization
 public class NullItem implements Item {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    public NullItem() {
-        super();
-    }
 
     @Override
     public boolean equals(Object other) {

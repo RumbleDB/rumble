@@ -71,7 +71,6 @@ public class LazyObjectItem implements Item {
     }
 
     public LazyObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new HashMap<>();
         this.lazyValues = new HashMap<>();

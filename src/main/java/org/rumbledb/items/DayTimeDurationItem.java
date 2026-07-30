@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.text.DecimalFormat;
 import java.time.Duration;
@@ -17,6 +18,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class DayTimeDurationItem implements Item {
 
     @Serial
@@ -28,17 +30,11 @@ public class DayTimeDurationItem implements Item {
     private static final Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
 
-    public DayTimeDurationItem() {
-        super();
-    }
-
     public DayTimeDurationItem(Duration value) {
-        super();
         this.value = value;
     }
 
     public DayTimeDurationItem(String value) {
-        super();
         if (!durationRegex.matcher(value).matches() || !dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }

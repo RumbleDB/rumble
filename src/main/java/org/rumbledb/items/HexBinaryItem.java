@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -13,6 +14,7 @@ import java.io.Serial;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor // For Kryo serialization
 public class HexBinaryItem implements Item {
 
     @Serial
@@ -24,10 +26,6 @@ public class HexBinaryItem implements Item {
     private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
     private final static String hexBinary = hexOctet + "*";
     private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
-
-    public HexBinaryItem() {
-        super();
-    }
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;

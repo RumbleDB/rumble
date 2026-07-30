@@ -19,7 +19,6 @@ public class UntypedAtomicItem implements Item {
     private String value;
 
     public UntypedAtomicItem(String value) {
-        super();
         this.value = value;
     }
 
@@ -181,4 +180,3 @@ public class UntypedAtomicItem implements Item {
         return "STRING";
     }
 }
-

@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -32,6 +33,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class AnnotatedItem implements Item {
 
     @Serial
@@ -39,10 +41,6 @@ public class AnnotatedItem implements Item {
 
     private Item itemToAnnotate;
     private ItemType type;
-
-    public AnnotatedItem() {
-        super();
-    }
 
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;

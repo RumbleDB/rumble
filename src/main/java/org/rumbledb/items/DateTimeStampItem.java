@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.OffsetDateTime;
@@ -13,18 +14,14 @@ import org.rumbledb.types.ItemType;
 
 
 
+@NoArgsConstructor // For Kryo serialization
 public class DateTimeStampItem implements Item {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private DateTimeItem value;
 
-    public DateTimeStampItem() {
-        super();
-    }
-
     DateTimeStampItem(OffsetDateTime value, boolean checkTimezone) {
-        super();
         if (!checkTimezone) {
             throw new IllegalArgumentException("There is no timezone in dateTime");
         }

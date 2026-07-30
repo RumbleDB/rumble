@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class DateTimeItem implements Item {
 
     @Serial
@@ -28,12 +30,7 @@ public class DateTimeItem implements Item {
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public DateTimeItem() {
-        super();
-    }
-
     DateTimeItem(OffsetDateTime value, boolean hasTimeZone) {
-        super();
         this.value = value;
         this.hasTimeZone = hasTimeZone;
     }

@@ -34,7 +34,6 @@ public class OrderByClauseSortingKey {
             String collationURI,
             EMPTY_ORDER empty_order
     ) {
-        super();
         this.expression = expression;
         this.ascending = ascending;
         this.collationURI = collationURI;

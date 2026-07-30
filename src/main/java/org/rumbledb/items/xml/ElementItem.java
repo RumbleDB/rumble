@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -17,6 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@NoArgsConstructor // For Kryo serialization
 public class ElementItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -30,10 +32,6 @@ public class ElementItem implements Item {
     private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public ElementItem() {
-    }
 
     /**
      * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).

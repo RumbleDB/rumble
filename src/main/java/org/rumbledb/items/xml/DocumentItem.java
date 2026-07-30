@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -12,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@NoArgsConstructor // For Kryo serialization
 public class DocumentItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -20,10 +22,6 @@ public class DocumentItem implements Item {
     private XMLDocumentPosition documentPos;
     private Item documentElement;
     // TODO: add base-uri, document-uri, typed-value
-
-    // needed for kryo
-    public DocumentItem() {
-    }
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.stringValue = documentNode.getTextContent();

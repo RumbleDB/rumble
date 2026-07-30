@@ -24,6 +24,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -34,20 +35,13 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 
-
+@NoArgsConstructor // For Kryo serialization
 public class DecimalItem implements Item {
-
-
     @Serial
     private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
-    public DecimalItem() {
-        super();
-    }
-
     public DecimalItem(BigDecimal decimal) {
-        super();
         this.value = decimal;
     }
 
