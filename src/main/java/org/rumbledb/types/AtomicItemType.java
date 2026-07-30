@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
@@ -37,6 +38,7 @@ import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
+@NoArgsConstructor(force = true)
 public class AtomicItemType implements ItemType {
 
     @Serial
