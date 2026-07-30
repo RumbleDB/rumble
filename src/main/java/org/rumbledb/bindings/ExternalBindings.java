@@ -1,9 +1,5 @@
 package org.rumbledb.bindings;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
 import java.io.Serializable;
@@ -20,10 +16,10 @@ import java.util.Set;
  * configuration. The model is broader than what the current runtime bridge can consume so the public API can settle
  * while the remaining binding kinds are connected to the execution pipeline.
  */
-public final class ExternalBindings implements Serializable, KryoSerializable {
+public final class ExternalBindings implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Map<Name, Binding> variables;
+    private final Map<Name, Binding> variables;
 
     public ExternalBindings() {
         this.variables = new LinkedHashMap<>();
@@ -67,16 +63,5 @@ public final class ExternalBindings implements Serializable, KryoSerializable {
 
     public ExternalBindings snapshot() {
         return new ExternalBindings(this.variables);
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.variables);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.variables = (Map<Name, Binding>) kryo.readClassAndObject(input);
     }
 }

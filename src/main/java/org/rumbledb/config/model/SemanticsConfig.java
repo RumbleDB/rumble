@@ -23,25 +23,20 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.exceptions.CliException;
 
 import lombok.Builder;
 import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.Accessors;
-import lombok.experimental.NonFinal;
 import lombok.extern.jackson.Jacksonized;
 
 @Value
-@NoArgsConstructor
+@NoArgsConstructor(force = true)
 @Jacksonized
 @Accessors(fluent = true)
 @JsonDeserialize(builder = SemanticsConfig.SemanticsConfigBuilder.class)
-public class SemanticsConfig implements Serializable, KryoSerializable {
+public class SemanticsConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
@@ -49,15 +44,10 @@ public class SemanticsConfig implements Serializable, KryoSerializable {
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
     public static final String DEFAULT_XML_VERSION = "1.1";
 
-    @NonFinal
     private boolean datesWithTimeZone;
-    @NonFinal
     private boolean laxJSONNullValidation;
-    @NonFinal
     private String queryLanguage;
-    @NonFinal
     private String xmlVersion;
-    @NonFinal
     private String staticBaseUri;
 
     @Builder(toBuilder = true)
@@ -76,24 +66,6 @@ public class SemanticsConfig implements Serializable, KryoSerializable {
         this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
         this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
         this.staticBaseUri = staticBaseUri;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeBoolean(this.datesWithTimeZone);
-        output.writeBoolean(this.laxJSONNullValidation);
-        output.writeString(this.queryLanguage);
-        output.writeString(this.xmlVersion);
-        output.writeString(this.staticBaseUri);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.datesWithTimeZone = input.readBoolean();
-        this.laxJSONNullValidation = input.readBoolean();
-        this.queryLanguage = input.readString();
-        this.xmlVersion = input.readString();
-        this.staticBaseUri = input.readString();
     }
 
     private static String normalizeXmlVersion(String xmlVersion) {
