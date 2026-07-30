@@ -31,13 +31,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.List;
 
 public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public PowFunctionIterator(
@@ -49,11 +47,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item base = this.getChild(0).materializeFirstItemOrNull(context);
+        Item base = this.children.get(0).materializeFirstItemOrNull(context);
         if (base == null) {
             return null;
         }
-        Item exponent = this.getChild(1)
+        Item exponent = this.children.get(1)
             .materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
@@ -82,11 +80,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = this.getChild(1)
+        NativeClauseContext exponentQuery = this.children.get(1)
             .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;

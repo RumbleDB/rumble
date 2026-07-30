@@ -1,12 +1,5 @@
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -20,7 +13,6 @@ import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TryCatchExpression;
-import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -35,12 +27,10 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
-import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
-import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -48,11 +38,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -61,7 +47,6 @@ import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
-import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
@@ -93,21 +78,26 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
-import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirElemConstructorExpression;
 import org.rumbledb.expressions.xml.DirPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
-import org.rumbledb.expressions.xml.NamespaceDeclaration;
-import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
@@ -143,10 +133,12 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
             .collect(Collectors.toList());
-        List<Node> declarations = expression.getDeclarations()
+        List<Node> declarations = expression.getFunctionDeclarations()
             .stream()
             .map(expr -> visit(expr, argument))
             .collect(Collectors.toList());
+        declarations.addAll(expression.getVariableDeclarations());
+        declarations.addAll(expression.getTypeDeclarations());
         expression.setDeclarations(declarations);
         expression.getImportedModules().clear();
         expression.getImportedModules().addAll(libraryModules);
@@ -181,7 +173,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(statementsAndOptionalExpr.getStaticContext());
         result.setStaticSequenceType(statementsAndOptionalExpr.getStaticSequenceType());
-        result.setSequential(statementsAndOptionalExpr.isSequential());
         return result;
     }
 
@@ -201,7 +192,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(statementsAndExpr.getStaticContext());
         result.setStaticSequenceType(statementsAndExpr.getStaticSequenceType());
-        result.setSequential(statementsAndExpr.isSequential());
         return result;
     }
 
@@ -215,7 +205,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         CommaExpression result = new CommaExpression(children, expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -235,11 +224,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression resultingExpression = new FlworExpression((ReturnClause) result, expression.getMetadata());
         resultingExpression.setStaticContext(expression.getStaticContext());
         resultingExpression.setStaticSequenceType(expression.getStaticSequenceType());
-        resultingExpression.setSequential(expression.isSequential());
         return resultingExpression;
     }
 
-    @Override
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
         VariableReferenceExpression result = new VariableReferenceExpression(
                 expression.getVariableName(),
@@ -248,7 +235,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setActualType(expression.getActualType());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -264,29 +250,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(clause.getStaticContext());
         return result;
-    }
-
-    @Override
-    public Node visitWindowClause(WindowClause clause, Node argument) {
-        WindowClause result = new WindowClause(
-                clause.getWindowType(),
-                clause.getWindowVariable(),
-                clause.getActualSequenceType(),
-                (Expression) visit(clause.getExpression(), argument),
-                cloneWindowCondition(clause.getStartCondition(), argument),
-                clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
-                clause.getMetadata()
-        );
-        result.setStaticContext(clause.getStaticContext());
-        return result;
-    }
-
-    private WindowClause.WindowCondition cloneWindowCondition(WindowClause.WindowCondition condition, Node argument) {
-        return new WindowClause.WindowCondition(
-                condition.variables(),
-                (Expression) visit(condition.expression(), argument),
-                condition.only()
-        );
     }
 
     @Override
@@ -312,8 +275,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                         variable.getActualSequenceType(),
                         (variable.getExpression() == null)
                             ? variable.getExpression()
-                            : (Expression) visit(variable.getExpression(), argument),
-                        variable.getCollationURI()
+                            : (Expression) visit(variable.getExpression(), argument)
                 )
             );
         }
@@ -378,7 +340,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -391,7 +352,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -404,7 +364,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -419,7 +378,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -433,7 +391,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -446,51 +403,32 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
-        List<Expression> arguments = expression.getArguments()
-            .stream()
-            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-            .collect(Collectors.toList());
         DynamicFunctionCallExpression result = new DynamicFunctionCallExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
-                arguments,
+                expression.getArguments(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
     // endregion
 
     // region primary
-    @Override
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
-        ArrayConstructorExpression result;
-        if (expression.isFixedSlotsArrayConstructor()) {
-            List<Expression> clonedMembers = new java.util.ArrayList<>();
-            if (expression.getMemberExpressions() != null) {
-                for (Expression memberExpr : expression.getMemberExpressions()) {
-                    clonedMembers.add((Expression) visit(memberExpr, argument));
-                }
-            }
-            result = new ArrayConstructorExpression(clonedMembers, true, expression.getMetadata());
-        } else {
-            result = new ArrayConstructorExpression(
-                    (expression.getExpression() == null)
-                        ? expression.getExpression()
-                        : (Expression) visit(expression.getExpression(), argument),
-                    expression.getMetadata()
-            );
-        }
+        ArrayConstructorExpression result = new ArrayConstructorExpression(
+                (expression.getExpression() == null)
+                    ? expression.getExpression()
+                    : (Expression) visit(expression.getExpression(), argument),
+                expression.getMetadata()
+        );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -503,7 +441,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             );
             result.setStaticContext(expression.getStaticContext());
             result.setStaticSequenceType(expression.getStaticSequenceType());
-            result.setSequential(expression.isSequential());
             return result;
         } else {
             List<Expression> keys = expression.getKeys()
@@ -517,26 +454,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             Expression result = new ObjectConstructorExpression(keys, values, expression.getMetadata());
             result.setStaticContext(expression.getStaticContext());
             result.setStaticSequenceType(expression.getStaticSequenceType());
-            result.setSequential(expression.isSequential());
             return result;
         }
-    }
-
-    @Override
-    public Node visitMapConstructor(MapConstructorExpression expression, Node argument) {
-        List<Expression> keys = expression.getKeys()
-            .stream()
-            .map(key -> (Expression) visit(key, argument))
-            .collect(Collectors.toList());
-        List<Expression> values = expression.getValues()
-            .stream()
-            .map(value -> (Expression) visit(value, argument))
-            .collect(Collectors.toList());
-        Expression result = new MapConstructorExpression(keys, values, expression.getMetadata());
-        result.setStaticContext(expression.getStaticContext());
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
-        return result;
     }
 
     @Override
@@ -550,21 +469,15 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .stream()
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
-        List<NamespaceDeclaration> namespaceDeclarations = expression.getNamespaceDeclarations()
-            .stream()
-            .map(ns -> new NamespaceDeclaration(ns.getPrefix(), ns.getUri(), ns.getMetadata()))
-            .collect(Collectors.toList());
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getNodeName(),
                 content,
                 attributes,
-                namespaceDeclarations,
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -580,7 +493,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -606,7 +518,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -632,7 +543,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -646,11 +556,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                     expression.getMetadata()
             );
         } else {
-            if (expression.getNameExpression() == null) {
-                throw new OurBadException(
-                        "Computed attribute constructor has neither a static name nor a dynamic name expression."
-                );
-            }
             result = new ComputedAttributeConstructorExpression(
                     (Expression) visit(expression.getNameExpression(), argument),
                     (Expression) visit(expression.getValueExpression(), argument),
@@ -659,7 +564,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -681,7 +585,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -698,16 +601,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
-        return result;
-    }
-
-    @Override
-    public Node visitPathRootExpr(PathRootExpression expression, Node argument) {
-        PathRootExpression result = new PathRootExpression(expression.getMetadata());
-        result.setStaticContext(expression.getStaticContext());
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -724,7 +617,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -736,7 +628,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -753,7 +644,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -762,7 +652,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression result = new TextNodeExpression(expression.getContent(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -773,13 +662,12 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
             .map(child -> (Expression) visit(child, argument))
             .collect(Collectors.toList());
         AttributeNodeExpression result = new AttributeNodeExpression(
-                expression.getNodeName(),
+                expression.getQName(),
                 value,
                 expression.getMetadata()
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -791,7 +679,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -800,7 +687,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         Expression result = new ContextItemExpression(expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -815,12 +701,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 arguments,
                 expression.getMetadata()
         );
-        if (expression.isTailCallOptimization()) {
-            ((FunctionCallExpression) result).setTailCallOptimization(true);
-        }
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -840,68 +722,54 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
 
-    @Override
     public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
         Expression result = new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
     // endregion
 
     // region literal
-    @Override
     public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
         Expression result = new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
-    @Override
     public Node visitString(StringLiteralExpression expression, Node argument) {
         Expression result = new StringLiteralExpression(expression.getValue(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
-    @Override
     public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
         Expression result = new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
-    @Override
     public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
         Expression result = new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
-    @Override
     public Node visitNull(NullLiteralExpression expression, Node argument) {
         Expression result = new NullLiteralExpression(expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
-    @Override
     public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
         Expression result = new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
     // endregion
@@ -917,7 +785,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -931,7 +798,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -944,7 +810,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -957,7 +822,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -970,7 +834,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -982,7 +845,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -995,7 +857,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1004,20 +865,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         RangeExpression result = new RangeExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
-                expression.getMetadata()
-        );
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
-        return result;
-    }
-
-    @Override
-    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
-        NodeSetExpression result = new NodeSetExpression(
-                (Expression) visit(expression.getLeftExpression(), argument),
-                (Expression) visit(expression.getRightExpression(), argument),
-                expression.getOperator(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -1034,7 +881,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1048,7 +894,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1062,7 +907,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1075,7 +919,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1088,7 +931,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1115,7 +957,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1128,7 +969,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
     // endregion
@@ -1144,7 +984,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1166,7 +1005,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1210,24 +1048,25 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
     @Override
     public Node visitTryCatchExpression(TryCatchExpression expression, Node argument) {
-        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
-        for (CatchPattern key : expression.getCatchExpressions().keySet()) {
+        Map<String, Expression> catchExpressions = new HashMap<>();
+        for (String key : expression.getCatchExpressions().keySet()) {
             catchExpressions.put(key, (Expression) visit(expression.getCatchExpressions().get(key), argument));
         }
         TryCatchExpression result = new TryCatchExpression(
                 (Expression) visit(expression.getTryExpression(), argument),
                 catchExpressions,
+                (expression.getExpressionCatchingAll() == null)
+                    ? expression.getExpressionCatchingAll()
+                    : (Expression) visit(expression.getExpressionCatchingAll(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
-        result.setSequential(expression.isSequential());
         return result;
     }
     // endregion
@@ -1239,7 +1078,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getVariableName(),
                 expression.external(),
                 expression.getActualSequenceType(),
-                expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
+                (Expression) visit(expression.getExpression(), argument),
                 expression.getAnnotations(),
                 expression.getMetadata()
         );
@@ -1253,7 +1092,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
     }
 
-    @Override
     public Node visitTypeDeclaration(TypeDeclaration expression, Node argument) {
         return new TypeDeclaration(expression.getDefinition(), expression.getMetadata());
     }
@@ -1268,7 +1106,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         );
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -1347,12 +1184,15 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitTryCatchStatement(TryCatchStatement statement, Node argument) {
-        Map<CatchPattern, BlockStatement> catchStatements = new LinkedHashMap<>();
+        Map<String, BlockStatement> catchStatements = new HashMap<>();
         statement.getCatchStatements()
             .forEach((key, value) -> catchStatements.put(key, (BlockStatement) visit(value, argument)));
         TryCatchStatement result = new TryCatchStatement(
                 (BlockStatement) visit(statement.getTryStatement(), argument),
                 catchStatements,
+                (statement.getCatchAllStatement() == null)
+                    ? statement.getCatchAllStatement()
+                    : (BlockStatement) visit(statement.getCatchAllStatement(), argument),
                 statement.getMetadata()
         );
         result.setStaticContext(statement.getStaticContext());
@@ -1464,9 +1304,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                     (Expression) visit(statement.getVariableExpression(), argument),
                     statement.getMetadata()
             );
+            result.setSequential(statement.isSequential());
             result.setStaticContext(statement.getStaticContext());
             result.setStaticSequenceType(statement.getSequenceType());
-            result.setSequential(statement.isSequential());
             return result;
         }
         VariableDeclStatement result = new VariableDeclStatement(

@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.durations.components;
 
-import java.io.Serial;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
@@ -14,7 +13,6 @@ import java.util.List;
 
 public class ImplicitTimezoneIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ImplicitTimezoneIterator(

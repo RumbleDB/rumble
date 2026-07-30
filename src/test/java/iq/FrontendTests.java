@@ -21,19 +21,15 @@
 package iq;
 
 
-import iq.base.AnnotationTestExecutor;
-import iq.base.TestConfigurations;
-import iq.base.TestFileDiscovery;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Timeout;
+import iq.base.AnnotationsTestsBase;
+import org.junit.Assert;
+import org.junit.Test;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
@@ -41,9 +37,8 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-public class FrontendTests {
 
-    private static final RumbleRuntimeConfiguration configuration = TestConfigurations.defaultConfiguration();
+public class FrontendTests extends AnnotationsTestsBase {
 
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -67,11 +62,19 @@ public class FrontendTests {
      *
      * @throws Throwable
      */
-    @Test
-    @Timeout(1000)
+    @Test(timeout = 1000000)
     public void testGrammarAndParser() throws Throwable {
-        for (File testFile : TestFileDiscovery.jsoniqFiles(grammarTestsDirectory)) {
-            AnnotationTestExecutor.run(testFile, configuration, true);
+        initializeTests(grammarTestsDirectory);
+        for (File testFile : this.testFiles) {
+            System.err.println(counter++ + " : " + testFile);
+            // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
+            testAnnotations(
+                testFile.getAbsolutePath(),
+                getConfiguration(),
+                true,
+                getConfiguration().applyUpdates(),
+                getConfiguration().getResultSizeCap()
+            );
         }
 
     }
@@ -101,20 +104,27 @@ public class FrontendTests {
      *
      * @throws Throwable
      */
-    @Test
-    @Timeout(1000)
+    @Test(timeout = 1000000)
     public void testSematicChecks() throws Throwable {
-        for (File testFile : TestFileDiscovery.jsoniqFiles(semanticTestsDirectory)) {
-            AnnotationTestExecutor.run(testFile, configuration, true);
+        initializeTests(semanticTestsDirectory);
+        for (File testFile : this.testFiles) {
+            System.err.println(counter++ + " : " + testFile);
+            testAnnotations(
+                testFile.getAbsolutePath(),
+                getConfiguration(),
+                true,
+                getConfiguration().applyUpdates(),
+                getConfiguration().getResultSizeCap()
+            );
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
-                    configuration,
+                    getConfiguration(),
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
                     uri,
-                    configuration
+                    getConfiguration()
                 );
 
                 testVariableTypes(mainModule);
@@ -207,7 +217,7 @@ public class FrontendTests {
                         .equals(Name.createVariableInNoNamespace("var"))
             );
         vars.forEach(
-            var -> Assertions.assertTrue(
+            var -> Assert.assertTrue(
                 ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
@@ -219,7 +229,7 @@ public class FrontendTests {
                         .equals(Name.createVariableInNoNamespace("j"))
             );
         js.forEach(
-            j -> Assertions.assertTrue(
+            j -> Assert.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
                     ||
                     ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
@@ -233,7 +243,7 @@ public class FrontendTests {
                         .equals(Name.createVariableInNoNamespace("internal"))
             );
         internals.forEach(
-            j -> Assertions.assertTrue(
+            j -> Assert.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
@@ -245,7 +255,7 @@ public class FrontendTests {
                         .equals(Name.createVariableInNoNamespace("arry"))
             );
         arry.forEach(
-            j -> Assertions.assertTrue(
+            j -> Assert.assertTrue(
                 ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)
             )
         );

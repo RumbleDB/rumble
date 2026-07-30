@@ -70,7 +70,7 @@ public class ConditionalExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("if (");
         this.conditionExpression.serializeToJSONiq(sb, 0);

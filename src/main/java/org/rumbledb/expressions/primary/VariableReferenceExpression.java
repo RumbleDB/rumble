@@ -28,11 +28,14 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariableReferenceExpression extends Expression {
-    private final Name name;
+public class VariableReferenceExpression extends Expression implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+    private Name name;
     private SequenceType type;
 
 
@@ -47,7 +50,7 @@ public class VariableReferenceExpression extends Expression {
 
     // default to item* if type is null
     public SequenceType getType() {
-        return this.type == null ? SequenceType.createSequenceType("item*") : this.type;
+        return this.type == null ? SequenceType.ITEM_STAR : this.type;
     }
 
     public SequenceType getActualType() {
@@ -68,8 +71,7 @@ public class VariableReferenceExpression extends Expression {
         return new ArrayList<>();
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -91,7 +93,7 @@ public class VariableReferenceExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("($" + this.name + ")\n");
     }

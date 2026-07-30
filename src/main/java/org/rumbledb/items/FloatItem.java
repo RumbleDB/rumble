@@ -20,6 +20,9 @@
 
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
@@ -32,13 +35,11 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 public class FloatItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private float value;
 
@@ -50,16 +51,11 @@ public class FloatItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new FloatItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -135,7 +131,6 @@ public class FloatItem implements Item {
         return this.value;
     }
 
-    @Override
     public BigDecimal castToDecimalValue() {
         if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -143,12 +138,10 @@ public class FloatItem implements Item {
         return BigDecimal.valueOf(this.value);
     }
 
-    @Override
     public int castToIntValue() {
         return Float.valueOf(this.value).intValue();
     }
 
-    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }
@@ -158,7 +151,15 @@ public class FloatItem implements Item {
         return true;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeFloat(this.value);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.value = input.readFloat();
+    }
 
     public int hashCode() {
         return (int) Math.round(this.value);
@@ -192,11 +193,7 @@ public class FloatItem implements Item {
         if (Float.isNaN(this.value)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return new NativeClauseContext(
-                context,
-                "CAST (" + this.value + "D AS FLOAT)",
-                SequenceType.createSequenceType("float")
-        );
+        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", SequenceType.FLOAT);
     }
 
     @Override

@@ -34,13 +34,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StructuredJsonLinesFunctionIterator(
@@ -52,11 +50,11 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.getChild(0);
+        RuntimeIterator urlIterator = this.children.get(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }

@@ -39,7 +39,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
 
 import java.io.IOException;
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,7 +54,6 @@ import java.util.List;
  */
 public class DataFrameContext implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private List<FlworDataFrameColumn> columns;
     private DynamicContext context;
@@ -184,7 +182,6 @@ public class DataFrameContext implements Serializable {
         return this.input;
     }
 
-    @Serial
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {
@@ -222,7 +219,8 @@ public class DataFrameContext implements Serializable {
                 throw ex;
             }
         }
-        if (dt instanceof ArrayType arrayType) {
+        if (dt instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dt;
             if (arrayType.elementType().equals(DataTypes.BinaryType)) {
                 List<Object> objects = row.getList(columnIndex);
                 List<Item> items = new ArrayList<>();
@@ -245,7 +243,7 @@ public class DataFrameContext implements Serializable {
                 for (Object object : objects) {
                     Item item = ItemParser.convertValueToItem(
                         object,
-                        (arrayType).elementType(),
+                        ((ArrayType) dt).elementType(),
                         ExceptionMetadata.EMPTY_METADATA,
                         itemType == null ? null : itemType.getArrayContentFacet()
                     );

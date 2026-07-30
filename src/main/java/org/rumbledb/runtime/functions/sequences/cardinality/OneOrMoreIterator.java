@@ -30,14 +30,12 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class OneOrMoreIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Item nextResult;
 
     public OneOrMoreIterator(
@@ -45,7 +43,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
     }
 
     @Override
@@ -67,7 +65,7 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",
@@ -92,6 +90,18 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.iterator.close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        if (!this.iterator.hasNext()) {
+            throw new SequenceExceptionOneOrMore(
+                    "fn:one-or-more() called with a sequence containing less than 1 item",
+                    getMetadata()
+            );
+        }
+        setNextResult();
     }
 
     @Override

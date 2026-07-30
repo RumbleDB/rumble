@@ -1,7 +1,8 @@
 package org.rumbledb.expressions.xml.node_test;
 
-
-import java.io.Serial;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 /**
  * XQuery 3.1 Section 2.5.5 - SequenceType Matching
@@ -9,7 +10,6 @@ import java.io.Serial;
  * A CommentTest matches any comment node.
  */
 public class CommentTest implements NodeTest {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     @Override
@@ -17,6 +17,14 @@ public class CommentTest implements NodeTest {
         return "comment()";
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
 
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+
+    }
 }
 

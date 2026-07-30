@@ -12,7 +12,7 @@ import com.sun.net.httpserver.HttpServer;
 
 public class RumbleServer {
 
-    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     public RumbleServer(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;

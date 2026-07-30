@@ -1,21 +1,19 @@
 package org.rumbledb.expressions.xml.node_test;
 
-import org.apache.commons.lang3.StringUtils;
-
-import java.io.Serial;
-import java.util.Objects;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 /**
  * XQuery 3.1 Section 2.5.5 - SequenceType Matching
  * PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
  * A PITest with no argument matches any processing-instruction node.
  * A PITest with an NCName or StringLiteral argument matches any processing-instruction node
- * whose PITarget equals fn:normalize-space of the given name.
+ * whose target name (node name) equals the given name.
  */
 public class PITest implements NodeTest {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final String targetName;
+    private String targetName;
 
     /**
      * Creates a PITest that matches any processing-instruction node.
@@ -30,7 +28,7 @@ public class PITest implements NodeTest {
      * @param targetName the target name to match against (from NCName or StringLiteral)
      */
     public PITest(String targetName) {
-        this.targetName = StringUtils.normalizeSpace(Objects.requireNonNull(targetName));
+        this.targetName = targetName;
     }
 
     public boolean hasTargetName() {
@@ -51,6 +49,14 @@ public class PITest implements NodeTest {
         return sb.toString();
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.targetName);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.targetName = input.readString();
+    }
 }
 

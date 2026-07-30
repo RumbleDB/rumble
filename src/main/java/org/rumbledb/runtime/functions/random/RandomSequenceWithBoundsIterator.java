@@ -6,11 +6,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private Item low;
     private Item high;
@@ -24,10 +22,10 @@ public class RandomSequenceWithBoundsIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        this.low = this.getChild(0).materializeFirstItemOrNull(context);
-        this.high = this.getChild(1).materializeFirstItemOrNull(context);
-        this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
-        this.type = this.getChild(3).materializeFirstItemOrNull(context);
+        this.low = this.children.get(0).materializeFirstItemOrNull(context);
+        this.high = this.children.get(1).materializeFirstItemOrNull(context);
+        this.size = this.children.get(2).materializeFirstItemOrNull(context).castToIntValue();
+        this.type = this.children.get(3).materializeFirstItemOrNull(context);
         this.generatedRandomsIterator = createRandomNumberStream();
     }
 

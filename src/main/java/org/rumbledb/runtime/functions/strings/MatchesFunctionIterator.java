@@ -23,17 +23,18 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public MatchesFunctionIterator(
@@ -45,26 +46,22 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item regexpItem = this.getChild(1)
+        Item regexpItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
-        String pattern = regexpItem.getStringValue();
-        String flags = null;
-        if (this.getChildren().size() == 3) {
-            Item flagsItem = this.getChild(2)
-                .materializeFirstItemOrNull(context);
-            if (flagsItem != null) {
-                flags = flagsItem.getStringValue();
-            }
+        try {
+            Matcher matcher = Pattern.compile(regexpItem.getStringValue()).matcher(stringItem.getStringValue());
+            boolean result = matcher.find();
+            return ItemFactory.getInstance().createBooleanItem(result);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidRegexPatternException(
+                    e.getDescription(),
+                    getMetadata()
+            );
         }
-        Matcher matcher = RegexPatternUtils.compileRegex(pattern, flags, getMetadata())
-            .getPattern()
-            .matcher(stringItem.getStringValue());
-        boolean result = matcher.find();
-        return ItemFactory.getInstance().createBooleanItem(result);
     }
 }

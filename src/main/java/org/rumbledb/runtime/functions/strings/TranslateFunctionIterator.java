@@ -27,14 +27,12 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public TranslateFunctionIterator(
@@ -46,11 +44,11 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item inputItem = this.getChild(0)
+        Item inputItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        Item mapStringItem = this.getChild(1)
+        Item mapStringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
-        Item transStringItem = this.getChild(2)
+        Item transStringItem = this.children.get(2)
             .materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
@@ -61,33 +59,28 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         String mapString = mapStringItem.getStringValue();
         String transString = transStringItem.getStringValue();
 
-        // Java .codePoints() returns an IntStream of Unicode code points
-        // This is better than using charAt() because it handles surrogate pairs correctly
-        // (Chars are 16 bits and Unicode code points can be larger)
-        int[] mapCodePoints = mapString.codePoints().toArray();
-        int[] translationCodePoints = transString.codePoints().toArray();
-
-        Map<Integer, Integer> translations = new HashMap<>();
-        for (int i = 0; i < mapCodePoints.length; i++) {
-            int codePoint = mapCodePoints[i];
-            if (!translations.containsKey(codePoint)) {
-                translations.put(codePoint, i < translationCodePoints.length ? translationCodePoints[i] : null);
+        HashMap<Character, Character> mp = new HashMap<>();
+        for (int i = 0; i < mapString.length(); i++) {
+            char c = mapString.charAt(i);
+            if (!(mp.containsKey(c))) {
+                mp.put(c, i < transString.length() ? transString.charAt(i) : '\0');
             }
         }
 
-        StringBuilder output = new StringBuilder(input.length());
-        input.codePoints().forEach(codePoint -> {
-            if (!translations.containsKey(codePoint)) {
-                output.appendCodePoint(codePoint);
-                return;
-            }
-            Integer translatedCodePoint = translations.get(codePoint);
-            if (translatedCodePoint != null) {
-                output.appendCodePoint(translatedCodePoint);
-            }
-        });
+        String output = input
+            .codePoints()
+            .mapToObj(c -> (char) c)
+            .filter(s -> !(mp.containsKey(s) && mp.get(s) == '\0'))
+            .map(s -> {
+                if (mp.containsKey(s)) {
+                    return mp.get(s);
+                }
+                return s;
+            })
+            .map(String::valueOf)
+            .collect(Collectors.joining());
 
-        return ItemFactory.getInstance().createStringItem(output.toString());
+        return ItemFactory.getInstance().createStringItem(output);
     }
 
 }

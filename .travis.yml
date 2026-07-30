@@ -1,0 +1,17 @@
+language: java
+dist: trusty
+sudo: false
+before_script:
+  - _JAVA_OPTIONS="-Xmx8192m -Xms512m"
+install: mvn install -DskipTests -Dgpg.skip --quiet
+script:
+  - mvn clean compile assembly:single
+  - mvn -Dtest=FrontendTests test
+  - mvn -Dtest=RuntimeTests test
+  - mvn -Dtest=SparkRuntimeTests test
+  - mvn -Dtest=JavaAPITest test
+  - mvn spotless:check
+cache:
+  directories:
+    - $HOME/.m2
+

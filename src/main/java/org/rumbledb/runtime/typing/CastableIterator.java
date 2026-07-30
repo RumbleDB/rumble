@@ -16,12 +16,10 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
 import java.util.Collections;
 
 
 public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -43,15 +41,10 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        ItemType targetItemType = this.sequenceType.getItemType();
-        boolean validCastTarget =
-            targetItemType.isAtomicItemType()
-                || (targetItemType.isUnionType()
-                    && targetItemType.getTypes().stream().allMatch(ItemType::isAtomicItemType));
-        if (!validCastTarget) {
+        if (!this.sequenceType.getItemType().isAtomicItemType()) {
             throw new UnknownCastTypeException(
                     "The type "
-                        + targetItemType.getIdentifierString()
+                        + this.sequenceType.getItemType().getIdentifierString()
                         + " is not atomic. Castable can only be used with atomic types.",
                     getMetadata()
             );
@@ -73,12 +66,7 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
 
         checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
         try {
-            Item res = CastIterator.castItemToType(
-                item,
-                this.sequenceType.getItemType(),
-                getMetadata(),
-                this.staticContext
-            );
+            Item res = CastIterator.castItemToType(item, this.sequenceType.getItemType(), getMetadata());
             return ItemFactory.getInstance()
                 .createBooleanItem(res != null);
         } catch (Exception e) {
@@ -89,13 +77,11 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
-        // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
-        // TODO: add support for xs:anySimpleType
-        if (type.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-            throw new CastableException("Invalid target type for castable expression: xs:NOTATION", metadata);
-        }
         if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
-            throw new CastableException("Invalid target type for castable expression: xs:anyAtomicType", metadata);
+            throw new CastableException(
+                    "\"anyAtomicType\": invalid type for \"cast\" or \"castable\" expression",
+                    metadata
+            );
         }
         if (item.isAtomic()) {
             return;

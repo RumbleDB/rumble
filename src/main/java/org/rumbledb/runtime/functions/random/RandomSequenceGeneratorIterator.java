@@ -6,11 +6,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
@@ -30,16 +28,16 @@ public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
 
     @Override
     public void open(DynamicContext context) {
-        if (this.getChildren().size() == 2) {
+        if (this.children.size() == 2) {
             // Seed is present as first argument
-            int seed = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
-            int sequenceLength = this.getChild(1).materializeFirstItemOrNull(context).castToIntValue();
+            int seed = this.children.get(0).materializeFirstItemOrNull(context).castToIntValue();
+            int sequenceLength = this.children.get(1).materializeFirstItemOrNull(context).castToIntValue();
             this.generatedRandomsIterator = new GeneratedRandomDoublesIterator(
                     sequenceLength,
                     seed
             );
         } else {
-            int sequenceLength = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
+            int sequenceLength = this.children.get(0).materializeFirstItemOrNull(context).castToIntValue();
             this.generatedRandomsIterator = new GeneratedRandomDoublesIterator(
                     sequenceLength
             );

@@ -1,6 +1,9 @@
 package org.rumbledb.items;
 
-import java.io.Serial;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Period;
@@ -16,18 +19,17 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class DayTimeDurationItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private Duration value;
-    private static final Pattern durationRegex = Pattern.compile(
+    Pattern durationRegex = Pattern.compile(
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
-    private static final Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
+    Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
 
 
+    @SuppressWarnings("unused")
     public DayTimeDurationItem() {
         super();
     }
@@ -39,7 +41,7 @@ public class DayTimeDurationItem implements Item {
 
     public DayTimeDurationItem(String value) {
         super();
-        if (!durationRegex.matcher(value).matches() || !dayTimeDurationRegex.matcher(value).matches()) {
+        if (!this.durationRegex.matcher(value).matches() || !this.dayTimeDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
         }
         try {
@@ -50,11 +52,6 @@ public class DayTimeDurationItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        return new DayTimeDurationItem(this.value);
     }
 
     @Override
@@ -82,14 +79,22 @@ public class DayTimeDurationItem implements Item {
         return Objects.hash(this.value);
     }
 
-
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.value = Duration.parse(input.readString());
+    }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.getStringValue());
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -122,11 +127,6 @@ public class DayTimeDurationItem implements Item {
     @Override
     public Period getPeriodValue() {
         return Period.ZERO;
-    }
-
-    @Override
-    public Duration getDayTimeDurationComponent() {
-        return this.value;
     }
 
     public static String normalizeDuration(Duration duration) {

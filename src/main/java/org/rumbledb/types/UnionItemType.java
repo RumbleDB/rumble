@@ -1,65 +1,59 @@
 package org.rumbledb.types;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 public class UnionItemType implements ItemType {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(ConstrainingFacetTypes.CONTENT)
-    );
+    private static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(FacetTypes.CONTENT));
 
     private final Name name;
     private final ItemType baseType;
     private final int typeTreeDepth;
     private final List<ItemType> types;
-    private final boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
-        this(name, baseType, types, true);
-    }
-
-    UnionItemType(Name name, ItemType baseType, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.types = types;
-        this.userDefined = userDefined;
     }
 
     UnionItemType(Name name, List<ItemType> types) {
-        this(name, types, true);
-    }
-
-    UnionItemType(Name name, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;
         this.types = types;
-        this.userDefined = userDefined;
     }
 
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        // Implement serialization logic here if needed
+        throw new UnsupportedOperationException("Serialization not implemented yet.");
+    }
 
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        // Implement deserialization logic here if needed
+        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+    }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return isEqualTo(itemType);
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -69,7 +63,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return this.name != null;
+        return true;
     }
 
     @Override
@@ -89,33 +83,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return this.userDefined;
-    }
-
-    @Override
-    public boolean isNumeric() {
-        for (ItemType member : this.types) {
-            if (!member.isNumeric()) {
-                return false;
-            }
-        }
-        return !this.types.isEmpty();
-    }
-
-    @Override
-    public boolean isStaticallyCastableAs(ItemType other) {
-        if (other.equals(this)) {
-            return true;
-        }
-        if (other.isNumeric()) {
-            return true;
-        }
-        for (ItemType member : this.types) {
-            if (other.isSubtypeOf(member)) {
-                return true;
-            }
-        }
-        return false;
+        return true;
     }
 
     @Override
@@ -129,7 +97,7 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+    public Set<FacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 
@@ -235,93 +203,6 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
-        if (this.types.size() != 2) {
-            return false;
-        }
-        ItemType first = this.types.get(0);
-        ItemType second = this.types.get(1);
-        if (
-            first.equals(BuiltinTypesCatalogue.nullItem)
-                && second.isAtomicItemType()
-                && second.isCompatibleWithDataFrames(configuration)
-        ) {
-            return true;
-        }
-        if (
-            second.equals(BuiltinTypesCatalogue.nullItem)
-                && first.isAtomicItemType()
-                && first.isCompatibleWithDataFrames(configuration)
-        ) {
-            return true;
-        }
         return false;
     }
-
-    @Override
-    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        ItemType otherBaseType = other.getBaseType();
-        List<ItemType> otherTypes;
-        if (other.isUnionType()) {
-            otherTypes = other.getTypes();
-        } else {
-            otherTypes = List.of(other);
-        }
-        boolean hasNumeric = false;
-        boolean hasNonNumeric = false;
-        boolean hasNull = false;
-        Set<ItemType> resultTypes = new HashSet<>(this.types);
-        resultTypes.addAll(otherTypes);
-        for (ItemType member : resultTypes) {
-            if (member.equals(BuiltinTypesCatalogue.nullItem)) {
-                hasNull = true;
-                continue;
-            }
-            if (member.equals(BuiltinTypesCatalogue.atomicItem)) {
-                hasNumeric = true;
-                hasNonNumeric = true;
-                continue;
-            }
-            if (member.isNumeric()) {
-                hasNumeric = true;
-                continue;
-            }
-            hasNonNumeric = true;
-        }
-        if (hasNumeric && hasNonNumeric) {
-            return BuiltinTypesCatalogue.atomicItem;
-        }
-        if (hasNumeric && !hasNull) {
-            return BuiltinTypesCatalogue.numericItem;
-        }
-        if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
-        }
-        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
-    }
-
-    @Override
-    public boolean canBeNull() {
-        for (ItemType member : this.types) {
-            if (member.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public ItemType getSingleNullableType() {
-        if (this.types.size() == 2) {
-            ItemType firstType = this.types.get(0);
-            ItemType secondType = this.types.get(1);
-            if (firstType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                return secondType;
-            }
-            if (secondType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                return firstType;
-            }
-        }
-        return null;
-    }
-
 }

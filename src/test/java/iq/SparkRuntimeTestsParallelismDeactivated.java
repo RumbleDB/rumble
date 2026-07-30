@@ -20,10 +20,17 @@
 
 package iq;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
-import java.io.File;
 
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+@RunWith(Parameterized.class)
 public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
 
     public RumbleRuntimeConfiguration getConfiguration() {
@@ -49,8 +56,16 @@ public class SparkRuntimeTestsParallelismDeactivated extends RuntimeTests {
                 "/src/test/resources/test_files/runtime-spark"
     );
 
-    @Override
-    protected File testDirectory() {
-        return sparkRuntimeTestsDirectory;
+    public SparkRuntimeTestsParallelismDeactivated(File testFile) {
+        super(testFile);
+    }
+
+    @Parameterized.Parameters(name = "{index}:{0}")
+    public static Collection<Object[]> testFiles() {
+        List<Object[]> result = new ArrayList<>();
+        _testFiles.clear();
+        readFileList(sparkRuntimeTestsDirectory);
+        _testFiles.forEach(file -> result.add(new Object[] { file }));
+        return result;
     }
 }

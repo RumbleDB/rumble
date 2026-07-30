@@ -23,20 +23,20 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.Matcher;
+import java.util.regex.PatternSyntaxException;
 
 public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ReplaceFunctionIterator(
@@ -48,37 +48,36 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.getChild(1)
+        Item patternStringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
 
         if (patternStringItem == null) {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
-        String flags = null;
-        if (this.getChildren().size() == 4) {
-            Item flagsItem = this.getChild(3)
-                .materializeFirstItemOrNull(context);
-            if (flagsItem != null) {
-                flags = flagsItem.getStringValue();
-            }
+        Pattern p;
+
+        try {
+            p = Pattern.compile(pattern);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidRegexPatternException(
+                    e.getDescription(),
+                    getMetadata()
+            );
         }
-        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+        if ("".matches(pattern)) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string",
+                    "'" + pattern + "' matches empty string",
                     getMetadata()
             );
         }
 
-        Item replacementStringItem = this.getChild(2)
+        Item replacementStringItem = this.children.get(2)
             .materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (compiledRegex.isQuote()) {
-            replacement = Matcher.quoteReplacement(replacement);
-        } else if (!(checkReplacementStringForValidity(replacement))) {
+        if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
                     "'" + replacement + "' contains a disallowed sequence of characters",
                     getMetadata()
@@ -92,7 +91,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = compiledRegex.getPattern().matcher(input);
+        Matcher m = p.matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
 
     }
@@ -103,9 +102,6 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         while (i < repl.length()) {
             if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
-                if (i + 1 >= repl.length()) {
-                    return false;
-                }
                 if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
                     return false;
                 }

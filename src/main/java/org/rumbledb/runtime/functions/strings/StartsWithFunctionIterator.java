@@ -23,17 +23,15 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.CollationSupport;
 
-import java.io.Serial;
 import java.util.List;
 
 public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StartsWithFunctionIterator(
@@ -45,26 +43,27 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
-            : getRuntimeStaticContext().getDefaultCollation();
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
 
-        Item substringItem = this.getChild(1)
+        Item substringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        boolean result = CollationSupport.startsWith(
-            stringItem.getStringValue(),
-            substringItem.getStringValue(),
-            collation,
-            getMetadata()
-        );
+        boolean result = stringItem.getStringValue()
+            .startsWith(
+                substringItem.getStringValue()
+            );
         return ItemFactory.getInstance().createBooleanItem(result);
     }
 

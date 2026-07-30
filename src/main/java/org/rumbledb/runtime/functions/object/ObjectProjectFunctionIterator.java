@@ -36,15 +36,13 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Item nextResult;
     private List<Item> projectionKeys;
 
@@ -59,7 +57,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.projectionKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (this.projectionKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Projection Key; Object projection can't be performed with zero keys: ",
@@ -123,6 +121,20 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        if (this.projectionKeys.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Projection Key; Object projection can't be performed with zero keys: ",
+                    getMetadata()
+            );
+        }
+
+        setNextResult();
+    }
+
+    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -130,7 +142,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        this.projectionKeys = this.getChild(1).materialize(context);
+        this.projectionKeys = this.children.get(1).materialize(context);
         FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
                 this.projectionKeys,
                 getMetadata()
@@ -145,7 +157,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (!childDataFrame.getItemType().isObjectItemType()) {
             return childDataFrame;
@@ -153,7 +165,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         List<String> fieldNames = childDataFrame.getKeys();
 
         List<String> keys = new ArrayList<>();
-        this.projectionKeys = this.getChild(1).materialize(context);
+        this.projectionKeys = this.children.get(1).materialize(context);
         for (Item keyItem : this.projectionKeys) {
             String key = keyItem.getStringValue();
             if (fieldNames.contains(key)) {

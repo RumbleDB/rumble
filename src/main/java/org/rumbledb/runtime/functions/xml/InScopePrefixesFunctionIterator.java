@@ -20,7 +20,6 @@
 package org.rumbledb.runtime.functions.xml;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -28,7 +27,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +52,6 @@ import java.util.List;
  *      Operators 3.1 : fn:in-scope-prefixes</a>
  */
 public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> prefixItems;
@@ -72,7 +69,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
 
         // fn:in-scope-prefixes($element as element()) as xs:string*
         // The function requires exactly one argument of type element().
-        Item element = this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item element = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         this.prefixItems = computeInScopePrefixes(element);
         this.hasNext = !this.prefixItems.isEmpty();
@@ -121,14 +118,7 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
         // "For namespace bindings that have a prefix, the prefix is returned."
         // "For the default namespace, if it exists, the zero-length string is returned."
         for (Item nsNode : element.namespaceNodes()) {
-            Name q = nsNode.nodeName();
-            if (q == null && nsNode.getStringValue().isEmpty()) {
-                // An explicit undeclaration xmlns="" is not an in-scope default namespace.
-                continue;
-            }
-            result.add(
-                ItemFactory.getInstance().createStringItem(q == null ? "" : q.getLocalName())
-            );
+            result.add(ItemFactory.getInstance().createStringItem(nsNode.nodeName()));
         }
 
         return result;

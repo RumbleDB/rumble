@@ -25,20 +25,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import com.google.gson.stream.JsonReader;
 
-import java.io.Serial;
 import java.io.StringReader;
 import java.util.Iterator;
 
 public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final ExceptionMetadata metadata;
-    boolean mutable = false;
 
-    public JSONSyntaxToItemMapper(ExceptionMetadata metadata, boolean mutable) {
+    public JSONSyntaxToItemMapper(ExceptionMetadata metadata) {
         this.metadata = metadata;
-        this.mutable = mutable;
     }
 
     @Override
@@ -52,13 +48,7 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
             @Override
             public Item next() {
                 JsonReader object = new JsonReader(new StringReader(stringIterator.next()));
-                return ItemParser.getItemFromObject(
-                    object,
-                    true,
-                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
-                    JSONSyntaxToItemMapper.this.metadata,
-                    JSONSyntaxToItemMapper.this.mutable
-                );
+                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
             }
 
             @Override

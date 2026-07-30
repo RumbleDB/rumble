@@ -15,8 +15,8 @@ import java.util.List;
  */
 public class TypeswitchCase {
 
-    private final Name variableName;
-    private final List<SequenceType> union;
+    private Name variableName;
+    private List<SequenceType> union;
     private final Expression returnExpression;
 
     public TypeswitchCase(

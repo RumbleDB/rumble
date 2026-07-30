@@ -6,12 +6,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DescendantOrSelfAxisIterator extends AxisIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public DescendantOrSelfAxisIterator(RuntimeStaticContext staticContext) {

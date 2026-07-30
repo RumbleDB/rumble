@@ -7,11 +7,9 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public IsNullIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
@@ -20,7 +18,7 @@ public class IsNullIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        List<Item> materializedItems = this.getChild(0).materialize(context);
+        List<Item> materializedItems = this.children.get(0).materialize(context);
         if (materializedItems == null || materializedItems.isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }

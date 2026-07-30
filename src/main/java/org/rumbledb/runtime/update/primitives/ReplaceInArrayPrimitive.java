@@ -51,7 +51,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         if (index >= 0 || index < this.target.getSize()) {
             this.target.removeItemAt(index);
             if (index == this.target.getSize()) {
-                this.target.appendItem(this.content);
+                this.target.append(this.content);
             } else {
                 this.target.putItemAt(this.content, index);
             }
@@ -85,11 +85,24 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
             Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet()
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType();
 
+            String setField = pathIn + " = ";
             this.applyItem();
-            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
+            setField = setField + this.target.getSparkSQLValue(arrayType);
+
+            String query = "UPDATE "
+                + location
+                + " SET "
+                + setField
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
+
+            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
         } else {
             this.arrayIndexingApplyDelta();
         }

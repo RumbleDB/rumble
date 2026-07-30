@@ -17,25 +17,24 @@ import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
-import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
 public class TruncateCollectionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
-    private final Mode mode;
+    private Mode mode;
 
     public TruncateCollectionIterator(
             RuntimeIterator targetIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(Arrays.asList(targetIterator), staticContext);
         this.targetIterator = targetIterator;
         this.mode = mode;
+        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {
@@ -57,7 +56,10 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
+    protected void resetLocal() {
 
+    }
 
     @Override
     protected boolean hasNextLocal() {
@@ -96,11 +98,7 @@ public class TruncateCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = collectionNameItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticContext.getStaticURI(),
-                logicalPath,
-                getMetadata()
-            );
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }

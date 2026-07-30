@@ -45,19 +45,16 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.Arrays;
 import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private int lookup;
     private Item nextResult;
-    private java.util.Queue<Item> lookupResultQueue;
 
     public ArrayLookupIterator(
             RuntimeIterator array,
@@ -71,16 +68,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            if (this.lookupResultQueue != null && !this.lookupResultQueue.isEmpty()) {
-                Item result = this.lookupResultQueue.poll();
-                if (this.lookupResultQueue.isEmpty()) {
-                    this.lookupResultQueue = null;
-                    setNextResult();
-                }
-                return result;
-            }
-            Item result = this.nextResult;
-            setNextResult();
+            Item result = this.nextResult; // save the result to be returned
+            setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
@@ -93,12 +82,18 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+        RuntimeIterator lookupIterator = this.children.get(1);
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
@@ -126,7 +121,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         initLookupPosition(this.currentDynamicContextForLocalExecution);
-        this.lookupResultQueue = null;
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -138,22 +132,10 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isArray()) {
                 if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResult = item.getItemAt(this.lookup - 1);
-                    } else {
-                        java.util.List<Item> memberSeq = item.getSequenceAt(this.lookup - 1);
-                        if (!memberSeq.isEmpty()) {
-                            this.nextResult = memberSeq.get(0);
-                            if (memberSeq.size() > 1) {
-                                this.lookupResultQueue = new java.util.LinkedList<>(
-                                        memberSeq.subList(1, memberSeq.size())
-                                );
-                            }
-                        }
-                    }
-                    if (this.nextResult != null) {
-                        break;
-                    }
+                    // -1 for Jsoniq convention, arrays start from 1
+                    Item result = item.getItemAt(this.lookup - 1);
+                    this.nextResult = result;
+                    break;
                 }
             }
         }
@@ -167,7 +149,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
 
@@ -189,13 +171,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
                 .getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
-            if (schema instanceof StructType structType) {
-                structSchema = structType;
+            if (schema instanceof StructType) {
+                structSchema = (StructType) schema;
                 if (
                     Arrays.stream(structSchema.fieldNames())
                         .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
@@ -225,7 +207,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
 
             schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType arraySchema)) {
+            if (!(schema instanceof ArrayType)) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
@@ -247,22 +229,21 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         SequenceType.Arity.OneOrZero
                 )
             );
-            newContext.setSchema(arraySchema.elementType());
+            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
             newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
         }
         return newContext;
     }
 
-    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
             && childDataFrame.getItemType()
-                .getObjectKeysFacet()
-                .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
+                .getObjectContentFacet()
+                .containsKey(SparkSessionManager.nonObjectJSONiqItemColumnName);
 
         // Check if metadata columns exist
         String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
@@ -334,15 +315,17 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             hasNonObjectJSONiqItem
                 &&
                 childDataFrame.getItemType()
-                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getObjectContentFacet()
+                    .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
                     .isArrayItemType()
                 && childDataFrame.getItemType()
-                    .getObjectKeysFacet()
-                    .contains(SparkSessionManager.tableLocationColumnName)
+                    .getObjectContentFacet()
+                    .containsKey(SparkSessionManager.tableLocationColumnName)
         ) {
             ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getObjectContentFacet()
+                .get(SparkSessionManager.nonObjectJSONiqItemColumnName)
                 .getType()
                 .getArrayContentFacet();
             String sql;

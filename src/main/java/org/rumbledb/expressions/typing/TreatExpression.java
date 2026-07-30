@@ -55,8 +55,7 @@ public class TreatExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -77,7 +76,7 @@ public class TreatExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" treat as " + this.sequenceType.toString() + "\n");

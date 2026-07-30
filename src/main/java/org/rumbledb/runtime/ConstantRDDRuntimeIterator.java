@@ -25,13 +25,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 
-import java.io.Serial;
-
 public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final JavaRDD<Item> items;
+    private JavaRDD<Item> items;
 
     public ConstantRDDRuntimeIterator(
             JavaRDD<Item> items,
@@ -54,6 +51,12 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    protected void resetLocal() {
         // TODO Auto-generated method stub
 
     }

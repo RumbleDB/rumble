@@ -11,9 +11,9 @@ import java.util.List;
 
 public class InsertExpression extends Expression {
 
-    private final Expression mainExpression;
-    private final Expression toInsertExpression;
-    private final Expression positionExpression;
+    private Expression mainExpression;
+    private Expression toInsertExpression;
+    private Expression positionExpression;
 
     public InsertExpression(
             Expression mainExpression,
@@ -59,7 +59,7 @@ public class InsertExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("insert json ");
         this.toInsertExpression.serializeToJSONiq(sb, 0);

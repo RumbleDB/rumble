@@ -1,12 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Stream;
-
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -15,38 +10,36 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class TransformExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Map<Name, RuntimeIterator> copyDeclMap;
-    private final RuntimeIterator modifyIterator;
-    private final RuntimeIterator returnIterator;
-    private final boolean mutable;
+    private Map<Name, RuntimeIterator> copyDeclMap;
+    private RuntimeIterator modifyIterator;
+    private RuntimeIterator returnIterator;
 
-    private final int mutabilityLevel;
+    private int mutabilityLevel;
 
     public TransformExpressionIterator(
             Map<Name, RuntimeIterator> copyDeclMap,
             RuntimeIterator modifyIterator,
             RuntimeIterator returnIterator,
             RuntimeStaticContext staticContext,
-            int mutabilityLevel,
-            boolean resultMutable
+            int mutabilityLevel
     ) {
-        super(
-            Stream.concat(
-                copyDeclMap.values().stream(),
-                Stream.of(modifyIterator, returnIterator)
-            ).toList(),
-            staticContext.toBuilder().isUpdating(false).build()
-        );
+        super(null, staticContext);
+        this.children.addAll(copyDeclMap.values());
+        this.children.add(modifyIterator);
+        this.children.add(returnIterator);
 
         this.copyDeclMap = copyDeclMap;
         this.modifyIterator = modifyIterator;
         this.returnIterator = returnIterator;
         this.mutabilityLevel = mutabilityLevel;
-        this.mutable = resultMutable;
+        this.isUpdating = false;
     }
 
     @Override
@@ -72,17 +65,20 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        PendingUpdateList pul = getPendingUpdateList(this.currentDynamicContextForLocalExecution);
+        pul.applyUpdates(this.getMetadata());
+        this.returnIterator.reset(this.currentDynamicContextForLocalExecution);
+    }
+
+    @Override
     protected boolean hasNextLocal() {
         return this.returnIterator.hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        Item result = this.returnIterator.next();
-        if (this.mutable) {
-            result.setMutabilityLevel(this.currentDynamicContextForLocalExecution.getCurrentMutabilityLevel());
-        }
-        return result;
+        return this.returnIterator.next();
     }
 
     @Override
@@ -100,7 +96,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator {
             List<Item> copy = new ArrayList<>();
             Item temp;
             for (Item item : toCopy) {
-                temp = item.copy(true);
+                temp = SerializationUtils.clone(item);
                 temp.setMutabilityLevel(this.mutabilityLevel);
                 // Ensure transform updates apply to the copied item, not the backing collection.
                 temp.setCollection(null);

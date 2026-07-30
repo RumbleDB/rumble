@@ -37,7 +37,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
-import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -45,9 +44,8 @@ import java.util.TreeMap;
 public class VariableReferenceIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Name variableName;
+    private Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
@@ -83,10 +81,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         Name name = nativeClauseContext.getVariable(this.variableName);
         DataType schema = nativeClauseContext.getSchema();
-        if (!(schema instanceof StructType structSchema)) {
+        if (!(schema instanceof StructType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
+        StructType structSchema = (StructType) schema;
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, name)) {
             List<Item> items = nativeClauseContext.getContext()
                 .getVariableValues()
@@ -113,8 +112,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = TypeMappings.getItemTypeFromDataFrameDataType(fieldType);
-        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType arrayType) {
-            if (arrayType.elementType().equals(DataTypes.BinaryType)) {
+        if (arity == SequenceType.Arity.ZeroOrMore && fieldType instanceof ArrayType) {
+            if (((ArrayType) fieldType).elementType().equals(DataTypes.BinaryType)) {
                 return NativeClauseContext.NoNativeQuery;
             }
             variableType = variableType.getArrayContentFacet();
@@ -161,12 +160,16 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         // do nothing
     }
 
+    @Override
+    public void resetLocal() {
+        this.currentIndex = 0;
+        this.items = null;
+    }
 
     public Name getVariableName() {
         return this.variableName;
     }
 
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);

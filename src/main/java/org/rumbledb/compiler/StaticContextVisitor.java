@@ -20,22 +20,14 @@
 
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -49,13 +41,9 @@ import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
-import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -66,7 +54,6 @@ import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
-import org.rumbledb.expressions.scripting.control.TryCatchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
@@ -84,19 +71,22 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.DirElemConstructorExpression;
-import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
-
-    private final Map<String, StaticContext> importedModuleContexts;
+    private Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
@@ -114,14 +104,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (argument == null) {
             throw new OurBadException("No static context provided!");
         }
-        if (node instanceof Expression expression) {
-            expression.setStaticContext(argument);
+        if (node instanceof Expression) {
+            ((Expression) node).setStaticContext(argument);
         }
-        if (node instanceof Statement statement) {
-            statement.setStaticContext(argument);
+        if (node instanceof Statement) {
+            ((Statement) node).setStaticContext(argument);
         }
-        if (node instanceof Clause clause) {
-            clause.setStaticContext(argument);
+        if (node instanceof Clause) {
+            ((Clause) node).setStaticContext(argument);
         }
         return node.accept(this, argument);
     }
@@ -257,61 +247,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
-        this.visit(clause.getExpression(), argument);
-
-        WindowClause.WindowVars start = clause.getStartCondition().variables();
-        WindowClause.WindowVars end = clause.getEndCondition() == null ? null : clause.getEndCondition().variables();
-
-        // Three different static contexts are created to avoid situations like start condition seeing end condition
-        // variables.
-        StaticContext startContext = new StaticContext(argument);
-        addWindowVars(start, clause.getSequenceType(), startContext, clause);
-        this.visit(clause.getStartCondition().expression(), startContext);
-
-        if (end != null) {
-            StaticContext endContext = new StaticContext(startContext);
-            addWindowVars(end, clause.getSequenceType(), endContext, clause);
-            this.visit(clause.getEndCondition().expression(), endContext);
-        }
-
-        StaticContext followingClausesContext = new StaticContext(argument);
-        followingClausesContext.addVariable(
-            clause.getWindowVariable(),
-            clause.getSequenceType(),
-            clause.getMetadata()
-        );
-        addWindowVars(start, clause.getSequenceType(), followingClausesContext, clause);
-        if (end != null) {
-            addWindowVars(end, clause.getSequenceType(), followingClausesContext, clause);
-        }
-
-        this.visit(clause.getNextClause(), followingClausesContext);
-        return argument;
-    }
-
-    private static void addWindowVars(
-            WindowClause.WindowVars vars,
-            SequenceType itemType,
-            StaticContext context,
-            WindowClause clause
-    ) {
-        SequenceType optionalItem = new SequenceType(itemType.getItemType(), SequenceType.Arity.OneOrZero);
-        if (vars.currentItem() != null)
-            context.addVariable(vars.currentItem(), optionalItem, clause.getMetadata());
-        if (vars.position() != null)
-            context.addVariable(
-                vars.position(),
-                new SequenceType(BuiltinTypesCatalogue.integerItem),
-                clause.getMetadata()
-            );
-        if (vars.previousItem() != null)
-            context.addVariable(vars.previousItem(), optionalItem, clause.getMetadata());
-        if (vars.nextItem() != null)
-            context.addVariable(vars.nextItem(), optionalItem, clause.getMetadata());
-    }
-
-    @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), argument);
 
@@ -374,7 +309,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getCountVariableName(),
-            SequenceType.createSequenceType("integer"),
+            SequenceType.INTEGER,
             clause.getMetadata()
         );
         this.visit(clause.getNextClause(), result);
@@ -498,27 +433,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitOptionDeclaration(OptionDeclaration declaration, StaticContext argument) {
-        Name optionName = declaration.getName();
-        if (SERIALIZATION_NAMESPACE.equals(optionName.getNamespace())) {
-            // XQuery 3.1 §4.19.3: "Serialization option declarations use the namespace URI
-            // http://www.w3.org/2010/xslt-xquery-serialization."
-            String localName = optionName.getLocalName();
-            if (localName == null || localName.isEmpty()) {
-                throw new ParsingException(
-                        "Serialization option name must have a local part.",
-                        declaration.getMetadata()
-                );
-            }
-            argument.overrideSerializationParameter(localName, declaration.getValue(), declaration.getMetadata());
-        }
-        // XQuery 3.1 §4.19: if the namespace part of an option declaration's name is not recognized,
-        // the option declaration is ignored. For recognized namespaces with unrecognized option names,
-        // the effect is implementation-defined; ignoring them is conformant as well.
-        return argument;
-    }
-
-    @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(prolog, argument);
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
@@ -552,25 +466,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.getSequenceType().resolve(argument, expression.getMetadata());
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
-        StaticContext contentContext = argument;
-        if (!expression.getNamespaceDeclarations().isEmpty()) {
-            contentContext = new StaticContext(argument);
-            for (NamespaceDeclaration namespaceDeclaration : expression.getNamespaceDeclarations()) {
-                contentContext.bindNamespace(namespaceDeclaration.getPrefix(), namespaceDeclaration.getUri());
-            }
-        }
-
-        for (Expression attribute : expression.getAttributes()) {
-            this.visit(attribute, argument);
-        }
-        for (Expression child : expression.getContent()) {
-            this.visit(child, contentContext);
-        }
         return argument;
     }
 
@@ -727,34 +622,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
         this.visit(clause.getReturnStatement(), argument);
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
-        StaticContext tryContext = new StaticContext(argument);
-        this.visit(statement.getTryStatement(), tryContext);
-
-        for (BlockStatement catchBlock : statement.getCatchStatements().values()) {
-            StaticContext catchContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchContext, catchBlock.getMetadata());
-            this.visit(catchBlock, catchContext);
-        }
-
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitTryCatchExpression(TryCatchExpression expression, StaticContext argument) {
-        StaticContext tryContext = new StaticContext(argument);
-        this.visit(expression.getTryExpression(), tryContext);
-
-        for (Expression catchExpr : expression.getCatchExpressions().values()) {
-            StaticContext catchContext = new StaticContext(argument);
-            ErrorVariables.injectStaticContext(catchContext, catchExpr.getMetadata());
-            this.visit(catchExpr, catchContext);
-        }
-
         return argument;
     }
 }

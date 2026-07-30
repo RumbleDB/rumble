@@ -22,12 +22,10 @@ package org.rumbledb.runtime;
 
 import org.rumbledb.context.RuntimeStaticContext;
 
-import java.io.Serial;
 import java.util.List;
 
 public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     protected DataFrameRuntimeIterator(

@@ -20,6 +20,10 @@
 
 package sparksoniq.jsoniq.tuple;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -32,9 +36,9 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FlworKey {
+public class FlworKey implements KryoSerializable {
 
-    private final List<Item> keyItems;
+    private List<Item> keyItems;
 
     public FlworKey(List<Item> contents) {
         this.keyItems = new ArrayList<>();
@@ -57,8 +61,8 @@ public class FlworKey {
 
     @Override
     public boolean equals(Object otherKey) {
-        if (otherKey instanceof FlworKey flworKey) {
-            return this.equalFlworKey(flworKey);
+        if (otherKey instanceof FlworKey) {
+            return this.equalFlworKey((FlworKey) otherKey);
         } else {
             return false;
         }
@@ -265,6 +269,16 @@ public class FlworKey {
         return result;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.keyItems);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.keyItems = kryo.readObject(input, ArrayList.class);
+    }
 
 
 }

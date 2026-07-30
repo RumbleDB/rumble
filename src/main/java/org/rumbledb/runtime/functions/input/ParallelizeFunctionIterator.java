@@ -32,23 +32,21 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
+    private RuntimeIterator sequenceIterator;
     private RuntimeIterator partitionsIterator;
 
     public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.getChild(0);
+        this.sequenceIterator = this.children.get(0);
         this.partitionsIterator = null;
-        if (this.getChildren().size() > 1) {
-            this.partitionsIterator = this.getChild(1);
+        if (this.children.size() > 1) {
+            this.partitionsIterator = this.children.get(1);
         }
     }
 
@@ -59,14 +57,14 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         if (this.sequenceIterator.isDataFrame()) {
             JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
             rdd = dataFrameToRDDOfItems(dataFrame, this.getMetadata());
-            if (this.getChildren().size() == 1) {
+            if (this.children.size() == 1) {
                 return rdd;
             } else {
                 return rdd.repartition(getNumberOfPartitions(context).getIntValue());
             }
         }
         this.sequenceIterator.materialize(context, contents);
-        if (this.getChildren().size() == 1) {
+        if (this.children.size() == 1) {
             rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         } else {
             Item partitions = getNumberOfPartitions(context);
@@ -107,24 +105,29 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void openLocal() {
-        this.getChild(0).open(this.currentDynamicContextForLocalExecution);
-        if (this.getChildren().size() > 1) {
+        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
+        if (this.children.size() > 1) {
             getNumberOfPartitions(this.currentDynamicContextForLocalExecution);
         }
     }
 
     @Override
     protected void closeLocal() {
-        this.getChild(0).close();
+        this.children.get(0).close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
     protected boolean hasNextLocal() {
-        return this.getChild(0).hasNext();
+        return this.children.get(0).hasNext();
     }
 
     @Override
     protected Item nextLocal() {
-        return this.getChild(0).next();
+        return this.children.get(0).next();
     }
 }

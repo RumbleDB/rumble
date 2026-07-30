@@ -20,25 +20,26 @@
 
 package org.rumbledb.items;
 
-import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class DoubleItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private double value;
 
@@ -52,16 +53,11 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new DoubleItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -123,14 +119,6 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public BigDecimal getDecimalValue() {
-        if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
-            throw new IteratorFlowException("NaN and INF cannot be cast to decimal");
-        }
-        return new BigDecimal(getDoubleValue());
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return this.value != 0;
     }
@@ -145,7 +133,6 @@ public class DoubleItem implements Item {
         return (float) this.value;
     }
 
-    @Override
     public BigDecimal castToDecimalValue() {
         if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
@@ -153,12 +140,10 @@ public class DoubleItem implements Item {
         return BigDecimal.valueOf(getDoubleValue());
     }
 
-    @Override
     public int castToIntValue() {
         return Double.valueOf(this.value).intValue();
     }
 
-    @Override
     public BigInteger castToIntegerValue() {
         return BigDecimal.valueOf(this.value).toBigInteger();
     }
@@ -173,7 +158,15 @@ public class DoubleItem implements Item {
         return Double.isNaN(this.value);
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeDouble(this.value);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.value = input.readDouble();
+    }
 
     public int hashCode() {
         return (int) Math.round(getDoubleValue());
@@ -186,7 +179,7 @@ public class DoubleItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("double"));
+        return new NativeClauseContext(context, "" + this.value, SequenceType.DOUBLE);
     }
 
     @Override

@@ -13,6 +13,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
+import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -25,7 +26,6 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,10 +39,9 @@ import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkML
 
 public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final String estimatorShortName;
-    private final Estimator<?> estimator;
+    private String estimatorShortName;
+    private Estimator<?> estimator;
 
     private JSoundDataFrame inputDataset;
     private Item paramMapItem;
@@ -223,11 +222,24 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
-        return RumbleMLUtils.getDataFrameOrInferFromVariable(
-            context,
-            estimatorInputVariableName,
-            this.staticContext,
-            getMetadata()
+
+        if (!context.getVariableValues().contains(estimatorInputVariableName)) {
+            throw new OurBadException("Estimator's input data is not available in the dynamic context");
+        }
+
+        if (context.getVariableValues().isDataFrame(estimatorInputVariableName, getMetadata())) {
+            return context.getVariableValues()
+                .getDataFrameVariableValue(
+                    estimatorInputVariableName,
+                    getMetadata()
+                );
+        }
+
+        throw new MLNotADataFrameException(
+                "Estimators operate on DataFrames. "
+                    +
+                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
+                getMetadata()
         );
     }
 
@@ -357,12 +369,12 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
-                this.staticContext
-                    .toBuilder()
-                    .staticType(new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One))
-                    .executionMode(ExecutionMode.DATAFRAME)
-                    .metadata(getMetadata())
-                    .build()
+                new RuntimeStaticContext(
+                        getConfiguration(),
+                        new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One),
+                        ExecutionMode.DATAFRAME,
+                        getMetadata()
+                )
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(

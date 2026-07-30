@@ -1,12 +1,5 @@
 package org.rumbledb.types;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.log4j.LogManager;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
@@ -25,9 +18,10 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
 import sparksoniq.spark.SparkSessionManager;
+
+import java.util.*;
 
 public class ItemTypeFactory {
 
@@ -43,7 +37,7 @@ public class ItemTypeFactory {
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
         if (item.isArray()) {
-            List<Item> members = item.getItemMembers();
+            List<Item> members = item.getItems();
             if (members.size() != 1) {
                 throw new InvalidSchemaException(
                         "Invalid JSound, an array type should only contain one member type: " + item.serialize(),
@@ -62,7 +56,7 @@ public class ItemTypeFactory {
         }
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
-            for (String key : item.getStringKeys()) {
+            for (String key : item.getKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
                 boolean unique = false;
@@ -115,8 +109,7 @@ public class ItemTypeFactory {
                     name,
                     BuiltinTypesCatalogue.objectItem,
                     true,
-                    new ArrayList<>(fields.keySet()),
-                    new ArrayList<>(fields.values()),
+                    fields,
                     Collections.emptyList(),
                     Collections.emptyList()
             );
@@ -138,7 +131,7 @@ public class ItemTypeFactory {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        List<FieldDescriptor> content = new ArrayList<>();
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (int i = 0; i < keys.size(); i++) {
             String key = keys.get(i);
             ItemType field = values.get(i);
@@ -146,13 +139,12 @@ public class ItemTypeFactory {
             fieldDescriptor.setName(key);
             fieldDescriptor.setType(field);
             fieldDescriptor.setRequired(true);
-            content.add(fieldDescriptor);
+            content.put(key, fieldDescriptor);
         }
         return new ObjectItemType(
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 true,
-                new ArrayList<>(keys),
                 content,
                 Collections.emptyList(),
                 Collections.emptyList()
@@ -176,22 +168,6 @@ public class ItemTypeFactory {
         );
     }
 
-    /**
-     * Create an empty array type.
-     * 
-     * @return an empty array type.
-     */
-    public static ItemType createEmptyArrayType() {
-        return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                BuiltinTypesCatalogue.item,
-                0,
-                0,
-                null
-        );
-    }
-
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(
@@ -199,7 +175,7 @@ public class ItemTypeFactory {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        List<String> keys = item.getStringKeys();
+        List<String> keys = item.getKeys();
         if (!keys.contains("kind")) {
             throw new InvalidSchemaException(
                     "A JSound verbose schema must contain a 'kind' field.",
@@ -247,10 +223,10 @@ public class ItemTypeFactory {
                         .warn(
                             "The content facet of an object type is missing. By default, no fields are defined or overriden."
                         );
-                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
+                    contentItem = ItemFactory.getInstance().createArrayItem();
                 } else {
                     if (contentItem == null) {
-                        contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
+                        contentItem = ItemFactory.getInstance().createArrayItem();
                     }
                     if (!contentItem.isArray()) {
                         throw new InvalidSchemaException(
@@ -277,7 +253,7 @@ public class ItemTypeFactory {
                         );
                     closed = true;
                 }
-                List<Item> contents = contentItem.getItemMembers();
+                List<Item> contents = contentItem.getItems();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
                 for (Item c : contents) {
                     Item fieldItem = c.getItemByKey("name");
@@ -369,8 +345,7 @@ public class ItemTypeFactory {
                         name,
                         baseType,
                         closed,
-                        new ArrayList<>(fields.keySet()),
-                        new ArrayList<>(fields.values()),
+                        fields,
                         Collections.emptyList(),
                         Collections.emptyList()
                 );
@@ -387,7 +362,7 @@ public class ItemTypeFactory {
                 }
                 contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
-                    contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
+                    contentItem = ItemFactory.getInstance().createArrayItem();
                 }
                 ItemType memberType = null;
                 if (contentItem.isString()) {
@@ -606,116 +581,6 @@ public class ItemTypeFactory {
     }
 
     /**
-     * Typed XQuery map type map(K, V) as a restriction of map(*).
-     *
-     * @param keyAtomicType must be an atomic type (typically from xs: namespace)
-     * @param valueSequenceType sequence type of map values
-     */
-    public static MapItemType mapOf(ItemType keyAtomicType, SequenceType valueSequenceType) {
-        return new MapItemType(null, BuiltinTypesCatalogue.mapItem, keyAtomicType, valueSequenceType);
-    }
-
-    /**
-     * Typed XQuery array type array(T) as a restriction of array(*).
-     *
-     * @param memberSequenceType sequence type of array members
-     */
-    public static ItemType xqueryArrayOf(SequenceType memberSequenceType) {
-        if (memberSequenceType == null) {
-            throw new OurBadException("Array member sequence type cannot be null.");
-        }
-        if (memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
-            return BuiltinTypesCatalogue.xqueryArrayItem;
-        }
-        return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSequenceType);
-    }
-
-    /**
-     * Wildcard XQuery element node type element().
-     *
-     * @return wildcard element node type
-     */
-    public static ItemType elementNodeItemType() {
-        return BuiltinTypesCatalogue.elementNode;
-    }
-
-    /**
-     * Named XQuery element node type element(N).
-     *
-     * @param nodeName node QName restriction
-     * @return named element node type
-     */
-    public static ItemType elementNodeItemType(Name nodeName) {
-        if (nodeName == null) {
-            throw new OurBadException("Element node name cannot be null.");
-        }
-        return new ElementNodeItemType(nodeName);
-    }
-
-    /**
-     * Wildcard XQuery attribute node type attribute().
-     *
-     * @return wildcard attribute node type
-     */
-    public static ItemType attributeNodeItemType() {
-        return BuiltinTypesCatalogue.attributeNode;
-    }
-
-    /**
-     * Named XQuery attribute node type attribute(N).
-     *
-     * @param nodeName node QName restriction
-     * @return named attribute node type
-     */
-    public static ItemType attributeNodeItemType(Name nodeName) {
-        if (nodeName == null) {
-            throw new OurBadException("Attribute node name cannot be null.");
-        }
-        return new AttributeNodeItemType(nodeName);
-    }
-
-    /**
-     * Wildcard XQuery document node type document-node().
-     *
-     * @return wildcard document node type
-     */
-    public static ItemType documentNodeItemType() {
-        return BuiltinTypesCatalogue.documentNode;
-    }
-
-    /**
-     * Restricted XQuery document node type document-node(element(...)).
-     *
-     * @param elementTestType element-test type restriction
-     * @return restricted document node type
-     */
-    public static ItemType documentNodeItemType(ItemType elementTestType) {
-        if (elementTestType == null) {
-            throw new OurBadException("Document node element-test type cannot be null.");
-        }
-        return new DocumentNodeItemType(elementTestType);
-    }
-
-    /**
-     * Wildcard XQuery processing-instruction node type processing-instruction().
-     *
-     * @return wildcard processing-instruction node type
-     */
-    public static ItemType processingInstructionNodeItemType() {
-        return BuiltinTypesCatalogue.processingInstructionNode;
-    }
-
-    /**
-     * Restricted XQuery processing-instruction node type processing-instruction(N).
-     *
-     * @param targetName raw target-name restriction, normalized with fn:normalize-space
-     * @return restricted processing-instruction node type
-     */
-    public static ItemType processingInstructionNodeItemType(String targetName) {
-        return new PINodeItemType(targetName);
-    }
-
-    /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
      * @param structType descriptor of the object
@@ -724,8 +589,7 @@ public class ItemTypeFactory {
     private static ItemType createItemTypeFromSparkStructType(StructType structType) {
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
-        List<String> keys = new ArrayList<>();
-        List<FieldDescriptor> content = new ArrayList<>();
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
             ItemType mappedItemType = createItemType(filedType);
@@ -743,52 +607,10 @@ public class ItemTypeFactory {
             fieldDescriptor.setType(mappedItemType);
             fieldDescriptor.setRequired(!field.nullable());
             // TODO : how to deal with duplicate keys?
-            keys.add(field.name());
-            content.add(fieldDescriptor);
+            content.put(field.name(), fieldDescriptor);
         }
 
-        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, keys, content, null, null);
-    }
-
-    /**
-     * Create an object item type from an item by detecting a schema.
-     * 
-     * @param item the item to analyze
-     * @return an object item type representing the type in Rumble
-     */
-    public static ItemType createItemTypeFromItem(Item item) {
-        if (item.isObject()) {
-            List<ItemType> itemTypes = new ArrayList<>();
-            for (String key : item.getStringKeys()) {
-                itemTypes.add(createItemTypeFromItem(item.getItemByKey(key)));
-            }
-            return ItemTypeFactory.createAnonymousObjectType(item.getStringKeys(), itemTypes);
-        } else if (item.isMap()) {
-            if (item.getSize() == 0) {
-                return BuiltinTypesCatalogue.mapItem;
-            }
-            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                item.getItemKeys(),
-                ExceptionMetadata.EMPTY_METADATA,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
-            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                item.getSequenceValues(),
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
-            return ItemTypeFactory.mapOf(keyType, valueSequenceType);
-        } else if (item.isArrayOfItems()) {
-            if (item.getSize() == 0) {
-                return ItemTypeFactory.createEmptyArrayType();
-            }
-            ItemType result = createItemTypeFromItem(item.getItemAt(0));
-            for (int i = 1; i < item.getSize(); i++) {
-                result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
-            }
-            return ItemTypeFactory.createAnonymousArrayType(result);
-        } else {
-            return item.getDynamicType();
-        }
+        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
@@ -803,12 +625,12 @@ public class ItemTypeFactory {
     }
 
     public static ItemType createItemType(DataType dt) {
-        if (dt instanceof StructType structType) {
-            return createItemTypeFromSparkStructType(structType);
+        if (dt instanceof StructType) {
+            return createItemTypeFromSparkStructType((StructType) dt);
         }
-        if (dt instanceof ArrayType arrayType) {
+        if (dt instanceof ArrayType) {
             return createArrayTypeWithSparkDataTypeContent(
-                arrayType.elementType()
+                ((ArrayType) dt).elementType()
             );
         }
         if (dt.equals(DataTypes.StringType)) {
@@ -825,7 +647,7 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
             return BuiltinTypesCatalogue.floatItem;
-        } else if (dt instanceof DecimalType decimalType && decimalType.scale() == 0) {
+        } else if (dt instanceof DecimalType && ((DecimalType) dt).scale() == 0) {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt instanceof DecimalType) {
             return BuiltinTypesCatalogue.decimalItem;

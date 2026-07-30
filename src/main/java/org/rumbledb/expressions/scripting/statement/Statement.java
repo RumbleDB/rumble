@@ -17,6 +17,7 @@ public abstract class Statement extends Node {
         super(metadata);
     }
 
+
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -39,34 +40,22 @@ public abstract class Statement extends Node {
 
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
-        if (isSequential) {
-            setIsInSequentialBlock(true);
-        }
-    }
-
-    @Override
-    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
-        this.isInSequentialBlock = isInSequentialBlock;
-        for (Node child : getChildren()) {
-            child.setIsInSequentialBlock(isInSequentialBlock);
-        }
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return RuntimeStaticContext.fromStaticContext(getStaticContext())
-            .configuration(conf)
-            .staticType(getStaticSequenceType())
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .isSequential(isSequential())
-            .build();
+        return new RuntimeStaticContext(
+                conf,
+                getStaticSequenceType(),
+                getHighestExecutionMode(visitorConfig),
+                getMetadata()
+        );
     }
 
     @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -76,11 +65,6 @@ public abstract class Statement extends Node {
             buffer.append(" | " + "sequential");
         } else {
             buffer.append(" | " + "non-sequential");
-        }
-        if (this.isInSequentialBlock) {
-            buffer.append(" | " + "in sequential block");
-        } else {
-            buffer.append(" | " + "not in sequential block");
         }
         buffer.append("\n");
         for (Node iterator : getChildren()) {

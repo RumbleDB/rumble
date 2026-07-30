@@ -7,12 +7,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class StaticBaseURIFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StaticBaseURIFunctionIterator(
@@ -25,6 +23,6 @@ public class StaticBaseURIFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURIString());
+        return ItemFactory.getInstance().createAnyURIItem(this.staticURI.toString());
     }
 }

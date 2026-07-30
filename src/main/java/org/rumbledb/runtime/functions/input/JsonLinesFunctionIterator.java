@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -37,16 +36,19 @@ import com.google.gson.stream.JsonReader;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    final RuntimeIterator iterator;
+    RuntimeIterator iterator;
     BufferedReader reader;
     Item path;
     Item nextItem;
@@ -56,7 +58,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
         this.reader = null;
         this.nextItem = null;
         this.path = null;
@@ -64,12 +66,12 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
         int partitions = -1;
-        if (this.getChildren().size() > 1) {
-            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.children.size() > 1) {
+            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
         JavaRDD<String> strings;
@@ -121,15 +123,13 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        return strings.mapPartitions(
-            new JSONSyntaxToItemMapper(getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())
-        );
+        return strings.mapPartitions(new JSONSyntaxToItemMapper(getMetadata()));
     }
 
     protected void init() {
         try {
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticContext.getStaticURI(),
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticURI,
                 this.path.getStringValue(),
                 getMetadata()
             );
@@ -163,6 +163,17 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        try {
+            this.reader.close();
+        } catch (IOException e) {
+            handleException(e);
+        }
+        this.path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        init();
+    }
+
+    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -180,13 +191,7 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = (line != null);
             if (this.hasNext) {
                 JsonReader object = new JsonReader(new StringReader(line));
-                this.nextItem = ItemParser.getItemFromObject(
-                    object,
-                    true,
-                    JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE,
-                    getMetadata(),
-                    this.getRuntimeStaticContext().isQuerySideEffecting()
-                );
+                this.nextItem = ItemParser.getItemFromObject(object, getMetadata());
             }
         } catch (IOException e) {
             handleException(e);

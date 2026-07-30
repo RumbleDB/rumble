@@ -7,19 +7,13 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 
 public abstract class AxisIterator extends LocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR = Comparator.comparing(
-        Item::getXmlDocumentPosition,
-        Comparator.nullsLast(Comparator.naturalOrder())
-    );
     protected List<Item> results;
     protected int resultCounter = 0;
     protected Item nextResult;
@@ -42,7 +36,7 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
             // Remove duplicates
             this.results = new ArrayList<>(new LinkedHashSet<>(this.results));
             // Sort values in document order.
-            this.results.sort(DOCUMENT_ORDER_COMPARATOR);
+            this.results.sort(Comparator.comparing(Item::getXmlDocumentPosition));
         }
         if (this.resultCounter < this.results.size()) {
             this.nextResult = this.results.get(this.resultCounter++);
@@ -58,13 +52,6 @@ public abstract class AxisIterator extends LocalRuntimeIterator {
             descendants.addAll(getDescendants(child));
         }
         return descendants;
-    }
-
-    protected List<Item> getDescendantsOrSelf(Item node) {
-        List<Item> descendantsOrSelf = new ArrayList<>();
-        descendantsOrSelf.add(node);
-        descendantsOrSelf.addAll(getDescendants(node));
-        return descendantsOrSelf;
     }
 
     protected List<Item> getAncestors(Item node) {

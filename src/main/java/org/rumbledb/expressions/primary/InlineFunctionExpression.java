@@ -125,7 +125,7 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public SequenceType getReturnType() {
-        return this.returnType == null ? SequenceType.createSequenceType("item*") : this.returnType;
+        return this.returnType == null ? SequenceType.ITEM_STAR : this.returnType;
     }
 
     public SequenceType getActualReturnType() {
@@ -181,8 +181,7 @@ public class InlineFunctionExpression extends Expression {
         return visitor.visitInlineFunctionExpr(this, argument);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -220,9 +219,9 @@ public class InlineFunctionExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        String updating = isUpdating() ? "%updating " : "";
+        String updating = isUpdating() ? "%an:updating" : "";
         if (this.name != null) {
             sb.append("declare " + updating + " function " + this.name.toString() + "(");
         } else {
@@ -264,3 +263,4 @@ public class InlineFunctionExpression extends Expression {
         return this.hasExitStatement;
     }
 }
+

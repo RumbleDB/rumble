@@ -52,7 +52,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         String name = this.selector.getStringValue();
-        if (this.target.getStringKeys().contains(name)) {
+        if (this.target.getKeys().contains(name)) {
             Item item = this.target.getItemByKey(name);
             this.target.removeItemByKey(name);
             this.target.putItemByKey(this.content.getStringValue(), item);
@@ -74,31 +74,8 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
             String fullOldPath = pathIn + oldName;
             String fullNewPath = pathIn + this.content.getStringValue();
 
-            if (!fullOldPath.contains(".") && !fullNewPath.contains(".")) {
-                String renameColumnQuery = "ALTER TABLE "
-                    + location
-                    + " RENAME COLUMN "
-                    + fullOldPath
-                    + " TO "
-                    + fullNewPath;
-                try {
-                    SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
-                    return;
-                } catch (Exception e) {
-                    if (e.getMessage() != null && e.getMessage().contains("columnMapping")) {
-                        SparkSessionManager.getInstance()
-                            .getOrCreateSession()
-                            .sql(
-                                "ALTER TABLE "
-                                    + location
-                                    + " SET TBLPROPERTIES ('delta.columnMapping.mode' = 'name')"
-                            );
-                        SparkSessionManager.getInstance().getOrCreateSession().sql(renameColumnQuery);
-                        return;
-                    }
-                }
-            }
-
+            String setOldFieldClause = fullOldPath + " = NULL";
+            String setNewFieldClause = fullNewPath + " = " + this.target.getItemByKey(oldName).getSparkSQLValue();
             String type = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .sql("DESC (SELECT " + fullOldPath + " FROM " + location + ")")
@@ -107,7 +84,6 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                 .collectAsList()
                 .get(0)
                 .getString(0);
-            String typedNewValue = "CAST(" + this.target.getItemByKey(oldName).getSparkSQLValue() + " AS " + type + ")";
 
             String insertNewColumnQuery = "ALTER TABLE "
                 + location
@@ -116,6 +92,16 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                 + " "
                 + type
                 + ");";
+            String setFieldsQuery = "UPDATE "
+                + location
+                + " SET "
+                + setOldFieldClause
+                + ", "
+                + setNewFieldClause
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
 
             // SKIP INSERTING NEW COL IF COL ALREADY EXISTS
             try {
@@ -125,8 +111,7 @@ public class RenameInObjectPrimitive implements UpdatePrimitive {
                     throw e;
                 }
             }
-            this.applySetFieldInCollection(location, rowID, fullOldPath, "CAST(NULL AS " + type + ")");
-            this.applySetFieldInCollection(location, rowID, fullNewPath, typedNewValue);
+            SparkSessionManager.getInstance().getOrCreateSession().sql(setFieldsQuery);
         } else {
             this.arrayIndexingApplyDelta();
         }

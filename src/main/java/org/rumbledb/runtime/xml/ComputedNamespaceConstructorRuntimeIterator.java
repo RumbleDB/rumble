@@ -27,12 +27,10 @@ import org.rumbledb.exceptions.InvalidElementNameExpressionException;
 import org.rumbledb.exceptions.InvalidComputedNamespaceConstructorException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -45,12 +43,11 @@ import java.util.regex.Pattern;
  */
 public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
-    private final String staticPrefix;
-    private final DataFunctionIterator prefixIterator;
-    private final DataFunctionIterator uriIterator;
+    private String staticPrefix;
+    private AtomizationIterator prefixIterator;
+    private AtomizationIterator uriIterator;
 
     /**
      * Constructor for static prefix: namespace prefix { uri }
@@ -61,7 +58,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
      */
     public ComputedNamespaceConstructorRuntimeIterator(
             String staticPrefix,
-            DataFunctionIterator uriIterator,
+            AtomizationIterator uriIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(uriIterator), staticContext);
@@ -78,8 +75,8 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
      * @param staticContext The runtime static context
      */
     public ComputedNamespaceConstructorRuntimeIterator(
-            DataFunctionIterator prefixIterator,
-            DataFunctionIterator uriIterator,
+            AtomizationIterator prefixIterator,
+            AtomizationIterator uriIterator,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(prefixIterator, uriIterator), staticContext);
@@ -111,12 +108,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
 
         this.hasNext = false;
 
-        Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            namespaceItem.setXmlDocumentPosition(documentPath, 0);
-        }
-        return namespaceItem;
+        return ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
     }
 
     private String resolvePrefix(DynamicContext dynamicContext) {
@@ -140,7 +132,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
             );
         }
         Item prefixItem = atomizedPrefixItems.get(0);
-        if (!prefixItem.isAtomic() || !(prefixItem.isString() || prefixItem.isUntypedAtomic())) {
+        if (!prefixItem.isAtomic()) {
             throw new UnexpectedStaticTypeException(
                     "Computed namespace constructor prefix must evaluate to an empty sequence or a single atomic value of type xs:string or xs:untypedAtomic"
             );
@@ -238,3 +230,4 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AtMostOneItemLo
         return value != null && NCNAME_PATTERN.matcher(value).matches();
     }
 }
+

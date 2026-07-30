@@ -1,15 +1,15 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
-import java.io.Serial;
-
 public class AttributeTest implements NodeTest {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Name attributeName;
-    private final boolean hasWildcard;
-    private final Name typeName;
+    private Name attributeName;
+    private boolean hasWildcard;
+    private Name typeName;
 
     public AttributeTest(Name attributeName, Name typeName) {
         this.attributeName = attributeName;
@@ -59,17 +59,25 @@ public class AttributeTest implements NodeTest {
         return this.attributeName != null && this.typeName == null;
     }
 
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
+    public String getAttributeName() {
+        return this.attributeName.getLocalName();
     }
 
     public boolean isWildcardOnly() {
         return this.attributeName == null && this.typeName == null && this.hasWildcard;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.attributeName);
+        kryo.writeObject(output, this.typeName);
+        output.writeBoolean(this.hasWildcard);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.attributeName = kryo.readObject(input, Name.class);
+        this.typeName = kryo.readObject(input, Name.class);
+        this.hasWildcard = input.readBoolean();
+    }
 }

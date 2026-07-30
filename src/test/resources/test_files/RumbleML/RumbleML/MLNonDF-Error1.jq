@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBML0003"; :)
+(:JIQS: ShouldCrash; ErrorCode="RBML0004"; :)
 let $estimator := get-estimator("KMeans")
 let $rdd-data := json-lines("../../../queries/rumbleML/sample-ml-data-age-weight.json")
 return ($estimator(
@@ -9,4 +9,4 @@ return ($estimator(
     }
 ))
 
-(: estimator input is now inferred into a dataframe, but KMeans still needs an explicit features column :)
+(: estimators expect a dataframe as the input dataset :)

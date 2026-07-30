@@ -1,22 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
-import org.rumbledb.exceptions.InvalidUpdateTargetException;
-import org.rumbledb.exceptions.ModifiesImmutableValueException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
-import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -24,13 +13,16 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator mainIterator;
-    private final RuntimeIterator locatorIterator;
-    private final RuntimeIterator replacerIterator;
+    private RuntimeIterator mainIterator;
+    private RuntimeIterator locatorIterator;
+    private RuntimeIterator replacerIterator;
 
     public ReplaceExpressionIterator(
             RuntimeIterator mainIterator,
@@ -38,14 +30,12 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator replacerIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            Arrays.asList(mainIterator, locatorIterator, replacerIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+        super(Arrays.asList(mainIterator, locatorIterator, replacerIterator), staticContext);
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.replacerIterator = replacerIterator;
+        this.isUpdating = true;
     }
 
     @Override
@@ -60,6 +50,11 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+
+    }
+
+    @Override
+    protected void resetLocal() {
 
     }
 
@@ -98,8 +93,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
             for (Item item : tempContent) {
                 copyContent.add((Item) SerializationUtils.clone(item));
             }
-            content = ItemFactory.getInstance()
-                .createArrayItem(copyContent, this.getRuntimeStaticContext().isQuerySideEffecting());
+            content = ItemFactory.getInstance().createArrayItem(copyContent, true);
         }
 
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
@@ -111,7 +105,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
+            if (target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
@@ -128,7 +122,7 @@ public class ReplaceExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
+            if (target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

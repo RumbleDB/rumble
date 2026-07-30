@@ -35,13 +35,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public AvroFileFunctionIterator(
@@ -53,26 +51,26 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
-            if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
+            if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
-                List<String> keys = options.getStringKeys();
-                List<Item> values = options.getItemValues();
+                List<String> keys = options.getKeys();
+                List<Item> values = options.getValues();
                 for (int i = 0; i < keys.size(); i++) {
                     Item value = values.get(i);
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
-                            URI schemaURI = FileSystemUtil.resolveFileSystemURI(
-                                this.staticContext.getStaticURI(),
+                            URI schemaURI = FileSystemUtil.resolveURI(
+                                this.staticURI,
                                 value.getStringValue(),
                                 getMetadata()
                             );
@@ -111,6 +109,6 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.getChild(1).materializeFirstItemOrNull(context);
+        return this.children.get(1).materializeFirstItemOrNull(context);
     }
 }

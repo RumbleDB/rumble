@@ -6,14 +6,12 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 /*
  * It is expected that no results are returned for this iterator.
  */
 public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private int childIndex;
@@ -26,8 +24,8 @@ public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntim
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.childIndex = 0;
 
-        if (!this.getChildren().isEmpty()) {
-            this.currentChild = this.getChild(this.childIndex);
+        if (!this.children.isEmpty()) {
+            this.currentChild = this.children.get(this.childIndex);
             this.currentChild.open(this.currentDynamicContextForLocalExecution);
             materializeChildren();
         } else {
@@ -42,10 +40,10 @@ public class CommaVariableDeclStatementIterator extends AtMostOneItemLocalRuntim
                 this.currentChild.next();
             } else {
                 this.currentChild.close();
-                if (++this.childIndex == this.getChildren().size()) {
+                if (++this.childIndex == this.children.size()) {
                     this.currentChild = null;
                 } else {
-                    this.currentChild = this.getChild(this.childIndex);
+                    this.currentChild = this.children.get(this.childIndex);
                     this.currentChild.open(this.currentDynamicContextForLocalExecution);
                 }
             }

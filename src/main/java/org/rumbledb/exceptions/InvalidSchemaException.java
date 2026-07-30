@@ -22,11 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serial;
-
 public class InvalidSchemaException extends ParsingException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public InvalidSchemaException(String message, ExceptionMetadata metadata) {

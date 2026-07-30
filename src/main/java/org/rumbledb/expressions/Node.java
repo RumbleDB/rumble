@@ -20,13 +20,13 @@
 
 package org.rumbledb.expressions;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Predicate;
-
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
 
 /**
  * This is the top-level class for nodes in the intermediate representation of a
@@ -35,8 +35,8 @@ import org.rumbledb.exceptions.OurBadException;
 public abstract class Node {
 
     private ExceptionMetadata metadata;
+
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
-    protected boolean isInSequentialBlock;
 
     protected Node() {
     }
@@ -167,17 +167,12 @@ public abstract class Node {
      * @param buffer a string buffer to write to
      * @param indent the current level of indentation
      */
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        if (this.isInSequentialBlock) {
-            buffer.append(" | " + "in sequential block");
-        } else {
-            buffer.append(" | " + "not in sequential block");
-        }
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -186,14 +181,14 @@ public abstract class Node {
 
     @Override
     public final String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         this.print(sb, 0);
         return sb.toString();
     }
 
-    public abstract void serializeToJSONiq(StringBuilder sb, int indent);
+    public abstract void serializeToJSONiq(StringBuffer sb, int indent);
 
-    protected void indentIt(StringBuilder buffer, int indent) {
+    protected void indentIt(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -211,13 +206,5 @@ public abstract class Node {
             }
         }
         return false;
-    }
-
-    public boolean isInSequentialBlock() {
-        return this.isInSequentialBlock;
-    }
-
-    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
-        this.isInSequentialBlock = isInSequentialBlock;
     }
 }

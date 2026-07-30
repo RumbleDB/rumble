@@ -31,19 +31,15 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
-import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
@@ -100,29 +96,6 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             }
             while (iterator.hasNext()) {
                 Item nextItem = iterator.next();
-                List<Item> atomized = nextItem.atomizedValue();
-                if (atomized.size() > 1) {
-                    throw new OurBadException(
-                            "Invalid sort key: order by expression must atomize to at most one item."
-                    );
-                }
-                if (atomized.isEmpty()) {
-                    if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
-                        this.results.add(emptySequenceOrderIndexLast);
-                    } else {
-                        this.results.add(emptySequenceOrderIndexFirst);
-                    }
-                    this.results.add(null);
-                    continue;
-                }
-                nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
-                    atomized.get(0),
-                    CollationSupport.resolveCollation(
-                        expressionWithIterator.getUri(),
-                        expressionWithIterator.getIterator().getRuntimeStaticContext()
-                    ),
-                    expressionWithIterator.getIterator().getMetadata()
-                );
                 createColumnsForItem(nextItem, expressionIndex);
             }
             iterator.close();

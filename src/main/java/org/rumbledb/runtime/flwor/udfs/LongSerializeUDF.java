@@ -25,18 +25,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class LongSerializeUDF implements UDF1<Long, byte[]> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final List<Item> nextResult;
+    private List<Item> nextResult;
 
-    private final DataFrameContext dataFrameContext;
+    private DataFrameContext dataFrameContext;
 
     public LongSerializeUDF() {
         this.dataFrameContext = new DataFrameContext();

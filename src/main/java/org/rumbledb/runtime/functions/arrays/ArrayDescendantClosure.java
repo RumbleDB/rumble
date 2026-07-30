@@ -3,37 +3,28 @@ package org.rumbledb.runtime.functions.arrays;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ArrayDescendantClosure implements FlatMapFunction<Item, Item> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ArrayDescendantClosure() {
     }
 
-    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
         List<Item> innerValues;
 
         if (arg0.isArray()) {
             results.add(arg0);
-            if (arg0.isArrayOfItems()) {
-                innerValues = arg0.getItemMembers();
-            } else {
-                innerValues = new ArrayList<Item>();
-                for (java.util.List<Item> member : arg0.getSequenceMembers()) {
-                    innerValues.addAll(member);
-                }
-            }
+            innerValues = arg0.getItems();
         } else if (arg0.isObject()) {
-            innerValues = arg0.getItemValues();
+            innerValues = arg0.getValues();
         } else {
+            // for atomic types: do nothing
             return results.iterator();
         }
 

@@ -17,7 +17,6 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
-import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -34,18 +33,16 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 
 public class TreatIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private final SequenceType sequenceType;
-    private final ErrorCode errorCode;
+    private ErrorCode errorCode;
 
     private ItemType itemType;
 
@@ -56,12 +53,14 @@ public class TreatIterator extends HybridRuntimeIterator {
     public TreatIterator(
             RuntimeIterator iterator,
             SequenceType sequenceType,
+            boolean isUpdating,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(iterator), staticContext);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
+        this.isUpdating = isUpdating;
         this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
@@ -78,9 +77,25 @@ public class TreatIterator extends HybridRuntimeIterator {
         }
     }
 
+    public TreatIterator(
+            RuntimeIterator iterator,
+            SequenceType sequenceType,
+            ErrorCode errorCode,
+            RuntimeStaticContext staticContext
+    ) {
+        this(iterator, sequenceType, false, errorCode, staticContext);
+    }
+
     @Override
     public boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    public void resetLocal() {
+        this.resultCount = 0;
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
     }
 
     @Override
@@ -147,38 +162,30 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeException errorToThrow(String type) {
-        if (this.errorCode.equals(ErrorCode.DynamicTypeTreatErrorCode)) {
-            return new TreatException(
-                    type
-                        + " cannot be treated as type "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
+        switch (this.errorCode) {
+            case DynamicTypeTreatErrorCode:
+                return new TreatException(
+                        type
+                            + " cannot be treated as type "
+                            + this.sequenceType,
+                        this.getMetadata()
+                );
+            case UnexpectedTypeErrorCode:
+                return new UnexpectedTypeException(
+                        type
+                            + " is not expected here. The expected type is "
+                            + this.sequenceType,
+                        this.getMetadata()
+                );
+            case InvalidInstance:
+                return new InvalidInstanceException(
+                        "Invalid instance because of arity mismatch. The expected arity is "
+                            + this.sequenceType.getArity(),
+                        this.getMetadata()
+                );
+            default:
+                return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
         }
-        if (this.errorCode.equals(ErrorCode.UnexpectedTypeErrorCode)) {
-            return new UnexpectedTypeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
-        }
-        if (this.errorCode.equals(ErrorCode.InvalidInstance)) {
-            return new InvalidInstanceException(
-                    "Invalid instance because of arity mismatch. The expected arity is "
-                        + this.sequenceType.getArity(),
-                    this.getMetadata()
-            );
-        }
-        if (this.errorCode.equals(ErrorCode.UnexpectedNode)) {
-            return new UnexpectedNodeException(
-                    type
-                        + " is not expected here. The expected type is "
-                        + this.sequenceType,
-                    this.getMetadata()
-            );
-        }
-        return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
     }
 
     @Override
@@ -244,15 +251,11 @@ public class TreatIterator extends HybridRuntimeIterator {
      * @param itemType the dynamic type of these values.
      * @return
      */
-    public static JSoundDataFrame convertToDataFrame(
-            JavaRDD<?> rdd,
-            ItemType itemType,
-            RuntimeStaticContext staticContext
-    ) {
+    public static JSoundDataFrame convertToDataFrame(JavaRDD<?> rdd, ItemType itemType) {
         List<StructField> fields = Collections.singletonList(
             DataTypes.createStructField(
                 SparkSessionManager.nonObjectJSONiqItemColumnName,
-                TypeMappings.getDataFrameDataTypeFromItemType(itemType, staticContext),
+                TypeMappings.getDataFrameDataTypeFromItemType(itemType),
                 true
             )
         );

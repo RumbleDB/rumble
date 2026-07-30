@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.logics;
 
-import java.io.Serial;
 import java.util.Collections;
 
 import org.rumbledb.api.Item;
@@ -35,7 +34,6 @@ import org.rumbledb.types.SequenceType;
 
 public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
 

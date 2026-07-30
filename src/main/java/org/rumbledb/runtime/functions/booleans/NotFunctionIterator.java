@@ -27,12 +27,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class NotFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public NotFunctionIterator(
@@ -44,7 +42,7 @@ public class NotFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+        RuntimeIterator iterator = this.children.get(0);
         boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
             context
         );

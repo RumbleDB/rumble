@@ -20,10 +20,7 @@
 
 package org.rumbledb.runtime.flwor;
 
-import java.io.Serial;
 import java.io.Serializable;
-
-import lombok.EqualsAndHashCode;
 
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
@@ -34,10 +31,8 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeMappings;
 
-@EqualsAndHashCode
 public class FlworDataFrameColumn implements Serializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public enum ColumnFormat {
@@ -88,29 +83,61 @@ public class FlworDataFrameColumn implements Serializable {
         }
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof FlworDataFrameColumn)) {
+            return false;
+        }
+        FlworDataFrameColumn other = (FlworDataFrameColumn) o;
+        if (this.tableName == null && other.tableName != null) {
+            return false;
+        }
+        if (this.tableName != null && other.tableName == null) {
+            return false;
+        }
+        if (this.tableName != null && !this.tableName.equals(other.tableName)) {
+            return false;
+        }
+        if (!this.variableName.equals(other.variableName)) {
+            return false;
+        }
+        if (!this.columnFormat.equals(other.columnFormat)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        if (this.tableName == null) {
+            return this.variableName.hashCode() + this.columnFormat.hashCode();
+        }
+        return this.tableName.hashCode() + this.variableName.hashCode() + this.columnFormat.hashCode();
+    }
+
     public static SequenceType getSequenceTypeFromColumn(String columnName, StructType inputSchema) {
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             int index = inputSchema.fieldIndex(columnName);
             if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
-                return SequenceType.createSequenceType("item*");
+                return SequenceType.ITEM_STAR;
             }
             ItemType itemType = TypeMappings.getItemTypeFromDataFrameDataType(inputSchema.fields()[index].dataType());
             return new SequenceType(itemType, Arity.ZeroOrMore);
         } else {
             switch (columnName.substring(pos)) {
                 case ".count":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 case ".sequence":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 case ".sum":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 case ".max":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 case ".min":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 case ".average":
-                    return SequenceType.createSequenceType("item*");
+                    return SequenceType.ITEM_STAR;
                 default:
                     throw new OurBadException("Unrecognized column name: " + columnName);
             }

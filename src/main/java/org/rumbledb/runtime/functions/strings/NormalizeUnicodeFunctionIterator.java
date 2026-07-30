@@ -28,7 +28,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -36,7 +35,6 @@ import java.util.List;
 
 public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
             Arrays.asList(
@@ -136,15 +134,15 @@ public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeI
     public Item materializeFirstItemOrNull(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-        Item inputItem = this.getChild(0)
+        Item inputItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
-        if (this.getChildren().size() > 1) {
-            Item normalizationFormItem = this.getChild(1)
+        if (this.children.size() > 1) {
+            Item normalizationFormItem = this.children.get(1)
                 .materializeFirstItemOrNull(context);
 
             String normalizationFormRaw = normalizationFormItem.getStringValue();

@@ -1,11 +1,8 @@
 package org.rumbledb.context;
 
-import lombok.EqualsAndHashCode;
-
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 
-@EqualsAndHashCode
 public class BuiltinFunction {
 
     /**
@@ -52,6 +49,23 @@ public class BuiltinFunction {
 
     public BuiltinFunctionExecutionMode getBuiltinFunctionExecutionMode() {
         return this.builtinFunctionExecutionMode;
+    }
+
+    @Override
+    public boolean equals(Object instance) {
+        return instance instanceof BuiltinFunction
+            && this.getIdentifier().equals(((BuiltinFunction) instance).getIdentifier())
+            && this.getSignature().equals(((BuiltinFunction) instance).getSignature())
+            && this.getFunctionIteratorClass().equals(((BuiltinFunction) instance).getFunctionIteratorClass())
+            && this.getBuiltinFunctionExecutionMode() == ((BuiltinFunction) instance).getBuiltinFunctionExecutionMode();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getIdentifier().hashCode()
+            + this.getSignature().hashCode()
+            + this.getFunctionIteratorClass().hashCode()
+            + this.getBuiltinFunctionExecutionMode().hashCode();
     }
 
 }

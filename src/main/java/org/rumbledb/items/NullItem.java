@@ -20,6 +20,9 @@
 
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -28,12 +31,9 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-
 public class NullItem implements Item {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public NullItem() {
@@ -41,22 +41,17 @@ public class NullItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
             return c == 0;
         }
         return false;
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        return this;
     }
 
     @Override
@@ -74,7 +69,16 @@ public class NullItem implements Item {
         return false;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObjectOrNull(output, null, Item.class);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        kryo.readObjectOrNull(input, Item.class);
+
+    }
 
     public int hashCode() {
         return 0;
@@ -102,6 +106,6 @@ public class NullItem implements Item {
 
     @Override
     public String getSparkSQLValue(ItemType itemType) {
-        return "CAST(NULL AS " + itemType.getSparkSQLType() + ")";
+        return "NULL";
     }
 }

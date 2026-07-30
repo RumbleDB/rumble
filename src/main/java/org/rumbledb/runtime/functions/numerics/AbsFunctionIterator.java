@@ -30,13 +30,10 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
-import java.math.BigInteger;
 import java.util.List;
 
 public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public AbsFunctionIterator(
@@ -48,7 +45,7 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
@@ -59,14 +56,10 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createFloatItem(Math.abs(value.getFloatValue()));
         }
         if (value.isInt()) {
-            int intValue = value.getIntValue();
-            if (intValue >= 0) {
+            if (value.getIntValue() >= 0) {
                 return value;
             }
-            if (intValue == Integer.MIN_VALUE) {
-                return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(intValue).negate());
-            }
-            return ItemFactory.getInstance().createIntItem(-intValue);
+            return ItemFactory.getInstance().createIntItem(-value.getIntValue());
         }
         if (value.isInteger()) {
             return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue().abs());
@@ -79,7 +72,7 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

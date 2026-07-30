@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class DoubleLiteralExpression extends Expression {
 
-    private final double value;
+    private double value;
 
     public DoubleLiteralExpression(double value, ExceptionMetadata metadata) {
         super(metadata);
@@ -52,8 +52,7 @@ public class DoubleLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -69,7 +68,7 @@ public class DoubleLiteralExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.value + "\n");
     }

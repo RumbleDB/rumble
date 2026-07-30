@@ -1,5 +1,8 @@
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -8,14 +11,11 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
 public class HexBinaryItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private byte[] value;
     private String stringValue;
@@ -35,16 +35,11 @@ public class HexBinaryItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new HexBinaryItem(this.stringValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -107,7 +102,18 @@ public class HexBinaryItem implements Item {
         return Arrays.hashCode(this.getValue());
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeInt(this.getValue().length);
+        output.writeBytes(this.getValue());
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        int bytesLength = input.readInt();
+        this.value = input.readBytes(bytesLength);
+        this.stringValue = Hex.encodeHexString(this.value);
+    }
 
     @Override
     public ItemType getDynamicType() {

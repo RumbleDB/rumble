@@ -1,16 +1,8 @@
 package org.rumbledb.items;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.Duration;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.Period;
-import java.util.List;
-import java.util.Map;
+import java.time.*;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
@@ -19,9 +11,13 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
+
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
 
 public class ItemFactory {
 
@@ -57,21 +53,10 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
-        if (s == null || s.isEmpty()) {
+        if (s.equals("")) {
             return this.emptyStringItem;
         }
         return new StringItem(s);
-    }
-
-    public Item createLanguageItem(String s) {
-        return this.createAnnotatedItem(
-            this.createStringItem(s),
-            BuiltinTypesCatalogue.languageItem
-        );
-    }
-
-    public Item createUntypedAtomicItem(String s) {
-        return new UntypedAtomicItem(s);
     }
 
     public Item createBooleanItem(boolean b) {
@@ -244,17 +229,6 @@ public class ItemFactory {
         return new AnyURIItem(s);
     }
 
-    public Item createQNameItem(Name name) {
-        return new QNameItem(name);
-    }
-
-    public Item createNCNameItem(String s) {
-        return this.createAnnotatedItem(
-            this.createStringItem(s),
-            BuiltinTypesCatalogue.NCNameItem
-        );
-    }
-
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
@@ -271,28 +245,12 @@ public class ItemFactory {
         return new LazyObjectItem();
     }
 
-    public Item createArrayItem(boolean mutable) {
-        Item result = new ArrayItem();
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
+    public Item createArrayItem() {
+        return new ArrayItem();
     }
 
     public Item createArrayItem(List<Item> items, boolean mutable) {
         Item result = new ArrayItem(items);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-    public Item createSequenceArrayItem(List<List<Item>> memberSequences, boolean mutable) {
-        Item result = new SequenceArrayItem(memberSequences);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {
@@ -316,93 +274,8 @@ public class ItemFactory {
         return result;
     }
 
-    /**
-     * Create an object item from a map of string keys and list of items.
-     * 
-     * @deprecated Use {@link #createObjectItemOptimized(Map<String, Item>, boolean)} instead.
-     * @param keyValuePairs The map of string keys and list of items.
-     * @param mutable The mutability level of the object item.
-     * @return The object item.
-     */
-    @Deprecated
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs, boolean mutable) {
-        return createObjectItemFromValueLists(keyValuePairs, mutable);
-    }
-
-    public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
         Item result = new ObjectItem(keyValuePairs);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-    public Item createObjectItemOptimized(Map<String, Item> keyValuePairs, boolean mutable) {
-        Item result = new ObjectItem(keyValuePairs);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-    public Item createMapItem(
-            Item onlyKey,
-            List<Item> onlyValue,
-            boolean mutable
-    ) {
-        if (!mutable) {
-            return new MapEntryItem(onlyKey, onlyValue);
-        }
-        List<Item> keys = List.of(onlyKey);
-        List<List<Item>> values = List.of(onlyValue);
-        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    public Item createMapItemRemovingKeys(
-            Item original,
-            List<Item> keysToRemove
-    ) {
-        return new MapWithRemovedEntryItem(original, keysToRemove);
-    }
-
-    public Item createMapItemAddingKey(
-            Item original,
-            Item keyToAdd,
-            List<Item> valueToAdd
-    ) {
-        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
-    }
-
-    public Item createMapItem(
-            List<Item> keys,
-            List<List<Item>> values,
-            ExceptionMetadata itemMetadata,
-            boolean mutable
-    ) {
-        if (!mutable && keys.size() == 1) {
-            Item key = keys.get(0);
-            return new MapEntryItem(key, values.get(0));
-        }
-        Item result = new MapItem(keys, values, itemMetadata);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
-        return result;
-    }
-
-    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
-        if (!mutable && keyValuePairs.size() == 1) {
-            Item key = keyValuePairs.keySet().iterator().next();
-            List<Item> values = keyValuePairs.get(key);
-            return new MapEntryItem(key, values);
-        }
-        Item result = new MapItem(keyValuePairs, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {
@@ -429,15 +302,18 @@ public class ItemFactory {
         return new CommentItem(content);
     }
 
-    public Item createXmlCommentNode(Node currentNode) {
-        return new CommentItem(currentNode);
-    }
-
     public Item createXmlAttributeNode(Node attribute) {
         return new AttributeItem(attribute);
     }
 
-    public Item createXmlAttributeNode(Name nodeName, String stringValue) {
+    /**
+     * Create an attribute item.
+     * 
+     * @param nodeName The name of the attribute
+     * @param stringValue The string value of the attribute
+     * @return The attribute item
+     */
+    public Item createXmlAttributeNode(String nodeName, String stringValue) {
         return new AttributeItem(nodeName, stringValue);
     }
 
@@ -455,16 +331,19 @@ public class ItemFactory {
         return new DocumentItem(children);
     }
 
-    public Item createXmlElementNode(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
-        return new ElementItem(elementNode, children, attributes, namespaceBindings);
+    public Item createXmlElementNode(Node elementNode, List<Item> children, List<Item> attributes) {
+        return new ElementItem(elementNode, children, attributes);
     }
 
-    public Item createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
+    /**
+     * Create an element item.
+     * 
+     * @param nodeName The name of the element
+     * @param children The children items of the element
+     * @param attributes The attributes items of the element
+     * @return The element item
+     */
+    public Item createXmlElementNode(String nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 
@@ -488,9 +367,5 @@ public class ItemFactory {
      */
     public Item createXmlProcessingInstructionNode(String target, String content) {
         return new ProcessingInstructionItem(target, content);
-    }
-
-    public Item createXmlProcessingInstructionNode(Node currentNode) {
-        return new ProcessingInstructionItem(currentNode);
     }
 }

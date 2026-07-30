@@ -1,7 +1,9 @@
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serial;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.util.regex.Pattern;
@@ -17,14 +19,14 @@ import org.rumbledb.types.ItemType;
 
 public class TimeItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetTime value;
     private boolean hasTimeZone = true;
-    private static final Pattern timeRegex = Pattern.compile(
+    Pattern timeRegex = Pattern.compile(
         "(([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9](\\.[0-9]+)?|(24:00:00(\\.0+)?))(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
+    @SuppressWarnings("unused")
     public TimeItem() {
         super();
     }
@@ -36,15 +38,10 @@ public class TimeItem implements Item {
     }
 
     TimeItem(String timeString) {
-        if (!timeRegex.matcher(timeString).matches()) {
+        if (!this.timeRegex.matcher(timeString).matches()) {
             throw new IllegalArgumentException("Invalid time string: " + timeString);
         }
         getTimeFromString(timeString);
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        return new TimeItem(this.value, this.hasTimeZone);
     }
 
     private void getTimeFromString(String timeString) {
@@ -68,11 +65,11 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -113,7 +110,17 @@ public class TimeItem implements Item {
         );
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.value.format(DateTimeFormatter.ISO_OFFSET_TIME));
+        output.writeBoolean(this.hasTimeZone);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.value = OffsetTime.parse(input.readString());
+        this.hasTimeZone = input.readBoolean();
+    }
 
     @Override
     public ItemType getDynamicType() {
@@ -150,7 +157,6 @@ public class TimeItem implements Item {
         return this.value.getOffset().getTotalSeconds() / 60;
     }
 
-    @Override
     public OffsetTime getTimeValue() {
         return this.value;
     }

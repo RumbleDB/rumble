@@ -29,15 +29,13 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class UnorderedFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Item nextResult;
 
     public UnorderedFunctionIterator(
@@ -45,7 +43,7 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
     }
 
     @Override
@@ -72,6 +70,17 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.iterator.close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+
+        if (!this.iterator.hasNext()) {
+            this.hasNext = false;
+        } else {
+            setNextResult();
+        }
     }
 
     @Override

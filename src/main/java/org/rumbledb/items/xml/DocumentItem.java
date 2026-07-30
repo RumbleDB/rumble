@@ -1,24 +1,23 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class DocumentItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
-    private Item documentElement;
     // TODO: add base-uri, document-uri, typed-value
 
     // needed for kryo
@@ -28,7 +27,6 @@ public class DocumentItem implements Item {
     public DocumentItem(Node documentNode, List<Item> children) {
         this.stringValue = documentNode.getTextContent();
         this.children = children;
-        this.documentElement = getDocumentElement();
     }
 
     /**
@@ -43,16 +41,6 @@ public class DocumentItem implements Item {
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
         this.stringValue = sb.toString();
-        this.documentElement = getDocumentElement();
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        List<Item> copiedChildren = new ArrayList<>();
-        for (Item child : this.children) {
-            copiedChildren.add(child.copy(mutable));
-        }
-        return new DocumentItem(copiedChildren);
     }
 
     /**
@@ -66,20 +54,6 @@ public class DocumentItem implements Item {
                 computeStringValue(item.children(), sb);
             }
         }
-    }
-
-    private Item getDocumentElement() {
-        List<Item> children = this.children();
-        List<Item> elements = new ArrayList<>();
-        for (Item child : children) {
-            if (child.isElementNode()) {
-                elements.add(child);
-            }
-        }
-        if (elements.size() == 1) {
-            return elements.get(0);
-        }
-        return null;
     }
 
     @Override
@@ -98,12 +72,23 @@ public class DocumentItem implements Item {
 
     @Override
     public void addParentToDescendants() {
-        this.children.forEach(child -> {
-            child.setParent(this);
-            child.addParentToDescendants();
-        });
+        this.children.forEach(child -> child.setParent(this));
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.stringValue);
+        kryo.writeObject(output, this.children);
+        kryo.writeObject(output, this.documentPos);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.stringValue = input.readString();
+        this.children = kryo.readObject(input, ArrayList.class);
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
+    }
 
 
     @Override
@@ -123,20 +108,15 @@ public class DocumentItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        if (this.documentElement == null) {
-            return ItemTypeFactory.documentNodeItemType();
-        }
-        return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
+        return BuiltinTypesCatalogue.documentNode;
     }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof DocumentItem otherDocumentItem)) {
+        if (!(other instanceof DocumentItem)) {
             return false;
         }
-        if (this.documentPos == null || otherDocumentItem.documentPos == null) {
-            return this == otherDocumentItem;
-        }
+        DocumentItem otherDocumentItem = (DocumentItem) other;
         return this.getXmlDocumentPosition().equals(otherDocumentItem.getXmlDocumentPosition());
     }
 
@@ -164,10 +144,12 @@ public class DocumentItem implements Item {
      * XDM 3.1 Section 6.1 Document Node Accessors — node-name.
      *
      * "For a Document Node, dm:node-name returns the empty sequence."
+     *
+     * An empty string is used here to represent the empty sequence.
      */
     @Override
-    public Name nodeName() {
-        return null;
+    public String nodeName() {
+        return "";
     }
 
     /**
@@ -293,18 +275,12 @@ public class DocumentItem implements Item {
 
     @Override
     public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
         return this.documentPos.hashCode();
     }
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.documentElement != null) {
-            return this.documentElement.typedValue();
-        }
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 
     @Override

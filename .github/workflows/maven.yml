@@ -3,25 +3,19 @@
 
 name: Java CI with Maven
 
-on:
-  push:
-    branches:
-      - 'master'
-  pull_request:
-    branches:
-      - '**'
+on: [push, pull_request]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-      - name: Checkout the repository
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v3
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v3
         with:
           java-version: 17
-          distribution: temurin
+          distribution: adopt
       # Github ubuntu contain Maven, but other testing software use minimal size container
       - name: Check if Maven is Installed
         run: |
@@ -34,7 +28,7 @@ jobs:
             mvn -version
           fi
       - name: Cache Maven packages
-        uses: actions/cache@v5
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
@@ -46,7 +40,7 @@ jobs:
       - name: Spotless Check
         run: mvn spotless:check
       - name: Upload Build Artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: Package
           path: target/*.jar
@@ -55,12 +49,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
         test_class: [
           "FrontendTests",
-          "BackwardsCompatibilityTests",
-          "RegexPatternUtilsTest",
           "RuntimeTests",
           "RuntimeTestsNoParallelism",
           "RuntimeTestsNoInlining",
@@ -83,30 +74,21 @@ jobs:
           "IcebergUpdateRuntimeTests"
         ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v3
       - name: Set up Java 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v3
         with:
           java-version: 17
-          distribution: temurin
+          distribution: adopt
       - name: Restore Cached Maven Packages
-        uses: actions/cache@v5
+        uses: actions/cache@v3
         with:
           path: ~/.m2
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
       - name: Download Compiled Artifacts
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@v4
         with:
           name: Package 
           path: target
       - name: Run Test ${{ matrix.test_class }}
         run: mvn -Dtest=${{ matrix.test_class }} test
-      - name: Publish Surefire Report ${{ matrix.test_class }}
-        if: always()
-        uses: ScalableCapital/action-surefire-report@v2
-        with:
-          report_paths: target/surefire-reports/TEST-*.xml
-          create_check: false
-          fail_on_test_failures: false
-          fail_if_no_tests: false
-          report_mode: workflow

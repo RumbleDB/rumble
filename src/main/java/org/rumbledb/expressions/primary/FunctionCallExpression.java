@@ -35,7 +35,6 @@ public class FunctionCallExpression extends Expression {
     private final FunctionIdentifier identifier;
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
-    private boolean isTailCallOptimization;
 
     public FunctionCallExpression(
             Name functionName,
@@ -49,15 +48,6 @@ public class FunctionCallExpression extends Expression {
                 functionName,
                 this.arguments.size()
         );
-        this.isTailCallOptimization = false;
-    }
-
-    public void setTailCallOptimization(boolean isTailCallOptimization) {
-        this.isTailCallOptimization = isTailCallOptimization;
-    }
-
-    public boolean isTailCallOptimization() {
-        return this.isTailCallOptimization;
     }
 
     // some may be null for partial application
@@ -88,15 +78,11 @@ public class FunctionCallExpression extends Expression {
         return visitor.visitFunctionCall(this, argument);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName() + " (" + this.identifier + ")");
-        if (this.isTailCallOptimization) {
-            buffer.append(" [tail call optimization]");
-        }
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(
@@ -120,7 +106,7 @@ public class FunctionCallExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.identifier.toString());
 

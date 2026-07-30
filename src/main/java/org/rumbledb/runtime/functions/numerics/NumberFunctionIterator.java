@@ -29,13 +29,10 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
-import java.io.Serial;
 import java.util.List;
 
 public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public NumberFunctionIterator(
@@ -47,27 +44,17 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 0) {
+        if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return CastIterator.castItemToType(
-                items.get(0),
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+            return CastIterator.castItemToType(items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata());
         }
 
-        Item anyItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item anyItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (anyItem == null) {
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
         try {
-            Item result = CastIterator.castItemToType(
-                anyItem,
-                BuiltinTypesCatalogue.doubleItem,
-                getMetadata(),
-                this.staticContext
-            );
+            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
             if (result != null) {
                 return result;
             }

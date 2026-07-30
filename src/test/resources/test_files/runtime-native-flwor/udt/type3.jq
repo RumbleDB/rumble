@@ -19,6 +19,6 @@ try {
       { }
     )
   return $x
-} catch err:XPTY0004 {
+} catch XPTY0004 {
   "Success"
 }

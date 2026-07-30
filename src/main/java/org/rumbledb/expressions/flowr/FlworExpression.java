@@ -40,9 +40,11 @@ public class FlworExpression extends Expression {
         super(metadata);
         Clause startClause = returnClause.getFirstClause();
         if (
-            !List.of(FLWOR_CLAUSES.FOR, FLWOR_CLAUSES.LET, FLWOR_CLAUSES.WINDOW).contains(startClause.getClauseType())
+            startClause.getClauseType() != FLWOR_CLAUSES.FOR
+                &&
+                startClause.getClauseType() != FLWOR_CLAUSES.LET
         ) {
-            throw new SemanticException("FLOWR clause must starts with a FOR, LET or WINDOW\n", this.getMetadata());
+            throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
         }
 
         this.returnClause = returnClause;
@@ -52,13 +54,12 @@ public class FlworExpression extends Expression {
         return this.returnClause;
     }
 
-    @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.returnClause);
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         this.returnClause.serializeToJSONiq(sb, 0);
         sb.append("\n");
@@ -69,4 +70,5 @@ public class FlworExpression extends Expression {
         return visitor.visitFlowrExpression(this, argument);
     }
 }
+
 

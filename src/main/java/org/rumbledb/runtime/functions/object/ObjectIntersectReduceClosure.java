@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -33,7 +32,6 @@ import org.rumbledb.items.ItemFactory;
 public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item> {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ObjectIntersectReduceClosure() {
@@ -49,7 +47,7 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
 
         // add all key-value pairs in v1
-        for (String key : v1.getStringKeys()) {
+        for (String key : v1.getKeys()) {
             Item value = v1.getItemByKey(key);
             ArrayList<Item> valueList = new ArrayList<>();
             valueList.add(value);
@@ -61,18 +59,18 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
         while (keyIterator.hasNext()) {
             String key = keyIterator.next();
             // if the new item doesn't contain the same keys
-            if (!v2.getStringKeys().contains(key)) {
+            if (!v2.getKeys().contains(key)) {
                 // remove the key from the map
                 keyIterator.remove();
             } else {
                 // add the matching key's value to the list
                 Item value = v2.getItemByKey(key);
                 Item prevValue = keyValuePairs.get(key).get(0);
-                for (Item elem : value.getItemMembers())
-                    prevValue.appendItem(elem);
+                for (Item elem : value.getItems())
+                    prevValue.putItem(elem);
             }
         }
 
-        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
+        return ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
     }
 };

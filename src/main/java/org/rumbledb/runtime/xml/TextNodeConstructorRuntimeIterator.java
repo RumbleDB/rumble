@@ -24,11 +24,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
-
-import java.io.Serial;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,10 +36,9 @@ import java.util.List;
  */
 public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     /** The content iterator */
-    private final DataFunctionIterator contentIterator;
+    private final AtomizationIterator contentIterator;
 
     /**
      * Constructor for text node constructor runtime iterator
@@ -51,7 +47,7 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
      * @param staticContext The static context
      */
     public TextNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
+            AtomizationIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -85,14 +81,9 @@ public class TextNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntim
 
         // Create and return the text node item
         this.hasNext = false;
-        Item textItem = ItemFactory.getInstance()
+        return ItemFactory.getInstance()
             .createXmlTextNode(
                 textContent.toString()
             );
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            textItem.setXmlDocumentPosition(documentPath, 0);
-        }
-        return textItem;
     }
 }

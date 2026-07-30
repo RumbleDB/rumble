@@ -1,49 +1,43 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class AttributeItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private Name dmNodeName;
+    private String nodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    private ItemType typeAnnotation;
-    // TODO: add is-id, is-idrefs
+    // TODO: add schema-type, typed-value, is-id, is-idrefs
 
     // needed for kryo
     public AttributeItem() {
     }
 
     public AttributeItem(Node attributeNode) {
-        this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
+        this.nodeName = attributeNode.getNodeName();
         this.stringValue = attributeNode.getNodeValue();
-        this.typeAnnotation = null;
     }
 
-    public AttributeItem(Name dmNodeName, String stringValue) {
-        this.dmNodeName = dmNodeName;
+    /**
+     * Constructor for an attribute item.
+     * 
+     * @param nodeName The name of the attribute
+     * @param stringValue The string value of the attribute
+     */
+    public AttributeItem(String nodeName, String stringValue) {
+        this.nodeName = nodeName;
         this.stringValue = stringValue;
-        this.typeAnnotation = null;
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
-        copy.typeAnnotation = this.typeAnnotation;
-        return copy;
     }
 
     @Override
@@ -58,10 +52,25 @@ public class AttributeItem implements Item {
     }
 
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.documentPos);
+        kryo.writeClassAndObject(output, this.parent);
+        output.writeString(this.nodeName);
+        output.writeString(this.stringValue);
+    }
 
     @Override
-    public Name nodeName() {
-        return this.dmNodeName;
+    public void read(Kryo kryo, Input input) {
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
+        this.parent = (Item) kryo.readClassAndObject(input);
+        this.nodeName = input.readString();
+        this.stringValue = input.readString();
+    }
+
+    @Override
+    public String nodeName() {
+        return this.nodeName;
     }
 
     @Override
@@ -79,18 +88,9 @@ public class AttributeItem implements Item {
         this.parent = parent;
     }
 
-    public void setNodeName(Name nodeName) {
-        this.dmNodeName = nodeName;
-    }
-
-    @Override
-    public void addParentToDescendants() {
-        // Attribute nodes are leaves and therefore have no descendants to update.
-    }
-
     @Override
     public ItemType getDynamicType() {
-        return ItemTypeFactory.attributeNodeItemType(this.dmNodeName);
+        return BuiltinTypesCatalogue.attributeNode;
     }
 
     /**
@@ -154,16 +154,11 @@ public class AttributeItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (this == other) {
-            return true;
-        }
-        if (!(other instanceof AttributeItem otherAttributeItem)) {
+        if (!(other instanceof AttributeItem)) {
             return false;
         }
-        if (this.documentPos == null || otherAttributeItem.documentPos == null) {
-            return false;
-        }
-        return this.documentPos.equals(otherAttributeItem.documentPos);
+        AttributeItem otherAttributeItem = (AttributeItem) other;
+        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -178,23 +173,12 @@ public class AttributeItem implements Item {
 
     @Override
     public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
         return this.documentPos.hashCode();
     }
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
-            return Collections.singletonList(typedValue);
-        }
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.stringValue));
     }
 
     @Override
@@ -257,21 +241,6 @@ public class AttributeItem implements Item {
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
-            return Collections.emptyList();
-        }
-        return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
-    }
-
-    @Override
-    public void setSchemaType(ItemType typeAnnotation) {
-        this.typeAnnotation = typeAnnotation;
-    }
-
-    @Override
-    public ItemType getSchemaType() {
-        return this.typeAnnotation;
+        return Collections.emptyList();
     }
 }

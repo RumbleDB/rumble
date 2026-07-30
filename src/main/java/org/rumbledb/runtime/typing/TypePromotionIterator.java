@@ -3,7 +3,6 @@ package org.rumbledb.runtime.typing;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -14,7 +13,6 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -23,18 +21,16 @@ import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.Collections;
 
 public class TypePromotionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimeIterator iterator;
-    private final SequenceType sequenceType;
+    private RuntimeIterator iterator;
+    private SequenceType sequenceType;
 
-    private final ItemType itemType;
+    private ItemType itemType;
 
     private Item nextResult;
     private int childIndex;
@@ -64,6 +60,13 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    public void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        this.childIndex = 0;
+        setNextResult();
     }
 
     @Override
@@ -223,25 +226,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     private void checkTypePromotion() {
-        if (
-            this.nextResult.isFunction()
-                && this.nextResult.getIdentifier() != null
-                && this.nextResult.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(this.nextResult.getIdentifier().getName())
-        ) {
-            return;
-        }
-        if (
-            (this.nextResult.isFunction() || this.nextResult.isMap() || this.nextResult.isArray())
-                && this.itemType.isFunctionItemType()
-                && this.itemType.getSignature() != null
-        ) {
-            this.nextResult = FunctionCoercion.coerceToFunctionItem(
-                this.nextResult,
-                this.itemType,
-                getRuntimeStaticContext(),
-                this.exceptionMessage
-            );
+        if (this.nextResult.isFunction()) {
             return;
         }
         if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
@@ -254,17 +239,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.nextResult = CastIterator.castItemToType(
-            this.nextResult,
-            this.sequenceType.getItemType(),
-            getMetadata(),
-            this.staticContext
-        );
+        this.nextResult = CastIterator.castItemToType(this.nextResult, this.sequenceType.getItemType(), getMetadata());
         if (this.nextResult == null) {
             throw new OurBadException(
                     "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()
             );
         }
     }
-
 }

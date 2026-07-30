@@ -25,18 +25,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.immutable.ArraySeq;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<byte[]>, byte[]> {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final List<Item> nextResult;
-    private final List<List<Item>> deserializedParams;
-    private final DataFrameContext dataFrameContext;
+    private List<Item> nextResult;
+    private List<List<Item>> deserializedParams;
+    private DataFrameContext dataFrameContext;
 
     public GroupClauseSerializeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();

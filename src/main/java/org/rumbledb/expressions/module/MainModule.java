@@ -48,7 +48,6 @@ public class MainModule extends Module {
         this.program = program;
     }
 
-    @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -84,7 +83,7 @@ public class MainModule extends Module {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         this.prolog.serializeToJSONiq(sb, indent);
         this.program.serializeToJSONiq(sb, indent);
     }

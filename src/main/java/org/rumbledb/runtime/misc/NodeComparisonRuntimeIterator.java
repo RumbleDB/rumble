@@ -32,7 +32,6 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.Arrays;
 
 /**
@@ -43,12 +42,11 @@ import java.util.Arrays;
  * @see org.rumbledb.expressions.comparison.NodeComparisonExpression
  */
 public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final NodeComparisonExpression.NodeComparisonOperator operator;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private NodeComparisonExpression.NodeComparisonOperator operator;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
 
     public NodeComparisonRuntimeIterator(
             RuntimeIterator leftIterator,
@@ -122,6 +120,12 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             );
         }
 
+        // Compare document order using XMLDocumentPosition
+        XMLDocumentPosition leftPos = leftItem.getXmlDocumentPosition();
+        XMLDocumentPosition rightPos = rightItem.getXmlDocumentPosition();
+
+        int comparison = leftPos.compareTo(rightPos);
+
         boolean result;
         switch (this.operator) {
             case NC_IS: // is
@@ -130,19 +134,14 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                 result = leftItem.equals(rightItem);
                 break;
             case NC_PRECEDES: // <<
+                // 5. A comparison with the << operator returns true if the left operand node precedes
+                // the right operand node in document order; otherwise it returns false.
+                result = comparison < 0;
+                break;
             case NC_FOLLOWS: // >>
-                XMLDocumentPosition leftPos = leftItem.getXmlDocumentPosition();
-                XMLDocumentPosition rightPos = rightItem.getXmlDocumentPosition();
-                if (leftPos == null || rightPos == null) {
-                    throw new UnexpectedTypeException(
-                            "Node comparison in document order requires both operands to have a document position.",
-                            getMetadata()
-                    );
-                }
-                int comparison = leftPos.compareTo(rightPos);
-                result = this.operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
-                    ? comparison < 0
-                    : comparison > 0;
+                // 6. A comparison with the >> operator returns true if the left operand node follows
+                // the right operand node in document order; otherwise it returns false.
+                result = comparison > 0;
                 break;
             default:
                 throw new OurBadException("Unrecognized node comparison operator: " + this.operator);

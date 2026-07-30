@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public class AttributeNodeContentExpression extends Expression {
 
-    private final String content;
+    private String content;
 
     public AttributeNodeContentExpression(String content, ExceptionMetadata metadata) {
         super(metadata);
@@ -60,7 +60,7 @@ public class AttributeNodeContentExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         // just append the content as is
         // this is not a string literal, but it's only used in the context of computed attribute nodes

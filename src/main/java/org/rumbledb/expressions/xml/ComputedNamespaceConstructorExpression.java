@@ -101,18 +101,11 @@ public class ComputedNamespaceConstructorExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        if (this.prefixExpression != null) {
-            result.add(this.prefixExpression);
-        }
-        if (this.uriExpression != null) {
-            result.add(this.uriExpression);
-        }
-        return result;
+        return new ArrayList<>();
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("namespace ");
         if (this.hasStaticPrefix()) {
@@ -127,3 +120,4 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
+

@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="0":)
-declare %an:assignable variable $x := 3;
+declare %assignable variable $x := 3;
 declare function local:recursive_decrement_x($to_change) {
     if ($x gt 0) then {
         $x := $x - 1;

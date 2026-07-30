@@ -28,7 +28,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
@@ -38,7 +37,6 @@ import java.util.Queue;
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
@@ -54,7 +52,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
         this.iterator.open(context);
         this.nextResults = new LinkedList<>();
 
@@ -105,9 +103,9 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
     private void getDescendantPairs(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantPairs(item.getItemMembers());
+                getDescendantPairs(item.getItems());
             } else if (item.isObject()) {
-                List<String> keys = item.getStringKeys();
+                List<String> keys = item.getKeys();
                 for (String key : keys) {
                     Item value = item.getItemByKey(key);
 

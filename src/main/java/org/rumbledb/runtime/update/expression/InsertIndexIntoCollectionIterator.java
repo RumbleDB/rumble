@@ -22,13 +22,11 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.net.URI;
 import java.util.Arrays;
 
 public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator targetIterator;
     private final RuntimeIterator contentIterator;
@@ -46,10 +44,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isLast,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            Arrays.asList(targetIterator, contentIterator, posIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+        super(Arrays.asList(targetIterator, contentIterator, posIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = posIterator;
@@ -57,6 +52,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
+        this.isUpdating = true;
 
     }
 
@@ -68,7 +64,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
             boolean isLast,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(targetIterator, contentIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(Arrays.asList(targetIterator, contentIterator), staticContext);
         this.targetIterator = targetIterator;
         this.contentIterator = contentIterator;
         this.posIterator = null;
@@ -76,6 +72,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         this.isFirst = isFirst;
         this.isLast = isLast;
 
+        this.isUpdating = true;
 
     }
 
@@ -98,6 +95,10 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
+    protected void resetLocal() {
+
+    }
 
     @Override
     protected boolean hasNextLocal() {
@@ -138,11 +139,7 @@ public class InsertIndexIntoCollectionIterator extends HybridRuntimeIterator {
         String logicalPath = targetItem.getStringValue();
         Mode mode = this.mode;
         if (mode == Mode.DELTA) {
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                this.staticContext.getStaticURI(),
-                logicalPath,
-                getMetadata()
-            );
+            URI uri = FileSystemUtil.resolveURI(this.staticURI, logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
         }
 

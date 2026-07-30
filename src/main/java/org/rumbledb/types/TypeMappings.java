@@ -1,17 +1,11 @@
 package org.rumbledb.types;
 
+import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.sql.types.*;
+import org.rumbledb.exceptions.OurBadException;
+
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.spark.ml.linalg.VectorUDT;
-import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.DecimalType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.OurBadException;
 
 public class TypeMappings {
 
@@ -19,7 +13,7 @@ public class TypeMappings {
     public static final DataType integerType = new DecimalType(38, 0);
     public static final DataType decimalType = new DecimalType(38, 19);
 
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType, RuntimeStaticContext staticContext) {
+    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             return DataTypes.BooleanType;
         }
@@ -48,7 +42,7 @@ public class TypeMappings {
             return decimalType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
-            return DataTypes.DoubleType;
+            return decimalType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
@@ -70,16 +64,13 @@ public class TypeMappings {
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
-            itemType.getObjectKeysFacet()
+            itemType.getObjectContentFacet()
                 .forEach(
-                    key -> fields.add(
+                    (key, value) -> fields.add(
                         DataTypes.createStructField(
                             key,
-                            getDataFrameDataTypeFromItemType(
-                                itemType.getObjectContentFacet(key).getType(),
-                                staticContext
-                            ),
-                            !itemType.getObjectContentFacet(key).isRequired()
+                            getDataFrameDataTypeFromItemType(value.getType()),
+                            !value.isRequired()
                         )
                     )
                 );
@@ -89,55 +80,14 @@ public class TypeMappings {
             return DataTypes.BinaryType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
-            return DataTypes.createArrayType(
-                getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet(), staticContext)
-            );
+            return DataTypes.createArrayType(getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet()));
         }
         if (itemType.isTopmostItemType()) {
-            return DataTypes.StringType;
+            return DataTypes.VariantType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.JSONItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.isUnionType()) {
-            List<ItemType> memberTypes = itemType.getTypes();
-            ItemType singleNullableType = itemType.getSingleNullableType();
-            if (singleNullableType != null) {
-                if (staticContext.getConfiguration().getLaxJSONNullValidation()) {
-                    return getDataFrameDataTypeFromItemType(singleNullableType, staticContext);
-                }
-                return DataTypes.StringType;
-            }
-            boolean hasNumeric = false;
-            boolean hasNull = false;
-            boolean hasStructuredType = false;
-            for (ItemType memberType : memberTypes) {
-                if (memberType.isNumeric()) {
-                    hasNumeric = true;
-                } else if (memberType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
-                    hasNull = true;
-                } else if (!memberType.isAtomicItemType()) {
-                    hasStructuredType = true;
-                }
-            }
-            if (
-                hasNumeric
-                    && !hasStructuredType
-                    && !(!staticContext.getConfiguration().getLaxJSONNullValidation() && hasNull)
-            ) {
-                return DataTypes.DoubleType;
-            }
-            return DataTypes.StringType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            return DataTypes.StringType;
-        }
+        Thread.dumpStack();
         throw new IllegalArgumentException(
-                "Unexpected item type found: '"
-                    + itemType
-                    + "' in namespace "
-                    + (itemType.getName() != null ? itemType.getName().getNamespace() : "null")
-                    + "."
+                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
         );
     }
 
@@ -164,7 +114,7 @@ public class TypeMappings {
         if (DataTypes.FloatType.equals(dataType)) {
             return BuiltinTypesCatalogue.floatItem;
         }
-        if (dataType instanceof DecimalType decimalType && decimalType.scale() == 0) {
+        if (dataType instanceof DecimalType && ((DecimalType) dataType).scale() == 0) {
             return BuiltinTypesCatalogue.integerItem;
         }
         if (dataType instanceof DecimalType) {

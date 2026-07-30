@@ -23,12 +23,13 @@ package org.rumbledb.compiler;
 import org.apache.log4j.LogManager;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -53,8 +54,6 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
-import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -97,7 +96,7 @@ import java.util.Map.Entry;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private final RumbleRuntimeConfiguration configuration;
+    private RumbleRuntimeConfiguration configuration;
     private List<Statement> exitStatementChildren;
 
     ExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
@@ -249,8 +248,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        String queryLanguage = expression.getStaticContext().getQueryLanguage();
-        if (!BuiltinFunctionCatalogue.exists(identifier, queryLanguage)) {
+        if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
             for (Expression parameter : expression.getArguments()) {
                 if (parameter == null) {
@@ -269,18 +267,16 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
         }
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), queryLanguage)) {
+        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier())) {
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                expression.getFunctionIdentifier(),
-                queryLanguage
+                expression.getFunctionIdentifier()
             );
             expression.setHighestExecutionMode(
-                BuiltinFunctionExecutionModes.resolve(
+                getBuiltInFunctionExecutionMode(
                     builtinFunction,
                     expression.getArguments().size() > 0
                         ? expression.getArguments().get(0).getHighestExecutionMode(this.visitorConfig)
-                        : null,
-                    this.configuration
+                        : null
                 )
             );
         } else {
@@ -310,6 +306,47 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         return argument;
+    }
+
+    private ExecutionMode getBuiltInFunctionExecutionMode(
+            BuiltinFunction builtinFunction,
+            ExecutionMode firstMode
+    ) {
+        BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
+            return ExecutionMode.LOCAL;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.RDD) {
+            return ExecutionMode.RDD;
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.DATAFRAME) {
+            return DATAFRAMEifConfigurationAllows();
+        }
+        if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
+            ExecutionMode firstArgumentExecutionMode = firstMode;
+            if (firstArgumentExecutionMode.isDataFrame()) {
+                return DATAFRAMEifConfigurationAllows();
+            }
+            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        if (
+            functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
+        ) {
+            ExecutionMode firstArgumentExecutionMode = firstMode;
+            if (
+                firstArgumentExecutionMode.isRDDOrDataFrame()
+                    && !firstArgumentExecutionMode.isDataFrame()
+            ) {
+                return ExecutionMode.RDD;
+            }
+            return ExecutionMode.LOCAL;
+        }
+        throw new OurBadException(
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
+        );
     }
 
     // endregion
@@ -406,45 +443,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getPositionalVariableName(),
                 ExecutionMode.LOCAL
             );
-        }
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
-        this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
-
-        StaticContext startContext = clause.getStartCondition().expression().getStaticContext();
-        clause.getStartCondition()
-            .variables()
-            .names()
-            .forEach(name -> startContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
-        this.visit(clause.getStartCondition().expression(), startContext);
-
-        if (clause.getEndCondition() != null) {
-            StaticContext endContext = clause.getEndCondition().expression().getStaticContext();
-            clause.getStartCondition()
-                .variables()
-                .names()
-                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
-            clause.getEndCondition()
-                .variables()
-                .names()
-                .forEach(name -> endContext.setVariableStorageMode(name, ExecutionMode.LOCAL));
-            this.visit(clause.getEndCondition().expression(), endContext);
-        }
-
-        clause.setHighestExecutionMode(ExecutionMode.LOCAL);
-        argument.setVariableStorageMode(clause.getWindowVariable(), ExecutionMode.LOCAL);
-        clause.getStartCondition()
-            .variables()
-            .names()
-            .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
-        if (clause.getEndCondition() != null) {
-            clause.getEndCondition()
-                .variables()
-                .names()
-                .forEach(name -> argument.setVariableStorageMode(name, ExecutionMode.LOCAL));
         }
         return argument;
     }
@@ -751,12 +749,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         Expression left = rangeExpression.getLeftExpression();
         Expression right = rangeExpression.getRightExpression();
         if (
-            left instanceof IntegerLiteralExpression leftLiteralExpr
+            left instanceof IntegerLiteralExpression
                 &&
-                right instanceof IntegerLiteralExpression rightLiteralExpr
+                right instanceof IntegerLiteralExpression
         ) {
-            String leftLiteral = leftLiteralExpr.getLexicalValue();
-            String rightLiteral = rightLiteralExpr.getLexicalValue();
+            String leftLiteral = ((IntegerLiteralExpression) left).getLexicalValue();
+            String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
             BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
             BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
             if (
@@ -917,43 +915,44 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression intLiteralExpr) {
-            String lexicalValue = intLiteralExpr.getLexicalValue();
+        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                 return argument;
             }
         }
 
+
         // START eq optimization
         if (
-            expression.getPredicateExpression() instanceof ComparisonExpression comparisonExpression
-                && comparisonExpression.getComparisonOperator()
+            expression.getPredicateExpression() instanceof ComparisonExpression
+                && ((ComparisonExpression) expression.getPredicateExpression()).getComparisonOperator()
                     .toString()
                     .equals("eq")
         ) {
             Node left = expression.getPredicateExpression().getChildren().get(0);
             Node right = expression.getPredicateExpression().getChildren().get(1);
 
-            IntegerLiteralExpression intLiteral = null;
+            Node intLiteral = null;
             if (
-                left instanceof FunctionCallExpression leftFuncExpr
-                    && leftFuncExpr.getFunctionName().getLocalName().equals("position")
+                left instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) left).getFunctionName().getLocalName().equals("position")
             ) {
-                if (right instanceof IntegerLiteralExpression rightLiteralExpr) {
-                    intLiteral = rightLiteralExpr;
+                if (right instanceof IntegerLiteralExpression) {
+                    intLiteral = right;
                 }
             }
             if (
-                right instanceof FunctionCallExpression rightFuncExpr
-                    && rightFuncExpr.getFunctionName().getLocalName().equals("position")
+                right instanceof FunctionCallExpression
+                    && ((FunctionCallExpression) right).getFunctionName().getLocalName().equals("position")
             ) {
-                if (left instanceof IntegerLiteralExpression leftLiteralExpr) {
-                    intLiteral = leftLiteralExpr;
+                if (left instanceof IntegerLiteralExpression) {
+                    intLiteral = left;
                 }
             }
             if (intLiteral != null) {
-                String lexicalValue = intLiteral.getLexicalValue();
+                String lexicalValue = ((IntegerLiteralExpression) intLiteral).getLexicalValue();
                 if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                     expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                     return argument;
@@ -1096,15 +1095,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
         visitDescendants(slashExpr, argument);
         slashExpr.setHighestExecutionMode(slashExpr.getLeftExpression().getHighestExecutionMode());
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitNodeSetExpr(NodeSetExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        ExecutionMode leftMode = expression.getLeftExpression().getHighestExecutionMode(this.visitorConfig);
-        ExecutionMode rightMode = expression.getRightExpression().getHighestExecutionMode(this.visitorConfig);
-        expression.setHighestExecutionMode(getHighestExecutionMode(leftMode, rightMode));
         return argument;
     }
 

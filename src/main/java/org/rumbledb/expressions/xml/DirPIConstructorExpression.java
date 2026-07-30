@@ -78,14 +78,14 @@ public class DirPIConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("<?");
         sb.append(this.target);
         if (this.contentExpression != null) {
             sb.append(" ");
-            if (this.contentExpression instanceof StringLiteralExpression stringLiteralExpression) {
-                sb.append(stringLiteralExpression.getValue());
+            if (this.contentExpression instanceof StringLiteralExpression) {
+                sb.append(((StringLiteralExpression) this.contentExpression).getValue());
             } else {
                 this.contentExpression.serializeToJSONiq(sb, 0);
             }

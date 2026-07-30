@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.arithmetics;
 
-import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
@@ -48,11 +47,10 @@ import org.rumbledb.types.SequenceType.Arity;
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     Item left;
     Item right;
-    final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
 
@@ -107,12 +105,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 this.right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
-        }
-        if (this.left.isUntypedAtomic()) {
-            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
-        }
-        if (this.right.isUntypedAtomic()) {
-            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
         }
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
@@ -462,14 +454,11 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         if (Double.isNaN(r)) {
             throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
         }
+        if (Double.isInfinite(r)) {
+            throw new DurationOverflowOrUnderflow("Overflow after multiplying duration with infinity.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
-                if (Double.isInfinite(r)) {
-                    throw new DurationOverflowOrUnderflow(
-                            "Overflow after multiplying duration with infinity.",
-                            metadata
-                    );
-                }
                 int months = l.getYears() * 12 + l.getMonths();
                 int totalMonths = (int) Math.round(months * r);
                 try {
@@ -479,9 +468,6 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 }
             }
             case DIV: {
-                if (Double.isInfinite(r)) {
-                    return ItemFactory.getInstance().createYearMonthDurationItem(Period.ZERO);
-                }
                 int months = l.getYears() * 12 + l.getMonths();
                 if (r == -0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
@@ -530,19 +516,10 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         }
         switch (multiplicativeOperator) {
             case MUL: {
-                if (Double.isInfinite(r)) {
-                    throw new DurationOverflowOrUnderflow(
-                            "Overflow after multiplying duration with infinity.",
-                            metadata
-                    );
-                }
                 long duration = l.toNanos();
                 return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofNanos((long) (duration * r)));
             }
             case DIV: {
-                if (Double.isInfinite(r)) {
-                    return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ZERO);
-                }
                 long duration = l.toNanos();
                 if (r == 0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
@@ -583,40 +560,40 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
             if (this.multiplicativeOperator.equals(MultiplicativeExpression.MultiplicativeOperator.DIV)) {
                 resultType = BuiltinTypesCatalogue.decimalItem;
@@ -624,8 +601,8 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                 resultType = BuiltinTypesCatalogue.integerItem;
             }
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {

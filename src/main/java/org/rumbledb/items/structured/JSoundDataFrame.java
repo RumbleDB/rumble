@@ -1,6 +1,5 @@
 package org.rumbledb.items.structured;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,10 +25,9 @@ import org.rumbledb.types.ItemTypeFactory;
 import sparksoniq.spark.SparkSessionManager;
 
 public class JSoundDataFrame implements Serializable {
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final Dataset<Row> dataFrame;
+    private Dataset<Row> dataFrame;
     private ItemType itemType;
 
     public JSoundDataFrame(Dataset<Row> dataFrame, ItemType itemType) {
@@ -245,10 +243,12 @@ public class JSoundDataFrame implements Serializable {
         if (dataType instanceof VariantType) {
             return true;
         }
-        if (dataType instanceof ArrayType arrayType) {
+        if (dataType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dataType;
             return containsVariantTypeInSchema(arrayType.elementType());
         }
-        if (dataType instanceof StructType structType) {
+        if (dataType instanceof StructType) {
+            StructType structType = (StructType) dataType;
             for (StructField field : structType.fields()) {
                 if (containsVariantTypeInSchema(field.dataType())) {
                     return true;

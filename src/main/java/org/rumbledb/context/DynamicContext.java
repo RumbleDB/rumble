@@ -20,11 +20,13 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
-
-import java.io.Serial;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -37,9 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DynamicContext implements Serializable {
+public class DynamicContext implements Serializable, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;
@@ -79,7 +80,7 @@ public class DynamicContext implements Serializable {
         this.parent = null;
         this.variableValues = new VariableValues(conf);
         this.conf = conf;
-        this.namedFunctions = new NamedFunctions();
+        this.namedFunctions = new NamedFunctions(conf);
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = OffsetDateTime.now();
         this.currentMutabilityLevel = 0;
@@ -138,7 +139,17 @@ public class DynamicContext implements Serializable {
         return this.variableValues;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObjectOrNull(output, this.parent, DynamicContext.class);
+        kryo.writeObject(output, this.variableValues);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
+        this.variableValues = kryo.readObject(input, VariableValues.class);
+    }
 
     public int getCurrentMutabilityLevel() {
         return this.currentMutabilityLevel;

@@ -22,7 +22,6 @@ package org.rumbledb.expressions.xml;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -75,9 +74,6 @@ public class ComputedAttributeConstructorExpression extends Expression {
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        if (nameExpression == null) {
-            throw new OurBadException("Dynamic computed attribute constructors must have a name expression.");
-        }
         this.attributeName = null;
         this.nameExpression = nameExpression;
         this.valueExpression = valueExpression;
@@ -137,7 +133,7 @@ public class ComputedAttributeConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("attribute ");
         if (this.hasStaticName()) {

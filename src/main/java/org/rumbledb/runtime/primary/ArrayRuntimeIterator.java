@@ -20,10 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,85 +32,43 @@ import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final boolean isFixedSlotsArrayConstructor;
-    private final boolean mutable;
 
-    /**
-     * Curly array constructor: single child whose items become singleton members.
-     */
     public ArrayRuntimeIterator(
             RuntimeIterator arrayItems,
-            RuntimeStaticContext staticContext,
-            boolean mutable
+            RuntimeStaticContext staticContext
     ) {
-        super(arrayItems == null ? List.of() : List.of(arrayItems), staticContext);
-        this.isFixedSlotsArrayConstructor = false;
-        this.mutable = mutable;
+        super(null, staticContext);
+        if (arrayItems != null) {
+            this.children.add(arrayItems);
+        }
     }
 
-    /**
-     * Square array constructor: each child iterator produces one member (possibly a sequence).
-     */
-    public ArrayRuntimeIterator(
-            List<RuntimeIterator> memberIterators,
-            boolean isFixedSlotsArrayConstructor,
-            RuntimeStaticContext staticContext,
-            boolean mutable
-    ) {
-        super(memberIterators == null ? List.of() : memberIterators, staticContext);
-        this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
-        this.mutable = mutable;
-    }
-
-    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        if (isEffectiveFixedSlotsArrayConstructor()) {
-            boolean allSingleton = true;
-            List<List<Item>> memberSequences = new ArrayList<>();
-            for (RuntimeIterator child : this.getChildren()) {
-                List<Item> member = child.materialize(dynamicContext);
-                if (allSingleton && member.size() != 1) {
-                    allSingleton = false;
-                }
-                memberSequences.add(member);
-            }
-            if (allSingleton) {
-                List<Item> items = new ArrayList<>();
-                for (List<Item> member : memberSequences) {
-                    items.add(member.get(0));
-                }
-                return ItemFactory.getInstance()
-                    .createArrayItem(items, this.mutable);
-            } else {
-                return ItemFactory.getInstance()
-                    .createSequenceArrayItem(memberSequences, this.mutable);
-            }
-        }
         List<Item> result = new ArrayList<>();
-        for (RuntimeIterator child : this.getChildren()) {
-            result.addAll(child.materialize(dynamicContext));
+        if (!this.children.isEmpty()) {
+            result.addAll(this.children.get(0).materialize(dynamicContext));
         }
-        return ItemFactory.getInstance().createArrayItem(result, this.mutable);
+        Item item = ItemFactory.getInstance().createArrayItem(result, true);
+        return item;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (isEffectiveFixedSlotsArrayConstructor()) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-        if (this.getChildren().size() == 1) {
-            NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        if (!this.children.isEmpty()) {
+            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             String resultingQuery;
-            if (this.getChild(0) instanceof CommaExpressionIterator) {
+            if (this.children.get(0) instanceof CommaExpressionIterator) {
                 resultingQuery = childQuery.getResultingQuery();
             } else {
                 resultingQuery = "array( "
@@ -136,9 +90,5 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                     new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
             );
         }
-    }
-
-    private boolean isEffectiveFixedSlotsArrayConstructor() {
-        return this.isFixedSlotsArrayConstructor;
     }
 }

@@ -45,8 +45,8 @@ public class ComparisonExpression extends Expression {
         GC_GT(">"),
         GC_GE(">=");
 
-        private final String name;
-        private final boolean isValueComparison;
+        private String name;
+        private boolean isValueComparison;
 
         ComparisonOperator(String name) {
             switch (name) {
@@ -158,9 +158,9 @@ public class ComparisonExpression extends Expression {
         }
     };
 
-    private final Expression leftExpression;
-    private final Expression rightExpression;
-    private final ComparisonOperator comparisonOperator;
+    private Expression leftExpression;
+    private Expression rightExpression;
+    private ComparisonOperator comparisonOperator;
 
     public ComparisonExpression(
             Expression leftExpression,
@@ -188,8 +188,7 @@ public class ComparisonExpression extends Expression {
         return this.comparisonOperator;
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -205,7 +204,7 @@ public class ComparisonExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

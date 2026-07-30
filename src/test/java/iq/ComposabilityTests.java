@@ -22,6 +22,7 @@ package iq;
 
 
 import iq.base.AnnotationsTestsBase;
+import org.junit.Test;
 
 import java.io.File;
 
@@ -33,8 +34,24 @@ public class ComposabilityTests extends AnnotationsTestsBase {
                 "/src/test/resources/test_files/composability"
     );
 
-    @Override
-    protected File testDirectory() {
-        return composabilityTestsDirectory;
+
+    /**
+     * Tests composability
+     *
+     * @throws Throwable
+     */
+    @Test(timeout = 1000000)
+    public void testComposabilityContraints() throws Throwable {
+        initializeTests(composabilityTestsDirectory);
+        for (File testFile : this.testFiles) {
+            System.err.println(counter++ + " : " + testFile);
+            testAnnotations(
+                testFile.getAbsolutePath(),
+                getConfiguration(),
+                true,
+                getConfiguration().applyUpdates(),
+                getConfiguration().getResultSizeCap()
+            );
+        }
     }
 }

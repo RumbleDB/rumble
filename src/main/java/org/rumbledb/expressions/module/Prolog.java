@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 public class Prolog extends Node {
 
     private List<Node> declarations;
-    private final List<LibraryModule> importedModules;
+    private List<LibraryModule> importedModules;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
@@ -57,45 +57,33 @@ public class Prolog extends Node {
         return this.importedModules;
     }
 
-    public List<Node> getDeclarations() {
-        return this.declarations;
-    }
-
     public List<FunctionDeclaration> getFunctionDeclarations() {
         return this.declarations.stream()
-            .<FunctionDeclaration>mapMulti((x, downstream) -> {
-                if (x instanceof FunctionDeclaration functionDeclaration) {
-                    downstream.accept(functionDeclaration);
-                }
-            })
+            .filter(x -> x instanceof FunctionDeclaration)
+            .map(x -> (FunctionDeclaration) x)
             .collect(Collectors.toList());
     }
 
     public List<VariableDeclaration> getVariableDeclarations() {
         return this.declarations.stream()
-            .<VariableDeclaration>mapMulti((x, downstream) -> {
-                if (x instanceof VariableDeclaration variableDeclaration) {
-                    downstream.accept(variableDeclaration);
-                }
-            })
+            .filter(x -> x instanceof VariableDeclaration)
+            .map(x -> (VariableDeclaration) x)
             .collect(Collectors.toList());
     }
 
     public List<TypeDeclaration> getTypeDeclarations() {
         return this.declarations.stream()
-            .<TypeDeclaration>mapMulti((x, downstream) -> {
-                if (x instanceof TypeDeclaration typeDeclaration) {
-                    downstream.accept(typeDeclaration);
-                }
-            })
+            .filter(x -> x instanceof TypeDeclaration)
+            .map(x -> (TypeDeclaration) x)
             .collect(Collectors.toList());
     }
 
     public boolean hasContextItemDeclaration() {
         for (Node d : this.declarations) {
-            if (!(d instanceof VariableDeclaration vd)) {
+            if (!(d instanceof VariableDeclaration)) {
                 continue;
             }
+            VariableDeclaration vd = (VariableDeclaration) d;
             if (vd.getVariableName().equals(Name.CONTEXT_ITEM)) {
                 return true;
             }
@@ -124,7 +112,7 @@ public class Prolog extends Node {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         for (int i = 0; i < this.declarations.size(); i++) {
             this.declarations.get(i).serializeToJSONiq(sb, indent);
             this.importedModules.get(i).serializeToJSONiq(sb, indent);
@@ -154,3 +142,4 @@ public class Prolog extends Node {
         return null;
     }
 }
+

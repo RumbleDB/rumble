@@ -1,32 +1,24 @@
 package org.rumbledb.runtime.update.expression;
 
-import java.io.Serial;
-import java.util.Arrays;
-
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
-import org.rumbledb.exceptions.InvalidUpdateTargetException;
-import org.rumbledb.exceptions.ModifiesImmutableValueException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
-import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.Arrays;
+
 public class RenameExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator mainIterator;
-    private final RuntimeIterator locatorIterator;
-    private final RuntimeIterator nameIterator;
+    private RuntimeIterator mainIterator;
+    private RuntimeIterator locatorIterator;
+    private RuntimeIterator nameIterator;
 
     public RenameExpressionIterator(
             RuntimeIterator mainIterator,
@@ -34,14 +26,12 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator nameIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            Arrays.asList(mainIterator, locatorIterator, nameIterator),
-            staticContext.toBuilder().isUpdating(true).build()
-        );
+        super(Arrays.asList(mainIterator, locatorIterator, nameIterator), staticContext);
 
         this.mainIterator = mainIterator;
         this.locatorIterator = locatorIterator;
         this.nameIterator = nameIterator;
+        this.isUpdating = true;
     }
 
     @Override
@@ -56,6 +46,11 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+
+    }
+
+    @Override
+    protected void resetLocal() {
 
     }
 
@@ -95,7 +90,7 @@ public class RenameExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
+            if (target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

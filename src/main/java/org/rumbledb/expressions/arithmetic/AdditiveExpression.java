@@ -30,9 +30,9 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AdditiveExpression extends Expression {
-    private final Expression leftExpression;
-    private final Expression rightExpression;
-    private final boolean isMinus;
+    private Expression leftExpression;
+    private Expression rightExpression;
+    private boolean isMinus;
 
     public AdditiveExpression(
             Expression leftExpression,
@@ -68,8 +68,7 @@ public class AdditiveExpression extends Expression {
         return this.isMinus;
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -85,7 +84,7 @@ public class AdditiveExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

@@ -7,12 +7,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator assignExpression;
     private final Name variableName;
@@ -20,11 +18,13 @@ public class AssignStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     public AssignStatementIterator(
             RuntimeIterator assignExpression,
             Name variableName,
+            boolean isSequential,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(assignExpression), staticContext);
         this.assignExpression = assignExpression;
         this.variableName = variableName;
+        this.isSequential = isSequential;
     }
 
 

@@ -3,20 +3,17 @@ package org.rumbledb.runtime.functions.arrays;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ArrayFlattenClosure implements FlatMapFunction<Item, Item> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ArrayFlattenClosure() {
     }
 
-    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
@@ -25,21 +22,10 @@ public class ArrayFlattenClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        if (arg0.isArrayOfItems()) {
-            for (Item item : arg0.getItemMembers()) {
-                Iterator<Item> innerResult = this.call(item);
-                while (innerResult.hasNext()) {
-                    results.add(innerResult.next());
-                }
-            }
-        } else {
-            for (java.util.List<Item> member : arg0.getSequenceMembers()) {
-                for (Item memberItem : member) {
-                    Iterator<Item> innerResult = this.call(memberItem);
-                    while (innerResult.hasNext()) {
-                        results.add(innerResult.next());
-                    }
-                }
+        for (Item item : arg0.getItems()) {
+            Iterator<Item> innerResult = this.call(item);
+            while (innerResult.hasNext()) {
+                results.add(innerResult.next());
             }
         }
         return results.iterator();

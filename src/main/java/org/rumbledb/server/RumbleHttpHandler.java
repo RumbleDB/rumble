@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javassist.CannotCompileException;
 import org.apache.spark.SparkException;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
@@ -28,14 +29,14 @@ import com.sun.net.httpserver.HttpHandler;
 
 public class RumbleHttpHandler implements HttpHandler {
 
-    private final RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     private enum StatusCode {
         SUCCESS(200),
         METHOD_NOT_SUPPORTED(405),
         SERVER_ERROR(500);
 
-        private final int code;
+        private int code;
 
         StatusCode(int code) {
             this.code = code;
@@ -181,13 +182,13 @@ public class RumbleHttpHandler implements HttpHandler {
             "error-code",
             ItemFactory.getInstance().createStringItem(code)
         );
-        Item stackTrace = ItemFactory.getInstance().createArrayItem(false);
+        Item stackTrace = ItemFactory.getInstance().createArrayItem();
         if (stackTrace == null) {
             return output;
         }
         output.putItemByKey("stack-trace", stackTrace);
         for (StackTraceElement e : stackTraceElements) {
-            stackTrace.appendItem(ItemFactory.getInstance().createStringItem(e.toString()));
+            stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
         }
         return output;
     }
@@ -208,10 +209,10 @@ public class RumbleHttpHandler implements HttpHandler {
                                     + ex.getMessage()
                         )
                     );
-                } else if (ex instanceof RumbleException rumbleException && !(ex instanceof OurBadException)) {
+                } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
-                        rumbleException.getErrorCode().toString(),
+                        ((RumbleException) ex).getErrorCode(),
                         ex.getStackTrace()
                     );
                 } else if (ex instanceof OutOfMemoryError) {
@@ -224,6 +225,18 @@ public class RumbleHttpHandler implements HttpHandler {
                 } else if (ex instanceof IllegalArgumentException) {
                     return assembleErrorReponse(
                         "It seems that you are not using Java 11. Spark only works with Java 11. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 11 installed, we recommend installing AdoptOpenJDK 11.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof CannotCompileException) {
+                    return assembleErrorReponse(
+                        "⚠️  There was a CannotCompileException."
+                            +
+                            " There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
+                            +
+                            " We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
+                            +
+                            " For more debug info, please try again using --show-error-info yes in your command line.",
                         ErrorCode.OurBadErrorCode.toString(),
                         ex.getStackTrace()
                     );

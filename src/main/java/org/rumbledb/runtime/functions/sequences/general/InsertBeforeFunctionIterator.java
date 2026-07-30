@@ -30,18 +30,16 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private final RuntimeIterator insertIterator;
+    private RuntimeIterator sequenceIterator;
+    private RuntimeIterator positionIterator;
+    private RuntimeIterator insertIterator;
     private Item nextResult;
     private int insertPosition; // position to start inserting
     private int currentPosition; // current position
@@ -53,9 +51,9 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.getChild(0);
-        this.positionIterator = this.getChild(1);
-        this.insertIterator = this.getChild(2);
+        this.sequenceIterator = this.children.get(0);
+        this.positionIterator = this.children.get(1);
+        this.insertIterator = this.children.get(2);
     }
 
     @Override
@@ -117,6 +115,17 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.sequenceIterator.close();
         this.insertIterator.close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.currentPosition = 1; // initialize index as the first item
+        this.insertingNow = false;
+        this.insertingCompleted = false;
+
+        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
+        this.insertIterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
     }
 
     @Override

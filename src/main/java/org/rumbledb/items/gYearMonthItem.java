@@ -1,7 +1,9 @@
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serial;
 import java.time.*;
 
 import org.rumbledb.api.Item;
@@ -16,17 +18,17 @@ import java.util.regex.Pattern;
 
 public class gYearMonthItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private Year year;
     private Month month;
     private ZoneOffset offset;
-    private static final Pattern gYearMonthRegex = Pattern.compile(
+    private final Pattern gYearMonthRegex = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
 
+    @SuppressWarnings("unused")
     public gYearMonthItem() {
         super();
     }
@@ -47,13 +49,8 @@ public class gYearMonthItem implements Item {
         getgYearMonthFromString(gYearMonthString);
     }
 
-    @Override
-    public Item copy(boolean mutable) {
-        return new gYearMonthItem(this.getDateTimeValue(), this.hasTimeZone);
-    }
-
     private void getgYearMonthFromString(String gYearMonthString) {
-        Matcher matcher = gYearMonthRegex.matcher(gYearMonthString);
+        Matcher matcher = this.gYearMonthRegex.matcher(gYearMonthString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
         }
@@ -73,11 +70,11 @@ public class gYearMonthItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -108,11 +105,17 @@ public class gYearMonthItem implements Item {
     }
 
     @Override
-    public boolean hasTimeZone() {
-        return this.hasTimeZone;
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.getStringValue());
+        output.writeBoolean(this.hasTimeZone);
     }
 
-
+    @Override
+    public void read(Kryo kryo, Input input) {
+        String dateTimeString = input.readString();
+        this.hasTimeZone = input.readBoolean();
+        getgYearMonthFromString(dateTimeString);
+    }
 
     @Override
     public ItemType getDynamicType() {

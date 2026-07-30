@@ -33,7 +33,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -41,9 +40,8 @@ import java.util.Queue;
 
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
     private List<Item> alreadyFoundKeys;
 
@@ -97,7 +95,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             if (item.isObject()) { // ignore non-object items
                 Item result;
-                for (String key : item.getStringKeys()) {
+                for (String key : item.getKeys()) {
                     result = ItemFactory.getInstance().createStringItem(key);
                     if (!this.alreadyFoundKeys.contains(result)) {
                         this.alreadyFoundKeys.add(result);
@@ -139,6 +137,19 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.alreadyFoundKeys = new ArrayList<>();
+        this.nextResults = new LinkedList<>();
+
+        if (this.iterator.isDataFrame()) {
+            setResultsFromDF();
+        } else {
+            this.iterator.reset(this.currentDynamicContextForLocalExecution);
+            setResultsFromNextObjectItem();
+        }
     }
 
     @Override

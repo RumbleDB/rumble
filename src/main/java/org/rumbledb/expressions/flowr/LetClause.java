@@ -67,7 +67,7 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
+        return this.sequenceType == null ? SequenceType.ITEM_STAR : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
@@ -109,8 +109,7 @@ public class LetClause extends Clause {
         return visitor.visitLetClause(this, argument);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -136,7 +135,7 @@ public class LetClause extends Clause {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("let $" + this.variableName.toString());
         if (this.sequenceType != null)

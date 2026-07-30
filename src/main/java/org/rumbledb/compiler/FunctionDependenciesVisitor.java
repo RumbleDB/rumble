@@ -112,7 +112,6 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
         return null;
     }
 
-    @Override
     public FunctionIdentifier visitFunctionDeclaration(
             FunctionDeclaration expression,
             FunctionIdentifier encompassingFunction
@@ -124,7 +123,6 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
         return encompassingFunction;
     }
 
-    @Override
     public FunctionIdentifier visitFunctionCall(
             FunctionCallExpression expression,
             FunctionIdentifier encompassingFunction

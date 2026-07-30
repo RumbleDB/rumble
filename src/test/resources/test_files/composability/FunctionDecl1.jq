@@ -1,5 +1,5 @@
 (:JIQS: ShouldCompile :)
-declare %an:nonsequential function foo() {
+declare %nonsequential function foo() {
     variable $x := 3;
     while ($x eq 3) {
         if ($x eq 3) then {

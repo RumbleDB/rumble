@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.OurBadException;
 import scala.collection.immutable.ArraySeq;
 import scala.collection.Iterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 // import java.util.Iterator;
 import java.util.List;
@@ -36,10 +35,9 @@ import java.util.List;
 public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final List<Item> nextResult;
-    private final List<List<Item>> deserializedParams;
+    private List<Item> nextResult;
+    private List<List<Item>> deserializedParams;
 
     public GroupClauseArrayMergeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();
@@ -54,7 +52,8 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
         Iterator<Object> iterator = wrappedParameters.iterator();
         while (iterator.hasNext()) {
             Object o = iterator.next();
-            if (o instanceof Row row) {
+            if (o instanceof Row) {
+                Row row = (Row) o;
                 result.add(row);
             }
             if (o instanceof ArraySeq) {

@@ -7,13 +7,11 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.List;
 
 public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public SecondsFromTimeFunctionIterator(
@@ -25,7 +23,7 @@ public class SecondsFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item timeItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.children.get(0).materializeFirstItemOrNull(context);
         if (timeItem == null) {
             return null;
         }

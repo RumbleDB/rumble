@@ -30,13 +30,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.List;
 
 public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ExistsFunctionIterator(
@@ -48,17 +46,17 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.getChild(0).isDataFrame()) {
+        if (this.children.get(0).isDataFrame()) {
             return ItemFactory.getInstance()
                 .createBooleanItem(
-                    !this.getChild(0).getDataFrame(dynamicContext).take(1).isEmpty()
+                    !this.children.get(0).getDataFrame(dynamicContext).take(1).isEmpty()
                 );
         }
-        if (this.getChild(0).isRDDOrDataFrame()) {
-            List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
+        if (this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
         }
-        Item first = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        Item first = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
         if (first == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
@@ -67,7 +65,7 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (childQuery != NativeClauseContext.NoNativeQuery) {
             if (
                 childQuery.getResultingType().getItemType().isArrayItemType()

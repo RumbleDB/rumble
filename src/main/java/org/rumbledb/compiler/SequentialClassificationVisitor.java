@@ -52,7 +52,7 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class SequentialClassificationVisitor extends AbstractNodeVisitor<DescendentSequentialProperties> {
     private final Prolog prolog;
     private int blockLevel;
-    private final Map<Name, Integer> variableBlockLevel;
+    private Map<Name, Integer> variableBlockLevel;
 
     public SequentialClassificationVisitor(Prolog prolog) {
         this.prolog = prolog;
@@ -60,13 +60,12 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         this.variableBlockLevel = new HashMap<>();
     }
 
-    @Override
     protected DescendentSequentialProperties defaultAction(Node node, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = this.visitDescendants(node, argument);
-        if (node instanceof Expression expression) {
-            expression.setSequential(result.isSequential());
-        } else if (node instanceof Statement statement) {
-            statement.setSequential(result.isSequential());
+        if (node instanceof Expression) {
+            ((Expression) node).setSequential(result.isSequential());
+        } else if (node instanceof Statement) {
+            ((Statement) node).setSequential(result.isSequential());
         }
         return result;
     }
@@ -85,12 +84,11 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
                 || childResult.hasNonExitSequentialStatement();
             hasInterruptStatement = hasInterruptStatement || childResult.hasInterruptStatement();
         }
-        DescendentSequentialProperties result = new DescendentSequentialProperties(
+        return new DescendentSequentialProperties(
                 hasNonExitStatementDescendant,
                 hasInterruptStatement,
                 hasExitStatementDescendant
         );
-        return result;
     }
 
     @Override

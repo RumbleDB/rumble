@@ -20,18 +20,21 @@
 
 package org.rumbledb.runtime;
 
-import java.io.*;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.*;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import lombok.NonNull;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -44,26 +47,40 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
-public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> {
+public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
-    @Serial
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
-    private List<RuntimeIterator> children;
+    protected boolean isUpdating;
+    protected transient boolean isSequential;
+    protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
+    protected URI staticURI;
+    // private StaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -71,8 +88,22 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             );
         }
         this.isOpen = false;
+        this.isUpdating = false;
+        this.isSequential = false;
 
-        this.children = List.copyOf(Objects.requireNonNullElse(children, Collections.emptyList()));
+        this.children = new ArrayList<>();
+        if (children != null && !children.isEmpty()) {
+            this.children.addAll(children);
+        }
+    }
+
+    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
+    // This avoids the deserialization of many static context copies at runtime.
+    public void setStaticContext(StaticContext staticContext) {
+        if (this.staticURI != null) {
+            throw new OurBadException("Static context already consumed.");
+        }
+        this.staticURI = staticContext.getStaticBaseURI();
     }
 
     /**
@@ -90,84 +121,84 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        try {
-            open(dynamicContext);
-            if (hasNext()) {
-                Item item = this.next();
-                boolean result;
-                if (item.isBoolean()) {
-                    result = item.getBooleanValue();
-                } else if (item.isNumeric()) {
-                    if (position == null) {
-                        if (item.isInt()) {
-                            result = item.getIntValue() != 0;
-                        } else if (item.isInteger()) {
-                            result = !item.getIntegerValue().equals(BigInteger.ZERO);
-                        } else if (item.isDouble()) {
-                            result = !item.isNaN() && item.getDoubleValue() != 0;
-                        } else if (item.isFloat()) {
-                            result = !item.isNaN() && item.getFloatValue() != 0;
-                        } else if (item.isDecimal()) {
-                            result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
-                        } else {
-                            throw new OurBadException(
-                                    "Unexpected numeric type found while calculating effective boolean value."
-                            );
-                        }
+        open(dynamicContext);
+        if (hasNext()) {
+            Item item = this.next();
+            boolean result;
+            if (item.isBoolean()) {
+                result = item.getBooleanValue();
+            } else if (item.isNumeric()) {
+                if (position == null) {
+                    if (item.isInt()) {
+                        result = item.getIntValue() != 0;
+                    } else if (item.isInteger()) {
+                        result = !item.getIntegerValue().equals(BigInteger.ZERO);
+                    } else if (item.isDouble()) {
+                        result = !item.isNaN() && item.getDoubleValue() != 0;
+                    } else if (item.isFloat()) {
+                        result = !item.isNaN() && item.getFloatValue() != 0;
+                    } else if (item.isDecimal()) {
+                        result = !(item.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
                     } else {
-                        result = ComparisonIterator.compareItems(
-                            item,
-                            position,
-                            ComparisonOperator.VC_EQ,
-                            getMetadata()
-                        ) == 0;
+                        throw new OurBadException(
+                                "Unexpected numeric type found while calculating effective boolean value."
+                        );
                     }
-                } else if (item.isNull()) {
-                    result = false;
-                } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
-                    result = !item.getStringValue().isEmpty();
-                } else if (item.isNode()) {
-                    // returns true even if sequence has more items according to spec
-                    return true;
                 } else {
-                    if (this.staticContext.getQueryLanguage().equals("jsoniq10")) {
-                        if (item.isObject() || item.isArray()) {
-                            return true;
-                        }
-                    } else {
-                        if (item.isObject() || item.isArray()) {
-                            System.err.println(
-                                "Note: effective boolean value of "
-                                    + (item.isObject() ? "Object " : "Array ")
-                                    + "accessed which throws error in JSONiq 3.1 or 4.0 in alignment with Xquery 3.1 or 4.0 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
-                            );
-                        }
-                    }
-                    throw new InvalidArgumentTypeException(
-                            "Effective boolean value not defined for items of type "
-                                +
-                                item.getDynamicType().toString(),
-                            getMetadata()
-                    );
+                    result = ComparisonIterator.compareItems(
+                        item,
+                        position,
+                        ComparisonOperator.VC_EQ,
+                        getMetadata()
+                    ) == 0;
                 }
-
-                if (hasNext()) {
-                    throw new InvalidArgumentTypeException(
-                            "Effective boolean value not defined for sequences of more than one atomic item. "
-                                + "Sequence containing: "
-                                + item.serialize()
-                                + " must be a singleton.",
-                            getMetadata()
-                    );
-                }
-
-                return result;
+            } else if (item.isNull()) {
+                result = false;
+            } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+                result = !item.getStringValue().isEmpty();
+            } else if (item.isNode()) {
+                // returns true even if sequence has more items according to spec
+                return true;
             } else {
-                return false;
+                if (getConfiguration().getQueryLanguage().equals("jsoniq10")) {
+                    if (item.isObject() || item.isArray()) {
+                        this.close();
+                        return true;
+                    }
+                } else {
+                    if (item.isObject() || item.isArray()) {
+                        System.err.println(
+                            "Note: effective boolean value of "
+                                + (item.isObject() ? "Object " : "Array ")
+                                + "accessed which throws error in JSONiq 3.1 in alignment with Xquery 3.1 spec.\n If you want to revert to the old functionality use the --default-language jsoniq10 command line option"
+                        );
+                    }
+                }
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for items of type "
+                            +
+                            item.getDynamicType().toString(),
+                        getMetadata()
+                );
             }
-        } finally {
+
+            if (hasNext()) {
+                throw new InvalidArgumentTypeException(
+                        "Effective boolean value not defined for sequences of more than one atomic item. "
+                            + "Sequence containing: "
+                            + item.serialize()
+                            + " must be a singleton.",
+                        getMetadata()
+                );
+            }
+
             this.close();
+            return result;
+        } else {
+            this.close();
+            return false;
         }
+
     }
 
     /**
@@ -184,7 +215,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
-    @Override
     public void open(DynamicContext context) {
         if (context == null) {
             throw new IteratorFlowException(
@@ -200,28 +230,38 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         this.currentDynamicContextForLocalExecution = context;
     }
 
-    @Override
     public void close() {
         this.isOpen = false;
     }
 
-
+    public void reset(DynamicContext context) {
+        this.hasNext = true;
+        this.currentDynamicContextForLocalExecution = context;
+        this.children.forEach(c -> c.reset(context));
+    }
 
     @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.children);
+        // TODO serializer other fields
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.hasNext = false;
+        this.isOpen = false;
+        this.currentDynamicContextForLocalExecution = null;
+        this.children = kryo.readObject(input, ArrayList.class);
+        // TODO serializer other fields
+    }
+
     public boolean hasNext() {
         return this.hasNext;
     }
 
     public boolean isOpen() {
         return this.isOpen;
-    }
-
-    protected final RuntimeIterator getChild(int index) {
-        return this.children.get(index);
-    }
-
-    protected final List<RuntimeIterator> getChildren() {
-        return this.children;
     }
 
     public ExceptionMetadata getMetadata() {
@@ -238,10 +278,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return this.staticContext.getConfiguration();
-    }
-
-    public RuntimeStaticContext getRuntimeStaticContext() {
-        return this.staticContext;
     }
 
     public boolean isRDDOrDataFrame() {
@@ -317,21 +353,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
                     this.getStaticType().getItemType(),
                     context,
                     true,
-                    this.staticContext
+                    getConfiguration()
                 );
             } else {
                 JavaRDD<Item> rdd = this.getRDD(context);
-                ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                    rdd,
-                    getMetadata(),
-                    TypeInferrenceUtils.TypeMergeMode.LAX
-                );
+                ItemType type = ValidateTypeIterator.inferSchemaTypeOfRDDItems(rdd, getMetadata());
                 return ValidateTypeIterator.convertRDDToValidDataFrame(
                     rdd,
                     type,
                     context,
                     true,
-                    this.staticContext
+                    getConfiguration()
                 );
             }
         }
@@ -343,29 +375,22 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
                 this.getStaticType().getItemType(),
                 context,
                 true,
-                this.staticContext
+                getConfiguration()
             );
         } else {
-            ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-            if (this.getConfiguration().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + this.getStaticType().getItemType());
-            }
+            ItemType type = ValidateTypeIterator.inferSchemaTypeOfLocalItems(items, getMetadata());
             return ValidateTypeIterator.convertLocalItemsToDataFrame(
                 items,
                 type,
                 context,
                 true,
-                this.staticContext
+                getConfiguration()
             );
         }
     }
 
     public boolean isUpdating() {
-        return this.staticContext.isUpdating();
+        return this.isUpdating;
     }
 
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
@@ -376,10 +401,9 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     }
 
     public boolean isSequential() {
-        return this.staticContext.isSequential();
+        return this.isSequential;
     }
 
-    @Override
     public abstract Item next();
 
     public List<Item> materialize(DynamicContext context) {
@@ -389,9 +413,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             while (this.hasNext()) {
                 result.add(this.next());
             }
-            return result;
-        } finally {
             this.close();
+            return result;
+        } catch (BreakStatementException | ContinueStatementException controlException) {
+            this.close();
+            throw controlException;
         }
     }
 
@@ -403,39 +429,31 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
      */
     public void materialize(DynamicContext context, List<Item> result) {
         result.clear();
-        try {
-            this.open(context);
-            while (this.hasNext()) {
-                result.add(this.next());
-            }
-        } finally {
-            this.close();
+        this.open(context);
+        while (this.hasNext()) {
+            result.add(this.next());
         }
+        this.close();
     }
 
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         result.clear();
-        try {
-            this.open(context);
-            int i = 0;
-            while (this.hasNext() && i < n) {
-                result.add(this.next());
-                ++i;
-            }
-        } finally {
-            this.close();
+        this.open(context);
+        int i = 0;
+        while (this.hasNext() && i < n) {
+            result.add(this.next());
+            ++i;
         }
+        this.close();
     }
 
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
-        try {
-            this.open(context);
-            return this.hasNext() ? this.next() : null;
-        } finally {
-            this.close();
-        }
+        this.open(context);
+        Item result = this.hasNext() ? this.next() : null;
+        this.close();
+        return result;
     }
 
     public Item materializeExactlyOneItem(
@@ -443,38 +461,33 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        try {
-            this.open(context);
-            if (!this.hasNext()) {
-                throw new NoItemException();
-            }
-            Item result = this.next();
-            if (this.hasNext()) {
-                throw new MoreThanOneItemException();
-            }
-            return result;
-        } finally {
-            this.close();
+        this.open(context);
+        if (!this.hasNext()) {
+            throw new NoItemException();
         }
+        Item result = this.next();
+        if (this.hasNext()) {
+            throw new MoreThanOneItemException();
+        }
+        this.close();
+        return result;
     }
 
     public Item materializeAtMostOneItemOrNull(
             DynamicContext context
     )
             throws MoreThanOneItemException {
-        try {
-            this.open(context);
-            if (!this.hasNext()) {
-                return null;
-            }
-            Item result = this.next();
-            if (this.hasNext()) {
-                throw new MoreThanOneItemException();
-            }
-            return result;
-        } finally {
+        this.open(context);
+        if (!this.hasNext()) {
             this.close();
+            return null;
         }
+        Item result = this.next();
+        if (this.hasNext()) {
+            throw new MoreThanOneItemException();
+        }
+        this.close();
+        return result;
     }
 
     public Item materializeAtMostOneItemOrDefault(
@@ -500,12 +513,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     }
 
     public void printToStandardError() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         this.print(sb, 0);
         System.err.println(sb);
     }
 
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -517,7 +530,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
         buffer.append(" | ");
         buffer.append(this.isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
-        buffer.append(this.isSequential() ? "sequential" : "non-sequential");
+        buffer.append(this.isSequential ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

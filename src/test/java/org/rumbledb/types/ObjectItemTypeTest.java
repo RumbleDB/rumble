@@ -1,23 +1,21 @@
 package org.rumbledb.types;
 
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.Assert;
+import org.junit.Test;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class ObjectItemTypeTest {
     /**
      * Tests that the lax merge operation includes all fields from both object type operands.
      * Verifies that:
-     * <ul>
-     * <li>Fields from both left and right operands are present in the merged result</li>
-     * <li>Field properties (required, unique) are preserved from their respective sources</li>
-     * <li>The closed facet is set to false (open) if at least one operand is open</li>
-     * </ul>
+     * - Fields from both left and right operands are present in the merged result
+     * - Field properties (required, unique) are preserved from their respective sources
+     * - The closed facet is set to false (open) if at least one operand is open
      */
     @Test
     public void laxMergeIncludesAllFieldsFromBothOperands() {
@@ -31,28 +29,24 @@ public class ObjectItemTypeTest {
         );
 
         ItemType mergedType = left.findLeastCommonSuperTypeLax(right);
-        Assertions.assertTrue(mergedType instanceof ObjectItemType);
+        Assert.assertTrue(mergedType instanceof ObjectItemType);
         ObjectItemType mergedObject = (ObjectItemType) mergedType;
-        Assertions.assertEquals(2, mergedObject.getObjectContentFacet().size());
-        Assertions.assertFalse(
-            mergedObject.getObjectContentFacet("first").isRequired(),
-            "Fields present on only one side of a lax merge are currently treated as optional."
-        );
-        Assertions.assertFalse(mergedObject.getObjectContentFacet("second").isRequired());
-        Assertions.assertTrue(mergedObject.getObjectContentFacet("second").isUnique());
-        Assertions.assertFalse(mergedObject.getClosedFacet(), "Merged object should be open if any operand is open.");
+        Map<String, FieldDescriptor> content = mergedObject.getObjectContentFacet();
+        Assert.assertEquals(2, content.size());
+        Assert.assertTrue(content.get("first").isRequired());
+        Assert.assertFalse(content.get("second").isRequired());
+        Assert.assertTrue(content.get("second").isUnique());
+        Assert.assertFalse("Merged object should be open if any operand is open.", mergedObject.getClosedFacet());
     }
 
     /**
      * Tests that overlapping fields between two object types are merged using lax supertype logic recursively.
      * Verifies that:
-     * <ul>
-     * <li>When both operands define a field with the same name but different nested object types, the nested types are
-     * merged recursively using findLeastCommonSuperTypeLax</li>
-     * <li>The merged nested object contains all fields from both nested types</li>
-     * <li>The required flag is set to true only if both operands require the field (AND semantics)</li>
-     * <li>The unique flag is set to true if either operand marks the field as unique (OR semantics)</li>
-     * </ul>
+     * - When both operands define a field with the same name but different nested object types, the nested types are
+     * merged recursively using findLeastCommonSuperTypeLax
+     * - The merged nested object contains all fields from both nested types
+     * - The required flag is set to true only if both operands require the field (AND semantics)
+     * - The unique flag is set to true if either operand marks the field as unique (OR semantics)
      */
     @Test
     public void overlappingFieldsUseLaxSuperTypesRecursively() {
@@ -74,27 +68,26 @@ public class ObjectItemTypeTest {
         );
 
         FieldDescriptor mergedDescriptor = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
-            .getObjectContentFacet("nested");
-        Assertions.assertFalse(
-            mergedDescriptor.isRequired(),
-            "Nested field should be optional if any operand is optional."
+            .getObjectContentFacet()
+            .get("nested");
+        Assert.assertFalse(
+            "Nested field should be optional if any operand is optional.",
+            mergedDescriptor.isRequired()
         );
-        Assertions.assertTrue(mergedDescriptor.isUnique(), "Nested field should be unique if any operand is unique.");
+        Assert.assertTrue("Nested field should be unique if any operand is unique.", mergedDescriptor.isUnique());
         ItemType mergedNestedType = mergedDescriptor.getType();
-        Assertions.assertTrue(mergedNestedType instanceof ObjectItemType);
-        ObjectItemType innerObject = (ObjectItemType) mergedNestedType;
-        Assertions.assertEquals(2, innerObject.getObjectContentFacet().size());
-        Assertions.assertTrue(innerObject.getObjectKeysFacet().contains("a"));
-        Assertions.assertTrue(innerObject.getObjectKeysFacet().contains("b"));
+        Assert.assertTrue(mergedNestedType instanceof ObjectItemType);
+        Map<String, FieldDescriptor> innerContent = ((ObjectItemType) mergedNestedType).getObjectContentFacet();
+        Assert.assertEquals(2, innerContent.size());
+        Assert.assertTrue(innerContent.containsKey("a"));
+        Assert.assertTrue(innerContent.containsKey("b"));
     }
 
     /**
      * Tests that default values are preserved in merged field descriptors only when they are compatible.
      * Verifies that:
-     * <ul>
-     * <li>When both operands define the same default value for a field, it is preserved in the merged result</li>
-     * <li>When operands define conflicting default values, the default is discarded (set to null)</li>
-     * </ul>
+     * - When both operands define the same default value for a field, it is preserved in the merged result
+     * - When operands define conflicting default values, the default is discarded (set to null)
      */
     @Test
     public void defaultValuesArePreservedOnlyWhenCompatible() {
@@ -116,9 +109,9 @@ public class ObjectItemTypeTest {
         ObjectItemType left = createObjectType(true, leftDescriptor);
         ObjectItemType right = createObjectType(true, rightDescriptor);
 
-        FieldDescriptor merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right))
-            .getObjectContentFacet("flag");
-        Assertions.assertEquals(defaultTrue, merged.getDefaultValue());
+        FieldDescriptor merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(right)).getObjectContentFacet()
+            .get("flag");
+        Assert.assertEquals(defaultTrue, merged.getDefaultValue());
 
         FieldDescriptor conflictingRight = field(
             "flag",
@@ -128,8 +121,9 @@ public class ObjectItemTypeTest {
             ItemFactory.getInstance().createBooleanItem(false)
         );
         merged = ((ObjectItemType) left.findLeastCommonSuperTypeLax(createObjectType(true, conflictingRight)))
-            .getObjectContentFacet("flag");
-        Assertions.assertNull(merged.getDefaultValue(), "Conflicting defaults should be discarded.");
+            .getObjectContentFacet()
+            .get("flag");
+        Assert.assertNull("Conflicting defaults should be discarded.", merged.getDefaultValue());
     }
 
     /**
@@ -140,17 +134,14 @@ public class ObjectItemTypeTest {
      * @return the created object type
      */
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
-        List<String> keys = new ArrayList<>();
-        List<FieldDescriptor> content = new ArrayList<>();
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (FieldDescriptor descriptor : descriptors) {
-            keys.add(descriptor.getName());
-            content.add(descriptor);
+            content.put(descriptor.getName(), descriptor);
         }
         return new ObjectItemType(
                 null,
                 BuiltinTypesCatalogue.objectItem,
                 closed,
-                keys,
                 content,
                 Collections.<String>emptyList(),
                 Collections.<Item>emptyList()
@@ -185,3 +176,4 @@ public class ObjectItemTypeTest {
         return descriptor;
     }
 }
+

@@ -20,40 +20,35 @@
 
 package org.rumbledb.runtime.functions.object;
 
-import java.io.Serial;
+import org.apache.spark.api.java.function.Function;
+import org.rumbledb.api.Item;
+import org.rumbledb.items.ItemFactory;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.apache.spark.api.java.function.Function;
-import org.rumbledb.api.Item;
-import org.rumbledb.items.ItemFactory;
-
 public class ObjectIntersectMapClosure implements Function<Item, Item> {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final boolean mutable;
 
-    public ObjectIntersectMapClosure(boolean mutable) {
-        this.mutable = mutable;
+    public ObjectIntersectMapClosure() {
     }
 
-    @Override
     public Item call(Item arg0) throws Exception {
         if (!arg0.isObject())
             return arg0;
 
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-        for (String key : arg0.getStringKeys()) {
+        for (String key : arg0.getKeys()) {
             Item value = arg0.getItemByKey(key);
             Item arrayValue = ItemFactory.getInstance()
-                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), this.mutable);
+                .createArrayItem(new ArrayList<Item>(Collections.singletonList(value)), false);
             keyValuePairs.put(key, new ArrayList<Item>(Collections.singletonList(arrayValue)));
         }
 
-        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, this.mutable);
+        return ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
     }
 };

@@ -1,19 +1,18 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.w3c.dom.Node;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class ProcessingInstructionItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
     private String target;
     private String content;
@@ -41,11 +40,6 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new ProcessingInstructionItem(this.target, this.content);
-    }
-
-    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -62,18 +56,13 @@ public class ProcessingInstructionItem implements Item {
     }
 
     @Override
-    public void addParentToDescendants() {
-        // Processing-instruction nodes are leaves and therefore have no descendants to update.
-    }
-
-    @Override
     public Item parent() {
         return this.parent;
     }
 
     @Override
-    public Name nodeName() {
-        return NamespaceBindingUtils.nameLocalOnly(this.target);
+    public String nodeName() {
+        return this.target;
     }
 
     @Override
@@ -83,7 +72,7 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemTypeFactory.processingInstructionNodeItemType(this.target);
+        return BuiltinTypesCatalogue.processingInstructionNode;
     }
 
     @Override
@@ -103,9 +92,10 @@ public class ProcessingInstructionItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ProcessingInstructionItem otherItem)) {
+        if (!(other instanceof ProcessingInstructionItem)) {
             return false;
         }
+        ProcessingInstructionItem otherItem = (ProcessingInstructionItem) other;
         return this.getXmlDocumentPosition().equals(otherItem.getXmlDocumentPosition());
     }
 
@@ -114,7 +104,21 @@ public class ProcessingInstructionItem implements Item {
         return this.documentPos.hashCode();
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.documentPos);
+        kryo.writeClassAndObject(output, this.parent);
+        output.writeString(this.target);
+        output.writeString(this.content);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
+        this.parent = (Item) kryo.readClassAndObject(input);
+        this.target = input.readString();
+        this.content = input.readString();
+    }
 
     @Override
     public List<Item> namespaceNodes() {
@@ -225,3 +229,4 @@ public class ProcessingInstructionItem implements Item {
         return Collections.emptyList();
     }
 }
+

@@ -28,12 +28,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StringJoinFunctionIterator(
@@ -46,22 +44,20 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
-        if (this.getChildren().size() > 1) {
-            joinString = this.getChild(1).materializeFirstItemOrNull(context);
+        if (this.children.size() > 1) {
+            joinString = this.children.get(1).materializeFirstItemOrNull(context);
         }
-        List<Item> strings = this.getChild(0).materialize(context);
+        List<Item> strings = this.children.get(0).materialize(context);
 
         StringBuilder stringBuilder = new StringBuilder();
-        boolean first = true;
         for (Item item : strings) {
             if (!(item.isString())) {
-                throw new UnexpectedTypeException("String item expected", this.getChild(0).getMetadata());
+                throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
             }
-            if (!first) {
+            if (!stringBuilder.toString().isEmpty()) {
                 stringBuilder.append(joinString.getStringValue());
             }
             stringBuilder.append(item.getStringValue());
-            first = false;
         }
 
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());

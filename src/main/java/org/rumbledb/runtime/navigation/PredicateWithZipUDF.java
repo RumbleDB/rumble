@@ -34,12 +34,10 @@ import org.rumbledb.types.ItemType;
 import scala.Option;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final RuntimeIterator expression;
@@ -47,7 +45,7 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
     private final long contextSize;
-    final List<Item> currentItems = new ArrayList<>();
+    List<Item> currentItems = new ArrayList<>();
 
     public PredicateWithZipUDF(
             RuntimeIterator expression,

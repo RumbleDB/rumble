@@ -14,7 +14,6 @@ import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
-import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
@@ -24,7 +23,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.*;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -73,7 +72,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return new FlworExpression((ReturnClause) result, expression.getMetadata());
     }
 
-    @Override
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
         VariableReferenceExpression result = new VariableReferenceExpression(
                 expression.getVariableName(),
@@ -92,27 +90,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 clause.getPositionalVariableName(),
                 (Expression) visit(clause.getExpression(), argument),
                 clause.getMetadata()
-        );
-    }
-
-    @Override
-    public Node visitWindowClause(WindowClause clause, Node argument) {
-        return new WindowClause(
-                clause.getWindowType(),
-                clause.getWindowVariable(),
-                clause.getActualSequenceType(),
-                (Expression) visit(clause.getExpression(), argument),
-                cloneWindowCondition(clause.getStartCondition(), argument),
-                clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
-                clause.getMetadata()
-        );
-    }
-
-    private WindowClause.WindowCondition cloneWindowCondition(WindowClause.WindowCondition condition, Node argument) {
-        return new WindowClause.WindowCondition(
-                condition.variables(),
-                (Expression) visit(condition.expression(), argument),
-                condition.only()
         );
     }
 
@@ -136,8 +113,7 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                         variable.getActualSequenceType(),
                         (variable.getExpression() == null)
                             ? variable.getExpression()
-                            : (Expression) visit(variable.getExpression(), argument),
-                        variable.getCollationURI()
+                            : (Expression) visit(variable.getExpression(), argument)
                 )
             );
         }
@@ -237,25 +213,13 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
     // endregion
 
     // region primary
-    @Override
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
-        ArrayConstructorExpression result;
-        if (expression.isFixedSlotsArrayConstructor()) {
-            List<Expression> visitedMembers = new java.util.ArrayList<>();
-            if (expression.getMemberExpressions() != null) {
-                for (Expression memberExpr : expression.getMemberExpressions()) {
-                    visitedMembers.add((Expression) visit(memberExpr, argument));
-                }
-            }
-            result = new ArrayConstructorExpression(visitedMembers, true, expression.getMetadata());
-        } else {
-            result = new ArrayConstructorExpression(
-                    (expression.getExpression() == null)
-                        ? expression.getExpression()
-                        : (Expression) visit(expression.getExpression(), argument),
-                    expression.getMetadata()
-            );
-        }
+        ArrayConstructorExpression result = new ArrayConstructorExpression(
+                (expression.getExpression() == null)
+                    ? expression.getExpression()
+                    : (Expression) visit(expression.getExpression(), argument),
+                expression.getMetadata()
+        );
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }
@@ -278,21 +242,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
                 .collect(Collectors.toList());
             return new ObjectConstructorExpression(keys, values, expression.getMetadata());
         }
-    }
-
-    @Override
-    public Node visitMapConstructor(MapConstructorExpression expression, Node argument) {
-        List<Expression> keys = expression.getKeys()
-            .stream()
-            .map(key -> (Expression) visit(key, argument))
-            .collect(Collectors.toList());
-        List<Expression> values = expression.getValues()
-            .stream()
-            .map(key -> (Expression) visit(key, argument))
-            .collect(Collectors.toList());
-        MapConstructorExpression result = new MapConstructorExpression(keys, values, expression.getMetadata());
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        return result;
     }
 
     @Override
@@ -329,39 +278,32 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         return result;
     }
 
-    @Override
     public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
         return new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
     }
     // endregion
 
     // region literal
-    @Override
     public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
         return new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
     }
 
-    @Override
     public Node visitString(StringLiteralExpression expression, Node argument) {
         return new StringLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
-    @Override
     public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
         return new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
-    @Override
     public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
         return new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
     }
 
-    @Override
     public Node visitNull(NullLiteralExpression expression, Node argument) {
         return new NullLiteralExpression(expression.getMetadata());
     }
 
-    @Override
     public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
         return new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
     }
@@ -451,18 +393,6 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
         RangeExpression result = new RangeExpression(
                 (Expression) visit(expression.getChildren().get(0), argument),
                 (Expression) visit(expression.getChildren().get(1), argument),
-                expression.getMetadata()
-        );
-        result.setStaticSequenceType(expression.getStaticSequenceType());
-        return result;
-    }
-
-    @Override
-    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
-        NodeSetExpression result = new NodeSetExpression(
-                (Expression) visit(expression.getLeftExpression(), argument),
-                (Expression) visit(expression.getRightExpression(), argument),
-                expression.getOperator(),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -626,13 +556,16 @@ public abstract class TypeIndependentNodeVisitor extends AbstractNodeVisitor<Nod
 
     @Override
     public Node visitTryCatchExpression(TryCatchExpression expression, Node argument) {
-        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
-        for (CatchPattern key : expression.getCatchExpressions().keySet()) {
+        Map<String, Expression> catchExpressions = new HashMap<>();
+        for (String key : expression.getCatchExpressions().keySet()) {
             catchExpressions.put(key, (Expression) visit(expression.getCatchExpressions().get(key), argument));
         }
         TryCatchExpression result = new TryCatchExpression(
                 (Expression) visit(expression.getTryExpression(), argument),
                 catchExpressions,
+                (expression.getExpressionCatchingAll() == null)
+                    ? expression.getExpressionCatchingAll()
+                    : (Expression) visit(expression.getExpressionCatchingAll(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());

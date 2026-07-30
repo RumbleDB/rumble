@@ -27,7 +27,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -37,14 +36,12 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
 public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ContextExpressionIterator(RuntimeStaticContext staticContext) {
@@ -55,22 +52,14 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        return getContextItem(dynamicContext);
-    }
-
-    private Item getContextItem(DynamicContext dynamicContext) {
-        List<Item> items = dynamicContext.getVariableValues()
+        return dynamicContext.getVariableValues()
             .getLocalVariableValue(
                 Name.CONTEXT_ITEM,
                 getMetadata()
-            );
-        if (items.isEmpty()) {
-            throw new UnexpectedTypeException("The context item cannot be an empty sequence.", getMetadata());
-        }
-        return items.get(0);
+            )
+            .get(0);
     }
 
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
@@ -80,12 +69,16 @@ public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         DataType schema = nativeClauseContext.getSchema();
-        if (!(schema instanceof StructType structSchema)) {
+        if (!(schema instanceof StructType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
+        StructType structSchema = (StructType) schema;
         if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, Name.CONTEXT_ITEM)) {
-            return getContextItem(nativeClauseContext.getContext()).generateNativeQuery(nativeClauseContext);
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return items.get(0).generateNativeQuery(nativeClauseContext);
         }
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, Name.CONTEXT_ITEM)) {
             return NativeClauseContext.NoNativeQuery;

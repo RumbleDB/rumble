@@ -33,16 +33,14 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Item nextResult;
     private List<String> removalKeys;
 
@@ -61,7 +59,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     private void startLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        List<Item> removalKeys = this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
@@ -116,7 +114,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         ArrayList<String> finalKeylist = new ArrayList<>();
         ArrayList<Item> finalValueList = new ArrayList<>();
 
-        for (String objectKey : objItem.getStringKeys()) {
+        for (String objectKey : objItem.getKeys()) {
             if (!removalKeys.contains(objectKey)) {
                 finalKeylist.add(objectKey);
                 finalValueList.add(objItem.getItemByKey(objectKey));
@@ -132,6 +130,11 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        startLocal();
+    }
+
+    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -139,7 +142,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        List<Item> removalKeys = this.getChild(1).materialize(context);
+        List<Item> removalKeys = this.children.get(1).materialize(context);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
@@ -165,7 +168,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame dataFrame = this.iterator.getDataFrame(context);
-        List<Item> columnsToDropItems = this.getChild(1).materialize(context);
+        List<Item> columnsToDropItems = this.children.get(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid drop-columns parameter; drop-columns can't be performed without string columns to be removed.",

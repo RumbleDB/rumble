@@ -24,12 +24,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 
-import java.io.Serial;
 import java.util.List;
 
 public abstract class LocalRuntimeIterator extends RuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     protected LocalRuntimeIterator(

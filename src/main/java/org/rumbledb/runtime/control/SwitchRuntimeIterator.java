@@ -32,14 +32,11 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-import java.io.Serial;
 import java.util.Map;
-import java.util.stream.Stream;
 
 
 public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
     private final Map<RuntimeIterator, RuntimeIterator> cases;
@@ -52,13 +49,11 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator defaultReturn,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            Stream.concat(
-                Stream.concat(Stream.of(test), cases.keySet().stream()),
-                Stream.concat(cases.values().stream(), Stream.of(defaultReturn))
-            ).toList(),
-            staticContext
-        );
+        super(null, staticContext);
+        this.children.add(test);
+        this.children.addAll(cases.keySet());
+        this.children.addAll(cases.values());
+        this.children.add(defaultReturn);
         this.testField = test;
         this.cases = cases;
         this.defaultReturn = defaultReturn;
@@ -87,6 +82,14 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public void closeLocal() {
         this.matchingIterator.close();
+    }
+
+    @Override
+    public void resetLocal() {
+        this.matchingIterator.close();
+        this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
     }
 
     private RuntimeIterator selectApplicableIterator(

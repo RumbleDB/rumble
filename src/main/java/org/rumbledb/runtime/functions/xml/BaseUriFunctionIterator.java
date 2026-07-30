@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 /**
@@ -43,25 +42,18 @@ import java.util.List;
  * has one; otherwise it returns the empty sequence."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:base-uri}):
- * 
- * <ul>
- * <li>fn:base-uri() as xs:anyURI?</li>
- * <li>fn:base-uri($arg as node()?) as xs:anyURI?</li>
- * </ul>
+ * - fn:base-uri() as xs:anyURI?
+ * - fn:base-uri($arg as node()?) as xs:anyURI?
  *
  * Rules:
- * 
- * <ul>
- * <li>If the argument is omitted, it defaults to the context item (.).</li>
- * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
- * <li>Otherwise, the function returns dm:base-uri($arg).</li>
- * </ul>
+ * - If the argument is omitted, it defaults to the context item (.).
+ * - If the argument is supplied and is the empty sequence, the function returns the empty sequence.
+ * - Otherwise, the function returns dm:base-uri($arg).
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-base-uri">XPath and XQuery Functions and
  *      Operators 3.1: fn:base-uri</a>
  */
 public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> resultItems;
@@ -122,14 +114,14 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
+        if (this.children.isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
 

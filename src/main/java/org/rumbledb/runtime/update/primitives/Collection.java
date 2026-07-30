@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.update.primitives;
 
-import java.io.Serial;
 import java.io.Serializable;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -9,9 +8,8 @@ import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
 
 
 public class Collection implements Serializable {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Mode mode;
+    private Mode mode;
     private String logicalName;
     private String physicalName;
 
@@ -33,12 +31,8 @@ public class Collection implements Serializable {
                 this.physicalName = "delta.`" + collectionPath + "`";
                 break;
             case ICEBERG:
-                this.logicalName = collectionPath;
-                this.physicalName = collectionPath;
-                break;
-            case HUDI:
-                this.logicalName = collectionPath;
-                this.physicalName = collectionPath;
+                this.logicalName = "iceberg." + collectionPath;
+                this.physicalName = "iceberg." + collectionPath;
                 break;
         }
     }
@@ -54,9 +48,8 @@ public class Collection implements Serializable {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
             this.physicalName = collectionPath;
-        } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
-            // case Iceberg table - we assume Iceberg tables are always qualified with at
-            // least a catalog and a namespace, so they contain at least two dots.
+        } else if (collectionPath.startsWith("iceberg.")) {
+            // case Iceberg table
             this.mode = Mode.ICEBERG;
             this.logicalName = collectionPath;
             this.physicalName = collectionPath;
@@ -116,9 +109,7 @@ public class Collection implements Serializable {
                         .append();
                     break;
                 default:
-                    throw new UnsupportedOperationException(
-                            "Insert Unordered: Unsupported collection mode: " + this.mode
-                    );
+                    throw new UnsupportedOperationException("Unsupported collection mode: " + this.mode);
             }
         } catch (NoSuchTableException e) {
             throw new RuntimeException("Target collection not found: " + this.logicalName, e);

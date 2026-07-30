@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="FOTY0013"; :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:6:COLUMN:33:" :)
 for $i in parallelize((
  {"guess": "Bulgarian", "target": "Albanian", "country": "AU", "choices": ["Albanian", "Bulgarian", "Russian", "Ukrainian"], "sample": "00b85faa8b878a14f8781be334deb137", "date": "2013-08-19"},
  {"guess": "Bulgarian", "target": "Albanian", "country": {"country": "AU"}, "choices": ["Albanian", "Bulgarian", "Russian", "Ukrainian"], "sample": "00b85faa8b878a14f8781be334deb137", "date": "2013-08-19"}))
