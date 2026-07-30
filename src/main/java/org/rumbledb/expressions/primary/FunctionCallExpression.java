@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -38,6 +39,7 @@ public class FunctionCallExpression extends Expression {
     private final List<Expression> arguments; // null for placeholder
     @Getter
     private final boolean isPartialApplication;
+    @Setter
     @Getter
     private boolean isTailCallOptimization;
 
@@ -54,10 +56,6 @@ public class FunctionCallExpression extends Expression {
                 this.arguments.size()
         );
         this.isTailCallOptimization = false;
-    }
-
-    public void setTailCallOptimization(boolean isTailCallOptimization) {
-        this.isTailCallOptimization = isTailCallOptimization;
     }
 
     public FunctionIdentifier getFunctionIdentifier() {

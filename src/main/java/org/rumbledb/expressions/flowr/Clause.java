@@ -22,6 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -46,6 +47,7 @@ public abstract class Clause extends Node {
     protected Clause previousClause;
     protected Clause nextClause;
     protected final FLWOR_CLAUSES clauseType;
+    @Setter
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
@@ -224,10 +226,6 @@ public abstract class Clause extends Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(

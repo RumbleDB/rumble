@@ -22,6 +22,7 @@ package org.rumbledb.expressions.primary;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -56,6 +57,7 @@ public class InlineFunctionExpression extends Expression {
     private final StatementsAndOptionalExpr body;
     private final List<Annotation> annotations;
     private boolean hasSequentialPropertyAnnotation;
+    @Setter
     private boolean hasExitStatement;
     @Getter
     private final boolean isExternal;
@@ -240,10 +242,6 @@ public class InlineFunctionExpression extends Expression {
 
     public boolean hasSequentialPropertyAnnotation() {
         return this.hasSequentialPropertyAnnotation;
-    }
-
-    public void setHasExitStatement(boolean hasExitStatement) {
-        this.hasExitStatement = hasExitStatement;
     }
 
     public boolean hasExitStatement() {

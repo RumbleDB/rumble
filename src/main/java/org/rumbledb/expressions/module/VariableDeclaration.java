@@ -22,6 +22,7 @@ package org.rumbledb.expressions.module;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -52,6 +53,7 @@ public class VariableDeclaration extends Node {
     @Getter
     private final boolean isAssignable;
 
+    @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public VariableDeclaration(
@@ -119,10 +121,6 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
-    }
-
-    public void setVariableHighestStorageMode(ExecutionMode mode) {
-        this.variableHighestStorageMode = mode;
     }
 
     @Override

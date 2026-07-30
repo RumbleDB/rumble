@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -49,22 +50,13 @@ public abstract class Node {
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
      */
+    @Setter
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
     protected boolean isInSequentialBlock;
 
     protected Node(ExceptionMetadata metadata) {
         this.metadata = metadata;
-    }
-
-    /**
-     * Initializes the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis.
-     */
-    public void setHighestExecutionMode(ExecutionMode newMode) {
-        this.highestExecutionMode = newMode;
     }
 
     /**

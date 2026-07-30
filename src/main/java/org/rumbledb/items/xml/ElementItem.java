@@ -1,6 +1,7 @@
 package org.rumbledb.items.xml;
 
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -29,6 +30,7 @@ public class ElementItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
+    @Setter
     private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
@@ -423,10 +425,6 @@ public class ElementItem extends AbstractNodeItem {
      */
     public void setNodeName(Name nodeName) {
         this.dmNodeName = nodeName;
-    }
-
-    public void setInheritNamespacesFromParent(boolean inheritNamespacesFromParent) {
-        this.inheritNamespacesFromParent = inheritNamespacesFromParent;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {

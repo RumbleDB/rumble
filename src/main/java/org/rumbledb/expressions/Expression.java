@@ -22,6 +22,7 @@ package org.rumbledb.expressions;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -49,31 +50,25 @@ public abstract class Expression extends Node {
     /**
      * Static context attached to this expression
      */
+    @Setter
     protected StaticContext staticContext;
 
     /**
      * Statically inferred sequence type.
      */
+    @Setter
     protected SequenceType staticSequenceType;
 
     /**
      * Expression Classification of the expression.
      */
+    @Setter
     protected ExpressionClassification expressionClassification = ExpressionClassification.UNSET;
 
     protected boolean isSequential;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
-    }
-
-    /**
-     * Sets the static context of the expression.
-     * 
-     * @param staticContext the static context to set.
-     */
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
     }
 
     public RuntimeStaticContext getStaticContextForRuntime(
@@ -102,25 +97,6 @@ public abstract class Expression extends Node {
             this.staticSequenceType.getArity().equals(Arity.OneOrZero)
             ||
             this.staticSequenceType.getArity().equals(Arity.Zero);
-    }
-
-    /**
-     * Sets the inferred static type, for used by the static
-     * analysis visitor.
-     * 
-     * @param staticSequenceType the statically inferred sequence type to set.
-     */
-    public void setStaticSequenceType(SequenceType staticSequenceType) {
-        this.staticSequenceType = staticSequenceType;
-    }
-
-    /**
-     * Sets the inferred expression classification of this node, for use ...
-     *
-     * @param expressionClassification the statically inferred expression classification.
-     */
-    public void setExpressionClassification(ExpressionClassification expressionClassification) {
-        this.expressionClassification = expressionClassification;
     }
 
     /**

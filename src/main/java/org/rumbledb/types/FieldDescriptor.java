@@ -4,6 +4,7 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.StaticContext;
@@ -17,33 +18,24 @@ public class FieldDescriptor implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Setter
     @Getter
     public String name;
+    @Setter
     @Getter
     private ItemType type;
     @Getter
     private boolean required = false;
+    @Setter
     @Getter
     private Item defaultValue = null;
     private boolean unique = false;
     private boolean requiredIsSet = false;
     private boolean uniqueIsSet = false;
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setType(ItemType type) {
-        this.type = type;
-    }
-
     public void setRequired(Boolean required) {
         this.requiredIsSet = true;
         this.required = required;
-    }
-
-    public void setDefaultValue(Item defaultValue) {
-        this.defaultValue = defaultValue;
     }
 
     public void setUnique(Boolean unique) {

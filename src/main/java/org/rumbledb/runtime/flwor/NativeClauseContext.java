@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.flwor;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
@@ -21,26 +22,32 @@ public class NativeClauseContext {
     public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private NativeClauseContext parent;
+    @Setter
     @Getter
     private FLWOR_CLAUSES clauseType;
+    @Setter
     @Getter
     private DataType schema;
     @Getter
     private DynamicContext context;
+    @Setter
     @Getter
     private String resultingQuery;
     @Getter
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
+    @Setter
     @Getter
     private SequenceType resultingType;
 
     private List<String> conditionalColumns; // used in where clauses
 
+    @Setter
     @Getter
     private String view;
 
     private int monotonicallyIncreasingId;
 
+    @Setter
     @Getter
     private boolean isExplodedView; // if the view is exploded, then the result is a sequence; otherwise it's atomic
 
@@ -52,6 +59,7 @@ public class NativeClauseContext {
     private Map<Name, Name> variables;
     @Getter
     private String rowIdField;
+    @Setter
     @Getter
     private boolean grouped;
 
@@ -124,26 +132,6 @@ public class NativeClauseContext {
         return result;
     }
 
-    public void setClauseType(FLWOR_CLAUSES clauseType) {
-        this.clauseType = clauseType;
-    }
-
-    public void setResultingQuery(String resultingQuery) {
-        this.resultingQuery = resultingQuery;
-    }
-
-    public void setSchema(DataType schema) {
-        this.schema = schema;
-    }
-
-    public void setResultingType(SequenceType resultingType) {
-        this.resultingType = resultingType;
-    }
-
-    public void setView(String view) {
-        this.view = view;
-    }
-
     public void addConditionalColumn(String name) {
         this.conditionalColumns.add(name);
     }
@@ -189,10 +177,6 @@ public class NativeClauseContext {
         return name;
     }
 
-    public void setExplodedView(boolean isExplodedView) {
-        this.isExplodedView = isExplodedView;
-    }
-
     public void addPositionalVariableName(Name name) {
         this.positionalVariableNames.add(name);
     }
@@ -218,10 +202,6 @@ public class NativeClauseContext {
 
     public void clearSortingColumns() {
         this.sortingColumns.clear();
-    }
-
-    public void setGrouped(boolean grouped) {
-        this.grouped = grouped;
     }
 
     public String toString() {

@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -47,6 +48,7 @@ public class ForClause extends Clause {
     protected Expression expression;
 
     // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
 
@@ -90,10 +92,6 @@ public class ForClause extends Clause {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
-    }
-
-    public void setVariableHighestStorageMode(ExecutionMode mode) {
-        this.variableHighestStorageMode = mode;
     }
 
     @Override

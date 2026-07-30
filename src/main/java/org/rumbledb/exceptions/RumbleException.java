@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.errorcodes.ErrorCode;
 
@@ -41,6 +42,7 @@ public class RumbleException extends RuntimeException {
     private final String errorMessage;
     @Getter
     private final List<Item> errorValue;
+    @Setter
     @Getter
     private ExceptionMetadata metadata;
 
@@ -106,10 +108,6 @@ public class RumbleException extends RuntimeException {
             + metadata
             + "\n"
             + "This code can also be looked up in the documentation and specifications for more information.\n";
-    }
-
-    public void setMetadata(ExceptionMetadata metadata) {
-        this.metadata = metadata;
     }
 
     public String getJSONiqErrorMessage() {

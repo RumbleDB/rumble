@@ -19,6 +19,7 @@ package org.rumbledb.serialization;
 
 
 import lombok.Getter;
+import lombok.Setter;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -40,6 +41,7 @@ import java.util.Set;
  * </ul>
  *
  */
+@Setter
 public class SerializationParameters implements Serializable {
 
     @Serial
@@ -282,80 +284,20 @@ public class SerializationParameters implements Serializable {
         return "xml-json-hybrid";
     }
 
-    public void setMethod(String method) {
-        this.method = method;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
     public boolean getOmitXmlDeclaration() {
         return this.omitXmlDeclaration;
-    }
-
-    public void setOmitXmlDeclaration(boolean omitXmlDeclaration) {
-        this.omitXmlDeclaration = omitXmlDeclaration;
-    }
-
-    public void setStandalone(Standalone standalone) {
-        this.standalone = standalone;
-    }
-
-    public void setDoctypeSystem(String doctypeSystem) {
-        this.doctypeSystem = doctypeSystem;
-    }
-
-    public void setDoctypePublic(String doctypePublic) {
-        this.doctypePublic = doctypePublic;
-    }
-
-    public void setMediaType(String mediaType) {
-        this.mediaType = mediaType;
-    }
-
-    public void setNormalizationForm(String normalizationForm) {
-        this.normalizationForm = normalizationForm;
     }
 
     public boolean getUndeclarePrefixes() {
         return this.undeclarePrefixes;
     }
 
-    public void setUndeclarePrefixes(boolean undeclarePrefixes) {
-        this.undeclarePrefixes = undeclarePrefixes;
-    }
-
-    public void setCharacterMaps(Map<String, String> characterMaps) {
-        this.characterMaps = characterMaps;
-    }
-
-    public void setCdataSectionElements(Set<String> cdataSectionElements) {
-        this.cdataSectionElements = cdataSectionElements;
-    }
-
     public boolean getIncludeContentType() {
         return this.includeContentType;
     }
 
-    public void setIncludeContentType(boolean includeContentType) {
-        this.includeContentType = includeContentType;
-    }
-
     public boolean getEscapeUriAttributes() {
         return this.escapeUriAttributes;
-    }
-
-    public void setEscapeUriAttributes(boolean escapeUriAttributes) {
-        this.escapeUriAttributes = escapeUriAttributes;
-    }
-
-    public void setHtmlVersion(String htmlVersion) {
-        this.htmlVersion = htmlVersion;
     }
 
     /**
@@ -393,50 +335,13 @@ public class SerializationParameters implements Serializable {
         return this.byteOrderMark;
     }
 
-    public void setByteOrderMark(boolean byteOrderMark) {
-        this.byteOrderMark = byteOrderMark;
-    }
-
     public boolean getIndent() {
         return this.indent;
-    }
-
-    public void setIndent(boolean indent) {
-        this.indent = indent;
-    }
-
-    public void setIndentSpaces(int indentSpaces) {
-        this.indentSpaces = indentSpaces;
-    }
-
-    public void setSuppressIndentation(Set<String> suppressIndentation) {
-        this.suppressIndentation = suppressIndentation;
-    }
-
-    public void setItemSeparator(String itemSeparator) {
-        this.itemSeparator = itemSeparator;
     }
 
     public boolean getAllowDuplicateNames() {
         return this.allowDuplicateNames;
     }
-
-    public void setAllowDuplicateNames(boolean allowDuplicateNames) {
-        this.allowDuplicateNames = allowDuplicateNames;
-    }
-
-    public void setJsonNodeOutputMethod(JsonNodeOutputMethod jsonNodeOutputMethod) {
-        this.jsonNodeOutputMethod = jsonNodeOutputMethod;
-    }
-
-    public void setExtensionParameters(Map<String, String> extensionParameters) {
-        this.extensionParameters = extensionParameters;
-    }
-
-    public void setSparkOptions(Map<String, String> sparkOptions) {
-        this.sparkOptions = sparkOptions;
-    }
-
 
 
     /**

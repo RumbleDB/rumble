@@ -22,6 +22,7 @@ package org.rumbledb.expressions.module;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -35,6 +36,7 @@ import java.util.List;
 
 public class MainModule extends Module {
 
+    @Setter
     protected StaticContext staticContext;
     @Getter
     private final Prolog prolog;
@@ -53,10 +55,6 @@ public class MainModule extends Module {
     @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
-    }
-
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
     }
 
     public Expression getExpression() {

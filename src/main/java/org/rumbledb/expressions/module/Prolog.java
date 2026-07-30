@@ -22,6 +22,7 @@ package org.rumbledb.expressions.module;
 
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -35,6 +36,7 @@ import java.util.stream.Collectors;
 @Getter
 public class Prolog extends Node {
 
+    @Setter
     private List<Node> declarations;
     private final List<LibraryModule> importedModules;
 
@@ -95,10 +97,6 @@ public class Prolog extends Node {
             }
         }
         return false;
-    }
-
-    public void setDeclarations(List<Node> declarations) {
-        this.declarations = declarations;
     }
 
     public void addDeclaration(Node declaration) {

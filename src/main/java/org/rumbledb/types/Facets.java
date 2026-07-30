@@ -1,6 +1,7 @@
 package org.rumbledb.types;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 
 import java.util.Collections;
@@ -64,63 +65,39 @@ public class Facets {
         return facets;
     }
 
-    private Item minInclusive, maxInclusive;
-    private Item minExclusive, maxExclusive;
-    private Integer minLength, length, maxLength, totalDigits, fractionDigits;
+    @Setter
+    private Item minInclusive;
+    @Setter
+    private Item maxInclusive;
+    @Setter
+    private Item minExclusive;
+    @Setter
+    private Item maxExclusive;
+    private Integer minLength;
+    private Integer length;
+    private Integer maxLength;
+    private Integer totalDigits;
+    @Setter
+    private Integer fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
+    @Setter
     private TimezoneFacet explicitTimezone;
+    @Setter
     private WhitespaceFacet whiteSpace;
+    @Setter
     private List<String> pattern;
 
     // Fundamental facets (XSD 1.1 §4.2)
     private OrderedFacetValue ordered;
+    @Setter
     private Boolean bounded;
+    @Setter
     private CardinalityFacetValue cardinality;
     private Boolean numeric;
 
     public Facets() {
 
-    }
-
-    public void setMinInclusive(Item minInclusive) {
-        this.minInclusive = minInclusive;
-    }
-
-    public void setMaxInclusive(Item maxInclusive) {
-        this.maxInclusive = maxInclusive;
-    }
-
-    public void setMinExclusive(Item minExclusive) {
-        this.minExclusive = minExclusive;
-    }
-
-    public void setMaxExclusive(Item maxExclusive) {
-        this.maxExclusive = maxExclusive;
-    }
-
-    public void setFractionDigits(Integer fractionDigits) {
-        this.fractionDigits = fractionDigits;
-    }
-
-    public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
-        this.explicitTimezone = explicitTimezone;
-    }
-
-    public void setWhiteSpace(WhitespaceFacet whiteSpace) {
-        this.whiteSpace = whiteSpace;
-    }
-
-    public void setPattern(List<String> pattern) {
-        this.pattern = pattern;
-    }
-
-    public void setBounded(Boolean bounded) {
-        this.bounded = bounded;
-    }
-
-    public void setCardinality(CardinalityFacetValue cardinality) {
-        this.cardinality = cardinality;
     }
 
     /**

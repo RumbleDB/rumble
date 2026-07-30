@@ -29,6 +29,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -49,6 +50,7 @@ public class StaticContext {
     private Map<String, String> staticallyKnownNamespaces;
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
+    @Setter
     private String queryLanguage;
     private StaticContext parent;
     private URI staticBaseURI;
@@ -69,6 +71,7 @@ public class StaticContext {
      */
     private String defaultFunctionNamespaceUri;
 
+    @Setter
     @Getter
     private SequenceType contextItemStaticType;
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
@@ -77,6 +80,7 @@ public class StaticContext {
     private DecimalFormatDefinition defaultDecimalFormat;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
+    @Setter
     @Getter
     private int currentMutabilityLevel;
 
@@ -166,10 +170,6 @@ public class StaticContext {
             return this.parent.getRumbleConfiguration();
         }
         throw new OurBadException("Configuration not set.");
-    }
-
-    public void setQueryLanguage(String queryLanguage) {
-        this.queryLanguage = queryLanguage;
     }
 
     public String getQueryLanguage() {
@@ -639,10 +639,6 @@ public class StaticContext {
         return this.defaultCollation;
     }
 
-    public void setContextItemStaticType(SequenceType contextItemStaticType) {
-        this.contextItemStaticType = contextItemStaticType;
-    }
-
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
     // with same variable with sequence type arity changed from 1 to + and form ? to *
     // used by groupBy clause
@@ -702,10 +698,6 @@ public class StaticContext {
             return this.parent.getInScopeSchemaTypes();
         }
         throw new OurBadException("In-scope schema types are not set up properly in static context.");
-    }
-
-    public void setCurrentMutabilityLevel(int currentMutabilityLevel) {
-        this.currentMutabilityLevel = currentMutabilityLevel;
     }
 
     public boolean getIsAssignable(Name name) {

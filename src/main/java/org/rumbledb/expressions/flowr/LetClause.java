@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -40,11 +41,13 @@ public class LetClause extends Clause {
     @Getter
     private final Name variableName;
     protected SequenceType sequenceType;
+    @Setter
     @Getter
     protected SequenceType staticType;
     @Getter
     protected Expression expression;
 
+    @Setter
     private boolean isReferenced;
 
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
@@ -142,15 +145,8 @@ public class LetClause extends Clause {
         sb.append(")\n");
     }
 
-    public void setStaticType(SequenceType staticType) {
-        this.staticType = staticType;
-    }
-
     public boolean getReferenced() {
         return this.isReferenced;
     }
 
-    public void setReferenced(boolean isReferenced) {
-        this.isReferenced = isReferenced;
-    }
 }

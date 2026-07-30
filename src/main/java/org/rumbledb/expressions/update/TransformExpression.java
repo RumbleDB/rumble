@@ -1,6 +1,7 @@
 package org.rumbledb.expressions.update;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.*;
@@ -15,6 +16,7 @@ public class TransformExpression extends Expression {
     private List<CopyDeclaration> copyDeclarations;
     private Expression modifyExpression;
     private Expression returnExpression;
+    @Setter
     private int mutabilityLevel;
 
     public TransformExpression(
@@ -72,7 +74,4 @@ public class TransformExpression extends Expression {
         sb.append("\n");
     }
 
-    public void setMutabilityLevel(int mutabilityLevel) {
-        this.mutabilityLevel = mutabilityLevel;
-    }
 }

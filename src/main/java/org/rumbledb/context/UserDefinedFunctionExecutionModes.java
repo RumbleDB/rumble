@@ -21,6 +21,7 @@
 package org.rumbledb.context;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -41,6 +42,7 @@ public class UserDefinedFunctionExecutionModes {
     private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
     @Getter
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    @Setter
     private String queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
@@ -48,10 +50,6 @@ public class UserDefinedFunctionExecutionModes {
         this.userDefinedFunctionsParametersStorageMode = new HashMap<>();
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
         this.queryLanguage = null;
-    }
-
-    public void setQueryLanguage(String queryLanguage) {
-        this.queryLanguage = queryLanguage;
     }
 
     public boolean exists(FunctionIdentifier identifier) {
