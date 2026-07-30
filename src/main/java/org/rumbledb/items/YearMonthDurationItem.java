@@ -1,7 +1,9 @@
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serial;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -19,11 +21,11 @@ import org.rumbledb.types.ItemType;
 
 public class YearMonthDurationItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private Period value;
-    private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
+    Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
+    @SuppressWarnings("unused")
     public YearMonthDurationItem() {
         super();
     }
@@ -34,7 +36,7 @@ public class YearMonthDurationItem implements Item {
     }
 
     public YearMonthDurationItem(String value) {
-        if (!yearMonthDurationRegex.matcher(value).matches()) {
+        if (!this.yearMonthDurationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
         }
         try {
@@ -45,11 +47,6 @@ public class YearMonthDurationItem implements Item {
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        return new YearMonthDurationItem(this.value);
     }
 
     @Override
@@ -77,14 +74,22 @@ public class YearMonthDurationItem implements Item {
         return Objects.hash(this.value);
     }
 
-
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.getStringValue());
+    }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public void read(Kryo kryo, Input input) {
+        this.value = normalizeMonthsToYears(Period.parse(input.readString()));
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -110,14 +115,8 @@ public class YearMonthDurationItem implements Item {
         return Duration.between(anchor, target);
     }
 
-    @Override
     public Period getPeriodValue() {
         return this.value;
-    }
-
-    @Override
-    public Duration getDayTimeDurationComponent() {
-        return Duration.ZERO;
     }
 
     @Override

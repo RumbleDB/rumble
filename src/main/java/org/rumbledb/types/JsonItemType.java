@@ -3,7 +3,6 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
-import java.io.Serial;
 import java.util.Set;
 
 /**
@@ -11,7 +10,6 @@ import java.util.Set;
  */
 public class JsonItemType implements ItemType {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     static final ItemType jsonItem = new JsonItemType();
@@ -21,14 +19,20 @@ public class JsonItemType implements ItemType {
         this.name = new Name(Name.JS_NS, "js", "json-item");
     }
 
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+    }
 
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+    }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return isEqualTo(itemType);
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -65,7 +69,7 @@ public class JsonItemType implements ItemType {
     }
 
     @Override
-    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+    public Set<FacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("item type does not support facets");
     }
 

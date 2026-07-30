@@ -20,12 +20,6 @@
 
 package org.rumbledb.runtime.functions;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -48,54 +42,49 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
+
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-
     // parametrized fields
-    private final Item functionItem;
-    private final List<RuntimeIterator> functionArguments;
+    private Item functionItem;
+    private List<RuntimeIterator> functionArguments;
 
     // calculated fields
     private boolean isPartialApplication;
-    private boolean isTailOptimization;
+    private RuntimeIterator functionBodyIterator;
+    private Item nextResult;
+    private transient DynamicContext dynamicContextForCalls;
 
-    // Only used for local execution.
-    private transient RuntimeIterator functionBodyIterator;
-
-    private transient Item nextResult;
 
     public FunctionItemCallIterator(
             Item functionItem,
             List<RuntimeIterator> functionArguments,
-            RuntimeStaticContext staticContext,
-            boolean isTailOptimization
+            RuntimeStaticContext staticContext
     ) {
-        super(
-            functionArguments.stream().filter(arg -> arg != null).toList(),
-            staticContext.toBuilder()
-                .isUpdating(functionItem.getSignature().isUpdating())
-                .isSequential(functionItem.getBodyIterator().isSequential())
-                .build()
-        );
-
-        this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
-        if (isTailOptimization) {
-            this.isPartialApplication = true;
-            this.isTailOptimization = true;
+        super(null, staticContext);
+        for (RuntimeIterator arg : functionArguments) {
+            if (arg == null) {
+                this.isPartialApplication = true;
+            } else {
+                this.children.add(arg);
+            }
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
         this.functionBodyIterator = null;
+        this.isUpdating = functionItem.getSignature().isUpdating();
 
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
-    }
-
-    private DynamicContext createCallContext(DynamicContext context) {
-        // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
+        // Prepopulation of the dynamic context (without the parameters)
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
@@ -106,14 +95,12 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.functionItem.getDFVariablesInClosure()
         );
 
-        DynamicContext callContext = new DynamicContext(
+        this.dynamicContextForCalls = new DynamicContext(
                 this.functionItem.getModuleDynamicContext(),
                 localArgumentValues,
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        populateDynamicContextWithArguments(context, callContext);
-        return callContext;
     }
 
     private void validateNumberOfArguments() {
@@ -138,7 +125,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         && !this.functionItem.getSignature()
                             .getParameterTypes()
                             .get(i)
-                            .equals(SequenceType.createSequenceType("item*"))
+                            .equals(ITEM_STAR)
                 ) {
                     SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
                     ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
@@ -149,17 +136,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     ) {
                         executionMode = ExecutionMode.LOCAL;
                     }
-                    RuntimeStaticContext runtimeStaticContext = getRuntimeStaticContext()
-                        .toBuilder()
-                        .staticType(sequenceType)
-                        .executionMode(executionMode)
-                        .metadata(this.functionArguments.get(i).getMetadata())
-                        .build();
-                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
-                        this.functionArguments.get(i),
-                        sequenceType,
-                        "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                        runtimeStaticContext
+                    RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+                            getConfiguration(),
+                            sequenceType,
+                            executionMode,
+                            this.functionArguments.get(i).getMetadata()
                     );
                     if (
                         sequenceType.isEmptySequence()
@@ -167,7 +148,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             || sequenceType.getArity().equals(Arity.OneOrZero)
                     ) {
                         RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                                argumentIterator,
+                                this.functionArguments.get(i),
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
@@ -175,7 +156,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         this.functionArguments.set(i, typePromotionIterator);
                     } else {
                         RuntimeIterator typePromotionIterator = new TypePromotionIterator(
-                                argumentIterator,
+                                this.functionArguments.get(i),
                                 sequenceType,
                                 "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                                 runtimeStaticContext
@@ -189,34 +170,26 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        DynamicContext callContext = this.currentDynamicContextForLocalExecution;
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
-            callContext = createCallContext(callContext);
             if (this.functionBodyIterator == null) {
-                // The previous body was discarded, or this is the first invocation at this call site.
-                this.functionBodyIterator = createFunctionBodyIterator();
+                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
             }
+            this.populateDynamicContextWithArguments(
+                this.currentDynamicContextForLocalExecution
+            );
         }
-        try {
-            this.functionBodyIterator.open(callContext);
-            setNextResult();
-        } catch (RuntimeException exception) {
-            discardBody();
-            throw exception;
-        }
+        this.functionBodyIterator.open(this.dynamicContextForCalls);
+        setNextResult();
     }
 
     /**
      * Partial application generates a new function:
-     * 
-     * <ul>
-     * <li>Supplied parameters are set as NonLocalVariables</li>
-     * <li>Argument placeholders form the parameters</li>
-     * </ul>
+     * - Supplied parameters are set as NonLocalVariables
+     * - Argument placeholders form the parameters
      *
-     * @return a one-item iterator containing the partially applied function item
+     * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
     private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         Name argName;
@@ -253,13 +226,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
-        Name functionItemName = this.functionItem.getIdentifier().getName();
-        if (this.isTailOptimization) {
-            functionItemName = Name.TAIL_CALL_OPTIMIZATION;
-        }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
-                        functionItemName,
+                        this.functionItem.getIdentifier().getName(),
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
@@ -276,16 +245,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         );
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
-                this.staticContext
-                    .toBuilder()
-                    .staticType(SequenceType.createSequenceType("function(*)"))
-                    .executionMode(ExecutionMode.LOCAL)
-                    .metadata(getMetadata())
-                    .build()
+                new RuntimeStaticContext(getConfiguration(), SequenceType.FUNCTION, ExecutionMode.LOCAL, getMetadata())
         );
     }
 
-    private void populateDynamicContextWithArguments(DynamicContext context, DynamicContext callContext) {
+    private void populateDynamicContextWithArguments(DynamicContext context) {
         Name argName;
         RuntimeIterator argIterator;
 
@@ -294,26 +258,15 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             argIterator = this.functionArguments.get(i);
 
             if (argIterator.isDataFrame()) {
-                callContext.getVariableValues()
+                this.dynamicContextForCalls.getVariableValues()
                     .addVariableValue(argName, argIterator.getDataFrame(context));
             } else if (argIterator.isRDDOrDataFrame()) {
-                callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
+                this.dynamicContextForCalls.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
             } else {
-                callContext.getVariableValues()
+                this.dynamicContextForCalls.getVariableValues()
                     .addVariableValue(argName, argIterator.materialize(context));
             }
         }
-    }
-
-    /**
-     * Creates an execution instance without exposing the shared function-body prototype to mutation.
-     * FunctionItem uses its cached snapshot; other Item implementations retain the generic deep-copy fallback.
-     */
-    private RuntimeIterator createFunctionBodyIterator() {
-        if (this.functionItem instanceof FunctionItem concreteFunctionItem) {
-            return concreteFunctionItem.createBodyIterator();
-        }
-        return this.functionItem.getBodyIterator().deepCopy();
     }
 
     @Override
@@ -338,56 +291,31 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
     protected void closeLocal() {
-        this.nextResult = null;
-        this.hasNext = false;
-        // Preserve a normally exhausted body for reuse; discard an execution that is still active.
+        // ensure that recursive function calls terminate gracefully
+        // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
-            discardBody();
+            this.functionBodyIterator.close();
         }
     }
 
-    private void setNextResult() {
-        try {
-            this.nextResult = null;
-            if (this.functionBodyIterator.hasNext()) {
-                this.nextResult = this.functionBodyIterator.next();
-            }
-
-            if (this.nextResult == null) {
-                // Reaching the end through normal iteration is the only path that can make a body reusable.
-                this.hasNext = false;
-                this.functionBodyIterator.close();
-                if (this.isPartialApplication || !canReuseBody()) {
-                    discardBody();
-                }
-            } else {
-                this.hasNext = true;
-            }
-        } catch (RuntimeException exception) {
-            discardBody();
-            throw exception;
+    public void setNextResult() {
+        this.nextResult = null;
+        if (this.functionBodyIterator.hasNext()) {
+            this.nextResult = this.functionBodyIterator.next();
         }
-    }
 
-    /**
-     * Sequential and updating bodies can retain statement or mutation state even after normal exhaustion.
-     */
-    private boolean canReuseBody() {
-        return !this.staticContext.isSequential() && !this.staticContext.isUpdating();
-    }
-
-    /**
-     * Closes an active execution and removes it from this call site.
-     */
-    private void discardBody() {
-        RuntimeIterator iterator = this.functionBodyIterator;
-        try {
-            if (iterator != null && iterator.isOpen()) {
-                iterator.close();
-            }
-        } finally {
-            this.functionBodyIterator = null;
+        if (this.nextResult == null) {
+            this.hasNext = false;
+            this.functionBodyIterator.close();
+        } else {
+            this.hasNext = true;
         }
     }
 
@@ -399,9 +327,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             );
         }
 
-        DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
-        return bodyIterator.getRDD(callContext);
+        this.populateDynamicContextWithArguments(dynamicContext);
+        this.functionBodyIterator = this.functionItem.getBodyIterator();
+        return this.functionBodyIterator.getRDD(this.dynamicContextForCalls);
     }
 
     @Override
@@ -417,9 +345,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             );
         }
 
-        DynamicContext callContext = createCallContext(dynamicContext);
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
-        return bodyIterator.getDataFrame(callContext);
+        populateDynamicContextWithArguments(dynamicContext);
+        this.functionBodyIterator = this.functionItem.getBodyIterator();
+        return this.functionBodyIterator.getDataFrame(this.dynamicContextForCalls);
     }
 
     @Override
@@ -427,10 +355,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
-        DynamicContext callContext = createCallContext(context);
-        DynamicContext contextForUpdates = new DynamicContext(callContext);
+        this.populateDynamicContextWithArguments(context);
+        DynamicContext contextForUpdates = new DynamicContext(this.dynamicContextForCalls);
         contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
-        RuntimeIterator bodyIterator = createFunctionBodyIterator();
-        return bodyIterator.getPendingUpdateList(contextForUpdates);
+        this.functionBodyIterator = this.functionItem.getBodyIterator();
+        return this.functionBodyIterator.getPendingUpdateList(contextForUpdates);
     }
 }

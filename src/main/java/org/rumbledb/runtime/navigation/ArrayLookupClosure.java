@@ -23,14 +23,12 @@ package org.rumbledb.runtime.navigation;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final Integer lookup;
 
@@ -38,7 +36,6 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
         this.lookup = lookup;
     }
 
-    @Override
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
@@ -50,14 +47,9 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
             return results.iterator();
         }
 
-        if (arg0.isArrayOfItems()) {
-            Item item = arg0.getItemAt(this.lookup - 1);
-            if (item != null) {
-                results.add(item);
-            }
-        } else {
-            List<Item> memberSeq = arg0.getSequenceAt(this.lookup - 1);
-            results.addAll(memberSeq);
+        Item item = arg0.getItemAt(this.lookup - 1);
+        if (item != null) {
+            results.add(item);
         }
         return results.iterator();
     }

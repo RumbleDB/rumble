@@ -7,12 +7,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class DefaultCollationFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public DefaultCollationFunctionIterator(
@@ -24,6 +22,6 @@ public class DefaultCollationFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createStringItem(this.getRuntimeStaticContext().getDefaultCollation());
+        return ItemFactory.getInstance().createStringItem("http://www.w3.org/2005/xpath-functions/collation/codepoint");
     }
 }

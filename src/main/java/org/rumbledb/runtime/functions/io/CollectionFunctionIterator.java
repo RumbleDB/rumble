@@ -8,14 +8,11 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public CollectionFunctionIterator(
@@ -29,16 +26,10 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        if (this.getChildren().isEmpty()) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
-        }
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
-        if (stringItem == null) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
-        }
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }

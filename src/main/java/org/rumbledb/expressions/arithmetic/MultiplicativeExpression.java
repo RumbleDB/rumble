@@ -38,7 +38,7 @@ public class MultiplicativeExpression extends Expression {
         MOD("mod"),
         IDIV("idiv");
 
-        private final String name;
+        private String name;
 
         MultiplicativeOperator(String name) {
             this.name = name;
@@ -66,9 +66,9 @@ public class MultiplicativeExpression extends Expression {
         }
     };
 
-    private final Expression leftExpression;
-    private final Expression rightExpression;
-    private final MultiplicativeOperator multiplicativeOperator;
+    private Expression leftExpression;
+    private Expression rightExpression;
+    private MultiplicativeOperator multiplicativeOperator;
 
     public MultiplicativeExpression(
             Expression leftExpression,
@@ -104,8 +104,7 @@ public class MultiplicativeExpression extends Expression {
         return this.multiplicativeOperator;
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -121,7 +120,7 @@ public class MultiplicativeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

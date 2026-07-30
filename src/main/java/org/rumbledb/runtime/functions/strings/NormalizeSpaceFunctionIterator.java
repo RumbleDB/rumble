@@ -29,12 +29,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public NormalizeSpaceFunctionIterator(
@@ -46,12 +44,12 @@ public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 0) {
+        if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return ItemFactory.getInstance()
                 .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
         }
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
         if (stringItem == null) {

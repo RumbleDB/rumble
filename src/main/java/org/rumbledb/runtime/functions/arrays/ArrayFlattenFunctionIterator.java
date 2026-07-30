@@ -29,7 +29,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,10 +36,9 @@ import java.util.Queue;
 
 public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ArrayFlattenFunctionIterator(
@@ -93,13 +91,7 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     private void flatten(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                if (item.isArrayOfItems()) {
-                    flatten(item.getItemMembers());
-                } else {
-                    for (java.util.List<Item> member : item.getSequenceMembers()) {
-                        flatten(member);
-                    }
-                }
+                flatten(item.getItems());
             } else {
                 this.nextResults.add(item);
             }
@@ -109,6 +101,14 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
+
+        setNextResult();
     }
 
     @Override

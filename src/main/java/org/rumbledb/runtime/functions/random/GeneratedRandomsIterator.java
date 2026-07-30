@@ -5,7 +5,7 @@ import org.rumbledb.api.Item;
 import java.util.Random;
 
 public abstract class GeneratedRandomsIterator {
-    protected final Random random;
+    protected Random random;
 
     protected GeneratedRandomsIterator() {
         this.random = new Random();

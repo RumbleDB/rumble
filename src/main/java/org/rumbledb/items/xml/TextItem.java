@@ -1,18 +1,18 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class TextItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
     private String content; // is also typed-value
     private Item parent;
@@ -36,11 +36,6 @@ public class TextItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new TextItem(this.content);
-    }
-
-    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -57,19 +52,12 @@ public class TextItem implements Item {
     }
 
     @Override
-    public void addParentToDescendants() {
-        // Text nodes are leaves and therefore have no descendants to update.
-    }
-
-    @Override
     public boolean equals(Object other) {
-        if (!(other instanceof TextItem otherTextItem)) {
+        if (!(other instanceof TextItem)) {
             return false;
         }
-        if (this.documentPos == null || otherTextItem.documentPos == null) {
-            return false;
-        }
-        return this.documentPos.equals(otherTextItem.documentPos);
+        TextItem otherTextItem = (TextItem) other;
+        return this.getXmlDocumentPosition().equals(otherTextItem.getXmlDocumentPosition());
     }
 
     @Override
@@ -77,17 +65,25 @@ public class TextItem implements Item {
         return this.content;
     }
 
-    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.content.isEmpty();
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.documentPos);
+        kryo.writeClassAndObject(output, this.parent);
+        output.writeString(this.content);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
+        this.parent = (Item) kryo.readClassAndObject(input);
+        this.content = input.readString();
+    }
 
     public int hashCode() {
-        if (this.documentPos == null) {
-            return System.identityHashCode(this);
-        }
         return this.documentPos.hashCode();
     }
 
@@ -117,8 +113,8 @@ public class TextItem implements Item {
     }
 
     @Override
-    public Name nodeName() {
-        return null;
+    public String nodeName() {
+        return "";
     }
 
     /**
@@ -153,7 +149,7 @@ public class TextItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.content));
+        return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
     }
 
     @Override
@@ -225,20 +221,13 @@ public class TextItem implements Item {
         return Collections.emptyList();
     }
 
-
     /**
-     * XDM 3.1 Section 6.7 Text Node Accessors — type-name:
+     * XDM 3.1 Section 6.7 Text Node Accessors — type-name.
      *
-     * For a Text Node, dm:type-name returns xs:untypedAtomic.
+     * For a Text Node, dm:type-name returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {
-        return Collections.singletonList(
-            ItemFactory.getInstance()
-                .createAnnotatedItem(
-                    ItemFactory.getInstance().createStringItem("untypedAtomic"),
-                    BuiltinTypesCatalogue.QNameItem
-                )
-        );
+        return Collections.emptyList();
     }
 }

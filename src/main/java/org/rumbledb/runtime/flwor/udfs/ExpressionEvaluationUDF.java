@@ -30,17 +30,15 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private DataFrameContext dataFrameContext;
+    private RuntimeIterator expression;
 
     private transient List<byte[]> results;
 
@@ -83,7 +81,6 @@ public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
         return this.results;
     }
 
-    @Serial
     private void readObject(java.io.ObjectInputStream in)
             throws IOException,
                 ClassNotFoundException {

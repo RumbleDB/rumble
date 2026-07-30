@@ -31,7 +31,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -41,16 +40,15 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
     /**
      *
      */
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
 
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
     }
 
     @Override
@@ -64,7 +62,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 if (item.isObject()) {
                     if (firstItem) {
                         // add all key-value pairs of the first item
-                        for (String key : item.getStringKeys()) {
+                        for (String key : item.getKeys()) {
                             Item value = item.getItemByKey(key);
                             ArrayList<Item> valueList = new ArrayList<>();
                             valueList.add(value);
@@ -77,7 +75,7 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                         while (keyIterator.hasNext()) {
                             String key = keyIterator.next();
                             // if the new item doesn't contain the same keys
-                            if (!item.getStringKeys().contains(key)) {
+                            if (!item.getKeys().contains(key)) {
                                 // remove the key from the map
                                 keyIterator.remove();
                             } else {
@@ -90,16 +88,14 @@ public class ObjectIntersectFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 }
             }
 
-            Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
+            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs, true);
 
             return result;
         }
 
         // Enclose object values into arrays.
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-        );
+        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure();
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         // Reduce input objects.

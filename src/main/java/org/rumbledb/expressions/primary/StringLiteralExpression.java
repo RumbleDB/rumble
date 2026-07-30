@@ -32,7 +32,7 @@ import org.rumbledb.expressions.Node;
 
 public class StringLiteralExpression extends Expression {
 
-    private final String value;
+    private String value;
 
     public StringLiteralExpression(String value, ExceptionMetadata metadata) {
         super(metadata);
@@ -53,8 +53,7 @@ public class StringLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -70,7 +69,7 @@ public class StringLiteralExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("\"" + this.value + "\"\n");
     }

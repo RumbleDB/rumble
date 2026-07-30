@@ -43,7 +43,7 @@ public class NodeComparisonExpression extends Expression {
         NC_FOLLOWS(">>"),
         NC_IS("is");
 
-        private final String symbol;
+        private String symbol;
 
         NodeComparisonOperator(String symbol) {
             this.symbol = symbol;
@@ -68,9 +68,9 @@ public class NodeComparisonExpression extends Expression {
         }
     }
 
-    private final Expression leftExpression;
-    private final Expression rightExpression;
-    private final NodeComparisonOperator operator;
+    private Expression leftExpression;
+    private Expression rightExpression;
+    private NodeComparisonOperator operator;
 
     public NodeComparisonExpression(
             Expression leftExpression,
@@ -107,7 +107,7 @@ public class NodeComparisonExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

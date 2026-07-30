@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.logics;
 
-import java.io.Serial;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
@@ -35,10 +34,9 @@ import org.rumbledb.types.SequenceType;
 
 public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
 
     public AndOperationIterator(
             RuntimeIterator leftIterator,

@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 import org.rumbledb.api.Item;
@@ -10,10 +9,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-public class FieldDescriptor implements Serializable {
+public class FieldDescriptor implements Serializable, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public String name;
@@ -76,7 +78,7 @@ public class FieldDescriptor implements Serializable {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         sb.append("Field " + this.name + " of type " + this.type);
         if (this.isRequired()) {
             sb.append(", required");
@@ -127,7 +129,7 @@ public class FieldDescriptor implements Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null, context);
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
             if (castValue == null) {
                 throw new InvalidSchemaException(
                         "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
@@ -138,7 +140,27 @@ public class FieldDescriptor implements Serializable {
         }
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.name);
+        kryo.writeClassAndObject(output, this.type);
+        output.writeBoolean(this.required);
+        kryo.writeClassAndObject(output, this.defaultValue);
+        output.writeBoolean(this.unique);
+        output.writeBoolean(this.requiredIsSet);
+        output.writeBoolean(this.uniqueIsSet);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.name = input.readString();
+        this.type = (ItemType) kryo.readClassAndObject(input);
+        this.required = input.readBoolean();
+        this.defaultValue = (Item) kryo.readClassAndObject(input);
+        this.unique = input.readBoolean();
+        this.requiredIsSet = input.readBoolean();
+        this.uniqueIsSet = input.readBoolean();
+    }
 
     public static FieldDescriptor copy(FieldDescriptor descriptor) {
         FieldDescriptor clone = new FieldDescriptor();

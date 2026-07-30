@@ -1,7 +1,9 @@
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
-import java.io.Serial;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 
@@ -18,15 +20,15 @@ import java.util.regex.Pattern;
 
 public class gDayItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private boolean hasTimeZone;
     private int day;
     private ZoneOffset offset;
-    private static final Pattern gDayRegex = Pattern.compile(
+    private final Pattern gDayRegex = Pattern.compile(
         "---(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
+    @SuppressWarnings("unused")
     public gDayItem() {
         super();
     }
@@ -46,13 +48,8 @@ public class gDayItem implements Item {
         getgDayFromString(gDayString);
     }
 
-    @Override
-    public Item copy(boolean mutable) {
-        return new gDayItem(this.getDateTimeValue(), this.hasTimeZone);
-    }
-
     private void getgDayFromString(String gDayString) {
-        Matcher matcher = gDayRegex.matcher(gDayString);
+        Matcher matcher = this.gDayRegex.matcher(gDayString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gDay: \"" + gDayString + "\"");
         }
@@ -67,11 +64,11 @@ public class gDayItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonExpression.ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -85,7 +82,6 @@ public class gDayItem implements Item {
         return false;
     }
 
-    @Override
     public String getStringValue() {
         if (this.hasTimeZone) {
             return String.format("---%02d", this.day) + this.offset;
@@ -100,11 +96,17 @@ public class gDayItem implements Item {
     }
 
     @Override
-    public boolean hasTimeZone() {
-        return this.hasTimeZone;
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.getStringValue());
+        output.writeBoolean(this.hasTimeZone);
     }
 
-
+    @Override
+    public void read(Kryo kryo, Input input) {
+        String dateTimeString = input.readString();
+        this.hasTimeZone = input.readBoolean();
+        getgDayFromString(dateTimeString);
+    }
 
     @Override
     public ItemType getDynamicType() {

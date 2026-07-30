@@ -39,13 +39,11 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Serial;
 import java.net.URI;
 import java.util.List;
 
 public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private YAMLParser parser;
@@ -61,11 +59,11 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
         Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         try {
             URI uri = FileSystemUtil.resolveURI(
-                this.staticContext.getStaticURI(),
+                this.staticURI,
                 path.getStringValue(),
                 getMetadata()
             );

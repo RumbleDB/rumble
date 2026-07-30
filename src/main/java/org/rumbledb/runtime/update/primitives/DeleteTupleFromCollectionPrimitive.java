@@ -6,8 +6,8 @@ import org.apache.spark.sql.SparkSession;
 
 
 public class DeleteTupleFromCollectionPrimitive implements UpdatePrimitive {
-    private final Collection collection;
-    private final double rowOrder;
+    private Collection collection;
+    private double rowOrder;
     @SuppressWarnings("unused")
     private ExceptionMetadata metadata;
 

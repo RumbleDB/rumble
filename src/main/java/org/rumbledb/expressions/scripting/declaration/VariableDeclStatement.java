@@ -68,7 +68,7 @@ public class VariableDeclStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("declare variable $").append(this.variableName);
         if (this.variableSequenceType != null) {
@@ -87,7 +87,7 @@ public class VariableDeclStatement extends Statement {
         if (this.variableExpression != null && this.variableExpression.getStaticSequenceType() != null) {
             return this.variableExpression.getStaticSequenceType();
         }
-        return SequenceType.createSequenceType("item*");
+        return SequenceType.ITEM_STAR;
     }
 
     public Name getVariableName() {

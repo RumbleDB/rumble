@@ -28,14 +28,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Item item;
+    private Item item;
 
     public DoubleRuntimeIterator(Double value, RuntimeStaticContext staticContext) {
         super(null, staticContext);
@@ -53,7 +50,7 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         return new NativeClauseContext(
                 nativeClauseContext,
                 "" + this.item.getDoubleValue(),
-                SequenceType.createSequenceType("double")
+                SequenceType.DOUBLE
         );
     }
 }

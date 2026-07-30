@@ -9,19 +9,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
-import org.rumbledb.serialization.SerializerUtils;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -47,11 +39,10 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class SequenceOfItems {
 
-    private final RuntimeIterator iterator;
-    private final DynamicContext dynamicContext;
-    private final RumbleRuntimeConfiguration configuration;
+    private RuntimeIterator iterator;
+    private DynamicContext dynamicContext;
+    private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
-    private List<Item> cachedItems;
 
     /**
      * The constructor is not meant to be used directly. Sequences of items are obtained through a Rumble object and a
@@ -70,7 +61,6 @@ public class SequenceOfItems {
         this.isOpen = false;
         this.dynamicContext = dynamicContext;
         this.configuration = configuration;
-        this.cachedItems = null;
     }
 
     /**
@@ -264,16 +254,6 @@ public class SequenceOfItems {
     }
 
     /**
-     * Returns the runtime static context associated with this sequence.
-     *
-     * This context provides access to the default serialization parameters
-     * that should be used when serializing the results of this sequence.
-     */
-    public RuntimeStaticContext getRuntimeStaticContext() {
-        return this.iterator.getRuntimeStaticContext();
-    }
-
-    /**
      * Applies the PUL available when the iterator is updating.
      */
     public void applyPUL() {
@@ -283,88 +263,24 @@ public class SequenceOfItems {
 
     /**
      * Outputs the results as a list. Throws an exception if there are more items than the allowed materialization
-     * limit. This method is governed only by the materialization cap; the result-size cap is not considered here.
+     * limit.
      * 
      * @return The list of all items in the sequence.
      */
     public List<Item> getAsList() {
-        if (this.cachedItems != null) {
-            return new ArrayList<Item>(this.cachedItems);
-        }
         List<Item> result = new ArrayList<Item>();
-        long num = populateList(result, this.configuration.getMaterializationCap());
+        long num = populateList(result, this.configuration.getResultSizeCap());
         if (num != -1) {
             throw new CannotMaterializeException(
                     "Cannot materialize a sequence of "
                         + num
                         + " items because the limit is set to "
-                        + this.configuration.getMaterializationCap()
+                        + this.configuration.getResultSizeCap()
                         + ". This value can be configured with the --materialization-cap parameter at startup",
                     ExceptionMetadata.EMPTY_METADATA
             );
         }
-        this.cachedItems = new ArrayList<Item>(result);
-        return new ArrayList<Item>(this.cachedItems);
-    }
-
-    /**
-     * Serializes the query result to a string using the serialization parameters carried by the
-     * runtime static context.
-     *
-     * This is intended for API and test harness use when the result must be observed exactly as a
-     * serialized sequence rather than as raw {@link Item} objects.
-     *
-     * @return the serialized result.
-     */
-    public String serialize() {
-        if (this.availableAsPUL()) {
-            return "";
-        }
-        if (this.isOpen) {
-            throw new RuntimeException("Cannot serialize a sequence if the iterator is open.");
-        }
-
-        SerializationParameters params = SerializationParameters.copy(
-            this.getRuntimeStaticContext().getSerializationParameters()
-        );
-        SerializationParameters itemParams = SerializationParameters.copy(params);
-        if ("xml".equalsIgnoreCase(params.getMethod())) {
-            itemParams.setOmitXmlDeclaration(true);
-        }
-        Serializer serializer = Serializers.from(itemParams);
-        String itemSeparator = params.getItemSeparator();
-        if (itemSeparator == null) {
-            itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        List<Item> items = this.getAsList();
-        if (
-            "xml".equalsIgnoreCase(params.getMethod())
-                && !params.getOmitXmlDeclaration()
-                && !items.isEmpty()
-        ) {
-            SerializerUtils.appendXmlDeclaration(sb, params);
-        }
-        if ("json".equalsIgnoreCase(params.getMethod())) {
-            if (items.isEmpty()) {
-                return "null";
-            }
-            if (items.size() > 1) {
-                throw new RumbleException(
-                        "JSON serialization requires the top-level sequence to contain at most one item.",
-                        new ErrorCode(new Name(Name.ERROR_NS, "err", "SERE0023")),
-                        ExceptionMetadata.EMPTY_METADATA
-                );
-            }
-        }
-        for (int i = 0; i < items.size(); i++) {
-            if (i > 0) {
-                sb.append(itemSeparator);
-            }
-            sb.append(serializer.serialize(items.get(i)));
-        }
-        return sb.toString();
+        return result;
     }
 
     /**
@@ -479,7 +395,7 @@ public class SequenceOfItems {
      * Returns a SequenceWriter to save the sequence in various formats.
      */
     public SequenceWriter write() {
-        return new SequenceWriter(this);
+        return new SequenceWriter(this, this.configuration);
     }
 
 }

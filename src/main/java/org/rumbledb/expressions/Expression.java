@@ -78,14 +78,13 @@ public abstract class Expression extends Node {
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return RuntimeStaticContext.fromStaticContext(this.staticContext)
-            .configuration(conf)
-            .staticType(getStaticSequenceType())
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .isUpdating(isUpdating())
-            .isSequential(isSequential())
-            .build();
+        return new RuntimeStaticContext(
+                conf,
+                getStaticSequenceType(),
+                getHighestExecutionMode(visitorConfig),
+                getMetadata(),
+                staticContext.getInScopeNamespaceBindings()
+        );
     }
 
     /**
@@ -161,12 +160,9 @@ public abstract class Expression extends Node {
     /**
      * Sets the sequential property of the expression. An expression can only
      * be one of the following:
-     * 
-     * <ul>
-     * <li>non-updating sequential,</li>
-     * <li>non-updating non-sequential,</li>
-     * <li>updating non-sequential.</li>
-     * </ul>
+     * - non-updating sequential,
+     * - non-updating non-sequential,
+     * - updating non-sequential.
      *
      * @param isSequential a boolean value defining if the expression is
      *        sequential or not.
@@ -175,21 +171,10 @@ public abstract class Expression extends Node {
      */
     public void setSequential(boolean isSequential) {
         this.isSequential = isSequential;
-        if (isSequential) {
-            setIsInSequentialBlock(true);
-        }
     }
 
     public boolean isSequential() {
         return this.isSequential;
-    }
-
-    @Override
-    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
-        this.isInSequentialBlock = isInSequentialBlock;
-        for (Node child : getChildren()) {
-            child.setIsInSequentialBlock(isInSequentialBlock);
-        }
     }
 
     /**
@@ -203,35 +188,19 @@ public abstract class Expression extends Node {
 
 
     @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        if (this.isSequential) {
-            buffer.append(" | " + "sequential");
-        } else {
-            buffer.append(" | " + "non-sequential");
-        }
-        if (this.isInSequentialBlock) {
-            buffer.append(" | " + "in sequential block");
-        } else {
-            buffer.append(" | " + "not in sequential block");
-        }
         buffer.append(
             " | "
                 + (this.staticSequenceType == null
                     ? "not set"
                     : this.staticSequenceType
                         + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
-        buffer.append(
-            " | "
-                + (this.getStaticContext() != null && this.getStaticContext().isQuerySideEffecting()
-                    ? "query side effecting"
-                    : "query without side effects")
         );
         buffer.append("\n");
         for (Node iterator : getChildren()) {

@@ -1,22 +1,18 @@
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.InvalidUpdatingExpressionPositionException;
 import org.rumbledb.exceptions.SimpleExpressionMustBeVacuousException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UpdatingFunctionHasReturnTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.ExpressionClassification;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.UpdatingFunctionHasReturnTypeException;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
@@ -30,7 +26,6 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
-import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -41,19 +36,23 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
-import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteExpression;
-import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
-import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
-import org.rumbledb.expressions.update.EditCollectionExpression;
 import org.rumbledb.expressions.update.InsertExpression;
-import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
-import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.FunctionSignature;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ExpressionClassificationVisitor extends AbstractNodeVisitor<ExpressionClassification> {
 
@@ -61,12 +60,14 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     protected ExpressionClassification defaultAction(Node node, ExpressionClassification argument) {
         ExpressionClassification expressionClassification = this.visitDescendants(node, argument);
 
-        if (!(node instanceof Expression expression)) {
+        if (
+            !(node instanceof Expression)
+        ) {
             return expressionClassification;
         }
 
-        if (node instanceof InlineFunctionExpression inlineFunctionExpression) {
-            inlineFunctionExpression.setExpressionClassification(expressionClassification);
+        if (node instanceof InlineFunctionExpression) {
+            ((InlineFunctionExpression) node).setExpressionClassification(expressionClassification);
             return expressionClassification;
         }
         if (expressionClassification.isUpdating()) {
@@ -75,6 +76,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
                     node.getMetadata()
             );
         }
+        Expression expression = (Expression) node;
         expression.setExpressionClassification(expressionClassification);
         return expressionClassification;
     }
@@ -185,22 +187,6 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         if (result.isUpdating()) {
             throw new InvalidUpdatingExpressionPositionException(
                     "Expression in For Clause cannot be updating",
-                    expression.getMetadata()
-            );
-        }
-        return result;
-    }
-
-    @Override
-    public ExpressionClassification visitWindowClause(WindowClause expression, ExpressionClassification argument) {
-        ExpressionClassification result = this.visit(expression.getExpression(), argument);
-        result = this.visit(expression.getStartCondition().expression(), result);
-        if (expression.getEndCondition() != null) {
-            result = this.visit(expression.getEndCondition().expression(), result);
-        }
-        if (result.isUpdating()) {
-            throw new InvalidUpdatingExpressionPositionException(
-                    "Expressions in Window Clause cannot be updating",
                     expression.getMetadata()
             );
         }
@@ -362,7 +348,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function;
         FunctionSignature signature;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
         if (function != null) {
             signature = function.getSignature();
         } else {
@@ -412,6 +398,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
 
         if (expression.isUpdating()) {
             if (expression.getActualReturnType() != null) {
+                System.err.println(expression);
                 throw new UpdatingFunctionHasReturnTypeException(
                         "An updating function cannot have a return type. Return type "
                             + expression.getActualReturnType()

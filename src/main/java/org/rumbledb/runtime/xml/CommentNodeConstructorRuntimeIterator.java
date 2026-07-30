@@ -25,11 +25,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidCommentContentException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.AtomizationIterator;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
@@ -41,13 +39,12 @@ import java.util.StringJoiner;
  */
 public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     /** The content iterator */
-    private final DataFunctionIterator contentIterator;
+    private final AtomizationIterator contentIterator;
 
     public CommentNodeConstructorRuntimeIterator(
-            DataFunctionIterator contentIterator,
+            AtomizationIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -74,11 +71,7 @@ public class CommentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRun
         }
 
         this.hasNext = false;
-        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(commentContent);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            commentItem.setXmlDocumentPosition(documentPath, 0);
-        }
-        return commentItem;
+        return ItemFactory.getInstance().createXmlCommentNode(commentContent);
     }
 }
+

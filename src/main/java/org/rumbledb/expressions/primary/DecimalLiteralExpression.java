@@ -32,7 +32,7 @@ import java.util.List;
 
 public class DecimalLiteralExpression extends Expression {
 
-    private final BigDecimal value;
+    private BigDecimal value;
 
     public DecimalLiteralExpression(BigDecimal value, ExceptionMetadata metadata) {
         super(metadata);
@@ -57,8 +57,7 @@ public class DecimalLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -74,7 +73,7 @@ public class DecimalLiteralExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.value + "\n");
     }

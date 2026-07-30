@@ -80,7 +80,7 @@ public class TextNodeConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("text { ");
         if (this.contentExpression != null) {

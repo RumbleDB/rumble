@@ -33,15 +33,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.io.Serial;
 import java.io.StringReader;
 import java.util.Iterator;
 
 public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-
     @SuppressWarnings("unused")
     private final ExceptionMetadata metadata;
     private final boolean optimizeParentPointers;
@@ -66,7 +63,6 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                 String content = tuple._2;
                 try {
                     DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                    documentBuilderFactory.setNamespaceAware(true);
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
                     return ItemParser.getItemFromXML(

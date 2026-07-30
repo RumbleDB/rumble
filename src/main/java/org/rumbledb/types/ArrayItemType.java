@@ -9,21 +9,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.Serial;
 import java.util.*;
 
 public class ArrayItemType implements ItemType {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
+    final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
-                ConstrainingFacetTypes.ENUMERATION,
-                ConstrainingFacetTypes.CONTENT,
+                FacetTypes.ENUMERATION,
+                FacetTypes.CONTENT,
 
-                ConstrainingFacetTypes.MINLENGTH,
-                ConstrainingFacetTypes.MAXLENGTH
+                FacetTypes.MINLENGTH,
+                FacetTypes.MAXLENGTH
             )
     );
 
@@ -77,43 +75,15 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        if (itemType.isXQueryArrayItemType()) {
-            // delegate to the XQuery array item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo(itemType);
+        return isEqualTo((ItemType) other);
     }
 
     @Override
     public boolean isArrayItemType() {
         return true;
-    }
-
-    @Override
-    public boolean isSubtypeOf(ItemType superType) {
-        if (superType.isUnionType()) {
-            for (ItemType member : superType.getTypes()) {
-                if (this.isSubtypeOf(member)) {
-                    return true;
-                }
-            }
-        }
-        if (superType.isXQueryArrayItemType()) {
-            // an ArrayItemType (js:array()) with a base type of T <: array(T)
-            return new SequenceType(this.content, SequenceType.Arity.One).isSubtypeOf(
-                superType.getMemberSequenceType()
-            );
-        }
-        if (superType.isFunctionItemType()) {
-            ItemType xqueryArrayType = ItemTypeFactory.xqueryArrayOf(
-                new SequenceType(this.content, SequenceType.Arity.One)
-            );
-            return xqueryArrayType.isSubtypeOf(superType);
-        }
-        return ItemType.super.isSubtypeOf(superType);
     }
 
     @Override
@@ -155,7 +125,7 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+    public Set<FacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 
@@ -181,26 +151,20 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ArrayItemType otherArray)) {
+        if (!(other instanceof ArrayItemType)) {
             if (other.isArrayItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
+        ArrayItemType otherArray = (ArrayItemType) other;
         if (!this.isResolved() || !otherArray.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
         if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ItemType mergedContent;
-        if (this.maxLength != null && this.maxLength == 0) {
-            mergedContent = otherArray.content;
-        } else if (otherArray.maxLength != null && otherArray.maxLength == 0) {
-            mergedContent = this.content;
-        } else {
-            mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
-        }
+        ItemType mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
         Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
         Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
         if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
@@ -266,17 +230,6 @@ public class ArrayItemType implements ItemType {
             sb.append("\"treeDepth\": ");
             sb.append(this.typeTreeDepth);
             sb.append(", ");
-
-            if (this.minLength != null) {
-                sb.append("\"minLength\": ");
-                sb.append(this.minLength);
-                sb.append(", ");
-            }
-            if (this.maxLength != null) {
-                sb.append("\"maxLength\": ");
-                sb.append(this.maxLength);
-                sb.append(", ");
-            }
 
             if (isResolved()) {
                 sb.append("\"content\": ");
@@ -401,7 +354,34 @@ public class ArrayItemType implements ItemType {
         return sb.toString();
     }
 
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        kryo.writeObjectOrNull(output, this.name, Name.class);
+        kryo.writeClassAndObject(output, this.baseType);
+        kryo.writeClassAndObject(output, this.content);
+        kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
+        output.writeInt(this.minLength != null ? this.minLength : -1);
+        output.writeInt(this.maxLength != null ? this.maxLength : -1);
+    }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        this.name = kryo.readObjectOrNull(input, Name.class);
+        this.baseType = (ItemType) kryo.readClassAndObject(input);
+        this.content = (ItemType) kryo.readClassAndObject(input);
+        this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
+        int min = input.readInt();
+        int max = input.readInt();
+        this.minLength = (min == -1) ? null : min;
+        this.maxLength = (max == -1) ? null : max;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (this.content != null && this.content.isResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
+    }
 
     private boolean hasEnumerationFacet() {
         return this.enumeration != null && !this.enumeration.isEmpty();
@@ -409,21 +389,21 @@ public class ArrayItemType implements ItemType {
 
     private Integer mergeMinLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return null;
+            return second;
         }
         if (second == null) {
-            return null;
+            return first;
         }
-        return Math.min(first, second);
+        return Math.max(first, second);
     }
 
     private Integer mergeMaxLengthFacet(Integer first, Integer second) {
         if (first == null) {
-            return null;
+            return second;
         }
         if (second == null) {
-            return null;
+            return first;
         }
-        return Math.max(first, second);
+        return Math.min(first, second);
     }
 }

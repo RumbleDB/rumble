@@ -26,8 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 /**
  * Runtime iterator for text nodes in a direct element constructor.
  * 
@@ -35,10 +33,9 @@ import java.io.Serial;
  */
 public class TextNodeRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     /** The string content of the text node */
-    private final String content;
+    private String content;
 
     /**
      * Constructor for text node runtime iterator.

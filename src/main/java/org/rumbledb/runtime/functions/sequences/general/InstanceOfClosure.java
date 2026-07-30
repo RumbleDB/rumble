@@ -5,11 +5,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
-
 public class InstanceOfClosure implements Function<Item, Boolean> {
-    private final ItemType itemType;
-    @Serial
+    private ItemType itemType;
     private static final long serialVersionUID = 1L;
 
     public InstanceOfClosure(ItemType itemType) {

@@ -7,7 +7,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 import java.util.Random;
 
@@ -16,7 +15,6 @@ import java.util.Random;
  */
 public class RandomNumberGeneratorIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public RandomNumberGeneratorIterator(

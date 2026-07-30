@@ -3,20 +3,17 @@ package org.rumbledb.types;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
-import java.io.Serial;
 import java.util.Set;
 
 /**
  * Class representing a concrete XML node item type at depth 2 in the type hierarchy.
- * This class now covers the remaining concrete XML node kinds after dedicated implementations
- * for element(), attribute(), document-node(), and processing-instruction():
- * comment(), text(), namespace-node().
+ * This is used for all 7 concrete node types defined by the XPath Data Model 3.1, Section 2.7.4:
+ * element(), attribute(), document-node(), comment(), text(), namespace-node(), processing-instruction().
  *
  * All concrete node types share node() as their base type at depth 1.
  */
 public class XmlNodeItemType implements ItemType {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final Name name;
@@ -25,14 +22,20 @@ public class XmlNodeItemType implements ItemType {
         this.name = name;
     }
 
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+    }
 
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+    }
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return isEqualTo(itemType);
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -61,7 +64,7 @@ public class XmlNodeItemType implements ItemType {
     }
 
     @Override
-    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+    public Set<FacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("XML node item type does not support facets");
     }
 
@@ -80,4 +83,5 @@ public class XmlNodeItemType implements ItemType {
         return false;
     }
 }
+
 

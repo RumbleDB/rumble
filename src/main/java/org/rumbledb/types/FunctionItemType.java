@@ -4,18 +4,16 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.Serial;
 import java.util.Set;
 
 public class FunctionItemType implements ItemType {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private final boolean isGeneric;
     private final FunctionSignature signature;
 
-    static final FunctionItemType anyFunctionItem = new FunctionItemType(true);
+    static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     FunctionItemType(FunctionSignature signature) {
         if (signature == null) {
@@ -31,7 +29,17 @@ public class FunctionItemType implements ItemType {
         this.signature = null;
     }
 
+    @Override
+    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
+        // Implement serialization logic here if needed
+        throw new UnsupportedOperationException("Serialization not implemented yet.");
+    }
 
+    @Override
+    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
+        // Implement deserialization logic here if needed
+        throw new UnsupportedOperationException("Deserialization not implemented yet.");
+    }
 
     @Override
     public Name getName() {
@@ -40,10 +48,10 @@ public class FunctionItemType implements ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return isEqualTo(itemType);
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -77,9 +85,6 @@ public class FunctionItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
-        if (other.isMapItemType()) {
-            return anyFunctionItem;
-        }
         if (other.isFunctionItemType()) {
             return anyFunctionItem;
         }
@@ -97,7 +102,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+    public Set<FacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("function item types does not support facets");
     }
 

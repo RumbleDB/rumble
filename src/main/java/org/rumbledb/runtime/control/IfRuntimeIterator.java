@@ -30,13 +30,9 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-import java.io.Serial;
-import java.util.List;
-
 public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
 
@@ -44,16 +40,31 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
             RuntimeIterator condition,
             RuntimeIterator branch,
             RuntimeIterator elseBranch,
+            boolean isUpdating,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            List.of(
-                condition,
-                branch,
-                elseBranch
-            ),
-            staticContext
-        );
+        super(null, staticContext);
+        this.children.add(condition);
+        this.children.add(branch);
+        this.children.add(elseBranch);
+        this.isUpdating = isUpdating;
+    }
+
+    public IfRuntimeIterator(
+            RuntimeIterator condition,
+            RuntimeIterator branch,
+            RuntimeIterator elseBranch,
+            RuntimeStaticContext staticContext
+    ) {
+        this(condition, branch, elseBranch, false, staticContext);
+    }
+
+    @Override
+    public void resetLocal() {
+        this.selectedIterator.close();
+        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.selectedIterator.hasNext();
     }
 
     @Override
@@ -84,12 +95,12 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.getChild(0);
+        RuntimeIterator condition = this.children.get(0);
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
         if (effectiveBooleanValue) {
-            return this.getChild(1);
+            return this.children.get(1);
         } else {
-            return this.getChild(2);
+            return this.children.get(2);
         }
     }
 

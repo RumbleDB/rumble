@@ -20,6 +20,10 @@
 
 package org.rumbledb.runtime;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -32,24 +36,22 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
-import org.rumbledb.runtime.flwor.clauses.ForClauseIterator;
-import org.rumbledb.runtime.flwor.clauses.LetClauseIterator;
+import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.io.Serial;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<FlworTuple> {
+public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterface, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final RuntimeStaticContext staticContext;
-    protected final RuntimeTupleIterator child;
+    protected RuntimeTupleIterator child;
     protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;
@@ -72,7 +74,6 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         return this.child;
     }
 
-    @Override
     public void open(DynamicContext context) {
         if (this.isOpen) {
             throw new IteratorFlowException(
@@ -85,24 +86,41 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
         this.currentDynamicContext = context;
     }
 
-    @Override
     public void close() {
         this.isOpen = false;
         this.child.close();
     }
 
+    public void reset(DynamicContext context) {
+        this.hasNext = true;
+        this.currentDynamicContext = context;
+        this.child.reset(context);
+    }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeBoolean(this.hasNext);
+        output.writeBoolean(this.isOpen);
+        kryo.writeObject(output, this.currentDynamicContext);
+        kryo.writeObject(output, this.child);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.hasNext = input.readBoolean();
+        this.isOpen = input.readBoolean();
+        this.currentDynamicContext = kryo.readObject(input, DynamicContext.class);
+        this.child = kryo.readObject(input, RuntimeTupleIterator.class);
+    }
 
     public boolean isOpen() {
         return this.isOpen;
     }
 
-    @Override
     public boolean hasNext() {
         return this.hasNext;
     }
 
-    @Override
     public abstract FlworTuple next();
 
     public ExceptionMetadata getMetadata() {
@@ -222,7 +240,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     public void setEvaluationDepthLimit(int limit) {
         this.evaluationDepthLimit = limit;
         if (limit == 0) {
-            if (!(this instanceof ForClauseIterator || this instanceof LetClauseIterator)) {
+            if (!(this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator)) {
                 throw new OurBadException(
                         "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
                 );
@@ -255,7 +273,7 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      */
     public boolean canSetEvaluationDepthLimit(int limit) {
         if (limit == 0) {
-            return this instanceof ForClauseIterator || this instanceof LetClauseIterator;
+            return this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator;
         }
         if (limit == -1) {
             return true;
@@ -309,12 +327,12 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
     public abstract boolean containsClause(FLWOR_CLAUSES kind);
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        print(sb, 0);
-        return sb.toString();
+        StringBuffer stringBuffer = new StringBuffer();
+        print(stringBuffer, 0);
+        return stringBuffer.toString();
     }
 
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -391,14 +409,5 @@ public abstract class RuntimeTupleIterator implements RuntimeIteratorInterface<F
      */
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return NativeClauseContext.NoNativeQuery;
-    }
-
-    /**
-     * Returns the runtime static context of the clause.
-     * 
-     * @return the static context of the clause.
-     */
-    public RuntimeStaticContext getStaticContext() {
-        return this.staticContext;
     }
 }

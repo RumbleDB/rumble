@@ -30,16 +30,14 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
-import java.io.Serial;
 import java.util.List;
 
 public class HashUDF implements UDF1<Row, Long> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private DataFrameContext dataFrameContext;
+    private RuntimeIterator expression;
 
     public HashUDF(
             RuntimeIterator expression,

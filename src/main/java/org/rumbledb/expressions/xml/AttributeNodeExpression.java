@@ -23,7 +23,6 @@ package org.rumbledb.expressions.xml;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rumbledb.context.Name;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -36,25 +35,25 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  */
 public class AttributeNodeExpression extends Expression {
     /**
-     * Resolved expanded name of the attribute (compile-time).
+     * The qname of the attribute node.
      */
-    private final Name attributeName;
+    private String qname;
     /**
      * The value of the attribute node.
      * 
      * The value is a list of expressions. This is because an attribute node can be
      * constructed from multiple expressions and literals, which are materialized at runtime.
      */
-    private final List<Expression> value;
+    private List<Expression> value;
 
-    public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
+    public AttributeNodeExpression(String qname, List<Expression> value, ExceptionMetadata metadata) {
         super(metadata);
-        this.attributeName = attributeName;
+        this.qname = qname;
         this.value = value;
     }
 
-    public Name getNodeName() {
-        return this.attributeName;
+    public String getQName() {
+        return this.qname;
     }
 
     public List<Expression> getValue() {
@@ -74,9 +73,9 @@ public class AttributeNodeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(this.attributeName);
+        sb.append(this.qname);
         sb.append("=");
         for (Expression child : this.value) {
             child.serializeToJSONiq(sb, indent);

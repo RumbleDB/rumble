@@ -30,8 +30,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class StringConcatExpression extends Expression {
-    private final Expression leftExpression;
-    private final Expression rightExpression;
+    private Expression leftExpression;
+    private Expression rightExpression;
 
     public StringConcatExpression(
             Expression leftExpression,
@@ -54,7 +54,7 @@ public class StringConcatExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

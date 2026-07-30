@@ -19,7 +19,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
 
     public InsertIntoObjectPrimitive(Item targetObject, Item contentObject, ExceptionMetadata metadata) {
-        for (String key : contentObject.getStringKeys()) {
+        for (String key : contentObject.getKeys()) {
             if (targetObject.getItemByKey(key) != null) {
                 throw new DuplicateKeyOnUpdateApplyException(
                         "cannot insert a key already present in an object",
@@ -44,7 +44,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         try {
-            for (String key : this.content.getStringKeys()) {
+            for (String key : this.content.getKeys()) {
                 this.target.putItemByKey(key, this.content.getItemByKey(key));
             }
         } catch (DuplicateObjectKeyException e) {
@@ -65,15 +65,28 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
         if (startOfArrayIndexing == -1) {
             List<String> columnsClauseList = new ArrayList<>();
-            List<String> keys = this.content.getStringKeys();
-            List<Item> values = this.content.getItemValues();
+            List<String> setClauseList = new ArrayList<>();
+            List<String> keys = this.content.getKeys();
+            List<Item> values = this.content.getValues();
             for (int i = 0; i < keys.size(); i++) {
                 columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
+                setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
             }
+
+            String setClauses = String.join(", ", setClauseList);
 
             List<String> insertColumnQueries = columnsClauseList.stream()
                 .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
                 .collect(Collectors.toList());
+
+            String setFieldQuery = "UPDATE "
+                + location
+                + " SET "
+                + setClauses
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
 
             SparkSessionManager manager = SparkSessionManager.getInstance();
 
@@ -87,14 +100,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            for (int i = 0; i < keys.size(); i++) {
-                this.applySetFieldInCollection(
-                    location,
-                    rowID,
-                    pathIn + keys.get(i),
-                    values.get(i).getSparkSQLValue()
-                );
-            }
+            manager.getOrCreateSession().sql(setFieldQuery);
         } else {
             this.arrayIndexingApplyDelta();
 
@@ -141,8 +147,8 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
 
         List<String> columnsClauseList = new ArrayList<>();
-        List<String> keys = this.content.getStringKeys();
-        List<Item> values = this.content.getItemValues();
+        List<String> keys = this.content.getKeys();
+        List<Item> values = this.content.getValues();
         for (int i = 0; i < keys.size(); i++) {
             columnsClauseList.add(pathInSchema + keys.get(i) + " " + values.get(i).getSparkSQLType());
         }
@@ -168,11 +174,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public static Item mergeSources(Item first, Item second, ExceptionMetadata metadata) {
         Item res;
 
-        List<String> keys = new ArrayList<>(first.getStringKeys());
-        keys.addAll(second.getStringKeys());
+        List<String> keys = new ArrayList<>(first.getKeys());
+        keys.addAll(second.getKeys());
 
-        List<Item> values = new ArrayList<>(first.getItemValues());
-        values.addAll(second.getItemValues());
+        List<Item> values = new ArrayList<>(first.getValues());
+        values.addAll(second.getValues());
 
         try {
             res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);

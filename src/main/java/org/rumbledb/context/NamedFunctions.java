@@ -20,145 +20,90 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
-import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
-import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public class NamedFunctions implements Serializable {
+public class NamedFunctions implements Serializable, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at
     // static analysis phase
     // but functions items are fully known at runtimeIterator generation
-    private final HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+    private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+    private RumbleRuntimeConfiguration conf;
 
-    public NamedFunctions() {
+    public NamedFunctions(RumbleRuntimeConfiguration conf) {
         this.userDefinedFunctions = new HashMap<>();
+        this.conf = conf;
     }
 
     public void clearUserDefinedFunctions() {
         this.userDefinedFunctions.clear();
     }
 
-    /**
-     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()} (same as
-     * {@link org.rumbledb.runtime.RuntimeIterator#getHighestExecutionMode()} for iterators constructed with that
-     * context).
-     */
     public RuntimeIterator getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
-            RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments,
-            boolean isTailOptimization
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
-            return buildFunctionItemCallIterator(
-                this.userDefinedFunctions.get(identifier),
-                callerRuntimeContext,
-                callerRuntimeContext.getExecutionMode(),
-                arguments,
-                isTailOptimization
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                this.conf,
+                executionMode,
+                metadata,
+                arguments
             );
         }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                callerRuntimeContext.getMetadata()
-        );
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
 
     }
 
-    /**
-     * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
-     * callee's {@code executionModeForFunctionCall}
-     */
-    public static RuntimeIterator buildFunctionItemCallIterator(
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
             Item functionItem,
-            RuntimeStaticContext callerRuntimeContext,
-            ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments,
-            boolean isTailOptimization
+            RumbleRuntimeConfiguration conf,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
     ) {
-        ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
-        boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
-        if (isPartialApplication) {
-            List<SequenceType> partialParamTypes = new ArrayList<>();
-            List<SequenceType> paramTypes = functionItem.getSignature().getParameterTypes();
-            for (int i = 0; i < arguments.size(); i++) {
-                if (arguments.get(i) == null) {
-                    partialParamTypes.add(paramTypes.get(i));
-                }
-            }
-            FunctionSignature partialSignature = new FunctionSignature(
-                    partialParamTypes,
-                    functionItem.getSignature().getReturnType(),
-                    functionItem.getSignature().isUpdating()
-            );
-            sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
-        }
         SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
-        RuntimeStaticContext outerStaticContext = callerRuntimeContext
-            .toBuilder()
-            .staticType(sequenceType)
-            .executionMode(executionModeForFunctionCall)
-            .build();
-        RuntimeStaticContext innerStaticContext = callerRuntimeContext
-            .toBuilder()
-            .staticType(innerSequenceType)
-            .executionMode(executionModeForFunctionCall)
-            .build();
-        RuntimeIterator functionCallIterator;
-        if (functionItem.isBuiltinFunction()) {
-            if (arguments.stream().anyMatch(a -> a == null)) {
-                throw new UnsupportedFeatureException(
-                        "Partial application of builtin named function references is not supported yet.",
-                        metadata
-                );
-            }
-            functionCallIterator = new BuiltinFunctionItemCallIterator(
-                    functionItem,
-                    arguments,
-                    innerStaticContext
-            );
-        } else {
-            functionCallIterator = new FunctionItemCallIterator(
-                    functionItem,
-                    arguments,
-                    innerStaticContext,
-                    isTailOptimization
-            );
-        }
-        if (isTailOptimization) {
-            return functionCallIterator;
-        }
-        if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
+        RuntimeStaticContext staticContext = new RuntimeStaticContext(conf, sequenceType, executionMode, metadata);
+        RuntimeStaticContext innerStaticContext = new RuntimeStaticContext(
+                conf,
+                innerSequenceType,
+                executionMode,
+                metadata
+        );
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                innerStaticContext
+        );
+        if (sequenceType.equals(SequenceType.ITEM_STAR)) {
             return functionCallIterator;
         }
         if (
@@ -168,24 +113,24 @@ public class NamedFunctions implements Serializable {
         ) {
             return new AtMostOneItemTypePromotionIterator(
                     functionCallIterator,
-                    sequenceType,
+                    functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
                         + "function. ",
-                    outerStaticContext
+                    staticContext
             );
         } else {
             return new TypePromotionIterator(
                     functionCallIterator,
-                    sequenceType,
+                    functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
                         + ((functionItem.getIdentifier().getName() == null)
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
                         + "function. ",
-                    outerStaticContext
+                    staticContext
             );
         }
     }
@@ -195,11 +140,8 @@ public class NamedFunctions implements Serializable {
             throw new OurBadException("Only a function item can be added as a user-defined function.");
         }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
-        String queryLanguage = function.getModuleDynamicContext()
-            .getRumbleRuntimeConfiguration()
-            .getQueryLanguage();
         if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier, queryLanguage)
+            BuiltinFunctionCatalogue.exists(functionIdentifier)
                 || this.userDefinedFunctions.containsKey(functionIdentifier)
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
@@ -213,150 +155,124 @@ public class NamedFunctions implements Serializable {
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
         FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
-        return functionItem.copyForLookup();
+        FunctionItem copyFunctionItem = functionItem.deepCopy();
+        copyFunctionItem.setModuleDynamicContext(functionItem.getModuleDynamicContext());
+        return copyFunctionItem;
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
-            RuntimeStaticContext callerStaticContext,
-            boolean argumentsAlreadyCoerced
+            StaticContext staticContext,
+            RumbleRuntimeConfiguration conf,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata
     ) {
-        RumbleRuntimeConfiguration conf = callerStaticContext.getConfiguration();
-        ExceptionMetadata metadata = callerStaticContext.getMetadata();
         boolean checkReturnTypesOfBuiltinFunctions = conf.isCheckReturnTypeOfBuiltinFunctions();
-        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-            identifier,
-            callerStaticContext.getQueryLanguage()
-        );
+        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
         if (builtinFunction == null) {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
         }
-        if (!argumentsAlreadyCoerced) {
-            for (int i = 0; i < arguments.size(); i++) {
-                if (
-                    !builtinFunction.getSignature()
-                        .getParameterTypes()
-                        .get(i)
-                        .equals(SequenceType.createSequenceType("item*"))
-                ) {
-                    SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
-                    RuntimeStaticContext argStaticContext = callerStaticContext
-                        .toBuilder()
-                        .staticType(sequenceType)
-                        .executionMode(arguments.get(i).getHighestExecutionMode())
-                        .metadata(arguments.get(i).getMetadata())
-                        .build();
-                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
-                        arguments.get(i),
+        for (int i = 0; i < arguments.size(); i++) {
+            if (!builtinFunction.getSignature().getParameterTypes().get(i).equals(SequenceType.ITEM_STAR)) {
+                SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
+                RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+                        conf,
                         sequenceType,
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        argStaticContext
+                        arguments.get(i).getHighestExecutionMode(),
+                        arguments.get(i).getMetadata()
+                );
+                if (
+                    sequenceType.isEmptySequence()
+                        || sequenceType.getArity().equals(Arity.One)
+                        || sequenceType.getArity().equals(Arity.OneOrZero)
+                ) {
+                    RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
+                            arguments.get(i),
+                            sequenceType,
+                            "Invalid argument for function " + identifier.getName() + ". ",
+                            runtimeStaticContext
                     );
-                    if (
-                        sequenceType.isEmptySequence()
-                            || sequenceType.getArity().equals(Arity.One)
-                            || sequenceType.getArity().equals(Arity.OneOrZero)
-                    ) {
-                        arguments.set(
-                            i,
-                            new AtMostOneItemTypePromotionIterator(
-                                    argumentIterator,
-                                    sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
-                                    argStaticContext
-                            )
-                        );
-                    } else {
-                        arguments.set(
-                            i,
-                            new TypePromotionIterator(
-                                    argumentIterator,
-                                    sequenceType,
-                                    "Invalid argument for function " + identifier.getName() + ". ",
-                                    argStaticContext
-                            )
-                        );
-                    }
+
+                    arguments.set(i, typePromotionIterator);
+                } else {
+                    TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                            arguments.get(i),
+                            sequenceType,
+                            "Invalid argument for function " + identifier.getName() + ". ",
+                            runtimeStaticContext
+                    );
+
+                    arguments.set(i, typePromotionIterator);
                 }
             }
         }
 
-        SequenceType catalogueReturnType = builtinFunction.getSignature().getReturnType();
-
-        RuntimeStaticContext delegateContext = callerStaticContext
-            .toBuilder()
-            .staticType(catalogueReturnType)
-            .executionMode(callerStaticContext.getExecutionMode())
-            .build();
-
-        if (!"format-number".equals(identifier.getName().getLocalName())) {
-            // Remove decimal formats definition from the context
-            delegateContext = delegateContext
-                .toBuilder()
-                .decimalFormats(null)
-                .defaultDecimalFormat(null)
-                .build();
-        }
-
         RuntimeIterator functionCallIterator;
         try {
-            if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                    .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
-                functionCallIterator = constructor.newInstance(
-                    builtinFunction.getIdentifier(),
-                    arguments,
-                    delegateContext
-                );
-            } else {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                    .getConstructor(List.class, RuntimeStaticContext.class);
-                functionCallIterator = constructor.newInstance(arguments, delegateContext);
-            }
-        } catch (ReflectiveOperationException ex) {
-            RuntimeException e = new UnknownFunctionCallException(
-                    identifier.getName(),
-                    arguments.size(),
-                    delegateContext.getMetadata()
+            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                .getConstructor(List.class, RuntimeStaticContext.class);
+            functionCallIterator = constructor.newInstance(
+                arguments,
+                new RuntimeStaticContext(
+                        conf,
+                        builtinFunction.getSignature().getReturnType(),
+                        executionMode,
+                        metadata,
+                        staticContext.getInScopeNamespaceBindings()
+                )
             );
+        } catch (ReflectiveOperationException ex) {
+            RuntimeException e = new UnknownFunctionCallException(identifier.getName(), arguments.size(), metadata);
             e.initCause(ex);
             throw e;
         }
 
-        if (catalogueReturnType.equals(SequenceType.createSequenceType("item*"))) {
-            return functionCallIterator;
-        }
-        if (!checkReturnTypesOfBuiltinFunctions) {
-            return functionCallIterator;
-        }
-        RuntimeStaticContext returnCheckContext = callerStaticContext
-            .toBuilder()
-            .staticType(catalogueReturnType)
-            .executionMode(functionCallIterator.getHighestExecutionMode())
-            .metadata(functionCallIterator.getMetadata())
-            .build();
-        if (
-            catalogueReturnType.isEmptySequence()
-                || catalogueReturnType.getArity().equals(Arity.One)
-                || catalogueReturnType.getArity().equals(Arity.OneOrZero)
-        ) {
-            return new AtMostOneItemTypePromotionIterator(
-                    functionCallIterator,
-                    catalogueReturnType,
-                    "Invalid return type for function " + builtinFunction.getIdentifier().getName() + ". ",
-                    returnCheckContext
+        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.ITEM_STAR)) {
+            if (!checkReturnTypesOfBuiltinFunctions) {
+                return functionCallIterator;
+            }
+            functionCallIterator.setStaticContext(staticContext);
+            SequenceType sequenceType = builtinFunction.getSignature().getReturnType();
+            RuntimeStaticContext runtimeStaticContext = new RuntimeStaticContext(
+                    conf,
+                    sequenceType,
+                    functionCallIterator.getHighestExecutionMode(),
+                    functionCallIterator.getMetadata()
             );
+            if (
+                sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero)
+            ) {
+                return new AtMostOneItemTypePromotionIterator(
+                        functionCallIterator,
+                        sequenceType,
+                        "Invalid return type for function " + identifier.getName() + ". ",
+                        runtimeStaticContext
+                );
+            } else {
+                return new TypePromotionIterator(
+                        functionCallIterator,
+                        sequenceType,
+                        "Invalid return type for function " + identifier.getName() + ". ",
+                        runtimeStaticContext
+                );
+            }
         }
-        return new TypePromotionIterator(
-                functionCallIterator,
-                catalogueReturnType,
-                "Invalid return type for function " + builtinFunction.getIdentifier().getName() + ". ",
-                returnCheckContext
-        );
+        return functionCallIterator;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.userDefinedFunctions);
+    }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.userDefinedFunctions = kryo.readObject(input, HashMap.class);
+    }
 
     @Override
     public String toString() {

@@ -25,7 +25,7 @@ public class ContinueStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("Continue Statement");
     }

@@ -13,13 +13,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
+import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.Serial;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,14 +32,13 @@ import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkML
 
 public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final String transformerShortName;
-    private final Transformer transformer;
+    private String transformerShortName;
+    private Transformer transformer;
 
     private JSoundDataFrame inputDataset;
     private Item paramMapItem;
-    private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
+    private List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
     public ApplyTransformerRuntimeIterator(
             String transformerShortName,
@@ -178,11 +177,24 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
-        return RumbleMLUtils.getDataFrameOrInferFromVariable(
-            context,
-            transformerInputVariableName,
-            this.staticContext,
-            getMetadata()
+
+        if (!context.getVariableValues().contains(transformerInputVariableName)) {
+            throw new OurBadException("Transformer's input data is not available in the dynamic context");
+        }
+
+        if (context.getVariableValues().isDataFrame(transformerInputVariableName, getMetadata())) {
+            return context.getVariableValues()
+                .getDataFrameVariableValue(
+                    transformerInputVariableName,
+                    getMetadata()
+                );
+        }
+
+        throw new MLNotADataFrameException(
+                "Transformers operate on DataFrames. "
+                    +
+                    "Please consider using 'annotate' built-in function to generate a DataFrame.",
+                getMetadata()
         );
     }
 

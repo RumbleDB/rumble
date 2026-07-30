@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ForwardStepExpr extends StepExpr {
-    private final ForwardAxis forwardAxis;
-    private final NodeTest nodeTest;
+    private ForwardAxis forwardAxis;
+    private NodeTest nodeTest;
 
     public ForwardStepExpr(ForwardAxis forwardAxis, NodeTest nodeTest, ExceptionMetadata exceptionMetadata) {
         super(exceptionMetadata);
@@ -27,7 +27,7 @@ public class ForwardStepExpr extends StepExpr {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.forwardAxis.getAxisValue());
         sb.append(this.nodeTest.toString());

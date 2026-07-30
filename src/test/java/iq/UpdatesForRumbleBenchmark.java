@@ -3,7 +3,7 @@ package iq;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.LogManager;
 import org.apache.spark.SparkConf;
-import org.junit.jupiter.api.Assertions;
+import org.junit.Assert;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -46,6 +46,8 @@ public class UpdatesForRumbleBenchmark {
                 "yes",
                 "--dates-with-timezone",
                 "yes",
+                "--print-iterator-tree",
+                "yes",
                 "--apply-updates",
                 "yes",
                 "--show-error-info",
@@ -59,6 +61,8 @@ public class UpdatesForRumbleBenchmark {
 
     protected static final RumbleRuntimeConfiguration createDeltaConfiguration = new RumbleRuntimeConfiguration(
             new String[] {
+                "--print-iterator-tree",
+                "yes",
                 "--output-format",
                 "delta",
                 "--show-error-info",
@@ -83,7 +87,7 @@ public class UpdatesForRumbleBenchmark {
         powersOf2.add(64);
         powersOf2.add(128);
 
-        // GH_Q1
+        ////// GH_Q1
         // RUMBLE
         // for (Integer power : powersOf2) {
         // benchmarkFiles.add(new FileTuple(
@@ -117,7 +121,7 @@ public class UpdatesForRumbleBenchmark {
         // ));
         // }
 
-        // GH_Q2
+        ////// GH_Q2
         // RUMBLE
         // for (Integer power : powersOf2) {
         // benchmarkFiles.add(new FileTuple(
@@ -153,7 +157,7 @@ public class UpdatesForRumbleBenchmark {
         // ));
         // }
 
-        // GH_Q3
+        ////// GH_Q3
         // RUMBLE
         // for (Integer power : powersOf2) {
         // benchmarkFiles.add(new FileTuple(
@@ -189,7 +193,7 @@ public class UpdatesForRumbleBenchmark {
         // ));
         // }
 
-        // NEW ORDER TRANSACTION
+        ////// NEW ORDER TRANSACTION
         // RUMBLE
         for (Integer power : powersOf2) {
             this.benchmarkFiles.add(
@@ -260,7 +264,7 @@ public class UpdatesForRumbleBenchmark {
         // true
         // ));
 
-        // PAYMENT TRANSACTION
+        ////// PAYMENT TRANSACTION
         // RUMBLE
         // for (Integer power : powersOf2) {
         // benchmarkFiles.add(new FileTuple(
@@ -295,7 +299,7 @@ public class UpdatesForRumbleBenchmark {
         // ));
         // }
 
-        // DELIVERY TRANSACTION
+        ////// DELIVERY TRANSACTION
         // RUMBLE
         // for (Integer power : powersOf2) {
         // benchmarkFiles.add(new FileTuple(
@@ -589,7 +593,7 @@ public class UpdatesForRumbleBenchmark {
             System.err.println("Deleted file: " + oldTable.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
-            Assertions.fail();
+            Assert.fail();
         }
     }
 

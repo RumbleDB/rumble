@@ -20,28 +20,24 @@
 
 package org.rumbledb.items;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionItemStringValueException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-
+import java.util.ArrayList;
+import java.util.List;
 
 public class ArrayItem implements Item {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final List<Item> arrayItems;
+    private List<Item> arrayItems;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -68,46 +64,67 @@ public class ArrayItem implements Item {
         this.collection = null;
     }
 
-    @Override
-    public Item copy(boolean mutable) {
-        List<Item> copiedItems = new ArrayList<>(this.arrayItems.size());
-        for (Item item : this.arrayItems) {
-            copiedItems.add(item.copy(mutable));
-        }
-        ArrayItem copy = new ArrayItem(copiedItems);
-        if (mutable) {
-            copy.setMutabilityLevel(0);
-        }
-        return copy;
-    }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        if (!otherItem.isArray()) {
+        Item o = (Item) otherItem;
+        if (!o.isArray()) {
             return false;
         }
-        if (getSize() != otherItem.getSize()) {
+        if (getSize() != o.getSize()) {
             return false;
         }
         for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(otherItem.getItemAt(i))) {
+            if (!getItemAt(i).equals(o.getItemAt(i))) {
                 return false;
             }
         }
         return true;
     }
 
-    // region arrays
+    public void append(Item other) {
+        this.arrayItems.add(other);
+    }
 
-    @Override
-    public boolean isArray() {
-        return true;
+
+    public List<Item> getItems() {
+        return this.arrayItems;
     }
 
     @Override
-    public boolean isArrayOfItems() {
+    public Item getItemAt(int i) {
+        if (i >= this.arrayItems.size() || i < 0) {
+            throw new ArrayIndexOutOfBoundsException(
+                    "Tried to access array index: " + (i + 1) + ", of array with length: " + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        return this.arrayItems.get(i);
+    }
+
+    @Override
+    public void putItem(Item value) {
+        this.arrayItems.add(value);
+    }
+
+    @Override
+    public void putItemAt(Item value, int i) {
+        this.arrayItems.add(i, value);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> values, int i) {
+        this.arrayItems.addAll(i, values);
+    }
+
+    @Override
+    public void removeItemAt(int i) {
+        this.arrayItems.remove(i);
+    }
+
+    @Override
+    public boolean isArray() {
         return true;
     }
 
@@ -117,111 +134,37 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public List<Item> getItemMembers() {
-        return this.arrayItems;
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.arrayItems);
+        output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        kryo.writeObject(output, this.pathIn);
+        kryo.writeObject(output, this.location);
+        kryo.writeObjectOrNull(output, this.collection, Collection.class);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
-    public List<List<Item>> getSequenceMembers() {
-        List<List<Item>> result = new ArrayList<>(this.arrayItems.size());
-        for (Item item : this.arrayItems) {
-            result.add(Collections.singletonList(item));
-        }
-        return result;
+    public void read(Kryo kryo, Input input) {
+        this.arrayItems = kryo.readObject(input, ArrayList.class);
+        this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = kryo.readObject(input, String.class);
+        this.location = kryo.readObject(input, String.class);
+        this.collection = kryo.readObjectOrNull(input, Collection.class);
     }
-
-    @Override
-    public Item getItemAt(int position) throws ArrayIndexOutOfBoundsException {
-        if (position >= this.arrayItems.size() || position < 0) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: "
-                        + (position + 1)
-                        + ", of array with length: "
-                        + this.arrayItems.size(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
-        }
-        return this.arrayItems.get(position);
-    }
-
-    @Override
-    public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
-        Item member = this.getItemAt(position);
-        return Collections.singletonList(member);
-    }
-
-    @Override
-    public void appendItem(Item item) {
-        this.arrayItems.add(item);
-    }
-
-    @Override
-    public void appendSequence(List<Item> sequence) throws OurBadException {
-        if (sequence.size() == 1) {
-            this.arrayItems.add(sequence.get(0));
-            return;
-        }
-        throw new OurBadException("ArrayItem only supports singleton member sequences.");
-    }
-
-    @Override
-    public void putItemAt(Item item, int index) {
-        this.arrayItems.add(index, item);
-    }
-
-    @Override
-    public void putSequenceAt(List<Item> sequence, int index) throws OurBadException {
-        if (sequence.size() == 1) {
-            this.arrayItems.set(index, sequence.get(0));
-            return;
-        }
-        throw new OurBadException("ArrayItem only supports singleton member sequences.");
-    }
-
-    @Override
-    public void putItemsAt(List<Item> items, int i) {
-        this.arrayItems.addAll(i, items);
-    }
-
-    @Override
-    public void putSequencesAt(List<List<Item>> sequences, int index) throws OurBadException {
-        List<Item> items = new ArrayList<>(sequences.size());
-        for (List<Item> seq : sequences) {
-            if (seq.size() != 1) {
-                throw new OurBadException("ArrayItem only supports singleton member sequences.");
-            }
-            items.add(seq.get(0));
-        }
-        this.arrayItems.addAll(index, items);
-    }
-
-    @Override
-    public void removeItemAt(int index) {
-        this.arrayItems.remove(index);
-    }
-
-    @Override
-    public void removeSequenceAt(int index) {
-        this.arrayItems.remove(index);
-    }
-
-    // endregion arrays
-
-
 
     public int hashCode() {
-        int result = 1;
+        int result = 0;
+        result += getSize();
         for (int i = 0; i < getSize(); ++i) {
-            result = 31 * result + getItemAt(i).hashCode();
+            result += getItemAt(i).hashCode();
         }
         return result;
     }
 
     @Override
     public ItemType getDynamicType() {
-        if (this.arrayItems.isEmpty()) {
-            return ItemTypeFactory.createEmptyArrayType();
-        }
         return BuiltinTypesCatalogue.arrayItem;
     }
 
@@ -329,24 +272,12 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        List<Item> result = new ArrayList<>();
-        for (Item member : this.arrayItems) {
-            result.addAll(member.atomizedValue());
-        }
-        return result;
-    }
-
-    @Override
-    public String getStringValue() {
-        throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+        return getItems();
     }
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItemMembers();
+        List<Item> arrayItems = this.getItems();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());

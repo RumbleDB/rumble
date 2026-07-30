@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="({ "name" : "test@test.com", "failed" : false, "email_verified" : true, "access-attempt" : "2016-11-28T16:00:47.203Z" }, { "name" : "test1@test.com", "failed" : false, "email_verified" : true, "access-attempt" : "2016-11-28T16:00:47.203Z" }, { "name" : "aaa@aaa.com", "failed" : false, "email_verified" : true, "access-attempt" : "2016-11-28T16:00:47.203Z" }, { "name" : "a@a.com", "failed" : false, "email_verified" : true, "access-attempt" : "2016-11-28T16:00:47.203Z" }, { "name" : "test9999@test.com", "failed" : false, "email_verified" : true, "access-attempt" : "2016-11-28T16:00:47.203Z" })" :)
-declare %an:assignable variable $res as item* := ();
+declare %assignable variable $res as item* := ();
 declare function local:validate-and-return($username as xs:string) {
     variable $user-doc := json-doc("../../../queries/user-names.json");
     variable $log := {};

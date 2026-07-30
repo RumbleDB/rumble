@@ -25,35 +25,36 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.Serializer;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
-public class RumbleRuntimeConfiguration implements Serializable {
+public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-
     private static final String SHORTCUT_PREFIX = "-";
     private static final String ARGUMENT_PREFIX = "--";
-    private final HashMap<String, String> arguments;
+    private HashMap<String, String> arguments;
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
     private int materializationCap;
     private String inputFormat;
+    private String outputFormat;
+    private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
@@ -77,8 +78,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
     private boolean parallelExecution;
     private boolean dataFrameExecution;
     private boolean nativeExecution;
-    private boolean tailCallOptimization;
-    private boolean debug;
     private boolean functionInlining;
     private boolean applyUpdates;
     private String queryLanguage;
@@ -92,7 +91,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
 
-    private SerializationParameters serializationParameters;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -106,6 +104,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
         this.shortcutMap = new HashMap<>();
         this.shortcutMap.put("q", "query");
         this.shortcutMap.put("o", "output-path");
+        this.shortcutMap.put("f", "output-format");
         this.shortcutMap.put("O", "overwrite");
         this.shortcutMap.put("c", "materialization-cap");
         this.shortcutMap.put("I", "context-item");
@@ -144,11 +143,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                if (
-                    i + 1 >= args.length
-                        || (!(args[i + 1].equals("-"))
-                            && (args[i + 1].startsWith(ARGUMENT_PREFIX) || args[i + 1].startsWith(SHORTCUT_PREFIX)))
-                ) {
+                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && args[i + 1].startsWith(ARGUMENT_PREFIX))) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
                 String argumentValue = args[i + 1];
@@ -158,23 +153,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
             }
             if (args[i].startsWith(SHORTCUT_PREFIX)) {
                 String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
-                // Handle -o:<option> <value> pattern (distinct from -o output-path) separately
-                // from the other shortcuts
-                if (argumentName.startsWith("o:") && argumentName.length() > 2) {
-                    String optionName = argumentName.substring(2); // Remove "o:" prefix
-                    if (
-                        i + 1 < args.length
-                            && !args[i + 1].startsWith(ARGUMENT_PREFIX)
-                            && !args[i + 1].startsWith(SHORTCUT_PREFIX)
-                    ) {
-                        String optionValue = args[i + 1];
-                        this.arguments.put("output:" + optionName, optionValue);
-                        ++i;
-                        continue;
-                    } else {
-                        throw new CliException("Missing value for serialization parameter: " + optionName + ".");
-                    }
-                }
                 if (!this.yesNoShortcuts.contains(argumentName)) {
                     if (
                         i + 1 >= args.length
@@ -258,7 +236,25 @@ public class RumbleRuntimeConfiguration implements Serializable {
      * @param newValue the allowed URI prefixes.
      */
     public void setAllowedURIPrefixes(List<String> newValue) {
-        this.allowedPrefixes = new ArrayList<>(newValue);
+        this.allowedPrefixes = newValue;
+    }
+
+    /**
+     * Returns the output format for writing the output of the query to the output path.
+     * 
+     * @return the output format.
+     */
+    public String getOutputFormat() {
+        return this.outputFormat;
+    }
+
+    /**
+     * Sets the output format for writing the output of the query to the output path.
+     * 
+     * @param newValue the output format.
+     */
+    public void setOutputFormat(String newValue) {
+        this.outputFormat = newValue;
     }
 
     /**
@@ -299,6 +295,26 @@ public class RumbleRuntimeConfiguration implements Serializable {
     }
 
     /**
+     * Returns the serialization options to write to the output path.
+     * 
+     * @return the serialization options.
+     */
+    public Map<String, String> getOutputFormatOptions() {
+        return this.outputFormatOptions;
+    }
+
+    /**
+     * Sets a serialization option to write to the output path.
+     * 
+     * @param key the serialization option key.
+     * @param value the serialization option value.
+     */
+    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
+        this.outputFormatOptions.put(key, value);
+        return this;
+    }
+
+    /**
      * Returns whether the return type of built-in functions is checked.
      * 
      * @return whether the return type of built-in functions is checked.
@@ -307,24 +323,17 @@ public class RumbleRuntimeConfiguration implements Serializable {
         return this.checkReturnTypeOfBuiltinFunctions;
     }
 
+    /**
+     * Set whether the return type of built-in functions is checked.
+     * 
+     * @param checkReturnTypeOfBuiltinFunctions whether the return type of built-in functions is checked.
+     */
+    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
+        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
+        return this;
+    }
+
     public void init() {
-        if (this.arguments.containsKey("default-language")) {
-            this.queryLanguage = this.arguments.get("default-language");
-        } else {
-            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future // TODO KEEP
-        }
-
-        Map<String, String> serializationOverrides = new HashMap<>();
-        for (Map.Entry<String, String> entry : this.arguments.entrySet()) {
-            String key = entry.getKey();
-            if (key.startsWith("output:")) {
-                // remove the output: prefix
-                serializationOverrides.put(key.substring(7), entry.getValue());
-            }
-        }
-        // this will throw an exception if the serialization parameters are invalid
-        this.serializationParameters = SerializationParameterBuilder.build(serializationOverrides, this.queryLanguage);
-
         if (this.arguments.containsKey("print-iterator-tree")) {
             this.printIteratorTree = this.arguments.get("print-iterator-tree").equals("yes");
         } else {
@@ -341,11 +350,14 @@ public class RumbleRuntimeConfiguration implements Serializable {
             this.laxJSONNullValidation = true;
         }
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
-            this.allowedPrefixes = new ArrayList<>(
-                    Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"))
-            );
+            this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
-            this.allowedPrefixes = new ArrayList<>();
+            this.allowedPrefixes = Arrays.asList();
+        }
+        if (this.arguments.containsKey("output-format")) {
+            this.outputFormat = this.arguments.get("output-format").toLowerCase();
+        } else {
+            this.outputFormat = "json";
         }
         if (this.arguments.containsKey("input-format")) {
             this.inputFormat = this.arguments.get("input-format").toLowerCase();
@@ -356,6 +368,14 @@ public class RumbleRuntimeConfiguration implements Serializable {
             this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
         } else {
             this.numberOfOutputPartitions = -1;
+        }
+        this.outputFormatOptions = new HashMap<>();
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("output-format-option:")) {
+                String key = s.substring(21);
+                String value = this.arguments.get(s);
+                this.outputFormatOptions.put(key, value);
+            }
         }
         if (this.arguments.containsKey("materialization-cap")) {
             this.materializationCap = Integer.parseInt(this.arguments.get("materialization-cap"));
@@ -489,18 +509,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
             this.functionInlining = true;
         }
 
-        if (this.arguments.containsKey("tail-call-optimization")) {
-            this.tailCallOptimization = this.arguments.get("tail-call-optimization").equals("yes");
-        } else {
-            this.tailCallOptimization = true;
-        }
-
-        if (this.arguments.containsKey("debug")) {
-            this.debug = this.arguments.get("debug").equals("yes");
-        } else {
-            this.debug = false;
-        }
-
         if (this.arguments.containsKey("apply-updates")) {
             this.applyUpdates = this.arguments.get("apply-updates").equals("yes");
         } else {
@@ -513,6 +521,12 @@ public class RumbleRuntimeConfiguration implements Serializable {
             ).equals("yes");
         } else {
             this.optimizeGeneralComparisonToValueComparison = true;
+        }
+
+        if (this.arguments.containsKey("default-language")) {
+            this.queryLanguage = this.arguments.get("default-language");
+        } else {
+            this.queryLanguage = "jsoniq10"; // default is JSONiq 1.0 for now, will be JSONiq 3.1 in future
         }
 
         if (this.arguments.containsKey("static-base-uri")) {
@@ -536,52 +550,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
         } else {
             this.optimizeParentPointers = true;
         }
-        if (this.arguments.containsKey("xml-version")) {
-            String xmlVersion = this.arguments.get("xml-version").trim();
-            try {
-                setXmlVersion(xmlVersion);
-            } catch (Exception e) {
-                CliException ex = new CliException(
-                        "Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ")."
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-        if (this.arguments.containsKey("default-formatting-calendar")) {
-            String defaultCalendar = this.arguments.get("default-formatting-calendar").trim();
-            try {
-                setDefaultFormattingCalendar(defaultCalendar);
-            } catch (Exception e) {
-                CliException ex = new CliException(
-                        "Invalid argument supplied for default-formatting-calendar: " + defaultCalendar
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-        if (this.arguments.containsKey("default-formatting-language")) {
-            String defaultLanguage = this.arguments.get("default-formatting-language").trim();
-            try {
-                setDefaultFormattingLanguage(defaultLanguage);
-            } catch (Exception e) {
-                CliException ex = new CliException(
-                        "Invalid argument supplied for default-formatting-language: " + defaultLanguage
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-    }
-
-    /**
-     * Set whether the return type of built-in functions is checked.
-     *
-     * @param checkReturnTypeOfBuiltinFunctions whether the return type of built-in functions is checked.
-     */
-    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
-        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
-        return this;
     }
 
     /**
@@ -1033,42 +1001,6 @@ public class RumbleRuntimeConfiguration implements Serializable {
     }
 
     /**
-     * Returns whether tail call optimization is enabled.
-     *
-     * @return true if tail call optimization is enabled, false otherwise.
-     */
-    public boolean tailCallOptimization() {
-        return this.tailCallOptimization;
-    }
-
-    /**
-     * Sets whether tail call optimization is enabled.
-     *
-     * @param b true if tail call optimization is enabled, false otherwise.
-     */
-    public void settailCallOptimization(boolean b) {
-        this.tailCallOptimization = b;
-    }
-
-    /**
-     * Returns whether debug output is enabled.
-     *
-     * @return true if debug output is enabled, false otherwise.
-     */
-    public boolean debug() {
-        return this.debug;
-    }
-
-    /**
-     * Sets whether debug output is enabled.
-     *
-     * @param b true if debug output is enabled, false otherwise.
-     */
-    public void setDebug(boolean b) {
-        this.debug = b;
-    }
-
-    /**
      * Returns whether the returned Pending Update List should be applied when executed on the command line.
      *
      * @return true if the Pending Update List should be applied, false otherwise.
@@ -1115,7 +1047,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
 
     /**
      * Sets the version of the query language to use.
-     * Possible values: jsoniq10, jsoniq40, jsoniq31, xquery30, xquery31.
+     * Possible values: jsoniq10, jsoniq31, xquery30, xquery31.
      *
      * @param version the version of the query language to use.
      */
@@ -1212,7 +1144,7 @@ public class RumbleRuntimeConfiguration implements Serializable {
      */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
+        StringBuffer sb = new StringBuffer();
         sb.append(
             "App name: "
                 + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")
@@ -1286,134 +1218,53 @@ public class RumbleRuntimeConfiguration implements Serializable {
         return sb.toString();
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.arguments);
+    }
 
-
-    public static final String DEFAULT_XML_VERSION = "1.1";
-
-    private String xmlVersion = DEFAULT_XML_VERSION;
-
-    /**
-     * Returns the configured XML version.
-     *
-     * <p>
-     * The default XML version is {@code "1.1"}.
-     * </p>
-     *
-     * @return the XML version, for example {@code "1.0"} or {@code "1.1"}
-     */
-    public String getXmlVersion() {
-        return this.xmlVersion;
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.arguments = kryo.readObject(input, HashMap.class);
     }
 
     /**
-     * Sets the XML version to use.
+     * Returns the serializer in use according to the output format specified.
      *
-     * @param version the XML version (e.g., "1.0" or "1.1")
+     * @return the serializer in use according to the output format specified.
      */
-    public void setXmlVersion(String version) {
-        if (version == null || !(version.equals("1.0") || version.equals("1.1"))) {
-            throw new IllegalArgumentException("Invalid xml-version");
+    public Serializer getSerializer() {
+        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
+        if (this.getOutputFormat().equals("tyson")) {
+            method = Serializer.Method.TYSON;
         }
-        this.xmlVersion = version;
-    }
-
-
-    private String defaultFormattingCalendar = FormattingCalendarModeSupport.DEFAULT;
-
-    /**
-     * Returns the default calendar used for formatting date and time values.
-     *
-     * <p>
-     * The default calendar is used by date/time formatting functions when no explicit
-     * calendar is supplied. The initial default is
-     * {@link FormattingCalendarModeSupport#DEFAULT}.
-     * </p>
-     *
-     * @return the default formatting calendar
-     */
-    public String getDefaultFormattingCalendar() {
-        return this.defaultFormattingCalendar;
-    }
-
-    /**
-     * Sets the default calendar used for formatting date and time values.
-     *
-     * <p>
-     * The calendar value is used by date/time formatting functions when no explicit
-     * calendar is supplied. Calendar data is resolved by the ICU formatting backend;
-     * valid but unsupported designators fall back at render time.
-     * </p>
-     *
-     * @param calendar the default formatting calendar; must not be {@code null}
-     * @throws NullPointerException if {@code calendar} is {@code null}
-     * @throws IllegalArgumentException if {@code calendar} is syntactically invalid
-     */
-    private void setDefaultFormattingCalendar(String calendar) {
-        Objects.requireNonNull(calendar, "calendar");
-
-        String normalized = org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport
-            .normalizeKnownCalendarMode(calendar);
-
-        if (!FormattingCalendarModeSupport.isValidFormattingCalendar(normalized)) {
-            throw new IllegalArgumentException("Unsupported default formatting calendar: " + calendar);
+        if (this.getOutputFormat().equals("json")) {
+            method = Serializer.Method.JSON;
         }
-
-        this.defaultFormattingCalendar = normalized;
-    }
-
-
-    private String defaultFormattingLanguage = FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE;
-
-    /**
-     * Returns the default language used for formatting date and time values.
-     *
-     * <p>
-     * The default language is used by date/time formatting functions when no explicit
-     * language is supplied. The initial default is
-     * {@link FormattingLanguageSupport#DEFAULT_FORMATTING_LANGUAGE}.
-     * </p>
-     *
-     * @return the default formatting language
-     */
-    public String getDefaultFormattingLanguage() {
-        return this.defaultFormattingLanguage;
-    }
-
-    /**
-     * Sets the default language used for formatting date and time values.
-     *
-     * <p>
-     * The value is a language code as defined by the type xs:language. This value is used by
-     * date/time formatting functions when no explicit language is supplied. The
-     * language must be accepted by {@link FormattingLanguageSupport}. Locale data is
-     * resolved by the ICU formatting backend.
-     * </p>
-     *
-     * @param language the default formatting language as an ISO 639-1 language code;
-     *        must not be {@code null}
-     * @throws NullPointerException if {@code language} is {@code null}
-     * @throws IllegalArgumentException if {@code language} is syntactically invalid
-     */
-    public void setDefaultFormattingLanguage(String language) {
-        Objects.requireNonNull(language, "language");
-
-        String normalized = org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport.normalizeLanguage(
-            language
+        if (this.getOutputFormat().equals("yaml")) {
+            method = Serializer.Method.YAML;
+        }
+        boolean indent = false;
+        Map<String, String> options = this.getOutputFormatOptions();
+        if (options.containsKey("indent")) {
+            if (options.get("indent").equals("yes")) {
+                indent = true;
+            }
+        }
+        String itemSeparator = "\n";
+        if (options.containsKey("item-separator")) {
+            itemSeparator = options.get("item-separator");
+        }
+        String encoding = "UTF-8";
+        if (options.containsKey("encoding")) {
+            itemSeparator = options.get("encoding");
+        }
+        return new Serializer(
+                encoding,
+                method,
+                indent,
+                itemSeparator
         );
-
-        if (!FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
-            throw new IllegalArgumentException("Unsupported default formatting language: " + language);
-        }
-
-        this.defaultFormattingLanguage = normalized;
-    }
-
-    /**
-     * Returns the SerializationParameters in use.
-     *
-     * @return the SerializationParameters in use.
-     */
-    public SerializationParameters getSerializationParameters() {
-        return this.serializationParameters;
     }
 }

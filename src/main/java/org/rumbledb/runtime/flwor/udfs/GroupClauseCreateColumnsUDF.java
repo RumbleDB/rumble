@@ -27,25 +27,18 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
-import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
     private final List<Name> groupingVariableNames;
-    private final List<SequenceType> groupingSequenceTypes;
 
     private final List<Object> results;
     private final ExceptionMetadata metadata;
@@ -63,19 +56,14 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final int dateTimeGroupIndex = 5;
 
     public GroupClauseCreateColumnsUDF(
-            List<GroupByClauseSparkIteratorExpression> groupingExpressions,
+            List<Name> groupingVariableNames,
             DynamicContext context,
             StructType schema,
             List<FlworDataFrameColumn> columns,
             ExceptionMetadata metadata
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
-        this.groupingVariableNames = new ArrayList<>();
-        this.groupingSequenceTypes = new ArrayList<>();
-        for (GroupByClauseSparkIteratorExpression expression : groupingExpressions) {
-            this.groupingVariableNames.add(expression.getVariableName());
-            this.groupingSequenceTypes.add(expression.getSequenceType());
-        }
+        this.groupingVariableNames = groupingVariableNames;
         this.results = new ArrayList<>();
         this.metadata = metadata;
     }
@@ -86,9 +74,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
         this.results.clear();
 
-        for (int i = 0; i < this.groupingVariableNames.size(); i++) {
-            Name groupingVariableName = this.groupingVariableNames.get(i);
-            SequenceType declaredType = this.groupingSequenceTypes.get(i);
+        for (Name groupingVariableName : this.groupingVariableNames) {
             List<Item> items = this.dataFrameContext.getContext()
                 .getVariableValues()
                 .getLocalVariableValue(
@@ -96,11 +82,14 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.metadata
                 );
 
-            List<Item> atomizedGroupingKey = atomizeGroupingKey(items);
+            if (items.size() > 1) {
+                throw new UnexpectedTypeException(
+                        "Can not group on variables with sequences of multiple items.",
+                        this.metadata
+                );
+            }
 
-            validateGroupingKeySequenceType(declaredType, atomizedGroupingKey);
-
-            if (atomizedGroupingKey.isEmpty()) {
+            if (items.isEmpty()) {
                 this.results.add(emptySequenceGroupIndex);
                 this.results.add(null);
                 this.results.add(null);
@@ -108,66 +97,11 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
                 continue;
             }
 
-            Item nextItem = atomizedGroupingKey.get(0);
+            Item nextItem = items.get(0);
             this.createColumnsForItem(nextItem);
         }
 
         return RowFactory.create(this.results.toArray());
-    }
-
-    private List<Item> atomizeGroupingKey(List<Item> items) {
-        List<Item> atomizedGroupingKey = new ArrayList<>();
-        for (Item item : items) {
-            try {
-                atomizedGroupingKey.addAll(item.atomizedValue());
-            } catch (CannotAtomizeException e) {
-                throw new UnexpectedTypeException(
-                        "Group by variable must atomize to a supported atomic value.",
-                        this.metadata
-                );
-            }
-        }
-        if (atomizedGroupingKey.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "Keys in a group-by clause must atomize to at most one item.",
-                    this.metadata
-            );
-        }
-        return atomizedGroupingKey;
-    }
-
-    private void validateGroupingKeySequenceType(SequenceType declaredType, List<Item> groupingKey) {
-        if (declaredType == null) {
-            return;
-        }
-        if (!declaredType.isResolved()) {
-            declaredType.resolve(this.dataFrameContext.getContext(), this.metadata);
-        }
-
-        boolean validCardinality = switch (declaredType.getArity()) {
-            case Zero -> groupingKey.isEmpty();
-            case One -> groupingKey.size() == 1;
-            case OneOrZero -> groupingKey.size() <= 1;
-            case OneOrMore -> !groupingKey.isEmpty();
-            case ZeroOrMore -> true;
-        };
-        if (!validCardinality) {
-            throw new UnexpectedTypeException(
-                    "The grouping key has cardinality "
-                        + groupingKey.size()
-                        + ", but the expected type is "
-                        + declaredType,
-                    this.metadata
-            );
-        }
-        for (Item item : groupingKey) {
-            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
-                throw new UnexpectedTypeException(
-                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
-                        this.metadata
-                );
-            }
-        }
     }
 
     private void createColumnsForItem(Item nextItem) {
@@ -176,7 +110,6 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(null);
             this.results.add(null);
             this.results.add(null);
-            return;
         } else if (nextItem.isBoolean()) {
             if (nextItem.getBooleanValue()) {
                 this.results.add(booleanTrueGroupIndex);
@@ -186,53 +119,46 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(null);
             this.results.add(null);
             this.results.add(null);
-            return;
         } else if (nextItem.isString() || nextItem.isHexBinary() || nextItem.isBase64Binary()) {
             this.results.add(stringGroupIndex);
             this.results.add(nextItem.getStringValue());
             this.results.add(null);
             this.results.add(null);
-            return;
         } else if (nextItem.isInteger()) {
             this.results.add(doubleGroupIndex);
             this.results.add(null);
             this.results.add(nextItem.castToDoubleValue());
             this.results.add(null);
-            return;
         } else if (nextItem.isDecimal()) {
             this.results.add(doubleGroupIndex);
             this.results.add(null);
             this.results.add(nextItem.castToDoubleValue());
             this.results.add(null);
-            return;
         } else if (nextItem.isDouble()) {
             this.results.add(doubleGroupIndex);
             this.results.add(null);
             this.results.add(nextItem.getDoubleValue());
             this.results.add(null);
-            return;
         } else if (nextItem.isFloat()) {
             this.results.add(doubleGroupIndex);
             this.results.add(null);
             this.results.add(nextItem.castToDoubleValue());
             this.results.add(null);
-            return;
         } else if (nextItem.isDuration()) {
             this.results.add(durationGroupIndex);
             this.results.add(null);
             this.results.add(null);
             this.results.add(nextItem.getEpochMillis());
-            return;
         } else if (nextItem.hasDateTime()) {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);
             this.results.add(null);
             this.results.add(nextItem.getEpochMillis());
-            return;
+        } else {
+            throw new UnexpectedTypeException(
+                    "Group by variable can not contain arrays or objects.",
+                    this.metadata
+            );
         }
-        throw new UnexpectedTypeException(
-                "Group by variable must atomize to a supported atomic value.",
-                this.metadata
-        );
     }
 }

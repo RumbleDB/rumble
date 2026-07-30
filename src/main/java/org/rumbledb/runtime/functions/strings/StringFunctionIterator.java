@@ -24,17 +24,14 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StringFunctionIterator(
@@ -44,30 +41,21 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         super(arguments, staticContext);
     }
 
-    private Item stringResultFromItem(Item item) {
-        try {
-            return ItemFactory.getInstance().createStringItem(item.getStringValue());
-        } catch (FunctionItemStringValueException e) {
-            throw new FunctionItemStringValueException(e.getMessage(), getMetadata());
-        }
-    }
-
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 0) {
+        if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            Item contextItem = items.get(0);
-            return stringResultFromItem(contextItem);
+            return ItemFactory.getInstance().createStringItem(items.get(0).getStringValue());
         }
 
-        Item item = this.getChild(0)
+        Item item = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
         if (item == null) {
             return null;
         }
 
-        return stringResultFromItem(item);
+        return ItemFactory.getInstance().createStringItem(item.getStringValue());
     }
 
 }

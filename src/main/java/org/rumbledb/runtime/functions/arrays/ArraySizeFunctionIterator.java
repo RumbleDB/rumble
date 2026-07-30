@@ -30,13 +30,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.List;
 
 public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ArraySizeFunctionIterator(
@@ -48,7 +46,7 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item array = this.getChild(0).materializeFirstItemOrNull(context);
+        Item array = this.children.get(0).materializeFirstItemOrNull(context);
         if (array == null) {
             return null;
         }
@@ -57,7 +55,7 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             return new NativeClauseContext(
                     nativeClauseContext,

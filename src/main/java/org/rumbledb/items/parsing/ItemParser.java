@@ -39,12 +39,10 @@ import java.time.ZoneId;
 import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -58,6 +56,7 @@ import org.w3c.dom.NodeList;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -65,14 +64,13 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Collections;
-import java.util.Set;
 
-public class ItemParser {
+public class ItemParser implements Serializable {
+
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * Parses a JSON string to an item.
@@ -81,191 +79,66 @@ public class ItemParser {
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
-    @Deprecated
-    public static Item getItemFromString(String string, ExceptionMetadata metadata, boolean mutable) {
+    public static Item getItemFromString(String string, ExceptionMetadata metadata) {
         string = "[ " + string + " ]";
         JsonReader object = new JsonReader(new StringReader(string));
-        Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata, mutable);
+        Item arrayItem = ItemParser.getItemFromObject(object, metadata);
         if (arrayItem.getSize() == 0) {
             throw new ParsingException("Empty string to parse as JSON!", metadata);
         }
         return arrayItem.getItemAt(0);
     }
 
-    public static Item getItemFromJSONString(
-            String string,
-            JSONParsingOptions options,
-            String xmlVersion,
-            boolean isJSONiq10,
-            ExceptionMetadata metadata
-    ) {
-        return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
-    }
-
-    /**
-     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
-     */
-    @Deprecated
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
-    }
-
-    /**
-     * Parses a JSON object from the given reader.
-     *
-     * @param object the JSON reader.
-     * @param metadata exception metadata if an error is thrown.
-     * @return the parsed item.
-     */
-    public static Item getItemFromObject(
-            JsonReader object,
-            boolean isJSONiq10,
-            String numberFormat,
-            ExceptionMetadata metadata,
-            boolean mutable
-    ) {
-        try {
-            Item result = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
-            object.peek();
-            return result;
-        } catch (Exception e) {
-            InvalidJSONException ex = new InvalidJSONException("Invalid JSON object!", metadata);
-            ex.initCause(e);
-            throw ex;
-        }
-    }
-
-    /**
-     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata, boolean)}
-     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
-     */
-    @Deprecated
-    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
-        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
-    }
-
     /**
      * Parses a JSON string, accessible via a reader, to an item.
-     *
+     * 
      * @param object the JSON reader.
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
-     *
      */
-    public static Item parseOptionlessJSON(
-            JsonReader object,
-            boolean isJSONiq10,
-            String numberFormat,
-            ExceptionMetadata metadata,
-            boolean mutable
-    ) {
+    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
             }
-
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
-                return getItemFromJSONNumber(number, numberFormat);
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
             }
-
             if (object.peek() == JsonToken.BOOLEAN) {
                 return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
             }
-
             if (object.peek() == JsonToken.BEGIN_ARRAY) {
                 List<Item> values = new ArrayList<>();
-                boolean containsJavaNull = false;
-
                 object.beginArray();
                 while (object.hasNext()) {
-                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
-
-                    if (value == null) {
-                        containsJavaNull = true;
-                    }
-
-                    values.add(value);
+                    values.add(getItemFromObject(object, metadata));
                 }
                 object.endArray();
-
-                if (!containsJavaNull) {
-                    return ItemFactory.getInstance().createArrayItem(values, mutable);
-                }
-
-                List<List<Item>> sequenceMembers = new ArrayList<>();
-
-                for (Item value : values) {
-                    if (value == null) {
-                        sequenceMembers.add(Collections.emptyList());
-                    } else {
-                        sequenceMembers.add(Collections.singletonList(value));
-                    }
-                }
-
-                return ItemFactory.getInstance().createSequenceArrayItem(sequenceMembers, mutable);
+                return ItemFactory.getInstance().createArrayItem(values, false);
             }
-
             if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                Set<String> seenKeys = new HashSet<>();
-                boolean containsJavaNull = false;
-
                 object.beginObject();
                 while (object.hasNext()) {
-                    String key = object.nextName();
-
-                    if (seenKeys.contains(key)) {
-                        object.skipValue(); // spec requires default use-first policy
-                        continue;
-                    }
-
-                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
-
-                    if (value == null) {
-                        containsJavaNull = true;
-                    }
-
-                    seenKeys.add(key);
-                    keys.add(key);
-                    values.add(value);
+                    keys.add(object.nextName());
+                    values.add(getItemFromObject(object, metadata));
                 }
                 object.endObject();
-
-                if (!containsJavaNull) {
-                    return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
-                }
-
-                List<Item> mapKeys = new ArrayList<>();
-                List<List<Item>> mapValues = new ArrayList<>();
-
-                for (String key : keys) {
-                    mapKeys.add(ItemFactory.getInstance().createStringItem(key));
-                }
-
-                for (Item value : values) {
-                    if (value == null) {
-                        mapValues.add(Collections.emptyList());
-                    } else {
-                        mapValues.add(Collections.singletonList(value));
-                    }
-                }
-
-                return ItemFactory.getInstance().createMapItem(mapKeys, mapValues, metadata, false);
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, metadata, false);
             }
-
             if (object.peek() == JsonToken.NULL) {
                 object.nextNull();
-
-                if (isJSONiq10) {
-                    return ItemFactory.getInstance().createNullItem();
-                }
-
-                return null;
+                return ItemFactory.getInstance().createNullItem();
             }
-
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
             RumbleException r = new ParsingException(
@@ -275,20 +148,6 @@ public class ItemParser {
             r.initCause(e);
             throw r;
         }
-    }
-
-    /**
-     * Returns the appropriate numeric Item for a JSON number.
-     * Since XQuery 4.0 introduces the `number-format` option for `json-doc` and `parse-json`,
-     * the returned Item type depends on the resolved number format.
-     *
-     * @param number the JSON number as a string
-     * @param numberFormat the resolved number-format option from the JSON parsing options
-     * @return a DoubleItem or DecimalItem if explicitly requested; if the format is adaptive,
-     *         the method returns the most appropriate numeric Item based on the input value
-     */
-    static Item getItemFromJSONNumber(String number, String numberFormat) {
-        return JSONLiteralParsingUtils.getItemFromJSONNumber(number, numberFormat);
     }
 
     /**
@@ -488,6 +347,17 @@ public class ItemParser {
             return atomicItem;
         }
 
+        // Non-atomic case
+        Map<String, FieldDescriptor> content = null;
+        if (itemType != null && itemType.isObjectItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
+            content = itemType.getObjectContentFacet();
+            if (content == null) {
+                throw new OurBadException(
+                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
+                );
+            }
+        }
+
         // Array case
         int mutabilityLevel = -1;
         long topLevelID = -1;
@@ -522,12 +392,8 @@ public class ItemParser {
                 continue;
             }
 
-            if (
-                itemType != null
-                    && itemType.isObjectItemType()
-                    && (itemType.getObjectKeysFacet().size() != 0 || itemType.getClosedFacet())
-            ) {
-                FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
+            if (content != null) {
+                FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor != null) {
                     fieldItemType = descriptor.getType();
                     if (fieldItemType == null) {
@@ -592,6 +458,9 @@ public class ItemParser {
             ExceptionMetadata metadata,
             ItemType itemType
     ) {
+        if (itemType != null && itemType.getName() == null) {
+            itemType = itemType.getBaseType();
+        }
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
@@ -602,11 +471,7 @@ public class ItemParser {
                 s = (String) o;
             }
             Item item = ItemFactory.getInstance().createStringItem(s);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.stringItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.stringItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -619,11 +484,7 @@ public class ItemParser {
                 b = (Boolean) o;
             }
             Item item = ItemFactory.getInstance().createBooleanItem(b);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.booleanItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -636,11 +497,7 @@ public class ItemParser {
                 value = (Double) o;
             }
             Item item = ItemFactory.getInstance().createDoubleItem(value);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.doubleItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -653,11 +510,7 @@ public class ItemParser {
                 value = (Integer) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.intItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.intItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -670,16 +523,12 @@ public class ItemParser {
                 value = (Float) o;
             }
             Item item = ItemFactory.getInstance().createFloatItem(value);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.floatItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.floatItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType instanceof DecimalType decimalType && decimalType.scale() == 0) {
+        } else if (fieldType instanceof DecimalType && ((DecimalType) fieldType).scale() == 0) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
@@ -688,11 +537,7 @@ public class ItemParser {
             }
             BigInteger integerValue = value.toBigIntegerExact();
             Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.integerItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.integerItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -705,11 +550,7 @@ public class ItemParser {
                 value = (BigDecimal) o;
             }
             Item item = ItemFactory.getInstance().createDecimalItem(value);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.decimalItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -722,11 +563,7 @@ public class ItemParser {
                 value = ((Long) o).longValue();
             }
             Item item = ItemFactory.getInstance().createLongItem(value);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.longItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -741,9 +578,6 @@ public class ItemParser {
                 value = (Byte) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (itemType == null || itemType.getName() == null) {
-                return item;
-            }
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
@@ -753,9 +587,6 @@ public class ItemParser {
                 value = (Short) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (itemType == null || itemType.getName() == null) {
-                return item;
-            }
             return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
@@ -767,11 +598,7 @@ public class ItemParser {
             Instant instant = value.toInstant();
             OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -786,11 +613,7 @@ public class ItemParser {
             long instant = value.getTime();
             OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.dateItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -803,11 +626,7 @@ public class ItemParser {
                 value = (byte[]) o;
             }
             Item item = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -820,16 +639,13 @@ public class ItemParser {
                 value = (Row) o;
             }
             Item item = getItemFromRow(value, metadata, itemType);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.objectItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType instanceof ArrayType arrayType) {
+        } else if (fieldType instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             ItemType memberType = null;
             if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
@@ -843,8 +659,8 @@ public class ItemParser {
                 }
             } else {
                 Iterator<Object> iterator = null;
-                if (o instanceof scala.collection.mutable.ArraySeq<?> arraySeq) {
-                    iterator = ((scala.collection.mutable.ArraySeq<Object>) arraySeq).iterator();
+                if (o instanceof scala.collection.mutable.ArraySeq) {
+                    iterator = ((scala.collection.mutable.ArraySeq<Object>) o).iterator();
                 } else {
                     iterator = ((ArraySeq<Object>) o).iterator();
                 }
@@ -854,11 +670,7 @@ public class ItemParser {
                 }
             }
             Item item = ItemFactory.getInstance().createArrayItem(members, false);
-            if (
-                itemType == null
-                    || itemType.equals(BuiltinTypesCatalogue.arrayItem)
-                    || itemType.getName() == null
-            ) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -870,24 +682,22 @@ public class ItemParser {
             } else {
                 vector = (Vector) o;
             }
-            if (vector instanceof DenseVector denseVector) {
+            if (vector instanceof DenseVector) {
                 // a dense vector is mapped to a rumble array
+                DenseVector denseVector = (DenseVector) vector;
                 List<Item> members = new ArrayList<>(vector.size());
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
                 Item item = ItemFactory.getInstance().createArrayItem(members, false);
-                if (
-                    itemType == null
-                        || itemType.equals(BuiltinTypesCatalogue.arrayItem)
-                        || itemType.getName() == null
-                ) {
+                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
                 }
-            } else if (vector instanceof SparseVector sparseVector) {
+            } else if (vector instanceof SparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
+                SparseVector sparseVector = (SparseVector) vector;
                 List<String> objectKeyList = new ArrayList<>();
                 List<Item> objectValueList = new ArrayList<>();
                 int[] vectorIndices = sparseVector.indices();
@@ -897,11 +707,7 @@ public class ItemParser {
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
                 Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
-                if (
-                    itemType == null
-                        || itemType.equals(BuiltinTypesCatalogue.objectItem)
-                        || itemType.getName() == null
-                ) {
+                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -924,10 +730,6 @@ public class ItemParser {
     public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
         if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
             return getTextNodeItem(currentNode, path);
-        } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
-            return getCommentNodeItem(currentNode, path);
-        } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
-            return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
             return getDocumentNodeItem(currentNode, path, removeParentPointers);
         }
@@ -945,9 +747,9 @@ public class ItemParser {
 
     private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers);
-        ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
+        List<Item> attributes = getAttributes(currentNode);
         Item elementItem = ItemFactory.getInstance()
-            .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
+            .createXmlElementNode(currentNode, children, attributes);
         if (!removeParentPointers)
             addParentToChildrenAndAttributes(elementItem);
         elementItem.setXmlDocumentPosition(path, 0);
@@ -967,10 +769,6 @@ public class ItemParser {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers));
-            } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
-                children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
-            } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
-                children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if (
                 (childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
                     && !hasWhitespaceText(childNode)
@@ -981,48 +779,15 @@ public class ItemParser {
         return children;
     }
 
-    private static ParsedDomAttributes getAttributesAndNamespaces(Node currentNode) {
+    private static List<Item> getAttributes(Node currentNode) {
         List<Item> attributes = new ArrayList<>();
-        Map<String, String> namespaceBindings = new LinkedHashMap<>();
         NamedNodeMap attributesMap = currentNode.getAttributes();
 
         for (int i = 0; i < attributesMap.getLength(); ++i) {
             Node attribute = attributesMap.item(i);
-            String namespaceUri = attribute.getNamespaceURI();
-            String nodeName = attribute.getNodeName();
-            String localName = attribute.getLocalName();
-
-            boolean isNamespaceDeclaration =
-                NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
-                    || "xmlns".equals(nodeName)
-                    || (nodeName != null && nodeName.startsWith("xmlns:"));
-            if (isNamespaceDeclaration) {
-                String prefix = "";
-                if (!"xmlns".equals(nodeName)) {
-                    if (NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri) && localName != null) {
-                        prefix = localName;
-                    } else if (nodeName != null && nodeName.startsWith("xmlns:")) {
-                        prefix = nodeName.substring("xmlns:".length());
-                    }
-                }
-                String uri = attribute.getNodeValue();
-                NamespaceBindingUtils.validateParsedNamespaceBinding(prefix, uri);
-                namespaceBindings.put(prefix, uri);
-                continue;
-            }
             attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
         }
-        return new ParsedDomAttributes(attributes, namespaceBindings);
-    }
-
-    private static class ParsedDomAttributes {
-        final List<Item> attributes;
-        final Map<String, String> namespaces;
-
-        ParsedDomAttributes(List<Item> attributes, Map<String, String> namespaces) {
-            this.attributes = attributes;
-            this.namespaces = namespaces;
-        }
+        return attributes;
     }
 
     private static void addParentToChildrenAndAttributes(Item nodeItem) {
@@ -1033,17 +798,5 @@ public class ItemParser {
         Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
         textItem.setXmlDocumentPosition(path, 0);
         return textItem;
-    }
-
-    private static Item getCommentNodeItem(Node currentNode, String path) {
-        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(currentNode);
-        commentItem.setXmlDocumentPosition(path, 0);
-        return commentItem;
-    }
-
-    private static Item getProcessingInstructionNodeItem(Node currentNode, String path) {
-        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
-        processingInstructionItem.setXmlDocumentPosition(path, 0);
-        return processingInstructionItem;
     }
 }

@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class BooleanLiteralExpression extends Expression {
 
-    private final boolean value;
+    private boolean value;
 
     public BooleanLiteralExpression(boolean value, ExceptionMetadata metadata) {
         super(metadata);
@@ -52,8 +52,7 @@ public class BooleanLiteralExpression extends Expression {
         return new ArrayList<>();
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -69,7 +68,7 @@ public class BooleanLiteralExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         if (this.value)
             sb.append("true\n");

@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.misc;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -47,10 +46,9 @@ import sparksoniq.spark.SparkSessionManager;
 public class RangeOperationIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
     private long left;
     private long right;
     private long index;
@@ -110,12 +108,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         if (left == null || right == null) {
             return false;
         }
-        if (left.isUntypedAtomic()) {
-            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
-        }
-        if (right.isUntypedAtomic()) {
-            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
-        }
         if (
             !(left.isInteger())
                 || !(right.isInteger())
@@ -158,7 +150,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         return null;
     }
 
-    @Override
     protected boolean implementsDataFrames() {
         return true;
     }
@@ -171,7 +162,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
                     BuiltinTypesCatalogue.item
             );
         }
-        return createLongInterval(this.left, this.right, this.getRuntimeStaticContext());
+        return createLongInterval(this.left, this.right);
     }
 
     /**
@@ -181,7 +172,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
      * @param right the right bound (inclusive).
      * @return
      */
-    public static JSoundDataFrame createLongInterval(long left, long right, RuntimeStaticContext staticContext) {
+    public static JSoundDataFrame createLongInterval(long left, long right) {
         List<Long> list = new ArrayList<>();
         for (long i = left; i <= right; i += PARTITION_SIZE) {
             list.add(i);
@@ -192,11 +183,15 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         rdd = rdd.flatMap(
             i -> LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator()
         );
-        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
+        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem);
     }
 
     @Override
     protected void closeLocal() {
+    }
+
+    @Override
+    protected void resetLocal() {
     }
 
     @Override

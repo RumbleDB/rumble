@@ -25,16 +25,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-
-import java.io.Serial;
 
 public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final FunctionIdentifier functionIdentifier;
+    private FunctionIdentifier functionIdentifier;
 
     public NamedFunctionRefRuntimeIterator(
             FunctionIdentifier functionIdentifier,
@@ -46,19 +44,20 @@ public class NamedFunctionRefRuntimeIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item resolved = NamedFunctionLookup.lookupOrNull(
-            this.functionIdentifier,
-            dynamicContext,
-            getConfiguration(),
-            getMetadata()
-        );
-        if (resolved != null) {
-            return resolved;
+        if (
+            !dynamicContext.getNamedFunctions()
+                .checkUserDefinedFunctionExists(this.functionIdentifier)
+        ) {
+            throw new UnknownFunctionCallException(
+                    this.functionIdentifier.getName(),
+                    this.functionIdentifier.getArity(),
+                    getMetadata()
+            );
         }
-        throw new UnknownFunctionCallException(
-                this.functionIdentifier.getName(),
-                this.functionIdentifier.getArity(),
-                getMetadata()
-        );
+        FunctionItem function = dynamicContext.getNamedFunctions()
+            .getUserDefinedFunction(this.functionIdentifier);
+        FunctionItem result = ((FunctionItem) function).deepCopy();
+        result.populateClosureFromDynamicContext(dynamicContext, getMetadata());
+        return result;
     }
 }

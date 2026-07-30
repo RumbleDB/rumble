@@ -21,8 +21,6 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
-
-import java.io.Serial;
 import java.time.Duration;
 import java.time.OffsetTime;
 import java.time.Period;
@@ -40,7 +38,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -49,7 +46,6 @@ import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -57,7 +53,6 @@ import java.util.TreeMap;
 public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private transient double currentMinDouble;
@@ -73,7 +68,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private transient Duration currentMinDayTimeDuration;
     private transient Period currentMinYearMonthDuration;
     private transient OffsetTime currentMinTime;
-    private transient Item currentMinBinary;
     private transient byte activeType = 0;
     private transient ItemType returnType;
     private transient Item result;
@@ -85,7 +79,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.getChild(0);
+        this.iterator = this.children.get(0);
         this.comparator = new ItemComparator(
                 true,
                 new InvalidArgumentTypeException(
@@ -97,8 +91,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 2) {
-            String collation = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
@@ -121,7 +115,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         this.currentMinDayTimeDuration = null;
         this.currentMinYearMonthDuration = null;
         this.currentMinTime = null;
-        this.currentMinBinary = null;
         this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
@@ -131,9 +124,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
                     return ItemFactory.getInstance().createNullItem();
-                }
-                if (candidateItem.isUntypedAtomic()) {
-                    candidateItem = ItemFactory.getInstance().createDoubleItem(candidateItem.castToDoubleValue());
                 }
                 candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
@@ -183,12 +173,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             if (candidateItem.hasTimeZone()) {
                                 this.hasTimeZone = true;
                             }
-                        } else if (candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
-                            this.activeType = 13;
-                            this.currentMinBinary = candidateItem;
-                        } else if (candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
-                            this.activeType = 14;
-                            this.currentMinBinary = candidateItem;
                         } else {
                             throw new OurBadException("Inconsistent state in state iteration");
                         }
@@ -327,17 +311,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.activeType = 6;
                             this.returnType = BuiltinTypesCatalogue.stringItem;
                             this.currentMinString = this.currentMinURI;
-                            if (
-                                CollationSupport.compareByCodePoint(
-                                    candidateItem.getStringValue(),
-                                    this.currentMinURI
-                                ) < 0
-                            ) {
+                            if (candidateItem.getStringValue().compareTo(this.currentMinURI) < 0) {
                                 this.currentMinString = candidateItem.getStringValue();
                             }
-                        } else if (
-                            CollationSupport.compareByCodePoint(candidateItem.getStringValue(), this.currentMinURI) < 0
-                        ) {
+                        } else if (candidateItem.getStringValue().compareTo(this.currentMinURI) < 0) {
                             this.currentMinURI = candidateItem.getStringValue();
 
                         }
@@ -349,12 +326,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                                     getMetadata()
                             );
                         }
-                        if (
-                            CollationSupport.compareByCodePoint(
-                                candidateItem.getStringValue(),
-                                this.currentMinString
-                            ) < 0
-                        ) {
+                        if (candidateItem.getStringValue().compareTo(this.currentMinString) < 0) {
                             this.currentMinString = candidateItem.getStringValue();
                             this.returnType = candidateType;
                         }
@@ -432,32 +404,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
-                    case 13:
-                        if (!candidateType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
-                            throw new InvalidArgumentTypeException(
-                                    "Cannot compare " + this.returnType + " with " + candidateType,
-                                    getMetadata()
-                            );
-                        }
-                        if (
-                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMinBinary.getBinaryValue()) < 0
-                        ) {
-                            this.currentMinBinary = candidateItem;
-                        }
-                        break;
-                    case 14:
-                        if (!candidateType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
-                            throw new InvalidArgumentTypeException(
-                                    "Cannot compare " + this.returnType + " with " + candidateType,
-                                    getMetadata()
-                            );
-                        }
-                        if (
-                            Arrays.compare(candidateItem.getBinaryValue(), this.currentMinBinary.getBinaryValue()) < 0
-                        ) {
-                            this.currentMinBinary = candidateItem;
-                        }
-                        break;
                     default:
                         throw new OurBadException("Inconsistent state in state iteration");
                 }
@@ -509,14 +455,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance()
                         .createTimeItem(this.currentMinTime, this.hasTimeZone);
                     break;
-                case 13:
-                case 14:
-                    itemResult = this.currentMinBinary;
-                    break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
             }
-            return CastIterator.castItemToType(itemResult, this.returnType, getMetadata(), this.staticContext);
+            return CastIterator.castItemToType(itemResult, this.returnType, getMetadata());
 
         }
 
@@ -546,9 +488,9 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.result;
     }
 
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.MIN);
@@ -560,10 +502,10 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.getChildren().size() > 1) {
+        if (this.children.size() > 1) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

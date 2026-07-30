@@ -14,13 +14,11 @@ import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.Arrays;
 import java.util.List;
 
 public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator contentIterator;
 
@@ -28,8 +26,9 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
             RuntimeIterator contentIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(contentIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(Arrays.asList(contentIterator), staticContext);
         this.contentIterator = contentIterator;
+        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {
@@ -48,6 +47,11 @@ public class DeleteSearchFromCollectionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+
+    }
+
+    @Override
+    protected void resetLocal() {
 
     }
 

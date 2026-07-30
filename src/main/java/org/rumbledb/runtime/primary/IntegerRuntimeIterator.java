@@ -28,14 +28,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-import java.io.Serial;
-
 public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Item item;
+    private Item item;
 
     public IntegerRuntimeIterator(
             String lexicalValue,
@@ -54,8 +51,8 @@ public class IntegerRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         return new NativeClauseContext(
                 nativeClauseContext,
-                "" + this.item.getIntegerValue(),
-                SequenceType.createSequenceType("integer")
+                "" + this.item.getIntValue(),
+                SequenceType.INTEGER
         );
     }
 }

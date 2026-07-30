@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 /**
@@ -46,22 +45,16 @@ import java.util.List;
  * returned by Item.nilled().
  *
  * Function signature (Functions and Operators 3.1, {@code fn:nilled}):
- * 
- * <ul>
- * <li>fn:nilled($arg as node()?) as xs:boolean?</li>
- * </ul>
+ * - fn:nilled($arg as node()?) as xs:boolean?
  *
  * Rules:
- * <ul>
- * <li>If the argument is supplied and is the empty sequence, the function returns the empty sequence.</li>
- * <li>Otherwise, the function returns dm:nilled($arg).</li>
- * </ul>
+ * - If the argument is supplied and is the empty sequence, the function returns the empty sequence.
+ * - Otherwise, the function returns dm:nilled($arg).
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-nilled">XPath and XQuery Functions and
  *      Operators 3.1: fn:nilled</a>
  */
 public class NilledFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private List<Item> resultItems;
@@ -122,14 +115,14 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
      * If a parameter is provided, uses the first parameter.
      */
     private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
+        if (this.children.isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
 

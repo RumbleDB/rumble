@@ -29,7 +29,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 /**
@@ -44,30 +43,24 @@ import java.util.List;
  * sequence if the node does not have a name."
  *
  * Function signatures (Functions and Operators 3.1, {@code fn:node-name}):
- * 
- * <ul>
- * <li>fn:node-name() as xs:QName?</li>
- * <li>fn:node-name($arg as node()?) as xs:QName?</li>
- * </ul>
+ * - fn:node-name() as xs:QName?
+ * - fn:node-name($arg as node()?) as xs:QName?
  *
  * Rules:
- * 
- * <ul>
- * <li>"If the argument is omitted, it defaults to the context item."</li>
- * <li>"If the argument is supplied and is the empty sequence, the function returns the empty sequence."</li>
- * <li>"Otherwise, the function returns the result of applying the dm:node-name accessor to the node
+ * - "If the argument is omitted, it defaults to the context item."
+ * - "If the argument is supplied and is the empty sequence, the function returns the empty sequence."
+ * - "Otherwise, the function returns the result of applying the dm:node-name accessor to the node
  * identified by the argument. If the dm:node-name accessor returns the empty sequence, then the
- * function returns the empty sequence."</li>
- * </ul>
- * 
- * The optional {@code xs:QName} result wraps the expanded {@link Name} from {@link Item#nodeName()} in a
- * {@link org.rumbledb.items.QNameItem}; otherwise the function returns the empty sequence.
+ * function returns the empty sequence."
+ *
+ * In this implementation, the optional xs:QName result is represented via the existing Item.nodeName()
+ * accessor defined on Item and implemented by XML node item classes. A non-null, non-empty lexical
+ * QName is exposed as a string item, and the empty sequence is used when the node has no name.
  *
  * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-node-name">XPath and XQuery Functions and
  *      Operators 3.1: fn:node-name</a>
  */
 public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item resultItem;
@@ -102,15 +95,16 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
         //
         // Here we use the generic XDM 3.1 node-name accessor defined on Item and implemented
         // by XML node item classes (see Item.nodeName()).
-        Name nodeName = node.nodeName();
+        String nodeName = node.nodeName();
 
         // Spec: "If the dm:node-name accessor returns the empty sequence, then the function returns the empty
         // sequence."
-        if (nodeName == null) {
+        if (nodeName == null || nodeName.isEmpty()) {
             this.resultItem = null;
             this.hasNext = false;
         } else {
-            this.resultItem = ItemFactory.getInstance().createQNameItem(nodeName);
+            // For named nodes, we expose the lexical QName as a string item.
+            this.resultItem = ItemFactory.getInstance().createStringItem(nodeName);
             this.hasNext = true;
         }
     }
@@ -136,14 +130,14 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
      * Spec: "If the argument is omitted, it defaults to the context item."
      */
     private Item getContextNode() {
-        if (this.getChildren().isEmpty()) {
+        if (this.children.isEmpty()) {
             // No argument provided, use context item
             return this.currentDynamicContextForLocalExecution.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
         // Argument provided, use first parameter (may materialize to the empty sequence).
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
 

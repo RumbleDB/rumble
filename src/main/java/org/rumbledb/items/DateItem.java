@@ -1,10 +1,11 @@
 package org.rumbledb.items;
 
-import java.io.Serial;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.sql.Date;
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
@@ -13,21 +14,20 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-
 
 public class DateItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private OffsetDateTime value;
     private boolean hasTimeZone = false;
-    private static final Pattern dayRegex = Pattern.compile(
+    Pattern dayRegex = Pattern.compile(
         "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
+    @SuppressWarnings("unused")
     public DateItem() {
         super();
     }
@@ -42,13 +42,8 @@ public class DateItem implements Item {
         getDateFromString(dateTimeString);
     }
 
-    @Override
-    public Item copy(boolean mutable) {
-        return new DateItem(this.value, this.hasTimeZone);
-    }
-
     private void getDateFromString(String dateString) {
-        if (!dayRegex.matcher(dateString).matches()) {
+        if (!this.dayRegex.matcher(dateString).matches()) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         }
         int yearIncrement = 0;
@@ -91,11 +86,11 @@ public class DateItem implements Item {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -135,7 +130,24 @@ public class DateItem implements Item {
         return true;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        String formatted = this.value.format(
+            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
+        );
+        if (formatted.startsWith("+")) {
+            formatted = formatted.substring(1);
+        }
+        output.writeString(formatted);
+        output.writeBoolean(this.hasTimeZone);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        String dateString = input.readString();
+        this.hasTimeZone = input.readBoolean();
+        getDateFromString(dateString);
+    }
 
     @Override
     public ItemType getDynamicType() {

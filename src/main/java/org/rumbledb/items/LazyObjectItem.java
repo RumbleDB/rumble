@@ -20,17 +20,17 @@
 
 package org.rumbledb.items;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -39,16 +39,15 @@ import java.util.Map;
 public class LazyObjectItem implements Item {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final List<String> keys;
-    private final Map<String, Item> values;
-    final transient private Map<String, LazyValue> lazyValues;
+    private List<String> keys;
+    private Map<String, Item> values;
+    transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
-        private final RuntimeIterator iterator;
-        private final DynamicContext context;
-        private final boolean isArray;
+        private RuntimeIterator iterator;
+        private DynamicContext context;
+        private boolean isArray;
 
         public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
             this.iterator = iterator;
@@ -89,31 +88,16 @@ public class LazyObjectItem implements Item {
         this.lazyValues = new HashMap<>();
     }
 
-    @Override
-    public Item copy(boolean mutable) {
-        List<String> newKeys = new ArrayList<>(this.keys.size());
-        List<Item> newValues = new ArrayList<>();
-        for (String key : this.getStringKeys()) {
-            newKeys.add(key);
-            newValues.add(this.getItemByKey(key).copy(mutable));
-        }
-        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        }
-        return result;
-
-    }
-
-    public boolean equals(Object other) {
-        if (!(other instanceof Item otherItem)) {
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
             return false;
         }
-        if (!otherItem.isObject()) {
+        Item o = (Item) otherItem;
+        if (!o.isObject()) {
             return false;
         }
-        for (String s : this.getStringKeys()) {
-            Item v = otherItem.getItemByKey(s);
+        for (String s : getKeys()) {
+            Item v = o.getItemByKey(s);
             if (v == null) {
                 return false;
             }
@@ -121,182 +105,38 @@ public class LazyObjectItem implements Item {
                 return false;
             }
         }
-        for (String s : otherItem.getStringKeys()) {
+        for (String s : o.getKeys()) {
             Item v = getItemByKey(s);
             if (v == null) {
                 return false;
             }
-            if (!otherItem.getItemByKey(s).equals(v)) {
+            if (!o.getItemByKey(s).equals(v)) {
                 return false;
             }
         }
         return true;
     }
 
-
-    // region maps
-
     @Override
-    public boolean isMap() {
-        return true;
-    }
-
-    @Override
-    public boolean isObject() {
-        return true;
-    }
-
-    @Override
-    public List<String> getStringKeys() {
+    public List<String> getKeys() {
         return this.keys;
     }
-
-    @Override
-    public List<Item> getItemKeys() {
-        List<Item> result = new ArrayList<>(this.keys.size());
-        for (String key : this.keys) {
-            result.add(ItemFactory.getInstance().createStringItem(key));
-        }
-        return result;
-    }
-
-    @Override
-    public List<Item> getItemValues() {
-        List<Item> result = new ArrayList<>();
-        materialize();
-        for (Item i : this.values.values()) {
-            result.add(i);
-        }
-        return result;
-    }
-
-    @Override
-    public List<List<Item>> getSequenceValues() {
-        List<List<Item>> result = new ArrayList<>(this.keys.size());
-        for (String key : this.keys) {
-            result.add(java.util.Collections.singletonList(getItemByKey(key)));
-        }
-        return result;
-    }
-
-    @Override
-    public Item getItemByKey(String key) {
-        if (this.keys.contains(key)) {
-            if (this.values.containsKey(key)) {
-                return this.values.get(key);
-            }
-            if (this.lazyValues.containsKey(key)) {
-                Item i = this.lazyValues.get(key).getItem();
-                this.lazyValues.remove(key);
-                this.values.put(key, i);
-                return i;
-            }
-            throw new OurBadException("Key " + key + "not found in lazy object. Inconsistent layout.");
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public Item getItemByKey(Item key) {
-        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
-            return null;
-        }
-        return getItemByKey(key.getStringValue());
-    }
-
-    @Override
-    public List<Item> getSequenceByKey(String key) {
-        Item value = getItemByKey(key);
-        if (value == null) {
-            return null;
-        }
-        return java.util.Collections.singletonList(value);
-    }
-
-    @Override
-    public List<Item> getSequenceByKey(Item key) {
-        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
-            return null;
-        }
-        return getSequenceByKey(key.getStringValue());
-    }
-
-    @Override
-    public void putItemByKey(String key, Item value) {
-        this.keys.add(key);
-        this.values.put(key, value);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    @Override
-    public void putItemByKey(Item key, Item value) {
-        if (key == null || !key.isString()) {
-            throw new OurBadException("LazyObjectItem keys must be strings.");
-        }
-        putItemByKey(key.getStringValue(), value);
-    }
-
-    @Override
-    public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        if (valueSequence == null || valueSequence.isEmpty()) {
-            putItemByKey(key, ItemFactory.getInstance().createNullItem());
-            return;
-        }
-        if (valueSequence.size() != 1) {
-            throw new OurBadException(
-                    "LazyObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-            );
-        }
-        putItemByKey(key, valueSequence.get(0));
-    }
-
-    @Override
-    public void putSequenceByKey(String key, List<Item> valueSequence) {
-        if (valueSequence == null) {
-            throw new OurBadException("Value sequence cannot be empty.");
-        }
-        if (valueSequence.size() == 1) {
-            putItemByKey(key, valueSequence.get(0));
-            return;
-        }
-        throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
-    }
-
-    @Override
-    public void removeItemByKey(String key) {
-        if (this.keys.contains(key)) {
-            this.keys.remove(key);
-            this.values.remove(key);
-            this.lazyValues.remove(key);
-        }
-    }
-
-    @Override
-    public void removeItemByKey(Item key) {
-        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
-            return;
-        }
-        removeItemByKey(key.getStringValue());
-    }
-
-    @Override
-    public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
-        this.keys.add(key);
-        LazyValue lv = new LazyValue(iterator, context, isArray);
-        this.lazyValues.put(key, lv);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    // endregion maps
 
     private void materialize() {
         for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
             this.values.put(e.getKey(), e.getValue().getItem());
         }
         this.lazyValues.clear();
+    }
+
+    @Override
+    public List<Item> getValues() {
+        List<Item> result = new ArrayList<>();
+        materialize();
+        for (Item i : this.values.values()) {
+            result.add(i);
+        }
+        return result;
     }
 
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
@@ -310,12 +150,63 @@ public class LazyObjectItem implements Item {
         }
     }
 
+    @Override
+    public Item getItemByKey(String s) {
+        if (this.keys.contains(s)) {
+            if (this.values.containsKey(s)) {
+                return this.values.get(s);
+            }
+            if (this.lazyValues.containsKey(s)) {
+                Item i = this.lazyValues.get(s).getItem();
+                this.lazyValues.remove(s);
+                this.values.put(s, i);
+                return i;
+            }
+            throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
+        } else {
+            return null;
+        }
+    }
 
+    @Override
+    public void putItemByKey(String s, Item value) {
+        this.keys.add(s);
+        this.values.put(s, value);
+        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public void putLazyItemByKey(String s, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+        this.keys.add(s);
+        LazyValue lv = new LazyValue(iterator, context, isArray);
+        this.lazyValues.put(s, lv);
+        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    @Override
+    public boolean isObject() {
+        return true;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.keys);
+        materialize();
+        kryo.writeObject(output, this.values);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.keys = kryo.readObject(input, ArrayList.class);
+        this.values = kryo.readObject(input, HashMap.class);
+        this.lazyValues = new HashMap<>();
+    }
 
     public int hashCode() {
         int result = 0;
-        result += getStringKeys().size();
-        for (String s : getStringKeys()) {
+        result += getKeys().size();
+        for (String s : getKeys()) {
             result += getItemByKey(s).hashCode();
         }
         return result;
@@ -324,14 +215,6 @@ public class LazyObjectItem implements Item {
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.objectItem;
-    }
-
-    @Override
-    public String getStringValue() {
-        throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
     }
 
     @Override

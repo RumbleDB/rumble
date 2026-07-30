@@ -34,7 +34,6 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -43,7 +42,6 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     /**
      *
      */
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
@@ -56,12 +54,13 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+        RuntimeIterator iterator = this.children.get(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
         // key.
-        if (iterator instanceof VariableReferenceIterator expr) {
+        if (iterator instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
             // this.hasNext = false;
             return context.getVariableValues()
                 .getVariableCount(expr.getVariableName(), getMetadata());
@@ -143,9 +142,9 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     }
 
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
@@ -156,7 +155,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(

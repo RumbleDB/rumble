@@ -3,13 +3,13 @@ package org.rumbledb.compiler;
 public class VisitorConfig {
 
     // flag to suppress errors when a function declaration collides with an existing function
-    private final boolean suppressErrorsForFunctionSignatureCollision;
+    private boolean suppressErrorsForFunctionSignatureCollision;
     // flag to suppress errors when an unrecognized function is called
-    private final boolean suppressErrorsForCallingMissingFunctions;
+    private boolean suppressErrorsForCallingMissingFunctions;
     // flag to suppress errors when an unset execution mode value is fetched from a node
-    private final boolean suppressErrorsForAccessingUnsetExecutionModes;
+    private boolean suppressErrorsForAccessingUnsetExecutionModes;
     // flag to set unset expressions (actually, variable references) to local
-    private final boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
+    private boolean setUnsetExecutionModeOfVariableReferenceExpressionsToLocal;
 
     public static class Builder {
         private boolean suppressErrorsForFunctionSignatureCollision = false;

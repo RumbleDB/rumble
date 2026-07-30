@@ -1,19 +1,11 @@
 package org.rumbledb.runtime.update.expression;
 
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.Collections;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidUpdateTargetException;
-import org.rumbledb.exceptions.ModifiesImmutableValueException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -21,23 +13,26 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 
 public class AppendExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator toAppendIterator;
+    private RuntimeIterator arrayIterator;
+    private RuntimeIterator toAppendIterator;
 
     public AppendExpressionIterator(
             RuntimeIterator arrayIterator,
             RuntimeIterator toAppendIterator,
             RuntimeStaticContext staticContext
     ) {
-        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext.toBuilder().isUpdating(true).build());
+        super(Arrays.asList(arrayIterator, toAppendIterator), staticContext);
 
         this.arrayIterator = arrayIterator;
         this.toAppendIterator = toAppendIterator;
+        this.isUpdating = true;
     }
 
     @Override
@@ -55,6 +50,10 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
 
     }
 
+    @Override
+    protected void resetLocal() {
+
+    }
 
     @Override
     protected boolean hasNextLocal() {
@@ -83,7 +82,7 @@ public class AppendExpressionIterator extends HybridRuntimeIterator {
         UpdatePrimitive up;
         if (target.isArray()) {
             Item locator = ItemFactory.getInstance().createIntItem(target.getSize() + 1);
-            if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
+            if (target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (target.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

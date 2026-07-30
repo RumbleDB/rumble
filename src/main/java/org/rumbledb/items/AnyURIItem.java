@@ -20,24 +20,24 @@
 
 package org.rumbledb.items;
 
-import java.io.Serial;
-import java.net.URI;
-import java.net.URISyntaxException;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public class AnyURIItem implements Item {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private String lexicalValue;
     private URI value;
 
     public AnyURIItem() {
@@ -46,24 +46,15 @@ public class AnyURIItem implements Item {
 
     public AnyURIItem(String value) {
         super();
-        if (value == null) {
-            throw new IllegalArgumentException();
-        }
-        this.lexicalValue = value;
         this.value = parseAnyURIString(value);
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new AnyURIItem(this.lexicalValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -78,23 +69,23 @@ public class AnyURIItem implements Item {
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {
-            return null;
+            throw new IllegalArgumentException(e.getMessage());
         }
     }
 
     @Override
     public String getStringValue() {
-        return this.lexicalValue;
+        return this.getValue().toString();
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return !this.lexicalValue.isEmpty();
+        return !this.getStringValue().isEmpty();
     }
 
     @Override
     public int hashCode() {
-        return this.lexicalValue.hashCode();
+        return this.getValue().hashCode();
     }
 
     public URI getValue() {
@@ -106,7 +97,15 @@ public class AnyURIItem implements Item {
         return getStringValue();
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.getValue());
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.value = kryo.readObject(input, URI.class);
+    }
 
     @Override
     public boolean isAnyURI() {

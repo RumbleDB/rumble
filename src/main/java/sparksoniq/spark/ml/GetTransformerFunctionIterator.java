@@ -35,7 +35,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -44,7 +43,6 @@ import java.util.NoSuchElementException;
 
 public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     public static final List<Name> transformerParameterNames = new ArrayList<>(
             Arrays.asList(
@@ -68,10 +66,10 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        String transformerShortName = this.getChild(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        String transformerShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
         Item paramMapItem = null;
-        if (this.getChildren().size() >= 2) {
-            paramMapItem = this.getChild(1).materializeFirstItemOrNull(dynamicContext);
+        if (this.children.size() >= 2) {
+            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
         }
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
@@ -93,9 +91,9 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             Transformer transformer = (Transformer) transformerSparkMLClass.getDeclaredConstructor().newInstance();
 
             if (paramMapItem != null) {
-                for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
-                    String paramName = paramMapItem.getStringKeys().get(paramIndex);
-                    Item paramValue = paramMapItem.getItemValues().get(paramIndex);
+                for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+                    String paramName = paramMapItem.getKeys().get(paramIndex);
+                    Item paramValue = paramMapItem.getValues().get(paramIndex);
 
                     RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, getMetadata());
 
@@ -121,12 +119,12 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
             RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                     transformerShortName,
                     transformer,
-                    this.staticContext
-                        .toBuilder()
-                        .staticType(SequenceType.createSequenceType("object*"))
-                        .executionMode(ExecutionMode.DATAFRAME)
-                        .metadata(getMetadata())
-                        .build()
+                    new RuntimeStaticContext(
+                            getConfiguration(),
+                            SequenceType.OBJECTS,
+                            ExecutionMode.DATAFRAME,
+                            getMetadata()
+                    )
             );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(

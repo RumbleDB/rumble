@@ -1,18 +1,19 @@
 package org.rumbledb.items;
 
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.regex.Pattern;
-
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.lang3.StringUtils;
+import java.util.Base64;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
+import java.util.Arrays;
+import java.util.regex.Pattern;
 
 public class Base64BinaryItem implements Item {
 
@@ -30,7 +31,6 @@ public class Base64BinaryItem implements Item {
     private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private byte[] value;
     private String stringValue;
@@ -46,16 +46,11 @@ public class Base64BinaryItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new Base64BinaryItem(this.stringValue);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -114,7 +109,18 @@ public class Base64BinaryItem implements Item {
         return Arrays.hashCode(this.getValue());
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeInt(this.getValue().length);
+        output.writeBytes(this.getValue());
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        int bytesLength = input.readInt();
+        this.value = input.readBytes(bytesLength);
+        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
+    }
 
     @Override
     public ItemType getDynamicType() {

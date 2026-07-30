@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
 module namespace jsoniq_utils = "jsoniq_utils.jq";
 
 declare function jsoniq_utils:cast-as($value, $type as string) {
@@ -27,7 +27,7 @@ declare function jsoniq_utils:shape($arr as array) {
             $pos := $pos + 1;
             $it := $it[[1]];
         }
-    } catch err:XPTY0004 {
+    } catch XPTY0004 {
         (: While loop stops when $it becomes a single value :)
         ();
     }

@@ -20,7 +20,6 @@
 
 package org.rumbledb.expressions.flowr;
 
-
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -43,7 +42,7 @@ public abstract class Clause extends Node {
     /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
     protected Clause nextClause;
-    protected final FLWOR_CLAUSES clauseType;
+    protected FLWOR_CLAUSES clauseType;
     protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
@@ -223,8 +222,7 @@ public abstract class Clause extends Node {
     }
 
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -248,11 +246,10 @@ public abstract class Clause extends Node {
             RumbleRuntimeConfiguration conf,
             VisitorConfig visitorConfig
     ) {
-        return RuntimeStaticContext.fromStaticContext(this.staticContext)
-            .configuration(conf)
-            .staticType(null)
-            .executionMode(getHighestExecutionMode(visitorConfig))
-            .metadata(getMetadata())
-            .build();
+        return new RuntimeStaticContext(
+                conf,
+                getHighestExecutionMode(visitorConfig),
+                getMetadata()
+        );
     }
 }

@@ -29,41 +29,42 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.Map;
 
 public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Name functionName;
-    private final Map<Name, SequenceType> paramNameToSequenceTypes;
-    final SequenceType returnType;
-    final RuntimeIterator bodyIterator;
+    private Name functionName;
+    private Map<Name, SequenceType> paramNameToSequenceTypes;
+    SequenceType returnType;
+    RuntimeIterator bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator,
-            RuntimeStaticContext staticContext
+            RuntimeStaticContext staticContext,
+            boolean isUpdating
     ) {
         super(null, staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
+        this.isUpdating = isUpdating;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
         FunctionItem function = new FunctionItem(
                 this.functionName,
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                this.bodyIterator,
-                this.staticContext.isUpdating()
+                bodyIteratorCopy,
+                this.isUpdating
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;

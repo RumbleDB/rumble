@@ -27,12 +27,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.List;
 
 public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private String input1;
     private String input2;
@@ -56,9 +54,9 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     public void setNextResult(DynamicContext context) {
         if (this.input1 == null || this.input2 == null) {
-            Item operandOneItem = this.getChild(0)
+            Item operandOneItem = this.children.get(0)
                 .materializeFirstItemOrNull(context);
-            Item operandTwoItem = this.getChild(1)
+            Item operandTwoItem = this.children.get(1)
                 .materializeFirstItemOrNull(context);
             if (operandOneItem == null || operandTwoItem == null) {
                 this.hasNext = false;

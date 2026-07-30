@@ -1,18 +1,17 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class NamespaceItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
     private String prefix;
     private String uri;
@@ -20,6 +19,7 @@ public class NamespaceItem implements Item {
     private XMLDocumentPosition documentPos;
 
     // needed for kryo
+    @SuppressWarnings("unused")
     public NamespaceItem() {
     }
 
@@ -32,11 +32,6 @@ public class NamespaceItem implements Item {
     public NamespaceItem(String prefix, String uri) {
         this.prefix = prefix == null ? "" : prefix;
         this.uri = uri;
-    }
-
-    @Override
-    public Item copy(boolean mutable) {
-        return new NamespaceItem(this.prefix, this.uri);
     }
 
 
@@ -64,7 +59,21 @@ public class NamespaceItem implements Item {
         // Namespaces do not have descendants.
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.documentPos);
+        kryo.writeClassAndObject(output, this.parent);
+        output.writeString(this.prefix);
+        output.writeString(this.uri);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
+        this.parent = (Item) kryo.readClassAndObject(input);
+        this.prefix = input.readString();
+        this.uri = input.readString();
+    }
 
     @Override
     public boolean isNode() {
@@ -77,13 +86,12 @@ public class NamespaceItem implements Item {
     }
 
     @Override
-    public Name nodeName() {
-        // XDM 3.1: if the prefix is not empty, node-name is an xs:QName with the prefix as the local name and an
-        // empty namespace name; otherwise the empty sequence.
-        if (this.prefix == null || this.prefix.isEmpty()) {
-            return null;
-        }
-        return NamespaceBindingUtils.nameLocalOnly(this.prefix);
+    public String nodeName() {
+        // Spec: "dm: node-name If the prefix is not empty, returns an xs:QName with the value of the prefix property in
+        // the
+        // local-name and an empty namespace name, otherwise returns the empty sequence."
+        // For practical purposes, we return the prefix (may be empty).
+        return this.prefix;
     }
 
     /**
@@ -133,9 +141,10 @@ public class NamespaceItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof NamespaceItem otherNamespaceItem)) {
+        if (!(other instanceof NamespaceItem)) {
             return false;
         }
+        NamespaceItem otherNamespaceItem = (NamespaceItem) other;
         return this.getXmlDocumentPosition().equals(otherNamespaceItem.getXmlDocumentPosition());
     }
 
@@ -249,3 +258,4 @@ public class NamespaceItem implements Item {
         return Collections.emptyList();
     }
 }
+

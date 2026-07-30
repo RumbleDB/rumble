@@ -74,7 +74,6 @@ import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
@@ -99,11 +98,11 @@ import sparksoniq.spark.SparkSessionManager;
 public class FlworDataFrameUtils {
 
     // we use UUID to escape backtick within DataFrame columns
-    public static final String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
+    public static String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
 
-    private static final ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
+    private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
-    private static final ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
+    private static ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
@@ -127,7 +126,6 @@ public class FlworDataFrameUtils {
         kryo.register(IntegerItem.class);
         kryo.register(IntItem.class);
         kryo.register(NullItem.class);
-        kryo.register(QNameItem.class);
         kryo.register(StringItem.class);
         kryo.register(TimeItem.class);
         kryo.register(YearMonthDurationItem.class);
@@ -647,15 +645,18 @@ public class FlworDataFrameUtils {
             String newName = inverse
                 ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
                 : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
-            if (field.dataType() instanceof StructType castedField) {
+            if (field.dataType() instanceof StructType) {
+                StructType castedField = (StructType) field.dataType();
                 return new StructField(
                         newName,
                         new StructType(recursiveRename(castedField, inverse)),
                         field.nullable(),
                         field.metadata()
                 );
-            } else if (field.dataType() instanceof ArrayType castedField) {
-                if (castedField.elementType() instanceof StructType castedElementType) {
+            } else if (field.dataType() instanceof ArrayType) {
+                ArrayType castedField = (ArrayType) field.dataType();
+                if (castedField.elementType() instanceof StructType) {
+                    StructType castedElementType = (StructType) castedField.elementType();
                     return new StructField(
                             newName,
                             new ArrayType(
@@ -859,8 +860,8 @@ public class FlworDataFrameUtils {
 
     public static long getCountOfField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
-        if (o instanceof Long longValue) {
-            return longValue.longValue();
+        if (o instanceof Long) {
+            return ((Long) o).longValue();
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }

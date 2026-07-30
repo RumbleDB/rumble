@@ -1,6 +1,5 @@
 package sparksoniq.spark.ml;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
@@ -8,71 +7,20 @@ import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RumbleMLUtils {
-    public static JSoundDataFrame getDataFrameOrInferFromVariable(
-            DynamicContext context,
-            Name inputVariableName,
-            RuntimeStaticContext staticContext,
-            ExceptionMetadata metadata
-    ) {
-        if (!context.getVariableValues().contains(inputVariableName)) {
-            throw new OurBadException("ML input data is not available in the dynamic context", metadata);
-        }
-
-        if (context.getVariableValues().isDataFrame(inputVariableName, metadata)) {
-            return context.getVariableValues().getDataFrameVariableValue(inputVariableName, metadata);
-        }
-
-        if (context.getVariableValues().isRDD(inputVariableName, metadata)) {
-            JavaRDD<Item> rdd = context.getVariableValues().getRDDVariableValue(inputVariableName, metadata);
-            ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                metadata,
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
-            return ValidateTypeIterator.convertRDDToValidDataFrame(
-                rdd,
-                type,
-                context,
-                true,
-                staticContext
-            );
-        }
-
-        List<Item> items = context.getVariableValues().getLocalVariableValue(inputVariableName, metadata);
-        ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-            items,
-            metadata,
-            TypeInferrenceUtils.TypeMergeMode.LAX
-        );
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(
-            items,
-            type,
-            context,
-            true,
-            staticContext
-        );
-    }
-
     public static ParamMap convertRumbleObjectItemToSparkMLParamMap(
             String transformerShortName,
             Transformer transformer,
@@ -81,9 +29,9 @@ public class RumbleMLUtils {
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem
-        for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
-            String paramName = paramMapItem.getStringKeys().get(paramIndex);
-            Item paramValue = paramMapItem.getItemValues().get(paramIndex);
+        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getValues().get(paramIndex);
 
             RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
@@ -119,9 +67,9 @@ public class RumbleMLUtils {
     ) {
         ParamMap result = new ParamMap();
         // paramMapItem is expected to be an ObjectItem
-        for (int paramIndex = 0; paramIndex < paramMapItem.getStringKeys().size(); paramIndex++) {
-            String paramName = paramMapItem.getStringKeys().get(paramIndex);
-            Item paramValue = paramMapItem.getItemValues().get(paramIndex);
+        for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+            String paramName = paramMapItem.getKeys().get(paramIndex);
+            Item paramValue = paramMapItem.getValues().get(paramIndex);
 
             RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, metadata);
             String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
@@ -161,7 +109,7 @@ public class RumbleMLUtils {
             }
             List<Object> paramAsListInJava = new ArrayList<>();
             // paramValue is expected to be an ArrayItem
-            param.getItemMembers().forEach(item -> {
+            param.getItems().forEach(item -> {
                 paramAsListInJava.add(
                     convertParamItemToJava(
                         paramName,
@@ -261,7 +209,7 @@ public class RumbleMLUtils {
             case "int":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    BuiltinTypesCatalogue.intItem,
+                    BuiltinTypesCatalogue.integerItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
@@ -299,8 +247,8 @@ public class RumbleMLUtils {
     }
 
     public static Item removeParameter(Item paramMapItem, String key, ExceptionMetadata metadata) {
-        List<String> keys = paramMapItem.getStringKeys();
-        List<Item> values = paramMapItem.getItemValues();
+        List<String> keys = paramMapItem.getKeys();
+        List<Item> values = paramMapItem.getValues();
         int indexToRemove = keys.indexOf(key);
         keys.remove(indexToRemove);
         values.remove(indexToRemove);

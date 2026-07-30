@@ -22,11 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serial;
-
 public class ObjectInsertContentIsNotObjectSeqException extends RumbleException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public ObjectInsertContentIsNotObjectSeqException(String message, ExceptionMetadata metadata) {

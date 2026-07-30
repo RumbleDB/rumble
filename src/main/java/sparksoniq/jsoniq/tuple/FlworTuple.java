@@ -20,6 +20,10 @@
 
 package sparksoniq.jsoniq.tuple;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -31,20 +35,18 @@ import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 
-import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 
-public class FlworTuple implements Serializable {
+public class FlworTuple implements Serializable, KryoSerializable {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final LinkedHashMap<Name, List<Item>> localVariables;
-    private final LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private final LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
+    private LinkedHashMap<Name, List<Item>> localVariables;
+    private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
+    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
     private RumbleRuntimeConfiguration configuration;
 
     public FlworTuple() {
@@ -177,7 +179,22 @@ public class FlworTuple implements Serializable {
         return this;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.localVariables);
+        kryo.writeObject(output, this.rddVariables);
+        kryo.writeObject(output, this.dataFrameVariables);
+        kryo.writeObject(output, this.configuration);
+    }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.localVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.configuration = kryo.readObject(input, RumbleRuntimeConfiguration.class);
+    }
 
     @Override
     public String toString() {

@@ -3,8 +3,6 @@ package org.rumbledb.runtime.scripting.control;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorVariables;
-import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExitStatementException;
@@ -12,27 +10,29 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator tryStatementIterator;
-    private final Map<CatchPattern, RuntimeIterator> catchStatements;
+    private final Map<String, RuntimeIterator> catchStatements;
+    private final RuntimeIterator catchAllStatements;
 
     public TryCatchStatementIterator(
             RuntimeIterator tryStatement,
-            Map<CatchPattern, RuntimeIterator> catchStatements,
+            Map<String, RuntimeIterator> catchStatements,
+            RuntimeIterator catchAllStatement,
             RuntimeStaticContext staticContext
     ) {
-        super(
-            Stream.concat(Stream.of(tryStatement), catchStatements.values().stream()).toList(),
-            staticContext
-        );
+        super(null, staticContext);
+        this.children.add(tryStatement);
+        this.children.addAll(catchStatements.values());
+        if (catchAllStatement != null) {
+            this.children.add(catchAllStatement);
+        }
         this.tryStatementIterator = tryStatement;
         this.catchStatements = catchStatements;
+        this.catchAllStatements = catchAllStatement;
     }
 
     @Override
@@ -50,22 +50,16 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
                 throw throwable;
             }
             RumbleException unnestedException = RumbleException.unnestException(throwable);
-            RuntimeIterator catchingStatementIterator = findMatchingCatch(unnestedException);
-            if (catchingStatementIterator != null) {
+            String errorCode = unnestedException.getErrorCode();
+            if (this.catchStatements.containsKey(errorCode)) {
+                RuntimeIterator catchingStatementIterator = this.catchStatements.get(errorCode);
                 DynamicContext childContext = new DynamicContext(context);
-                ErrorVariables.injectDynamicContext(childContext, unnestedException);
                 catchingStatementIterator.materializeFirstItemOrNull(childContext);
+            } else if (this.catchAllStatements != null) {
+                DynamicContext childContext = new DynamicContext(context);
+                this.catchAllStatements.materializeFirstItemOrNull(childContext);
             } else {
                 throw throwable;
-            }
-        }
-        return null;
-    }
-
-    private RuntimeIterator findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimeIterator> entry : this.catchStatements.entrySet()) {
-            if (entry.getKey().matches(exception.getErrorCode())) {
-                return entry.getValue();
             }
         }
         return null;

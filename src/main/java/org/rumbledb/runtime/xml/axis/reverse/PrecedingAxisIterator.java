@@ -6,13 +6,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.xml.axis.AxisIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class PrecedingAxisIterator extends AxisIterator {
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public PrecedingAxisIterator(RuntimeStaticContext staticContext) {
@@ -54,7 +52,7 @@ public class PrecedingAxisIterator extends AxisIterator {
             }
         }
         for (int i = 0; i < nodeIndex; ++i) {
-            precedingNodes.addAll(getDescendantsOrSelf(parentChildren.get(i)));
+            precedingNodes.addAll(getDescendants(parentChildren.get(i)));
         }
         precedingNodes.addAll(getPrecedingNode(parent.parent(), parent));
         return precedingNodes;

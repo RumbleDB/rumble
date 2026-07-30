@@ -31,12 +31,10 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serial;
 import java.util.List;
 
 public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public StringLengthFunctionIterator(
@@ -48,11 +46,11 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        if (this.getChildren().size() == 0) {
+        if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return ItemFactory.getInstance().createIntItem(items.get(0).getStringValue().length());
         }
-        Item stringItem = this.getChild(0)
+        Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
         if (stringItem == null) {
@@ -64,10 +62,10 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if (this.getChildren().size() == 0) {
+        if (this.children.size() == 0) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

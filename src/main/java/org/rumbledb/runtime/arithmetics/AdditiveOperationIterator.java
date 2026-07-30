@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.arithmetics;
 
-import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.OffsetTime;
@@ -48,7 +47,6 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     private Item left;
@@ -69,7 +67,6 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         this.isMinus = isMinus;
     }
 
-    @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
             this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
@@ -107,12 +104,6 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                 this.right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
-        }
-        if (this.left.isUntypedAtomic()) {
-            this.left = ItemFactory.getInstance().createDoubleItem(this.left.castToDoubleValue());
-        }
-        if (this.right.isUntypedAtomic()) {
-            this.right = ItemFactory.getInstance().createDoubleItem(this.right.castToDoubleValue());
         }
         Item result = processItem(this.left, this.right, this.isMinus);
         if (result == null) {
@@ -390,45 +381,45 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         String leftQuery = leftResult.getResultingQuery();
         String rightQuery = rightResult.getResultingQuery();
         if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))
+            rightResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("double?"))) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.DOUBLE_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS DOUBLE))";
             }
             resultType = BuiltinTypesCatalogue.doubleItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 && rightResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+            if (!rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))
+            rightResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)
                 && leftResult.getResultingType().getItemType().isNumeric()
         ) {
-            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("float?"))) {
+            if (!leftResult.getResultingType().isSubtypeOf(SequenceType.FLOAT_QM)) {
                 leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
             }
             resultType = BuiltinTypesCatalogue.floatItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("integer?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.INTEGER_QM)
         ) {
             resultType = BuiltinTypesCatalogue.integerItem;
         } else if (
-            leftResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
-                && rightResult.getResultingType().isSubtypeOf(SequenceType.createSequenceType("decimal?"))
+            leftResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
+                && rightResult.getResultingType().isSubtypeOf(SequenceType.DECIMAL_QM)
         ) {
             resultType = BuiltinTypesCatalogue.decimalItem;
         } else {

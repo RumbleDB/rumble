@@ -30,7 +30,7 @@ import org.rumbledb.expressions.Node;
 
 
 public class CountClause extends Clause {
-    private final Name variableName;
+    private Name variableName;
 
     public CountClause(Name variableName, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
@@ -51,8 +51,7 @@ public class CountClause extends Clause {
         return this.variableName;
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -66,7 +65,7 @@ public class CountClause extends Clause {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("count $" + this.variableName);
     }

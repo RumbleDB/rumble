@@ -37,8 +37,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 public class TextNodeExpression extends Expression {
 
     /** The content of the text node */
-    private final String content;
-    private final boolean boundaryWhitespace;
+    private String content;
 
     /**
      * Constructor for a text node.
@@ -47,13 +46,8 @@ public class TextNodeExpression extends Expression {
      * @param metadata The exception metadata
      */
     public TextNodeExpression(String content, ExceptionMetadata metadata) {
-        this(content, metadata, false);
-    }
-
-    public TextNodeExpression(String content, ExceptionMetadata metadata, boolean boundaryWhitespace) {
         super(metadata);
         this.content = content;
-        this.boundaryWhitespace = boundaryWhitespace;
     }
 
     /**
@@ -63,10 +57,6 @@ public class TextNodeExpression extends Expression {
      */
     public String getContent() {
         return this.content;
-    }
-
-    public boolean isBoundaryWhitespace() {
-        return this.boundaryWhitespace;
     }
 
     @Override
@@ -80,7 +70,7 @@ public class TextNodeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(this.content);
     }

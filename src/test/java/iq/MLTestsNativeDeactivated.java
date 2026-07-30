@@ -21,9 +21,15 @@
 package iq;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 
+@RunWith(Parameterized.class)
 public class MLTestsNativeDeactivated extends RuntimeTests {
 
     public static final File sparkRuntimeTestsDirectory = new File(
@@ -31,6 +37,10 @@ public class MLTestsNativeDeactivated extends RuntimeTests {
                 +
                 "/src/test/resources/test_files/RumbleML"
     );
+
+    public MLTestsNativeDeactivated(File testFile) {
+        super(testFile);
+    }
 
     public RumbleRuntimeConfiguration getConfiguration() {
         return new RumbleRuntimeConfiguration(
@@ -47,8 +57,12 @@ public class MLTestsNativeDeactivated extends RuntimeTests {
         );
     }
 
-    @Override
-    protected File testDirectory() {
-        return sparkRuntimeTestsDirectory;
+    @Parameterized.Parameters(name = "{index}:{0}")
+    public static Collection<Object[]> testFiles() {
+        List<Object[]> result = new ArrayList<>();
+        _testFiles.clear();
+        readFileList(sparkRuntimeTestsDirectory);
+        _testFiles.forEach(file -> result.add(new Object[] { file }));
+        return result;
     }
 }

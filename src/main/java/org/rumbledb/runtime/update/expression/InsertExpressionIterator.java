@@ -1,35 +1,26 @@
 package org.rumbledb.runtime.update.expression;
 
-import java.io.Serial;
-import java.util.Arrays;
-import java.util.Collections;
-
 import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotCastUpdateSelectorException;
-import org.rumbledb.exceptions.InvalidUpdateTargetException;
-import org.rumbledb.exceptions.ModifiesImmutableValueException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.ObjectInsertContentIsNotObjectSeqException;
-import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
-import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 public class InsertExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator mainIterator;
-    private final RuntimeIterator toInsertIterator;
-    private final RuntimeIterator positionIterator;
+    private RuntimeIterator mainIterator;
+    private RuntimeIterator toInsertIterator;
+    private RuntimeIterator positionIterator;
 
     public InsertExpressionIterator(
             RuntimeIterator mainIterator,
@@ -41,12 +32,13 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
             positionIterator == null
                 ? Arrays.asList(mainIterator, toInsertIterator)
                 : Arrays.asList(mainIterator, toInsertIterator, positionIterator),
-            staticContext.toBuilder().isUpdating(true).build()
+            staticContext
         );
 
         this.mainIterator = mainIterator;
         this.toInsertIterator = toInsertIterator;
         this.positionIterator = positionIterator;
+        this.isUpdating = true;
     }
 
     public boolean hasPositionIterator() {
@@ -65,6 +57,11 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+
+    }
+
+    @Override
+    protected void resetLocal() {
 
     }
 
@@ -106,7 +103,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
+            if (main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {
@@ -126,7 +123,7 @@ public class InsertExpressionIterator extends HybridRuntimeIterator {
                         this.getMetadata()
                 );
             }
-            if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
+            if (main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException("Attempt to modify immutable target", this.getMetadata());
             }
             if (main.getMutabilityLevel() != context.getCurrentMutabilityLevel()) {

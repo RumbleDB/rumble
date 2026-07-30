@@ -1,15 +1,15 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
 
-import java.io.Serial;
-
 public class ElementTest implements NodeTest {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Name elementName;
-    private final boolean hasWildcard;
-    private final Name typeName;
+    private Name elementName;
+    private boolean hasWildcard;
+    private Name typeName;
     // TODO: add support for optional type
 
 
@@ -60,17 +60,25 @@ public class ElementTest implements NodeTest {
         return this.elementName != null && this.typeName == null;
     }
 
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getElementName() {
-        return this.elementName;
+    public String getElementName() {
+        return this.elementName.getLocalName();
     }
 
     public boolean isWildcardOnly() {
         return this.elementName == null && this.typeName == null && this.hasWildcard;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.elementName);
+        output.writeBoolean(this.hasWildcard);
+        kryo.writeObject(output, this.typeName);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.elementName = kryo.readObject(input, Name.class);
+        this.hasWildcard = input.readBoolean();
+        this.typeName = kryo.readObject(input, Name.class);
+    }
 }

@@ -22,11 +22,8 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-import java.io.Serial;
-
 public class JobWithinAJobException extends RumbleException {
 
-    @Serial
     private static final long serialVersionUID = 1L;
 
     public JobWithinAJobException(String message, ExceptionMetadata metadata) {

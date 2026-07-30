@@ -40,7 +40,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -49,7 +48,6 @@ import java.util.TreeMap;
 public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private Item item;
 
@@ -64,7 +62,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.item = computeSum(
             zeroElement(context),
-            this.getChild(0),
+            this.children.get(0),
             context,
             getMetadata()
         );
@@ -75,8 +73,8 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item zeroElement(DynamicContext context) {
-        if (this.getChildren().size() > 1) {
-            return this.getChild(1).materializeFirstItemOrNull(context);
+        if (this.children.size() > 1) {
+            return this.children.get(1).materializeFirstItemOrNull(context);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
         }
@@ -123,15 +121,9 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         Item result = null;
         while (iterator.hasNext()) {
             Item nextValue = iterator.next();
-            if (nextValue.isUntypedAtomic()) {
-                nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
-            }
             if (result == null) {
                 result = nextValue;
             } else {
-                if (result.isUntypedAtomic()) {
-                    result = ItemFactory.getInstance().createDoubleItem(result.castToDoubleValue());
-                }
                 Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
                 if (sum == null) {
                     throw new InvalidArgumentTypeException(
@@ -189,9 +181,9 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return summedDF.getExactlyOneItem();
     }
 
-    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
+        if (this.children.get(0) instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
@@ -203,7 +195,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -217,7 +209,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))",
                         childContext.getResultingQuery()
                     ),
-                    SequenceType.createSequenceType("integer")
+                    SequenceType.INTEGER
             );
         }
         // each row contains a single value

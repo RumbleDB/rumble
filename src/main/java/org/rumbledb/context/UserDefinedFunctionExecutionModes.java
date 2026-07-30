@@ -20,36 +20,37 @@
 
 package org.rumbledb.context;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class UserDefinedFunctionExecutionModes {
+public class UserDefinedFunctionExecutionModes implements Serializable, KryoSerializable {
+
+    private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
-    private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
-    private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
-    private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
-    private String queryLanguage;
+    private HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
+    private HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+    private List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
     public UserDefinedFunctionExecutionModes() {
         this.userDefinedFunctionsExecutionMode = new HashMap<>();
         this.userDefinedFunctionsParametersStorageMode = new HashMap<>();
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
-        this.queryLanguage = null;
-    }
-
-    public void setQueryLanguage(String queryLanguage) {
-        this.queryLanguage = queryLanguage;
     }
 
     public boolean exists(FunctionIdentifier identifier) {
@@ -78,7 +79,7 @@ public class UserDefinedFunctionExecutionModes {
             ExceptionMetadata metadata
     ) {
         if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
+            BuiltinFunctionCatalogue.exists(functionIdentifier)
                 ||
                 (!suppressErrorsForFunctionSignatureCollision
                     && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
@@ -170,6 +171,23 @@ public class UserDefinedFunctionExecutionModes {
     public List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
         return this.userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.userDefinedFunctionsExecutionMode);
+        kryo.writeObject(output, this.userDefinedFunctionIdentifiersWithUnsetExecutionModes);
+        kryo.writeObject(output, this.userDefinedFunctionsParametersStorageMode);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.userDefinedFunctionsExecutionMode = kryo.readObject(input, HashMap.class);
+        this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = kryo.readObject(input, List.class);
+        this.userDefinedFunctionsParametersStorageMode = kryo.readObject(input, HashMap.class);
+    }
+
+
 
     @Override
     public String toString() {

@@ -21,13 +21,6 @@
 package org.rumbledb.types;
 
 
-import java.io.Serial;
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -35,10 +28,15 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
+import com.esotericsoftware.kryo.KryoSerializable;
 
-public interface ItemType extends Serializable {
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-    @Serial
+public interface ItemType extends Serializable, KryoSerializable {
+
     long serialVersionUID = 1L;
 
     /**
@@ -63,7 +61,7 @@ public interface ItemType extends Serializable {
             }
             return this.toString().equals(otherType.toString());
         }
-        if (!this.hasName() || !otherType.hasName()) {
+        if (this.getName() == null || otherType.getName() == null) {
             return this == otherType;
         }
         return this.getName().equals(otherType.getName());
@@ -99,20 +97,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * @return true it [this] is an XQuery array item type.
-     */
-    default boolean isXQueryArrayItemType() {
-        return false;
-    }
-
-    /**
-     * @return true if [this] is an XQuery map item type (map(*) or map(K, V)).
-     */
-    default boolean isMapItemType() {
-        return false;
-    }
-
-    /**
      * @return test if [this] is a subptype of a json item type
      */
     default boolean isJsonItemType() {
@@ -143,22 +127,6 @@ public interface ItemType extends Serializable {
      */
     default boolean isNumeric() {
         return false;
-    }
-
-    /**
-     *
-     * @return [true] if the null value is in the value space.
-     */
-    default boolean canBeNull() {
-        return false;
-    }
-
-    /**
-     *
-     * @return [true] if this is just one type unioned with null, returns that type.
-     */
-    default ItemType getSingleNullableType() {
-        return null;
     }
 
     // endregion
@@ -231,32 +199,6 @@ public interface ItemType extends Serializable {
      *         and [other] (does not take into account union types as common ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        if (other.isUnionType()) {
-            return other.findLeastCommonSuperTypeWith(this);
-        }
-        if (this.equals(BuiltinTypesCatalogue.nullItem) && other.equals(BuiltinTypesCatalogue.nullItem)) {
-            return BuiltinTypesCatalogue.nullItem;
-        }
-        if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
-            if (this.equals(BuiltinTypesCatalogue.atomicItem)) {
-                return BuiltinTypesCatalogue.atomicItem;
-            }
-            return new UnionItemType(
-                    null,
-                    BuiltinTypesCatalogue.atomicItem,
-                    Arrays.asList(this, BuiltinTypesCatalogue.nullItem)
-            );
-        }
-        if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
-            if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
-                return BuiltinTypesCatalogue.atomicItem;
-            }
-            return new UnionItemType(
-                    null,
-                    BuiltinTypesCatalogue.atomicItem,
-                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem)
-            );
-        }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
             other = other.getBaseType();
@@ -336,20 +278,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * Casting-specific primitive notion from XPath/XQuery Functions and Operators 3.1 §19:
-     * in addition to XML Schema primitive types, xs:integer, xs:yearMonthDuration,
-     * and xs:dayTimeDuration are treated as primitive for casting.
-     *
-     * @return [true] if this type is considered primitive for casting semantics.
-     */
-    default boolean isCastingPrimitive() {
-        return this.isPrimitive()
-            || this.equals(BuiltinTypesCatalogue.integerItem)
-            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
-            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
-    }
-
-    /**
      *
      * @return the primitive type for a derived type, throw an error for primitive types
      */
@@ -358,19 +286,10 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * Casting-specific primitive normalization used by cast/castable logic.
-     *
-     * @return this type if it is a casting primitive; otherwise its casting primitive ancestor.
-     */
-    default ItemType getCastingPrimitiveType() {
-        return this.isCastingPrimitive() ? this : this.getPrimitiveType();
-    }
-
-    /**
      *
      * @return a set containing the allowed facets for restricting the type
      */
-    public Set<ConstrainingFacetTypes> getAllowedFacets();
+    public Set<FacetTypes> getAllowedFacets();
 
     /**
      *
@@ -497,120 +416,9 @@ public interface ItemType extends Serializable {
 
     /**
      *
-     * @return the whiteSpace facet value for [this] item type or null if the restriction is not set
+     * @return content facet value for object item types (cumulative facet)
      */
-    default WhitespaceFacet getWhitespaceFacet() {
-        throw new UnsupportedOperationException(
-                "whiteSpace facet is not allowed for " + this.toString() + " item types"
-        );
-    }
-
-    /**
-     * Returns the pattern facet for this item type.
-     *
-     * This reflects pattern facets applied via derivation (for example on
-     * {@link DerivedAtomicItemType}), not the full lexical space of a
-     * primitive atomic type.
-     *
-     * @return the list of pattern regex strings for this derivation step,
-     *         or null if no pattern restriction is set
-     */
-    default List<String> getPatternFacet() {
-        throw new UnsupportedOperationException(
-                "pattern facet is not allowed for " + this.toString() + " item types"
-        );
-    }
-
-    /**
-     * Returns the lexical-space patterns for this item type.
-     *
-     * For primitive atomic types, this describes the lexical space defined
-     * by the specification (for example, the allowed literals for xs:boolean
-     * or the lexical grammar for xs:decimal). For derived atomic types, this
-     * typically delegates to the primitive type.
-     *
-     * Implementations that do not provide additional constraints should
-     * return an empty list.
-     *
-     * @return a list of regular expressions describing the lexical space
-     *         of this type, or an empty list if no regex-based restriction
-     *         is modeled.
-     */
-    default List<String> getLexicalSpacePatterns() {
-        return java.util.Collections.emptyList();
-    }
-
-    // region fundamental facets (XSD 1.1 §4.2)
-
-    /**
-     * @return the ordered fundamental facet value, or null if not set
-     */
-    default OrderedFacetValue getOrderedFacet() {
-        throw new UnsupportedOperationException(
-                "ordered facet is not applicable to " + this.toString() + " item types"
-        );
-    }
-
-    /**
-     * @return the bounded fundamental facet value, or null if not set
-     */
-    default Boolean getBoundedFacet() {
-        throw new UnsupportedOperationException(
-                "bounded facet is not applicable to " + this.toString() + " item types"
-        );
-    }
-
-    /**
-     * @return the cardinality fundamental facet value, or null if not set
-     */
-    default CardinalityFacetValue getCardinalityFacet() {
-        throw new UnsupportedOperationException(
-                "cardinality facet is not applicable to " + this.toString() + " item types"
-        );
-    }
-
-    /**
-     * @return the numeric fundamental facet value, or null if not set
-     */
-    default Boolean getNumericFacet() {
-        throw new UnsupportedOperationException(
-                "numeric facet is not applicable to " + this.toString() + " item types"
-        );
-    }
-
-    // endregion fundamental facets
-
-    default List<String> getObjectKeysFacet() {
-        throw new UnsupportedOperationException(
-                "keys content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    default FieldDescriptor getObjectContentFacet(String key) {
-        throw new UnsupportedOperationException(
-                "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    default List<FieldDescriptor> getObjectContentFacet() {
-        throw new UnsupportedOperationException(
-                "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    default Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
+    default Map<String, FieldDescriptor> getObjectContentFacet() {
         throw new UnsupportedOperationException(
                 "object content facet is allowed only for object item types, but "
                     + getIdentifierString()
@@ -635,46 +443,6 @@ public interface ItemType extends Serializable {
     default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
                 "array content facet is allowed only for array item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    /**
-     * @return atomic key type for map item types (map(K, V)).
-     */
-    default ItemType getMapKeyItemType() {
-        throw new UnsupportedOperationException(
-                "map key facet is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    /**
-     * @return value sequence type for map item types (map(K, V)).
-     */
-    default SequenceType getMapValueSequenceType() {
-        throw new UnsupportedOperationException(
-                "map value sequence type is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
-    }
-
-    /**
-     * @return the sequence type for the members of the array item type
-     * @throws UnsupportedOperationException if the item type is not an xquery array item type
-     */
-    default SequenceType getMemberSequenceType() {
-        throw new UnsupportedOperationException(
-                "member sequence type is allowed only for array item types, but "
                     + getIdentifierString()
                     + " is not one (class "
                     + this.getClass().getCanonicalName()

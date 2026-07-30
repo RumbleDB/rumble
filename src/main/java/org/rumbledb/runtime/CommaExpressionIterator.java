@@ -35,24 +35,32 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class CommaExpressionIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
     private Item nextResult;
     private int childIndex;
 
+
+    public CommaExpressionIterator(
+            List<RuntimeIterator> childIterators,
+            boolean isUpdating,
+            RuntimeStaticContext staticContext
+    ) {
+        super(childIterators, staticContext);
+        this.isUpdating = isUpdating;
+    }
+
     public CommaExpressionIterator(
             List<RuntimeIterator> childIterators,
             RuntimeStaticContext staticContext
     ) {
-        super(childIterators, staticContext);
+        this(childIterators, false, staticContext);
     }
 
     @Override
@@ -68,8 +76,8 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     private void startLocal() {
         this.childIndex = 0;
 
-        if (this.getChildren().size() >= 1) {
-            this.currentChild = this.getChild(this.childIndex);
+        if (this.children.size() >= 1) {
+            this.currentChild = this.children.get(this.childIndex);
             this.currentChild.open(this.currentDynamicContextForLocalExecution);
         } else {
             this.currentChild = null;
@@ -96,11 +104,11 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 this.nextResult = this.currentChild.next();
             } else {
                 this.currentChild.close();
-                if (++this.childIndex == this.getChildren().size()) {
+                if (++this.childIndex == this.children.size()) {
                     this.currentChild = null;
                     break;
                 }
-                this.currentChild = this.getChild(this.childIndex);
+                this.currentChild = this.children.get(this.childIndex);
                 this.currentChild.open(this.currentDynamicContextForLocalExecution);
             }
         }
@@ -114,29 +122,28 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        startLocal();
+    }
+
+    @Override
     protected void closeLocal() {
         if (this.currentChild != null) {
             this.currentChild.close();
         }
     }
 
-    public List<RuntimeIterator> getOperands() {
-        // This method is currently used in SequenceLookupIterator and ObjectConstructorRuntimeIterator
-        // Because getChildren is protected and not visible from there
-        return getChildren();
-    }
-
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        if (!this.getChildren().isEmpty()) {
+        if (!this.children.isEmpty()) {
             this.childIndex = 0;
-            this.currentChild = this.getChild(this.childIndex);
+            this.currentChild = this.children.get(this.childIndex);
 
             JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
             this.childIndex++;
 
-            while (this.childIndex < this.getChildren().size()) {
-                this.currentChild = this.getChild(this.childIndex);
+            while (this.childIndex < this.children.size()) {
+                this.currentChild = this.children.get(this.childIndex);
                 JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
                 childRDD = childRDD.union(nextChildRDD);
                 this.childIndex++;
@@ -151,7 +158,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         List<NativeClauseContext> childClauses = new ArrayList<>();
-        for (RuntimeIterator iterator : this.getChildren()) {
+        for (RuntimeIterator iterator : this.children) {
             NativeClauseContext childContext = iterator.generateNativeQuery(nativeClauseContext);
             if (childContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
@@ -169,14 +176,16 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 .map(childClause -> childClause.getResultingType().getItemType())
                 .reduce(
                     (a, b) -> (a.isObjectItemType()
-                        && a.getObjectKeysFacet().size() == b.getObjectKeysFacet().size()
-                        && a.getObjectKeysFacet()
+                        && a.getObjectContentFacet().keySet().size() == b.getObjectContentFacet().keySet().size()
+                        && a.getObjectContentFacet()
+                            .keySet()
                             .stream()
                             .allMatch(
-                                key -> b.getObjectKeysFacet().contains(key)
-                                    && a.getObjectContentFacet(key)
+                                key -> b.getObjectContentFacet().containsKey(key)
+                                    && a.getObjectContentFacet()
+                                        .get(key)
                                         .getType()
-                                        .equals(b.getObjectContentFacet(key).getType())
+                                        .equals(b.getObjectContentFacet().get(key).getType())
                             ))
                                 ? a
                                 : BuiltinTypesCatalogue.item
@@ -225,14 +234,17 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
         );
     }
 
-    @Override
+    public List<RuntimeIterator> getChildren() {
+        return this.children;
+    }
+
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!isUpdating()) {
             return new PendingUpdateList();
         }
 
         PendingUpdateList pul = new PendingUpdateList();
-        for (RuntimeIterator child : this.getChildren()) {
+        for (RuntimeIterator child : this.children) {
             pul.mergeUpdates(child.getPendingUpdateList(context), this.getMetadata());
         }
         return pul;

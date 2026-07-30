@@ -35,16 +35,14 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
+    private RuntimeIterator sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
@@ -53,7 +51,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.getChild(0);
+        this.sequenceIterator = this.children.get(0);
     }
 
     @Override
@@ -70,7 +68,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")
@@ -115,6 +113,20 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.results = new ArrayList<>();
+        this.currentIndex = 0;
+
+        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        for (int i = items.size() - 1; i >= 0; i--) {
+            this.results.add(items.get(i));
+        }
+
+        this.hasNext = this.results.size() != 0;
     }
 
     @Override

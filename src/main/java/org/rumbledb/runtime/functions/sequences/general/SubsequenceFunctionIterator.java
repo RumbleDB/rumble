@@ -37,16 +37,14 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serial;
 import java.util.List;
 
 public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
+    private RuntimeIterator sequenceIterator;
+    private RuntimeIterator positionIterator;
     private RuntimeIterator lengthIterator;
     private Item nextResult;
     private int startPosition;
@@ -60,10 +58,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.getChild(0);
-        this.positionIterator = this.getChild(1);
-        if (this.getChildren().size() == 3) {
-            this.lengthIterator = this.getChild(2);
+        this.sequenceIterator = this.children.get(0);
+        this.positionIterator = this.children.get(1);
+        if (this.children.size() == 3) {
+            this.lengthIterator = this.children.get(2);
         }
     }
 
@@ -187,6 +185,11 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        initializeLocal();
+    }
+
+    @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
     }
@@ -213,7 +216,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             this.hasNext = false;
             return;
         } else {
-            if (!this.sequenceIterator.isOpen()) {
+            if (this.sequenceIterator.isOpen()) {
+                this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
+            } else {
                 this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
             }
 
@@ -247,7 +252,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
-        if (this.getChildren().size() == 3) {
+        if (this.children.size() == 3) {
             Item lengthItem = this.lengthIterator
                 .materializeFirstItemOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());

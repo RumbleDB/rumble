@@ -30,14 +30,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.Serial;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
 public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private RuntimeIterator valueIterator;
     private RuntimeIterator labelIterator;
@@ -55,9 +53,9 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.valueIterator = this.getChild(0);
-        if (this.getChildren().size() == 2) {
-            this.labelIterator = this.getChild(1);
+        this.valueIterator = this.children.get(0);
+        if (this.children.size() == 2) {
+            this.labelIterator = this.children.get(1);
             this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
         } else {
             this.label = "";
@@ -66,6 +64,20 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         this.hasNext = this.valueIterator.hasNext();
         this.position = 0;
     }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.open(context);
+        if (this.children.size() == 2) {
+            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+        } else {
+            this.label = "";
+        }
+        this.valueIterator.reset(context);
+        this.hasNext = this.valueIterator.hasNext();
+        this.position = 0;
+    }
+
 
     @Override
     public void close() {

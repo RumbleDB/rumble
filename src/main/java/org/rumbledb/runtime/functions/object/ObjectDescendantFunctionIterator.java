@@ -29,7 +29,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -38,9 +37,8 @@ import java.util.Queue;
 public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
     public ObjectDescendantFunctionIterator(
@@ -97,10 +95,10 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     private void getDescendantObjects(List<Item> items) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantObjects(item.getItemMembers());
+                getDescendantObjects(item.getItems());
             } else if (item.isObject()) {
                 this.nextResults.add(item);
-                getDescendantObjects(item.getItemValues());
+                getDescendantObjects(item.getValues());
             } else {
                 // for atomic types: do nothing
             }
@@ -110,6 +108,14 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
+
+        setNextResult();
     }
 
     @Override

@@ -20,12 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -36,44 +30,43 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
 import sparksoniq.spark.SparkSessionManager;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private List<RuntimeIterator> keys;
     private List<RuntimeIterator> values;
     private boolean isMergedObject = false;
-    private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> keys,
             List<RuntimeIterator> values,
-            RuntimeStaticContext staticContext,
-            boolean mutable
+            RuntimeStaticContext staticContext
     ) {
-        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
+        super(keys, staticContext);
+        this.children.addAll(values);
         this.keys = keys;
         this.values = values;
-        this.mutable = mutable;
     }
 
     public ObjectConstructorRuntimeIterator(
             List<RuntimeIterator> childExpressions,
-            RuntimeStaticContext staticContext,
-            boolean mutable
+            RuntimeStaticContext staticContext
     ) {
-        super(childExpressions, staticContext);
+        super(null, staticContext);
+        this.children.addAll(childExpressions);
         this.isMergedObject = true;
-        this.mutable = mutable;
     }
 
     @Override
@@ -81,18 +74,18 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
-            for (RuntimeIterator iterator : this.getChildren()) {
+            for (RuntimeIterator iterator : this.children) {
                 iterator.open(dynamicContext);
                 while (iterator.hasNext()) {
                     ObjectItem item = (ObjectItem) iterator.next();
-                    keys.addAll(item.getStringKeys());
-                    values.addAll(item.getItemValues());
+                    keys.addAll(item.getKeys());
+                    values.addAll(item.getValues());
                 }
                 iterator.close();
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.mutable);
+                .createObjectItem(keys, values, getMetadata(), true);
 
         } else {
 
@@ -105,10 +98,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 valueIterator.close();
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
-                    values.add(
-                        ItemFactory.getInstance()
-                            .createArrayItem(currentResults, this.mutable)
-                    );
+                    values.add(ItemFactory.getInstance().createArrayItem(currentResults, true));
                 } else if (currentResults.size() == 1) {
                     values.add(currentResults.get(0));
                 } else {
@@ -139,7 +129,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
             }
             this.hasNext = false;
             return ItemFactory.getInstance()
-                .createObjectItem(keys, values, getMetadata(), this.mutable);
+                .createObjectItem(keys, values, getMetadata(), true);
         }
     }
 
@@ -152,9 +142,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
-        List<RuntimeIterator> objectsToMerge = this.getChildren();
-        if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
-            objectsToMerge = commaExpressionIterator.getOperands();
+        List<RuntimeIterator> objectsToMerge = this.children;
+        if (this.children.get(0) instanceof CommaExpressionIterator) {
+            objectsToMerge = ((CommaExpressionIterator) this.children.get(0)).getChildren();
         }
         if (
             !objectsToMerge.stream()
@@ -175,10 +165,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     return NativeClauseContext.NoNativeQuery;
                 }
                 nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
-                ItemType objectPartContextResultingItemType = objectPartContext.getResultingType().getItemType();
-                objectPartContextResultingItemType.getObjectKeysFacet().forEach(k -> {
+                objectPartContext.getResultingType().getItemType().getObjectContentFacet().forEach((k, v) -> {
                     keyNames.add(k);
-                    valueTypes.add(objectPartContextResultingItemType.getObjectContentFacet(k).getType());
+                    valueTypes.add(v.getType());
                 });
                 // special case: if there is only one item, spark treats it as a reference, in that case don't use .*
                 queries.add(
@@ -188,7 +177,8 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                         objectsToMerge.size() > 1 ? ".*" : ""
                     )
                 );
-            } else if (objectToMerge instanceof ObjectConstructorRuntimeIterator child) {
+            } else {
+                ObjectConstructorRuntimeIterator child = (ObjectConstructorRuntimeIterator) objectToMerge;
                 if (child.isMergedObject) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -251,8 +241,6 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                     .stream()
                     .map(value -> value.getResultingType().getItemType())
                     .forEach(valueTypes::add);
-            } else {
-                return NativeClauseContext.NoNativeQuery;
             }
         }
         String resultString = "(" + String.join(",", queries) + ")";

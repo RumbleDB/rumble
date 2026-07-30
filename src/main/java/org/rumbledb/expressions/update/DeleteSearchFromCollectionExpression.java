@@ -40,7 +40,7 @@ public class DeleteSearchFromCollectionExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("delete ");
         this.contentExpression.serializeToJSONiq(sb, 1);

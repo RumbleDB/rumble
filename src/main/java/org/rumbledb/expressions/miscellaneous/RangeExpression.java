@@ -31,8 +31,8 @@ import org.rumbledb.expressions.Node;
 
 public class RangeExpression extends Expression {
 
-    private final Expression leftExpression;
-    private final Expression rightExpression;
+    private Expression leftExpression;
+    private Expression rightExpression;
 
     public RangeExpression(Expression leftExpression, Expression rightExpression, ExceptionMetadata metadata) {
         super(metadata);
@@ -59,7 +59,7 @@ public class RangeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         // TODO Check if it makes sense
         indentIt(sb, indent);
         sb.append("(\n");

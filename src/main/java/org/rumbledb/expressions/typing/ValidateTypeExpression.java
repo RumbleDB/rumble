@@ -54,8 +54,7 @@ public class ValidateTypeExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -82,7 +81,7 @@ public class ValidateTypeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append(" validate type " + this.sequenceType.toString() + "\n");
         this.mainExpression.serializeToJSONiq(sb, 0);

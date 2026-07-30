@@ -1,7 +1,6 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -9,7 +8,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -18,18 +16,16 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-import java.io.Serial;
 import java.util.Collections;
 
 public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimeIterator iterator;
-    private final SequenceType sequenceType;
+    private RuntimeIterator iterator;
+    private SequenceType sequenceType;
 
-    private final ItemType itemType;
+    private ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
             RuntimeIterator iterator,
@@ -97,56 +93,34 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private Item checkTypePromotion(Item item) {
-        if (
-            item.isFunction()
-                && item.getIdentifier() != null
-                && item.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())
-        ) {
+        if (item.isFunction()) {
             return item;
-        }
-        if (
-            (item.isFunction() || item.isMap() || item.isArray())
-                && this.itemType.isFunctionItemType()
-                && this.itemType.getSignature() != null
-        ) {
-            return FunctionCoercion.coerceToFunctionItem(
-                item,
-                this.itemType,
-                getRuntimeStaticContext(),
-                this.exceptionMessage
-            );
         }
         if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if (!item.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + item.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + this.sequenceType
-                        + ".",
-                    getMetadata()
-            );
+        if (item.isFloat() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        item = CastIterator.castItemToType(
-            item,
-            this.sequenceType.getItemType(),
-            getMetadata(),
-            this.staticContext
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        }
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.floatItem)) {
+            return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
+        }
+        throw new UnexpectedTypeException(
+                this.exceptionMessage
+                    + item.getDynamicType().toString()
+                    + " cannot be promoted to type "
+                    + this.sequenceType
+                    + ".",
+                getMetadata()
         );
-        if (item == null) {
-            throw new OurBadException(
-                    "We were not able to promote an item to type " + this.sequenceType.getItemType()
-            );
-        }
-        return item;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }

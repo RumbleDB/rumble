@@ -59,7 +59,7 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         for (int i = 0; i < this.expressions.size(); i++) {
             this.expressions.get(i).serializeToJSONiq(sb, 0);

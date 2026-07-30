@@ -1,18 +1,18 @@
 package org.rumbledb.items.xml;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.w3c.dom.Node;
 
-import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
 public class CommentItem implements Item {
-    @Serial
     private static final long serialVersionUID = 1L;
     private String content;
     private Item parent;
@@ -31,11 +31,6 @@ public class CommentItem implements Item {
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        return new CommentItem(this.content);
-    }
-
-    @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         return ++current;
@@ -49,11 +44,6 @@ public class CommentItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
-    }
-
-    @Override
-    public void addParentToDescendants() {
-        // Comment nodes are leaves and therefore have no descendants to update.
     }
 
     @Override
@@ -90,10 +80,12 @@ public class CommentItem implements Item {
      * XDM 3.1 Section 6.6 Comment Node Accessors — node-name.
      *
      * "For a Comment Node, dm:node-name returns the empty sequence."
+     *
+     * An empty string is used here to represent the empty sequence.
      */
     @Override
-    public Name nodeName() {
-        return null;
+    public String nodeName() {
+        return "";
     }
 
     @Override
@@ -108,14 +100,23 @@ public class CommentItem implements Item {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof CommentItem otherComment)) {
+        if (!(other instanceof CommentItem)) {
             return false;
         }
+        CommentItem otherComment = (CommentItem) other;
         return this.getXmlDocumentPosition() != null
             && this.getXmlDocumentPosition().equals(otherComment.getXmlDocumentPosition());
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.content);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.content = input.readString();
+    }
 
     @Override
     public List<Item> namespaceNodes() {
@@ -216,3 +217,4 @@ public class CommentItem implements Item {
         return Collections.emptyList();
     }
 }
+

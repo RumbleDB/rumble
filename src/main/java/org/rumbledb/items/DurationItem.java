@@ -1,6 +1,9 @@
 package org.rumbledb.items;
 
-import java.io.Serial;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -15,21 +18,22 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
-
 
 public class DurationItem implements Item {
 
-    @Serial
     private static final long serialVersionUID = 1L;
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
-    private static final Pattern durationRegex = Pattern.compile(
+    boolean isDuration = false;
+    boolean isPeriod = false;
+    Pattern durationRegex = Pattern.compile(
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
 
+    @SuppressWarnings("unused")
     public DurationItem() {
         super();
     }
@@ -39,35 +43,19 @@ public class DurationItem implements Item {
         this.durationValue = value;
     }
 
-    public DurationItem(Period value) {
-        super();
-        this.periodValue = value;
-    }
-
     public DurationItem(String value) {
-        if (!durationRegex.matcher(value).matches()) {
+        if (!this.durationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid duration: " + value);
         }
         getDurationFromString(value);
     }
 
     @Override
-    public Item copy(boolean mutable) {
-        if (!Objects.isNull(this.durationValue)) {
-            return new DurationItem(this.durationValue);
-        }
-        if (!Objects.isNull(this.periodValue)) {
-            return new DurationItem(this.periodValue);
-        }
-        throw new IllegalStateException("Invalid DurationItem state");
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
-                otherItem,
+                (Item) otherItem,
                 ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
@@ -76,7 +64,6 @@ public class DurationItem implements Item {
         return false;
     }
 
-    @Override
     public Duration getDurationValue() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return Duration.ZERO;
@@ -89,15 +76,8 @@ public class DurationItem implements Item {
             .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
-    @Override
     public Period getPeriodValue() {
         return this.periodValue;
-    }
-
-    @Override
-    public Duration getDayTimeDurationComponent() {
-        Duration days = Duration.ofDays(Objects.isNull(this.periodValue) ? 0 : this.periodValue.getDays());
-        return days.plus(Objects.isNull(this.durationValue) ? Duration.ZERO : this.durationValue);
     }
 
     @Override
@@ -125,13 +105,22 @@ public class DurationItem implements Item {
         return Objects.hash(this.durationValue, this.periodValue);
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.getStringValue());
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        getDurationFromString(input.readString());
+    }
 
     private void getDurationFromString(String durationPeriodString) {
         try {
             if (!durationPeriodString.contains("PT")) {
                 String periodString = durationPeriodString.split("T")[0];
                 this.periodValue = normalizeMonthsToYears(Period.parse(periodString));
+                this.isPeriod = true;
             }
             if (durationPeriodString.contains("T")) {
                 String durationString = "PT" + durationPeriodString.split("T")[1];
@@ -139,6 +128,7 @@ public class DurationItem implements Item {
                     durationString = "-" + durationString;
                 }
                 this.durationValue = Duration.parse(durationString);
+                this.isDuration = true;
             }
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(
@@ -155,7 +145,7 @@ public class DurationItem implements Item {
         return BuiltinTypesCatalogue.durationItem;
     }
 
-    public static final Comparator<Period> periodComparator = (p1, p2) -> {
+    public static Comparator<Period> periodComparator = (p1, p2) -> {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };

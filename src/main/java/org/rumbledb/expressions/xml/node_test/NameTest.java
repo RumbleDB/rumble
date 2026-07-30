@@ -1,15 +1,15 @@
 package org.rumbledb.expressions.xml.node_test;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.context.Name;
-
-import java.io.Serial;
 
 // TODO: Add support for name test
 public class NameTest implements NodeTest {
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final Name qname;
-    private final String wildcardWithNCName;
+    private Name qname;
+    private String wildcardWithNCName;
 
     public NameTest(Name qname) {
         this.qname = qname;
@@ -37,14 +37,6 @@ public class NameTest implements NodeTest {
         return this.qname.toString();
     }
 
-    /**
-     * Expanded name (namespace URI + local name). Prefer {@link Name#equals} over string forms for node matching:
-     * the same expanded name can stringify differently when the prefix is empty vs absent.
-     */
-    public Name getExpandedName() {
-        return this.qname;
-    }
-
     public boolean hasWildcardOnly() {
         return this.wildcardWithNCName != null && this.wildcardWithNCName.equals("*");
     }
@@ -53,5 +45,15 @@ public class NameTest implements NodeTest {
         return this.wildcardWithNCName;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.qname);
+        kryo.writeObject(output, this.wildcardWithNCName);
+    }
 
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.qname = kryo.readObject(input, Name.class);
+        this.wildcardWithNCName = kryo.readObject(input, String.class);
+    }
 }

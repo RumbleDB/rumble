@@ -32,7 +32,7 @@ import java.util.List;
 public class LibraryModule extends Module {
 
     protected StaticContext staticContext;
-    private final String namespace;
+    private String namespace;
     private final Prolog prolog;
 
     public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
@@ -41,7 +41,6 @@ public class LibraryModule extends Module {
         this.namespace = namespace;
     }
 
-    @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
@@ -72,8 +71,7 @@ public class LibraryModule extends Module {
         return visitor.visitLibraryModule(this, argument);
     }
 
-    @Override
-    public void print(StringBuilder buffer, int indent) {
+    public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -86,7 +84,7 @@ public class LibraryModule extends Module {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("module namespace " + this.namespace + ";\n");
         this.prolog.serializeToJSONiq(sb, indent);

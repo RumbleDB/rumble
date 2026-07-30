@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.navigation;
 
-import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -65,9 +64,8 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
-    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private RuntimeIterator iterator;
     private Item lookupKey;
     private boolean contextLookup;
     private Item nextResult;
@@ -82,7 +80,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     private void initLookupKey(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+
+        RuntimeIterator lookupIterator = this.children.get(1);
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
@@ -151,6 +150,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
     protected void closeLocal() {
         this.iterator.close();
     }
@@ -198,7 +203,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
+        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
         initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
@@ -227,12 +232,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
+        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
             .getVariableDependencies();
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
-        if (outerContextSchema instanceof StructType structSchema) {
+        if (outerContextSchema instanceof StructType) {
+            StructType structSchema = (StructType) outerContextSchema;
             for (Name n : keyDependencies.keySet()) {
                 if (FlworDataFrameUtils.hasColumnForVariable(structSchema, n)) {
                     return NativeClauseContext.NoNativeQuery;
@@ -252,10 +258,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 && (this.iterator instanceof ContextExpressionIterator)
         ) {
             leftSchema = (nativeClauseContext.getResultingType() != null)
-                ? TypeMappings.getDataFrameDataTypeFromItemType(
-                    nativeClauseContext.getResultingType().getItemType(),
-                    this.staticContext
-                )
+                ? TypeMappings.getDataFrameDataTypeFromItemType(nativeClauseContext.getResultingType().getItemType())
                 : outerContextSchema;
             if (leftSchema instanceof StructType) {
                 newContext = new NativeClauseContext(
@@ -264,8 +267,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         nativeClauseContext.getResultingType()
                 );
             } else {
-                if (leftSchema instanceof ArrayType arrayType) {
-                    leftSchema = arrayType.elementType();
+                if (leftSchema instanceof ArrayType) {
+                    leftSchema = ((ArrayType) leftSchema).elementType();
                 }
                 newContext = new NativeClauseContext(
                         nativeClauseContext,
@@ -276,10 +279,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         } else {
             newContext = this.iterator.generateNativeQuery(nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
-                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
-                    newContext.getResultingType().getItemType(),
-                    this.staticContext
-                );
+                leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(newContext.getResultingType().getItemType());
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -291,8 +291,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         // get key (escape backtick)
         String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
-        if (!(leftSchema instanceof StructType structSchema)) {
-            if (this.getChild(1) instanceof StringRuntimeIterator) {
+        if (!(leftSchema instanceof StructType)) {
+            if (this.children.get(1) instanceof StringRuntimeIterator) {
                 if (getConfiguration().doStaticAnalysis()) {
                     throw new UnexpectedStaticTypeException(
                             "You are trying to look up the value associated with the field "
@@ -311,6 +311,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             return NativeClauseContext.NoNativeQuery;
         }
+        StructType structSchema = (StructType) leftSchema;
         if (
             Arrays.asList(structSchema.fieldNames()).contains(key)
                 || Arrays.asList(structSchema.fieldNames()).contains(sequenceKey)
@@ -334,10 +335,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             newContext.setSchema(field.dataType());
         } else if (
             newContext.getResultingType().getItemType().isObjectItemType()
-                && (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(key)
-                    || newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey))
+                && (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(key)
+                    || newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey))
         ) {
-            if (newContext.getResultingType().getItemType().getObjectKeysFacet().contains(sequenceKey)) {
+            if (newContext.getResultingType().getItemType().getObjectContentFacet().containsKey(sequenceKey)) {
                 key = sequenceKey;
             }
             String leftQuery = newContext.getResultingQuery();
@@ -348,7 +349,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             ItemType resultType = newContext.getResultingType()
                 .getItemType()
-                .getObjectContentFacet(key)
+                .getObjectContentFacet()
+                .get(key)
                 .getType();
             newContext.setResultingType(new SequenceType(resultType, SequenceType.Arity.OneOrZero));
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
@@ -360,7 +362,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             );
             newContext.setSchema(field.dataType());
         } else {
-            if (this.getChild(1) instanceof StringRuntimeIterator) {
+            if (this.children.get(1) instanceof StringRuntimeIterator) {
                 LogManager.getLogger("ObjectLookupIterator")
                     .warn(
                         "Object lookup on a DataFrame that does not have this column. Empty sequence returned."
@@ -381,9 +383,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
@@ -396,7 +397,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         }
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
-            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
+            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
             ItemType type = BuiltinTypesCatalogue.item;
             if (fieldDescriptor != null) {
                 type = fieldDescriptor.getType();

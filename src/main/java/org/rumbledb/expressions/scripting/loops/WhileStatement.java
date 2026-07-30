@@ -33,7 +33,7 @@ public class WhileStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuilder sb, int indent) {
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("while (");
         this.testCondition.serializeToJSONiq(sb, 0);
