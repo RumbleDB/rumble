@@ -1,8 +1,11 @@
 package org.rumbledb.expressions.xml.node_test;
 
 
+import lombok.Getter;
+
 import java.io.Serial;
 
+@Getter
 public class DocumentTest implements NodeTest {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -25,10 +28,6 @@ public class DocumentTest implements NodeTest {
 
     public boolean isEmptyCheck() {
         return this.nodeTest == null;
-    }
-
-    public NodeTest getNodeTest() {
-        return this.nodeTest;
     }
 
 

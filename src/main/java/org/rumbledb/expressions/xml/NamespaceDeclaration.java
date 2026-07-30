@@ -22,6 +22,7 @@ package org.rumbledb.expressions.xml;
 import java.io.Serial;
 import java.io.Serializable;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 /**
@@ -31,6 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
  * contribute namespace nodes and static namespace bindings, but do not construct
  * attribute nodes.
  */
+@Getter
 public class NamespaceDeclaration implements Serializable {
 
     @Serial
@@ -44,18 +46,6 @@ public class NamespaceDeclaration implements Serializable {
         this.prefix = prefix;
         this.uri = uri;
         this.metadata = metadata;
-    }
-
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    public String getUri() {
-        return this.uri;
-    }
-
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
     }
 
     public void serializeToJSONiq(StringBuilder sb) {

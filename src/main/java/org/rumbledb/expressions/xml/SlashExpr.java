@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -8,6 +9,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class SlashExpr extends Expression {
     private final Expression leftExpression;
     private final Expression rightExpression;
@@ -30,14 +32,6 @@ public class SlashExpr extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
-    }
-
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
     }
 
     @Override

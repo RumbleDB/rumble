@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
@@ -18,6 +19,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class DurationItem extends AbstractAtomicItem {
 
     @Serial
@@ -28,17 +30,11 @@ public class DurationItem extends AbstractAtomicItem {
         "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
     );
 
-    public DurationItem() {
-        super();
-    }
-
     public DurationItem(Duration value) {
-        super();
         this.durationValue = value;
     }
 
     public DurationItem(Period value) {
-        super();
         this.periodValue = value;
     }
 

@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.mutation;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -10,6 +11,7 @@ import org.rumbledb.expressions.scripting.statement.Statement;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class AssignStatement extends Statement {
     private final Expression assignExpression;
     private final Name name;
@@ -40,11 +42,4 @@ public class AssignStatement extends Statement {
         this.assignExpression.serializeToJSONiq(sb, indent);
     }
 
-    public Expression getAssignExpression() {
-        return this.assignExpression;
-    }
-
-    public Name getName() {
-        return this.name;
-    }
 }

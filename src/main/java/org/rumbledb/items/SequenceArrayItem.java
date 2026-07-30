@@ -26,17 +26,6 @@ public class SequenceArrayItem extends AbstractArrayItem {
     private boolean allSingletons;
     private boolean allSingletonsCached;
 
-    public SequenceArrayItem() {
-        this.memberSequences = new ArrayList<>();
-        this.mutabilityLevel = -1;
-        this.topLevelID = -1;
-        this.pathIn = "null";
-        this.location = "null";
-        this.collection = null;
-        this.allSingletons = true;
-        this.allSingletonsCached = true;
-    }
-
     public SequenceArrayItem(List<List<Item>> memberSequences) {
         this.memberSequences = memberSequences;
         this.mutabilityLevel = -1;

@@ -20,6 +20,8 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -31,29 +33,21 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@Getter
+@NoArgsConstructor // For Kryo serialization
 public class StringItem extends AbstractAtomicItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
     private String value;
 
-    public StringItem() {
-        super();
-    }
-
     public StringItem(String value) {
-        super();
         this.value = value;
     }
 
     @Override
     public Item copy(boolean mutable) {
         return new StringItem(this.value);
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override

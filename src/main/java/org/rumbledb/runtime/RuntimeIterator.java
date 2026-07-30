@@ -25,6 +25,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.*;
 
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -58,6 +59,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     @Serial
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
+    @Getter
     protected transient boolean isOpen;
     private List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
@@ -210,10 +212,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
     @Override
     public boolean hasNext() {
         return this.hasNext;
-    }
-
-    public boolean isOpen() {
-        return this.isOpen;
     }
 
     protected final RuntimeIterator getChild(int index) {
@@ -497,12 +495,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;
-    }
-
-    public void printToStandardError() {
-        StringBuilder sb = new StringBuilder();
-        this.print(sb, 0);
-        System.err.println(sb);
     }
 
     public void print(StringBuilder buffer, int indent) {

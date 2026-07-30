@@ -48,11 +48,6 @@ public class MapEntryItem extends AbstractMapItem {
     private final Item key;
     private final List<Item> value;
 
-    public MapEntryItem() {
-        this.key = null;
-        this.value = Collections.emptyList();
-    }
-
     public MapEntryItem(Item key, List<Item> value) {
         this.key = key;
         this.value = value;

@@ -56,7 +56,6 @@ public class ObjectItem extends AbstractMapItem {
     private Collection collection;
 
     public ObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
         this.keyStringToIndex = new HashMap<>();
@@ -69,7 +68,6 @@ public class ObjectItem extends AbstractMapItem {
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        super();
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
@@ -108,7 +106,6 @@ public class ObjectItem extends AbstractMapItem {
     public ObjectItem(Map<String, ?> keyValuePairs)
 
     {
-        super();
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();

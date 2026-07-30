@@ -46,9 +46,5 @@ public class InvalidComputedNamespaceConstructorException extends RumbleExceptio
     public InvalidComputedNamespaceConstructorException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.InvalidComputedNamespaceConstructorErrorCode, metadata);
     }
-
-    public InvalidComputedNamespaceConstructorException(String message) {
-        super(message, ErrorCode.InvalidComputedNamespaceConstructorErrorCode);
-    }
 }
 

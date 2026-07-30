@@ -49,7 +49,6 @@ public class ArrayItem extends AbstractArrayItem {
     private Collection collection;
 
     public ArrayItem() {
-        super();
         this.arrayItems = new ArrayList<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
@@ -59,7 +58,6 @@ public class ArrayItem extends AbstractArrayItem {
     }
 
     public ArrayItem(List<Item> arrayItems) {
-        super();
         this.arrayItems = arrayItems;
         this.mutabilityLevel = -1;
         this.topLevelID = -1;

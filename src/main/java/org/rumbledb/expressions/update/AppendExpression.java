@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.update;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -9,6 +10,7 @@ import org.rumbledb.expressions.Node;
 import java.util.Arrays;
 import java.util.List;
 
+@Getter
 public class AppendExpression extends Expression {
 
     private Expression arrayExpression;
@@ -28,14 +30,6 @@ public class AppendExpression extends Expression {
         }
         this.arrayExpression = arrayExpression;
         this.toAppendExpression = toAppendExpression;
-    }
-
-    public Expression getArrayExpression() {
-        return this.arrayExpression;
-    }
-
-    public Expression getToAppendExpression() {
-        return this.toAppendExpression;
     }
 
     @Override

@@ -45,12 +45,6 @@ public class MapWithAdditionalEntryItem extends AbstractMapItem {
     private final Item additionalKey;
     private final List<Item> additionalValue;
 
-    public MapWithAdditionalEntryItem() {
-        this.original = null;
-        this.additionalKey = null;
-        this.additionalValue = null;
-    }
-
     public MapWithAdditionalEntryItem(Item original, Item additionalKey, List<Item> additionalValue) {
         this.original = original;
         this.additionalKey = additionalKey;

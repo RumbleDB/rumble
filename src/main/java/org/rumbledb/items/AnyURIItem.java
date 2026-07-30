@@ -20,6 +20,8 @@
 
 package org.rumbledb.items;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -29,20 +31,17 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class AnyURIItem extends AbstractAtomicItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
     private String lexicalValue;
+
+    @Getter
     private URI value;
 
-    public AnyURIItem() {
-        super();
-    }
-
     public AnyURIItem(String value) {
-        super();
         if (value == null) {
             throw new IllegalArgumentException();
         }
@@ -75,16 +74,10 @@ public class AnyURIItem extends AbstractAtomicItem {
         return !this.lexicalValue.isEmpty();
     }
 
-    public URI getValue() {
-        return this.value;
-    }
-
     @Override
     public Object getVariantValue() {
         return getStringValue();
     }
-
-
 
     @Override
     public boolean isAnyURI() {

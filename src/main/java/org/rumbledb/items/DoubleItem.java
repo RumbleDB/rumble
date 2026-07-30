@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -33,18 +34,14 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class DoubleItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private double value;
 
-    public DoubleItem() {
-        super();
-    }
-
     public DoubleItem(double value) {
-        super();
         this.value = value;
     }
 
@@ -155,8 +152,6 @@ public class DoubleItem extends AbstractAtomicItem {
     public boolean isNaN() {
         return Double.isNaN(this.value);
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

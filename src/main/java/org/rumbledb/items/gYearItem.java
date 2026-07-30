@@ -24,10 +24,6 @@ public class gYearItem extends AbstractAtomicItem {
         "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
     );
 
-    public gYearItem() {
-        super();
-    }
-
     gYearItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.year = Year.of(dateTime.getYear());
         if (hasTimeZone) {

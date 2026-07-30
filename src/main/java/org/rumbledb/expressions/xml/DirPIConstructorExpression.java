@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -41,6 +42,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#doc-xquery31-DirPIConstructor">XQuery 3.1, 3.9.1.2: Direct
  *      Processing Instruction Constructors</a>
  */
+@Getter
 public class DirPIConstructorExpression extends Expression {
     private final String target;
     private final Expression contentExpression;
@@ -53,14 +55,6 @@ public class DirPIConstructorExpression extends Expression {
         super(metadata);
         this.target = target;
         this.contentExpression = contentExpression;
-    }
-
-    public String getTarget() {
-        return this.target;
-    }
-
-    public Expression getContentExpression() {
-        return this.contentExpression;
     }
 
     @Override

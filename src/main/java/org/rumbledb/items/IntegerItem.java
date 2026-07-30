@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -30,19 +31,14 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@NoArgsConstructor // For Kryo serialization
 public class IntegerItem extends AbstractAtomicItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
     private BigInteger value;
 
-    public IntegerItem() {
-        super();
-    }
-
     public IntegerItem(BigInteger value) {
-        super();
         this.value = value;
     }
 
@@ -110,8 +106,6 @@ public class IntegerItem extends AbstractAtomicItem {
     public boolean isDecimal() {
         return true;
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

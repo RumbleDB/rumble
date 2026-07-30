@@ -1,5 +1,7 @@
 package org.rumbledb.items.xml;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -11,17 +13,24 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+@NoArgsConstructor // For Kryo serialization
 public class NamespaceItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /**
+     * Nnamespace prefix (possibly empty).
+     */
+    @Getter
     private String prefix;
+
+    /**
+     * Namespaces URI.
+     */
+    @Getter
     private String uri;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public NamespaceItem() {
-    }
 
     /**
      * Constructor for a namespace item.
@@ -84,20 +93,6 @@ public class NamespaceItem extends AbstractNodeItem {
             return null;
         }
         return NamespaceBindingUtils.nameLocalOnly(this.prefix);
-    }
-
-    /**
-     * Returns the namespace prefix (possibly empty).
-     */
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    /**
-     * Returns the namespace URI.
-     */
-    public String getUri() {
-        return this.uri;
     }
 
     @Override

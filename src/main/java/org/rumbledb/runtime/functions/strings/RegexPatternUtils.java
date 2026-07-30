@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexFlagException;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
@@ -777,6 +778,7 @@ public final class RegexPatternUtils {
         return codePoint - ('a' - 'A');
     }
 
+    @Getter
     public static final class CompiledRegex {
         private final Pattern pattern;
         private final boolean quote;
@@ -788,17 +790,6 @@ public final class RegexPatternUtils {
             this.effectivePattern = effectivePattern;
         }
 
-        public Pattern getPattern() {
-            return this.pattern;
-        }
-
-        public boolean isQuote() {
-            return this.quote;
-        }
-
-        public String getEffectivePattern() {
-            return this.effectivePattern;
-        }
     }
 
     private static final class ClassRewriteResult {

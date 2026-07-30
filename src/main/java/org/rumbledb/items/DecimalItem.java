@@ -24,16 +24,15 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-
-
+@NoArgsConstructor // For Kryo serialization
 public class DecimalItem extends AbstractAtomicItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -43,17 +42,11 @@ public class DecimalItem extends AbstractAtomicItem {
     // with the concise lexical representation users expect from the source numeric value.
     private String displayValue;
 
-    public DecimalItem() {
-        super();
-    }
-
     public DecimalItem(BigDecimal decimal) {
-        super();
         this.value = decimal;
     }
 
     public DecimalItem(BigDecimal decimal, String displayValue) {
-        super();
         this.value = decimal;
         this.displayValue = displayValue;
     }
@@ -61,10 +54,6 @@ public class DecimalItem extends AbstractAtomicItem {
     @Override
     public Item copy(boolean mutable) {
         return new DecimalItem(this.value, this.displayValue);
-    }
-
-    public BigDecimal getValue() {
-        return this.value;
     }
 
     @Override
@@ -119,8 +108,6 @@ public class DecimalItem extends AbstractAtomicItem {
     public boolean isDecimal() {
         return true;
     }
-
-
 
     @Override
     public ItemType getDynamicType() {

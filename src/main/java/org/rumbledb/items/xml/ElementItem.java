@@ -1,5 +1,7 @@
 package org.rumbledb.items.xml;
 
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -17,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@NoArgsConstructor // For Kryo serialization
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,13 +30,10 @@ public class ElementItem extends AbstractNodeItem {
     private String stringValue;
     private Item parent;
     private ItemType typeAnnotation;
+    @Setter
     private boolean inheritNamespacesFromParent;
     // TODO: add base-uri, is-id, is-idrefs
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public ElementItem() {
-    }
 
     /**
      * Constructed element with a resolved expanded name (e.g. from XQuery direct/computed constructors).
@@ -425,10 +425,6 @@ public class ElementItem extends AbstractNodeItem {
      */
     public void setNodeName(Name nodeName) {
         this.dmNodeName = nodeName;
-    }
-
-    public void setInheritNamespacesFromParent(boolean inheritNamespacesFromParent) {
-        this.inheritNamespacesFromParent = inheritNamespacesFromParent;
     }
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {

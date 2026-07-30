@@ -35,10 +35,6 @@ public class AttributeOrNamespaceAfterNonAttributeException extends RumbleExcept
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AttributeOrNamespaceAfterNonAttributeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.AttributeOrNamespaceAfterNonAttributeErrorCode, metadata);
-    }
-
     public AttributeOrNamespaceAfterNonAttributeException(String message) {
         super(message, ErrorCode.AttributeOrNamespaceAfterNonAttributeErrorCode);
     }

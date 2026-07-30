@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
@@ -47,6 +48,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
@@ -161,10 +163,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         // do nothing
     }
 
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

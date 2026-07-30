@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
@@ -18,6 +19,7 @@ public class AttributeNodeItemType extends AbstractItemType {
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+    @Getter
     private Name nodeName;
 
     public AttributeNodeItemType() {
@@ -53,10 +55,6 @@ public class AttributeNodeItemType extends AbstractItemType {
             throw new UnsupportedOperationException("Named attribute node item type has no builtin QName");
         }
         return this.catalogueName;
-    }
-
-    public Name getNodeName() {
-        return this.nodeName;
     }
 
     @Override

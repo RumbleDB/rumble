@@ -20,6 +20,7 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -31,19 +32,14 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+@NoArgsConstructor // For Kryo serialization
 public class IntItem extends AbstractAtomicItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
     private int value;
 
-    public IntItem() {
-        super();
-    }
-
     public IntItem(int value) {
-        super();
         this.value = value;
     }
 

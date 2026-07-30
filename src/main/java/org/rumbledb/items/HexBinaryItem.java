@@ -1,5 +1,7 @@
 package org.rumbledb.items;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
@@ -9,10 +11,12 @@ import org.rumbledb.types.ItemType;
 import java.io.Serial;
 import java.util.regex.Pattern;
 
+@NoArgsConstructor // For Kryo serialization
 public class HexBinaryItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private byte[] value;
     private String stringValue;
 
@@ -20,10 +24,6 @@ public class HexBinaryItem extends AbstractAtomicItem {
     private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
     private final static String hexBinary = hexOctet + "*";
     private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
-
-    public HexBinaryItem() {
-        super();
-    }
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;
@@ -33,10 +33,6 @@ public class HexBinaryItem extends AbstractAtomicItem {
     @Override
     public Item copy(boolean mutable) {
         return new HexBinaryItem(this.stringValue);
-    }
-
-    public byte[] getValue() {
-        return this.value;
     }
 
     @Override

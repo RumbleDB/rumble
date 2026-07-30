@@ -1,5 +1,6 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.time.Duration;
@@ -14,6 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
+@NoArgsConstructor // For Kryo serialization
 public class YearMonthDurationItem extends AbstractAtomicItem {
 
     @Serial
@@ -21,12 +23,7 @@ public class YearMonthDurationItem extends AbstractAtomicItem {
     private Period value;
     private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
-    public YearMonthDurationItem() {
-        super();
-    }
-
     public YearMonthDurationItem(Period value) {
-        super();
         this.value = Period.of(value.getYears(), value.getMonths(), 0);
     }
 

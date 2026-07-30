@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.Getter;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
@@ -12,6 +13,7 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
+@Getter
 public class DocumentNodeItemType extends AbstractItemType {
 
     @Serial
@@ -40,10 +42,6 @@ public class DocumentNodeItemType extends AbstractItemType {
     @Override
     protected Object equalityKey() {
         return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
-    }
-
-    public ItemType getElementTestType() {
-        return this.elementTestType;
     }
 
     @Override

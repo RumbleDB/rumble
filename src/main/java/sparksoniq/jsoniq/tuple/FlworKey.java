@@ -43,10 +43,6 @@ public class FlworKey {
 
     }
 
-    List<Item> getKeyItems() {
-        return this.keyItems;
-    }
-
     @Override
     public int hashCode() {
         int result = 1;

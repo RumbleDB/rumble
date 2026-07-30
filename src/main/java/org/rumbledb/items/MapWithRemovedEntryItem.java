@@ -47,11 +47,6 @@ public class MapWithRemovedEntryItem extends AbstractMapItem {
     private final Item original;
     private final Set<Item> removedKeys;
 
-    public MapWithRemovedEntryItem() {
-        this.original = null;
-        this.removedKeys = null;
-    }
-
     public MapWithRemovedEntryItem(Item original, List<Item> removedKeys) {
         this.original = original;
         this.removedKeys = new HashSet<>();

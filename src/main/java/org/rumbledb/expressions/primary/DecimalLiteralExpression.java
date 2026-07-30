@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -30,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@Getter
 public class DecimalLiteralExpression extends Expression {
 
     private final BigDecimal value;
@@ -37,10 +39,6 @@ public class DecimalLiteralExpression extends Expression {
     public DecimalLiteralExpression(BigDecimal value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
-    }
-
-    public BigDecimal getValue() {
-        return this.value;
     }
 
     public boolean isIntValue() {

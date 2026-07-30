@@ -1,5 +1,7 @@
 package org.rumbledb.items;
 
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.Base64;
 import java.util.regex.Pattern;
@@ -10,6 +12,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
+@NoArgsConstructor // For Kryo serialization
 public class Base64BinaryItem extends AbstractAtomicItem {
 
     private static final String B64 = "[A-Za-z0-9+/]";
@@ -28,12 +31,9 @@ public class Base64BinaryItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private byte[] value;
     private String stringValue;
-
-    public Base64BinaryItem() {
-        super();
-    }
 
     public Base64BinaryItem(String stringValue) {
         stringValue = stringValue.replaceAll("\\s", "");
@@ -44,10 +44,6 @@ public class Base64BinaryItem extends AbstractAtomicItem {
     @Override
     public Item copy(boolean mutable) {
         return new Base64BinaryItem(this.stringValue);
-    }
-
-    public byte[] getValue() {
-        return this.value;
     }
 
     @Override

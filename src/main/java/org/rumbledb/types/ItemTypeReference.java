@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -12,6 +13,7 @@ import org.rumbledb.exceptions.UndefinedTypeException;
 import java.io.Serial;
 import java.util.*;
 
+@NoArgsConstructor
 public class ItemTypeReference extends AbstractItemType {
 
     @Serial
@@ -20,17 +22,12 @@ public class ItemTypeReference extends AbstractItemType {
     private ItemType resolvedItemType;
     private Name name;
 
-    public ItemTypeReference() {
-    }
-
     public ItemTypeReference(Name name) {
         if (name == null) {
             throw new OurBadException("A type name cannot be null!");
         }
         this.name = name;
     }
-
-
 
     @Override
     public boolean isResolved() {

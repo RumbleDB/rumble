@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -25,6 +26,7 @@ import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
+@Getter
 public class JSoundDataFrame implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -126,25 +128,12 @@ public class JSoundDataFrame implements Serializable {
         );
     }
 
-    public Dataset<Row> getDataFrame() {
-        return this.dataFrame;
-    }
-
-    public void show() {
-        System.out.println("Item type: " + this.itemType);
-        this.dataFrame.show();
-    }
-
     public JavaRDD<Row> javaRDD() {
         return this.dataFrame.javaRDD();
     }
 
     public long count() {
         return this.dataFrame.count();
-    }
-
-    public ItemType getItemType() {
-        return this.itemType;
     }
 
     public List<String> getKeys() {

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -21,6 +22,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
+@NoArgsConstructor
 public class ObjectItemType extends AbstractItemType {
 
     @Serial
@@ -44,9 +46,6 @@ public class ObjectItemType extends AbstractItemType {
     private List<Item> enumeration;
     private ItemType baseType;
     private int typeTreeDepth;
-
-    ObjectItemType() {
-    }
 
     ObjectItemType(
             Name name,
