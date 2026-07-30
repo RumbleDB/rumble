@@ -78,9 +78,11 @@ public class ComputedPIConstructorRuntimeIterator extends AtMostOneItemLocalRunt
         this.contentIterator = contentIterator;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
+    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+            RuntimeIterator... iterators
+    ) {
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
             if (iterator != null) {
                 children.add(iterator);
             }

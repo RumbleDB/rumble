@@ -56,7 +56,9 @@ public class AttributeNodeRuntimeIterator extends AtMostOneItemLocalRuntimeItera
         this.atomizedValues = atomizedValues;
     }
 
-    private static List<RuntimeIterator> createChildList(List<DataFunctionIterator> atomizedValues) {
+    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+            List<DataFunctionIterator> atomizedValues
+    ) {
         return Arrays.asList(atomizedValues.toArray(new RuntimeIterator[0]));
     }
 

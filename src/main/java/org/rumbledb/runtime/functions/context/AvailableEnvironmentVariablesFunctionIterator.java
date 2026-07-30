@@ -5,7 +5,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -21,7 +20,7 @@ public class AvailableEnvironmentVariablesFunctionIterator extends LocalFunction
     private int index;
 
     public AvailableEnvironmentVariablesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

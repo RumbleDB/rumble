@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -41,7 +40,7 @@ public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator 
     private static final long serialVersionUID = 1L;
 
     public MongoDBCollectionFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

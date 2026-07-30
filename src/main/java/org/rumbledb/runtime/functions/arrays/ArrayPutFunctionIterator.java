@@ -32,7 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -57,12 +56,12 @@ public class ArrayPutFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator positionIterator;
-    private final RuntimeIterator memberIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> positionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> memberIterator;
 
     public ArrayPutFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

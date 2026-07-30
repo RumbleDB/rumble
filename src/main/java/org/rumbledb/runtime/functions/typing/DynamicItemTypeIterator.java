@@ -5,7 +5,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
@@ -15,7 +14,10 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DynamicItemTypeIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DynamicItemTypeIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
@@ -24,7 +26,10 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
         return evaluate(this.getChild(0), context);
     }
 
-    private static Item evaluate(RuntimeIterator argumentPlan, DynamicContext context) {
+    private static Item evaluate(
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentPlan,
+            DynamicContext context
+    ) {
         List<Item> argument = argumentPlan.materialize(context);
         ItemType itemType = argument.get(0).getDynamicType();
         List<Item> structureItems = getStructureItems(argument, itemType);

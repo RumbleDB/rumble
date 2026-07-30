@@ -47,7 +47,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator
     private transient Cursor<Item> localCursor;
 
     protected HybridRuntimeIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -88,8 +88,8 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator
             JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
             this.result = RuntimePlanConversions.collectRDDWithLimit(
                 rdd,
-                this.getConfiguration(),
-                this.getMetadata()
+                this.getRuntimeStaticContext().getConfiguration(),
+                this.getRuntimeStaticContext().getMetadata()
             );
             this.hasNext = !this.result.isEmpty();
         }

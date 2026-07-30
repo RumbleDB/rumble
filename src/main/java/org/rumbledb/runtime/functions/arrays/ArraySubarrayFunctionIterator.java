@@ -21,7 +21,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator
         implements
@@ -37,12 +36,12 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator startIterator;
-    private final RuntimeIterator lengthIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> startIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lengthIterator;
 
     public ArraySubarrayFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -134,7 +133,11 @@ public class ArraySubarrayFunctionIterator extends HybridRuntimeIterator
             .createSequenceArrayItem(slicedMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 
-    private BigInteger materializeIntegerArgument(DynamicContext context, RuntimeIterator iterator, String label) {
+    private BigInteger materializeIntegerArgument(
+            DynamicContext context,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            String label
+    ) {
         Item item = null;
         try {
             item = iterator.materializeAtMostOne(context);

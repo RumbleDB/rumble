@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -38,10 +37,10 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator argument;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argument;
 
     public Exp10FunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -63,7 +62,10 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext powerQuery = this.argument.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext powerQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.argument,
+            nativeClauseContext
+        );
         if (powerQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

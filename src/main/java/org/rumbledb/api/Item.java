@@ -14,7 +14,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
@@ -721,7 +721,7 @@ public interface Item extends Serializable {
      */
     default void putLazyItemByKey(
             String key,
-            RuntimeIterator iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             boolean isArray
     )
@@ -1121,7 +1121,7 @@ public interface Item extends Serializable {
      * 
      * @return the function signature.
      */
-    default RuntimeIterator getBodyIterator() {
+    default RuntimePlan<Item> getBodyIterator() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

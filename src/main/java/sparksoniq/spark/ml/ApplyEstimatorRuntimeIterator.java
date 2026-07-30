@@ -19,7 +19,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -354,7 +353,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private Item generateTransformerFunctionItem(Transformer fittedModel, DynamicContext dynamicContext) {
-        RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
                 this.staticContext

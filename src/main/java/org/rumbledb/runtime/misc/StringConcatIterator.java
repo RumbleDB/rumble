@@ -31,18 +31,17 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
     public StringConcatIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);

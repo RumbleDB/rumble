@@ -28,7 +28,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -37,12 +36,12 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
     public OrOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightIterator), staticContext);
@@ -52,19 +51,29 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        boolean leftEffectiveBooleanValue = this.leftIterator.getEffectiveBooleanValue(dynamicContext);
-        boolean rightEffectiveBooleanValue = this.rightIterator.getEffectiveBooleanValue(dynamicContext);
+        boolean leftEffectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(
+            this.leftIterator,
+            dynamicContext
+        );
+        boolean rightEffectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(
+            this.rightIterator,
+            dynamicContext
+        );
 
         return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.leftIterator,
+            nativeClauseContext
+        );
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+        NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.rightIterator,
             new NativeClauseContext(leftResult, null, null)
         );
         if (rightResult == NativeClauseContext.NoNativeQuery) {

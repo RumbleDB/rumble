@@ -31,7 +31,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -58,7 +57,7 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
     );
 
     public GetTransformerFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -120,16 +119,17 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                     }
                 }
             }
-            RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                    transformerShortName,
-                    transformer,
-                    this.staticContext
-                        .toBuilder()
-                        .staticType(SequenceType.createSequenceType("object*"))
-                        .executionMode(ExecutionMode.DATAFRAME)
-                        .metadata(getMetadata())
-                        .build()
-            );
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator =
+                new ApplyTransformerRuntimeIterator(
+                        transformerShortName,
+                        transformer,
+                        this.staticContext
+                            .toBuilder()
+                            .staticType(SequenceType.createSequenceType("object*"))
+                            .executionMode(ExecutionMode.DATAFRAME)
+                            .metadata(getMetadata())
+                            .build()
+                );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(
                     SequenceType.createSequenceType("object*"),

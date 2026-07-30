@@ -9,7 +9,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -32,7 +31,7 @@ public class ParseXMLFragmentFunctionIterator extends AtMostOneItemLocalRuntimeI
     private static final String WRAPPER_ELEMENT_NAME = "rumble-parse-xml-fragment-wrapper";
 
     public ParseXMLFragmentFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

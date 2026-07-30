@@ -7,7 +7,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.net.URI;
@@ -19,7 +18,7 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     private static final long serialVersionUID = 1L;
 
     public ResolveURIFunctionIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

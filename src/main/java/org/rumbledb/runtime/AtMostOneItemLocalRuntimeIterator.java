@@ -47,7 +47,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
     private Item result;
 
     protected AtMostOneItemLocalRuntimeIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

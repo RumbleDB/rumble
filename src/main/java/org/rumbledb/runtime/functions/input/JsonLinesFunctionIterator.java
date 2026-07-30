@@ -30,7 +30,6 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.ResourceLocalCursor;
 
@@ -75,10 +74,10 @@ public class JsonLinesFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     public JsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

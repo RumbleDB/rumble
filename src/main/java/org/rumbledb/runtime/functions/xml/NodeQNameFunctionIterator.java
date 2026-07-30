@@ -74,7 +74,10 @@ public class NodeQNameFunctionIterator extends LocalFunctionCallIterator {
 
     private Item resultItem;
 
-    public NodeQNameFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public NodeQNameFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

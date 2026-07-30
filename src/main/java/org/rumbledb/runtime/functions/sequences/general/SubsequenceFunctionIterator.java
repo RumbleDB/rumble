@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -31,9 +33,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
@@ -46,12 +46,14 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.List;
 
-public class SubsequenceFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class SubsequenceFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
     private final RuntimePlan<Item> positionIterator;
     private final RuntimePlan<Item> lengthIterator;
     private int startPosition;
@@ -60,7 +62,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
                                                           // threshold
 
     public SubsequenceFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -112,7 +114,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
     private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.sequenceIterator,
+            dynamicContext
+        );
         setInstanceVariables(dynamicContext);
 
         List<FlworDataFrameColumn> allColumns = df.getColumns();
@@ -156,7 +161,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
      * for small values
      */
     private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.sequenceIterator,
+            dynamicContext
+        );
         setInstanceVariables(dynamicContext);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());

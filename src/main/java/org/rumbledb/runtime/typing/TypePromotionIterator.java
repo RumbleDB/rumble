@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
@@ -11,7 +13,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -32,20 +33,19 @@ import lombok.NonNull;
 import java.io.Serial;
 import java.util.Collections;
 
-public class TypePromotionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class TypePromotionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
 
-    private Item nextResult;
-    private int childIndex;
-
     public TypePromotionIterator(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -77,42 +77,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
                 getRuntimeStaticContext(),
                 getMetadata()
         );
-    }
-
-
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
-                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
-            }
-            this.childIndex++;
-        } else {
-            checkEmptySequence(
-                this.childIndex,
-                this.sequenceType,
-                this.exceptionMessage,
-                getMetadata()
-            );
-        }
-
-        this.hasNext = this.nextResult != null;
-        if (!hasNext()) {
-            return;
-        }
-
-        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
-            this.nextResult = promoteItem(
-                this.nextResult,
-                this.itemType,
-                this.sequenceType,
-                this.exceptionMessage,
-                getRuntimeStaticContext(),
-                getMetadata()
-            );
-        }
     }
 
     private static void checkEmptySequence(
@@ -149,7 +113,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
         checkEmptySequence(
             df.isEmptySequence() ? 0 : 1,
             this.sequenceType,
@@ -193,7 +160,10 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

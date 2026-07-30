@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -54,7 +53,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public SumFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -80,18 +79,18 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static Item computeSum(
             Item zeroElement,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        if (iterator.isDataFrame()) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return computeDataFrame(
                 zeroElement,
                 iterator,
                 context,
                 metadata
             );
-        } else if (iterator.isRDDOrDataFrame()) {
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeRDD(
                 zeroElement,
                 iterator,
@@ -152,7 +151,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static Item computeRDD(
             Item zeroElement,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -165,11 +164,14 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static Item computeDataFrame(
             Item zeroElement,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        HomogeneousItemDataFrame df = iterator.getDataFrame(context);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            iterator,
+            context
+        );
         if (df.isEmptySequence()) {
             return zeroElement;
         }
@@ -200,7 +202,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

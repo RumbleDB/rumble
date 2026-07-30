@@ -52,7 +52,7 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
     );
 
     public EncodeForURIFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

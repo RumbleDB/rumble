@@ -22,7 +22,6 @@ import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
 
@@ -32,7 +31,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public JsonDocFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

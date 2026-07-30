@@ -6,7 +6,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -14,12 +13,12 @@ import java.util.Arrays;
 public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testConditionIterator;
-    private final RuntimeIterator bodyIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testConditionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator;
 
     public WhileStatementIterator(
-            RuntimeIterator testConditionIterator,
-            RuntimeIterator bodyIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testConditionIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -32,7 +31,7 @@ public class WhileStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        while (this.testConditionIterator.getEffectiveBooleanValue(context)) {
+        while (org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.testConditionIterator, context)) {
             try {
                 DynamicContext childContext = new DynamicContext(context);
                 this.bodyIterator.materialize(childContext);

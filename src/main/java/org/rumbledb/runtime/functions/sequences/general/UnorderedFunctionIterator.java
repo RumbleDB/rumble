@@ -20,28 +20,30 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
 
-public class UnorderedFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class UnorderedFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     public UnorderedFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -61,7 +63,10 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator implements 
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            context
+        );
         return df;
     }
 

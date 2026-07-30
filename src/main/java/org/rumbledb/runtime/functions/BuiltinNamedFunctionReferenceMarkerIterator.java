@@ -44,7 +44,7 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends RuntimeIterator
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getMetadata());
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 
     @Override

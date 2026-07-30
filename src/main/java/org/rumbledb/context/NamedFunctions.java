@@ -29,7 +29,8 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
@@ -64,13 +65,13 @@ public class NamedFunctions implements Serializable {
 
     /**
      * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()} (same as
-     * {@link org.rumbledb.runtime.RuntimeIterator#getHighestExecutionMode()} for iterators constructed with that
+     * {@link org.rumbledb.runtime.RuntimePlan<Item>#getHighestExecutionMode()} for iterators constructed with that
      * context).
      */
-    public RuntimeIterator getUserDefinedFunctionCallIterator(
+    public RuntimePlan<Item> getUserDefinedFunctionCallIterator(
             FunctionIdentifier identifier,
             RuntimeStaticContext callerRuntimeContext,
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             boolean isTailOptimization
     ) {
         if (checkUserDefinedFunctionExists(identifier)) {
@@ -94,11 +95,11 @@ public class NamedFunctions implements Serializable {
      * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
      * callee's {@code executionModeForFunctionCall}
      */
-    public static RuntimeIterator buildFunctionItemCallIterator(
+    public static RuntimePlan<Item> buildFunctionItemCallIterator(
             Item functionItem,
             RuntimeStaticContext callerRuntimeContext,
             ExecutionMode executionModeForFunctionCall,
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             boolean isTailOptimization
     ) {
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
@@ -119,7 +120,7 @@ public class NamedFunctions implements Serializable {
             );
             sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
         }
-        SequenceType innerSequenceType = functionItem.getBodyIterator().getStaticType();
+        SequenceType innerSequenceType = functionItem.getBodyIterator().getRuntimeStaticContext().getStaticType();
         RuntimeStaticContext outerStaticContext = callerRuntimeContext
             .toBuilder()
             .staticType(sequenceType)
@@ -130,7 +131,7 @@ public class NamedFunctions implements Serializable {
             .staticType(innerSequenceType)
             .executionMode(executionModeForFunctionCall)
             .build();
-        RuntimeIterator functionCallIterator;
+        RuntimePlan<Item> functionCallIterator;
         if (functionItem.isBuiltinFunction()) {
             if (arguments.stream().anyMatch(a -> a == null)) {
                 throw new UnsupportedFeatureException(
@@ -212,9 +213,9 @@ public class NamedFunctions implements Serializable {
         return functionItem.copyForLookup();
     }
 
-    public static RuntimeIterator getBuiltInFunctionIterator(
+    public static RuntimePlan<Item> getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
+            List<RuntimePlan<Item>> arguments,
             RuntimeStaticContext callerStaticContext,
             boolean argumentsAlreadyCoerced
     ) {
@@ -240,10 +241,10 @@ public class NamedFunctions implements Serializable {
                     RuntimeStaticContext argStaticContext = callerStaticContext
                         .toBuilder()
                         .staticType(sequenceType)
-                        .executionMode(arguments.get(i).getHighestExecutionMode())
-                        .metadata(arguments.get(i).getMetadata())
+                        .executionMode(arguments.get(i).getRuntimeStaticContext().getExecutionMode())
+                        .metadata(arguments.get(i).getRuntimeStaticContext().getMetadata())
                         .build();
-                    RuntimeIterator argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
+                    RuntimePlan<Item> argumentIterator = FunctionCallArgumentConversion.wrapForFunctionConversion(
                         arguments.get(i),
                         sequenceType,
                         "Invalid argument for function " + identifier.getName() + ". ",
@@ -295,10 +296,10 @@ public class NamedFunctions implements Serializable {
                 .build();
         }
 
-        RuntimeIterator functionCallIterator;
+        RuntimePlan<Item> functionCallIterator;
         try {
             if (builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends RuntimePlan<Item>> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(FunctionIdentifier.class, List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(
                     builtinFunction.getIdentifier(),
@@ -306,7 +307,7 @@ public class NamedFunctions implements Serializable {
                     delegateContext
                 );
             } else {
-                Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
+                Constructor<? extends RuntimePlan<Item>> constructor = builtinFunction.getFunctionIteratorClass()
                     .getConstructor(List.class, RuntimeStaticContext.class);
                 functionCallIterator = constructor.newInstance(arguments, delegateContext);
             }
@@ -329,8 +330,8 @@ public class NamedFunctions implements Serializable {
         RuntimeStaticContext returnCheckContext = callerStaticContext
             .toBuilder()
             .staticType(catalogueReturnType)
-            .executionMode(functionCallIterator.getHighestExecutionMode())
-            .metadata(functionCallIterator.getMetadata())
+            .executionMode(functionCallIterator.getRuntimeStaticContext().getExecutionMode())
+            .metadata(functionCallIterator.getRuntimeStaticContext().getMetadata())
             .build();
         if (
             catalogueReturnType.isEmptySequence()

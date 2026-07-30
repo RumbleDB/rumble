@@ -6,14 +6,16 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.RuntimeIterator;
 
 public class FormatDateFunctionIterator extends DateFormattingFunctionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FormatDateFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FormatDateFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

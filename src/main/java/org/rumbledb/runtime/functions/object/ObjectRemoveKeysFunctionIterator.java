@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
@@ -30,9 +32,7 @@ import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -40,7 +40,9 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -49,16 +51,16 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator impl
 
     private static final class RemovalLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator inputPlan;
-        private final RuntimeIterator keysPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> inputCursor;
         private List<String> keys;
 
         private RemovalLocalCursor(
-                RuntimeIterator inputPlan,
-                RuntimeIterator keysPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keysPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -128,10 +130,10 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator impl
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     public ObjectRemoveKeysFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -184,7 +186,8 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator impl
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = this.iterator.getDataFrame(context);
+        HomogeneousItemDataFrame dataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.iterator, context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(

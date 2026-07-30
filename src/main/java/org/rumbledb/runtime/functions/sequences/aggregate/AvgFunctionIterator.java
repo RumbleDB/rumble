@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -46,7 +45,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public AvgFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -54,8 +53,8 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimeIterator child = this.getChild(0);
-        if (!child.isRDDOrDataFrame()) {
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child = this.getChild(0);
+        if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeLocalAverage(child, context, getMetadata());
         }
         Item count = CountFunctionIterator.computeCount(

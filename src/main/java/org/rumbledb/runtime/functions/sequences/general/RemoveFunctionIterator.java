@@ -28,7 +28,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -48,7 +47,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
 
     public RemoveFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

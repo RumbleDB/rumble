@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -37,9 +39,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
@@ -61,7 +61,9 @@ import java.math.BigInteger;
 import java.math.BigDecimal;
 import java.util.*;
 
-public class PredicateIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class PredicateIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -76,14 +78,14 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private final RuntimeIterator filter;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filter;
     private final boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator filterExpression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filterExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, filterExpression), staticContext);
@@ -92,17 +94,18 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
-    public RuntimeIterator sequenceIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator() {
         return this.iterator;
     }
 
-    public RuntimeIterator predicateIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator() {
         return this.filter;
     }
 
     private boolean isBooleanOnlyFilter() {
-        return !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)
-            && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
+        return !org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.filter)
+            .containsKey(Name.CONTEXT_POSITION)
+            && !org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.filter).containsKey(Name.CONTEXT_COUNT)
             && (this.filter instanceof BooleanRuntimeIterator
                 || this.filter instanceof AndOperationIterator
                 || this.filter instanceof OrOperationIterator
@@ -112,8 +115,8 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
 
     private static final class PredicateLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator inputPlan;
-        private final RuntimeIterator filterPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filterPlan;
         private final boolean booleanOnlyFilter;
         private final DynamicContext context;
         private DynamicContext filterContext;
@@ -122,8 +125,8 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         private long position;
 
         private PredicateLocalCursor(
-                RuntimeIterator inputPlan,
-                RuntimeIterator filterPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filterPlan,
                 boolean booleanOnlyFilter,
                 DynamicContext context,
                 ExceptionMetadata metadata
@@ -138,7 +141,10 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         @Override
         protected void openLocal() {
             this.filterContext = new DynamicContext(this.context);
-            if (this.filterPlan.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
+            if (
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.filterPlan)
+                    .containsKey(Name.CONTEXT_COUNT)
+            ) {
                 this.filterContext.getVariableValues().setLast(countInput());
             }
             this.position = 0;
@@ -173,7 +179,7 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
                 } catch (MoreThanOneItemException e) {
                     throw new InvalidArgumentTypeException(
                             "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
-                            this.filterPlan.getMetadata()
+                            this.filterPlan.getRuntimeStaticContext().getMetadata()
                     );
                 }
                 if (matches(filterResult)) {
@@ -246,8 +252,8 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = this.getChild(0);
-        RuntimeIterator filter = this.getChild(1);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filter = this.getChild(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
@@ -256,7 +262,7 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
+            if (org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(filter).containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -271,8 +277,9 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
-        RuntimeIterator filter = this.getChild(1);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filter = this.getChild(1);
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
                 FLWOR_CLAUSES.FILTER,
                 childDataFrame.getDataFrame().schema(),
@@ -280,7 +287,7 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         );
         NativeClauseContext nativeQuery = NativeClauseContext.NoNativeQuery;
         if (getConfiguration().nativeExecution()) {
-            nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+            nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(filter, nativeClauseContext);
         }
         if (nativeQuery == NativeClauseContext.NoNativeQuery || !this.isBooleanOnlyFilter) {
             if (this.isBooleanOnlyFilter) {
@@ -376,9 +383,9 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.filter.getVariableDependencies());
+        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.filter));
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(this.iterator.getVariableDependencies());
+        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.iterator));
         return result;
     }
 
@@ -404,7 +411,10 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
         );
         FLWOR_CLAUSES previousType = arrayReferenceQuery.getClauseType();
         arrayReferenceQuery.setClauseType(FLWOR_CLAUSES.FILTER);
-        NativeClauseContext filterQuery = this.filter.generateNativeQuery(arrayReferenceQuery);
+        NativeClauseContext filterQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.filter,
+            arrayReferenceQuery
+        );
         if (
             filterQuery == NativeClauseContext.NoNativeQuery
                 || filterQuery.getResultingType().getItemType() != BuiltinTypesCatalogue.booleanItem

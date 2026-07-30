@@ -40,7 +40,6 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -80,11 +79,11 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
     private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator child;
     private transient DynamicContext tupleContext;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
 
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(expression), staticContext);
@@ -197,9 +196,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -231,7 +230,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         StructType oldSchema = df.schema();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             oldSchema,
-            this.expression.getVariableDependencies(),
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.expression),
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
@@ -240,7 +239,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Map<Name, VariableDependency> dependencies = org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(
+            this.expression
+        );
         Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
         Map<Name, VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {
@@ -253,9 +254,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -270,7 +271,11 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                                                                                                // from new tuple
 
-                HomogeneousItemDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
+                HomogeneousItemDataFrame intermediateResult =
+                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        this.expression,
+                        dynamicContext
+                    );
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -283,7 +288,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
             }
             return result;
         }
-        if (!this.child.isDataFrame()) {
+        if (!this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             throw new OurBadException(
                     "Unexpected application state: a dataframe was expected even though the previous tuple does not produce one.",
                     getMetadata()
@@ -302,7 +307,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
             );
         }
         if (nativeQueryResult != null) {
-            if (this.expression.getStaticType().getItemType().isObjectItemType()) {
+            if (this.expression.getRuntimeStaticContext().getStaticType().getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
                     nativeQueryResult.sparkSession()
@@ -316,7 +321,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
             }
             HomogeneousItemDataFrame result = new HomogeneousItemDataFrame(
                     nativeQueryResult,
-                    this.expression.getStaticType().getItemType()
+                    this.expression.getRuntimeStaticContext().getStaticType().getItemType()
             );
             return result;
         }
@@ -324,7 +329,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         JavaRDD<Item> rdd = getRDDAux(context);
         return ValidateTypeIterator.convertRDDToValidDataFrame(
             rdd,
-            this.expression.getStaticType().getItemType(),
+            this.expression.getRuntimeStaticContext().getStaticType().getItemType(),
             context,
             true,
             this.staticContext
@@ -334,7 +339,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this.expression.getVariableDependencies());
+            new TreeMap<>(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.expression));
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
@@ -359,8 +364,8 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         }
         buffer.append("\n");
 
-        this.child.print(buffer, indent + 1);
-        this.expression.print(buffer, indent + 1);
+        org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
+        org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.expression, buffer, indent + 1);
     }
 
     @Serial
@@ -386,14 +391,17 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
      */
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             StructType inputSchema,
             DynamicContext context
     ) {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            iterator,
+            letContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -455,13 +463,19 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         );
         subQueryContext.setRowId(rowIdField);
         // get child query
-        NativeClauseContext childContext = this.child.generateNativeQuery(subQueryContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            subQueryContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         // get expression
         childContext.setClauseType(FLWOR_CLAUSES.RETURN);
-        NativeClauseContext expressionContext = this.expression.generateNativeQuery(childContext);
+        NativeClauseContext expressionContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.expression,
+            childContext
+        );
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -611,7 +625,7 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
         }
         PendingUpdateList result = new PendingUpdateList();
 
-        if (!this.expression.isRDDOrDataFrame()) {
+        if (!this.expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             this.child.open(context);
             this.tupleContext = new DynamicContext(context); // assign current context
 
@@ -621,7 +635,10 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
                 this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new
                                                                                                   // variables
                 // from new tuple
-                result.mergeUpdates(this.expression.getPendingUpdateList(this.tupleContext), this.getMetadata());
+                result.mergeUpdates(
+                    org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.expression, this.tupleContext),
+                    this.getRuntimeStaticContext().getMetadata()
+                );
 
             }
             this.child.close();
@@ -630,9 +647,9 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
             // execution reaches here when there are no more results
         }
 
-        RuntimeIterator expression = this.getChild(0);
-        if (expression.isRDDOrDataFrame()) {
-            if (this.child.isDataFrame())
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression = this.getChild(0);
+        if (expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            if (this.child.getRuntimeStaticContext().getExecutionMode().isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -646,8 +663,11 @@ public class ReturnClauseIterator extends HybridRuntimeIterator
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                 // from new tuple
 
-                PendingUpdateList intermediateResult = this.expression.getPendingUpdateList(dynamicContext);
-                result.mergeUpdates(intermediateResult, this.getMetadata());
+                PendingUpdateList intermediateResult = org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(
+                    this.expression,
+                    dynamicContext
+                );
+                result.mergeUpdates(intermediateResult, this.getRuntimeStaticContext().getMetadata());
             }
         }
         return result;

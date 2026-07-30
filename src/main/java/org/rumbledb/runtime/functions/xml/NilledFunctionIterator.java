@@ -69,7 +69,10 @@ public class NilledFunctionIterator extends LocalFunctionCallIterator {
     private List<Item> resultItems;
     private int currentIndex;
 
-    public NilledFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public NilledFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

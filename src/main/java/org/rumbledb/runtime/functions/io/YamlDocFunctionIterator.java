@@ -49,12 +49,12 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private YAMLParser parser;
     private Item nextResult;
 
     public YamlDocFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -129,7 +129,7 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
         } catch (IOException e) {
             RumbleException r = new ParsingException(
                     "An error happened while parsing YAML. YAML is not well-formed!",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
             r.initCause(e);
             throw r;

@@ -31,7 +31,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
     private final RuntimePlan<Item> arraysIterator;
 
     public ArrayJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

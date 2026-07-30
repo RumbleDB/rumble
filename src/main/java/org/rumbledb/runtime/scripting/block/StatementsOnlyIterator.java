@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -14,10 +13,13 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public StatementsOnlyIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public StatementsOnlyIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(
             children,
-            staticContext.toBuilder().isSequential(children.stream().anyMatch(RuntimeIterator::isSequential)).build()
+            staticContext.toBuilder().isSequential(true).build()
         );
     }
 

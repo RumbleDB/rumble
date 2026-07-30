@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -40,11 +39,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator baseIterator;
-    private final RuntimeIterator exponentIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> baseIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exponentIterator;
 
     public PowFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -89,12 +88,17 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.baseIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext baseQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.baseIterator,
+            nativeClauseContext
+        );
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = this.exponentIterator
-            .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
+        NativeClauseContext exponentQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.exponentIterator,
+            new NativeClauseContext(baseQuery, null, null)
+        );
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

@@ -22,7 +22,7 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
@@ -356,7 +356,7 @@ public class AnnotatedItem implements Item {
     @Override
     public void putLazyItemByKey(
             String key,
-            RuntimeIterator iterator,
+            RuntimePlan<Item> iterator,
             DynamicContext context,
             boolean isArray
     )
@@ -574,7 +574,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public RuntimeIterator getBodyIterator() {
+    public RuntimePlan<Item> getBodyIterator() {
         return this.itemToAnnotate.getBodyIterator();
     }
 

@@ -28,7 +28,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -44,7 +43,7 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public XmlFilesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

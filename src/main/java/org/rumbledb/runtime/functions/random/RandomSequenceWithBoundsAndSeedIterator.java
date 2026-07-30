@@ -5,7 +5,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -22,7 +21,10 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
     private int size;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceWithBoundsAndSeedIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public RandomSequenceWithBoundsAndSeedIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 

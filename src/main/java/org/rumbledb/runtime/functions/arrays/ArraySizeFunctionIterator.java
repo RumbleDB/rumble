@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -39,7 +38,7 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final long serialVersionUID = 1L;
 
     public ArraySizeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -57,7 +56,10 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             return new NativeClauseContext(
                     nativeClauseContext,

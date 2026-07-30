@@ -37,7 +37,6 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -49,12 +48,12 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
     @Serial
     private static final long serialVersionUID = 1L;
     private final MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
     public MultiplicativeOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             RuntimeStaticContext staticContext
     ) {
@@ -570,14 +569,20 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.leftIterator,
+            nativeClauseContext
+        );
         if (leftResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
         if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.rightIterator,
+            nativeClauseContext
+        );
         if (rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

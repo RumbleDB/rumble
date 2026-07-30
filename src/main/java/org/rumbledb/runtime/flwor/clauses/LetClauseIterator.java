@@ -36,7 +36,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -75,13 +74,13 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
     private SequenceType sequenceType;
-    private RuntimeIterator assignmentIterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignmentIterator;
 
     public LetClauseIterator(
             RuntimeTupleIterator child,
             Name variableName,
             SequenceType sequenceType,
-            RuntimeIterator assignmentIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignmentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(child, staticContext);
@@ -107,7 +106,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
         private final RuntimeTupleIterator childPlan;
         private final Name variableName;
-        private final RuntimeIterator assignmentPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignmentPlan;
         private final int evaluationDepthLimit;
         private final RumbleRuntimeConfiguration configuration;
         private final DynamicContext context;
@@ -120,7 +119,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         private LetLocalCursor(
                 RuntimeTupleIterator childPlan,
                 Name variableName,
-                RuntimeIterator assignmentPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> assignmentPlan,
                 int evaluationDepthLimit,
                 RumbleRuntimeConfiguration configuration,
                 DynamicContext context,
@@ -165,13 +164,16 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             FlworTuple result = inputTuple == null
                 ? new FlworTuple(this.configuration)
                 : new FlworTuple(inputTuple);
-            if (this.assignmentPlan.isDataFrame()) {
+            if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                 result.putValue(
                     this.variableName,
-                    this.assignmentPlan.getDataFrame(this.tupleContext)
+                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        this.assignmentPlan,
+                        this.tupleContext
+                    )
                 );
                 this.tupleContext = new DynamicContext(this.context);
-            } else if (this.assignmentPlan.isRDDOrDataFrame()) {
+            } else if (this.assignmentPlan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 result.putValue(
                     this.variableName,
                     this.assignmentPlan.getRDD(this.tupleContext)
@@ -227,7 +229,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                 return df;
             }
 
-            if (this.assignmentIterator.isRDDOrDataFrame()) {
+            if (this.assignmentIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
@@ -267,8 +269,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
         }
 
-        RuntimeIterator sequenceIterator = predicateAssignmentIterator.sequenceIterator();
-        RuntimeIterator predicateIterator = predicateAssignmentIterator.predicateIterator();
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator = predicateAssignmentIterator
+            .sequenceIterator();
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator = predicateAssignmentIterator
+            .predicateIterator();
 
         // Is the left-hand-side of this predicate expression independent from input tuples?
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
@@ -278,8 +282,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             );
         }
 
-        List<RuntimeIterator> contextItemEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> inputTupleEqualityCriteria = new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> contextItemEqualityCriteria =
+            new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> inputTupleEqualityCriteria =
+            new ArrayList<>();
         String failureMessage = extractEqualityComparisonsForConjunction(
             predicateIterator,
             contextItemEqualityCriteria,
@@ -300,7 +306,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
-        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
+        Map<Name, VariableDependency> predicateDependencies = org.rumbledb.runtime.plan.VariableDependencyRuntimePlan
+            .get(predicateIterator);
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             throw new UnsupportedFeatureException(
                     "Rumble detected an equi-join, but does not support yet position() in the join predicate.",
@@ -328,7 +335,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         ).getDataFrame();
 
         // We compute the hashes for both sides of the equality predicate.
-        RuntimeIterator contextItemValueExpression = getJoinKeyExpression(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contextItemValueExpression = getJoinKeyExpression(
             contextItemEqualityCriteria,
             getMetadata()
         );
@@ -344,7 +351,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             getConfiguration()
         );
 
-        RuntimeIterator inputTupleValueExpression = getJoinKeyExpression(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputTupleValueExpression = getJoinKeyExpression(
             inputTupleEqualityCriteria,
             getMetadata()
         );
@@ -455,7 +462,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             .metadata(getMetadata())
             .build();
 
-        RuntimeIterator filteringPredicateIterator = new PredicateIterator(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
                         staticContext
@@ -478,8 +485,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         return new FlworDataFrame(inputDF);
     }
 
-    private RuntimeIterator getJoinKeyExpression(
-            List<RuntimeIterator> equalityCriteria,
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getJoinKeyExpression(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> equalityCriteria,
             ExceptionMetadata metadata
     ) {
         if (equalityCriteria.size() == 1) {
@@ -504,14 +511,14 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     private static String extractEqualityComparisonsForConjunction(
-            RuntimeIterator predicateIterator,
-            List<RuntimeIterator> contextItemEqualityCriteria,
-            List<RuntimeIterator> inputTupleEqualityCriteria
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> contextItemEqualityCriteria,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> inputTupleEqualityCriteria
     ) {
-        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        Stack<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimeIterator iterator = candidateIterators.pop();
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andIterator) {
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
@@ -524,13 +531,17 @@ public class LetClauseIterator extends RuntimeTupleIterator {
                 return "We did detect a predicate expression, but the criterion inside the predicate is not a value equality comparison.";
             }
 
-            RuntimeIterator leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-            RuntimeIterator rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftHandSideOfJoinEqualityCriterion =
+                comparisonIterator.getLeftIterator();
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightHandSideOfJoinEqualityCriterion =
+                comparisonIterator.getRightIterator();
             Set<Name> leftDependencies = new HashSet<>(
-                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                    org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(leftHandSideOfJoinEqualityCriterion)
+                        .keySet()
             );
             Set<Name> rightDependencies = new HashSet<>(
-                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                    org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(rightHandSideOfJoinEqualityCriterion)
+                        .keySet()
             );
 
             if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
@@ -557,12 +568,12 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
-            RuntimeIterator sequenceIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator,
             RuntimeTupleIterator tupleIterator
     ) {
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
-                sequenceIterator.getVariableDependencies().keySet()
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(sequenceIterator).keySet()
         );
         intersection.retainAll(tupleIterator.getOutputTupleVariableNames());
         return intersection.isEmpty();
@@ -571,7 +582,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     @Override
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
-            new TreeMap<>(this.assignmentIterator.getVariableDependencies());
+            new TreeMap<>(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.assignmentIterator));
         if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
@@ -598,7 +609,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             buffer.append("  ");
         }
         buffer.append("Variable ").append(this.variableName).append("\n");
-        this.assignmentIterator.print(buffer, indent + 1);
+        org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.assignmentIterator, buffer, indent + 1);
     }
 
     @Override
@@ -619,8 +630,8 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<Name, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> exprDependency =
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.assignmentIterator);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -663,7 +674,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             Dataset<Row> dataFrame,
             Name newVariableName,
             SequenceType sequenceType,
-            RuntimeIterator newVariableExpression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> newVariableExpression,
             DynamicContext context,
             List<Name> variablesInInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
@@ -703,8 +714,9 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             }
         }
 
-        // for (Name n : newVariableExpression.getVariableDependencies().keySet()) {
-        // System.out.println(n.toString() + " -> " + newVariableExpression.getVariableDependencies().get(n));
+        // for (Name n : org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(newVariableExpression).keySet()) {
+        // System.out.println(n.toString() + " -> " +
+        // org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(newVariableExpression).get(n));
         // }
         //
         // for (Name n : variablesInInputTuple) {
@@ -714,7 +726,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         // was not possible, we use let udf
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
             inputSchema,
-            newVariableExpression.getVariableDependencies(),
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(newVariableExpression),
             variablesInInputTuple,
             null
         );
@@ -780,7 +792,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
 
     public static boolean registerLetClauseUDF(
             Dataset<Row> dataFrame,
-            RuntimeIterator newVariableExpression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
             List<FlworDataFrameColumn> UDFcolumns,
@@ -901,7 +913,7 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             Name newVariableName,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
@@ -909,7 +921,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
         letContext.setView(input);
-        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            iterator,
+            letContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -959,10 +974,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
-        if (this.assignmentIterator.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.assignmentIterator)) {
             return true;
         }
         switch (getHighestExecutionMode()) {
@@ -982,7 +997,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.child != null) {
-            nativeClauseContext = this.child.generateNativeQuery(nativeClauseContext);
+            nativeClauseContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                this.child,
+                nativeClauseContext
+            );
             if (nativeClauseContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
@@ -990,7 +1008,10 @@ public class LetClauseIterator extends RuntimeTupleIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         nativeClauseContext.setClauseType(FLWOR_CLAUSES.LET);
-        NativeClauseContext expressionContext = this.assignmentIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext expressionContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.assignmentIterator,
+            nativeClauseContext
+        );
         if (expressionContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

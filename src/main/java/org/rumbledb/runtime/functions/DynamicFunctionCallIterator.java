@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import java.io.Serial;
 import java.util.List;
 import java.util.stream.Stream;
@@ -39,29 +41,29 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.types.SequenceType;
 
-public class DynamicFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
     @Serial
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private final RuntimeIterator functionItemIterator;
-    private final List<RuntimeIterator> functionArguments;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemIterator;
+    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
     private final boolean isPartialApplication;
 
     public DynamicFunctionCallIterator(
-            RuntimeIterator functionItemIterator,
-            List<RuntimeIterator> functionArguments,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemIterator,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -103,8 +105,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
     }
 
     private static FunctionCall resolveFunctionCall(
-            RuntimeIterator functionItemPlan,
-            List<RuntimeIterator> functionArguments,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
             boolean partialApplication,
             ExecutionMode callerExecutionMode,
             RuntimeStaticContext staticContext,
@@ -138,7 +140,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
                         staticContext.getMetadata()
                 );
             }
-            RuntimeIterator keyIterator = functionArguments.get(0);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -167,7 +169,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
                         staticContext.getMetadata()
                 );
             }
-            RuntimeIterator keyIterator = functionArguments.get(0);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = functionArguments.get(0);
             RuntimeStaticContext callStaticContext = RuntimeStaticContext.builder()
                 .configuration(staticContext.getConfiguration())
                 .staticType(SequenceType.createSequenceType("item*"))
@@ -219,7 +221,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
 
     private static ExecutionMode getCalleeExecutionModeForFunctionItemCall(
             Item functionItem,
-            List<RuntimeIterator> functionArguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
             boolean partialApplication,
             RuntimeStaticContext staticContext
     ) {
@@ -234,9 +236,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
                 );
             // assume that the passed builtin function is valid
             ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (RuntimeIterator arg : functionArguments) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arg : functionArguments) {
                 if (arg != null) {
-                    firstArgumentMode = arg.getHighestExecutionMode();
+                    firstArgumentMode = arg.getRuntimeStaticContext().getExecutionMode();
                     break;
                 }
             }
@@ -246,10 +248,13 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
                 staticContext.getConfiguration()
             );
         }
-        if (functionItem.getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
+        if (
+            functionItem
+                .getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator
+        ) {
             return coercionRuntimeIterator.getWrappedCallableExecutionMode();
         }
-        return functionItem.getBodyIterator().getHighestExecutionMode();
+        return functionItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
     @Override
@@ -264,7 +269,10 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            return resolveFunctionCall(dynamicContext).iterator.getDataFrame(dynamicContext);
+            return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                resolveFunctionCall(dynamicContext).iterator,
+                dynamicContext
+            );
         } catch (InvalidRumbleMLParamException e) {
             String m = e.getMLMessage();
             throw new InvalidRumbleMLParamException(m, getMetadata());
@@ -275,9 +283,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
 
     private static final class FunctionCall {
         private final Item functionItem;
-        private final RuntimeIterator iterator;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
-        private FunctionCall(Item functionItem, RuntimeIterator iterator) {
+        private FunctionCall(Item functionItem, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator) {
             this.functionItem = functionItem;
             this.iterator = iterator;
         }
@@ -285,8 +293,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
 
     private static final class DynamicCallLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator functionItemPlan;
-        private final List<RuntimeIterator> functionArguments;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan;
+        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments;
         private final boolean partialApplication;
         private final ExecutionMode callerExecutionMode;
         private final RuntimeStaticContext staticContext;
@@ -297,8 +305,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
         private int exitIndex;
 
         private DynamicCallLocalCursor(
-                RuntimeIterator functionItemPlan,
-                List<RuntimeIterator> functionArguments,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionItemPlan,
+                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> functionArguments,
                 boolean partialApplication,
                 ExecutionMode callerExecutionMode,
                 RuntimeStaticContext staticContext,
@@ -334,7 +342,10 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
             try {
                 return this.delegate.hasNext();
             } catch (InvalidRumbleMLParamException e) {
-                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
+                throw new InvalidRumbleMLParamException(
+                        e.getMLMessage(),
+                        this.staticContext.getMetadata()
+                );
             } catch (ExitStatementException e) {
                 this.exitResults = e.getLocalResult();
                 return this.exitIndex < this.exitResults.size();
@@ -352,7 +363,10 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator implement
             try {
                 return this.delegate.next();
             } catch (InvalidRumbleMLParamException e) {
-                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
+                throw new InvalidRumbleMLParamException(
+                        e.getMLMessage(),
+                        this.staticContext.getMetadata()
+                );
             } catch (ExitStatementException e) {
                 this.exitResults = e.getLocalResult();
                 return nextLocal();

@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.TemporalComponentFunctionIterator;
 
 import java.io.Serial;
@@ -16,7 +15,7 @@ public class DaysFromDurationFunctionIterator extends TemporalComponentFunctionI
     private static final long serialVersionUID = 1L;
 
     public DaysFromDurationFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext, Component.DAY);

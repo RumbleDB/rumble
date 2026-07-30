@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -29,9 +31,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -45,17 +45,19 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReverseFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ReverseFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
     private List<Item> results;
     private int currentIndex = 0;
 
     public ReverseFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -76,7 +78,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")

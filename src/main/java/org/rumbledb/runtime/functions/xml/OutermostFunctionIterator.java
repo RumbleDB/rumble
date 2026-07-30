@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.xml;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -7,9 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -18,7 +18,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class OutermostFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class OutermostFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -31,7 +33,7 @@ public class OutermostFunctionIterator extends HybridRuntimeIterator implements 
     private static final long serialVersionUID = 1L;
 
     public OutermostFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -7,9 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -17,7 +17,9 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayFunctionCallIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -80,11 +82,11 @@ public class ArrayFunctionCallIterator extends HybridRuntimeIterator implements 
     private static final long serialVersionUID = 1L;
 
     private final Item arrayItem;
-    private final RuntimeIterator indexIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> indexIterator;
 
     public ArrayFunctionCallIterator(
             Item arrayItem,
-            RuntimeIterator indexIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> indexIterator,
             RuntimeStaticContext staticContext
     ) {
         super(indexIterator == null ? null : Collections.singletonList(indexIterator), staticContext);

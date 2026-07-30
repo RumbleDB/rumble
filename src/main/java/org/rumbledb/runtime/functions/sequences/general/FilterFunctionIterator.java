@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,9 +11,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
@@ -21,7 +21,9 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class FilterFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -36,11 +38,11 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator predicateIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator;
 
     public FilterFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,7 +54,7 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
     }
 
     private static Item resolvePredicate(
-            RuntimeIterator predicateIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -86,7 +88,7 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -94,12 +96,12 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        RuntimeIterator callback = new DynamicFunctionCallIterator(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(predicate, functionItemContext),
                 callbackArguments,
                 functionItemContext
         );
-        return callback.getEffectiveBooleanValue(context);
+        return org.rumbledb.runtime.EffectiveBooleanValue.evaluate(callback, context);
     }
 
     private static boolean acceptsSingleArgument(Item item) {
@@ -121,8 +123,8 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
 
     private static final class FilterLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator sequencePlan;
-        private final RuntimeIterator predicatePlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicatePlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -130,8 +132,8 @@ public class FilterFunctionIterator extends HybridRuntimeIterator implements Dat
         private Item nextResult;
 
         private FilterLocalCursor(
-                RuntimeIterator sequencePlan,
-                RuntimeIterator predicatePlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicatePlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

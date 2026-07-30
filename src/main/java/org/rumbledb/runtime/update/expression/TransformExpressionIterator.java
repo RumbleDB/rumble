@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import java.io.Serial;
@@ -14,26 +16,27 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-public class TransformExpressionIterator extends HybridRuntimeIterator implements UpdatingRuntimePlan {
+public class TransformExpressionIterator extends HybridRuntimeIterator
+        implements
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final Map<Name, RuntimeIterator> copyDeclMap;
-    private final RuntimeIterator modifyIterator;
-    private final RuntimeIterator returnIterator;
+    private final Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclMap;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator;
     private final boolean mutable;
     private final int mutabilityLevel;
 
     public TransformExpressionIterator(
-            Map<Name, RuntimeIterator> copyDeclMap,
-            RuntimeIterator modifyIterator,
-            RuntimeIterator returnIterator,
+            Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclMap,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnIterator,
             RuntimeStaticContext staticContext,
             int mutabilityLevel,
             boolean resultMutable
@@ -43,7 +46,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
                 copyDeclMap.values().stream(),
                 Stream.of(modifyIterator, returnIterator)
             ).toList(),
-            staticContext.toBuilder().isUpdating(false).build()
+            staticContext.toBuilder().isUpdating(true).build()
         );
 
         this.copyDeclMap = copyDeclMap;
@@ -69,7 +72,7 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         PendingUpdateList pul = getPendingUpdateList(context);
-        pul.applyUpdates(this.getMetadata());
+        pul.applyUpdates(this.getRuntimeStaticContext().getMetadata());
         return this.returnIterator.getRDD(context);
     }
 
@@ -78,12 +81,12 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
         bindCopyDeclarations(context);
         DynamicContext newCtx = new DynamicContext(context);
         newCtx.setCurrentMutabilityLevel(this.mutabilityLevel);
-        return this.modifyIterator.getPendingUpdateList(newCtx);
+        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.modifyIterator, newCtx);
     }
 
     private void bindCopyDeclarations(DynamicContext context) {
         for (Name copyVar : this.copyDeclMap.keySet()) {
-            RuntimeIterator copyIterator = this.copyDeclMap.get(copyVar);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> copyIterator = this.copyDeclMap.get(copyVar);
             List<Item> toCopy = copyIterator.materialize(context);
             List<Item> copy = new ArrayList<>();
             Item temp;
@@ -100,9 +103,9 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
 
     private static final class TransformLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final Map<Name, RuntimeIterator> copyDeclarations;
-        private final RuntimeIterator modifyPlan;
-        private final RuntimeIterator returnPlan;
+        private final Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclarations;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnPlan;
         private final int mutabilityLevel;
         private final boolean resultMutable;
         private final DynamicContext context;
@@ -110,9 +113,9 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
         private Cursor<Item> returnCursor;
 
         private TransformLocalCursor(
-                Map<Name, RuntimeIterator> copyDeclarations,
-                RuntimeIterator modifyPlan,
-                RuntimeIterator returnPlan,
+                Map<Name, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> copyDeclarations,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> modifyPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> returnPlan,
                 int mutabilityLevel,
                 boolean resultMutable,
                 DynamicContext context,
@@ -164,11 +167,11 @@ public class TransformExpressionIterator extends HybridRuntimeIterator implement
             bindCopyDeclarations();
             DynamicContext modifyContext = new DynamicContext(this.context);
             modifyContext.setCurrentMutabilityLevel(this.mutabilityLevel);
-            return this.modifyPlan.getPendingUpdateList(modifyContext);
+            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.modifyPlan, modifyContext);
         }
 
         private void bindCopyDeclarations() {
-            for (Map.Entry<Name, RuntimeIterator> declaration : this.copyDeclarations.entrySet()) {
+            for (Map.Entry<Name, RuntimePlan<Item>> declaration : this.copyDeclarations.entrySet()) {
                 List<Item> copy = new ArrayList<>();
                 for (Item item : declaration.getValue().materialize(this.context)) {
                     Item copiedItem = item.copy(true);

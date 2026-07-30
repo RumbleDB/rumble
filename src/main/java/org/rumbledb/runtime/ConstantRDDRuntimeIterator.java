@@ -46,7 +46,7 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getMetadata());
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 
     @Override

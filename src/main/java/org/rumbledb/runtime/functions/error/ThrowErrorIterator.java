@@ -8,7 +8,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
@@ -17,7 +16,10 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ThrowErrorIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public ThrowErrorIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
@@ -40,7 +42,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
                     ErrorCode.UnidentifiedErrorExceptionCode,
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -49,7 +51,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
                     ErrorCode.UnidentifiedErrorExceptionCode,
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
         Name errorCode = errorCodeItem.getQNameValue();
@@ -59,20 +61,24 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             throw new RumbleException(
                     "An error has been raised without an error description.",
                     new ErrorCode(errorCode),
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
         String description = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         if (this.getChildren().size() == 2) {
             // Error code and description arguments case.
-            throw new RumbleException(description, new ErrorCode(errorCode), this.getMetadata());
+            throw new RumbleException(
+                    description,
+                    new ErrorCode(errorCode),
+                    this.getRuntimeStaticContext().getMetadata()
+            );
         } else {
             // Error code, description, and object case.
             throw new RumbleException(
                     description,
                     new ErrorCode(errorCode),
-                    this.getMetadata(),
+                    this.getRuntimeStaticContext().getMetadata(),
                     errorValue.get()
             );
         }

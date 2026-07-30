@@ -25,7 +25,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -42,7 +41,10 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionLookupFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FunctionLookupFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

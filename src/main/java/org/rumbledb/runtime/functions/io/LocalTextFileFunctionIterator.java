@@ -42,13 +42,13 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     private transient InputStream is;
     private transient Iterator<String> stream;
 
     public LocalTextFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

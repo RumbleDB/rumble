@@ -6,7 +6,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidDecimalFormatName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
 
 import java.io.Serial;
@@ -19,7 +18,7 @@ public class FormatNumberFunctionIterator extends AtMostOneItemLocalRuntimeItera
     private static final long serialVersionUID = 1L;
 
     public FormatNumberFunctionIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);

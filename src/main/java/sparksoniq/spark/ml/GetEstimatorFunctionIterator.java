@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -56,7 +55,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
     );
 
     public GetEstimatorFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -111,16 +110,17 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                 }
             }
 
-            RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                    estimatorShortName,
-                    estimator,
-                    this.staticContext
-                        .toBuilder()
-                        .staticType(SequenceType.createSequenceType("function(*)"))
-                        .executionMode(ExecutionMode.LOCAL)
-                        .metadata(getMetadata())
-                        .build()
-            );
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator =
+                new ApplyEstimatorRuntimeIterator(
+                        estimatorShortName,
+                        estimator,
+                        this.staticContext
+                            .toBuilder()
+                            .staticType(SequenceType.createSequenceType("function(*)"))
+                            .executionMode(ExecutionMode.LOCAL)
+                            .metadata(getMetadata())
+                            .build()
+                );
             List<SequenceType> paramTypes = Collections.unmodifiableList(
                 Arrays.asList(
                     SequenceType.createSequenceType("object*"),

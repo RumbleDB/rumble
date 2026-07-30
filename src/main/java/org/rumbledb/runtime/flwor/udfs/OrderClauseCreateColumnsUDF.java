@@ -29,7 +29,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -84,7 +83,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             );
 
             // apply expression in the dynamic context
-            RuntimeIterator iterator = expressionWithIterator.getIterator();
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = expressionWithIterator
+                .getIterator();
             List<Item> items = iterator.materialize(this.dataFrameContext.getContext());
             if (items.isEmpty()) {
                 if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {

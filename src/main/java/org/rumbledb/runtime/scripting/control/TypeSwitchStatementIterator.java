@@ -4,7 +4,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
@@ -18,12 +18,12 @@ import java.util.stream.Stream;
 public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testField;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeSwitchStatementIterator(
-            RuntimeIterator testField,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -47,23 +47,27 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
         return execute(
             this.testField.materializeFirstOrNull(context),
             childContext,
-            RuntimeIterator::materialize
+            RuntimePlan<Item>::materialize
         );
     }
 
     private Item execute(
             Item value,
             DynamicContext childContext,
-            java.util.function.BiConsumer<RuntimeIterator, DynamicContext> materialize
+            java.util.function.BiConsumer<RuntimePlan<Item>, DynamicContext> materialize
     ) {
-        RuntimeIterator selected = selectIterator(value, childContext);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selected = selectIterator(value, childContext);
         materialize.accept(selected, childContext);
         return null;
     }
 
-    private RuntimeIterator selectIterator(Item value, DynamicContext childContext) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectIterator(
+            Item value,
+            DynamicContext childContext
+    ) {
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            RuntimeIterator selected = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selected =
+                testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
             if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
                     childContext.getVariableValues()
@@ -86,7 +90,7 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
         return this.defaultCase.getReturnIterator();
     }
 
-    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testTypeMatchAndReturnCorrespondingIterator(
             TypeswitchRuntimeIteratorCase typeSwitchCase,
             Item value
     ) {

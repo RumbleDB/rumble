@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,9 +31,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
@@ -43,7 +43,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class ForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ForEachFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -58,11 +60,11 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator actionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator;
 
     public ForEachFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -74,7 +76,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
     }
 
     private static Item resolveAction(
-            RuntimeIterator actionIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
@@ -108,7 +110,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        List<RuntimeIterator> callbackArguments = new ArrayList<>(1);
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> callbackArguments = new ArrayList<>(1);
         callbackArguments.add(new ConstantRuntimeIterator(item, argumentContext));
         RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
             .configuration(staticContext.getConfiguration())
@@ -116,7 +118,7 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
             .executionMode(ExecutionMode.LOCAL)
             .metadata(staticContext.getMetadata())
             .build();
-        RuntimeIterator callback = new DynamicFunctionCallIterator(
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = new DynamicFunctionCallIterator(
                 new ConstantRuntimeIterator(function, functionItemContext),
                 callbackArguments,
                 functionItemContext
@@ -143,8 +145,8 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
 
     private static final class ForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator sequencePlan;
-        private final RuntimeIterator actionPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
         private Cursor<Item> sequenceCursor;
@@ -152,8 +154,8 @@ public class ForEachFunctionIterator extends HybridRuntimeIterator implements Da
         private Iterator<Item> currentResults;
 
         private ForEachLocalCursor(
-                RuntimeIterator sequencePlan,
-                RuntimeIterator actionPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
         ) {

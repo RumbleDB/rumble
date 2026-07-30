@@ -30,7 +30,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import scala.Tuple2;
@@ -54,13 +53,13 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         Item::getXmlDocumentPosition,
         Comparator.nullsLast(Comparator.naturalOrder())
     );
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
 
     public SlashExprIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator stepIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> stepIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, stepIterator), staticContext);
@@ -94,10 +93,10 @@ public class SlashExprIterator extends HybridRuntimeIterator {
         }
 
         if (allNodes) {
-            if (this.getConfiguration().optimizeSteps()) {
+            if (this.getRuntimeStaticContext().getConfiguration().optimizeSteps()) {
                 if (
-                    this.getConfiguration().optimizeStepExperimental()
-                        && this.getConfiguration().optimizeParentPointers()
+                    this.getRuntimeStaticContext().getConfiguration().optimizeStepExperimental()
+                        && this.getRuntimeStaticContext().getConfiguration().optimizeParentPointers()
                 ) {
                     // skip sorting and uniqueness if not needed
                     // use optimizeParent as approximation for now, this is not verified

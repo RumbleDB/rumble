@@ -36,7 +36,6 @@ import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
@@ -55,11 +54,11 @@ public class MapFindFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator inputIterator;
-    private final RuntimeIterator keyIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator;
 
     public MapFindFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

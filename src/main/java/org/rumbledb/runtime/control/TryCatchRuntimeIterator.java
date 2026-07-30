@@ -23,7 +23,7 @@ package org.rumbledb.runtime.control;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -45,15 +45,15 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator tryExpression;
-    private final Map<CatchPattern, RuntimeIterator> catchExpressions;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression;
+    private final Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchExpressions;
     private List<Item> results = null;
     private Item nextResult = null;
     private int nextPosition = 0;
 
     public TryCatchRuntimeIterator(
-            RuntimeIterator tryExpression,
-            Map<CatchPattern, RuntimeIterator> catchExpressions,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryExpression,
+            Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchExpressions,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -77,7 +77,9 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             return this.tryExpression.materialize(context);
         } catch (Throwable throwable) {
             RumbleException exception = RumbleException.unnestException(throwable);
-            RuntimeIterator catchingExpression = findMatchingCatch(exception);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> catchingExpression = findMatchingCatch(
+                exception
+            );
             if (catchingExpression == null) {
                 throw throwable;
             }
@@ -101,7 +103,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             return nextItem;
         }
         throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement",
+                org.rumbledb.runtime.RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " in try-catch statement",
                 getMetadata()
         );
     }
@@ -117,24 +119,17 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             this.nextPosition = 0;
             this.results = new ArrayList<>();
             try {
-                this.tryExpression.open(this.currentDynamicContextForLocalExecution);
-                while (this.tryExpression.hasNext()) {
-                    this.results.add(this.tryExpression.next());
-                }
-                this.tryExpression.close();
-
+                this.results.addAll(this.tryExpression.materialize(this.currentDynamicContextForLocalExecution));
             } catch (Throwable throwable) {
                 RumbleException exception = RumbleException.unnestException(throwable);
                 this.results.clear();
-                RuntimeIterator catchingExpression = findMatchingCatch(exception);
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> catchingExpression = findMatchingCatch(
+                    exception
+                );
                 if (catchingExpression != null) {
                     DynamicContext context = new DynamicContext(this.currentDynamicContextForLocalExecution);
                     ErrorVariables.injectDynamicContext(context, exception);
-                    catchingExpression.open(context);
-                    while (catchingExpression.hasNext()) {
-                        this.results.add(catchingExpression.next());
-                    }
-                    catchingExpression.close();
+                    this.results.addAll(catchingExpression.materialize(context));
                 } else {
                     throw throwable;
                 }
@@ -147,8 +142,8 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
         }
     }
 
-    private RuntimeIterator findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimeIterator> entry : this.catchExpressions.entrySet()) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> findMatchingCatch(RumbleException exception) {
+        for (Map.Entry<CatchPattern, RuntimePlan<Item>> entry : this.catchExpressions.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

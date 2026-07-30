@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -7,9 +9,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -28,7 +28,9 @@ import java.util.List;
  *
  * This built-in is local execution only (consistent with map/array accessors).
  */
-public class MapGetFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class MapGetFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -37,7 +39,7 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator implements Dat
     private final RuntimePlan<Item> keyIterator;
 
     public MapGetFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

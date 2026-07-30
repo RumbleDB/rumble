@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,9 +31,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.expressions.ExecutionMode;
@@ -42,7 +42,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -52,12 +54,12 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator impleme
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator zeroIterator;
-    private final RuntimeIterator functionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> zeroIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionIterator;
 
     public ArrayFoldLeftFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -117,7 +119,7 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator impleme
         return accumulator;
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> createSequenceIterator(List<Item> items) {
         if (items.isEmpty()) {
             RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -128,7 +130,9 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator impleme
             return new CommaExpressionIterator(Collections.emptyList(), staticContext);
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators = new ArrayList<>(
+                items.size()
+        );
         for (Item item : items) {
             RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
                 .configuration(getConfiguration())
@@ -154,20 +158,23 @@ public class ArrayFoldLeftFunctionIterator extends HybridRuntimeIterator impleme
             List<Item> memberSequence,
             DynamicContext context
     ) {
-        RuntimeIterator accIterator = createSequenceIterator(accumulator);
-        RuntimeIterator memberIterator = createSequenceIterator(memberSequence);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> accIterator = createSequenceIterator(accumulator);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> memberIterator = createSequenceIterator(
+            memberSequence
+        );
 
-        List<RuntimeIterator> arguments = new ArrayList<>(2);
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(2);
         arguments.add(accIterator);
         arguments.add(memberIterator);
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = NamedFunctions
+            .buildFunctionItemCallIterator(
+                functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
         return functionCall.materialize(context);
     }
 

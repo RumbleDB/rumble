@@ -24,7 +24,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
 import java.io.Serial;
@@ -35,19 +34,19 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
 
     public WhereClauseUDF(
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -59,7 +58,7 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
 
         DynamicContext dynamicContext = this.dataFrameContext.getContext();
 
-        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
+        boolean result = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
         return result;
     }
 }

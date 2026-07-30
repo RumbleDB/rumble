@@ -27,7 +27,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
 import java.io.Serial;
@@ -39,19 +38,19 @@ public class HashUDF implements UDF1<Row, Long> {
     private static final long serialVersionUID = 1L;
 
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
 
     public HashUDF(
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -67,7 +66,7 @@ public class HashUDF implements UDF1<Row, Long> {
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
         long hashCode = 0;

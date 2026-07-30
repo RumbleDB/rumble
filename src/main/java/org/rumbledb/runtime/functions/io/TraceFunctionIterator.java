@@ -26,8 +26,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -42,17 +40,12 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator valueIterator;
-    private RuntimeIterator labelIterator;
-    private String label;
-    private int position = 0;
 
     public TraceFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.position = 0;
     }
 
     @Override
@@ -63,44 +56,6 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 context,
                 getMetadata()
         );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.valueIterator = this.getChild(0);
-        if (this.getChildren().size() == 2) {
-            this.labelIterator = this.getChild(1);
-            this.label = this.labelIterator.materializeFirstOrNull(context).getStringValue();
-        } else {
-            this.label = "";
-        }
-        this.valueIterator.open(context);
-        this.hasNext = this.valueIterator.hasNext();
-        this.position = 0;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.valueIterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.valueIterator.next();
-            writeTrace(
-                result,
-                this.label,
-                ++this.position,
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-            this.hasNext = this.valueIterator.hasNext();
-            return result;
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
     }
 
     private static void writeTrace(
@@ -129,8 +84,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
     private static final class TraceLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator valuePlan;
-        private final RuntimeIterator labelPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valuePlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> labelPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> valueCursor;
@@ -138,8 +93,8 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         private int position;
 
         private TraceLocalCursor(
-                RuntimeIterator valuePlan,
-                RuntimeIterator labelPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valuePlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> labelPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

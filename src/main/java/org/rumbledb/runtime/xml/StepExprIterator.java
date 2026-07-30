@@ -30,14 +30,14 @@ import java.util.List;
 public class StepExprIterator extends LocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator axisIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator;
     private final NodeTest nodeTest;
     private List<Item> results;
     private Item nextResult;
     private int resultCounter = 0;
 
     public StepExprIterator(
-            RuntimeIterator axisIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> axisIterator,
             NodeTest nodeTest,
             RuntimeStaticContext staticContext
     ) {
@@ -71,7 +71,6 @@ public class StepExprIterator extends LocalRuntimeIterator {
         this.results = null;
         this.nextResult = null;
         this.resultCounter = 0;
-        this.axisIterator.close();
     }
 
     private void setNextResult() {

@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -38,11 +37,11 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator yIterator;
-    private final RuntimeIterator xIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> yIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> xIterator;
 
     public ATan2FunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -68,12 +67,17 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext yQuery = this.yIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext yQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.yIterator,
+            nativeClauseContext
+        );
         if (yQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext xQuery = this.xIterator
-            .generateNativeQuery(new NativeClauseContext(yQuery, null, null));
+        NativeClauseContext xQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.xIterator,
+            new NativeClauseContext(yQuery, null, null)
+        );
         if (xQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

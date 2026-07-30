@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
 import java.io.Serial;
@@ -36,16 +35,20 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
     private final DynamicContext dynamicContext;
     private final long contextSize;
 
-    public PredicateClosureZipped(RuntimeIterator expression, DynamicContext dynamicContext, long contextSize) {
+    public PredicateClosureZipped(
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
+            DynamicContext dynamicContext,
+            long contextSize
+    ) {
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this predicate requires parallel execution, but the predicate is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
         this.dynamicContext = dynamicContext;
@@ -61,7 +64,8 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
         dynamicContext.getVariableValues().setPosition(v1._2() + 1);
         dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        boolean result = this.expression.getEffectiveBooleanValueOrCheckPosition(
+        boolean result = org.rumbledb.runtime.EffectiveBooleanValue.evaluateOrCheckPosition(
+            this.expression,
             dynamicContext,
             dynamicContext.getVariableValues().getPosition()
         );

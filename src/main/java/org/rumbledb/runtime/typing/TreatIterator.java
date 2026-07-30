@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -19,7 +21,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -42,19 +43,18 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class TreatIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
+public class TreatIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final TreatTypeValidator validator;
 
-    private Item nextResult;
-    private Item currentResult;
-    private int resultCount;
-
     public TreatIterator(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             SequenceType sequenceType,
             ErrorCode errorCode,
             RuntimeStaticContext staticContext
@@ -77,41 +77,6 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EvaluationCursor(this.iterator, context, this.validator);
-    }
-
-
-
-    private void setNextResult() {
-        this.nextResult = null;
-        if (this.iterator.hasNext()) {
-            if (this.iterator.isRDDOrDataFrame()) {
-                if (this.currentResult == null) {
-                    JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
-                    int size = childRDD.take(2).size();
-                    this.validator.validateMaximumCardinality(size);
-                    this.nextResult = childRDD.first();
-                } else {
-                    this.nextResult = null;
-                }
-            } else {
-                this.nextResult = this.iterator.next();
-            }
-            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
-                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
-            }
-            if (this.nextResult != null) {
-                this.resultCount++;
-            }
-        } else {
-            this.validator.validateEmpty(this.resultCount);
-        }
-
-        this.hasNext = this.nextResult != null;
-        if (!hasNext()) {
-            return;
-        }
-
-        this.validator.validateItem(this.nextResult, this.resultCount);
     }
 
     @Override
@@ -140,7 +105,10 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         this.validator.resolve(dynamicContext);
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
         this.validator.validateEmpty(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
@@ -154,7 +122,7 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        return this.iterator.getPendingUpdateList(context);
+        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.iterator, context);
     }
 
     /**
@@ -250,7 +218,8 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
 
             Item candidate = this.childCursor.next();
             if (candidate != null && !candidate.getDynamicType().isResolved()) {
-                candidate.getDynamicType().resolve(this.context, this.validator.getMetadata());
+                candidate.getDynamicType()
+                    .resolve(this.context, this.validator.getMetadata());
             }
             if (candidate == null) {
                 return;
@@ -264,6 +233,6 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return this.iterator.generateNativeQuery(nativeClauseContext);
+        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
     }
 }

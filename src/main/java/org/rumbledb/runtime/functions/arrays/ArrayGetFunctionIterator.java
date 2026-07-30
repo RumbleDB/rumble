@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -8,9 +10,7 @@ import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -18,7 +18,9 @@ import org.rumbledb.runtime.plan.RuntimePlan;
 import java.io.Serial;
 import java.util.List;
 
-public class ArrayGetFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayGetFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -27,7 +29,7 @@ public class ArrayGetFunctionIterator extends HybridRuntimeIterator implements D
     private final RuntimePlan<Item> positionIterator;
 
     public ArrayGetFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

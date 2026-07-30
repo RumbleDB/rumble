@@ -29,7 +29,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.Tuple2;
 
@@ -46,12 +45,12 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final int position;
     private final int optimizationThreshold = 10_000_000; // do optimization only if position is above this threshold
 
     public SequenceLookupIterator(
-            RuntimeIterator sequence,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
             int position,
             RuntimeStaticContext staticContext
     ) {
@@ -70,29 +69,19 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             return lookupSmallPosition(dynamicContext);
         }
 
-        if (this.iterator.isDataFrame()) {
+        if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return lookupDF(dynamicContext);
         }
 
-        if (this.iterator.isRDD()) {
+        if (this.iterator.getRuntimeStaticContext().getExecutionMode().isRDD()) {
             return lookupRDD(dynamicContext);
         }
 
         if (this.position <= 0) {
             return null;
         }
-        this.iterator.open(dynamicContext);
-        int currentPosition = 0;
-        Item result = null;
-        while (this.iterator.hasNext() && currentPosition < this.position) {
-            result = this.iterator.next();
-            ++currentPosition;
-        }
-        this.iterator.close();
-        if (currentPosition == this.position) {
-            return result;
-        }
-        return null;
+        List<Item> items = this.iterator.materializeAtMost(dynamicContext, this.position);
+        return items.size() == this.position ? items.get(this.position - 1) : null;
     }
 
     public Item lookupSmallPosition(DynamicContext dynamicContext) {
@@ -105,7 +94,10 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         df = df.evaluateSQL(
             String.format(
@@ -115,7 +107,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             ),
             df.getItemType()
         );
-        JavaRDD<Item> rdd = df.toRDD(this.getMetadata());
+        JavaRDD<Item> rdd = df.toRDD(this.getRuntimeStaticContext().getMetadata());
 
         List<Item> results = rdd.take(1);
         if (results.isEmpty()) {
@@ -148,16 +140,17 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
             nativeClauseContext.getClauseType() == FLWOR_CLAUSES.WHERE
                 && this.iterator instanceof CommaExpressionIterator childIterator
         ) {
-            List<RuntimeIterator> children = childIterator.getOperands();
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = childIterator.getOperands();
             if (
                 children.size() == 2
                     && children.get(0) instanceof ComparisonIterator
                     && children.get(1) instanceof BooleanRuntimeIterator
                     && this.position == 1
             ) {
-                NativeClauseContext childContext = children
-                    .get(0)
-                    .generateNativeQuery(nativeClauseContext);
+                NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                    children.get(0),
+                    nativeClauseContext
+                );
                 if (childContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -168,7 +161,10 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
         }
-        NativeClauseContext childContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

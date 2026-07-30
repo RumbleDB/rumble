@@ -27,7 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
@@ -38,7 +37,7 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public StringFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

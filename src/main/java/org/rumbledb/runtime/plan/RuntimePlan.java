@@ -214,7 +214,9 @@ public abstract class RuntimePlan<T> implements Serializable {
             context,
             RuntimePlan::materializeFirstFromCursor,
             RuntimePlan::firstOrNull,
-            dataFrame -> firstOrNull(dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()))
+            dataFrame -> firstOrNull(
+                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata())
+            )
         );
     }
 
@@ -240,7 +242,8 @@ public abstract class RuntimePlan<T> implements Serializable {
             context,
             cursor -> materializeAtMostFromCursor(cursor, limit),
             rdd -> rdd.take(limit),
-            dataFrame -> dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()).take(limit)
+            dataFrame -> dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata())
+                .take(limit)
         );
     }
 
@@ -332,7 +335,8 @@ public abstract class RuntimePlan<T> implements Serializable {
             case DATAFRAME -> {
                 this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
                 yield materializeAtMostOneFromRDD(
-                    this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata())
+                    this.getNativeDataFrame(context)
+                        .toRDD(this.getRuntimeStaticContext().getMetadata())
                 );
             }
             case UNSET -> throw this.unsetExecutionMode();

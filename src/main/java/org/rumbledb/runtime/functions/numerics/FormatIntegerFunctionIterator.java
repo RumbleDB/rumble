@@ -5,7 +5,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.IntegerPictureFormatter;
 
 import java.io.Serial;
@@ -16,7 +15,10 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FormatIntegerFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FormatIntegerFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

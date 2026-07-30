@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -23,7 +22,7 @@ public class PathFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final String ROOT_PREFIX = "Q{http://www.w3.org/2005/xpath-functions}root()";
 
     public PathFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

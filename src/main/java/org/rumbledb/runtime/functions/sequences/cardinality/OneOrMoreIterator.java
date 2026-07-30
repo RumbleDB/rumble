@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,7 +30,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -39,14 +40,16 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Objects;
 
-public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class OneOrMoreIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     public OneOrMoreIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -72,7 +75,8 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         if (childDataFrame.isEmptySequence()) {
             throw new SequenceExceptionOneOrMore(
                     "fn:one-or-more() called with a sequence containing less than 1 item",

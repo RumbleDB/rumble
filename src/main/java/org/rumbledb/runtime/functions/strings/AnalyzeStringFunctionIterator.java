@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.ArrayDeque;
@@ -31,7 +30,7 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     private static final Name NR_ATTRIBUTE_NAME = new Name(null, null, "nr");
 
     public AnalyzeStringFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

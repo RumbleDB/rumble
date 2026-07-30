@@ -10,7 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import sparksoniq.spark.SparkSessionManager;
@@ -27,14 +26,14 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator
     private static final long serialVersionUID = 1L;
 
     public StatementsWithExprIterator(
-            List<RuntimeIterator> statements,
-            RuntimeIterator exprIterator,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> statements,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
             Stream.concat(statements.stream(), Stream.of(exprIterator)).toList(),
             staticContext.toBuilder()
-                .isUpdating(exprIterator.isUpdating())
+                .isUpdating(exprIterator.getRuntimeStaticContext().isUpdating())
                 .isSequential(isSequential(statements, exprIterator))
                 .build()
         );
@@ -51,15 +50,19 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator
         );
     }
 
-    private static boolean isSequential(List<RuntimeIterator> statements, RuntimeIterator exprIterator) {
-        return exprIterator.isSequential() || statements.stream().anyMatch(RuntimeIterator::isSequential);
+    private static boolean isSequential(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> statements,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator
+    ) {
+        return exprIterator.getRuntimeStaticContext().isSequential()
+            || statements.stream().anyMatch(statement -> statement.getRuntimeStaticContext().isSequential());
     }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty()) {
             int childIndex = 0;
-            RuntimeIterator currentChild = this.getChild(childIndex);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> currentChild = this.getChild(childIndex);
 
             JavaRDD<Item> childRDD = currentChild.getRDD(dynamicContext);
             childIndex++;
@@ -81,18 +84,26 @@ public class StatementsWithExprIterator extends HybridRuntimeIterator
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         int childIndex = 0;
         while (childIndex < this.getChildren().size() - 1) {
-            this.getChild(childIndex).getDataFrame(dynamicContext);
+            org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                this.getChild(childIndex),
+                dynamicContext
+            );
             ++childIndex;
         }
-        RuntimeIterator exprIterator = this.getChild(childIndex);
-        return exprIterator.getDataFrame(dynamicContext);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator = this.getChild(childIndex);
+        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            exprIterator,
+            dynamicContext
+        );
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
-        RuntimeIterator exprIterator = this.getChild(this.getChildren().size() - 1);
-        if (exprIterator.isUpdating()) {
-            return exprIterator.getPendingUpdateList(context);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> exprIterator = this.getChild(
+            this.getChildren().size() - 1
+        );
+        if (exprIterator.getRuntimeStaticContext().isUpdating()) {
+            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(exprIterator, context);
         }
         return new PendingUpdateList();
     }

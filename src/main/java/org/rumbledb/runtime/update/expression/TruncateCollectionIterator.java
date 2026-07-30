@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.InvalidUpdateTargetException;
@@ -24,11 +23,11 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator targetIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator;
     private final Mode mode;
 
     public TruncateCollectionIterator(
-            RuntimeIterator targetIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> targetIterator,
             Mode mode,
             RuntimeStaticContext staticContext
     ) {
@@ -50,12 +49,12 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a unique string, but more than one item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         } catch (NoItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but no item was provided.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
 
@@ -63,7 +62,7 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
             throw new InvalidUpdateTargetException(
                     "Expecting collection name as a String, but it was: "
                         + collectionNameItem.getDynamicType().getIdentifierString(),
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
         String logicalPath = collectionNameItem.getStringValue();
@@ -84,7 +83,7 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();
         UpdatePrimitive up = factory.createTruncateCollectionPrimitive(
             collection,
-            this.getMetadata(),
+            this.getRuntimeStaticContext().getMetadata(),
             context.getRumbleRuntimeConfiguration()
         );
 

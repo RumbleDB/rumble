@@ -37,7 +37,6 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -56,12 +55,12 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
     public ComparisonIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
             RuntimeStaticContext staticContext
     ) {
@@ -80,11 +79,11 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             || this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.GC_EQ);
     }
 
-    public RuntimeIterator getLeftIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getLeftIterator() {
         return this.leftIterator;
     }
 
-    public RuntimeIterator getRightIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getRightIterator() {
         return this.rightIterator;
     }
 
@@ -636,11 +635,15 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         if (this.comparisonOperator.isValueComparison()) {
-            NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+            NativeClauseContext leftResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                this.leftIterator,
+                nativeClauseContext
+            );
             if (leftResult == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
-            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(
+            NativeClauseContext rightResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                this.rightIterator,
                 new NativeClauseContext(leftResult, null, null)
             );
             if (rightResult == NativeClauseContext.NoNativeQuery) {

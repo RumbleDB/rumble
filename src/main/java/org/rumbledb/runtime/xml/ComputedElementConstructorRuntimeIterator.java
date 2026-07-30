@@ -33,7 +33,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -55,7 +55,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
     private static final long serialVersionUID = 1L;
     private final Name staticElementName;
     private final DataFunctionIterator nameIterator;
-    private final RuntimeIterator contentIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
 
     /**
      * Constructor for static element name: element elementName { content }
@@ -66,7 +66,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      */
     public ComputedElementConstructorRuntimeIterator(
             Name staticElementName,
-            RuntimeIterator contentIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(contentIterator), staticContext);
@@ -84,7 +84,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
      */
     public ComputedElementConstructorRuntimeIterator(
             DataFunctionIterator nameIterator,
-            RuntimeIterator contentIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(createChildList(nameIterator, contentIterator), staticContext);
@@ -93,9 +93,11 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
         this.contentIterator = contentIterator;
     }
 
-    private static List<RuntimeIterator> createChildList(RuntimeIterator... iterators) {
-        List<RuntimeIterator> children = new ArrayList<>();
-        for (RuntimeIterator iterator : iterators) {
+    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+            RuntimePlan<Item>... iterators
+    ) {
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : iterators) {
             if (iterator != null) {
                 children.add(iterator);
             }
@@ -112,7 +114,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
     }
 
     private Item createElement(
-            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            BiFunction<RuntimePlan<Item>, DynamicContext, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Check if this is the top-level runtime iterator for XML tree building

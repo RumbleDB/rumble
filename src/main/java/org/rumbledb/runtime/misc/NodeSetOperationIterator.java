@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -53,13 +52,13 @@ public class NodeSetOperationIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
     private NodeSetExpression.NodeSetOperator operator;
 
     public NodeSetOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             NodeSetExpression.NodeSetOperator operator,
             RuntimeStaticContext staticContext
     ) {

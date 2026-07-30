@@ -4,7 +4,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -16,7 +15,10 @@ public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceGeneratorIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public RandomSequenceGeneratorIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

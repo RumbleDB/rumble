@@ -10,7 +10,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.time.ZoneOffset;
 import java.util.List;
@@ -20,7 +19,10 @@ public class AdjustTimeToTimezone extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AdjustTimeToTimezone(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public AdjustTimeToTimezone(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

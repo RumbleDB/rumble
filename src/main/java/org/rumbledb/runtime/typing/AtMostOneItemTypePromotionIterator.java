@@ -11,7 +11,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.FunctionCoercion;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -26,12 +25,12 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     @Serial
     private static final long serialVersionUID = 1L;
     private final String exceptionMessage;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final SequenceType sequenceType;
     private final ItemType itemType;
 
     public AtMostOneItemTypePromotionIterator(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -70,7 +69,7 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private static Item evaluate(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             SequenceType sequenceType,
             ItemType itemType,
             String exceptionMessage,
@@ -164,7 +163,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext value = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext value = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }

@@ -5,7 +5,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
@@ -16,14 +16,14 @@ import java.util.stream.Stream;
 public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testField;
-    private final Map<RuntimeIterator, RuntimeIterator> cases;
-    private final RuntimeIterator defaultReturn;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
+    private final Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultReturn;
 
     public SwitchStatementIterator(
-            RuntimeIterator testField,
-            Map<RuntimeIterator, RuntimeIterator> cases,
-            RuntimeIterator defaultReturn,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField,
+            Map<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> cases,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> defaultReturn,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -38,7 +38,7 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         this.defaultReturn = defaultReturn;
     }
 
-    private RuntimeIterator selectApplicableIterator(
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectApplicableIterator(
             DynamicContext dynamicContext
     ) {
         return selectApplicableIterator(
@@ -46,7 +46,9 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
         );
     }
 
-    private RuntimeIterator selectApplicableIterator(Function<RuntimeIterator, Item> materializeFirst) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> selectApplicableIterator(
+            Function<RuntimePlan<Item>, Item> materializeFirst
+    ) {
         Item testValue = materializeFirst.apply(this.testField);
 
         if (testValue != null) {
@@ -63,7 +65,7 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
 
-        for (RuntimeIterator caseKey : this.cases.keySet()) {
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> caseKey : this.cases.keySet()) {
             Item caseValue = materializeFirst.apply(caseKey);
 
             if (caseValue != null) {
@@ -98,7 +100,9 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        RuntimeIterator matchingIterator = this.selectApplicableIterator(dynamicContext);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> matchingIterator = this.selectApplicableIterator(
+            dynamicContext
+        );
         DynamicContext childContext = new DynamicContext(dynamicContext);
         matchingIterator.materialize(childContext);
         return null;

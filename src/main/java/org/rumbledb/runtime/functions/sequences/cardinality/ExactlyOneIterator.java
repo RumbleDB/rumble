@@ -26,7 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.io.Serial;
@@ -38,7 +37,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public ExactlyOneIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -66,6 +65,6 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return this.getChild(0).generateNativeQuery(nativeClauseContext);
+        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
     }
 }

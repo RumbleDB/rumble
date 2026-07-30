@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
@@ -35,7 +34,7 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public HeadFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -43,7 +42,7 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        if (this.getChild(0).isRDDOrDataFrame()) {
+        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             if (i.isEmpty()) {
                 return null;

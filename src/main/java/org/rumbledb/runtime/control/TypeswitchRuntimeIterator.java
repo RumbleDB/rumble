@@ -9,7 +9,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
@@ -28,12 +27,12 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator testField;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
 
     public TypeswitchRuntimeIterator(
-            RuntimeIterator test,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> test,
             List<TypeswitchRuntimeIteratorCase> cases,
             TypeswitchRuntimeIteratorCase defaultCase,
             RuntimeStaticContext staticContext
@@ -60,14 +59,14 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator
     }
 
     private static final class TypeswitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final RuntimeIterator testPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan;
         private final List<TypeswitchRuntimeIteratorCase> cases;
         private final TypeswitchRuntimeIteratorCase defaultCase;
         private final DynamicContext context;
         private Cursor<Item> selected;
 
         private TypeswitchLocalCursor(
-                RuntimeIterator testPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> testPlan,
                 List<TypeswitchRuntimeIteratorCase> cases,
                 TypeswitchRuntimeIteratorCase defaultCase,
                 DynamicContext context,
@@ -177,13 +176,16 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator
         }
         Match match = selectMatch(context);
         bindMatch(match, context);
-        return match.typeSwitchCase.getReturnIterator().getPendingUpdateList(context);
+        return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), context);
     }
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         Match match = selectMatch(context);
         bindMatch(match, context);
-        return match.typeSwitchCase.getReturnIterator().getDataFrame(context);
+        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            match.typeSwitchCase.getReturnIterator(),
+            context
+        );
     }
 }

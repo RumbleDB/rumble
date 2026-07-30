@@ -406,7 +406,7 @@ public abstract class RuntimeTupleIterator
         buffer.append("\n");
 
         if (this.child != null) {
-            this.child.print(buffer, indent + 1);
+            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(this.child, buffer, indent + 1);
         }
     }
 

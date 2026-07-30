@@ -7,7 +7,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.BreakStatementException;
 import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -22,11 +21,11 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator clauseIterator;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
 
     public ReturnStatementClauseIterator(
             RuntimeTupleIterator clauseIterator,
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             RuntimeStaticContext context
     ) {
         super(Collections.singletonList(expression), context);
@@ -57,7 +56,8 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private void setInputAndOutputTupleVariableDependencies() {
-        Map<Name, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> dependencies =
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.expression);
         Set<Name> allTupleNames = this.clauseIterator.getOutputTupleVariableNames();
         Map<Name, DynamicContext.VariableDependency> projection = new HashMap<>();
         for (Name n : dependencies.keySet()) {

@@ -31,7 +31,6 @@ import org.rumbledb.expressions.comparison.NodeComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.Arrays;
@@ -48,12 +47,12 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private static final long serialVersionUID = 1L;
 
     private final NodeComparisonExpression.NodeComparisonOperator operator;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
     public NodeComparisonRuntimeIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator,
             NodeComparisonExpression.NodeComparisonOperator operator,
             RuntimeStaticContext staticContext
     ) {
@@ -67,11 +66,11 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return this.operator;
     }
 
-    public RuntimeIterator getLeftIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getLeftIterator() {
         return this.leftIterator;
     }
 
-    public RuntimeIterator getRightIterator() {
+    public org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> getRightIterator() {
         return this.rightIterator;
     }
 

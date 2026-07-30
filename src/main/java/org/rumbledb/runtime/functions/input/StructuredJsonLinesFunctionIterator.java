@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -44,7 +43,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
     private static final long serialVersionUID = 1L;
 
     public StructuredJsonLinesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -52,10 +51,8 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.getChild(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> urlIterator = this.getChild(0);
+        String url = urlIterator.materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

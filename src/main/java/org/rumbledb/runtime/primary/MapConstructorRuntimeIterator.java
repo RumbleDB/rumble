@@ -30,7 +30,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 /**
@@ -40,13 +40,13 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final List<RuntimeIterator> keys;
-    private final List<RuntimeIterator> values;
+    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys;
+    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values;
     private final boolean mutable;
 
     public MapConstructorRuntimeIterator(
-            List<RuntimeIterator> keys,
-            List<RuntimeIterator> values,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -85,7 +85,7 @@ public class MapConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return evaluate(iterator -> iterator.materialize(dynamicContext));
     }
 
-    private Item evaluate(Function<RuntimeIterator, List<Item>> materialize) {
+    private Item evaluate(Function<RuntimePlan<Item>, List<Item>> materialize) {
         List<Item> mapKeys = new ArrayList<>();
         List<List<Item>> valueSequences = new ArrayList<>();
         boolean allKeysString = true;

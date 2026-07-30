@@ -23,7 +23,10 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public GetRootFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public GetRootFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

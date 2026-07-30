@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.dataframe;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -7,26 +9,29 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
 
-public class DropColumnsIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class DropColumnsIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getMetadata());
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DropColumnsIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public DropColumnsIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
+            RuntimeStaticContext staticContext
+    ) {
         super(children, staticContext);
     }
 
@@ -37,7 +42,8 @@ public class DropColumnsIterator extends HybridRuntimeIterator implements DataFr
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame dataFrame = this.getChild(0).getDataFrame(context);
+        HomogeneousItemDataFrame dataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(

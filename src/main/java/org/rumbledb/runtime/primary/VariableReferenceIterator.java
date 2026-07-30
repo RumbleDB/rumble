@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
@@ -30,7 +32,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -47,7 +48,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class VariableReferenceIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class VariableReferenceIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial

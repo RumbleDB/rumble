@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.misc;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,9 +39,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -50,21 +50,23 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.spark.SparkSessionManager;
 
-public class RangeOperationIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class RangeOperationIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
     private long left;
     private long right;
     private long index;
     public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightiterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightiterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(leftIterator, rightiterator), staticContext);
@@ -229,7 +231,10 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         @Override
         protected Item nextLocal() {
             if (!this.hasNext) {
-                throw new IteratorFlowException("Invalid next call in Range Operation", this.getMetadata());
+                throw new IteratorFlowException(
+                        "Invalid next call in Range Operation",
+                        this.getMetadata()
+                );
             }
             long result = this.position;
             if (this.position == this.rightBound) {
@@ -259,11 +264,15 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext leftContext = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext leftContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.leftIterator,
+            nativeClauseContext
+        );
         if (leftContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext rightContext = this.rightIterator.generateNativeQuery(
+        NativeClauseContext rightContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.rightIterator,
             new NativeClauseContext(leftContext, null, null)
         );
         if (rightContext == NativeClauseContext.NoNativeQuery) {

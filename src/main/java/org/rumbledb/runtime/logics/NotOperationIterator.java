@@ -28,7 +28,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -37,10 +36,10 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
 
     public NotOperationIterator(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(child), staticContext);
@@ -49,13 +48,16 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        boolean effectiveBooleanValue = this.child.getEffectiveBooleanValue(dynamicContext);
+        boolean effectiveBooleanValue = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.child, dynamicContext);
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childResult = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

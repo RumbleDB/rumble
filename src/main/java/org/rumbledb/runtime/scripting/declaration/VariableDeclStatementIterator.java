@@ -7,7 +7,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
@@ -19,7 +18,7 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
 
     public VariableDeclStatementIterator(
             Name variableName,
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -28,7 +27,7 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        if (!this.getChildren().isEmpty() && !this.getChild(0).isLocal()) {
+        if (!this.getChildren().isEmpty() && !this.getChild(0).getRuntimeStaticContext().getExecutionMode().isLocal()) {
             return declareDistributed(dynamicContext);
         }
         return declare(
@@ -40,7 +39,7 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
     private Item declare(List<Item> value, DynamicContext dynamicContext) {
         VariableValues variableValues = dynamicContext.getVariableValues();
         if (variableValues.containsLocally(variableValues, this.variableName)) {
-            throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
+            throw new VariableAlreadyExistsException(this.variableName, this.getRuntimeStaticContext().getMetadata());
         }
         dynamicContext.getVariableValues().addVariableValue(this.variableName, value);
         return null;
@@ -49,9 +48,14 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
     private Item declareDistributed(DynamicContext dynamicContext) {
         VariableValues variableValues = dynamicContext.getVariableValues();
         if (variableValues.containsLocally(variableValues, this.variableName)) {
-            throw new VariableAlreadyExistsException(this.variableName, this.getMetadata());
+            throw new VariableAlreadyExistsException(this.variableName, this.getRuntimeStaticContext().getMetadata());
         }
-        this.getChild(0).bindToVariableInDynamicContext(dynamicContext, this.variableName, dynamicContext);
+        org.rumbledb.runtime.plan.RuntimePlanBindings.bind(
+            this.getChild(0),
+            dynamicContext,
+            this.variableName,
+            dynamicContext
+        );
         return null;
     }
 }

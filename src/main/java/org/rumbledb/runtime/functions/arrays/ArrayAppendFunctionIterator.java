@@ -35,7 +35,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
@@ -52,7 +51,7 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator
     private final RuntimePlan<Item> appendageIterator;
 
     public ArrayAppendFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

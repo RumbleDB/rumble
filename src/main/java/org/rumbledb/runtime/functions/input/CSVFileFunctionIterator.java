@@ -33,7 +33,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -47,7 +46,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public CSVFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -86,7 +85,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only boolean, string, and numeric types allowed as values",
-                                this.getMetadata()
+                                this.getRuntimeStaticContext().getMetadata()
                         );
                     }
                 }
@@ -99,7 +98,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                 ex.initCause(e);
                 throw ex;
             } else {
-                throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                throw new UnexpectedTypeException(e.getMessage(), this.getRuntimeStaticContext().getMetadata());
             }
         }
     }

@@ -42,7 +42,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -85,7 +84,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getMetadata());
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 
     /**
@@ -114,7 +113,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
             List<Name> variablesInRightInputTuple, // really needed?
-            RuntimeIterator predicateIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata,
@@ -139,8 +138,10 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<RuntimeIterator> leftTupleSideEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> rightTupleSideEqualityCriteria = new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> leftTupleSideEqualityCriteria =
+            new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> rightTupleSideEqualityCriteria =
+            new ArrayList<>();
 
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
@@ -154,13 +155,14 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             optimizableJoin = false;
         }
 
-        // for (RuntimeIterator r : rightHandSideEqualityCriteria) {
+        // for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> r : rightHandSideEqualityCriteria) {
         // StringBuilder sb = new StringBuilder();
-        // r.print(sb, 2);
+        // org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(r, sb, 2);
         // System.out.println(sb.toString());
         // }
 
-        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
+        Map<Name, VariableDependency> predicateDependencies = org.rumbledb.runtime.plan.VariableDependencyRuntimePlan
+            .get(predicateIterator);
         if (
             newRightSideVariableName != null
                 && outputTupleVariableDependencies.containsKey(newRightSideVariableName)
@@ -194,8 +196,8 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
 
 
         // Now we prepare the iterators for the two sides of the equality criterion.
-        RuntimeIterator rightHandSideEqualityCriterion;
-        RuntimeIterator leftHandSideEqualityCriterion;
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightHandSideEqualityCriterion;
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftHandSideEqualityCriterion;
 
         if (rightTupleSideEqualityCriteria.size() == 1) {
             rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
@@ -300,7 +302,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
             jointSchema,
-            predicateIterator.getVariableDependencies(),
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(predicateIterator),
             variablesInJointTuple,
             null
         );
@@ -362,31 +364,33 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
     }
 
     private static boolean extractEqualityComparisonsForHashing(
-            RuntimeIterator predicateIterator,
-            List<RuntimeIterator> leftTupleSideEqualityCriteria,
-            List<RuntimeIterator> rightTupleSideEqualityCriteria,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> leftTupleSideEqualityCriteria,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> rightTupleSideEqualityCriteria,
             List<Name> leftTupleSideVariableNames,
             List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
-        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        Stack<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> candidateIterators = new Stack<>();
         candidateIterators.push(predicateIterator);
         while (!candidateIterators.isEmpty()) {
-            RuntimeIterator iterator = candidateIterators.pop();
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = candidateIterators.pop();
             if (iterator instanceof AndOperationIterator andOperationIterator) {
                 AndOperationIterator andIterator = andOperationIterator;
                 candidateIterators.push(andIterator.getLeftIterator());
                 candidateIterators.push(andIterator.getRightIterator());
             } else if (iterator instanceof ComparisonIterator comparisonIterator) {
                 if (comparisonIterator.isValueEquality()) {
-                    RuntimeIterator lhs = comparisonIterator.getLeftIterator();
-                    RuntimeIterator rhs = comparisonIterator.getRightIterator();
+                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lhs = comparisonIterator
+                        .getLeftIterator();
+                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rhs = comparisonIterator
+                        .getRightIterator();
 
                     Set<Name> leftComparisonDependencies = new HashSet<>(
-                            lhs.getVariableDependencies().keySet()
+                            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(lhs).keySet()
                     );
                     Set<Name> rightComparisonDependencies = new HashSet<>(
-                            rhs.getVariableDependencies().keySet()
+                            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(rhs).keySet()
                     );
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.
@@ -448,7 +452,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
-            RuntimeIterator predicateIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
@@ -463,7 +467,10 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
         StructType rightSchema = rightInputTuple.schema();
         StructType unionSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
         NativeClauseContext nativeContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, unionSchema, context);
-        NativeClauseContext nativeQuery = predicateIterator.generateNativeQuery(nativeContext);
+        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            predicateIterator,
+            nativeContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
@@ -503,7 +510,7 @@ public class JoinClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         switch (getHighestExecutionMode()) {

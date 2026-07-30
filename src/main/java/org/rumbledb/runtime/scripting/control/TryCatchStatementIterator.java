@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.Map;
@@ -19,12 +19,12 @@ import java.util.stream.Stream;
 public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator tryStatementIterator;
-    private final Map<CatchPattern, RuntimeIterator> catchStatements;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryStatementIterator;
+    private final Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchStatements;
 
     public TryCatchStatementIterator(
-            RuntimeIterator tryStatement,
-            Map<CatchPattern, RuntimeIterator> catchStatements,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> tryStatement,
+            Map<CatchPattern, org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> catchStatements,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -37,12 +37,12 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return execute(context, RuntimeIterator::materialize);
+        return execute(context, RuntimePlan<Item>::materialize);
     }
 
     private Item execute(
             DynamicContext context,
-            java.util.function.BiConsumer<RuntimeIterator, DynamicContext> materialize
+            java.util.function.BiConsumer<RuntimePlan<Item>, DynamicContext> materialize
     ) {
         try {
             DynamicContext childContext = new DynamicContext(context);
@@ -57,7 +57,9 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
                 throw throwable;
             }
             RumbleException unnestedException = RumbleException.unnestException(throwable);
-            RuntimeIterator catchingStatementIterator = findMatchingCatch(unnestedException);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> catchingStatementIterator = findMatchingCatch(
+                unnestedException
+            );
             if (catchingStatementIterator != null) {
                 DynamicContext childContext = new DynamicContext(context);
                 ErrorVariables.injectDynamicContext(childContext, unnestedException);
@@ -69,8 +71,8 @@ public class TryCatchStatementIterator extends AtMostOneItemLocalRuntimeIterator
         return null;
     }
 
-    private RuntimeIterator findMatchingCatch(RumbleException exception) {
-        for (Map.Entry<CatchPattern, RuntimeIterator> entry : this.catchStatements.entrySet()) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> findMatchingCatch(RumbleException exception) {
+        for (Map.Entry<CatchPattern, RuntimePlan<Item>> entry : this.catchStatements.entrySet()) {
             if (entry.getKey().matches(exception.getErrorCode())) {
                 return entry.getValue();
             }

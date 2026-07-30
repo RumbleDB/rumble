@@ -28,7 +28,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
     private static final long serialVersionUID = 1L;
 
     public ObjectAccumulateFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -51,9 +50,9 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
 
-        if (!iterator.isDataFrame()) {
+        if (!iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             if (this.hasNext) {
                 this.hasNext = false;
                 return accumulate(iterator.materialize(context));

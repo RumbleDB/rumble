@@ -36,7 +36,6 @@ import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -53,10 +52,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final String CODEPOINT_COLLATION =
         "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
 
     public MaxFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -65,7 +64,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        if (!this.iterator.isRDDOrDataFrame()) {
+        if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return ExtremumLocalEvaluation.max(
                 this.iterator,
                 getCollationPlan(),
@@ -75,8 +74,11 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         validateCollation(context);
 
-        if (this.iterator.isDataFrame()) {
-            HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
+        if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                this.iterator,
+                context
+            );
             if (df.isEmptySequence()) {
                 return null;
             }
@@ -159,7 +161,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.getChildren().size() > 1) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (nativeChildQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

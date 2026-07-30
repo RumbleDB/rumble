@@ -62,7 +62,10 @@ public class InScopePrefixesFunctionIterator extends LocalFunctionCallIterator {
     private List<Item> prefixItems;
     private int currentIndex;
 
-    public InScopePrefixesFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public InScopePrefixesFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

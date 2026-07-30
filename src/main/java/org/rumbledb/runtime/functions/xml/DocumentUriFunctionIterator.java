@@ -67,7 +67,10 @@ public class DocumentUriFunctionIterator extends LocalFunctionCallIterator {
     private List<Item> resultItems;
     private int currentIndex;
 
-    public DocumentUriFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public DocumentUriFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

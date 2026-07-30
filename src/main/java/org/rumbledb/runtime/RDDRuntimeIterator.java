@@ -39,7 +39,7 @@ public abstract class RDDRuntimeIterator extends RuntimeIterator implements RDDR
     private transient Cursor<Item> executionCursor;
 
     protected RDDRuntimeIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -65,7 +65,10 @@ public abstract class RDDRuntimeIterator extends RuntimeIterator implements RDDR
     @Override
     public Item next() {
         if (this.executionCursor == null) {
-            throw new IteratorFlowException("Runtime iterator is not open", this.getMetadata());
+            throw new IteratorFlowException(
+                    "Runtime iterator is not open",
+                    this.getRuntimeStaticContext().getMetadata()
+            );
         }
         return this.executionCursor.next();
     }

@@ -80,7 +80,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         this.expressionsWithIterator = expressionsWithIterator;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
-            this.dependencies.putAll(e.getIterator().getVariableDependencies());
+            this.dependencies.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(e.getIterator()));
         }
     }
 
@@ -110,13 +110,13 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
                     } catch (MoreThanOneItemException e) {
                         throw new UnexpectedTypeException(
                                 "Keys in an order-by clause must be at most one item.",
-                                expression.getIterator().getMetadata()
+                                expression.getIterator().getRuntimeStaticContext().getMetadata()
                         );
                     }
                     if (key != null && !key.isAtomic()) {
                         throw new UnexpectedTypeException(
                                 "Keys in an order-by clause must be atomics.",
-                                expression.getIterator().getMetadata()
+                                expression.getIterator().getRuntimeStaticContext().getMetadata()
                         );
                     }
                     keys.add(key);
@@ -140,7 +140,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
                     "Keys in an order-by clause must atomize to at most one item.",
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
             );
         }
         if (atomized.isEmpty()) {
@@ -150,7 +150,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         if (!atomizedItem.isAtomic()) {
             throw new UnexpectedTypeException(
                     "Keys in an order-by clause must atomize to atomic values.",
-                    expressionWithIterator.getIterator().getMetadata()
+                    expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
             );
         }
         String collationUri = CollationSupport.resolveCollation(
@@ -160,7 +160,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         return normalizeOrderKeyAtomic(
             atomizedItem,
             collationUri,
-            expressionWithIterator.getIterator().getMetadata()
+            expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata()
         );
     }
 
@@ -190,7 +190,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         int numberOfOrderingKeys = this.expressionsWithIterator.size();
 
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-            if (expressionWithIterator.getIterator().isRDDOrDataFrame()) {
+            if (expressionWithIterator.getIterator().getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -441,7 +441,9 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-            result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
+            result.putAll(
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(expressionWithIterator.getIterator())
+            );
         }
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
@@ -459,7 +461,7 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
     public void print(StringBuilder buffer, int indent) {
         super.print(buffer, indent);
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
-            iterator.getIterator().print(buffer, indent + 1);
+            org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator.getIterator(), buffer, indent + 1);
         }
     }
 
@@ -473,8 +475,8 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
 
         // add the variable dependencies needed by this for clause's expression.
         for (OrderByClauseAnnotatedChildIterator iterator : this.expressionsWithIterator) {
-            Map<Name, DynamicContext.VariableDependency> exprDependency = iterator.getIterator()
-                .getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> exprDependency =
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getIterator());
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
@@ -539,7 +541,10 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
         StringBuilder orderSql = new StringBuilder();
         String orderSeparator = "";
         for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-            NativeClauseContext nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                orderIterator.getIterator(),
+                orderContext
+            );
             if (
                 nativeQuery == NativeClauseContext.NoNativeQuery
                     || SequenceType.Arity.OneOrMore.isSubtypeOf(nativeQuery.getResultingType().getArity())
@@ -586,7 +591,10 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
             Map<String, Boolean> sortingColumns
     ) {
         for (OrderByClauseAnnotatedChildIterator orderIterator : this.expressionsWithIterator) {
-            orderContext = orderIterator.getIterator().generateNativeQuery(orderContext);
+            orderContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                orderIterator.getIterator(),
+                orderContext
+            );
             if (
                 orderContext == NativeClauseContext.NoNativeQuery
                     || SequenceType.Arity.OneOrMore.isSubtypeOf(orderContext.getResultingType().getArity())
@@ -636,11 +644,11 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         for (OrderByClauseAnnotatedChildIterator i : this.expressionsWithIterator) {
-            if (i.getIterator().isSparkJobNeeded()) {
+            if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(i.getIterator())) {
                 return true;
             }
         }
@@ -660,7 +668,10 @@ public class OrderByClauseIterator extends RuntimeTupleIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

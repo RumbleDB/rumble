@@ -26,7 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.xml.XMLUtils;
 
 import java.io.Serial;
@@ -40,7 +39,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     private static final long serialVersionUID = 1L;
 
     public CodepointsToStringFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -49,16 +48,13 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         String xmlVersion = getConfiguration().getXmlVersion();
-        RuntimeIterator argumentIterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> argumentIterator = this.getChild(0);
 
-        argumentIterator.open(context);
-        try {
+        try (org.rumbledb.runtime.cursor.Cursor<Item> cursor = argumentIterator.getCursor(context)) {
             return ItemFactory.getInstance()
                 .createStringItem(
-                    buildStringFromCodepoints(argumentIterator::hasNext, argumentIterator::next, xmlVersion)
+                    buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion)
                 );
-        } finally {
-            argumentIterator.close();
         }
     }
 
@@ -74,7 +70,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
             if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
                 throw new CodepointNotValidException(
                         "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                        this.getChild(0).getMetadata()
+                        this.getChild(0).getRuntimeStaticContext().getMetadata()
                 );
             }
             result.appendCodePoint(codepoint);
@@ -88,7 +84,7 @@ public class CodepointsToStringFunctionIterator extends AtMostOneItemLocalRuntim
         } catch (ArithmeticException e) {
             CodepointNotValidException ex = new CodepointNotValidException(
                     "Non-XML-conformant codepoint: " + item.getIntegerValue(),
-                    this.getChild(0).getMetadata()
+                    this.getChild(0).getRuntimeStaticContext().getMetadata()
             );
             ex.initCause(e);
             throw ex;

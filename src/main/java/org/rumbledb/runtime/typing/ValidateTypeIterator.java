@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -32,9 +34,7 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -46,18 +46,20 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ValidateTypeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ValidateTypeIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final ItemType itemType;
     private final boolean isValidate;
     private final ItemValidator validator;
 
     public ValidateTypeIterator(
-            RuntimeIterator instance,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> instance,
             ItemType itemType,
             boolean isValidate,
             RuntimeStaticContext staticContext
@@ -93,8 +95,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
 
         try {
 
-            if (this.iterator.isDataFrame()) {
-                HomogeneousItemDataFrame inputDataAsDataFrame = this.iterator.getDataFrame(context);
+            if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+                HomogeneousItemDataFrame inputDataAsDataFrame =
+                    org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                        this.iterator,
+                        context
+                    );
                 ItemType actualType = inputDataAsDataFrame.getItemType();
                 if (actualType.isSubtypeOf(this.itemType)) {
                     return inputDataAsDataFrame;
@@ -109,7 +115,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
                 );
             }
 
-            if (this.iterator.isRDDOrDataFrame()) {
+            if (this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = this.iterator.getRDD(context);
                 return convertRDDToValidDataFrame(rdd, this.itemType, context, this.isValidate, this.staticContext);
             }
@@ -243,7 +249,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
                 StructField field = createStructField(
                     columnName,
                     columnType,
-                    !required || (staticContext.getConfiguration().getLaxJSONNullValidation() && nullable),
+                    !required
+                        || (staticContext.getConfiguration().getLaxJSONNullValidation()
+                            && nullable),
                     staticContext
                 );
                 fields.add(field);
@@ -634,7 +642,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
                                             + " : "
                                             + key
                                 );
-                            } else if (!this.staticContext.getConfiguration().getLaxJSONNullValidation()) {
+                            } else if (
+                                !this.staticContext
+                                    .getConfiguration()
+                                    .getLaxJSONNullValidation()
+                            ) {
                                 keys.add(key);
                                 values.add(validate(value, expectedType));
                             } else {
@@ -847,7 +859,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
         if (this.isValidate) {
             return NativeClauseContext.NoNativeQuery;
         }
-        return this.getChild(0).generateNativeQuery(nativeClauseContext);
+        return org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
     }
 
 

@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -26,11 +25,11 @@ public class ExitStatementIterator extends HybridRuntimeIterator
             UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator childIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> childIterator;
     private PendingUpdateList pendingUpdateList;
 
     public ExitStatementIterator(
-            RuntimeIterator childIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> childIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Collections.singletonList(childIterator), staticContext);
@@ -46,15 +45,18 @@ public class ExitStatementIterator extends HybridRuntimeIterator
     protected JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.childIterator.getRDD(dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
-        if (this.childIterator.isUpdating()) {
-            this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
+        if (this.childIterator.getRuntimeStaticContext().isUpdating()) {
+            this.pendingUpdateList = org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(
+                this.childIterator,
+                dynamicContext
+            );
         }
         throw new ExitStatementException(
                 this.pendingUpdateList,
                 null,
                 childRDD,
                 null,
-                this.getMetadata()
+                this.getRuntimeStaticContext().getMetadata()
         );
     }
 
@@ -68,29 +70,33 @@ public class ExitStatementIterator extends HybridRuntimeIterator
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        HomogeneousItemDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.childIterator, dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
-        if (this.childIterator.isUpdating()) {
-            this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);
+        if (this.childIterator.getRuntimeStaticContext().isUpdating()) {
+            this.pendingUpdateList = org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(
+                this.childIterator,
+                dynamicContext
+            );
         }
         throw new ExitStatementException(
                 this.pendingUpdateList,
                 null,
                 null,
                 childDataFrame,
-                this.getMetadata()
+                this.getRuntimeStaticContext().getMetadata()
         );
     }
 
     private static final class ExitLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator childPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> childPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private boolean hasNext;
 
         private ExitLocalCursor(
-                RuntimeIterator childPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> childPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {
@@ -117,8 +123,8 @@ public class ExitStatementIterator extends HybridRuntimeIterator
             }
             this.hasNext = false;
             List<Item> result = this.childPlan.materialize(this.context);
-            PendingUpdateList updates = this.childPlan.isUpdating()
-                ? this.childPlan.getPendingUpdateList(this.context)
+            PendingUpdateList updates = this.childPlan.getRuntimeStaticContext().isUpdating()
+                ? org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.childPlan, this.context)
                 : new PendingUpdateList();
             throw new ExitStatementException(
                     updates,

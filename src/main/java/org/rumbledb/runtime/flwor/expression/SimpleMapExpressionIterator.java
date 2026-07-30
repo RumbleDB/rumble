@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -34,9 +36,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -53,7 +53,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class SimpleMapExpressionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -62,13 +64,13 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator leftIterator;
-    private final RuntimeIterator rightIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightIterator;
 
 
     public SimpleMapExpressionIterator(
-            RuntimeIterator sequence,
-            RuntimeIterator mapExpression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequence,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapExpression,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(sequence, mapExpression), staticContext);
@@ -77,8 +79,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
     }
 
     private static final class SimpleMapLocalCursor extends AbstractLocalCursor<Item> {
-        private final RuntimeIterator leftPlan;
-        private final RuntimeIterator rightPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightPlan;
         private final DynamicContext context;
         private final org.rumbledb.exceptions.ExceptionMetadata metadata;
         private List<Item> inputs;
@@ -86,8 +88,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
         private Cursor<Item> currentResults;
 
         private SimpleMapLocalCursor(
-                RuntimeIterator leftPlan,
-                RuntimeIterator rightPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> leftPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> rightPlan,
                 DynamicContext context,
                 org.rumbledb.exceptions.ExceptionMetadata metadata
         ) {
@@ -168,15 +170,18 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.rightIterator.getVariableDependencies());
+        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.rightIterator));
         result.remove(Name.CONTEXT_ITEM);
-        result.putAll(this.leftIterator.getVariableDependencies());
+        result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.leftIterator));
         return result;
     }
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame df = this.leftIterator.getDataFrame(context);
+        HomogeneousItemDataFrame df = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.leftIterator,
+            context
+        );
         if (df.isEmptySequence()) {
             return df;
         }
@@ -185,7 +190,10 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator implement
                 df.getDataFrame().schema(),
                 context
         );
-        NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
+        NativeClauseContext nativeQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.rightIterator,
+            forContext
+        );
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             JavaRDD<Item> rdd = getRDDAux(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));

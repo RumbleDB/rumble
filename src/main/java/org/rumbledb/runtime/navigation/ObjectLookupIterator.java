@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -49,9 +51,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -66,17 +66,19 @@ import org.rumbledb.types.TypeMappings;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class ObjectLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ObjectLookupIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private Item lookupKey;
     private boolean contextLookup;
 
     public ObjectLookupIterator(
-            RuntimeIterator object,
-            RuntimeIterator lookupIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> object,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(object, lookupIterator), staticContext);
@@ -109,7 +111,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
     }
 
     private void initLookupKey(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator = this.getChild(1);
 
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
@@ -227,8 +229,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         // check if the key has variable dependencies inside the FLWOR expression
         // in that case we switch over to UDF
-        Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
-            .getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> keyDependencies =
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.getChild(1));
         // we use nativeClauseContext that contains the top level schema
         DataType outerContextSchema = nativeClauseContext.getSchema();
         // if the right hand side depends on the tuple stream, we cannot turn this into a native SQL query.
@@ -274,7 +276,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
                 );
             }
         } else {
-            newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+            newContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
             if (newContext != NativeClauseContext.NoNativeQuery) {
                 leftSchema = TypeMappings.getDataFrameDataTypeFromItemType(
                     newContext.getResultingType().getItemType(),
@@ -383,7 +385,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {

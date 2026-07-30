@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -39,13 +38,13 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private final Name functionName;
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
-    final RuntimeIterator bodyIterator;
+    final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
-            RuntimeIterator bodyIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> bodyIterator,
             RuntimeStaticContext staticContext
     ) {
         super(null, staticContext);

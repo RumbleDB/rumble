@@ -60,11 +60,14 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
     protected transient boolean hasNext;
     @Getter
     protected transient boolean isOpen;
-    private final List<RuntimeIterator> children;
+    private final List<RuntimePlan<Item>> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     protected RuntimeStaticContext staticContext;
 
-    protected RuntimeIterator(List<RuntimeIterator> children, @NonNull RuntimeStaticContext staticContext) {
+    protected RuntimeIterator(
+            List<? extends RuntimePlan<Item>> children,
+            @NonNull RuntimeStaticContext staticContext
+    ) {
         this.staticContext = staticContext;
         if (this.staticContext.getStaticType() == null) {
             throw new OurBadException(
@@ -111,7 +114,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValue(DynamicContext dynamicContext) {
-        return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
+        return org.rumbledb.runtime.EffectiveBooleanValue.evaluateOrCheckPosition(this, dynamicContext, null);
     }
 
     @Override
@@ -119,11 +122,14 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
         if (context == null) {
             throw new IteratorFlowException(
                     "No dynamic context was provided when opening an interator.",
-                    this.getMetadata()
+                    this.getRuntimeStaticContext().getMetadata()
             );
         }
         if (this.isOpen) {
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", this.getMetadata());
+            throw new IteratorFlowException(
+                    "Runtime iterator cannot be opened twice.",
+                    this.getRuntimeStaticContext().getMetadata()
+            );
         }
         this.isOpen = true;
         this.hasNext = true;
@@ -142,11 +148,11 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
         return this.hasNext;
     }
 
-    protected final RuntimeIterator getChild(int index) {
+    protected final RuntimePlan<Item> getChild(int index) {
         return this.children.get(index);
     }
 
-    protected final List<RuntimeIterator> getChildren() {
+    protected final List<RuntimePlan<Item>> getChildren() {
         return this.children;
     }
 
@@ -209,8 +215,11 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
      * @return true if it can, false otherwise.
      */
     public boolean canProduceDataFrame() {
-        return this.isDataFrame()
-            || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
+        return this.getRuntimeStaticContext().getExecutionMode().isDataFrame()
+            || this.getRuntimeStaticContext()
+                .getStaticType()
+                .getItemType()
+                .isCompatibleWithDataFrames(this.getRuntimeStaticContext().getConfiguration());
     }
 
     public final HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
@@ -221,7 +230,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
         throw new OurBadException(
                 "An item runtime plan produced an incompatible DataFrame: "
                     + dataFrame.getClass().getCanonicalName(),
-                this.getMetadata()
+                this.getRuntimeStaticContext().getMetadata()
         );
     }
 
@@ -258,7 +267,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         throw new OurBadException(
                 "Pending Update Lists are not implemented for the iterator " + this.getClass().getCanonicalName(),
-                this.getMetadata()
+                this.getRuntimeStaticContext().getMetadata()
         );
     }
 
@@ -272,8 +281,8 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>();
-        for (RuntimeIterator iterator : this.children) {
-            DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
+        for (RuntimePlan<Item> child : this.children) {
+            DynamicContext.mergeVariableDependencies(result, VariableDependencyRuntimePlan.get(child));
         }
         return result;
     }
@@ -286,21 +295,24 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
         buffer.append(" | ");
         buffer.append(this.staticContext.getExecutionMode());
         buffer.append(" | ");
-        buffer.append(this.getStaticType());
+        buffer.append(this.getRuntimeStaticContext().getStaticType());
         buffer.append(" | ");
-        buffer.append(this.isUpdating() ? "updating" : "simple");
+        buffer.append(this.getRuntimeStaticContext().isUpdating() ? "updating" : "simple");
         buffer.append(" | ");
-        buffer.append(this.isSequential() ? "sequential" : "non-sequential");
+        buffer.append(this.getRuntimeStaticContext().isSequential() ? "sequential" : "non-sequential");
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = this.getVariableDependencies();
+        Map<Name, DynamicContext.VariableDependency> dependencies =
+            org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this);
         for (Name v : dependencies.keySet()) {
             buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
         buffer.append("\n");
-        for (RuntimeIterator iterator : this.children) {
-            iterator.print(buffer, indent + 1);
+        for (RuntimePlan<Item> child : this.children) {
+            if (child instanceof RuntimeIterator iterator) {
+                org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator, buffer, indent + 1);
+            }
         }
     }
 
@@ -309,9 +321,9 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
             Name variable,
             DynamicContext executionContext
     ) {
-        if (this.isDataFrame()) {
+        if (this.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
-        } else if (this.isRDDOrDataFrame()) {
+        } else if (this.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
@@ -336,8 +348,11 @@ public abstract class RuntimeIterator extends RuntimePlan<Item>
      * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
      */
     public boolean isSparkJobNeeded() {
-        for (RuntimeIterator n : this.children) {
-            if (n.isSparkJobNeeded()) {
+        for (RuntimePlan<Item> child : this.children) {
+            if (
+                child instanceof RuntimeIterator iterator
+                    && org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(iterator)
+            ) {
                 return true;
             }
         }

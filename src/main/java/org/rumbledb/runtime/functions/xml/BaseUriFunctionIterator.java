@@ -69,7 +69,10 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
     private List<Item> resultItems;
     private int currentIndex;
 
-    public BaseUriFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public BaseUriFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
     }
 

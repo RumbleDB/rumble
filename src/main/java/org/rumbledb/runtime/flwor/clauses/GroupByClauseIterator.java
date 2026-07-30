@@ -38,7 +38,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -89,7 +88,9 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         this.dependencies = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
             if (e.getExpression() != null) {
-                this.dependencies.putAll(e.getExpression().getVariableDependencies());
+                this.dependencies.putAll(
+                    org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(e.getExpression())
+                );
             } else {
                 this.dependencies.put(
                     e.getVariableName(),
@@ -117,7 +118,8 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                 for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
                     tupleContext.getVariableValues().removeAllVariables();
                     tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
-                    RuntimeIterator keyExpression = expression.getExpression();
+                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyExpression = expression
+                        .getExpression();
                     if (keyExpression != null) {
                         if (tuple.contains(expression.getVariableName())) {
                             throw new InvalidGroupVariableException(
@@ -221,7 +223,10 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
     private void linearizeTuples(List<FlworTuple> keyTuplePairs, List<FlworTuple> output) {
         Iterator<FlworTuple> iterator = keyTuplePairs.iterator();
         FlworTuple oldFirstTuple = iterator.next();
-        FlworTuple newTuple = new FlworTuple(this.getConfiguration(), oldFirstTuple.getLocalKeys().size());
+        FlworTuple newTuple = new FlworTuple(
+                this.getRuntimeStaticContext().getConfiguration(),
+                oldFirstTuple.getLocalKeys().size()
+        );
 
         // Iterate over local keys
         for (Name tupleVariable : oldFirstTuple.getLocalKeys()) {
@@ -296,7 +301,10 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         }
 
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
-            if (expression.getExpression() != null && expression.getExpression().isRDDOrDataFrame()) {
+            if (
+                expression.getExpression() != null
+                    && expression.getExpression().getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+            ) {
                 throw new JobWithinAJobException(
                         "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -474,7 +482,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() != null) {
-                result.putAll(iterator.getExpression().getVariableDependencies());
+                result.putAll(org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getExpression()));
             } else {
                 result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
@@ -505,7 +513,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             }
             buffer.append("Variable ").append(iterator.getVariableName()).append("\n");
             if (iterator.getExpression() != null) {
-                iterator.getExpression().print(buffer, indent + 1);
+                org.rumbledb.runtime.plan.RuntimePlanDiagnostics.print(iterator.getExpression(), buffer, indent + 1);
             }
         }
     }
@@ -531,8 +539,8 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                 }
                 continue;
             }
-            Map<Name, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
-                .getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> exprDependency =
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(iterator.getExpression());
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
@@ -680,12 +688,12 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         for (GroupByClauseSparkIteratorExpression i : this.groupingExpressions) {
             if (i.getExpression() != null) {
-                if (i.getExpression().isSparkJobNeeded()) {
+                if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(i.getExpression())) {
                     return true;
                 }
             }
@@ -717,7 +725,10 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             null,
             null
         );
-        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -735,8 +746,10 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
         groupingVars.add(nativeClauseContext.getRowIdField());
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
             if (expression.getExpression() != null) {
-                NativeClauseContext expressionContext = expression.getExpression()
-                    .generateNativeQuery(childContext);
+                NativeClauseContext expressionContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                    expression.getExpression(),
+                    childContext
+                );
                 if (expressionContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }

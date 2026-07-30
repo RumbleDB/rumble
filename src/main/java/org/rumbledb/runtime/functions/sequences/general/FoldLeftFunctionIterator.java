@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -10,9 +12,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
@@ -23,7 +23,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class FoldLeftFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -33,12 +35,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator zeroIterator;
-    private final RuntimeIterator functionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> zeroIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionIterator;
 
     public FoldLeftFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -66,21 +68,24 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
                         .executionMode(ExecutionMode.LOCAL)
                         .metadata(getMetadata())
                         .build();
-                    ConstantRuntimeIterator accumulatorArgument = new ConstantRuntimeIterator(
-                            accumulator.get(0),
-                            localItemStarContext
-                    );
-                    ConstantRuntimeIterator currentItemArgument = new ConstantRuntimeIterator(
-                            inputItem,
-                            localItemStarContext
-                    );
-                    RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-                        functionItem,
-                        this.staticContext,
-                        ExecutionMode.LOCAL,
-                        Arrays.asList(accumulatorArgument, currentItemArgument),
-                        false
-                    );
+                    ConstantRuntimeIterator accumulatorArgument =
+                        new ConstantRuntimeIterator(
+                                accumulator.get(0),
+                                localItemStarContext
+                        );
+                    ConstantRuntimeIterator currentItemArgument =
+                        new ConstantRuntimeIterator(
+                                inputItem,
+                                localItemStarContext
+                        );
+                    org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = NamedFunctions
+                        .buildFunctionItemCallIterator(
+                            functionItem,
+                            this.staticContext,
+                            ExecutionMode.LOCAL,
+                            Arrays.asList(accumulatorArgument, currentItemArgument),
+                            false
+                        );
                     reusableCall = new ReusableFunctionCall(accumulatorArgument, currentItemArgument, functionCall);
                 } else {
                     reusableCall.accumulatorArgument.setItemForReuse(accumulator.get(0));
@@ -98,12 +103,12 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
     private static final class ReusableFunctionCall {
         private final ConstantRuntimeIterator accumulatorArgument;
         private final ConstantRuntimeIterator currentItemArgument;
-        private final RuntimeIterator functionCall;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall;
 
         private ReusableFunctionCall(
                 ConstantRuntimeIterator accumulatorArgument,
                 ConstantRuntimeIterator currentItemArgument,
-                RuntimeIterator functionCall
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall
         ) {
             this.accumulatorArgument = accumulatorArgument;
             this.currentItemArgument = currentItemArgument;
@@ -111,7 +116,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
         }
     }
 
-    private RuntimeIterator createSequenceIterator(List<Item> items) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> createSequenceIterator(List<Item> items) {
         RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
             .configuration(getConfiguration())
             .staticType(SequenceType.createSequenceType("item*"))
@@ -122,7 +127,9 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
             return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
         }
 
-        List<RuntimeIterator> childIterators = new ArrayList<>(items.size());
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childIterators = new ArrayList<>(
+                items.size()
+        );
         for (Item item : items) {
             childIterators.add(new ConstantRuntimeIterator(item, localItemStarContext));
         }
@@ -135,17 +142,18 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
             List<Item> currentItemSequence,
             DynamicContext context
     ) {
-        List<RuntimeIterator> arguments = new ArrayList<>(2);
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(2);
         arguments.add(createSequenceIterator(accumulator));
         arguments.add(createSequenceIterator(currentItemSequence));
 
-        RuntimeIterator functionCall = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> functionCall = NamedFunctions
+            .buildFunctionItemCallIterator(
+                functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
         return functionCall.materialize(context);
     }
 

@@ -22,7 +22,6 @@ package org.rumbledb.runtime.functions.base;
 
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
@@ -33,7 +32,7 @@ public abstract class LocalFunctionCallIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     protected LocalFunctionCallIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);

@@ -11,7 +11,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.items.AnnotatedItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
@@ -31,11 +30,11 @@ import java.util.regex.Pattern;
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
     private final SequenceType sequenceType;
 
     public CastIterator(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -52,7 +51,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item evaluate(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata,
@@ -1217,7 +1216,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

@@ -247,7 +247,7 @@ public class CountClauseIterator extends RuntimeTupleIterator {
      */
     @Override
     public boolean isSparkJobNeeded() {
-        if (this.child.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.child)) {
             return true;
         }
         switch (getHighestExecutionMode()) {
@@ -269,7 +269,10 @@ public class CountClauseIterator extends RuntimeTupleIterator {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        NativeClauseContext childContext = this.child.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.child,
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

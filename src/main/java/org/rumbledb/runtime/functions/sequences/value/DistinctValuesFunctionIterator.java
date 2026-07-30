@@ -20,15 +20,15 @@
 
 package org.rumbledb.runtime.functions.sequences.value;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -44,14 +44,16 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class DistinctValuesFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
 
     public DistinctValuesFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -81,7 +83,9 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         String collation = resolveCollation(dynamicContext);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        return childRDD.map(item -> new AtomicValueComparisonKey(item, collation, this.getMetadata()))
+        return childRDD.map(
+            item -> new AtomicValueComparisonKey(item, collation, this.getRuntimeStaticContext().getMetadata())
+        )
             .distinct()
             .map(AtomicValueComparisonKey::getItem);
     }
@@ -108,7 +112,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext sequenceQuery = this.sequenceIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext sequenceQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.sequenceIterator,
+            nativeClauseContext
+        );
         if (sequenceQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
@@ -120,8 +127,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
 
     private static final class DistinctLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator sequencePlan;
-        private final RuntimeIterator collationPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private final List<Item> seen = new ArrayList<>();
@@ -130,8 +137,8 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
         private String activeCollation;
 
         private DistinctLocalCursor(
-                RuntimeIterator sequencePlan,
-                RuntimeIterator collationPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequencePlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

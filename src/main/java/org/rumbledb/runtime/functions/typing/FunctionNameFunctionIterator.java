@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -20,7 +19,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     private static final long serialVersionUID = 1L;
 
     public FunctionNameFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -33,9 +32,15 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     private void validateStaticType() {
-        if (!this.getChild(0).getStaticType().isSubtypeOf(SequenceType.createSequenceType("function"))) {
+        if (
+            !this.getChild(0)
+                .getRuntimeStaticContext()
+                .getStaticType()
+                .isSubtypeOf(SequenceType.createSequenceType("function"))
+        ) {
             throw new UnexpectedTypeException(
-                    "fn:function-name expects a function item, found " + this.getChild(0).getStaticType(),
+                    "fn:function-name expects a function item, found "
+                        + this.getChild(0).getRuntimeStaticContext().getStaticType(),
                     getMetadata()
             );
         }

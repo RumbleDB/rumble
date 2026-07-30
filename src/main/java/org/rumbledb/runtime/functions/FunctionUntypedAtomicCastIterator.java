@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
@@ -9,9 +11,7 @@ import org.rumbledb.exceptions.CannotConvertToQNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -27,16 +27,20 @@ import java.util.Collections;
  * Function conversion step for arguments: cast runtime xs:untypedAtomic values to the requested atomic type
  * before the generic type-promotion layer runs. Non-untyped values flow through unchanged.
  */
-public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class FunctionUntypedAtomicCastIterator
+        extends
+            HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private final UntypedAtomicCaster caster;
 
     public FunctionUntypedAtomicCastIterator(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             ItemType targetType,
             String exceptionMessage,
             RuntimeStaticContext staticContext
@@ -58,7 +62,10 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator imp
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        return this.iterator.getDataFrame(dynamicContext);
+        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+            this.iterator,
+            dynamicContext
+        );
     }
 
     @Override

@@ -28,7 +28,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -50,7 +49,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     private int insertPosition; // position to start inserting
 
     public InsertBeforeFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -76,7 +75,11 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+        if (
+            this.insertIterator.getRuntimeStaticContext()
+                .getExecutionMode()
+                .isRDDOrDataFrame()
+        ) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
                 .filter((item) -> item._2() < this.insertPosition - 1)

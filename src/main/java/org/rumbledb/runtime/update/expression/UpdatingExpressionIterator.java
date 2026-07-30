@@ -7,13 +7,13 @@
 
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
@@ -21,10 +21,12 @@ import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 /**
  * Base plan for updating expressions whose local value is always the empty sequence.
  */
-abstract class UpdatingExpressionIterator extends HybridRuntimeIterator implements UpdatingRuntimePlan {
+abstract class UpdatingExpressionIterator extends HybridRuntimeIterator
+        implements
+            UpdatingRuntimePlan {
 
     protected UpdatingExpressionIterator(
-            List<RuntimeIterator> children,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children,
             RuntimeStaticContext staticContext
     ) {
         super(children, staticContext);
@@ -32,6 +34,6 @@ abstract class UpdatingExpressionIterator extends HybridRuntimeIterator implemen
 
     @Override
     public final Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EmptyLocalCursor<>(this.getMetadata());
+        return new EmptyLocalCursor<>(this.getRuntimeStaticContext().getMetadata());
     }
 }

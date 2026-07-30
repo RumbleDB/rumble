@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -48,7 +48,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator contentIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator;
 
     /**
      * Constructor for document node constructor runtime iterator
@@ -57,7 +57,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
      * @param staticContext The static context
      */
     public DocumentNodeConstructorRuntimeIterator(
-            RuntimeIterator contentIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> contentIterator,
             RuntimeStaticContext staticContext
     ) {
         super(
@@ -76,7 +76,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AtMostOneItemLocalRu
     }
 
     private Item createDocument(
-            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            BiFunction<RuntimePlan<Item>, DynamicContext, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Check if this is the top-level runtime iterator for XML tree building

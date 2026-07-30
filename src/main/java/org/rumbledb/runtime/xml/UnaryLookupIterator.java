@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -45,14 +44,14 @@ public class UnaryLookupIterator extends LocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator lookupIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator;
     private List<Item> lookupKeys;
     private List<Item> contextItem;
     private final Queue<Item> nextResult;
     private final boolean wildcard;
 
     public UnaryLookupIterator(
-            RuntimeIterator lookupIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

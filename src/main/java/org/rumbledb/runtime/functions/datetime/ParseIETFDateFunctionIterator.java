@@ -7,7 +7,6 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.time.DateTimeException;
@@ -119,7 +118,7 @@ public class ParseIETFDateFunctionIterator extends AtMostOneItemLocalRuntimeIter
     );
 
     public ParseIETFDateFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -35,7 +35,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -58,8 +57,8 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     private static final class LookupLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator inputPlan;
-        private final RuntimeIterator lookupPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupPlan;
         private final boolean wildcard;
         private final DynamicContext context;
         private final RuntimeStaticContext staticContext;
@@ -68,8 +67,8 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
         private Iterator<Item> currentResults;
 
         private LookupLocalCursor(
-                RuntimeIterator inputPlan,
-                RuntimeIterator lookupPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupPlan,
                 boolean wildcard,
                 DynamicContext context,
                 RuntimeStaticContext staticContext
@@ -203,13 +202,13 @@ public class PostfixLookupIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private final RuntimeIterator lookupIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator;
     private boolean wildcard;
 
     public PostfixLookupIterator(
-            RuntimeIterator object,
-            RuntimeIterator lookupIterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> object,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator,
             RuntimeStaticContext staticContext
     ) {
         super(

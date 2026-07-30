@@ -17,6 +17,8 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,9 +30,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.types.SequenceType;
@@ -43,7 +43,9 @@ import java.util.List;
  * FO 3.1 map:for-each($map as map(*), $action as function(xs:anyAtomicType, item()*) as item()*)
  * as item()*.
  */
-public class MapForEachFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class MapForEachFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -58,11 +60,11 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator mapIterator;
-    private final RuntimeIterator actionIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionIterator;
 
     public MapForEachFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -74,8 +76,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
     }
 
     private static Invocation resolveInvocation(
-            RuntimeIterator mapPlan,
-            RuntimeIterator actionPlan,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
@@ -128,12 +130,12 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 
-    private static RuntimeIterator buildCallback(
+    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildCallback(
             Invocation invocation,
             Item key,
             RuntimeStaticContext staticContext
     ) {
-        List<RuntimeIterator> valueChildren = new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
             for (Item value : values) {
@@ -173,8 +175,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
 
     private static final class MapForEachLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator mapPlan;
-        private final RuntimeIterator actionPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan;
         private final RuntimeStaticContext staticContext;
         private final DynamicContext context;
         private Invocation invocation;
@@ -182,8 +184,8 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
         private Cursor<Item> callbackCursor;
 
         private MapForEachLocalCursor(
-                RuntimeIterator mapPlan,
-                RuntimeIterator actionPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> mapPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> actionPlan,
                 RuntimeStaticContext staticContext,
                 DynamicContext context
         ) {
@@ -212,7 +214,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                RuntimeIterator callback = buildCallback(
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callback = buildCallback(
                     this.invocation,
                     this.keys.next(),
                     this.staticContext

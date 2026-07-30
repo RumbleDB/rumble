@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -40,7 +39,7 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
     private static final long serialVersionUID = 1L;
 
     public StringLengthFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -67,7 +66,10 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
         if (this.getChildren().size() == 0) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext childContext = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (childContext == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }

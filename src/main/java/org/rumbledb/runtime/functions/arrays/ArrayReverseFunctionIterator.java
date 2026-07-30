@@ -36,7 +36,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
         implements
@@ -49,7 +48,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
     private final RuntimePlan<Item> arrayIterator;
 
     public ArrayReverseFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

@@ -14,7 +14,6 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -33,7 +32,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

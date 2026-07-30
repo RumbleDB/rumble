@@ -8,7 +8,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -23,11 +22,11 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator keyIterator;
-    private final RuntimeIterator valueIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valueIterator;
 
     public MapEntryFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

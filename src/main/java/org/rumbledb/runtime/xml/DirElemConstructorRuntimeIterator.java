@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 
 import java.io.Serial;
@@ -50,13 +50,13 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
     @Serial
     private static final long serialVersionUID = 1L;
     private final Name elementName;
-    private final List<RuntimeIterator> content;
+    private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> content;
     private final List<AttributeNodeRuntimeIterator> attributes;
     private final List<NamespaceDeclaration> namespaceDeclarations;
 
     public DirElemConstructorRuntimeIterator(
             Name elementName,
-            List<RuntimeIterator> content,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> content,
             List<AttributeNodeRuntimeIterator> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
             RuntimeStaticContext staticContext
@@ -77,7 +77,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
     }
 
     private Item createElement(
-            BiFunction<RuntimeIterator, DynamicContext, List<Item>> materialize,
+            BiFunction<RuntimePlan<Item>, DynamicContext, List<Item>> materialize,
             DynamicContext dynamicContext
     ) {
         // Check if this is the top-level runtime iterator for XML tree building
@@ -99,7 +99,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
 
-            for (RuntimeIterator iterator : this.content) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : this.content) {
                 boolean previousItemWasAtomic = false;
                 for (Item childItem : materialize.apply(iterator, contextToUse)) {
                     List<Item> expandedItems = new ArrayList<>();
@@ -197,7 +197,7 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
         // process regular attributes
         if (this.attributes != null) {
-            for (RuntimeIterator iterator : this.attributes) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : this.attributes) {
                 for (Item item : materialize.apply(iterator, contextToUse)) {
                     // attributes should be attribute nodes
                     if (item.isAttributeNode()) {
@@ -250,11 +250,11 @@ public class DirElemConstructorRuntimeIterator extends AtMostOneItemLocalRuntime
         }
     }
 
-    private static List<RuntimeIterator> createChildList(
-            List<RuntimeIterator> content,
+    private static List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> createChildList(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> content,
             List<AttributeNodeRuntimeIterator> attributes
     ) {
-        List<RuntimeIterator> children = new ArrayList<>();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> children = new ArrayList<>();
         // first add attributes, then content
         children.addAll(attributes);
         children.addAll(content);

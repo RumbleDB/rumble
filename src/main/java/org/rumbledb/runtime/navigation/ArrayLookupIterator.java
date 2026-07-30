@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -35,9 +37,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
@@ -53,17 +53,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayLookupIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator;
     private int lookup;
 
     public ArrayLookupIterator(
-            RuntimeIterator array,
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> array,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             RuntimeStaticContext staticContext
     ) {
         super(Arrays.asList(array, iterator), staticContext);
@@ -94,7 +96,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
 
 
     private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.getChild(1);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> lookupIterator = this.getChild(1);
 
         try {
             Item lookupExpression = lookupIterator.materializeExactlyOne(context);
@@ -154,15 +156,18 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext newContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.iterator,
+            nativeClauseContext
+        );
         if (newContext != NativeClauseContext.NoNativeQuery) {
             if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.getChild(1)
-                .getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> keyDependencies =
+                org.rumbledb.runtime.plan.VariableDependencyRuntimePlan.get(this.getChild(1));
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
@@ -227,7 +232,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+        HomogeneousItemDataFrame childDataFrame = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+            .fromPlan(this.getChild(0), context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();

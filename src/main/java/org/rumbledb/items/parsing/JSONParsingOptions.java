@@ -8,7 +8,7 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -119,9 +119,9 @@ public final class JSONParsingOptions {
                 .metadata(metadata)
                 .build();
 
-            List<RuntimeIterator> arguments = new ArrayList<>(1);
+            List<RuntimePlan<Item>> arguments = new ArrayList<>(1);
             arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
-            RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
+            RuntimePlan<Item> call = NamedFunctions.buildFunctionItemCallIterator(
                 functionItem,
                 callContext,
                 ExecutionMode.LOCAL,

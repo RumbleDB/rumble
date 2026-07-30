@@ -9,7 +9,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.time.OffsetTime;
 import java.util.List;
@@ -19,10 +18,13 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator dateIterator;
-    private final RuntimeIterator timeIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> dateIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> timeIterator;
 
-    public DateTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public DateTimeFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
         this.dateIterator = arguments.get(0);
         this.timeIterator = arguments.get(1);

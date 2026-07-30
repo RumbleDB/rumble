@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -45,7 +44,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     private int currentPosition;
 
     public TokenizeFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -77,7 +76,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
     public void setNextResult() {
         if (this.results == null) {
             // Getting first parameter
-            RuntimeIterator stringIterator = this.getChild(0);
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> stringIterator = this.getChild(0);
             String input = null;
             String separator = null;
             Item stringItem = stringIterator.materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
@@ -92,16 +91,18 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                 this.results = RegexPatternUtils.tokenizeOnXmlWhitespace(input);
                 this.currentPosition = 0;
             } else {
-                RuntimeIterator separatorIterator = this.getChild(1);
-                separatorIterator.open(this.currentDynamicContextForLocalExecution);
-                if (!separatorIterator.hasNext()) {
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> separatorIterator = this.getChild(1);
+                List<Item> separatorItems = separatorIterator.materializeAtMost(
+                    this.currentDynamicContextForLocalExecution,
+                    2
+                );
+                if (separatorItems.isEmpty()) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
-                stringItem = separatorIterator.next();
-                if (separatorIterator.hasNext()) {
+                stringItem = separatorItems.get(0);
+                if (separatorItems.size() > 1) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
-                separatorIterator.close();
                 if (!stringItem.isString()) {
                     throw new UnexpectedTypeException("Second parameter of tokenize must be a string.", getMetadata());
                 }
@@ -156,14 +157,14 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
 
     private static final class TokenizeLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final List<RuntimeIterator> arguments;
+        private final List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private String[] results;
         private int position;
 
         private TokenizeLocalCursor(
-                List<RuntimeIterator> arguments,
+                List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

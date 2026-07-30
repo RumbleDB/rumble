@@ -36,7 +36,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -49,14 +49,14 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private List<RuntimeIterator> keys;
-    private List<RuntimeIterator> values;
+    private List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys;
+    private List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values;
     private boolean isMergedObject = false;
     private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimeIterator> keys,
-            List<RuntimeIterator> values,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> keys,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> values,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -67,7 +67,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     public ObjectConstructorRuntimeIterator(
-            List<RuntimeIterator> childExpressions,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> childExpressions,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -81,11 +81,11 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         return evaluate(iterator -> iterator.materialize(dynamicContext));
     }
 
-    private Item evaluate(Function<RuntimeIterator, List<Item>> materialize) {
+    private Item evaluate(Function<RuntimePlan<Item>, List<Item>> materialize) {
         List<Item> values = new ArrayList<>();
         List<String> keys = new ArrayList<>();
         if (this.isMergedObject) {
-            for (RuntimeIterator iterator : this.getChildren()) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator : this.getChildren()) {
                 for (Item materializedItem : materialize.apply(iterator)) {
                     ObjectItem item = (ObjectItem) materializedItem;
                     keys.addAll(item.getStringKeys());
@@ -97,7 +97,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
 
         } else {
 
-            for (RuntimeIterator valueIterator : this.values) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> valueIterator : this.values) {
                 List<Item> currentResults = materialize.apply(valueIterator);
                 // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                 if (currentResults.size() > 1) {
@@ -112,7 +112,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 }
             }
 
-            for (RuntimeIterator keyIterator : this.keys) {
+            for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator : this.keys) {
                 List<Item> keyItems = materialize.apply(keyIterator);
                 if (keyItems.isEmpty()) {
                     throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
@@ -146,7 +146,7 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
     }
 
     private NativeClauseContext generateMergedObject(NativeClauseContext nativeClauseContext) {
-        List<RuntimeIterator> objectsToMerge = this.getChildren();
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> objectsToMerge = this.getChildren();
         if (this.getChild(0) instanceof CommaExpressionIterator commaExpressionIterator) {
             objectsToMerge = commaExpressionIterator.getOperands();
         }
@@ -162,9 +162,12 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         List<String> queries = new ArrayList<>();
         List<String> keyNames = new ArrayList<>();
         List<ItemType> valueTypes = new ArrayList<>();
-        for (RuntimeIterator objectToMerge : objectsToMerge) {
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> objectToMerge : objectsToMerge) {
             if (objectToMerge instanceof VariableReferenceIterator) {
-                NativeClauseContext objectPartContext = objectToMerge.generateNativeQuery(nativeClauseContext);
+                NativeClauseContext objectPartContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                    objectToMerge,
+                    nativeClauseContext
+                );
                 if (objectPartContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -182,7 +185,9 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                         objectsToMerge.size() > 1 ? ".*" : ""
                     )
                 );
-            } else if (objectToMerge instanceof ObjectConstructorRuntimeIterator child) {
+            } else if (
+                objectToMerge instanceof ObjectConstructorRuntimeIterator child
+            ) {
                 if (child.isMergedObject) {
                     return NativeClauseContext.NoNativeQuery;
                 }
@@ -191,16 +196,22 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
                 }
                 List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
                 List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
-                for (RuntimeIterator key : child.keys) {
-                    NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+                for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> key : child.keys) {
+                    NativeClauseContext keyNativeContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                        key,
+                        nativeClauseContext
+                    );
                     if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
                     keyNativeContexts.add(keyNativeContext);
                     nativeClauseContext = keyNativeContext;
                 }
-                for (RuntimeIterator value : child.values) {
-                    NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+                for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> value : child.values) {
+                    NativeClauseContext valueNativeContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                        value,
+                        nativeClauseContext
+                    );
                     if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
                         return NativeClauseContext.NoNativeQuery;
                     }
@@ -267,16 +278,22 @@ public class ObjectConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeI
         }
         List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
         List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
-        for (RuntimeIterator key : this.keys) {
-            NativeClauseContext keyNativeContext = key.generateNativeQuery(nativeClauseContext);
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> key : this.keys) {
+            NativeClauseContext keyNativeContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                key,
+                nativeClauseContext
+            );
             if (keyNativeContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             keyNativeContexts.add(keyNativeContext);
             nativeClauseContext = keyNativeContext;
         }
-        for (RuntimeIterator value : this.values) {
-            NativeClauseContext valueNativeContext = value.generateNativeQuery(nativeClauseContext);
+        for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> value : this.values) {
+            NativeClauseContext valueNativeContext = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                value,
+                nativeClauseContext
+            );
             if (valueNativeContext == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }

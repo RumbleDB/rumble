@@ -39,7 +39,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
@@ -57,7 +56,7 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
     private final RuntimePlan<Item> positionsIterator;
 
     public ArrayRemoveFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

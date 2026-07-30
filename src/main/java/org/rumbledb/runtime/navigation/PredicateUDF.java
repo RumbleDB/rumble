@@ -27,7 +27,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
@@ -38,14 +37,14 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
     final List<Item> currentItems = new ArrayList<>();
 
     public PredicateUDF(
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             DynamicContext context,
             ExceptionMetadata metadata,
             ItemType itemType
@@ -64,7 +63,7 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
         this.currentItems.add(item);
         this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
 
-        boolean result = this.expression.getEffectiveBooleanValue(this.dynamicContext);
+        boolean result = org.rumbledb.runtime.EffectiveBooleanValue.evaluate(this.expression, this.dynamicContext);
         return result;
     }
 }

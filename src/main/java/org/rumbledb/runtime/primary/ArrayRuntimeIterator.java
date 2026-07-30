@@ -31,7 +31,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -48,7 +47,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
      * Curly array constructor: single child whose items become singleton members.
      */
     public ArrayRuntimeIterator(
-            RuntimeIterator arrayItems,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> arrayItems,
             RuntimeStaticContext staticContext,
             boolean mutable
     ) {
@@ -61,7 +60,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
      * Square array constructor: each child iterator produces one member (possibly a sequence).
      */
     public ArrayRuntimeIterator(
-            List<RuntimeIterator> memberIterators,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> memberIterators,
             boolean isFixedSlotsArrayConstructor,
             RuntimeStaticContext staticContext,
             boolean mutable
@@ -114,7 +113,10 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
             return NativeClauseContext.NoNativeQuery;
         }
         if (this.getChildren().size() == 1) {
-            NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+            NativeClauseContext childQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+                this.getChild(0),
+                nativeClauseContext
+            );
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }

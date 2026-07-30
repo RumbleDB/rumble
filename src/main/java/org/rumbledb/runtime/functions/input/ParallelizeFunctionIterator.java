@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
@@ -45,10 +44,13 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator partitionsIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> partitionsIterator;
 
-    public ParallelizeFunctionIterator(List<RuntimeIterator> parameters, RuntimeStaticContext staticContext) {
+    public ParallelizeFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
+            RuntimeStaticContext staticContext
+    ) {
         super(parameters, staticContext);
         this.sequenceIterator = this.getChild(0);
         this.partitionsIterator = this.getChildren().size() > 1 ? this.getChild(1) : null;
@@ -69,9 +71,9 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        if (this.sequenceIterator.isDataFrame()) {
+        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
-            JavaRDD<Item> rdd = dataFrame.toRDD(this.getMetadata());
+            JavaRDD<Item> rdd = dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata());
             if (this.partitionsIterator == null) {
                 return rdd;
             }

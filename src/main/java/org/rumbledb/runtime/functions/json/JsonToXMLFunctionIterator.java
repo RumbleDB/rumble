@@ -17,7 +17,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -44,7 +43,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final String DUPLICATES_RETAIN = "retain";
 
     public JsonToXMLFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

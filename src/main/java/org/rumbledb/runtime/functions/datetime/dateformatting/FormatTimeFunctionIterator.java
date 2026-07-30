@@ -8,14 +8,16 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.RuntimeIterator;
 
 public class FormatTimeFunctionIterator extends DateFormattingFunctionIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public FormatTimeFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public FormatTimeFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

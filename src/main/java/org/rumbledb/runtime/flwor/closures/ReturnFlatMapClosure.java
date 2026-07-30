@@ -25,7 +25,6 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
@@ -39,21 +38,21 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Serial
     private static final long serialVersionUID = 1L;
     private final DataFrameContext dataFrameContext;
-    private final RuntimeIterator expression;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression;
 
     List<Item> results;
 
     public ReturnFlatMapClosure(
-            RuntimeIterator expression,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columns
     ) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        if (this.expression.isSparkJobNeeded()) {
+        if (org.rumbledb.runtime.plan.RuntimePlanDiagnostics.isSparkJobNeeded(this.expression)) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
+                    this.expression.getRuntimeStaticContext().getMetadata()
             );
         }
         this.results = new ArrayList<>();

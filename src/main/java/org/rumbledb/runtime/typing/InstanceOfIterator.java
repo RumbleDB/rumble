@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -43,11 +42,11 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child;
     private final SequenceType sequenceType;
 
     public InstanceOfIterator(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             SequenceType sequenceType,
             RuntimeStaticContext staticContext
     ) {
@@ -64,7 +63,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item evaluate(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext
@@ -72,11 +71,12 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!sequenceType.isResolved()) {
             sequenceType.resolve(dynamicContext, metadata);
         }
-        if (!child.isRDDOrDataFrame()) {
+        if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return evaluateLocal(child, sequenceType, metadata, dynamicContext);
         }
-        if (child.isDataFrame()) {
-            HomogeneousItemDataFrame childDF = child.getDataFrame(dynamicContext);
+        if (child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            HomogeneousItemDataFrame childDF = org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE
+                .fromPlan(child, dynamicContext);
             if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
@@ -95,7 +95,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item evaluateLocal(
-            RuntimeIterator child,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> child,
             SequenceType sequenceType,
             ExceptionMetadata metadata,
             DynamicContext dynamicContext

@@ -31,7 +31,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -45,7 +44,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public AvroFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -90,7 +89,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only string and boolean types allowed as values",
-                                this.getMetadata()
+                                this.getRuntimeStaticContext().getMetadata()
                         );
                     }
                 }
@@ -99,7 +98,10 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
-                RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                RuntimeException f = new UnexpectedTypeException(
+                        e.getMessage(),
+                        this.getRuntimeStaticContext().getMetadata()
+                );
                 f.initCause(e);
                 throw f;
             } else {

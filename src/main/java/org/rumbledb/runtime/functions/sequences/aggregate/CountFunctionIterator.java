@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -49,7 +48,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public CountFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -57,7 +56,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the
         // count, e.g., if it comes from the group-by aggregation of a non-grouping
@@ -76,17 +75,17 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item computeCount(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        if (iterator.isDataFrame()) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return computeDataFrame(
                 iterator,
                 context,
                 metadata
             );
-        } else if (iterator.isRDDOrDataFrame()) {
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return computeRDD(
                 iterator,
                 context,
@@ -112,7 +111,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item computeRDD(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
@@ -125,11 +124,11 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private static Item computeDataFrame(
-            RuntimeIterator iterator,
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        long count = iterator.getDataFrame(context).count();
+        long count = iterator.getDataFrame(context).toRDD(metadata).count();
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
@@ -151,7 +150,10 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext nativeChildQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext nativeChildQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (nativeChildQuery != NativeClauseContext.NoNativeQuery) {
             if (nativeChildQuery.getResultingQuery().trim().startsWith("explode")) {
                 return new NativeClauseContext(

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 import org.apache.spark.api.java.JavaRDD;
@@ -8,9 +10,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -20,7 +20,10 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
+public class ProgramIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -34,10 +37,13 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator statementsAndExprIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprIterator;
     private final ProgramExecutionState executionState;
 
-    public ProgramIterator(RuntimeIterator statementsAndExprIterator, RuntimeStaticContext staticContext) {
+    public ProgramIterator(
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprIterator,
+            RuntimeStaticContext staticContext
+    ) {
         super(Collections.singletonList(statementsAndExprIterator), staticContext);
         this.statementsAndExprIterator = statementsAndExprIterator;
         this.executionState = new ProgramExecutionState();
@@ -56,7 +62,10 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            return this.statementsAndExprIterator.getDataFrame(dynamicContext);
+            return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                this.statementsAndExprIterator,
+                dynamicContext
+            );
         } catch (ExitStatementException exitStatementException) {
             setPULFromExitStatement(exitStatementException);
             return exitStatementException.getDataFrameResult();
@@ -69,25 +78,25 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
 
     @Override
     public boolean isSequential() {
-        return this.statementsAndExprIterator.isSequential();
+        return this.statementsAndExprIterator.getRuntimeStaticContext().isSequential();
     }
 
     @Override
     public boolean isUpdating() {
-        return this.statementsAndExprIterator.isUpdating();
+        return this.statementsAndExprIterator.getRuntimeStaticContext().isUpdating();
     }
 
     @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         if (!this.executionState.encounteredExitStatement) {
-            return this.statementsAndExprIterator.getPendingUpdateList(context);
+            return org.rumbledb.runtime.plan.UpdatingRuntimePlan.get(this.statementsAndExprIterator, context);
         }
         return this.executionState.pendingUpdateList;
     }
 
     private static final class ProgramLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator statementsAndExprPlan;
+        private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprPlan;
         private final ProgramExecutionState executionState;
         private final DynamicContext context;
         private Cursor<Item> delegate;
@@ -95,7 +104,7 @@ public class ProgramIterator extends HybridRuntimeIterator implements DataFrameR
         private int exitIndex;
 
         private ProgramLocalCursor(
-                RuntimeIterator statementsAndExprPlan,
+                org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> statementsAndExprPlan,
                 ProgramExecutionState executionState,
                 DynamicContext context,
                 RuntimeStaticContext staticContext

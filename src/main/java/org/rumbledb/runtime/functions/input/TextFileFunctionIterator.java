@@ -27,7 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -43,7 +42,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
     public static final int MIN_PARTITIONS = 10;
 
     public TextFileFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -51,7 +50,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator urlIterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> urlIterator = this.getChild(0);
         Item url = urlIterator.materializeFirstOrNull(context);
         if (url == null) {
             return SparkSessionManager.getInstance()

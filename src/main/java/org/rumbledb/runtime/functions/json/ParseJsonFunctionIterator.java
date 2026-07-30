@@ -28,7 +28,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.Serial;
@@ -41,7 +40,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     private static final long serialVersionUID = 1L;
 
     public ParseJsonFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);

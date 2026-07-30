@@ -25,7 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -39,7 +38,7 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public ExistsFunctionIterator(
-            List<RuntimeIterator> parameters,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> parameters,
             RuntimeStaticContext staticContext
     ) {
         super(parameters, staticContext);
@@ -47,13 +46,17 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        if (this.getChild(0).isDataFrame()) {
+        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             return ItemFactory.getInstance()
                 .createBooleanItem(
-                    !this.getChild(0).getDataFrame(dynamicContext).take(1).isEmpty()
+                    !this.getChild(0)
+                        .getDataFrame(dynamicContext)
+                        .toRDD(this.getRuntimeStaticContext().getMetadata())
+                        .take(1)
+                        .isEmpty()
                 );
         }
-        if (this.getChild(0).isRDDOrDataFrame()) {
+        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
         }
@@ -66,7 +69,10 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childQuery = this.getChild(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext childQuery = org.rumbledb.runtime.plan.NativeQueryRuntimePlan.generate(
+            this.getChild(0),
+            nativeClauseContext
+        );
         if (childQuery != NativeClauseContext.NoNativeQuery) {
             if (
                 childQuery.getResultingType().getItemType().isArrayItemType()

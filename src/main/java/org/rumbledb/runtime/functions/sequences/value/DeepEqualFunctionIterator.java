@@ -33,7 +33,6 @@ import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -55,7 +54,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     public DeepEqualFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -63,15 +62,18 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        RuntimeIterator sequenceIterator1 = this.getChild(0);
-        RuntimeIterator sequenceIterator2 = this.getChild(1);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator1 = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> sequenceIterator2 = this.getChild(1);
         validateCollation(
             this.getChildren().size() == 3
                 ? this.getChild(2).materializeFirstOrNull(context)
                 : null
         );
 
-        if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
+        if (
+            sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+                && sequenceIterator2.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
+        ) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
             JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
             if (rdd1.partitions().size() == rdd2.partitions().size()) {

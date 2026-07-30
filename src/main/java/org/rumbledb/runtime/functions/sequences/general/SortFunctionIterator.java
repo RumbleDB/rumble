@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.rumbledb.runtime.HybridRuntimeIterator;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -12,9 +14,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
@@ -32,7 +32,9 @@ import java.util.List;
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class SortFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item> {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
@@ -42,12 +44,12 @@ public class SortFunctionIterator extends HybridRuntimeIterator implements DataF
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator inputIterator;
-    private final RuntimeIterator collationIterator;
-    private final RuntimeIterator keyIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> inputIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collationIterator;
+    private final org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator;
 
     public SortFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -176,15 +178,16 @@ public class SortFunctionIterator extends HybridRuntimeIterator implements DataF
             Item item,
             DynamicContext context
     ) {
-        List<RuntimeIterator> arguments = new ArrayList<>(1);
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = NamedFunctions
+            .buildFunctionItemCallIterator(
+                functionItem,
+                this.staticContext,
+                ExecutionMode.LOCAL,
+                arguments,
+                false
+            );
         return materializeKeyIterator(call, context);
     }
 
@@ -195,7 +198,10 @@ public class SortFunctionIterator extends HybridRuntimeIterator implements DataF
                     getMetadata()
             );
         }
-        RuntimeIterator indexIterator = new ConstantRuntimeIterator(item, localStaticContext());
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> indexIterator = new ConstantRuntimeIterator(
+                item,
+                localStaticContext()
+        );
         ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
                 keyArray,
                 indexIterator,
@@ -212,7 +218,10 @@ public class SortFunctionIterator extends HybridRuntimeIterator implements DataF
                     getMetadata()
             );
         }
-        RuntimeIterator keyIterator = new ConstantRuntimeIterator(atomized.get(0), localStaticContext());
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> keyIterator = new ConstantRuntimeIterator(
+                atomized.get(0),
+                localStaticContext()
+        );
         MapFunctionCallIterator lookup = new MapFunctionCallIterator(
                 mapItem,
                 keyIterator,
@@ -221,11 +230,17 @@ public class SortFunctionIterator extends HybridRuntimeIterator implements DataF
         return materializeKeyIterator(lookup, context);
     }
 
-    private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
+    private List<Item> materializeIterator(
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            DynamicContext context
+    ) {
         return iterator.materialize(context);
     }
 
-    private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
+    private List<Item> materializeKeyIterator(
+            org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> iterator,
+            DynamicContext context
+    ) {
         List<Item> rawItems = materializeIterator(iterator, context);
         List<Item> atomizedKeys = new ArrayList<>();
         for (Item rawItem : rawItems) {

@@ -11,7 +11,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractDelegatingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -110,10 +109,10 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
         if (!callableItem.isFunction()) {
             return ExecutionMode.LOCAL;
         }
-        return callableItem.getBodyIterator().getHighestExecutionMode();
+        return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    private RuntimeIterator buildDelegate(DynamicContext context) {
+    private org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildDelegate(DynamicContext context) {
         return buildDelegate(
             this.callableItem,
             this.parameterNames,
@@ -124,7 +123,7 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
         );
     }
 
-    private static RuntimeIterator buildDelegate(
+    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildDelegate(
             Item callableItem,
             List<Name> parameterNames,
             SequenceType expectedReturnType,
@@ -132,7 +131,9 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
             RuntimeStaticContext staticContext,
             DynamicContext context
     ) {
-        List<RuntimeIterator> arguments = new ArrayList<>(parameterNames.size());
+        List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments = new ArrayList<>(
+                parameterNames.size()
+        );
         for (Name parameterName : parameterNames) {
             arguments.add(buildArgumentIterator(parameterName, context, staticContext));
         }
@@ -156,13 +157,14 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
                     staticContext.getMetadata()
             );
         }
-        RuntimeIterator callIterator = NamedFunctions.buildFunctionItemCallIterator(
-            callableItem,
-            callStaticContext,
-            wrappedCallableExecutionMode,
-            arguments,
-            false
-        );
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> callIterator = NamedFunctions
+            .buildFunctionItemCallIterator(
+                callableItem,
+                callStaticContext,
+                wrappedCallableExecutionMode,
+                arguments,
+                false
+            );
         return FunctionCallArgumentConversion.wrapForFunctionConversion(
             callIterator,
             expectedReturnType,
@@ -171,16 +173,21 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
         );
     }
 
-    private static RuntimeIterator buildArgumentIterator(
+    private static org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> buildArgumentIterator(
             Name parameterName,
             DynamicContext context,
             RuntimeStaticContext staticContext
     ) {
         ExecutionMode parameterExecutionMode = ExecutionMode.LOCAL;
         if (context.getVariableValues().contains(parameterName)) {
-            if (context.getVariableValues().isDataFrame(parameterName, staticContext.getMetadata())) {
+            if (
+                context.getVariableValues()
+                    .isDataFrame(parameterName, staticContext.getMetadata())
+            ) {
                 parameterExecutionMode = ExecutionMode.DATAFRAME;
-            } else if (context.getVariableValues().isRDD(parameterName, staticContext.getMetadata())) {
+            } else if (
+                context.getVariableValues().isRDD(parameterName, staticContext.getMetadata())
+            ) {
                 parameterExecutionMode = ExecutionMode.RDD;
             }
         }
@@ -194,14 +201,14 @@ public class FunctionCoercionRuntimeIterator extends HybridRuntimeIterator imple
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        RuntimeIterator call = buildDelegate(context);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = buildDelegate(context);
         return call.getRDD(context);
     }
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator call = buildDelegate(dynamicContext);
-        return call.getDataFrame(dynamicContext);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> call = buildDelegate(dynamicContext);
+        return org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
     }
 
     @Override

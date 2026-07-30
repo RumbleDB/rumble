@@ -7,7 +7,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.io.Serial;
@@ -19,7 +18,10 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public DateFormattingFunctionIterator(List<RuntimeIterator> arguments, RuntimeStaticContext staticContext) {
+    public DateFormattingFunctionIterator(
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
+            RuntimeStaticContext staticContext
+    ) {
         super(arguments, staticContext);
     }
 

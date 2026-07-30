@@ -6,7 +6,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serial;
@@ -21,7 +20,7 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     public IcebergTableFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item>> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
@@ -29,7 +28,7 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.getChild(0);
+        org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> collectionNameIterator = this.getChild(0);
         String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);
