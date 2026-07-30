@@ -1,5 +1,6 @@
 package org.rumbledb.items.xml;
 
+import lombok.NoArgsConstructor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -11,16 +12,13 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class CommentItem implements Item {
+@NoArgsConstructor // For Kryo serialization
+public class CommentItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
-
-    // needed for kryo
-    public CommentItem() {
-    }
 
     public CommentItem(String content) {
         this.content = content;
@@ -105,17 +103,6 @@ public class CommentItem implements Item {
     public List<Item> atomizedValue() {
         return Collections.singletonList(ItemFactory.getInstance().createStringItem(this.content));
     }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof CommentItem otherComment)) {
-            return false;
-        }
-        return this.getXmlDocumentPosition() != null
-            && this.getXmlDocumentPosition().equals(otherComment.getXmlDocumentPosition());
-    }
-
-
 
     @Override
     public List<Item> namespaceNodes() {

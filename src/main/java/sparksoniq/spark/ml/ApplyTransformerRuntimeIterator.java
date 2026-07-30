@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.VectorUDT;
@@ -15,8 +16,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.io.Serial;
@@ -35,9 +37,10 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     @Serial
     private static final long serialVersionUID = 1L;
     private final String transformerShortName;
+    @Getter
     private final Transformer transformer;
 
-    private JSoundDataFrame inputDataset;
+    private RuntimeDataFrame<Item> inputDataset;
     private Item paramMapItem;
     private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
@@ -51,12 +54,8 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         this.transformer = transformer;
     }
 
-    public Transformer getTransformer() {
-        return this.transformer;
-    }
-
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         this.inputDataset = getInputDataset(context);
         this.paramMapItem = getParamMapItem(context);
 
@@ -74,7 +73,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
             for (String name : this.columnNamesOfGeneratedVectors) {
                 result = result.drop(name);
             }
-            return new JSoundDataFrame(result, BuiltinTypesCatalogue.objectItem);
+            return new HomogeneousItemDataFrame(result, BuiltinTypesCatalogue.objectItem);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             if (e.getMessage().matches(".*DecimalType.*is not supported.*")) {
                 throw new InvalidRumbleMLParamException(
@@ -175,7 +174,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private JSoundDataFrame getInputDataset(DynamicContext context) {
+    private RuntimeDataFrame<Item> getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(

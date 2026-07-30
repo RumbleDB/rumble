@@ -4,7 +4,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -176,7 +176,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator implements 
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         Match match = selectMatch(context);
         bindMatch(match, context);
         return match.typeSwitchCase.getReturnIterator().getDataFrame(context);

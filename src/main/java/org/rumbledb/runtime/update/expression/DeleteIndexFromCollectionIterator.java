@@ -57,10 +57,6 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
         this.mode = mode;
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

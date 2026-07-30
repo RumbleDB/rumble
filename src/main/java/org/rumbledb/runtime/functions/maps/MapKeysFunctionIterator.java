@@ -23,7 +23,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -135,7 +135,7 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator implements Da
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("map:keys is currently supported only in local execution mode.");
     }
 }

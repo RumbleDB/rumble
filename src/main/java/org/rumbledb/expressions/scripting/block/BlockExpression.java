@@ -1,5 +1,6 @@
 package org.rumbledb.expressions.scripting.block;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -10,6 +11,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import java.util.Collections;
 import java.util.List;
 
+@Getter
 public class BlockExpression extends Expression {
     private final StatementsAndExpr statementsAndExpr;
 
@@ -32,10 +34,6 @@ public class BlockExpression extends Expression {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.statementsAndExpr.serializeToJSONiq(sb, 0);
-    }
-
-    public StatementsAndExpr getStatementsAndExpr() {
-        return this.statementsAndExpr;
     }
 
     public List<Statement> getStatements() {

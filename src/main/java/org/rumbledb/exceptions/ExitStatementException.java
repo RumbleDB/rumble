@@ -1,8 +1,9 @@
 package org.rumbledb.exceptions;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
@@ -11,17 +12,20 @@ import java.util.List;
 public class ExitStatementException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final PendingUpdateList pendingUpdateList;
     private final List<Item> localResult;
+    @Getter
     private final JavaRDD<Item> rddResult;
-    private final JSoundDataFrame dataFrameResult;
+    @Getter
+    private final HomogeneousItemDataFrame dataFrameResult;
     private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
             PendingUpdateList pendingUpdateList,
             List<Item> localResult,
             JavaRDD<Item> rddResult,
-            JSoundDataFrame dataFrameResult,
+            HomogeneousItemDataFrame dataFrameResult,
             ExceptionMetadata exceptionMetadata
     ) {
         this.pendingUpdateList = pendingUpdateList;
@@ -29,10 +33,6 @@ public class ExitStatementException extends RuntimeException {
         this.rddResult = rddResult;
         this.dataFrameResult = dataFrameResult;
         this.exceptionMetadata = exceptionMetadata;
-    }
-
-    public PendingUpdateList getPendingUpdateList() {
-        return this.pendingUpdateList;
     }
 
     public List<Item> getLocalResult() {
@@ -44,14 +44,6 @@ public class ExitStatementException extends RuntimeException {
             return this.dataFrameResult.toRDD(this.exceptionMetadata).collect();
         }
         throw new OurBadException("Expected local result but there was nothing to return from the exit statement!");
-    }
-
-    public JavaRDD<Item> getRddResult() {
-        return this.rddResult;
-    }
-
-    public JSoundDataFrame getDataFrameResult() {
-        return this.dataFrameResult;
     }
 
     public boolean hasLocalResult() {

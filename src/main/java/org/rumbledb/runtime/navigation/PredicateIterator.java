@@ -36,7 +36,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -270,8 +270,8 @@ public class PredicateIterator extends HybridRuntimeIterator implements DataFram
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         RuntimeIterator filter = this.getChild(1);
         NativeClauseContext nativeClauseContext = new NativeClauseContext(
                 FLWOR_CLAUSES.FILTER,

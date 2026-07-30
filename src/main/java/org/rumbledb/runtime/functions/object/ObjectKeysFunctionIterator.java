@@ -28,7 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -85,7 +85,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void setResultsFromDF() {
-        JSoundDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
+        HomogeneousItemDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         for (String key : childDF.getKeys()) {
             if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                 continue;

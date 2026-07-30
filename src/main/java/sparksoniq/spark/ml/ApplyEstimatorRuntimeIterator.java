@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
@@ -17,11 +18,11 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -44,6 +45,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Serial
     private static final long serialVersionUID = 1L;
     private final String estimatorShortName;
+    @Getter
     private final Estimator<?> estimator;
 
     public ApplyEstimatorRuntimeIterator(
@@ -54,10 +56,6 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         super(null, staticContext);
         this.estimatorShortName = estimatorShortName;
         this.estimator = estimator;
-    }
-
-    public Estimator<?> getEstimator() {
-        return this.estimator;
     }
 
     @Override
@@ -226,7 +224,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return generateTransformerFunctionItem(fittedModel, dynamicContext);
     }
 
-    private JSoundDataFrame getInputDataset(DynamicContext context) {
+    private RuntimeDataFrame<Item> getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(
@@ -407,10 +405,10 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private static final class EstimatorInputs {
-        private JSoundDataFrame inputDataset;
+        private RuntimeDataFrame<Item> inputDataset;
         private Item paramMapItem;
 
-        private EstimatorInputs(JSoundDataFrame inputDataset, Item paramMapItem) {
+        private EstimatorInputs(RuntimeDataFrame<Item> inputDataset, Item paramMapItem) {
             this.inputDataset = inputDataset;
             this.paramMapItem = paramMapItem;
         }

@@ -28,7 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
@@ -130,7 +130,7 @@ public class ForEachPairFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:for-each-pair is currently supported only in local execution mode.");
     }
 

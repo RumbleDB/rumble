@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
@@ -56,7 +57,6 @@ import org.rumbledb.types.TypeMappings;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.apache.spark.api.java.JavaRDD;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -268,9 +268,9 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
             ) {
                 newTuple.putValue(tupleVariable, oldFirstTuple.getDataFrameValue(tupleVariable, getMetadata()));
             } else {
-                JSoundDataFrame allValues = null;
+                HomogeneousItemDataFrame allValues = null;
                 while (iterator.hasNext()) {
-                    JSoundDataFrame df = iterator.next().getDataFrameValue(tupleVariable, getMetadata());
+                    HomogeneousItemDataFrame df = iterator.next().getDataFrameValue(tupleVariable, getMetadata());
                     if (allValues == null) {
                         allValues = df;
                         continue;
@@ -278,7 +278,7 @@ public class GroupByClauseIterator extends RuntimeTupleIterator {
                     allValues = allValues.union(df);
                 }
                 if (allValues == null) {
-                    allValues = JSoundDataFrame.emptyDataFrame();
+                    allValues = HomogeneousItemDataFrame.emptyDataFrame();
                 }
                 newTuple.putValue(tupleVariable, allValues);
             }

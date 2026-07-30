@@ -26,13 +26,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
 import java.util.List;
@@ -131,14 +130,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                long c = ComparisonIterator.compareItems(
-                    item,
-                    this.search,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                // if its double or float we additionally check that its not NanN, NaN cannot be found with indexOf
-                if (c == 0 && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())) {
+                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
+                if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }
@@ -204,16 +197,8 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                             this.metadata
                     );
                 }
-                long comparison = ComparisonIterator.compareItems(
-                    item,
-                    this.search,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                if (
-                    comparison == 0
-                        && ((!this.search.isDouble() && !this.search.isFloat()) || !this.search.isNaN())
-                ) {
+                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
+                if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.index);
                     return;
                 }

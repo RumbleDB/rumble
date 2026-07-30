@@ -9,7 +9,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.EmptySequenceIterator;
@@ -78,7 +78,7 @@ public class ApplyFunctionIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         return buildDelegate(context).getDataFrame(context);
     }
 

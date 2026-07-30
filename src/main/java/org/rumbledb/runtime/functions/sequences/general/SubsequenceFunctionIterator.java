@@ -30,7 +30,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -103,7 +103,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         if (this.startPosition < this.optimizationThreshold) {
             return getDataFrameOld(dynamicContext);
         } else
@@ -113,8 +113,8 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
     /**
      * Old implementation of getDataFrame, it is faster for low starting positions
      */
-    private JSoundDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+    private HomogeneousItemDataFrame getDataFrameOld(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
         List<FlworDataFrameColumn> allColumns = df.getColumns();
@@ -150,15 +150,15 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
                     Integer.toString(this.startPosition)
                 )
             );
-        return new JSoundDataFrame(ds, df.getItemType());
+        return new HomogeneousItemDataFrame(ds, df.getItemType());
     }
 
     /**
      * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
      * for small values
      */
-    private JSoundDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
+    private HomogeneousItemDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
@@ -182,7 +182,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
                 df.getItemType()
             );
         }
-        return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
+        return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
 
     @Override

@@ -24,7 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 
 import java.io.Serial;
@@ -48,5 +48,5 @@ public abstract class DataFrameRuntimeIterator extends RDDRuntimeIterator implem
     }
 
     @Override
-    public abstract JSoundDataFrame getNativeDataFrame(DynamicContext context);
+    public abstract HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context);
 }

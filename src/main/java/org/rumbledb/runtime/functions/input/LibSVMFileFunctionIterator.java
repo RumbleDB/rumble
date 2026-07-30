@@ -26,7 +26,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -49,7 +49,7 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
@@ -64,7 +64,7 @@ public class LibSVMFileFunctionIterator extends DataFrameRuntimeIterator {
                 .read()
                 .format("libsvm")
                 .load(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

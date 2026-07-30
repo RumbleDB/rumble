@@ -7,7 +7,7 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -155,7 +155,7 @@ public class FoldLeftFunctionIterator extends HybridRuntimeIterator implements D
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("fn:fold-left is currently supported only in local execution mode.");
     }
 }

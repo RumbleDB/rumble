@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import lombok.Getter;
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -39,7 +40,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -82,9 +83,12 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     private static final long serialVersionUID = 1L;
 
     // Properties
+    @Getter
     private final Name variableName; // for efficient use in local iteration
+    @Getter
     private final Name positionalVariableName; // for efficient use in local iteration
     private final RuntimeIterator assignmentIterator;
+    @Getter
     private final boolean allowingEmpty;
     private final DataFrameContext dataFrameContext;
 
@@ -103,22 +107,6 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         this.allowingEmpty = allowingEmpty;
         this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
-    }
-
-    public RuntimeIterator getAssignmentIterator() {
-        return this.assignmentIterator;
-    }
-
-    public boolean isAllowingEmpty() {
-        return this.allowingEmpty;
     }
 
     @Override
@@ -802,7 +790,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;
         SequenceType sequenceType = null;
         if (iterator.isDataFrame()) {
-            JSoundDataFrame rows = iterator.getDataFrame(context);
+            HomogeneousItemDataFrame rows = iterator.getDataFrame(context);
             if (allowingEmpty) {
                 sequenceType = new SequenceType(rows.getItemType(), Arity.OneOrZero);
             } else {

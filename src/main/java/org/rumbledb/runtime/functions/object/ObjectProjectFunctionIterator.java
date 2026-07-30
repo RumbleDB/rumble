@@ -28,7 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -174,8 +174,8 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator impleme
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (!childDataFrame.getItemType().isObjectItemType()) {
             return childDataFrame;
@@ -200,7 +200,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator impleme
             );
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
-        JSoundDataFrame result = childDataFrame.evaluateSQL(
+        HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
             String.format(
                 "SELECT %s FROM %s",
                 projectionVariables,

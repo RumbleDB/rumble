@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.comparison;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -46,6 +47,7 @@ public class ComparisonExpression extends Expression {
         GC_GE(">=");
 
         private final String name;
+        @Getter
         private final boolean isValueComparison;
 
         ComparisonOperator(String name) {
@@ -67,10 +69,6 @@ public class ComparisonExpression extends Expression {
         @Override
         public String toString() {
             return this.name;
-        }
-
-        public boolean isValueComparison() {
-            return this.isValueComparison;
         }
 
         public ComparisonOperator getCorrespondingValueComparison() {
@@ -160,6 +158,7 @@ public class ComparisonExpression extends Expression {
 
     private final Expression leftExpression;
     private final Expression rightExpression;
+    @Getter
     private final ComparisonOperator comparisonOperator;
 
     public ComparisonExpression(
@@ -182,10 +181,6 @@ public class ComparisonExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
-    }
-
-    public ComparisonOperator getComparisonOperator() {
-        return this.comparisonOperator;
     }
 
     @Override

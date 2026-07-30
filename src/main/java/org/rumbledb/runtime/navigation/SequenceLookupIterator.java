@@ -26,7 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -129,7 +129,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public Item lookupDF(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         df = df.evaluateSQL(
             String.format(

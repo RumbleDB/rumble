@@ -6,7 +6,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ExitStatementException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -91,8 +91,8 @@ public class ExitStatementIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        JSoundDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame childDataFrame = this.childIterator.getDataFrame(dynamicContext);
         this.pendingUpdateList = new PendingUpdateList();
         if (this.childIterator.isUpdating()) {
             this.pendingUpdateList = this.childIterator.getPendingUpdateList(dynamicContext);

@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
@@ -127,7 +127,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator implements R
         return getRDDAux(context);
     }
 
-    public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
+    public static JavaRDD<Item> dataFrameToRDDOfItems(HomogeneousItemDataFrame df, ExceptionMetadata metadata) {
         return df.toRDD(metadata);
     }
 

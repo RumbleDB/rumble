@@ -36,10 +36,6 @@ public class EditCollectionIterator extends UpdatingExpressionIterator {
 
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

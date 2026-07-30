@@ -29,7 +29,7 @@ import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -93,7 +93,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         try {
             RuntimeIterator call = dynamicContext.getNamedFunctions()
                 .getUserDefinedFunctionCallIterator(

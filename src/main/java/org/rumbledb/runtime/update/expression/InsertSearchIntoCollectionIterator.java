@@ -40,10 +40,6 @@ public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterat
 
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;

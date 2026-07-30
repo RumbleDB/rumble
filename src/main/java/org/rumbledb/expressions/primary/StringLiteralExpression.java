@@ -24,12 +24,14 @@ package org.rumbledb.expressions.primary;
 import java.util.ArrayList;
 import java.util.List;
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 
+@Getter
 public class StringLiteralExpression extends Expression {
 
     private final String value;
@@ -37,10 +39,6 @@ public class StringLiteralExpression extends Expression {
     public StringLiteralExpression(String value, ExceptionMetadata metadata) {
         super(metadata);
         this.value = value;
-    }
-
-    public String getValue() {
-        return this.value;
     }
 
     @Override

@@ -25,7 +25,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -124,7 +124,7 @@ public class MapForEachFunctionIterator extends HybridRuntimeIterator implements
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException("map:for-each is currently supported only in local execution mode.");
     }
 

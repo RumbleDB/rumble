@@ -8,7 +8,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -57,7 +57,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator imp
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         return this.iterator.getDataFrame(dynamicContext);
     }
 

@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
+import lombok.Getter;
+
+@Getter
 public final class FormatNumberPicture {
 
     private final FormatNumberSubPicture positiveSubPicture;
@@ -13,11 +16,4 @@ public final class FormatNumberPicture {
         this.negativeSubPicture = negativeSubPicture;
     }
 
-    public FormatNumberSubPicture getPositiveSubPicture() {
-        return this.positiveSubPicture;
-    }
-
-    public FormatNumberSubPicture getNegativeSubPicture() {
-        return this.negativeSubPicture;
-    }
 }

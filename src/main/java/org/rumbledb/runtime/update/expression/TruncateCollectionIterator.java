@@ -37,10 +37,6 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
         this.mode = mode;
     }
 
-    public boolean hasPositionIterator() {
-        return false;
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         return null;
@@ -55,8 +51,6 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
     protected void closeLocal() {
 
     }
-
-
 
     @Override
     protected boolean hasNextLocal() {

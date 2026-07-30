@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 
+import lombok.Getter;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,6 +30,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
+@Getter
 public class WhereClause extends Clause {
 
     private final Expression whereExpression;
@@ -36,10 +38,6 @@ public class WhereClause extends Clause {
     public WhereClause(Expression expr, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.WHERE, metadata);
         this.whereExpression = expr;
-    }
-
-    public Expression getWhereExpression() {
-        return this.whereExpression;
     }
 
     @Override

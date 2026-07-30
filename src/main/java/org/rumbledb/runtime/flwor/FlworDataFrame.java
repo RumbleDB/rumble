@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
+import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
@@ -25,7 +26,10 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Getter
     private Dataset<Row> dataFrame;
+
+    @Getter
     private List<FlworDataFrameColumn> columns;
     private Map<Name, SequenceType> columnTypes;
 
@@ -43,20 +47,11 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     @Override
-    public Dataset<Row> getDataFrame() {
-        return this.dataFrame;
-    }
-
-    @Override
     public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
         throw new OurBadException(
                 "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.",
                 metadata
         );
-    }
-
-    public List<FlworDataFrameColumn> getColumns() {
-        return this.columns;
     }
 
     public List<Name> getVariableNames() {

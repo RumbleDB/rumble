@@ -28,7 +28,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -75,8 +75,8 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String viewName = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         String selectSQL = childDataFrame.getSQLColumnProjection(false);
         LogManager.getLogger("ReverseFunctioniterator")
@@ -91,7 +91,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
                 )
             );
         String tempName = SparkSessionManager.temporaryColumnName;
-        JSoundDataFrame result = childDataFrame.evaluateSQL(
+        HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(
             String.format(
                 "SELECT %s FROM (SELECT %s, monotonically_increasing_id() as `%s` FROM %s ORDER BY `%s` DESC)",
                 selectSQL,

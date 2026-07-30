@@ -33,7 +33,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -75,12 +75,12 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         validateCollation(context);
 
         if (this.iterator.isDataFrame()) {
-            JSoundDataFrame df = this.iterator.getDataFrame(context);
+            HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
             if (df.isEmptySequence()) {
                 return null;
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-            JSoundDataFrame minDF = df.evaluateSQL(
+            HomogeneousItemDataFrame minDF = df.evaluateSQL(
                 String.format(
                     "SELECT MIN(`%s`) as `%s` FROM %s",
                     SparkSessionManager.nonObjectJSONiqItemColumnName,

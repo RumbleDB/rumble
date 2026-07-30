@@ -6,7 +6,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -36,8 +36,8 @@ public class DropColumnsIterator extends HybridRuntimeIterator implements DataFr
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame dataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame dataFrame = this.getChild(0).getDataFrame(context);
         List<Item> columnsToDropItems = this.getChild(1).materialize(context);
         if (columnsToDropItems.isEmpty()) {
             throw new InvalidSelectorException(
@@ -54,6 +54,6 @@ public class DropColumnsIterator extends HybridRuntimeIterator implements DataFr
             columnsToDrop[i] = columnItem.getStringValue();
             ++i;
         }
-        return new JSoundDataFrame(dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
+        return new HomogeneousItemDataFrame(dataFrame.getDataFrame().drop(columnsToDrop), dataFrame.getItemType());
     }
 }

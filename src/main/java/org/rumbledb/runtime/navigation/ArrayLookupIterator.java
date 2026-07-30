@@ -34,7 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -297,8 +297,8 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         initLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
@@ -389,7 +389,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
                 .getType()
                 .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             if (elementType.isObjectItemType()) {
                 sql = String.format(
                     "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
@@ -429,7 +429,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
                     this.lookup
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                res = new JSoundDataFrame(df, elementType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
@@ -446,6 +446,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
             .warn(
                 "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
             );
-        return JSoundDataFrame.emptyDataFrame();
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

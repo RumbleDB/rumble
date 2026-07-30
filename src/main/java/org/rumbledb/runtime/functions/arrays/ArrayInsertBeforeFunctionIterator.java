@@ -14,7 +14,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -146,7 +146,7 @@ public class ArrayInsertBeforeFunctionIterator extends HybridRuntimeIterator imp
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         throw new OurBadException(
                 "array:insert-before is currently supported only in local execution mode."
         );

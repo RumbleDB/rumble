@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
@@ -29,7 +30,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -52,6 +53,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
 
     @Serial
     private static final long serialVersionUID = 1L;
+    @Getter
     private final Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
@@ -75,7 +77,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
@@ -166,10 +168,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
         // do nothing
     }
 
-
-    public Name getVariableName() {
-        return this.variableName;
-    }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

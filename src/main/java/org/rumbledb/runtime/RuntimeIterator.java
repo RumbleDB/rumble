@@ -23,6 +23,7 @@ package org.rumbledb.runtime;
 import java.io.Serial;
 import java.util.*;
 
+import lombok.Getter;
 import lombok.NonNull;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
@@ -36,7 +37,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.LocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
@@ -53,6 +54,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     @Serial
     private static final long serialVersionUID = 1L;
     protected transient boolean hasNext;
+    @Getter
     protected transient boolean isOpen;
     private final List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
@@ -142,10 +144,6 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
         return this.hasNext;
     }
 
-    public boolean isOpen() {
-        return this.isOpen;
-    }
-
     protected final RuntimeIterator getChild(int index) {
         return this.children.get(index);
     }
@@ -217,9 +215,9 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
             || this.getStaticType().getItemType().isCompatibleWithDataFrames(this.getConfiguration());
     }
 
-    public final JSoundDataFrame getDataFrame(DynamicContext context) {
+    public final HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
         RuntimeDataFrame<Item> dataFrame = this.getDataFrameResult(context);
-        if (dataFrame instanceof JSoundDataFrame result) {
+        if (dataFrame instanceof HomogeneousItemDataFrame result) {
             return result;
         }
         throw new OurBadException(
@@ -234,18 +232,18 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      * 
      * @return the DataFrame.
      */
-    public final JSoundDataFrame getOrCreateDataFrame(DynamicContext context) {
+    public final RuntimeDataFrame<Item> getOrCreateDataFrame(DynamicContext context) {
         return this.getDataFrame(context);
     }
 
     @Override
-    protected final JSoundDataFrame convertRDDToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
+    protected final RuntimeDataFrame<Item> convertRDDToDataFrame(JavaRDD<Item> rdd, DynamicContext context) {
         return ItemRuntimeDataFrameFactory.INSTANCE.fromRDD(rdd, context, this.staticContext);
     }
 
     @Override
-    protected final JSoundDataFrame convertLocalToDataFrame(DynamicContext context) {
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromLocal(
+    protected final RuntimeDataFrame<Item> convertLocalToDataFrame(DynamicContext context) {
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromList(
             RuntimePlanConversions.materializeLocal(this, context),
             context,
             this.staticContext
@@ -302,12 +300,6 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
         }
         return result;
-    }
-
-    public void printToStandardError() {
-        StringBuilder sb = new StringBuilder();
-        this.print(sb, 0);
-        System.err.println(sb);
     }
 
     public void print(StringBuilder buffer, int indent) {

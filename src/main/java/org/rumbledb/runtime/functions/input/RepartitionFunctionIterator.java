@@ -24,7 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -90,8 +90,8 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator implement
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.iterator.getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.iterator.getDataFrame(context);
         int numberPartitions = this.partitionCountIterator.materializeFirstOrNull(context).getIntValue();
         return childDataFrame.repartition(numberPartitions);
     }

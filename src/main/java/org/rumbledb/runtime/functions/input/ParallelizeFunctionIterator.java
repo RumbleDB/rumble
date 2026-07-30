@@ -27,11 +27,11 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -70,7 +70,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         if (this.sequenceIterator.isDataFrame()) {
-            JSoundDataFrame dataFrame = this.sequenceIterator.getDataFrame(context);
+            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
             JavaRDD<Item> rdd = dataFrame.toRDD(this.getMetadata());
             if (this.partitionsIterator == null) {
                 return rdd;

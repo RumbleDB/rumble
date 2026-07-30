@@ -20,6 +20,8 @@
 
 package org.rumbledb.context;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -38,7 +40,9 @@ public class UserDefinedFunctionExecutionModes {
     // but functions items are fully known at runtimeIterator generation
     private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+    @Getter
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    @Setter
     private String queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
@@ -46,10 +50,6 @@ public class UserDefinedFunctionExecutionModes {
         this.userDefinedFunctionsParametersStorageMode = new HashMap<>();
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
         this.queryLanguage = null;
-    }
-
-    public void setQueryLanguage(String queryLanguage) {
-        this.queryLanguage = queryLanguage;
     }
 
     public boolean exists(FunctionIdentifier identifier) {
@@ -165,10 +165,6 @@ public class UserDefinedFunctionExecutionModes {
         return this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
             && this.userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
             && executionMode != ExecutionMode.UNSET;
-    }
-
-    public List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
-        return this.userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
 
     @Override

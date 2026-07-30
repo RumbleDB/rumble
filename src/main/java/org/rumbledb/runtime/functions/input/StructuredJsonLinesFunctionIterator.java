@@ -28,7 +28,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -51,7 +51,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
@@ -66,7 +66,7 @@ public class StructuredJsonLinesFunctionIterator extends DataFrameRuntimeIterato
                 .read()
                 .option("mode", "FAILFAST")
                 .json(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

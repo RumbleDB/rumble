@@ -30,7 +30,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
@@ -84,7 +84,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             return evaluateLocal(child, sequenceType, metadata, dynamicContext);
         }
         if (child.isDataFrame()) {
-            JSoundDataFrame childDF = child.getDataFrame(dynamicContext);
+            HomogeneousItemDataFrame childDF = child.getDataFrame(dynamicContext);
             if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }

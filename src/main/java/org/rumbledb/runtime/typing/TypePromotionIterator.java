@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -175,8 +175,8 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(
             df.isEmptySequence() ? 0 : 1,
             this.sequenceType,

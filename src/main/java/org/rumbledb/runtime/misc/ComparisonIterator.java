@@ -309,12 +309,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
-        if (left.isNumeric() && right.isDouble()) {
-            double l = left.castToDoubleValue();
-            double r = right.getDoubleValue();
-            return processDouble(l, r);
-        }
-
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
             float r;
@@ -640,7 +634,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             String l,
             String r
     ) {
-        return l.compareTo(r);
+        return CollationSupport.compareByCodePoint(l, r);
     }
 
     private static int processBytes(

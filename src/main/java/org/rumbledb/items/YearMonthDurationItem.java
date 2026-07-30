@@ -1,35 +1,29 @@
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import java.io.Serial;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.time.format.DateTimeParseException;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-public class YearMonthDurationItem implements Item {
+@NoArgsConstructor // For Kryo serialization
+public class YearMonthDurationItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private Period value;
     private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
-    public YearMonthDurationItem() {
-        super();
-    }
-
     public YearMonthDurationItem(Period value) {
-        super();
         this.value = Period.of(value.getYears(), value.getMonths(), 0);
     }
 
@@ -69,27 +63,6 @@ public class YearMonthDurationItem implements Item {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.value);
-    }
-
-
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
         return false;
     }
 

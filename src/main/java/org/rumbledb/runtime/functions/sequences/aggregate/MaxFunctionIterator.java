@@ -34,7 +34,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.LocalCursor;
@@ -77,7 +77,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         validateCollation(context);
 
         if (this.iterator.isDataFrame()) {
-            JSoundDataFrame df = this.iterator.getDataFrame(context);
+            HomogeneousItemDataFrame df = this.iterator.getDataFrame(context);
             if (df.isEmptySequence()) {
                 return null;
             }
@@ -93,7 +93,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 maxType = df.getItemType();
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-            JSoundDataFrame maxDF = df.evaluateSQL(
+            HomogeneousItemDataFrame maxDF = df.evaluateSQL(
                 String.format(
                     "SELECT MAX(`%s`) as `%s` FROM %s",
                     SparkSessionManager.nonObjectJSONiqItemColumnName,

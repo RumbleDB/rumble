@@ -16,7 +16,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -163,9 +163,9 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         this.validator.resolve(dynamicContext);
-        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        HomogeneousItemDataFrame df = this.iterator.getDataFrame(dynamicContext);
         this.validator.validateEmpty(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
@@ -189,7 +189,7 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
      * @param itemType the dynamic type of these values.
      * @return
      */
-    public static JSoundDataFrame convertToDataFrame(
+    public static HomogeneousItemDataFrame convertToDataFrame(
             JavaRDD<?> rdd,
             ItemType itemType,
             RuntimeStaticContext staticContext
@@ -207,7 +207,7 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
 
         // apply the schema to row RDD
         Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        return new JSoundDataFrame(df, itemType);
+        return new HomogeneousItemDataFrame(df, itemType);
     }
 
     private static final class Cursor extends AbstractLocalCursor<Item> {

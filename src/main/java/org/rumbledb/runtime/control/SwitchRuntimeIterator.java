@@ -26,14 +26,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.LocalCursor;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
 import java.util.Map;
@@ -129,9 +128,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
                     }
                     break;
                 }
-                if (
-                    ComparisonIterator.compareItems(testValue, caseValue, ComparisonOperator.VC_EQ, this.metadata) == 0
-                ) {
+                if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                     return this.cases.get(caseKey);
                 }
             }
@@ -192,13 +189,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
                     break;
                 }
             }
-            long comparison = ComparisonIterator.compareItems(
-                testValue,
-                caseValue,
-                ComparisonOperator.VC_EQ,
-                getMetadata()
-            );
-            if (comparison == 0) {
+            if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
                 return this.cases.get(caseKey);
             }
         }
@@ -214,7 +205,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {
         RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
 
         return iterator.getDataFrame(dynamicContext);

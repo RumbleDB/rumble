@@ -21,6 +21,8 @@
 package org.rumbledb.expressions.module;
 
 
+import lombok.Getter;
+import lombok.Setter;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -28,15 +30,17 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.Program;
-import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainModule extends Module {
 
+    @Setter
     protected StaticContext staticContext;
+    @Getter
     private final Prolog prolog;
+    @Getter
     private final Program program;
 
     public MainModule(Prolog prolog, Program program, ExceptionMetadata metadata) {
@@ -53,24 +57,8 @@ public class MainModule extends Module {
         return this.staticContext;
     }
 
-    public void setStaticContext(StaticContext staticContext) {
-        this.staticContext = staticContext;
-    }
-
-    public Prolog getProlog() {
-        return this.prolog;
-    }
-
     public Expression getExpression() {
         return this.program.getStatementsAndOptionalExpr().getExpression();
-    }
-
-    public StatementsAndOptionalExpr getStatementsAndOptionalExpr() {
-        return this.program.getStatementsAndOptionalExpr();
-    }
-
-    public Program getProgram() {
-        return this.program;
     }
 
     @Override

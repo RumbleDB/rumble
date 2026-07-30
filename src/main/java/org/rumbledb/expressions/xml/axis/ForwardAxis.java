@@ -1,5 +1,8 @@
 package org.rumbledb.expressions.xml.axis;
 
+import lombok.Getter;
+
+@Getter
 public enum ForwardAxis {
     CHILD("child::"),
     DESCENDANT("descendant::"),
@@ -13,10 +16,6 @@ public enum ForwardAxis {
 
     ForwardAxis(String axisValue) {
         this.axisValue = axisValue;
-    }
-
-    public String getAxisValue() {
-        return this.axisValue;
     }
 
     public static ForwardAxis fromString(String text) {

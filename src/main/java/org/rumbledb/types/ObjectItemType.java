@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.NoArgsConstructor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -21,7 +22,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-public class ObjectItemType implements ItemType {
+@NoArgsConstructor
+public class ObjectItemType extends AbstractItemType {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -44,9 +46,6 @@ public class ObjectItemType implements ItemType {
     private List<Item> enumeration;
     private ItemType baseType;
     private int typeTreeDepth;
-
-    ObjectItemType() {
-    }
 
     ObjectItemType(
             Name name,
@@ -94,18 +93,6 @@ public class ObjectItemType implements ItemType {
     }
 
 
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType itemType)) {
-            return false;
-        }
-        if (itemType.isMapItemType()) {
-            // delegate to the map item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo(itemType);
-    }
 
     @Override
     public boolean isObjectItemType() {
@@ -170,7 +157,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().isSubtypeOf(superType);
         }
-        return ItemType.super.isSubtypeOf(superType);
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -186,7 +173,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
-        return ItemType.super.findLeastCommonSuperTypeWith(other);
+        return super.findLeastCommonSuperTypeWith(other);
     }
 
     private ItemType getObjectAsMapType() {

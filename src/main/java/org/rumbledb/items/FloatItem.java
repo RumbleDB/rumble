@@ -20,15 +20,13 @@
 
 package org.rumbledb.items;
 
+import lombok.NoArgsConstructor;
 
 import org.apache.commons.lang3.StringUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -36,14 +34,12 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class FloatItem implements Item {
+@NoArgsConstructor // For Kryo serialization
+public class FloatItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private float value;
-
-    public FloatItem() {
-    }
 
     public FloatItem(float value) {
         this.value = value;
@@ -52,20 +48,6 @@ public class FloatItem implements Item {
     @Override
     public Item copy(boolean mutable) {
         return new FloatItem(this.value);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other instanceof Item otherItem) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
@@ -156,12 +138,6 @@ public class FloatItem implements Item {
     @Override
     public boolean isFloat() {
         return true;
-    }
-
-
-
-    public int hashCode() {
-        return (int) Math.round(this.value);
     }
 
     @Override

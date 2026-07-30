@@ -42,20 +42,12 @@ public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    final RuntimeIterator iterator;
-    final BufferedReader reader;
-    final Item path;
-    final Item nextItem;
 
     public XmlFilesFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
     ) {
         super(arguments, staticContext);
-        this.iterator = this.getChild(0);
-        this.reader = null;
-        this.nextItem = null;
-        this.path = null;
     }
 
     @Override

@@ -33,7 +33,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -203,8 +203,8 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator implements Data
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame = this.getChild(0).getDataFrame(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
@@ -274,7 +274,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator implements Data
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                return new JSoundDataFrame(df, elementType);
+                return new HomogeneousItemDataFrame(df, elementType);
             }
             return childDataFrame.evaluateSQL(
                 String.format(
@@ -300,7 +300,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator implements Data
                 .getType()
                 .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             // TODO: SORT OUT INDEXING DURING UNBOXING
             if (elementType.isObjectItemType()) {
                 sql = String.format(
@@ -334,7 +334,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator implements Data
                     array
                 );
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                res = new JSoundDataFrame(df, elementType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
@@ -351,6 +351,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator implements Data
             .warn(
                 "Array unboxing on a DataFrame that does not an array type. Empty sequence returned."
             );
-        return JSoundDataFrame.emptyDataFrame();
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

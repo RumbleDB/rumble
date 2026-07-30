@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -27,14 +28,15 @@ import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.SparkSessionManager;
 
-public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
+@Getter
+public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
     private final Dataset<Row> dataFrame;
     private ItemType itemType;
 
-    public JSoundDataFrame(Dataset<Row> dataFrame, ItemType itemType) {
+    public HomogeneousItemDataFrame(Dataset<Row> dataFrame, ItemType itemType) {
         this.dataFrame = dataFrame;
         this.itemType = itemType;
         StructType schema = this.dataFrame.schema();
@@ -117,25 +119,15 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
         }
     }
 
-    public JSoundDataFrame(Dataset<Row> dataFrame) {
+    public HomogeneousItemDataFrame(Dataset<Row> dataFrame) {
         this(dataFrame, BuiltinTypesCatalogue.item);
     }
 
-    public static JSoundDataFrame emptyDataFrame() {
-        return new JSoundDataFrame(
+    public static HomogeneousItemDataFrame emptyDataFrame() {
+        return new HomogeneousItemDataFrame(
                 SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
                 BuiltinTypesCatalogue.item
         );
-    }
-
-    @Override
-    public Dataset<Row> getDataFrame() {
-        return this.dataFrame;
-    }
-
-    public void show() {
-        System.out.println("Item type: " + this.itemType);
-        this.dataFrame.show();
     }
 
     /**
@@ -151,10 +143,6 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
 
     public long count() {
         return this.dataFrame.count();
-    }
-
-    public ItemType getItemType() {
-        return this.itemType;
     }
 
     public List<String> getKeys() {
@@ -186,9 +174,9 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
         this.dataFrame.createOrReplaceTempView(name);
     }
 
-    public JSoundDataFrame evaluateSQL(String sqlQuery, ItemType outputType) {
+    public HomogeneousItemDataFrame evaluateSQL(String sqlQuery, ItemType outputType) {
         Dataset<Row> resultDF = this.dataFrame.sparkSession().sql(sqlQuery);
-        return new JSoundDataFrame(resultDF, outputType);
+        return new HomogeneousItemDataFrame(resultDF, outputType);
     }
 
     public boolean isEmptySequence() {
@@ -206,17 +194,17 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
         );
     }
 
-    public JSoundDataFrame distinct() {
-        return new JSoundDataFrame(this.dataFrame.distinct(), this.itemType);
+    public HomogeneousItemDataFrame distinct() {
+        return new HomogeneousItemDataFrame(this.dataFrame.distinct(), this.itemType);
     }
 
-    public JSoundDataFrame union(JSoundDataFrame other) {
+    public HomogeneousItemDataFrame union(HomogeneousItemDataFrame other) {
         if (!this.itemType.equals(other.itemType)) {
             throw new OurBadException(
                     "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType
             );
         }
-        return new JSoundDataFrame(this.getDataFrame().union(other.getDataFrame()), this.itemType);
+        return new HomogeneousItemDataFrame(this.getDataFrame().union(other.getDataFrame()), this.itemType);
     }
 
     public boolean hasKey(String key) {
@@ -232,8 +220,8 @@ public class JSoundDataFrame implements RuntimeDataFrame<Item>, Serializable {
         return Arrays.asList((Row[]) this.dataFrame.take(n));
     }
 
-    public JSoundDataFrame repartition(int n) {
-        return new JSoundDataFrame(this.getDataFrame().repartition(n), this.itemType);
+    public HomogeneousItemDataFrame repartition(int n) {
+        return new HomogeneousItemDataFrame(this.getDataFrame().repartition(n), this.itemType);
     }
 
     /**

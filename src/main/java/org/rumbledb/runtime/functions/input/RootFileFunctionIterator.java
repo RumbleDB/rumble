@@ -28,7 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -51,7 +51,7 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public JSoundDataFrame getNativeDataFrame(DynamicContext context) {
+    public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator urlIterator = this.getChild(0);
         String path = null;
         if (this.getChildren().size() > 1) {
@@ -75,7 +75,7 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
                 reader.option("tree", path);
             }
             Dataset<Row> dataFrame = reader.load(FileSystemUtil.convertURIToStringForSpark(uri));
-            return new JSoundDataFrame(dataFrame);
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

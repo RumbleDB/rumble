@@ -8,6 +8,7 @@
 package org.rumbledb.runtime.dataframe;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -38,4 +39,14 @@ public interface RuntimeDataFrame<T> extends Serializable {
      * @return an RDD of logical runtime values
      */
     JavaRDD<T> toRDD(ExceptionMetadata metadata);
+
+    /**
+     * Materializes this DataFrame as logical runtime values.
+     *
+     * @param metadata query metadata used if a row cannot be decoded
+     * @return a list of logical runtime values
+     */
+    default List<T> toList(ExceptionMetadata metadata) {
+        return toRDD(metadata).collect();
+    }
 }

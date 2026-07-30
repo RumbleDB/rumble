@@ -550,6 +550,22 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             } else if (item.isBoolean()) {
                 convertedValue = ItemFactory.getInstance()
                     .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
+            } else if (item.isFloat()) {
+                float value = item.getFloatValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        new BigDecimal(Float.toString(value)).stripTrailingZeros().toPlainString()
+                    );
+            } else if (item.isDouble()) {
+                double value = item.getDoubleValue();
+                item.castToDecimalValue(); // validates that the value is finite
+                convertedValue = ItemFactory.getInstance()
+                    .createDecimalItem(
+                        new BigDecimal(value),
+                        BigDecimal.valueOf(value).stripTrailingZeros().toPlainString()
+                    );
             } else if (item.isNumeric()) {
                 convertedValue = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
             }

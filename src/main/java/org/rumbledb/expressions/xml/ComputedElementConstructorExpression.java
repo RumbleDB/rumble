@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.xml;
 
+import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -35,6 +36,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedElements">XQuery 3.1, 3.9.3.1: Computed Element
  *      Constructors</a>
  */
+@Getter
 public class ComputedElementConstructorExpression extends Expression {
     /** The static element name (if specified) */
     private final Name elementName;
@@ -77,33 +79,6 @@ public class ComputedElementConstructorExpression extends Expression {
         this.elementName = null;
         this.nameExpression = nameExpression;
         this.contentExpression = contentExpression;
-    }
-
-    /**
-     * Get the static element name
-     * 
-     * @return The static element name
-     */
-    public Name getElementName() {
-        return this.elementName;
-    }
-
-    /**
-     * Get the dynamic element name expression
-     * 
-     * @return The dynamic element name expression
-     */
-    public Expression getNameExpression() {
-        return this.nameExpression;
-    }
-
-    /**
-     * Get the content expression
-     * 
-     * @return The content expression
-     */
-    public Expression getContentExpression() {
-        return this.contentExpression;
     }
 
     /**
