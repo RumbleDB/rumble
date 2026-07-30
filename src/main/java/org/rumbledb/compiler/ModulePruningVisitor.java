@@ -38,7 +38,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @SuppressWarnings("unused")
     private final RumbleConfiguration configuration;
-    private List<String> visitedModules;
+    private final List<String> visitedModules;
 
     /**
      * Builds a new visitor.
