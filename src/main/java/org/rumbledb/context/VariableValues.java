@@ -53,7 +53,7 @@ public class VariableValues implements Serializable {
     private final Map<Name, Item> localVariableCounts;
     private final Map<Name, JavaRDD<Item>> rddVariableValues;
     private final Map<Name, JSoundDataFrame> dataFrameVariableValues;
-    private final boolean nestedQuery;
+    private transient boolean nestedQuery;
     private final VariableValues parent;
     private final RumbleRuntimeConfiguration configuration;
 
