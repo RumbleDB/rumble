@@ -1,6 +1,5 @@
 package org.rumbledb.cli.arguments;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.rumbledb.config.SerializationParameterBuilder;
@@ -58,7 +57,7 @@ public final class OutputArguments {
         paramLabel = "name=value",
         description = "Options to further specify the output format, for example a separator character for CSV or a compression format."
     )
-    private Map<String, String> outputFormatOptions = new HashMap<>();
+    private Map<String, String> outputFormatOptions;
 
     public OutputConfig toConfig() {
         OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();

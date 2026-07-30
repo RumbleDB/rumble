@@ -3,6 +3,7 @@ package org.rumbledb.cli.arguments;
 import org.rumbledb.config.model.InputConfig;
 
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Parameters;
 
 public final class InputArguments {
     @Option(
@@ -19,10 +20,18 @@ public final class InputArguments {
     )
     private String queryPath;
 
-    public InputConfig toConfig(String positionalQueryPath) {
+    @Parameters(
+        index = "0",
+        arity = "0..1",
+        paramLabel = "query-file",
+        description = "A JSONiq query file to read from (from any file system, even the Web!)."
+    )
+    private String positionalQueryPath;
+
+    public InputConfig toConfig() {
         InputConfig.InputConfigBuilder builder = InputConfig.builder();
         OptionConversion.applyIfPresent(
-            this.queryPath != null ? this.queryPath : positionalQueryPath,
+            this.queryPath != null ? this.queryPath : this.positionalQueryPath,
             builder::queryPath
         );
         OptionConversion.applyIfPresent(this.query, builder::query);

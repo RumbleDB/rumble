@@ -23,31 +23,23 @@ import org.rumbledb.cli.arguments.InputArguments;
 import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.model.RumbleMode;
 
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
-import picocli.CommandLine.Parameters;
 
 @Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = true)
 public final class Run extends BaseCommand {
-    @Mixin
+    @ArgGroup(exclusive = true, multiplicity = "1")
     InputArguments input;
 
     @Mixin
     OutputArguments output;
 
-    @Parameters(
-        index = "0",
-        arity = "0..1",
-        paramLabel = "query-file",
-        description = "A JSONiq query file to read from (from any file system, even the Web!)."
-    )
-    String queryPath;
-
     @Override
     public CLIInvocation call() {
         return this.invocation(
             this.baseConfiguration(RumbleMode.RUN)
-                .input(this.input.toConfig(this.queryPath))
+                .input(this.input.toConfig())
                 .output(this.output.toConfig())
                 .build()
         );
