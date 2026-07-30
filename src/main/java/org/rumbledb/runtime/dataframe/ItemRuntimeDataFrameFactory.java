@@ -33,7 +33,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public HomogeneousItemDataFrame fromLocal(
+    public RuntimeDataFrame<Item> fromLocal(
             List<Item> items,
             DynamicContext context,
             RuntimeStaticContext staticContext
@@ -53,7 +53,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     }
 
     @Override
-    public HomogeneousItemDataFrame fromRDD(
+    public RuntimeDataFrame<Item> fromRDD(
             JavaRDD<Item> rdd,
             DynamicContext context,
             RuntimeStaticContext staticContext

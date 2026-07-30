@@ -18,9 +18,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -46,7 +46,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     @Getter
     private final Estimator<?> estimator;
 
-    private HomogeneousItemDataFrame inputDataset;
+    private RuntimeDataFrame<Item> inputDataset;
     private Item paramMapItem;
 
     public ApplyEstimatorRuntimeIterator(
@@ -218,7 +218,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return generateTransformerFunctionItem(fittedModel, dynamicContext);
     }
 
-    private HomogeneousItemDataFrame getInputDataset(DynamicContext context) {
+    private RuntimeDataFrame<Item> getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(

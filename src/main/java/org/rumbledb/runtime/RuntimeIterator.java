@@ -44,6 +44,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.update.PendingUpdateList;
@@ -301,7 +302,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface<Item> 
      * 
      * @return the DataFrame.
      */
-    public final HomogeneousItemDataFrame getOrCreateDataFrame(DynamicContext context) {
+    public final RuntimeDataFrame<Item> getOrCreateDataFrame(DynamicContext context) {
         if (isDataFrame()) {
             return this.getDataFrame(context);
         }

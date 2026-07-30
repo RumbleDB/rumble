@@ -18,6 +18,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.io.Serial;
@@ -39,7 +40,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     @Getter
     private final Transformer transformer;
 
-    private HomogeneousItemDataFrame inputDataset;
+    private RuntimeDataFrame<Item> inputDataset;
     private Item paramMapItem;
     private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
@@ -173,7 +174,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private HomogeneousItemDataFrame getInputDataset(DynamicContext context) {
+    private RuntimeDataFrame<Item> getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
         return RumbleMLUtils.getDataFrameOrInferFromVariable(

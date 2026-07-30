@@ -78,12 +78,12 @@ import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.CommentItem;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -867,14 +867,14 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Zips a HomogeneousItemDataFrame to a special column.
+     * Zips an item runtime DataFrame to a special column.
      *
-     * @param jdf - the JSoundDataframe to perform the operation on
+     * @param dataFrame the runtime DataFrame to perform the operation on
      * @param offset - starting offset for the first index
-     * @return returns HomogeneousItemDataFrame with the added column containing indices (with some specific UUID)
+     * @return the underlying DataFrame with the added column containing indices (with some specific UUID)
      */
-    public static Dataset<Row> zipWithIndex(HomogeneousItemDataFrame jdf, Long offset) {
-        return zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName);
+    public static Dataset<Row> zipWithIndex(RuntimeDataFrame<Item> dataFrame, Long offset) {
+        return zipWithIndex(dataFrame.getDataFrame(), offset, SparkSessionManager.countColumnName);
     }
 
     /**

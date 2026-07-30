@@ -19,6 +19,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
@@ -28,7 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RumbleMLUtils {
-    public static HomogeneousItemDataFrame getDataFrameOrInferFromVariable(
+    public static RuntimeDataFrame<Item> getDataFrameOrInferFromVariable(
             DynamicContext context,
             Name inputVariableName,
             RuntimeStaticContext staticContext,
@@ -307,8 +308,8 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata, true);
     }
 
-    public static HomogeneousItemDataFrame createDataFrameContainingVectorizedColumn(
-            HomogeneousItemDataFrame inputDataset,
+    public static RuntimeDataFrame<Item> createDataFrameContainingVectorizedColumn(
+            RuntimeDataFrame<Item> inputDataset,
             String paramNameExposedToTheUser,
             String[] arrayOfInputColumnNames,
             String outputColumnName,
