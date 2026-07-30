@@ -585,7 +585,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             String l,
             String r
     ) {
-        return l.compareTo(r);
+        return CollationSupport.compareByCodePoint(l, r);
     }
 
     private static int processBytes(
