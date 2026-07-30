@@ -22,7 +22,6 @@ package org.rumbledb.runtime.xml;
 
 import org.rumbledb.api.Item;
 
-import java.util.ArrayList;
 import java.util.List;
 
 final class XmlConstructorContentUtils {
