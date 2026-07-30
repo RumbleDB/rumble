@@ -18,6 +18,7 @@
 
 package org.rumbledb.config.model;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -41,6 +42,7 @@ import lombok.extern.jackson.Jacksonized;
 @Accessors(fluent = true)
 @JsonDeserialize(builder = FormattingConfig.FormattingConfigBuilder.class)
 public class FormattingConfig implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     /**
@@ -51,7 +53,7 @@ public class FormattingConfig implements Serializable {
      * place is supplied. The initial default is {@code UTC}.
      * </p>
      */
-    private String defaultFormattingPlace;
+    String defaultFormattingPlace;
 
     /**
      * The default calendar used for formatting date and time values.
@@ -63,7 +65,7 @@ public class FormattingConfig implements Serializable {
      * </p>
      *
      */
-    private String defaultFormattingCalendar;
+    String defaultFormattingCalendar;
 
     /**
      * The default language used for formatting date and time values.
@@ -75,7 +77,7 @@ public class FormattingConfig implements Serializable {
      * </p>
      *
      */
-    private String defaultFormattingLanguage;
+    String defaultFormattingLanguage;
 
     @Builder(toBuilder = true)
     private FormattingConfig(

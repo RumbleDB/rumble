@@ -21,7 +21,6 @@ package org.rumbledb.config.model;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import org.rumbledb.exceptions.CliException;
 
@@ -35,7 +34,6 @@ import lombok.extern.jackson.Jacksonized;
 @NoArgsConstructor(force = true)
 @Jacksonized
 @Accessors(fluent = true)
-@JsonDeserialize(builder = SemanticsConfig.SemanticsConfigBuilder.class)
 public class SemanticsConfig implements Serializable {
     private static final long serialVersionUID = 1L;
 
@@ -44,11 +42,11 @@ public class SemanticsConfig implements Serializable {
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
     public static final String DEFAULT_XML_VERSION = "1.1";
 
-    private boolean datesWithTimeZone;
-    private boolean laxJSONNullValidation;
-    private String queryLanguage;
-    private String xmlVersion;
-    private String staticBaseUri;
+    boolean datesWithTimeZone;
+    boolean laxJSONNullValidation;
+    String queryLanguage;
+    String xmlVersion;
+    String staticBaseUri;
 
     @Builder(toBuilder = true)
     private SemanticsConfig(
