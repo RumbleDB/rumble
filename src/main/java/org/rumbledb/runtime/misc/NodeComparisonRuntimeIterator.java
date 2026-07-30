@@ -34,7 +34,6 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
@@ -67,17 +66,6 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         this.operator = operator;
     }
 
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(
-                this.leftIterator,
-                this.rightIterator,
-                this.operator,
-                context,
-                getMetadata()
-        );
-    }
-
     public NodeComparisonExpression.NodeComparisonOperator getOperator() {
         return this.operator;
     }
@@ -91,7 +79,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         // 1. The operands of a node comparison are evaluated in implementation-dependent order.
         Item leftItem;
         Item rightItem;

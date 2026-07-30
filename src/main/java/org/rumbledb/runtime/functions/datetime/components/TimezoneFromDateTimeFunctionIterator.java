@@ -24,7 +24,7 @@ public class TimezoneFromDateTimeFunctionIterator extends TemporalComponentFunct
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item dateTimeItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateTimeItem == null || !dateTimeItem.hasTimeZone()) {
             return null;

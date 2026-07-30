@@ -10,8 +10,6 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
@@ -29,18 +27,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> {
-                    validateStaticType();
-                    return evaluate(this.getChild(0).materializeFirstOrNull(context));
-                },
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         validateStaticType();
         return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
     }

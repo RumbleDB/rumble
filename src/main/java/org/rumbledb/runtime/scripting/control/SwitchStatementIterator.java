@@ -6,8 +6,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import java.io.Serial;
@@ -99,21 +97,7 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> {
-                    RuntimeIterator matchingIterator = selectApplicableIterator(
-                        iterator -> iterator.materializeFirstOrNull(context)
-                    );
-                    matchingIterator.materialize(new DynamicContext(context));
-                    return null;
-                },
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         RuntimeIterator matchingIterator = this.selectApplicableIterator(dynamicContext);
         DynamicContext childContext = new DynamicContext(dynamicContext);
         matchingIterator.materialize(childContext);

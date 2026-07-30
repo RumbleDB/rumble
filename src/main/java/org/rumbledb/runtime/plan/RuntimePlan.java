@@ -46,6 +46,17 @@ public abstract class RuntimePlan<T> implements Serializable {
     }
 
     /**
+     * Direct native-local evaluation hook for {@link AtMostOneLocalRuntimePlan} implementations.
+     */
+    public T evaluateAtMostOne(DynamicContext context) {
+        throw new OurBadException(
+                "The runtime plan "
+                    + this.getClass().getCanonicalName()
+                    + " does not support direct at-most-one evaluation."
+        );
+    }
+
+    /**
      * Executes this plan in its compiled representation and exposes the result as a cursor.
      */
     public final Cursor<T> getCursor(@NonNull DynamicContext context) {
@@ -160,6 +171,9 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @return the materialized result sequence
      */
     public final List<T> materialize(@NonNull DynamicContext context) {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.materializeDirectAtMostOne(context);
+        }
         List<T> result = new ArrayList<>();
         try (Cursor<T> cursor = this.getCursor(context)) {
             while (cursor.hasNext()) {
@@ -176,6 +190,9 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @return the first result, or {@code null}
      */
     public final T materializeFirstOrNull(@NonNull DynamicContext context) {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.evaluateAtMostOne(context);
+        }
         try (Cursor<T> cursor = this.getCursor(context)) {
             return cursor.hasNext() ? cursor.next() : null;
         }
@@ -192,6 +209,12 @@ public abstract class RuntimePlan<T> implements Serializable {
         Objects.requireNonNull(context, "dynamic context cannot be null");
         if (limit < 0) {
             throw new IllegalArgumentException("limit cannot be negative");
+        }
+        if (limit == 0) {
+            return new ArrayList<>();
+        }
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.materializeDirectAtMostOne(context);
         }
         List<T> result = new ArrayList<>(limit);
         try (Cursor<T> cursor = this.getCursor(context)) {
@@ -210,6 +233,9 @@ public abstract class RuntimePlan<T> implements Serializable {
      * @throws MoreThanOneItemException if more than one result is produced
      */
     public final T materializeAtMostOne(@NonNull DynamicContext context) throws MoreThanOneItemException {
+        if (this.canEvaluateAtMostOneDirectly()) {
+            return this.evaluateAtMostOne(context);
+        }
         try (Cursor<T> cursor = this.getCursor(context)) {
             if (!cursor.hasNext()) {
                 return null;
@@ -234,6 +260,19 @@ public abstract class RuntimePlan<T> implements Serializable {
             throws MoreThanOneItemException {
         T result = this.materializeAtMostOne(context);
         return result == null ? defaultValue : result;
+    }
+
+    private boolean canEvaluateAtMostOneDirectly() {
+        return this.getExecutionMode() == ExecutionMode.LOCAL && this instanceof AtMostOneLocalRuntimePlan<?>;
+    }
+
+    private List<T> materializeDirectAtMostOne(DynamicContext context) {
+        List<T> result = new ArrayList<>(1);
+        T item = this.evaluateAtMostOne(context);
+        if (item != null) {
+            result.add(item);
+        }
+        return result;
     }
 
     /**

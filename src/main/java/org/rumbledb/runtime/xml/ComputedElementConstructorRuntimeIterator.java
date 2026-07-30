@@ -34,8 +34,6 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -106,18 +104,7 @@ public class ComputedElementConstructorRuntimeIterator extends AtMostOneItemLoca
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> createElement(
-                    (iterator, childContext) -> iterator.materialize(childContext),
-                    context
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         return createElement(
             (iterator, childContext) -> iterator.materialize(childContext),
             dynamicContext

@@ -28,8 +28,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -38,7 +36,6 @@ import java.util.List;
 import java.util.function.IntSupplier;
 
 public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -51,20 +48,7 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> evaluate(
-                    this.getChild(0).materializeFirstOrNull(context),
-                    () -> this.getChildren().size() > 1
-                        ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
-                        : 0
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item value = this.getChild(0).materializeFirstItemOrNull(context);
         return evaluate(
             value,
@@ -126,7 +110,6 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
                     getMetadata()
             );
 
-
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
@@ -141,6 +124,5 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
             sign = -1;
         return sign;
     }
-
 
 }

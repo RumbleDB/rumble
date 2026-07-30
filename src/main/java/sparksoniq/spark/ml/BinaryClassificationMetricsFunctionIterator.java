@@ -17,8 +17,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
@@ -36,15 +34,7 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> materializeFirstItemOrNull(context),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         JavaRDD<Item> scoresAndLabels = this.getChild(0).getRDD(context);
         String scoreCol = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         String labelCol = this.getChild(2).materializeFirstOrNull(context).getStringValue();

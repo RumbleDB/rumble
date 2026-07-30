@@ -33,14 +33,18 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.cursor.ComputedLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator implements LocalRuntimePlan<Item> {
+public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
+        implements
+            AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -57,14 +61,24 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     }
 
     @Override
-    public abstract Item materializeFirstItemOrNull(
+    public abstract Item evaluateAtMostOne(
             DynamicContext context
     );
 
     @Override
+    public final Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new ComputedLocalCursor<>(() -> this.evaluateAtMostOne(context), this.getMetadata());
+    }
+
+    @Override
+    public final Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.evaluateAtMostOne(context);
+    }
+
+    @Override
     public void open(DynamicContext dynamicContext) {
         super.open(dynamicContext);
-        this.result = materializeFirstItemOrNull(dynamicContext);
+        this.result = evaluateAtMostOne(dynamicContext);
         this.hasNext = this.result != null;
     }
 
@@ -89,7 +103,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
     )
             throws NoItemException,
                 MoreThanOneItemException {
-        Item result = materializeFirstItemOrNull(dynamicContext);
+        Item result = evaluateAtMostOne(dynamicContext);
         if (result == null) {
             throw new NoItemException();
         }
@@ -101,12 +115,12 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator 
             DynamicContext dynamicContext
     )
             throws MoreThanOneItemException {
-        return materializeFirstItemOrNull(dynamicContext);
+        return evaluateAtMostOne(dynamicContext);
     }
 
     @Override
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        Item item = materializeFirstItemOrNull(dynamicContext);
+        Item item = evaluateAtMostOne(dynamicContext);
         if (item == null) {
             return false;
         }

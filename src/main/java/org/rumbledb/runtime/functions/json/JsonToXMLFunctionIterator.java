@@ -18,8 +18,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -53,12 +51,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item jsonText = this.getChild(0).materializeFirstItemOrNull(context);
         if (jsonText == null) {
             return null;

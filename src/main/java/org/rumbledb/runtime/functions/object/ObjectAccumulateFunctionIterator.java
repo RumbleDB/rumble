@@ -29,8 +29,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -52,15 +50,7 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> accumulate(this.getChild(0).materialize(context)),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         RuntimeIterator iterator = this.getChild(0);
 
         if (!iterator.isDataFrame()) {
@@ -80,7 +70,6 @@ public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeI
         Item result = mapResult.reduce(reductionTransformation);
 
         return result;
-
 
     }
 

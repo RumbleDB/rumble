@@ -32,8 +32,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -74,15 +72,7 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> evaluate(index -> this.getChild(index).materialize(context)),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
         return evaluate(index -> this.getChild(index).materialize(dynamicContext));

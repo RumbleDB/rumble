@@ -9,7 +9,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -26,17 +25,7 @@ public class LangFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ComputedLocalCursor.fromArguments(
-            this.getChildren(),
-            context,
-            arguments -> evaluate(arguments, context),
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
             ComputedLocalCursor.arguments(
                 this.getChildren().size(),

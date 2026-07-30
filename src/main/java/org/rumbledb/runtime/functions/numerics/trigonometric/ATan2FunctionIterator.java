@@ -26,8 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -53,18 +51,7 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return BinaryMappingLocalCursor.eager(
-            this.yIterator,
-            this.xIterator,
-            context,
-            ATan2FunctionIterator::evaluate,
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item y = this.yIterator.materializeFirstItemOrNull(dynamicContext);
         Item x = this.xIterator.materializeFirstItemOrNull(dynamicContext);
         return evaluate(y, x);

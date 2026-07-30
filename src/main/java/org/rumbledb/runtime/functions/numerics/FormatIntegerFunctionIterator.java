@@ -6,8 +6,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger.IntegerPictureFormatter;
 
 import java.io.Serial;
@@ -23,21 +21,7 @@ public class FormatIntegerFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> evaluate(
-                    this.getChild(0).materializeFirstOrNull(context),
-                    this.getChild(1).materializeFirstOrNull(context),
-                    this.getChildren().size() > 2
-                        ? this.getChild(2).materializeFirstOrNull(context)
-                        : null
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
         Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
         Item languageItem = this.getChildren().size() > 2

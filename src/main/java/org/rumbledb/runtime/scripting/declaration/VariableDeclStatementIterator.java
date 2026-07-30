@@ -8,8 +8,6 @@ import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -29,20 +27,7 @@ public class VariableDeclStatementIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> declare(
-                    this.getChildren().isEmpty()
-                        ? null
-                        : this.getChild(0).materialize(context),
-                    context
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         if (!this.getChildren().isEmpty() && !this.getChild(0).isLocal()) {
             return declareDistributed(dynamicContext);
         }

@@ -58,17 +58,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        RuntimeIterator child = getChild(0);
-        Name countedVariable = child instanceof VariableReferenceIterator variable
-            ? variable.getVariableName()
-            : null;
-        return new EvaluationCursor(child, countedVariable, context, getMetadata());
-    }
-
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         RuntimeIterator iterator = this.getChild(0);
 
         // the count($x) case is treated separately because we can short-circuit the

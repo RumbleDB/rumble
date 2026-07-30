@@ -26,7 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -35,7 +34,6 @@ import java.io.Serial;
 import java.util.List;
 
 public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -48,12 +46,7 @@ public class EmptyFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ExistenceLocalCursor.empty(getChild(0), context, this.getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         if (this.getChild(0).isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(i.isEmpty());

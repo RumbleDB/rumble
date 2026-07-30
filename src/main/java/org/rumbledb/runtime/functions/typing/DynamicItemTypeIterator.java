@@ -8,7 +8,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
@@ -23,13 +22,8 @@ public class DynamicItemTypeIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(this.getChild(0), context);
-    }
-
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(this.getChild(0), context, this.getMetadata());
     }
 
     private static Item evaluate(RuntimeIterator argumentPlan, DynamicContext context) {

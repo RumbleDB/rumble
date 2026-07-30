@@ -44,7 +44,6 @@ import java.util.TreeMap;
 
 public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -56,12 +55,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(getChild(0), context, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         RuntimeIterator child = this.getChild(0);
         if (!child.isRDDOrDataFrame()) {
             return computeLocalAverage(child, context, getMetadata());

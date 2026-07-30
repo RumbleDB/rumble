@@ -28,8 +28,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.MappingLocalCursor;
 
 /**
  * Shared plan for extracting one component from a date, time, dateTime, or duration value.
@@ -103,17 +101,7 @@ public abstract class TemporalComponentFunctionIterator extends AtMostOneItemLoc
     }
 
     @Override
-    public final Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new MappingLocalCursor<>(
-                this.argument,
-                context,
-                this.component::evaluate,
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item item = this.argument.materializeFirstItemOrNull(context);
         return item == null ? null : this.component.evaluate(item);
     }

@@ -8,8 +8,6 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.math.BigInteger;
@@ -27,17 +25,7 @@ public class FunctionArityFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ContextOrArgumentLocalCursor.mapArgument(
-            this.getChild(0),
-            context,
-            this::evaluate,
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
     }
 

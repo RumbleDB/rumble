@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -23,25 +22,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> raiseError(
-                    ComputedLocalCursor.arguments(
-                        this.getChildren().size(),
-                        index -> index == 2
-                            ? null
-                            : this.getChild(index).materializeFirstOrNull(context)
-                    ),
-                    this.getChildren().size() == 3
-                        ? () -> this.getChild(2).materialize(context)
-                        : List::of
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return raiseError(
             ComputedLocalCursor.arguments(
                 this.getChildren().size(),

@@ -27,8 +27,6 @@ import org.rumbledb.exceptions.InvalidProcessingInstructionContentException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
 import java.io.Serial;
@@ -61,19 +59,7 @@ public class DirPIConstructorRuntimeIterator extends AtMostOneItemLocalRuntimeIt
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> createProcessingInstruction(
-                    this.contentIterator == null
-                        ? List.of()
-                        : this.contentIterator.materialize(context)
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         return createProcessingInstruction(
             this.contentIterator == null
                 ? List.of()

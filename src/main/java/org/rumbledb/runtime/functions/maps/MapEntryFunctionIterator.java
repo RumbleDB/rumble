@@ -9,8 +9,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -38,18 +36,7 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> createEntry(
-                    this.keyIterator.materializeFirstOrNull(context),
-                    this.valueIterator.materialize(context)
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item key = this.keyIterator.materializeFirstItemOrNull(dynamicContext);
 
         List<Item> valueSequence = this.valueIterator.materialize(dynamicContext);

@@ -7,8 +7,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -27,24 +25,7 @@ public class StatementsOnlyIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> {
-                    for (RuntimeIterator childPlan : this.getChildren()) {
-                        try (Cursor<Item> child = childPlan.getCursor(context)) {
-                            while (child.hasNext()) {
-                                child.next();
-                            }
-                        }
-                    }
-                    return null;
-                },
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         startLocal(dynamicContext);
         return null;
     }

@@ -37,7 +37,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
@@ -65,14 +64,14 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ExtremumLocalCursor.max(this.iterator, getCollationPlan(), context, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         if (!this.iterator.isRDDOrDataFrame()) {
-            return this.materializeFirstOrNull(context);
+            return ExtremumLocalEvaluation.max(
+                this.iterator,
+                getCollationPlan(),
+                context,
+                getMetadata()
+            );
         }
         validateCollation(context);
 

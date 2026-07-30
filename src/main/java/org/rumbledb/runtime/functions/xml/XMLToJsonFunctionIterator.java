@@ -15,8 +15,6 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.math.BigDecimal;
@@ -42,12 +40,7 @@ public class XMLToJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(() -> materializeWithCursors(context), getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item input = materializeInput(context);
         if (input == null) {
             return null;

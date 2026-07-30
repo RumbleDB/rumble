@@ -34,8 +34,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 import scala.Tuple2;
@@ -47,7 +45,6 @@ import java.util.Objects;
 
 public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -57,7 +54,6 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         return Objects.equals(q1, q2);
     }
 
-
     public DeepEqualFunctionIterator(
             List<RuntimeIterator> arguments,
             RuntimeStaticContext staticContext
@@ -66,24 +62,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> {
-                    validateCollation(
-                        this.getChildren().size() == 3
-                            ? this.getChild(2).materializeFirstOrNull(context)
-                            : null
-                    );
-                    List<Item> items1 = this.getChild(0).materialize(context);
-                    List<Item> items2 = this.getChild(1).materialize(context);
-                    return booleanItem(checkDeepEqual(items1, items2));
-                },
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         RuntimeIterator sequenceIterator1 = this.getChild(0);
         RuntimeIterator sequenceIterator2 = this.getChild(1);
         validateCollation(

@@ -28,8 +28,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.BinaryMappingLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -38,7 +36,6 @@ import java.io.Serial;
 import java.util.List;
 
 public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -56,19 +53,7 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        ExceptionMetadata metadata = getMetadata();
-        return BinaryMappingLocalCursor.shortCircuiting(
-            this.baseIterator,
-            this.exponentIterator,
-            context,
-            (base, exponent) -> evaluate(base, exponent, metadata),
-            metadata
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item base = this.baseIterator.materializeFirstItemOrNull(context);
         if (base == null) {
             return null;

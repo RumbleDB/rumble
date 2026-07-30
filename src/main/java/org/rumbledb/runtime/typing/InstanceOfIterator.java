@@ -34,13 +34,11 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
-
 
 public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -60,15 +58,10 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
         return evaluate(this.child, this.sequenceType, getMetadata(), dynamicContext);
-    }
-
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(this.child, this.sequenceType, getMetadata(), context);
     }
 
     private static Item evaluate(

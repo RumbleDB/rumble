@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.RuntimePlan;
 
 import lombok.NonNull;
@@ -35,7 +34,6 @@ import java.io.Serial;
 import java.util.List;
 
 public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -48,12 +46,7 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(getChild(0), context, this.getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         if (this.getChild(0).isRDDOrDataFrame()) {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             if (i.isEmpty()) {

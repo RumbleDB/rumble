@@ -40,7 +40,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -57,13 +56,11 @@ import java.util.Arrays;
  */
 public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
     private final ComparisonExpression.ComparisonOperator comparisonOperator;
     private final RuntimeIterator leftIterator;
     private final RuntimeIterator rightIterator;
-
 
     public ComparisonIterator(
             RuntimeIterator leftIterator,
@@ -75,17 +72,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
         this.comparisonOperator = comparisonOperator;
-    }
-
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(
-                this.leftIterator,
-                this.rightIterator,
-                this.comparisonOperator,
-                context,
-                getMetadata()
-        );
     }
 
     public ComparisonExpression.ComparisonOperator getComparisonOperator() {
@@ -106,7 +92,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         // if EMPTY SEQUENCE - eg. () or ((),())
         // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
         Item left;

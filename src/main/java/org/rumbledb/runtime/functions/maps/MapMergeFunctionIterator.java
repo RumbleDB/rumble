@@ -16,7 +16,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 
 /**
@@ -63,11 +62,6 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         }
     }
 
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(() -> materializeFirstItemOrNull(context), getMetadata());
-    }
-
     private final RuntimeIterator mapsIterator;
     private final RuntimeIterator optionsIterator; // may be null for arity-1
 
@@ -96,7 +90,7 @@ public class MapMergeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         ExceptionMetadata metadata = getMetadata();
 
         // 2. Resolve options and duplicates policy.

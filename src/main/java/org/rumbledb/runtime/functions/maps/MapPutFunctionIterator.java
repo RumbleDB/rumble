@@ -14,8 +14,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -50,19 +48,7 @@ public class MapPutFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> evaluate(
-                    this.mapIterator.materialize(context),
-                    this.keyIterator.materialize(context),
-                    this.valueIterator.materialize(context)
-                ),
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
             this.mapIterator.materialize(context),
             this.keyIterator.materialize(context),

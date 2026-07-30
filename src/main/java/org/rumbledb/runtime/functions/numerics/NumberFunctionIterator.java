@@ -27,9 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -49,30 +46,7 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        if (this.getChildren().isEmpty()) {
-            return new ComputedLocalCursor<>(
-                    () -> CastIterator.castItemToType(
-                        context.getVariableValues()
-                            .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                            .get(0),
-                        BuiltinTypesCatalogue.doubleItem,
-                        getMetadata(),
-                        this.staticContext
-                    ),
-                    getMetadata()
-            );
-        }
-        return ContextOrArgumentLocalCursor.mapArgument(
-            this.getChild(0),
-            context,
-            this::castOrNaN,
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return CastIterator.castItemToType(

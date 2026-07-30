@@ -27,8 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -46,20 +44,7 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> {
-                    Item separator = this.getChildren().size() > 1
-                        ? this.getChild(1).materializeFirstOrNull(context)
-                        : ItemFactory.getInstance().createStringItem("");
-                    return join(this.getChild(0).materialize(context), separator);
-                },
-                getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
         if (this.getChildren().size() > 1) {
             joinString = this.getChild(1).materializeFirstItemOrNull(context);

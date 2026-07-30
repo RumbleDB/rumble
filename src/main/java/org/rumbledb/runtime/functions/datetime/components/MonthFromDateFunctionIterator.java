@@ -23,7 +23,7 @@ public class MonthFromDateFunctionIterator extends TemporalComponentFunctionIter
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item dateItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateItem == null) {
             return null;

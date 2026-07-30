@@ -35,6 +35,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -97,6 +98,55 @@ public class LegacyRuntimeIteratorCursorTest {
             () -> planWithoutLocalCapability.getCursor(dynamicContext)
         );
         assertTrue(exception.getMessage().contains("does not implement the corresponding capability"));
+    }
+
+    @Test
+    public void atMostOneMaterializationDoesNotCreateACursor() throws Exception {
+        RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration();
+        DynamicContext dynamicContext = new DynamicContext(configuration);
+        DirectAtMostOnePlan plan = new DirectAtMostOnePlan(
+                createStaticContext(configuration),
+                ItemFactory.getInstance().createIntItem(7)
+        );
+
+        assertEquals(7, plan.materializeFirstOrNull(dynamicContext).getIntValue());
+        assertEquals(7, plan.materializeAtMostOne(dynamicContext).getIntValue());
+        assertEquals(1, plan.materialize(dynamicContext).size());
+        assertTrue(plan.materializeAtMost(dynamicContext, 0).isEmpty());
+        assertEquals(3, plan.evaluationCount);
+        assertEquals(0, plan.cursorCreationCount);
+    }
+
+    private static final class DirectAtMostOnePlan extends RuntimePlan<Item>
+            implements
+                AtMostOneLocalRuntimePlan<Item> {
+
+        private final RuntimeStaticContext staticContext;
+        private final Item result;
+        private int evaluationCount;
+        private int cursorCreationCount;
+
+        private DirectAtMostOnePlan(RuntimeStaticContext staticContext, Item result) {
+            this.staticContext = staticContext;
+            this.result = result;
+        }
+
+        @Override
+        public Item evaluateAtMostOne(DynamicContext context) {
+            this.evaluationCount++;
+            return this.result;
+        }
+
+        @Override
+        public Cursor<Item> createNativeCursor(DynamicContext context) {
+            this.cursorCreationCount++;
+            return new SingletonLocalCursor<>(this.result, this.staticContext.getMetadata());
+        }
+
+        @Override
+        public RuntimeStaticContext getRuntimeStaticContext() {
+            return this.staticContext;
+        }
     }
 
     private static RuntimeStaticContext createStaticContext(RumbleRuntimeConfiguration configuration) {

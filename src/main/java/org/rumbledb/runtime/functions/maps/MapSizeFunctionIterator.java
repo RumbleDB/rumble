@@ -22,8 +22,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.MappingLocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -44,12 +42,7 @@ public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new MappingLocalCursor<>(this.getChild(0), context, MapSizeFunctionIterator::size, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item map = this.getChild(0).materializeFirstItemOrNull(context);
         return map == null ? null : size(map);
     }

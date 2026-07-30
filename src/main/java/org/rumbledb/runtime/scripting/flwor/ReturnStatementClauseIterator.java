@@ -9,7 +9,6 @@ import org.rumbledb.exceptions.ContinueStatementException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -34,14 +33,6 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
         this.clauseIterator = clauseIterator;
         this.expression = expression;
         setInputAndOutputTupleVariableDependencies();
-    }
-
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> executeLocally(context),
-                getMetadata()
-        );
     }
 
     private Item executeLocally(DynamicContext context) {
@@ -78,7 +69,7 @@ public class ReturnStatementClauseIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         this.currentDynamicContextForLocalExecution = new DynamicContext(context);
         materializeWithLocalTuple();
         return null;

@@ -27,8 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -49,17 +47,7 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ContextOrArgumentLocalCursor.mapFirstArgumentOrContext(
-            this.getChildren(),
-            context,
-            StringLengthFunctionIterator::evaluate,
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return evaluate(items.get(0));

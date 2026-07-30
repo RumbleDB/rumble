@@ -52,7 +52,6 @@ import java.util.TreeMap;
 
 public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -64,13 +63,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        RuntimePlan<Item> zeroPlan = getChildren().size() > 1 ? getChild(1) : null;
-        return new EvaluationCursor(getChild(0), zeroPlan, context, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return computeSum(
             zeroElement(context),
             this.getChild(0),

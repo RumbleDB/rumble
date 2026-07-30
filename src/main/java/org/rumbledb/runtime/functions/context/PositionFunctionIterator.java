@@ -27,8 +27,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.primary.ContextValueLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -36,7 +34,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 public class PositionFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -49,12 +46,7 @@ public class PositionFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ContextValueLocalCursor.position(context, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item result = context.getVariableValues().getPosition();
         if (result == null) {
             throw new AbsentPartOfDynamicContextException("Context undefined (position) ", getMetadata());

@@ -27,15 +27,14 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /**
- * Local cursor shared by the {@code min()} and {@code max()} aggregate plans.
+ * Direct local evaluation shared by the {@code min()} and {@code max()} aggregate plans.
  */
-final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
+final class ExtremumLocalEvaluation {
 
     private enum Kind {
         MIN,
@@ -45,48 +44,35 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
     private static final String CODEPOINT_COLLATION =
         "http://www.w3.org/2005/xpath-functions/collation/codepoint";
 
-    private final RuntimePlan<Item> childPlan;
-    private final RuntimePlan<Item> collationPlan;
-    private final DynamicContext context;
-    private final ExceptionMetadata metadata;
-    private final Kind kind;
+    private ExtremumLocalEvaluation() {
+    }
 
-    private ExtremumLocalCursor(
+    public static Item min(
+            RuntimePlan<Item> childPlan,
+            RuntimePlan<Item> collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return evaluate(childPlan, collationPlan, context, metadata, Kind.MIN);
+    }
+
+    public static Item max(
+            RuntimePlan<Item> childPlan,
+            RuntimePlan<Item> collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        return evaluate(childPlan, collationPlan, context, metadata, Kind.MAX);
+    }
+
+    private static Item evaluate(
             @NonNull RuntimePlan<Item> childPlan,
             RuntimePlan<Item> collationPlan,
             @NonNull DynamicContext context,
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind
     ) {
-        super(metadata);
-        this.childPlan = childPlan;
-        this.collationPlan = collationPlan;
-        this.context = context;
-        this.metadata = metadata;
-        this.kind = kind;
-    }
-
-    public static ExtremumLocalCursor min(
-            RuntimePlan<Item> childPlan,
-            RuntimePlan<Item> collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        return new ExtremumLocalCursor(childPlan, collationPlan, context, metadata, Kind.MIN);
-    }
-
-    public static ExtremumLocalCursor max(
-            RuntimePlan<Item> childPlan,
-            RuntimePlan<Item> collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata
-    ) {
-        return new ExtremumLocalCursor(childPlan, collationPlan, context, metadata, Kind.MAX);
-    }
-
-    @Override
-    protected Item materializeOneItemOrNull() {
-        validateCollation();
+        validateCollation(collationPlan, context, metadata);
 
         Item selected = null;
         boolean sawNull = false;
@@ -94,18 +80,19 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
         boolean sawDouble = false;
         boolean sawString = false;
         ItemComparator comparator = new ItemComparator(
-                this.kind == Kind.MIN,
+                kind == Kind.MIN,
                 new InvalidArgumentTypeException(
-                        functionName() + " expression input error. Input has to be non-null atomics of matching types",
-                        this.metadata
+                        functionName(kind)
+                            + " expression input error. Input has to be non-null atomics of matching types",
+                        metadata
                 )
         );
 
-        try (Cursor<Item> childCursor = this.childPlan.getCursor(this.context)) {
+        try (Cursor<Item> childCursor = childPlan.getCursor(context)) {
             while (childCursor.hasNext()) {
                 Item candidate = childCursor.next();
                 if (candidate.isNull()) {
-                    if (this.kind == Kind.MIN) {
+                    if (kind == Kind.MIN) {
                         return ItemFactory.getInstance().createNullItem();
                     }
                     sawNull = true;
@@ -127,7 +114,7 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
                 int comparison = comparator.compare(selected, candidate);
                 if (isNaN(candidate)) {
                     selected = candidate;
-                } else if (!isNaN(selected) && shouldSelectCandidate(comparison)) {
+                } else if (!isNaN(selected) && shouldSelectCandidate(comparison, kind)) {
                     selected = candidate;
                 }
             }
@@ -150,21 +137,25 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
         return selected;
     }
 
-    private boolean shouldSelectCandidate(int comparison) {
-        return this.kind == Kind.MIN ? comparison > 0 : comparison < 0;
+    private static boolean shouldSelectCandidate(int comparison, Kind kind) {
+        return kind == Kind.MIN ? comparison > 0 : comparison < 0;
     }
 
     private static boolean isNaN(Item item) {
         return (item.isFloat() || item.isDouble()) && item.isNaN();
     }
 
-    private void validateCollation() {
-        if (this.collationPlan == null) {
+    private static void validateCollation(
+            RuntimePlan<Item> collationPlan,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        if (collationPlan == null) {
             return;
         }
-        Item collation = this.collationPlan.materializeFirstOrNull(this.context);
+        Item collation = collationPlan.materializeFirstOrNull(context);
         if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", this.metadata);
+            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
         }
     }
 
@@ -186,7 +177,7 @@ final class ExtremumLocalCursor extends AtMostOneLocalCursor<Item> {
         throw new OurBadException("Inconsistent state in state iteration");
     }
 
-    private String functionName() {
-        return this.kind == Kind.MIN ? "Min" : "Max";
+    private static String functionName(Kind kind) {
+        return kind == Kind.MIN ? "Min" : "Max";
     }
 }

@@ -13,7 +13,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils.NamespaceResolver;
@@ -29,7 +28,6 @@ import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     @Serial
@@ -48,15 +46,10 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(
+    public Item evaluateAtMostOne(
             DynamicContext dynamicContext
     ) {
         return evaluate(this.child, this.sequenceType, this.staticContext, getMetadata(), dynamicContext);
-    }
-
-    @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(this.child, this.sequenceType, this.staticContext, getMetadata(), context);
     }
 
     private static Item evaluate(

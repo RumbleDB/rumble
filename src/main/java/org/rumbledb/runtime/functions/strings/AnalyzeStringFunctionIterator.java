@@ -10,7 +10,6 @@ import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayDeque;
@@ -39,12 +38,7 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ComputedLocalCursor.fromArguments(this.getChildren(), context, this::evaluate, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
             ComputedLocalCursor.arguments(
                 this.getChildren().size(),

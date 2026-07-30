@@ -26,8 +26,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.SingletonLocalCursor;
 
 import java.io.Serial;
 import java.util.List;
@@ -45,12 +43,7 @@ public class FalseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new SingletonLocalCursor<>(ItemFactory.getInstance().createBooleanItem(false), this.getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return ItemFactory.getInstance().createBooleanItem(false);
     }
 

@@ -18,7 +18,6 @@
  *
  */
 
-
 package org.rumbledb.runtime.functions.json;
 
 import com.google.gson.stream.JsonReader;
@@ -30,7 +29,6 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 
 import java.io.Serial;
@@ -50,17 +48,7 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ComputedLocalCursor.fromArguments(
-            this.getChildren(),
-            context,
-            arguments -> evaluate(arguments, context),
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
             ComputedLocalCursor.arguments(
                 this.getChildren().size(),

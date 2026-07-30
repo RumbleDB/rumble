@@ -27,8 +27,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.cursor.MappingLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
@@ -39,7 +37,6 @@ import java.math.RoundingMode;
 import java.util.List;
 
 public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -52,12 +49,7 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new MappingLocalCursor<>(this.getChild(0), context, this::evaluate, getMetadata());
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
     }
 
@@ -134,6 +126,5 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 new SequenceType(BuiltinTypesCatalogue.floatItem, value.getResultingType().getArity())
         );
     }
-
 
 }

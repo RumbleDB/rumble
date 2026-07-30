@@ -23,10 +23,8 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.functions.io.TextResourceUtil;
-
 
 public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -41,17 +39,7 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return ComputedLocalCursor.fromArguments(
-            this.getChildren(),
-            context,
-            arguments -> evaluate(arguments, context),
-            getMetadata()
-        );
-    }
-
-    @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         return evaluate(
             ComputedLocalCursor.arguments(
                 this.getChildren().size(),
@@ -137,8 +125,6 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             throw ex;
         }
     }
-
-
 
     private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         try {
