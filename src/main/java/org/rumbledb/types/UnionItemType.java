@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +13,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-@NoArgsConstructor(force = true) // For Kryo serialization
 public class UnionItemType extends AbstractItemType {
 
     @Serial

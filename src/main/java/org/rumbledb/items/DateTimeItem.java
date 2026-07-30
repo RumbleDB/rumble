@@ -1,6 +1,5 @@
 package org.rumbledb.items;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -16,7 +15,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-@NoArgsConstructor // For Kryo serialization
 public class DateTimeItem extends AbstractAtomicItem {
 
     @Serial

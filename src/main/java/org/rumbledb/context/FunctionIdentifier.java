@@ -20,7 +20,6 @@
 
 package org.rumbledb.context;
 
-import lombok.NoArgsConstructor;
 import java.io.Serial;
 import java.io.Serializable;
 
@@ -29,7 +28,6 @@ import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode
-@NoArgsConstructor
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private Name name;

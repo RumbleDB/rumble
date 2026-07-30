@@ -14,7 +14,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.runtime.typing.CastIterator;
 
 
-@NoArgsConstructor(force = true) // For Kryo serialization
+@NoArgsConstructor(force = true)
 public class FieldDescriptor implements Serializable {
 
     @Serial

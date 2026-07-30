@@ -24,7 +24,6 @@ import java.io.Serial;
 import java.io.Serializable;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import org.rumbledb.exceptions.OurBadException;
 
 import lombok.EqualsAndHashCode;
@@ -44,7 +43,6 @@ import lombok.EqualsAndHashCode;
  */
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@NoArgsConstructor(force = true) // For Kryo serialization
 public class Name implements Comparable<Name>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;

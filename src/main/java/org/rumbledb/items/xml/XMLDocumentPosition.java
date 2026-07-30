@@ -27,7 +27,6 @@ import java.util.UUID;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 
 /**
  * The `XMLDocumentPosition` class represents the position of an item within an XML document.
@@ -36,7 +35,6 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @EqualsAndHashCode
-@NoArgsConstructor // For Kryo serialization
 public class XMLDocumentPosition implements Comparable<XMLDocumentPosition>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
