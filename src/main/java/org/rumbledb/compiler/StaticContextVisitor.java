@@ -22,8 +22,11 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -100,9 +103,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private final Map<String, StaticContext> importedModuleContexts;
+    private final IdentityHashMap<StaticContext, Set<String>> importedModuleLocationsByContext;
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
+        this.importedModuleLocationsByContext = new IdentityHashMap<>();
     }
 
     @Override
@@ -132,6 +137,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
+        this.importedModuleLocationsByContext.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
     }
@@ -143,6 +149,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(moduleLocation, moduleContext);
+        }
+        Set<String> importedModuleLocations = this.importedModuleLocationsByContext.computeIfAbsent(
+            argument,
+            ignored -> new HashSet<>()
+        );
+        if (importedModuleLocations.contains(moduleLocation)) {
+            return argument;
         }
         StaticContext importedContext = this.importedModuleContexts.get(moduleLocation);
         for (Name variableName : importedContext.getInScopeVariables().keySet()) {
@@ -159,6 +172,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         argument.importModuleContext(importedContext);
+        importedModuleLocations.add(moduleLocation);
         argument.getInScopeSchemaTypes()
             .importModuleTypes(
                 importedContext.getInScopeSchemaTypes()
