@@ -20,6 +20,7 @@
 
 package org.rumbledb.context;
 
+import lombok.NoArgsConstructor;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
@@ -43,17 +44,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@NoArgsConstructor(force = true)
 public class VariableValues implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private Map<Name, List<Item>> localVariableValues;
-    private Map<Name, Item> localVariableCounts;
-    private Map<Name, JavaRDD<Item>> rddVariableValues;
-    private Map<Name, JSoundDataFrame> dataFrameVariableValues;
-    private boolean nestedQuery;
-    private VariableValues parent;
-    private RumbleRuntimeConfiguration configuration;
+    private final Map<Name, List<Item>> localVariableValues;
+    private final Map<Name, Item> localVariableCounts;
+    private final Map<Name, JavaRDD<Item>> rddVariableValues;
+    private final Map<Name, JSoundDataFrame> dataFrameVariableValues;
+    private final boolean nestedQuery;
+    private final VariableValues parent;
+    private final RumbleRuntimeConfiguration configuration;
 
     public VariableValues(RumbleRuntimeConfiguration configuration) {
         this.parent = null;
