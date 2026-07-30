@@ -58,26 +58,6 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item main;
@@ -85,10 +65,10 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
         Item locator = null;
 
         try {
-            main = this.mainIterator.materializeExactlyOneItem(context);
-            content = SerializationUtils.clone(this.toInsertIterator.materializeExactlyOneItem(context));
+            main = this.mainIterator.materializeExactlyOne(context);
+            content = SerializationUtils.clone(this.toInsertIterator.materializeExactlyOne(context));
             if (this.hasPositionIterator()) {
-                locator = this.positionIterator.materializeExactlyOneItem(context);
+                locator = this.positionIterator.materializeExactlyOne(context);
             }
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException("Target of insert expression is empty", this.getMetadata());

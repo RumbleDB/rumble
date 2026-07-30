@@ -25,7 +25,7 @@ public class MonthsFromDurationFunctionIterator extends TemporalComponentFunctio
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item durationItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (durationItem == null) {
             return null;
         }

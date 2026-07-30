@@ -20,6 +20,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
@@ -95,7 +96,7 @@ public abstract class RuntimePlan<T> implements Serializable {
     /**
      * Executes this plan in its compiled representation and exposes the result as a typed runtime DataFrame.
      */
-    protected final RuntimeDataFrame<T> getDataFrameResult(@NonNull DynamicContext context) {
+    public RuntimeDataFrame<T> getDataFrame(@NonNull DynamicContext context) {
         return this.executeAs(
             context,
             cursor -> this.convertLocalToDataFrame(cursor, context),
@@ -183,13 +184,20 @@ public abstract class RuntimePlan<T> implements Serializable {
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.materializeDirectAtMostOne(context);
         }
-        List<T> result = new ArrayList<>();
-        try (Cursor<T> cursor = this.getCursor(context)) {
-            while (cursor.hasNext()) {
-                result.add(cursor.next());
-            }
-        }
-        return result;
+        return this.executeAs(
+            context,
+            RuntimePlanConversions::materializeCursor,
+            rdd -> RuntimePlanConversions.collectRDDWithLimit(
+                rdd,
+                this.getRuntimeStaticContext().getConfiguration(),
+                this.getRuntimeStaticContext().getMetadata()
+            ),
+            dataFrame -> RuntimePlanConversions.collectRDDWithLimit(
+                dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()),
+                this.getRuntimeStaticContext().getConfiguration(),
+                this.getRuntimeStaticContext().getMetadata()
+            )
+        );
     }
 
     /**
@@ -202,9 +210,12 @@ public abstract class RuntimePlan<T> implements Serializable {
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.evaluateAtMostOne(context);
         }
-        try (Cursor<T> cursor = this.getCursor(context)) {
-            return cursor.hasNext() ? cursor.next() : null;
-        }
+        return this.executeAs(
+            context,
+            RuntimePlan::materializeFirstFromCursor,
+            RuntimePlan::firstOrNull,
+            dataFrame -> firstOrNull(dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()))
+        );
     }
 
     /**
@@ -225,13 +236,12 @@ public abstract class RuntimePlan<T> implements Serializable {
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.materializeDirectAtMostOne(context);
         }
-        List<T> result = new ArrayList<>(limit);
-        try (Cursor<T> cursor = this.getCursor(context)) {
-            while (result.size() < limit && cursor.hasNext()) {
-                result.add(cursor.next());
-            }
-        }
-        return result;
+        return this.executeAs(
+            context,
+            cursor -> materializeAtMostFromCursor(cursor, limit),
+            rdd -> rdd.take(limit),
+            dataFrame -> dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata()).take(limit)
+        );
     }
 
     /**
@@ -245,16 +255,25 @@ public abstract class RuntimePlan<T> implements Serializable {
         if (this.canEvaluateAtMostOneDirectly()) {
             return this.evaluateAtMostOne(context);
         }
-        try (Cursor<T> cursor = this.getCursor(context)) {
-            if (!cursor.hasNext()) {
-                return null;
-            }
-            T result = cursor.next();
-            if (cursor.hasNext()) {
-                throw new MoreThanOneItemException();
-            }
-            return result;
+        return this.executeAtMostOne(context);
+    }
+
+    /**
+     * Evaluates this plan and returns its only result.
+     *
+     * @param context the dynamic context for the evaluation
+     * @return the only result
+     * @throws NoItemException if the plan produces no result
+     * @throws MoreThanOneItemException if the plan produces more than one result
+     */
+    public final T materializeExactlyOne(@NonNull DynamicContext context)
+            throws NoItemException,
+                MoreThanOneItemException {
+        T result = this.materializeAtMostOne(context);
+        if (result == null) {
+            throw new NoItemException();
         }
+        return result;
     }
 
     /**
@@ -282,6 +301,68 @@ public abstract class RuntimePlan<T> implements Serializable {
             result.add(item);
         }
         return result;
+    }
+
+    private static <T> T materializeFirstFromCursor(Cursor<T> cursor) {
+        try (cursor) {
+            return cursor.hasNext() ? cursor.next() : null;
+        }
+    }
+
+    private static <T> List<T> materializeAtMostFromCursor(Cursor<T> cursor, int limit) {
+        List<T> result = new ArrayList<>(limit);
+        try (cursor) {
+            while (result.size() < limit && cursor.hasNext()) {
+                result.add(cursor.next());
+            }
+        }
+        return result;
+    }
+
+    private T executeAtMostOne(DynamicContext context) throws MoreThanOneItemException {
+        return switch (this.getExecutionMode()) {
+            case LOCAL -> {
+                this.requireCapability(this instanceof LocalRuntimePlan<?>, ExecutionMode.LOCAL);
+                yield materializeAtMostOneFromCursor(this.createNativeCursor(context));
+            }
+            case RDD -> {
+                this.requireCapability(this instanceof RDDRuntimePlan<?>, ExecutionMode.RDD);
+                yield materializeAtMostOneFromRDD(this.getNativeRDD(context));
+            }
+            case DATAFRAME -> {
+                this.requireCapability(this instanceof DataFrameRuntimePlan<?>, ExecutionMode.DATAFRAME);
+                yield materializeAtMostOneFromRDD(
+                    this.getNativeDataFrame(context).toRDD(this.getRuntimeStaticContext().getMetadata())
+                );
+            }
+            case UNSET -> throw this.unsetExecutionMode();
+        };
+    }
+
+    private static <T> T materializeAtMostOneFromCursor(Cursor<T> cursor) throws MoreThanOneItemException {
+        try (cursor) {
+            if (!cursor.hasNext()) {
+                return null;
+            }
+            T result = cursor.next();
+            if (cursor.hasNext()) {
+                throw new MoreThanOneItemException();
+            }
+            return result;
+        }
+    }
+
+    private static <T> T firstOrNull(JavaRDD<T> rdd) {
+        List<T> result = rdd.take(1);
+        return result.isEmpty() ? null : result.get(0);
+    }
+
+    private static <T> T materializeAtMostOneFromRDD(JavaRDD<T> rdd) throws MoreThanOneItemException {
+        List<T> result = rdd.take(2);
+        if (result.size() > 1) {
+            throw new MoreThanOneItemException();
+        }
+        return result.isEmpty() ? null : result.get(0);
     }
 
     /**

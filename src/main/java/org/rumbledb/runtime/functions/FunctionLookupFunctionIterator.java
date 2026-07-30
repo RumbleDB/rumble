@@ -52,7 +52,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     private Item evaluate(DynamicContext context) {
-        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item nameItem = this.getChild(0).materializeFirstOrNull(context);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
                     "function-lookup: first argument must be xs:QName",
@@ -61,7 +61,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
         Name fnName = nameItem.getQNameValue();
 
-        Item arityItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item arityItem = this.getChild(1).materializeFirstOrNull(context);
         if (arityItem == null) {
             throw new UnexpectedTypeException(
                     "function-lookup: second argument must be xs:integer",

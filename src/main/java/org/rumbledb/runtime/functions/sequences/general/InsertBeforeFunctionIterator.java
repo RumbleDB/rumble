@@ -44,14 +44,10 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private final RuntimeIterator insertIterator;
-    private Item nextResult;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> positionIterator;
+    private final RuntimePlan<Item> insertIterator;
     private int insertPosition; // position to start inserting
-    private int currentPosition; // current position
-    private boolean insertingNow; // check if currently iterating over insertIterator
-    private boolean insertingCompleted;
 
     public InsertBeforeFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -80,7 +76,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (this.insertIterator.isRDDOrDataFrame()) {
+        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
                 .filter((item) -> item._2() < this.insertPosition - 1)
@@ -117,86 +113,11 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         }, false);
     }
 
-    @Override
-    protected void openLocal() {
-        init(this.currentDynamicContextForLocalExecution);
-        this.currentPosition = 1; // initialize index as the first item
-        this.insertingNow = false;
-        this.insertingCompleted = false;
 
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.insertIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-        this.insertIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", getMetadata());
-    }
 
     private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.insertPosition = positionItem.getIntValue();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        // don't check for insertion triggers once insertion is completed
-        if (!this.insertingCompleted) {
-            if (!this.insertingNow) {
-                if (this.insertPosition <= this.currentPosition) { // start inserting if condition is met
-                    if (this.insertIterator.hasNext()) {
-                        this.insertingNow = true;
-                        this.nextResult = this.insertIterator.next();
-                    } else {
-                        this.insertingNow = false;
-                        this.insertingCompleted = true;
-                    }
-                }
-            } else { // if inserting
-                if (this.insertIterator.hasNext()) { // return an item from insertIterator at each iteration
-                    this.nextResult = this.insertIterator.next();
-                } else {
-                    this.insertingNow = false;
-                    this.insertingCompleted = true;
-                }
-            }
-        }
-
-        // if not inserting, take the next element from input sequence
-        if (!this.insertingNow) {
-            if (this.sequenceIterator.hasNext()) {
-                this.nextResult = this.sequenceIterator.next();
-                this.currentPosition++;
-            } else if (this.insertIterator.hasNext()) {
-                this.nextResult = this.insertIterator.next();
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-            this.insertIterator.close();
-        } else {
-            this.hasNext = true;
-        }
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

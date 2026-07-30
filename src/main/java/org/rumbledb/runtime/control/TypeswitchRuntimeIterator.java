@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -19,7 +21,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class TypeswitchRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class TypeswitchRuntimeIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

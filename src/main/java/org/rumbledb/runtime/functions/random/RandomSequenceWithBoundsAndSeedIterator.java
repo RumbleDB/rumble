@@ -38,11 +38,11 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
 
     @Override
     public void open(DynamicContext context) {
-        this.low = this.getChild(0).materializeFirstItemOrNull(context);
-        this.high = this.getChild(1).materializeFirstItemOrNull(context);
-        this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
-        this.type = this.getChild(3).materializeFirstItemOrNull(context);
-        this.seed = this.getChild(4).materializeFirstItemOrNull(context).castToIntValue();
+        this.low = this.getChild(0).materializeFirstOrNull(context);
+        this.high = this.getChild(1).materializeFirstOrNull(context);
+        this.size = this.getChild(2).materializeFirstOrNull(context).castToIntValue();
+        this.type = this.getChild(3).materializeFirstOrNull(context);
+        this.seed = this.getChild(4).materializeFirstOrNull(context).castToIntValue();
         this.generatedRandomsIterator = createRandomNumberStream(
             this.low,
             this.high,
@@ -54,11 +54,11 @@ public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterato
 
     private GeneratedRandomsIterator createRandomNumberStream(DynamicContext context) {
         return createRandomNumberStream(
-            this.getChild(0).materializeFirstItemOrNull(context),
-            this.getChild(1).materializeFirstItemOrNull(context),
-            this.getChild(2).materializeFirstItemOrNull(context).castToIntValue(),
-            this.getChild(3).materializeFirstItemOrNull(context),
-            this.getChild(4).materializeFirstItemOrNull(context).castToIntValue()
+            this.getChild(0).materializeFirstOrNull(context),
+            this.getChild(1).materializeFirstOrNull(context),
+            this.getChild(2).materializeFirstOrNull(context).castToIntValue(),
+            this.getChild(3).materializeFirstOrNull(context),
+            this.getChild(4).materializeFirstOrNull(context).castToIntValue()
         );
     }
 

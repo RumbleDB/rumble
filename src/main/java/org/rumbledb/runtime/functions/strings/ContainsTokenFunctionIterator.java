@@ -42,13 +42,13 @@ public class ContainsTokenFunctionIterator extends AtMostOneItemLocalRuntimeIter
         if (this.getChildren().size() < 3) {
             return null;
         }
-        Item collationItem = this.getChild(2).materializeFirstItemOrNull(context);
+        Item collationItem = this.getChild(2).materializeFirstOrNull(context);
         String collationUri = collationItem == null ? null : collationItem.getStringValue();
         return CollationResolver.resolve(collationUri, getMetadata());
     }
 
     private String getNormalizedToken(DynamicContext context) {
-        Item tokenItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item tokenItem = this.getChild(1).materializeFirstOrNull(context);
         return trimXmlWhitespace(tokenItem.getStringValue());
     }
 

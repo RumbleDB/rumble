@@ -72,7 +72,7 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item inputItem = this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item inputItem = this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
             return evaluate(inputItem);
         } else {
             throw new IteratorFlowException(

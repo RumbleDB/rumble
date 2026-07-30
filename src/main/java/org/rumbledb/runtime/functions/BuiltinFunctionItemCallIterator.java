@@ -16,6 +16,8 @@
  */
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -36,7 +38,10 @@ import java.util.List;
 /**
  * Dynamic invocation of a function item that represents a builtin named function reference.
  */
-public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class BuiltinFunctionItemCallIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

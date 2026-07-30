@@ -72,7 +72,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private Item zeroElement(DynamicContext context) {
         if (this.getChildren().size() > 1) {
-            return this.getChild(1).materializeFirstItemOrNull(context);
+            return this.getChild(1).materializeFirstOrNull(context);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
         }

@@ -63,7 +63,7 @@ public class HashUDF implements UDF1<Row, Long> {
 
         Item item = null;
         try {
-            item = this.expression.materializeAtMostOneItemOrNull(this.dataFrameContext.getContext());
+            item = this.expression.materializeAtMostOne(this.dataFrameContext.getContext());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Invalid args. Value comparison can't be performed on sequences with more than 1 items",

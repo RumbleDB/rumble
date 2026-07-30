@@ -47,7 +47,7 @@ public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item array = this.getChild(0).materializeFirstItemOrNull(context);
+        Item array = this.getChild(0).materializeFirstOrNull(context);
         return array == null ? null : size(array);
     }
 

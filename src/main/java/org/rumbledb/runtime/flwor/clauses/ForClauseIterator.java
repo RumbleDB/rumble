@@ -280,7 +280,7 @@ public class ForClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getDataFrame(
+    public FlworDataFrame getNativeDataFrame(
             DynamicContext context
     ) {
         // if it's a starting clause

@@ -27,7 +27,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -81,10 +80,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
@@ -135,38 +130,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator implements 
         return newContext;
     }
 
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.variableName,
-                    getMetadata()
-            );
-        }
-        Item item = this.items.get(this.currentIndex);
-        this.currentIndex++;
-        if (this.currentIndex == this.items.size()) {
-            this.hasNext = false;
-        }
-        return item;
-    }
-
-    @Override
-    public void openLocal() {
-        this.currentIndex = 0;
-        DynamicContext context = this.currentDynamicContextForLocalExecution;
-        VariableValues values = context.getVariableValues();
-        this.items = values.getLocalVariableValue(
-            this.variableName,
-            getMetadata()
-        );
-        this.hasNext = this.items.size() != 0;
-    }
-
-    @Override
-    protected void closeLocal() {
-        // do nothing
-    }
 
 
     @Override

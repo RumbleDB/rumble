@@ -34,7 +34,7 @@ public class ParseXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item arg = this.getChild(0).materializeFirstItemOrNull(context);
+        Item arg = this.getChild(0).materializeFirstOrNull(context);
         if (arg == null) {
             return null;
         }

@@ -44,7 +44,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
-    private Item nextResult;
 
     public OneOrMoreIterator(
             List<RuntimeIterator> arguments,
@@ -81,55 +80,6 @@ public class OneOrMoreIterator extends HybridRuntimeIterator implements DataFram
             );
         }
         return childDataFrame;
-    }
-
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        if (!this.iterator.hasNext()) {
-            throw new SequenceExceptionOneOrMore(
-                    "fn:one-or-more() called with a sequence containing less than 1 item",
-                    getMetadata()
-            );
-        }
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ONE-OR-MORE function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

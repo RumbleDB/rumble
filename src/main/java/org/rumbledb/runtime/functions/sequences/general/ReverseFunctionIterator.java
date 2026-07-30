@@ -105,36 +105,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator implements Da
         return result;
     }
 
-    @Override
-    protected void openLocal() {
-        this.results = new ArrayList<>();
-        this.currentIndex = 0;
 
-        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-        for (int i = items.size() - 1; i >= 0; i--) {
-            this.results.add(items.get(i));
-        }
-
-        this.hasNext = this.results.size() != 0;
-    }
-
-    @Override
-    protected void closeLocal() {
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            return getResult();
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "reverse function", getMetadata());
-    }
 
     public Item getResult() {
         if (this.results == null || this.results.size() == 0) {

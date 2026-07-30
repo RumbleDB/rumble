@@ -44,7 +44,7 @@ public class UpperCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return evaluate(this.getChild(0).materializeFirstItemOrNull(dynamicContext));
+        return evaluate(this.getChild(0).materializeFirstOrNull(dynamicContext));
     }
 
     private static Item evaluate(Item stringItem) {

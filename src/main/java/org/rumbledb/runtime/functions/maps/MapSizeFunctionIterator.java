@@ -43,7 +43,7 @@ public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item map = this.getChild(0).materializeFirstItemOrNull(context);
+        Item map = this.getChild(0).materializeFirstOrNull(context);
         return map == null ? null : size(map);
     }
 

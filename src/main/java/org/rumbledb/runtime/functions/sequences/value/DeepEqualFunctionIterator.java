@@ -67,7 +67,7 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         RuntimeIterator sequenceIterator2 = this.getChild(1);
         validateCollation(
             this.getChildren().size() == 3
-                ? this.getChild(2).materializeFirstItemOrNull(context)
+                ? this.getChild(2).materializeFirstOrNull(context)
                 : null
         );
 

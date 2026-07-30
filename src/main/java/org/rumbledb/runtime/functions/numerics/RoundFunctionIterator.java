@@ -52,11 +52,11 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        Item value = this.getChild(0).materializeFirstOrNull(dynamicContext);
         return evaluate(
             value,
             () -> this.getChildren().size() > 1
-                ? this.getChild(1).materializeFirstItemOrNull(dynamicContext).getIntValue()
+                ? this.getChild(1).materializeFirstOrNull(dynamicContext).getIntValue()
                 : 0
         );
     }

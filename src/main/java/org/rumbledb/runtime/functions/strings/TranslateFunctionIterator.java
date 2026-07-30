@@ -51,9 +51,9 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private Item evaluate(DynamicContext context) {
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item mapStringItem = this.getChild(1).materializeFirstItemOrNull(context);
-        Item transStringItem = this.getChild(2).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
+        Item mapStringItem = this.getChild(1).materializeFirstOrNull(context);
+        Item transStringItem = this.getChild(2).materializeFirstOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

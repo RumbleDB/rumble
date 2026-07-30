@@ -106,7 +106,7 @@ public class IdFunctionIterator extends HybridRuntimeIterator {
 
     private Item getContextNode(DynamicContext context) {
         if (this.getChildren().size() == 2) {
-            return this.getChild(1).materializeFirstItemOrNull(context);
+            return this.getChild(1).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())

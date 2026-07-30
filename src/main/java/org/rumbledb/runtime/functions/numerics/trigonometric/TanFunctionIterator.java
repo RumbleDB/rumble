@@ -50,7 +50,7 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item value = this.argument.materializeFirstItemOrNull(context);
+        Item value = this.argument.materializeFirstOrNull(context);
         if (value == null) {
             return null;
         }

@@ -42,32 +42,10 @@ public class EditCollectionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO: Ascertain this
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO: Check for this
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         Item targetItem = null;
         try {
-            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+            targetItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "More than one target item cannot be Edited.",

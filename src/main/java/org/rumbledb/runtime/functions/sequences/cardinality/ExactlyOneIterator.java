@@ -47,7 +47,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         try {
-            Item value = this.getChild(0).materializeAtMostOneItemOrNull(dynamicContext);
+            Item value = this.getChild(0).materializeAtMostOne(dynamicContext);
             if (value == null) {
                 throw new SequenceExceptionExactlyOne(
                         "fn:exactly-one() called with a sequence that doesn't contain exactly one item",

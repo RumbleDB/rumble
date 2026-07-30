@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -69,14 +71,16 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-public class ReturnClauseIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ReturnClauseIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeTupleIterator child;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private transient DynamicContext tupleContext;
     private final RuntimeIterator expression;
-    private Item nextResult;
 
     public ReturnClauseIterator(
             RuntimeTupleIterator child,
@@ -325,78 +329,6 @@ public class ReturnClauseIterator extends HybridRuntimeIterator implements DataF
             true,
             this.staticContext
         );
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    @Override
-    protected void openLocal() {
-        this.child.open(this.currentDynamicContextForLocalExecution);
-        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
-        // as parent
-        setNextResult();
-    }
-
-    private void setNextResult() {
-        if (this.expression.isOpen()) {
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        while (this.child.hasNext()) {
-            FlworTuple tuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
-                                                                                              // from new tuple
-
-            this.expression.open(this.tupleContext);
-            boolean isResultSet = setResultFromExpression();
-            if (isResultSet) {
-                return;
-            }
-        }
-
-        // execution reaches here when there are no more results
-        this.hasNext = false;
-    }
-
-    /**
-     * expression has to be open prior to call.
-     *
-     * @return true if nextResult is set and hasNext is true, false otherwise
-     */
-    private boolean setResultFromExpression() {
-        if (this.expression.hasNext()) { // if expression returns a value, set it as next
-            this.nextResult = this.expression.next();
-            this.hasNext = true;
-            return true;
-        } else { // if not, keep iterating
-            this.expression.close();
-            return false;
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.child.close();
-        if (this.expression.isOpen()) {
-            this.expression.close();
-        }
     }
 
     @Override

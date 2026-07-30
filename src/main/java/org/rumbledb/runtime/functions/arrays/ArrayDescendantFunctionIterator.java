@@ -25,25 +25,22 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimePlan<Item> iterator;
 
 
     public ArrayDescendantFunctionIterator(
@@ -68,54 +65,6 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
         );
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-ARRAYS function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            List<Item> singleItemList = new ArrayList<>();
-            singleItemList.add(item);
-
-            getDescendantArrays(singleItemList);
-            if (!(this.nextResults.isEmpty())) {
-                break;
-            }
-
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private void getDescendantArrays(List<Item> items) {
-        getDescendantArrays(items, this.nextResults);
-    }
-
     private static void getDescendantArrays(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
@@ -135,15 +84,7 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {

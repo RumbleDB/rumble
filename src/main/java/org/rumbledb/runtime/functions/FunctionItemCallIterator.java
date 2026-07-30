@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -50,7 +52,10 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
-public class FunctionItemCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class FunctionItemCallIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

@@ -50,7 +50,7 @@ public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIte
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
             return evaluate(items.get(0));
         }
-        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
     }
 
     private static Item evaluate(Item stringItem) {

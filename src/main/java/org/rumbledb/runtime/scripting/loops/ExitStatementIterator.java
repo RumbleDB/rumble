@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting.loops;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -18,7 +20,10 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
-public class ExitStatementIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ExitStatementIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator childIterator;
@@ -58,37 +63,8 @@ public class ExitStatementIterator extends HybridRuntimeIterator implements Data
      * This is expected as the ExitStatement will throw an exception when invoking nextLocal that passes this result up
      * to the program or function containing the exit statement.
      */
-    @Override
-    protected void openLocal() {
 
-    }
 
-    @Override
-    protected void closeLocal() {
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return true;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        this.result = this.childIterator.materialize(this.currentDynamicContextForLocalExecution);
-        this.pendingUpdateList = new PendingUpdateList();
-        if (this.childIterator.isUpdating()) {
-            this.pendingUpdateList = this.childIterator.getPendingUpdateList(
-                this.currentDynamicContextForLocalExecution
-            );
-        }
-        throw new ExitStatementException(
-                this.pendingUpdateList,
-                this.result,
-                null,
-                null,
-                this.getMetadata()
-        );
-    }
 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext dynamicContext) {

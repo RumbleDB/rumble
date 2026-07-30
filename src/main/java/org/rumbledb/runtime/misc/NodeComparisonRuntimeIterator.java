@@ -82,7 +82,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         Item rightItem;
 
         try {
-            leftItem = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
+            leftItem = this.leftIterator.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Left operand of node comparison must be a single node or empty sequence, got more than one item",
@@ -91,7 +91,7 @@ public class NodeComparisonRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         }
 
         try {
-            rightItem = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
+            rightItem = this.rightIterator.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Right operand of node comparison must be a single node or empty sequence, got more than one item",

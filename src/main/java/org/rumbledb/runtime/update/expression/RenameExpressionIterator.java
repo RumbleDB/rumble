@@ -49,26 +49,6 @@ public class RenameExpressionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item target;
@@ -76,9 +56,9 @@ public class RenameExpressionIterator extends UpdatingExpressionIterator {
         Item content;
 
         try {
-            target = this.mainIterator.materializeExactlyOneItem(context);
-            locator = this.locatorIterator.materializeExactlyOneItem(context);
-            content = this.nameIterator.materializeExactlyOneItem(context);
+            target = this.mainIterator.materializeExactlyOne(context);
+            locator = this.locatorIterator.materializeExactlyOne(context);
+            content = this.nameIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException("Target of rename expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {

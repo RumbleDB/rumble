@@ -26,12 +26,12 @@ public class ResolveQNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item qnameItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item qnameItem = this.getChild(0).materializeFirstOrNull(context);
         if (qnameItem == null) {
             return null;
         }
 
-        Item element = this.getChild(1).materializeFirstItemOrNull(context);
+        Item element = this.getChild(1).materializeFirstOrNull(context);
         if (element == null || !element.isElementNode()) {
             throw new UnexpectedTypeException(
                     "The second argument to fn:resolve-QName must be an element node",

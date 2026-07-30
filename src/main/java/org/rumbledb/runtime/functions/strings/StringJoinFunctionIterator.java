@@ -47,7 +47,7 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
         if (this.getChildren().size() > 1) {
-            joinString = this.getChild(1).materializeFirstItemOrNull(context);
+            joinString = this.getChild(1).materializeFirstOrNull(context);
         }
         List<Item> strings = this.getChild(0).materialize(context);
         return join(strings, joinString);

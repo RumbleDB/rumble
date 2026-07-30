@@ -44,8 +44,8 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item evaluate(DynamicContext context) {
-        Item pathItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstItemOrNull(context) : null;
+        Item pathItem = this.getChild(0).materializeFirstOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (pathItem == null) {
             return null;
         }

@@ -42,8 +42,7 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Item nextResult;
+    private final RuntimePlan<Item> iterator;
 
     public TailFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -56,52 +55,6 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new EvaluationCursor(this.iterator, context, getMetadata());
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "tail function", getMetadata());
-    }
-
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-
-        if (!this.iterator.hasNext()) {
-            this.hasNext = false;
-        } else {
-            this.iterator.next(); // skip the first item
-            setNextResult();
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
     }
 
     @Override

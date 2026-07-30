@@ -66,26 +66,7 @@ public class FunctionUntypedAtomicCastIterator extends HybridRuntimeIterator imp
         return this.iterator.getRDD(context).map(this.caster);
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-    }
 
-    @Override
-    public Item nextLocal() {
-        return this.caster.call(this.iterator.next());
-    }
-
-    @Override
-    public void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.iterator.hasNext();
-    }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {

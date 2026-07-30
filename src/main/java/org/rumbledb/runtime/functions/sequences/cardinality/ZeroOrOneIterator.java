@@ -48,7 +48,7 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
         RuntimeIterator sequenceIterator = this.getChild(0);
         Item result = null;
         try {
-            result = sequenceIterator.materializeAtMostOneItemOrNull(context);
+            result = sequenceIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionZeroOrOne(
                     "fn:zero-or-one() called with a sequence containing more than one item",

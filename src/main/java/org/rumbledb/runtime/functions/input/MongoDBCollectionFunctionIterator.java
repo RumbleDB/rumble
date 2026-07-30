@@ -50,12 +50,12 @@ public class MongoDBCollectionFunctionIterator extends DataFrameRuntimeIterator 
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
 
-        String uri = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
-        String collection = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String uri = this.getChild(0).materializeFirstOrNull(context).getStringValue();
+        String collection = this.getChild(1).materializeFirstOrNull(context).getStringValue();
 
         int partitions = -1;
         if (this.getChildren().size() > 2) {
-            partitions = this.getChild(2).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(2).materializeFirstOrNull(context).getIntValue();
         }
 
         try {

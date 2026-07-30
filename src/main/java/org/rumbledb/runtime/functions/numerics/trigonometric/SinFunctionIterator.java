@@ -50,7 +50,7 @@ public class SinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item value = this.argument.materializeFirstItemOrNull(dynamicContext);
+        Item value = this.argument.materializeFirstOrNull(dynamicContext);
         if (value == null) {
             return null;
         }

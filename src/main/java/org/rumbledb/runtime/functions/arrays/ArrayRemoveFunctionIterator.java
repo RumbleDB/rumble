@@ -18,6 +18,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 
 import java.io.Serial;
@@ -32,7 +33,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -53,10 +53,8 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private final RuntimeIterator positionsIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arrayIterator;
+    private final RuntimePlan<Item> positionsIterator;
 
     public ArrayRemoveFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -68,28 +66,12 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
         }
         this.arrayIterator = arguments.get(0);
         this.positionsIterator = arguments.get(1);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return remove(
-            this.arrayIterator.materialize(context),
-            this.positionsIterator.materialize(context)
-        );
-    }
-
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        this.resultItem = remove(
             this.arrayIterator.materialize(context),
             this.positionsIterator.materialize(context)
         );
@@ -159,33 +141,6 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
             return ItemFactory.getInstance()
                 .createSequenceArrayItem(keptMembers, this.getRuntimeStaticContext().isQuerySideEffecting());
         }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        if (this.positionsIterator.isOpen()) {
-            this.positionsIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

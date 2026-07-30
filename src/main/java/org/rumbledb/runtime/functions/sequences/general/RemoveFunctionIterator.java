@@ -42,11 +42,9 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private Item nextResult;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> positionIterator;
     private int removePosition; // position to remove the item
-    private int currentPosition; // current position
 
 
     public RemoveFunctionIterator(
@@ -73,63 +71,11 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         return filteredRDD.map((item) -> item._1);
     }
 
-    @Override
-    protected void openLocal() {
-        init(this.currentDynamicContextForLocalExecution);
-        this.currentPosition = 1;
 
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", getMetadata());
-    }
 
     private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
         this.removePosition = positionItem.getIntValue();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.sequenceIterator.hasNext()) {
-            if (this.currentPosition == this.removePosition) {
-                this.sequenceIterator.next(); // skip item to be removed
-                this.currentPosition++;
-                if (this.sequenceIterator.hasNext()) {
-                    this.nextResult = this.sequenceIterator.next();
-                    this.currentPosition++;
-                }
-            } else {
-                this.nextResult = this.sequenceIterator.next();
-                this.currentPosition++;
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
-        }
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

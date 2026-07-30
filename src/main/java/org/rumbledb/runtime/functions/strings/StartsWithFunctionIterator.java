@@ -51,14 +51,14 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     private Item evaluate(DynamicContext context) {
         String collation = this.getChildren().size() == 3
-            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
+            ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
 
-        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

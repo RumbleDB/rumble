@@ -51,7 +51,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
 
-        String url = this.getChild(0).materializeFirstItemOrNull(context).getStringValue();
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
 
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
@@ -59,7 +59,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
         }
         int partitions = -1;
         if (this.getChildren().size() > 1) {
-            partitions = this.getChild(1).materializeFirstItemOrNull(context).getIntValue();
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
         try {
             Dataset<Row> dataFrame = SparkSessionManager.getInstance()

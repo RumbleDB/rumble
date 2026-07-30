@@ -81,7 +81,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
         if (this.input == null) {
             // Getting first parameter
             Item stringItem = this.getChild(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {
                 this.hasNext = false;

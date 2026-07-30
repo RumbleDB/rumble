@@ -42,7 +42,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
@@ -74,7 +73,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
     private final RuntimeIterator iterator;
     private Item lookupKey;
     private boolean contextLookup;
-    private Item nextResult;
 
     public ObjectLookupIterator(
             RuntimeIterator object,
@@ -118,7 +116,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
         if (!this.contextLookup) {
 
             try {
-                this.lookupKey = lookupIterator.materializeExactlyOneItem(context);
+                this.lookupKey = lookupIterator.materializeExactlyOne(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
@@ -201,64 +199,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator implements DataF
                 "Non string object lookup for " + key.serialize(),
                 getMetadata()
         );
-    }
-
-    @Override
-    public void openLocal() {
-        initLookupKey(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Object Lookup", getMetadata());
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) {
-                if (!this.contextLookup) {
-                    Item result = item.getItemByKey(this.lookupKey.getStringValue());
-                    if (result != null) {
-                        this.nextResult = result;
-                        break;
-                    }
-                } else {
-                    Item contextItem = this.currentDynamicContextForLocalExecution.getVariableValues()
-                        .getLocalVariableValue(
-                            Name.CONTEXT_ITEM,
-                            getMetadata()
-                        )
-                        .get(0);
-                    this.nextResult = item.getItemByKey(contextItem.getStringValue());
-                }
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
     }
 
     @Override

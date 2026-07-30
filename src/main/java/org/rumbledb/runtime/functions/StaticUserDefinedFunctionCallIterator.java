@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -43,7 +45,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
     // static: functionIdentifier known at compile time
 
     @Serial

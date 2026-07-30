@@ -52,11 +52,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator positionIterator;
-    private final RuntimeIterator lengthIterator;
-    private Item nextResult;
+    private final RuntimePlan<Item> positionIterator;
+    private final RuntimePlan<Item> lengthIterator;
     private int startPosition;
-    private int currentLength;
     private int length;
     private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
                                                           // threshold
@@ -185,107 +183,16 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator implement
         return new HomogeneousItemDataFrame(df.getDataFrame(), df.getItemType());
     }
 
-    @Override
-    protected void openLocal() {
-        setInstanceVariables(this.currentDynamicContextForLocalExecution);
-        initializeLocal();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
-    }
-
-    private void initializeLocal() {
-        int currentPosition = 1; // JSONiq indices start from 1
-
-        this.currentLength = this.length;
-        if (this.startPosition <= 0 && this.currentLength != -1) {
-            this.currentLength += this.startPosition - 1;
-        }
-        // if length is 0, just return empty sequence
-        if (this.currentLength == 0) {
-            this.hasNext = false;
-            return;
-        } else {
-            if (!this.sequenceIterator.isOpen()) {
-                this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            }
-
-            // find the start of the subsequence
-            while (this.sequenceIterator.hasNext()) {
-                if (currentPosition < this.startPosition) {
-                    this.sequenceIterator.next(); // skip item
-                } else {
-                    this.nextResult = this.sequenceIterator.next();
-                    // if length is specified, decrement it
-                    if (this.currentLength != -1) {
-                        this.currentLength--;
-                    }
-                    break;
-                }
-                currentPosition++;
-            }
-        }
-
-        // if startPosition overshoots, return empty sequence
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
     private void setInstanceVariables(DynamicContext context) {
         Item positionItem = this.positionIterator
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
         if (this.getChildren().size() == 3) {
             Item lengthItem = this.lengthIterator
-                .materializeFirstItemOrNull(context);
+                .materializeFirstOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());
-        }
-    }
-
-    private void setNextResult() {
-        this.nextResult = null;
-
-        if (this.currentLength != 0) {
-            if (this.sequenceIterator.hasNext()) {
-                if (this.currentLength > 0) { // take length many items -> decrement the value for each item until 0
-                    this.nextResult = this.sequenceIterator.next();
-                    this.currentLength--;
-                } else if (this.currentLength == -1) { // length not specified -> take all items until the end
-                    this.nextResult = this.sequenceIterator.next();
-                } else {
-                    throw new OurBadException(
-                            "Unexpected length value found."
-                    );
-                }
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
         }
     }
 

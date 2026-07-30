@@ -71,7 +71,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
         this.valueIterator = this.getChild(0);
         if (this.getChildren().size() == 2) {
             this.labelIterator = this.getChild(1);
-            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
+            this.label = this.labelIterator.materializeFirstOrNull(context).getStringValue();
         } else {
             this.label = "";
         }

@@ -31,7 +31,7 @@ public class DeltaTableFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator collectionNameIterator = this.getChild(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+        String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
         return postProcess(dataFrame, collectionName);

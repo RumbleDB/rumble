@@ -50,6 +50,6 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             return i.get(0);
         }
-        return this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        return this.getChild(0).materializeFirstOrNull(dynamicContext);
     }
 }

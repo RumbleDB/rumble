@@ -60,7 +60,7 @@ public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return stringResultFromItem(contextItem);
         }
 
-        Item item = this.getChild(0).materializeFirstItemOrNull(context);
+        Item item = this.getChild(0).materializeFirstOrNull(context);
         return item == null ? null : stringResultFromItem(item);
     }
 

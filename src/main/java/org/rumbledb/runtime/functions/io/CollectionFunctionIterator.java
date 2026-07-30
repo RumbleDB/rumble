@@ -33,7 +33,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }
         Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (stringItem == null) {
             throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
         }

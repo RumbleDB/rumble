@@ -102,7 +102,7 @@ public abstract class TemporalComponentFunctionIterator extends AtMostOneItemLoc
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item item = this.argument.materializeFirstItemOrNull(context);
+        Item item = this.argument.materializeFirstOrNull(context);
         return item == null ? null : this.component.evaluate(item);
     }
 }

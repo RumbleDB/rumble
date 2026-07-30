@@ -54,7 +54,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
@@ -111,6 +111,6 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.getChild(1).materializeFirstItemOrNull(context);
+        return this.getChild(1).materializeFirstOrNull(context);
     }
 }

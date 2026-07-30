@@ -50,7 +50,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item exponent = this.argument.materializeFirstItemOrNull(context);
+        Item exponent = this.argument.materializeFirstOrNull(context);
         if (exponent == null) {
             return null;
         }

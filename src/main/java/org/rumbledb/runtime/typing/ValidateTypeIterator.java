@@ -490,25 +490,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator implements DataF
         return this.iterator.getRDD(context).map(this.validator);
     }
 
-    @Override
-    protected void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-    }
 
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.iterator.hasNext();
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return this.validator.call(this.iterator.next());
-    }
 
     private static final class ItemValidator implements Function<Item, Item> {
 

@@ -118,32 +118,7 @@ public class ParallelizeFunctionIterator extends HybridRuntimeIterator {
         return partitions;
     }
 
-    @Override
-    protected void openLocal() {
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.partitionsIterator != null) {
-            getNumberOfPartitions(
-                this.partitionsIterator,
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-        }
-    }
 
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.sequenceIterator.hasNext();
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return this.sequenceIterator.next();
-    }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 

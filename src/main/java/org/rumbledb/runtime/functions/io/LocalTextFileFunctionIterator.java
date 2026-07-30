@@ -85,7 +85,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
         this.iterator = this.getChild(0);
-        Item path = this.iterator.materializeFirstItemOrNull(context);
+        Item path = this.iterator.materializeFirstOrNull(context);
         if (path == null) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",

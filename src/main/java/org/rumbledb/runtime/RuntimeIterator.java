@@ -33,8 +33,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -44,11 +42,17 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanConversions;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.VariableDependencyRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.SequenceType;
 
 
-public abstract class RuntimeIterator extends RuntimePlan<Item> implements RuntimeIteratorInterface<Item> {
+public abstract class RuntimeIterator extends RuntimePlan<Item>
+        implements
+            RuntimeIteratorInterface<Item>,
+            NativeQueryRuntimePlan,
+            VariableDependencyRuntimePlan {
 
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     @Serial
@@ -86,16 +90,13 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
-        try {
-            this.open(dynamicContext);
+        try (Cursor<Item> cursor = this.getCursor(dynamicContext)) {
             return EffectiveBooleanValue.evaluateOpenSequence(
-                this::hasNext,
-                this::next,
+                cursor::hasNext,
+                cursor::next,
                 this.staticContext,
                 position
             );
-        } finally {
-            this.close();
         }
     }
 
@@ -213,7 +214,7 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
     }
 
     public final HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        RuntimeDataFrame<Item> dataFrame = this.getDataFrameResult(context);
+        RuntimeDataFrame<Item> dataFrame = super.getDataFrame(context);
         if (dataFrame instanceof HomogeneousItemDataFrame result) {
             return result;
         }
@@ -267,31 +268,6 @@ public abstract class RuntimeIterator extends RuntimePlan<Item> implements Runti
 
     @Override
     public abstract Item next();
-
-    public Item materializeFirstItemOrNull(
-            DynamicContext context
-    ) {
-        return this.materializeFirstOrNull(context);
-    }
-
-    public Item materializeExactlyOneItem(
-            DynamicContext context
-    )
-            throws NoItemException,
-                MoreThanOneItemException {
-        Item result = this.materializeAtMostOne(context);
-        if (result == null) {
-            throw new NoItemException();
-        }
-        return result;
-    }
-
-    public Item materializeAtMostOneItemOrNull(
-            DynamicContext context
-    )
-            throws MoreThanOneItemException {
-        return this.materializeAtMostOne(context);
-    }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =

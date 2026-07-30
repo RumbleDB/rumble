@@ -20,7 +20,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -29,11 +28,10 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * W3C XPath/XQuery {@code map:keys}:
@@ -49,8 +47,7 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator implements Da
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator mapIterator;
-    private final Queue<Item> pendingResults;
+    private final RuntimePlan<Item> mapIterator;
 
     public MapKeysFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,7 +58,6 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator implements Da
             throw new OurBadException("map:keys must have exactly one argument.");
         }
         this.mapIterator = arguments.get(0);
-        this.pendingResults = new LinkedList<>();
     }
 
     @Override
@@ -70,17 +66,6 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator implements Da
                 () -> getKeys(this.mapIterator.materialize(context)).iterator(),
                 getMetadata()
         );
-    }
-
-    @Override
-    protected void openLocal() {
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    private void initializeResults(DynamicContext context) {
-        this.pendingResults.clear();
-        this.pendingResults.addAll(getKeys(this.mapIterator.materialize(context)));
     }
 
     private List<Item> getKeys(List<Item> maps) {
@@ -100,33 +85,6 @@ public class MapKeysFunctionIterator extends HybridRuntimeIterator implements Da
 
         // MapItem already enforces distinct atomic keys (via op:same-key) during construction/merge.
         return mapItem.getItemKeys();
-    }
-
-    private void setNextResult() {
-        this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.pendingResults.remove();
-        setNextResult();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.mapIterator.isOpen()) {
-            this.mapIterator.close();
-        }
-        this.pendingResults.clear();
     }
 
     @Override

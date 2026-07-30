@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.update.expression;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +20,7 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
-public class TransformExpressionIterator extends HybridRuntimeIterator {
+public class TransformExpressionIterator extends HybridRuntimeIterator implements UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;

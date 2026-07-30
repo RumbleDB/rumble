@@ -60,8 +60,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
     private int lookup;
-    private Item nextResult;
-    private java.util.Queue<Item> lookupResultQueue;
 
     public ArrayLookupIterator(
             RuntimeIterator array,
@@ -93,40 +91,13 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
         );
     }
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            if (this.lookupResultQueue != null && !this.lookupResultQueue.isEmpty()) {
-                Item result = this.lookupResultQueue.poll();
-                if (this.lookupResultQueue.isEmpty()) {
-                    this.lookupResultQueue = null;
-                    setNextResult();
-                }
-                return result;
-            }
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
-    }
 
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
 
     private void initLookupPosition(DynamicContext context) {
         RuntimeIterator lookupIterator = this.getChild(1);
 
         try {
-            Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
+            Item lookupExpression = lookupIterator.materializeExactlyOne(context);
             if (!lookupExpression.isNumeric()) {
                 throw new UnexpectedTypeException(
                         "Type error; Non numeric array lookup for : "
@@ -169,48 +140,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator implements DataFr
             );
         }
         return lookupExpression.castToIntValue();
-    }
-
-    @Override
-    public void openLocal() {
-        initLookupPosition(this.currentDynamicContextForLocalExecution);
-        this.lookupResultQueue = null;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    if (item.isArrayOfItems()) {
-                        this.nextResult = item.getItemAt(this.lookup - 1);
-                    } else {
-                        java.util.List<Item> memberSeq = item.getSequenceAt(this.lookup - 1);
-                        if (!memberSeq.isEmpty()) {
-                            this.nextResult = memberSeq.get(0);
-                            if (memberSeq.size() > 1) {
-                                this.lookupResultQueue = new java.util.LinkedList<>(
-                                        memberSeq.subList(1, memberSeq.size())
-                                );
-                            }
-                        }
-                    }
-                    if (this.nextResult != null) {
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
     }
 
     @Override

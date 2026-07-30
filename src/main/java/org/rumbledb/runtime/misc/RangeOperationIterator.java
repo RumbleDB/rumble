@@ -77,21 +77,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         return new EvaluationCursor(this.leftIterator, this.rightIterator, context, getMetadata());
     }
 
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            if (this.index == this.right) {
-                this.hasNext = false;
-            }
-            return ItemFactory.getInstance().createLongItem(this.index++);
-        }
-        throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
-    }
 
     /**
      * Initializes the boundaries of the range.
@@ -103,7 +89,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         Item left;
         Item right;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            left = this.leftIterator.materializeAtMostOne(this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -111,7 +97,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
             );
         }
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            right = this.rightIterator.materializeAtMostOne(this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item",
@@ -149,20 +135,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         return true;
     }
 
-    @Override
-    public void openLocal() {
-        this.index = 0;
-        if (init(this.currentDynamicContextForLocalExecution)) {
-            if (this.right < this.left) {
-                this.hasNext = false;
-            } else {
-                this.index = this.left;
-                this.hasNext = true;
-            }
-        } else {
-            this.hasNext = false;
-        }
-    }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
@@ -205,9 +177,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator implements Dat
         return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
-    @Override
-    protected void closeLocal() {
-    }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
 

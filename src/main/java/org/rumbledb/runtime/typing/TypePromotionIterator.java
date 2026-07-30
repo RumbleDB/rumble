@@ -79,34 +79,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator implements Data
         );
     }
 
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
-    @Override
-    public void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public void openLocal() {
-        this.childIndex = 0;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.setNextResult();
-    }
-
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item currentResult = this.nextResult;
-            setNextResult();
-            return currentResult;
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-    }
 
     private void setNextResult() {
         this.nextResult = null;

@@ -78,6 +78,6 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
         }
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

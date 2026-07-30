@@ -45,35 +45,14 @@ public class AppendExpressionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item target;
         Item content;
 
         try {
-            target = this.arrayIterator.materializeExactlyOneItem(context);
-            content = SerializationUtils.clone(this.toAppendIterator.materializeExactlyOneItem(context));
+            target = this.arrayIterator.materializeExactlyOne(context);
+            content = SerializationUtils.clone(this.toAppendIterator.materializeExactlyOne(context));
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }

@@ -49,11 +49,11 @@ public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item left = this.leftIterator.materializeFirstItemOrNull(context);
+        Item left = this.leftIterator.materializeFirstOrNull(context);
         if (left == null) {
             return null;
         }
-        Item right = this.rightIterator.materializeFirstItemOrNull(context);
+        Item right = this.rightIterator.materializeFirstOrNull(context);
         if (right == null) {
             return null;
         }

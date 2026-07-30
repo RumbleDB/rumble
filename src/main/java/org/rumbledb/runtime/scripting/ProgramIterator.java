@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -18,7 +20,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
-public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ProgramIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {

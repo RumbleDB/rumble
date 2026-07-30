@@ -37,7 +37,7 @@ public class MapEntryFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item key = this.keyIterator.materializeFirstItemOrNull(dynamicContext);
+        Item key = this.keyIterator.materializeFirstOrNull(dynamicContext);
 
         List<Item> valueSequence = this.valueIterator.materialize(dynamicContext);
 

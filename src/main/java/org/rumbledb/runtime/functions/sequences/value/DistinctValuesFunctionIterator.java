@@ -70,7 +70,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator implem
 
     private String resolveCollation(DynamicContext context) {
         String explicitCollation = this.getChildren().size() == 2
-            ? this.getChild(1).materializeFirstItemOrNull(context).getStringValue()
+            ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
             : null;
         String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
         CollationSupport.checkCollationSupported(collation, getMetadata());

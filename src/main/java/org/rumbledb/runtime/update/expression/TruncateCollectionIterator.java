@@ -43,30 +43,10 @@ public class TruncateCollectionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         Item collectionNameItem = null;
         try {
-            collectionNameItem = this.targetIterator.materializeExactlyOneItem(context);
+            collectionNameItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a unique string, but more than one item was provided.",

@@ -35,7 +35,7 @@ public class ConstructorFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        return createCastIterator().materializeFirstItemOrNull(dynamicContext);
+        return createCastIterator().materializeFirstOrNull(dynamicContext);
     }
 
     private RuntimeIterator createCastIterator() {

@@ -24,7 +24,7 @@ public class HoursFromTimeFunctionIterator extends TemporalComponentFunctionIter
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item timeItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.getChild(0).materializeFirstOrNull(context);
         if (timeItem == null) {
             return null;
         }

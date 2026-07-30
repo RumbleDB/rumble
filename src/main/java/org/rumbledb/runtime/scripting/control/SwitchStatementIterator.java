@@ -42,7 +42,7 @@ public class SwitchStatementIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext dynamicContext
     ) {
         return selectApplicableIterator(
-            iterator -> iterator.materializeFirstItemOrNull(dynamicContext)
+            iterator -> iterator.materializeFirstOrNull(dynamicContext)
         );
     }
 

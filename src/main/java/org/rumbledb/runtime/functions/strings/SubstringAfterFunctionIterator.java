@@ -30,10 +30,10 @@ public class SubstringAfterFunctionIterator extends AtMostOneItemLocalRuntimeIte
     }
 
     private Item evaluate(DynamicContext context) {
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
+            String collation = this.getChild(2).materializeFirstOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }

@@ -30,11 +30,11 @@ public class AdjustDateTimeToTimezone extends AtMostOneItemLocalRuntimeIterator 
     }
 
     private Item adjust(DynamicContext context) {
-        Item timeItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item timeItem = this.getChild(0).materializeFirstOrNull(context);
         if (timeItem == null) {
             return null;
         }
-        Item timezone = this.getChildren().size() == 2 ? this.getChild(1).materializeFirstItemOrNull(context) : null;
+        Item timezone = this.getChildren().size() == 2 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (timezone == null && this.getChildren().size() == 1) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(timeItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);

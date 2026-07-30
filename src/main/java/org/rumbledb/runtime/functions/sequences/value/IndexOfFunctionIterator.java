@@ -32,6 +32,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.List;
@@ -41,11 +42,9 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator sequenceIterator;
-    private final RuntimeIterator searchIterator;
+    private final RuntimePlan<Item> sequenceIterator;
+    private final RuntimePlan<Item> searchIterator;
     private Item search;
-    private Item nextResult;
-    private int currentIndex;
 
     public IndexOfFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -70,7 +69,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     private void checkCollation(DynamicContext context) {
         if (this.getChildren().size() == 3) {
             String collation = this.getChild(2)
-                .materializeFirstItemOrNull(context)
+                .materializeFirstOrNull(context)
                 .getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
@@ -82,74 +81,18 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         checkCollation(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        this.search = this.searchIterator.materializeFirstItemOrNull(context);
+        this.search = this.searchIterator.materializeFirstOrNull(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._1().equals(this.search));
         return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
-    @Override
-    protected void openLocal() {
-        this.currentIndex = 0;
-        checkCollation(this.currentDynamicContextForLocalExecution);
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.search = this.searchIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.sequenceIterator.hasNext()) {
-            this.currentIndex += 1;
-            Item item = this.sequenceIterator.next();
-            if (!item.isAtomic()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                        getMetadata()
-                );
-            } else {
-                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
-                if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
-                    this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
-                    break;
-                }
-            }
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
     private static final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator sequencePlan;
-        private final RuntimeIterator searchPlan;
-        private final RuntimeIterator collationPlan;
+        private final RuntimePlan<Item> sequencePlan;
+        private final RuntimePlan<Item> searchPlan;
+        private final RuntimePlan<Item> collationPlan;
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
@@ -158,9 +101,9 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         private int index;
 
         private IndexOfLocalCursor(
-                RuntimeIterator sequencePlan,
-                RuntimeIterator searchPlan,
-                RuntimeIterator collationPlan,
+                RuntimePlan<Item> sequencePlan,
+                RuntimePlan<Item> searchPlan,
+                RuntimePlan<Item> collationPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

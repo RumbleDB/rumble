@@ -42,34 +42,14 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item main;
         Item lookup;
 
         try {
-            main = this.mainIterator.materializeExactlyOneItem(context);
-            lookup = this.lookupIterator.materializeExactlyOneItem(context);
+            main = this.mainIterator.materializeExactlyOne(context);
+            lookup = this.lookupIterator.materializeExactlyOne(context);
         } catch (NoItemException | MoreThanOneItemException e) {
             throw new RuntimeException(e);
         }

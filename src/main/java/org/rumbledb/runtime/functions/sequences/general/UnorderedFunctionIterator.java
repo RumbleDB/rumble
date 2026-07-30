@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
@@ -40,7 +39,6 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator implements 
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator iterator;
-    private Item nextResult;
 
     public UnorderedFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -53,51 +51,6 @@ public class UnorderedFunctionIterator extends HybridRuntimeIterator implements 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return this.iterator.getCursor(context);
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "unordered function", getMetadata());
-    }
-
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-
-        if (!this.iterator.hasNext()) {
-            this.hasNext = false;
-        } else {
-            setNextResult();
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        if (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-        }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
     }
 
     @Override

@@ -31,7 +31,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator hrefIterator = this.getChild(0);
-        Item hrefItem = hrefIterator.materializeFirstItemOrNull(context);
+        Item hrefItem = hrefIterator.materializeFirstOrNull(context);
         if (hrefItem == null) {
             return SparkSessionManager.getInstance()
                 .getJavaSparkContext()
@@ -39,7 +39,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
         }
         String encoding = null;
         if (this.getChildren().size() == 2) {
-            Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item encodingItem = this.getChild(1).materializeFirstOrNull(context);
             encoding = encodingItem.getStringValue();
         }
 

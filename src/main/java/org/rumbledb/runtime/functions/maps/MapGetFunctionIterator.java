@@ -4,7 +4,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -13,12 +12,11 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 /**
  * W3C XPath/XQuery {@code map:get}:
@@ -35,10 +33,8 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator implements Dat
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator mapIterator;
-    private final RuntimeIterator keyIterator;
-
-    private Queue<Item> pendingResults;
+    private final RuntimePlan<Item> mapIterator;
+    private final RuntimePlan<Item> keyIterator;
 
     public MapGetFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -50,7 +46,6 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator implements Dat
         }
         this.mapIterator = arguments.get(0);
         this.keyIterator = arguments.get(1);
-        this.pendingResults = new LinkedList<>();
     }
 
     @Override
@@ -61,19 +56,6 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator implements Dat
                     this.keyIterator.materialize(context)
                 ).iterator(),
                 getMetadata()
-        );
-    }
-
-    @Override
-    protected void openLocal() {
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    private void initializeResults(DynamicContext context) {
-        this.pendingResults.clear();
-        this.pendingResults.addAll(
-            lookup(this.mapIterator.materialize(context), this.keyIterator.materialize(context))
         );
     }
 
@@ -108,36 +90,6 @@ public class MapGetFunctionIterator extends HybridRuntimeIterator implements Dat
         Item key = atomized.get(0);
         List<Item> seq = mapItem.getSequenceByKey(key);
         return seq == null ? List.of() : seq;
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.pendingResults.remove();
-        setNextResult();
-        return result;
-    }
-
-    private void setNextResult() {
-        this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.mapIterator.isOpen()) {
-            this.mapIterator.close();
-        }
-        if (this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.pendingResults.clear();
     }
 
     @Override

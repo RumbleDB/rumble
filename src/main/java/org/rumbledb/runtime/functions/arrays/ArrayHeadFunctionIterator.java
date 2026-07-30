@@ -5,30 +5,25 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class ArrayHeadFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private Queue<Item> pendingResults;
+    private final RuntimePlan<Item> arrayIterator;
 
     public ArrayHeadFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -39,7 +34,6 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator implements 
             throw new OurBadException("array:head must have exactly one argument.");
         }
         this.arrayIterator = arguments.get(0);
-        this.pendingResults = new LinkedList<>();
     }
 
     @Override
@@ -48,31 +42,6 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator implements 
                 () -> headArgument(this.arrayIterator.materialize(context)).iterator(),
                 getMetadata()
         );
-    }
-
-    @Override
-    protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        initializeResults(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    private void initializeResults(DynamicContext context) {
-        this.pendingResults.clear();
-
-        Item arrayItem;
-        try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            return;
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:head expects exactly one array argument.",
-                    getMetadata()
-            );
-        }
-
-        this.pendingResults.addAll(head(arrayItem));
     }
 
     private List<Item> head(Item arrayItem) {
@@ -108,33 +77,6 @@ public class ArrayHeadFunctionIterator extends HybridRuntimeIterator implements 
             );
         }
         return head(items.isEmpty() ? null : items.get(0));
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.pendingResults.remove();
-        setNextResult();
-        return result;
-    }
-
-    private void setNextResult() {
-        this.hasNext = !this.pendingResults.isEmpty();
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        this.pendingResults.clear();
     }
 
     @Override

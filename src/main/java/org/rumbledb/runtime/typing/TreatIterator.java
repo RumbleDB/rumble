@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.typing;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
@@ -40,7 +42,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class TreatIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class TreatIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -77,34 +79,7 @@ public class TreatIterator extends HybridRuntimeIterator implements DataFrameRun
         return new EvaluationCursor(this.iterator, context, this.validator);
     }
 
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
-    @Override
-    public void closeLocal() {
-        this.iterator.close();
-    }
-
-    @Override
-    public void openLocal() {
-        this.validator.resolve(this.currentDynamicContextForLocalExecution);
-        this.resultCount = 0;
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.setNextResult();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            this.currentResult = this.nextResult;
-            setNextResult();
-            return this.currentResult;
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-    }
 
     private void setNextResult() {
         this.nextResult = null;

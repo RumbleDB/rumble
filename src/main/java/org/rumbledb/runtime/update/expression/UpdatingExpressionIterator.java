@@ -16,11 +16,12 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.EmptyLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 
 /**
  * Base plan for updating expressions whose local value is always the empty sequence.
  */
-abstract class UpdatingExpressionIterator extends HybridRuntimeIterator {
+abstract class UpdatingExpressionIterator extends HybridRuntimeIterator implements UpdatingRuntimePlan {
 
     protected UpdatingExpressionIterator(
             List<RuntimeIterator> children,

@@ -1,5 +1,7 @@
 package org.rumbledb.runtime.scripting.mutation;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -9,7 +11,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.io.Serial;
 import java.util.Collections;
 
-public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator {
+public class ApplyStatementIterator extends AtMostOneItemLocalRuntimeIterator implements UpdatingRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator exprIterator;

@@ -54,11 +54,11 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item base = this.baseIterator.materializeFirstItemOrNull(context);
+        Item base = this.baseIterator.materializeFirstOrNull(context);
         if (base == null) {
             return null;
         }
-        Item exponent = this.exponentIterator.materializeFirstItemOrNull(context);
+        Item exponent = this.exponentIterator.materializeFirstOrNull(context);
         if (exponent == null) {
             return null;
         }

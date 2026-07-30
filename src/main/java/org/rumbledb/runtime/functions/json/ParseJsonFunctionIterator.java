@@ -53,8 +53,8 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     }
 
     private Item evaluate(DynamicContext context) {
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
-        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstItemOrNull(context) : null;
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (stringItem == null) {
             return null;
         }

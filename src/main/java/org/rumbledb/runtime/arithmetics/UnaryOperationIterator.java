@@ -59,7 +59,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         Item item;
         try {
-            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            item = this.child.materializeAtMostOne(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Unary expression requires at most one item in its input sequence.",

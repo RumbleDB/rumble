@@ -25,7 +25,7 @@ public class NamespaceURIFromQNameFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
     }
 
     private static Item evaluate(Item item) {

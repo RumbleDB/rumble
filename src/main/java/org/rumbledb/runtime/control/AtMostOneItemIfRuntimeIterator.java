@@ -54,9 +54,9 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
         if (effectiveBooleanValue) {
-            return this.getChild(1).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(1).materializeFirstOrNull(dynamicContext);
         } else {
-            return this.getChild(2).materializeFirstItemOrNull(dynamicContext);
+            return this.getChild(2).materializeFirstOrNull(dynamicContext);
         }
     }
 

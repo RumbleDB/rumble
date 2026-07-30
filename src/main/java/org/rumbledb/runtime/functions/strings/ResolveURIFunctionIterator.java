@@ -31,13 +31,13 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     }
 
     private Item evaluate(DynamicContext context) {
-        Item relative = this.getChild(0).materializeFirstItemOrNull(context);
+        Item relative = this.getChild(0).materializeFirstOrNull(context);
         if (relative == null) {
             return null;
         }
         Item base;
         if (this.getChildren().size() == 2) {
-            base = this.getChild(1).materializeFirstItemOrNull(context);
+            base = this.getChild(1).materializeFirstOrNull(context);
         } else {
             base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }

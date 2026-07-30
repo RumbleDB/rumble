@@ -25,25 +25,22 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 
 public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
+    private final RuntimePlan<Item> iterator;
 
     public ArrayFlattenFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -67,49 +64,6 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
         );
     }
 
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " FLATTEN function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            flatten(Collections.singletonList(item));
-            if (!(this.nextResults.isEmpty())) {
-                break;
-            }
-        }
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private void flatten(List<Item> items) {
-        flatten(items, this.nextResults);
-    }
-
     private static void flatten(List<Item> items, java.util.Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
@@ -126,15 +80,7 @@ public class ArrayFlattenFunctionIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {

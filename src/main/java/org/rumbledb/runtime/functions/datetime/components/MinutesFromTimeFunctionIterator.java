@@ -25,7 +25,7 @@ public class MinutesFromTimeFunctionIterator extends TemporalComponentFunctionIt
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item timeItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (timeItem == null) {
             return null;
         }

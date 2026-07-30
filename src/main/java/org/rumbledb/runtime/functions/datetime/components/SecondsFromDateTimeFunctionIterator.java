@@ -26,7 +26,7 @@ public class SecondsFromDateTimeFunctionIterator extends TemporalComponentFuncti
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item dateTimeItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+            .materializeFirstOrNull(context);
         if (dateTimeItem == null) {
             return null;
         }

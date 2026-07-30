@@ -28,13 +28,13 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
     }
 
     private Item evaluate(DynamicContext context) {
-        Item hrefItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item hrefItem = this.getChild(0).materializeFirstOrNull(context);
         if (hrefItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         String encoding = null;
         if (this.getChildren().size() == 2) {
-            Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item encodingItem = this.getChild(1).materializeFirstOrNull(context);
             encoding = encodingItem.getStringValue();
         }
         try {

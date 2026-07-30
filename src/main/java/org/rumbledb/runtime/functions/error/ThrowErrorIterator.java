@@ -44,7 +44,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Item errorCodeItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item errorCodeItem = this.getChild(0).materializeFirstOrNull(context);
         if (errorCodeItem == null) {
             throw new RumbleException(
                     "An error has been raised without an error description or code.",
@@ -63,7 +63,7 @@ public class ThrowErrorIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        String description = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
+        String description = this.getChild(1).materializeFirstOrNull(context).getStringValue();
         if (this.getChildren().size() == 2) {
             // Error code and description arguments case.
             throw new RumbleException(description, new ErrorCode(errorCode), this.getMetadata());

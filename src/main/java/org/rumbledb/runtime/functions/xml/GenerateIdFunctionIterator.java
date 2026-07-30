@@ -49,7 +49,7 @@ public class GenerateIdFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     private Item getContextNode(DynamicContext context) {
         if (this.getChildren().size() == 1) {
-            return this.getChild(0).materializeFirstItemOrNull(context);
+            return this.getChild(0).materializeFirstOrNull(context);
         }
         return context.getVariableValues()
             .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())

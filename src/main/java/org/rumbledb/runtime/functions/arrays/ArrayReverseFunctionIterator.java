@@ -18,6 +18,7 @@
 package org.rumbledb.runtime.functions.arrays;
 
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 
 import java.io.Serial;
@@ -29,9 +30,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -48,9 +46,7 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arrayIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arrayIterator;
 
     public ArrayReverseFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,39 +57,12 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
             throw new OurBadException("array:reverse must have exactly one argument.");
         }
         this.arrayIterator = arguments.get(0);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return reverseArgument(this.arrayIterator.materialize(context));
-    }
-
-    @Override
-    protected void openLocal() {
-        this.arrayIterator.open(this.currentDynamicContextForLocalExecution);
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        Item arrayItem;
-        try {
-            arrayItem = this.arrayIterator.materializeExactlyOneItem(context);
-        } catch (NoItemException e) {
-            this.resultItem = null;
-            return;
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "array:reverse expects exactly one array argument.",
-                    getMetadata()
-            );
-        }
-
-        this.resultItem = reverse(arrayItem);
     }
 
     private Item reverse(Item arrayItem) {
@@ -130,30 +99,6 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
             );
         }
         return reverse(items.isEmpty() ? null : items.get(0));
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arrayIterator.isOpen()) {
-            this.arrayIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

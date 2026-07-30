@@ -29,7 +29,7 @@ public class FunctionNameFunctionIterator extends AtMostOneItemLocalRuntimeItera
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         validateStaticType();
-        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
     }
 
     private void validateStaticType() {

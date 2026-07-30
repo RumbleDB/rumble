@@ -49,8 +49,8 @@ public class MapContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterat
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item map = this.mapIterator.materializeFirstItemOrNull(context);
-        Item key = this.keyIterator.materializeFirstItemOrNull(context);
+        Item map = this.mapIterator.materializeFirstOrNull(context);
+        Item key = this.keyIterator.materializeFirstOrNull(context);
         return evaluate(map, key);
     }
 

@@ -137,6 +137,6 @@ public class BaseUriFunctionIterator extends LocalFunctionCallIterator {
                 .get(0);
         }
         // Argument provided, use first parameter
-        return this.getChild(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.getChild(0).materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
     }
 }

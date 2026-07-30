@@ -53,34 +53,14 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Item target;
         Item locator;
         Item content;
         try {
-            target = this.mainIterator.materializeExactlyOneItem(context);
-            locator = this.locatorIterator.materializeExactlyOneItem(context);
+            target = this.mainIterator.materializeExactlyOne(context);
+            locator = this.locatorIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
             throw new UpdateTargetIsEmptySeqException("Target of replace expression is empty", this.getMetadata());
         } catch (MoreThanOneItemException e) {

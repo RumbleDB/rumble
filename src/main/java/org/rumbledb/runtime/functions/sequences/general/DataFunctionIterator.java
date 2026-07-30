@@ -51,9 +51,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator implements DataF
     @Serial
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator sequenceIterator;
-    private List<Item> nextResults;
-    private int nextIndex;
-    private boolean usedContext = false;
 
     public DataFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -91,82 +88,6 @@ public class DataFunctionIterator extends HybridRuntimeIterator implements DataF
             throw new CannotAtomizeException("Cannot atomize arrays. Type: " + childDF.getItemType(), getMetadata());
         }
         throw new CannotAtomizeException("Cannot atomize. Type: " + childDF.getItemType(), getMetadata());
-    }
-
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.get(this.nextIndex); // save the result to be returned
-            ++this.nextIndex;
-            if (this.nextIndex >= this.nextResults.size()) {
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atomization iterator",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void openLocal() {
-        if (this.sequenceIterator != null) {
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        }
-        this.usedContext = false;
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        if (this.sequenceIterator != null) {
-            if (!this.sequenceIterator.hasNext()) {
-                this.hasNext = false;
-                return;
-            }
-            try {
-                this.nextResults = this.sequenceIterator.next().atomizedValue();
-                if (this.nextResults.isEmpty()) {
-                    this.hasNext = false;
-                } else {
-                    this.nextIndex = 0;
-                    this.hasNext = true;
-                }
-                return;
-            } catch (CannotAtomizeException e) {
-                throw new CannotAtomizeException("The sequence cannot be atomized.", getMetadata());
-            }
-        }
-        if (!this.usedContext) {
-            this.usedContext = true;
-            List<Item> items = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            if (items.size() != 1) {
-                throw new OurBadException("The context item is not a singleton.", getMetadata());
-            }
-            this.nextResults = items.get(0).atomizedValue();
-            if (this.nextResults.isEmpty()) {
-                this.hasNext = false;
-            } else {
-                this.nextIndex = 0;
-                this.hasNext = true;
-            }
-            return;
-        }
-        this.hasNext = false;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.sequenceIterator != null) {
-            this.sequenceIterator.close();
-        }
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

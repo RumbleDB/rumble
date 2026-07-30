@@ -45,7 +45,7 @@ public class TypeSwitchStatementIterator extends AtMostOneItemLocalRuntimeIterat
     public Item evaluateAtMostOne(DynamicContext context) {
         DynamicContext childContext = new DynamicContext(context);
         return execute(
-            this.testField.materializeFirstItemOrNull(context),
+            this.testField.materializeFirstOrNull(context),
             childContext,
             RuntimeIterator::materialize
         );

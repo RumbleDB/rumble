@@ -59,11 +59,11 @@ public class RandomSequenceGeneratorIterator extends LocalRuntimeIterator {
 
     private GeneratedRandomsIterator createRandomsLegacy(DynamicContext context) {
         if (this.getChildren().size() == 2) {
-            int seed = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
-            int sequenceLength = this.getChild(1).materializeFirstItemOrNull(context).castToIntValue();
+            int seed = this.getChild(0).materializeFirstOrNull(context).castToIntValue();
+            int sequenceLength = this.getChild(1).materializeFirstOrNull(context).castToIntValue();
             return new GeneratedRandomDoublesIterator(sequenceLength, seed);
         }
-        int sequenceLength = this.getChild(0).materializeFirstItemOrNull(context).castToIntValue();
+        int sequenceLength = this.getChild(0).materializeFirstOrNull(context).castToIntValue();
         return new GeneratedRandomDoublesIterator(sequenceLength);
     }
 }

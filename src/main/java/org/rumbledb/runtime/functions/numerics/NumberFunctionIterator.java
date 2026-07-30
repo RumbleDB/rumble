@@ -57,7 +57,7 @@ public class NumberFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        return castOrNaN(this.getChild(0).materializeFirstItemOrNull(context));
+        return castOrNaN(this.getChild(0).materializeFirstOrNull(context));
     }
 
     private Item castOrNaN(Item anyItem) {

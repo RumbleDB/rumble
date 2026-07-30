@@ -7,7 +7,7 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -72,12 +72,12 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+        RuntimePlan<Item> plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(plan, dynamicContext, this.configuration);
     }
 
     /**
@@ -104,12 +104,12 @@ public class Rumble {
             this.compilationConfiguration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+        RuntimePlan<Item> plan = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
 
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(plan, dynamicContext, this.configuration);
     }
 
     /**

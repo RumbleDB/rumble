@@ -37,28 +37,6 @@ public class DeleteSearchFromCollectionIterator extends UpdatingExpressionIterat
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO: Ascertain this
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO: Check for this
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         UpdatePrimitiveFactory factory = UpdatePrimitiveFactory.getInstance();

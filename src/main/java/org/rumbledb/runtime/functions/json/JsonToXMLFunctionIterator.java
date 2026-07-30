@@ -52,7 +52,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item jsonText = this.getChild(0).materializeFirstItemOrNull(context);
+        Item jsonText = this.getChild(0).materializeFirstOrNull(context);
         if (jsonText == null) {
             return null;
         }
@@ -61,7 +61,7 @@ public class JsonToXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         boolean escape = false;
         String duplicates = DUPLICATES_RETAIN;
         if (this.getChildren().size() > 1) {
-            Item optionsItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item optionsItem = this.getChild(1).materializeFirstOrNull(context);
             if (optionsItem == null || !optionsItem.isMap()) {
                 throw new UnexpectedTypeException(
                         "The options argument of fn:json-to-xml must be a map item [err:XPTY0004].",

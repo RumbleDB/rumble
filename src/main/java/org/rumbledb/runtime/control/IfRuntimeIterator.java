@@ -20,11 +20,12 @@
 
 package org.rumbledb.runtime.control;
 
+import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
@@ -35,7 +36,10 @@ import org.rumbledb.runtime.update.PendingUpdateList;
 import java.io.Serial;
 import java.util.List;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class IfRuntimeIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            UpdatingRuntimePlan {
 
 
     @Serial
@@ -69,32 +73,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator implements DataFram
         );
     }
 
-    @Override
-    public void openLocal() {
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
-    }
 
-    @Override
-    public void closeLocal() {
-        this.selectedIterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("No next item.");
-        }
-        Item result = this.selectedIterator.next();
-        this.hasNext = this.selectedIterator.hasNext();
-        return result;
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
 
     public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
         RuntimeIterator condition = this.getChild(0);

@@ -56,25 +56,7 @@ public class RepartitionFunctionIterator extends HybridRuntimeIterator implement
         return this.iterator.getCursor(context);
     }
 
-    @Override
-    public void openLocal() {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-    }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return this.iterator.hasNext();
-    }
-
-    @Override
-    public Item nextLocal() {
-        return this.iterator.next();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {

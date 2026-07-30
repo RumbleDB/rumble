@@ -54,21 +54,6 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
         return this.items;
     }
 
-    @Override
-    protected void openLocal() {
-    }
 
-    @Override
-    protected void closeLocal() {
-    }
 
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
 }

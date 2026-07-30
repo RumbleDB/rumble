@@ -51,11 +51,11 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     private Item evaluate(DynamicContext context) {
         String result;
-        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item indexItem = this.getChild(1).materializeFirstOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
                     "Type error; Start index parameter can't be empty sequence ",
@@ -67,7 +67,7 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             return ItemFactory.getInstance().createStringItem("");
         }
         if (this.getChildren().size() > 2) {
-            Item endIndexItem = this.getChild(2).materializeFirstItemOrNull(context);
+            Item endIndexItem = this.getChild(2).materializeFirstOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; End index parameter can't be empty sequence ",

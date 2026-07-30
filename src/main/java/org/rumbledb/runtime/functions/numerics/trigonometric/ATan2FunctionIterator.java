@@ -52,8 +52,8 @@ public class ATan2FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item y = this.yIterator.materializeFirstItemOrNull(dynamicContext);
-        Item x = this.xIterator.materializeFirstItemOrNull(dynamicContext);
+        Item y = this.yIterator.materializeFirstOrNull(dynamicContext);
+        Item x = this.xIterator.materializeFirstOrNull(dynamicContext);
         return evaluate(y, x);
     }
 

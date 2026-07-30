@@ -30,7 +30,7 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     @Override
     public HomogeneousItemDataFrame getNativeDataFrame(DynamicContext context) {
         RuntimeIterator collectionNameIterator = this.getChild(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+        String collectionName = collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);
         Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);

@@ -25,7 +25,7 @@ public class RandomNumberGeneratorFunctionIterator extends AtMostOneItemLocalRun
         long seed;
         Item seedItem = this.getChildren().isEmpty()
             ? null
-            : this.getChild(0).materializeFirstItemOrNull(context);
+            : this.getChild(0).materializeFirstOrNull(context);
         if (seedItem == null) {
             // No seed (or an empty-sequence seed) means an implementation-dependent default. Per F&O 3.1
             // 4.9.1, calling the function twice with the same (here: no) arguments within a single

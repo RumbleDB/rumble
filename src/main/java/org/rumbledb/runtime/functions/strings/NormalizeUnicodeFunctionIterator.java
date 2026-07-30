@@ -141,14 +141,14 @@ public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeI
     private Item evaluate(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
         if (this.getChildren().size() > 1) {
-            Item normalizationFormItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item normalizationFormItem = this.getChild(1).materializeFirstOrNull(context);
 
             String normalizationFormRaw = normalizationFormItem.getStringValue();
             if (normalizationFormRaw.length() == 0) {

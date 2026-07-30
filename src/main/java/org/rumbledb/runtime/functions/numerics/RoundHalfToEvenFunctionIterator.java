@@ -49,11 +49,11 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item value = this.getChild(0).materializeFirstItemOrNull(context);
+        Item value = this.getChild(0).materializeFirstOrNull(context);
         return evaluate(
             value,
             () -> this.getChildren().size() > 1
-                ? this.getChild(1).materializeFirstItemOrNull(context).getIntValue()
+                ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
                 : 0
         );
     }

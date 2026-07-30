@@ -51,7 +51,7 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private Item evaluate(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
         for (int index = 0; index < this.getChildren().size(); index++) {
-            Item item = this.getChild(index).materializeFirstItemOrNull(context);
+            Item item = this.getChild(index).materializeFirstOrNull(context);
             // if not empty sequence
             if (item != null) {
                 String stringValue = item.serialize();

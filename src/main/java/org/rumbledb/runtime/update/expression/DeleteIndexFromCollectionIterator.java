@@ -63,32 +63,12 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
 
         Item targetItem = null;
         try {
-            targetItem = this.targetIterator.materializeExactlyOneItem(context);
+            targetItem = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "The collection name must be a string, but more than one item was provided.",
@@ -113,7 +93,7 @@ public class DeleteIndexFromCollectionIterator extends UpdatingExpressionIterato
         if (this.numDeleteIterator != null) {
             Item numDeleteItem = null;
             try {
-                numDeleteItem = this.numDeleteIterator.materializeExactlyOneItem(context);
+                numDeleteItem = this.numDeleteIterator.materializeExactlyOne(context);
             } catch (MoreThanOneItemException e) {
                 throw new InvalidUpdateTargetException(
                         "The number to be deleted must be an integer, but more than one item was provided.",

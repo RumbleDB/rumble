@@ -18,13 +18,13 @@
 package org.rumbledb.runtime.functions.arrays;
 
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
@@ -48,9 +48,7 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator arraysIterator;
-    private Item resultItem;
-    private boolean hasProducedResult;
+    private final RuntimePlan<Item> arraysIterator;
 
     public ArrayJoinFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -61,25 +59,12 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
             throw new OurBadException("array:join must have exactly one argument.");
         }
         this.arraysIterator = arguments.get(0);
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return createResult(this.arraysIterator.materialize(context));
-    }
-
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.resultItem != null;
-        this.hasProducedResult = false;
-    }
-
-    private void initializeResult(DynamicContext context) {
-        this.resultItem = createResult(this.arraysIterator.materialize(context));
     }
 
     private Item createResult(List<Item> arrays) {
@@ -98,30 +83,6 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
         }
         // when joining, we always create a sequence array for now
         return ItemFactory.getInstance().createSequenceArrayItem(joined, false);
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext || this.hasProducedResult) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasProducedResult = true;
-        this.hasNext = false;
-        return this.resultItem;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.arraysIterator.isOpen()) {
-            this.arraysIterator.close();
-        }
-        this.resultItem = null;
-        this.hasProducedResult = false;
     }
 
     @Override

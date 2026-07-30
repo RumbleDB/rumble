@@ -25,8 +25,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -64,11 +62,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
     );
 
     @Override
-    public final Item materializeFirstItemOrNull(DynamicContext context) {
-        return this.evaluateAtMostOne(context);
-    }
-
-    @Override
     public void open(DynamicContext dynamicContext) {
         super.open(dynamicContext);
         this.result = evaluateAtMostOne(dynamicContext);
@@ -88,27 +81,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
     public void close() {
         super.close();
         this.result = null;
-    }
-
-    @Override
-    public Item materializeExactlyOneItem(
-            DynamicContext dynamicContext
-    )
-            throws NoItemException,
-                MoreThanOneItemException {
-        Item result = evaluateAtMostOne(dynamicContext);
-        if (result == null) {
-            throw new NoItemException();
-        }
-        return result;
-    }
-
-    @Override
-    public Item materializeAtMostOneItemOrNull(
-            DynamicContext dynamicContext
-    )
-            throws MoreThanOneItemException {
-        return evaluateAtMostOne(dynamicContext);
     }
 
     @Override

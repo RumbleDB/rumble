@@ -27,7 +27,7 @@ public class DocAvailableFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(this.getChild(0).materializeFirstItemOrNull(context));
+        return evaluate(this.getChild(0).materializeFirstOrNull(context));
     }
 
     private Item evaluate(Item uriItem) {

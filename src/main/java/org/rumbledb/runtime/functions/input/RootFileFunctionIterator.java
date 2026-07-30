@@ -56,7 +56,7 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
         String path = null;
         if (this.getChildren().size() > 1) {
             RuntimeIterator pathIterator = this.getChild(1);
-            Item pathItem = pathIterator.materializeFirstItemOrNull(context);
+            Item pathItem = pathIterator.materializeFirstOrNull(context);
             path = pathItem.getStringValue();
         }
         urlIterator.open(context);

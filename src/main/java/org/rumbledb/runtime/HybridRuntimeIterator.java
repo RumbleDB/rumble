@@ -26,8 +26,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -135,83 +133,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator
         return df.toRDD(metadata);
     }
 
-    @Override
-    public Item materializeFirstItemOrNull(
-            DynamicContext context
-    ) {
-        if (!isRDDOrDataFrame()) {
-            return super.materializeFirstItemOrNull(context);
-        }
-        JavaRDD<Item> items = this.getRDD(context);
-        List<Item> collectedItems = items.take(1);
-        if (collectedItems.size() == 1) {
-            return collectedItems.get(0);
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    public Item materializeExactlyOneItem(
-            DynamicContext context
-    )
-            throws NoItemException,
-                MoreThanOneItemException {
-        if (!isRDDOrDataFrame()) {
-            return super.materializeExactlyOneItem(context);
-        }
-        JavaRDD<Item> items = this.getRDD(context);
-        List<Item> collectedItems = items.take(2);
-        if (collectedItems.size() == 1) {
-            return collectedItems.get(0);
-        }
-        if (collectedItems.size() == 0) {
-            throw new NoItemException();
-        }
-        throw new MoreThanOneItemException();
-    }
-
-    @Override
-    public Item materializeAtMostOneItemOrNull(
-            DynamicContext context
-    )
-            throws MoreThanOneItemException {
-        if (!isRDDOrDataFrame()) {
-            return super.materializeAtMostOneItemOrNull(context);
-        }
-        JavaRDD<Item> items = this.getRDD(context);
-        List<Item> collectedItems = items.take(2);
-        if (collectedItems.size() == 1) {
-            return collectedItems.get(0);
-        }
-        if (collectedItems.size() == 0) {
-            return null;
-        }
-        throw new MoreThanOneItemException();
-    }
-
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);
 
-    /**
-     * Compatibility implementation for callers still using the legacy iterator lifecycle.
-     * Cursor-native subclasses need no local lifecycle overrides.
-     */
-    protected void openLocal() {
-        this.localCursor = createNativeCursor(this.currentDynamicContextForLocalExecution);
-    }
-
-    protected void closeLocal() {
-        if (this.localCursor != null) {
-            this.localCursor.close();
-            this.localCursor = null;
-        }
-    }
-
-    protected boolean hasNextLocal() {
-        return this.localCursor.hasNext();
-    }
-
-    protected Item nextLocal() {
-        return this.localCursor.next();
-    }
 }

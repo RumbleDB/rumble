@@ -23,10 +23,10 @@ public class CollationKeyFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item keyItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item keyItem = this.getChild(0).materializeFirstOrNull(context);
         String collationUri = null;
         if (this.getChildren().size() > 1) {
-            Item collationItem = this.getChild(1).materializeFirstItemOrNull(context);
+            Item collationItem = this.getChild(1).materializeFirstOrNull(context);
             collationUri = collationItem == null ? null : collationItem.getStringValue();
         } else {
             collationUri = this.staticContext.getDefaultCollation();

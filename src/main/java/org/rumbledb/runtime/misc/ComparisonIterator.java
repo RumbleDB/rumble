@@ -94,7 +94,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
         Item left;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrNull(
+            left = this.leftIterator.materializeAtMostOne(
                 dynamicContext
             );
         } catch (MoreThanOneItemException e) {
@@ -109,7 +109,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
         Item right;
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrNull(
+            right = this.rightIterator.materializeAtMostOne(
                 dynamicContext
             );
         } catch (MoreThanOneItemException e) {

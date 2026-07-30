@@ -26,33 +26,25 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.runtime.plan.RuntimePlan;
 
 import java.io.Serial;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
 import java.util.Set;
 
 public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
-    private List<Item> alreadyFoundKeys;
+    private final RuntimePlan<Item> iterator;
 
     public ObjectKeysFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -72,99 +64,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void openLocal() {
-        this.alreadyFoundKeys = new ArrayList<>();
-        this.nextResults = new LinkedList<>();
-
-        if (this.iterator.isDataFrame()) {
-            setResultsFromDF();
-        } else {
-            this.iterator.open(this.currentDynamicContextForLocalExecution);
-            setResultsFromNextObjectItem();
-        }
-    }
-
-    private void setResultsFromDF() {
-        HomogeneousItemDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
-        for (String key : childDF.getKeys()) {
-            if (key.equals(SparkSessionManager.mutabilityLevelColumnName)) {
-                continue;
-            }
-            if (key.equals(SparkSessionManager.rowIdColumnName)) {
-                continue;
-            }
-            if (key.equals(SparkSessionManager.tableLocationColumnName)) {
-                continue;
-            }
-            if (key.equals(SparkSessionManager.pathInColumnName)) {
-                continue;
-            }
-            if (
-                !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                    && !key.equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
-            ) {
-                this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
-            }
-        }
-    }
-
-    private void setResultsFromNextObjectItem() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isObject()) { // ignore non-object items
-                Item result;
-                for (String key : item.getStringKeys()) {
-                    result = ItemFactory.getInstance().createStringItem(key);
-                    if (!this.alreadyFoundKeys.contains(result)) {
-                        this.alreadyFoundKeys.add(result);
-                        this.nextResults.add(result);
-                    }
-                }
-                if (!this.nextResults.isEmpty()) {
-                    break;
-                }
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove();
-            if (this.nextResults.isEmpty()) {
-                if (this.iterator.isDataFrame()) {
-                    this.hasNext = false;
-                } else {
-                    setResultsFromNextObjectItem();
-                }
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " KEYS function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (!this.iterator.isDataFrame()) {
-            this.iterator.close();
-        }
-    }
-
-    @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         FlatMapFunction<Item, Item> transformation = new ObjectKeysClosure();
@@ -173,7 +72,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     private static final class ObjectKeysLocalCursor extends AbstractLocalCursor<Item> {
 
-        private final RuntimeIterator inputPlan;
+        private final RuntimePlan<Item> inputPlan;
         private final DynamicContext context;
         private final Set<String> seenKeys;
         private Cursor<Item> inputCursor;
@@ -181,7 +80,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         private String nextKey;
 
         private ObjectKeysLocalCursor(
-                RuntimeIterator inputPlan,
+                RuntimePlan<Item> inputPlan,
                 DynamicContext context,
                 ExceptionMetadata metadata
         ) {

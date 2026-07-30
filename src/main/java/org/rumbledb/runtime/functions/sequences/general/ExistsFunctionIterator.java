@@ -57,7 +57,7 @@ public class ExistsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
             return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
         }
-        Item first = this.getChild(0).materializeFirstItemOrNull(dynamicContext);
+        Item first = this.getChild(0).materializeFirstOrNull(dynamicContext);
         if (first == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

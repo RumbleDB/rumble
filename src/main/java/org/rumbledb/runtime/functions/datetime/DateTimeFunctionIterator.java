@@ -30,8 +30,8 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        Item dateItem = this.dateIterator.materializeFirstItemOrNull(context);
-        Item timeItem = this.timeIterator.materializeFirstItemOrNull(context);
+        Item dateItem = this.dateIterator.materializeFirstOrNull(context);
+        Item timeItem = this.timeIterator.materializeFirstOrNull(context);
         if (dateItem == null || timeItem == null) {
             return null;
         }

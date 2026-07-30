@@ -38,6 +38,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -53,7 +54,8 @@ public abstract class RuntimeTupleIterator
         implements
             RuntimeIteratorInterface<FlworTuple>,
             LocalRuntimePlan<FlworTuple>,
-            DataFrameRuntimePlan<FlworTuple> {
+            DataFrameRuntimePlan<FlworTuple>,
+            NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -162,14 +164,13 @@ public abstract class RuntimeTupleIterator
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
      * @return the DataFrame with the tuples returned by the child clause.
      */
-    public abstract FlworDataFrame getDataFrame(
-            DynamicContext context
-    );
+    @Override
+    public final FlworDataFrame getDataFrame(DynamicContext context) {
+        return (FlworDataFrame) super.getDataFrame(context);
+    }
 
     @Override
-    public final FlworDataFrame getNativeDataFrame(DynamicContext context) {
-        return getDataFrame(context);
-    }
+    public abstract FlworDataFrame getNativeDataFrame(DynamicContext context);
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.

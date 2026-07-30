@@ -535,7 +535,7 @@ public class WindowClauseIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public FlworDataFrame getDataFrame(DynamicContext context) {
+    public FlworDataFrame getNativeDataFrame(DynamicContext context) {
         throw new UnsupportedFeatureException("Window clauses require local execution.", this.getMetadata());
     }
 

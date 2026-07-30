@@ -46,28 +46,6 @@ public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterat
     }
 
     @Override
-    protected void openLocal() {
-
-    }
-
-    @Override
-    protected void closeLocal() {
-
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        // TODO: Ascertain this
-        return false;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        // TODO: Check for this
-        return null;
-    }
-
-    @Override
     public PendingUpdateList getPendingUpdateList(DynamicContext context) {
         PendingUpdateList pul = new PendingUpdateList();
         Dataset<Row> contentDF = null;
@@ -79,7 +57,7 @@ public class InsertSearchIntoCollectionIterator extends UpdatingExpressionIterat
         }
         Item target = null;
         try {
-            target = this.targetIterator.materializeExactlyOneItem(context);
+            target = this.targetIterator.materializeExactlyOne(context);
         } catch (MoreThanOneItemException e) {
             throw new InvalidUpdateTargetException(
                     "More than one target item cannot be used for insertion.",

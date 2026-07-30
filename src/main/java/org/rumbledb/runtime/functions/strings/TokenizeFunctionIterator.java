@@ -80,7 +80,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator stringIterator = this.getChild(0);
             String input = null;
             String separator = null;
-            Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item stringItem = stringIterator.materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
             if (stringItem == null) {
                 this.hasNext = false;
                 return;
@@ -113,7 +113,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                 String flags = null;
                 if (this.getChildren().size() == 3) {
                     Item flagsItem = this.getChild(2)
-                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                        .materializeFirstOrNull(this.currentDynamicContextForLocalExecution);
                     if (flagsItem != null) {
                         flags = flagsItem.getStringValue();
                     }

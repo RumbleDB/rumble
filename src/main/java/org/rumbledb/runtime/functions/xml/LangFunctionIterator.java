@@ -30,11 +30,11 @@ public class LangFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     private Item evaluate(DynamicContext context) {
-        Item testlangItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item testlangItem = this.getChild(0).materializeFirstOrNull(context);
         String testlang = testlangItem == null ? "" : testlangItem.getStringValue();
 
         Item node = this.getChildren().size() == 2
-            ? this.getChild(1).materializeFirstItemOrNull(context)
+            ? this.getChild(1).materializeFirstOrNull(context)
             : context.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);

@@ -71,7 +71,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         RuntimeIterator iterator = expressionWithIterator.getIterator();
         try {
             // apply expression in the dynamic context
-            this.nextItem = iterator.materializeAtMostOneItemOrNull(this.dataFrameContext.getContext());
+            this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Can not order by variables with sequences of multiple items.",

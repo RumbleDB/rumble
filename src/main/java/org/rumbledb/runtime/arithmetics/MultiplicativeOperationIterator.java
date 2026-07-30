@@ -69,7 +69,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         Item left;
         Item right;
         try {
-            left = this.leftIterator.materializeAtMostOneItemOrNull(context);
+            left = this.leftIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its left input sequence.",
@@ -77,7 +77,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             );
         }
         try {
-            right = this.rightIterator.materializeAtMostOneItemOrNull(context);
+            right = this.rightIterator.materializeAtMostOne(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its right input sequence.",
