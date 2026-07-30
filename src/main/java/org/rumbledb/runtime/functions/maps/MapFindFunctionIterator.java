@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,20 +37,19 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * FO 3.1 map:find($input as item()*, $key as xs:anyAtomicType) as array(*).
  */
-public class MapFindFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class MapFindFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
+
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> computeResult(context),
-                getMetadata()
-        );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
     }
 
     @Serial

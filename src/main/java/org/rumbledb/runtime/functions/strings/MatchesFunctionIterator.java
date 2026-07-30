@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -47,24 +46,19 @@ public class MatchesFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item regexpItem = arguments.get(1);
-        Item stringItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item regexpItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null) {
             stringItem = ItemFactory.getInstance().createStringItem("");
         }
         String pattern = regexpItem.getStringValue();
         String flags = null;
-        if (arguments.size() == 3) {
-            Item flagsItem = arguments.get(2);
+        if (this.getChildren().size() == 3) {
+            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

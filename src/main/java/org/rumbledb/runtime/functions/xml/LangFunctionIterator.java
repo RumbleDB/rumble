@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,21 +26,15 @@ public class LangFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            ),
-            context
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments, DynamicContext context) {
-        Item testlangItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item testlangItem = this.getChild(0).materializeFirstItemOrNull(context);
         String testlang = testlangItem == null ? "" : testlangItem.getStringValue();
 
-        Item node = arguments.size() == 2
-            ? arguments.get(1)
+        Item node = this.getChildren().size() == 2
+            ? this.getChild(1).materializeFirstItemOrNull(context)
             : context.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);

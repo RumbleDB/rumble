@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -48,20 +47,15 @@ public class CompareFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        String collation = arguments.size() == 3
-            ? arguments.get(2).getStringValue()
+    private Item evaluate(DynamicContext context) {
+        String collation = this.getChildren().size() == 3
+            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
-        Item firstStringItem = arguments.get(0);
-        Item secondStringItem = arguments.get(1);
+        Item firstStringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item secondStringItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (firstStringItem == null || secondStringItem == null) {
             return null;
         }

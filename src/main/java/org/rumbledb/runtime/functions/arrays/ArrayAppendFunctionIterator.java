@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
@@ -33,13 +36,14 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * F&amp;O 3.1 array:append — returns a new array with one additional member (the appendage sequence).
  */
-public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayAppendFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -63,14 +67,12 @@ public class ArrayAppendFunctionIterator extends HybridRuntimeIterator implement
         this.hasProducedResult = false;
     }
 
+
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> createResult(
-                    requireArray(this.arrayIterator.materialize(context)),
-                    this.appendageIterator.materialize(context)
-                ),
-                getMetadata()
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return createResult(
+            requireArray(this.arrayIterator.materialize(context)),
+            this.appendageIterator.materialize(context)
         );
     }
 

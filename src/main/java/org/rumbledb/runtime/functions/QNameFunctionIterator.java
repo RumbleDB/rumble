@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -49,19 +48,14 @@ public class QNameFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item uriItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item uriItem = this.getChild(0).materializeFirstItemOrNull(context);
         String uriString = uriItem == null ? null : uriItem.getStringValue();
 
-        Item lexicalItem = arguments.get(1);
+        Item lexicalItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (lexicalItem == null) {
             throw new UnexpectedTypeException(
                     "fn:QName: second argument must be xs:string (got empty sequence).",

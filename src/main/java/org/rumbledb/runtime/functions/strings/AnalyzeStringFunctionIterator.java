@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -40,24 +39,19 @@ public class AnalyzeStringFunctionIterator extends AtMostOneItemLocalRuntimeIter
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
+    private Item evaluate(DynamicContext context) {
         ItemFactory factory = ItemFactory.getInstance();
 
-        Item inputItem = arguments.get(0);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
         String input = inputItem == null ? "" : inputItem.getStringValue();
 
-        String pattern = arguments.get(1).getStringValue();
+        String pattern = this.getChild(1).materializeFirstItemOrNull(context).getStringValue();
         String flags = null;
-        if (arguments.size() == 3) {
-            Item flagsItem = arguments.get(2);
+        if (this.getChildren().size() == 3) {
+            Item flagsItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }

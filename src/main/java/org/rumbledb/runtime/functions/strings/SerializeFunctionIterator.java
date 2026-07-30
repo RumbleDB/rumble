@@ -20,16 +20,15 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.Serializer;
@@ -39,7 +38,7 @@ import org.rumbledb.serialization.SerializerUtils;
 import java.io.Serial;
 import java.util.List;
 
-public class SerializeFunctionIterator extends LocalFunctionCallIterator {
+public class SerializeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -52,35 +51,11 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> serialize(
-                    this.getChild(0).materialize(context),
-                    resolveSerializationParameters(context)
-                ),
-                getMetadata()
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return serialize(
+            this.getChild(0).materialize(context),
+            resolveSerializationParameters(context)
         );
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            List<Item> items = this.getChild(0).materialize(this.currentDynamicContextForLocalExecution);
-            this.hasNext = false;
-            return serialize(items, resolveSerializationParameters());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " serialize function",
-                    getMetadata()
-            );
-        }
-    }
-
-    private SerializationParameters resolveSerializationParameters() {
-        List<Item> options = this.getChildren().size() < 2
-            ? null
-            : this.getChild(1).materialize(this.currentDynamicContextForLocalExecution);
-        return resolveSerializationParameters(options);
     }
 
     private SerializationParameters resolveSerializationParameters(DynamicContext context) {

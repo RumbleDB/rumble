@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -29,8 +32,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -39,7 +40,10 @@ import java.util.List;
 /**
  * F&amp;O 3.1 array:join — concatenates the members of a sequence of arrays in order into one array.
  */
-public class ArrayJoinFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayJoinFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -61,12 +65,10 @@ public class ArrayJoinFunctionIterator extends HybridRuntimeIterator implements 
         this.hasProducedResult = false;
     }
 
+
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> createResult(this.arraysIterator.materialize(context)),
-                getMetadata()
-        );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return createResult(this.arraysIterator.materialize(context));
     }
 
     @Override

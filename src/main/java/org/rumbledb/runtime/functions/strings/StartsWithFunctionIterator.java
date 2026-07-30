@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -47,24 +46,19 @@ public class StartsWithFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        String collation = arguments.size() == 3
-            ? arguments.get(2).getStringValue()
+    private Item evaluate(DynamicContext context) {
+        String collation = this.getChildren().size() == 3
+            ? this.getChild(2).materializeFirstItemOrNull(context).getStringValue()
             : getRuntimeStaticContext().getDefaultCollation();
 
-        Item substringItem = arguments.get(1);
+        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = arguments.get(0);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

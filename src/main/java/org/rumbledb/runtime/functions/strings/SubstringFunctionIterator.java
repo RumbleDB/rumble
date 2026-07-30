@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -47,21 +46,16 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
+    private Item evaluate(DynamicContext context) {
         String result;
-        Item stringItem = arguments.get(0);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        Item indexItem = arguments.get(1);
+        Item indexItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (indexItem == null) {
             throw new UnexpectedTypeException(
                     "Type error; Start index parameter can't be empty sequence ",
@@ -72,8 +66,8 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         if (index >= stringItem.getStringValue().length()) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        if (arguments.size() > 2) {
-            Item endIndexItem = arguments.get(2);
+        if (this.getChildren().size() > 2) {
+            Item endIndexItem = this.getChild(2).materializeFirstItemOrNull(context);
             if (endIndexItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; End index parameter can't be empty sequence ",

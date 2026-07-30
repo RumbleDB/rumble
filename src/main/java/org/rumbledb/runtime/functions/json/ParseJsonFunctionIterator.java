@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.json;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import com.google.gson.stream.JsonReader;
 import org.rumbledb.api.Item;
@@ -50,18 +49,12 @@ public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            ),
-            context
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments, DynamicContext context) {
-        Item stringItem = arguments.get(0);
-        Item optionsItem = arguments.size() > 1 ? arguments.get(1) : null;
+    private Item evaluate(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstItemOrNull(context) : null;
         if (stringItem == null) {
             return null;
         }

@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -47,27 +46,22 @@ public class ContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        if (arguments.size() == 3) {
-            String collation = arguments.get(2).getStringValue();
+    private Item evaluate(DynamicContext context) {
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
 
-        Item substringItem = arguments.get(1);
+        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(true);
         }
-        Item stringItem = arguments.get(0);
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (stringItem == null || stringItem.getStringValue().isEmpty()) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }

@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -25,23 +24,17 @@ public class UnparsedTextAvailableFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            ),
-            context
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments, DynamicContext context) {
-        Item hrefItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item hrefItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (hrefItem == null) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
         String encoding = null;
-        if (arguments.size() == 2) {
-            Item encodingItem = arguments.get(1);
+        if (this.getChildren().size() == 2) {
+            Item encodingItem = this.getChild(1).materializeFirstItemOrNull(context);
             encoding = encodingItem.getStringValue();
         }
         try {

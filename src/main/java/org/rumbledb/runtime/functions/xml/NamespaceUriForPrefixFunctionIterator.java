@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -26,18 +25,13 @@ public class NamespaceUriForPrefixFunctionIterator extends AtMostOneItemLocalRun
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private static Item evaluate(EvaluationArguments<Item> arguments) {
-        Item prefixItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item prefixItem = this.getChild(0).materializeFirstItemOrNull(context);
         String prefix = prefixItem == null ? "" : prefixItem.getStringValue();
-        Item element = arguments.get(1);
+        Item element = this.getChild(1).materializeFirstItemOrNull(context);
         for (Item namespaceNode : element.namespaceNodes()) {
             Name name = namespaceNode.nodeName();
             String namespacePrefix = name == null ? "" : name.getLocalName();

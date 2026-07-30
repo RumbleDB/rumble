@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -27,19 +26,14 @@ public class SubstringBeforeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item stringItem = arguments.get(0);
-        Item substringItem = arguments.get(1);
-        if (arguments.size() == 3) {
-            String collation = arguments.get(2).getStringValue();
+    private Item evaluate(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() == 3) {
+            String collation = this.getChild(2).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }

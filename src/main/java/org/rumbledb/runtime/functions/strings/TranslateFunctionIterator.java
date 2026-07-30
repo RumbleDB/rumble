@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -48,18 +47,13 @@ public class TranslateFunctionIterator extends AtMostOneItemLocalRuntimeIterator
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item inputItem = arguments.get(0);
-        Item mapStringItem = arguments.get(1);
-        Item transStringItem = arguments.get(2);
+    private Item evaluate(DynamicContext context) {
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item mapStringItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item transStringItem = this.getChild(2).materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");

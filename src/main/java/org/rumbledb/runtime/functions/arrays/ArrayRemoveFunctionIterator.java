@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -37,14 +40,15 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * F&amp;O 3.1 array:remove — returns a new array with members at the given 1-based positions omitted
  * (distinct positions; order preserved). Raises FOAY0001 if any position is out of bounds.
  */
-public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -68,14 +72,12 @@ public class ArrayRemoveFunctionIterator extends HybridRuntimeIterator implement
         this.hasProducedResult = false;
     }
 
+
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> remove(
-                    this.arrayIterator.materialize(context),
-                    this.positionsIterator.materialize(context)
-                ),
-                getMetadata()
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return remove(
+            this.arrayIterator.materialize(context),
+            this.positionsIterator.materialize(context)
         );
     }
 

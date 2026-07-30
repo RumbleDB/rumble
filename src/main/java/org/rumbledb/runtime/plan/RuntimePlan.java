@@ -20,6 +20,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 
@@ -42,6 +43,14 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 public abstract class RuntimePlan<T> implements Serializable {
 
     public Cursor<T> createNativeCursor(DynamicContext context) {
+        if (this instanceof AtMostOneLocalRuntimePlan<?>) {
+            return new AtMostOneLocalCursor<>(this.getRuntimeStaticContext().getMetadata()) {
+                @Override
+                protected T materializeOneItemOrNull() {
+                    return RuntimePlan.this.evaluateAtMostOne(context);
+                }
+            };
+        }
         throw this.unsupportedRepresentation(ExecutionMode.LOCAL);
     }
 

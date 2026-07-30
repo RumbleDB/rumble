@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -28,22 +27,17 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item relative = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item relative = this.getChild(0).materializeFirstItemOrNull(context);
         if (relative == null) {
             return null;
         }
         Item base;
-        if (arguments.size() == 2) {
-            base = arguments.get(1);
+        if (this.getChildren().size() == 2) {
+            base = this.getChild(1).materializeFirstItemOrNull(context);
         } else {
             base = ItemFactory.getInstance().createAnyURIItem(this.staticContext.getStaticURI().toString());
         }

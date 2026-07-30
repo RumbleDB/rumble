@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -26,20 +25,15 @@ abstract class DateFormattingFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item valueItem = arguments.get(0);
-        Item pictureItem = arguments.get(1);
-        Item languageItem = arguments.size() > 2 ? arguments.get(2) : null;
-        Item calendarItem = arguments.size() > 3 ? arguments.get(3) : null;
-        Item placeItem = arguments.size() > 4 ? arguments.get(4) : null;
+    private Item evaluate(DynamicContext context) {
+        Item valueItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstItemOrNull(context);
+        Item languageItem = this.getChildren().size() > 2 ? this.getChild(2).materializeFirstItemOrNull(context) : null;
+        Item calendarItem = this.getChildren().size() > 3 ? this.getChild(3).materializeFirstItemOrNull(context) : null;
+        Item placeItem = this.getChildren().size() > 4 ? this.getChild(4).materializeFirstItemOrNull(context) : null;
 
         // If $value is the empty sequence, the functions return the empty sequence
         if (valueItem == null) {

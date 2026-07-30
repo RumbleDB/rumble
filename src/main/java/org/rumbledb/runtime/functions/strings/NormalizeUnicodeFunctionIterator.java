@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -136,25 +135,20 @@ public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeI
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
+    private Item evaluate(DynamicContext context) {
         boolean fullyNormalized = false;
         Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-        Item inputItem = arguments.get(0);
+        Item inputItem = this.getChild(0).materializeFirstItemOrNull(context);
 
         if (inputItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
 
-        if (arguments.size() > 1) {
-            Item normalizationFormItem = arguments.get(1);
+        if (this.getChildren().size() > 1) {
+            Item normalizationFormItem = this.getChild(1).materializeFirstItemOrNull(context);
 
             String normalizationFormRaw = normalizationFormItem.getStringValue();
             if (normalizationFormRaw.length() == 0) {

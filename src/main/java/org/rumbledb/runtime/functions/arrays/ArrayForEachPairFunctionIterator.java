@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,19 +42,21 @@ import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.types.SequenceType;
 
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code array:for-each-pair}:
  * {@code array:for-each-pair($array1 as array(*), $array2 as array(*), $function as function(item()*, item()*) as item()*) as array(*)}.
  */
-public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayForEachPairFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
+
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(() -> computeResult(context), getMetadata());
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
     }
 
     @Serial

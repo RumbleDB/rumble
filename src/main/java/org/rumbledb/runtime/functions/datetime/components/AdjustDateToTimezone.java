@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import java.io.Serial;
 import java.time.Duration;
@@ -27,21 +26,16 @@ public class AdjustDateToTimezone extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return adjust(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return adjust(context);
     }
 
-    private Item adjust(EvaluationArguments<Item> arguments) {
-        Item dateItem = arguments.get(0);
+    private Item adjust(DynamicContext context) {
+        Item dateItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (dateItem == null) {
             return null;
         }
-        Item timezone = arguments.size() == 2 ? arguments.get(1) : null;
-        if (timezone == null && arguments.size() == 1) {
+        Item timezone = this.getChildren().size() == 2 ? this.getChild(1).materializeFirstItemOrNull(context) : null;
+        if (timezone == null && this.getChildren().size() == 1) {
             return ItemFactory.getInstance()
                 .createDateItem(dateItem.getDateTimeValue().withOffsetSameInstant(ZoneOffset.UTC), true);
         }

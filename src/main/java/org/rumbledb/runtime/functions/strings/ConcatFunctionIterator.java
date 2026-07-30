@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -46,18 +45,13 @@ public class ConcatFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private static Item evaluate(EvaluationArguments<Item> arguments) {
+    private Item evaluate(DynamicContext context) {
         StringBuilder builder = new StringBuilder();
-        for (int index = 0; index < arguments.size(); index++) {
-            Item item = arguments.get(index);
+        for (int index = 0; index < this.getChildren().size(); index++) {
+            Item item = this.getChild(index).materializeFirstItemOrNull(context);
             // if not empty sequence
             if (item != null) {
                 String stringValue = item.serialize();

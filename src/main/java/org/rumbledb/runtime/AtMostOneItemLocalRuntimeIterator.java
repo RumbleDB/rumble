@@ -33,8 +33,6 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
 
 import java.io.Serial;
@@ -64,11 +62,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator
     public abstract Item evaluateAtMostOne(
             DynamicContext context
     );
-
-    @Override
-    public final Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(() -> this.evaluateAtMostOne(context), this.getMetadata());
-    }
 
     @Override
     public final Item materializeFirstItemOrNull(DynamicContext context) {

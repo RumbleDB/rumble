@@ -17,6 +17,9 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,10 +39,11 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
-public class ArrayReverseFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class ArrayReverseFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -61,12 +65,10 @@ public class ArrayReverseFunctionIterator extends HybridRuntimeIterator implemen
         this.hasProducedResult = false;
     }
 
+
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> reverseArgument(this.arrayIterator.materialize(context)),
-                getMetadata()
-        );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return reverseArgument(this.arrayIterator.materialize(context));
     }
 
     @Override

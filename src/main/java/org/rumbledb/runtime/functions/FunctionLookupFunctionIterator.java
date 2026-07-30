@@ -17,7 +17,6 @@
 
 package org.rumbledb.runtime.functions;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -49,17 +48,11 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            ),
-            context
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments, DynamicContext context) {
-        Item nameItem = arguments.get(0);
+    private Item evaluate(DynamicContext context) {
+        Item nameItem = this.getChild(0).materializeFirstItemOrNull(context);
         if (!nameItem.isQName()) {
             throw new UnexpectedTypeException(
                     "function-lookup: first argument must be xs:QName",
@@ -68,7 +61,7 @@ public class FunctionLookupFunctionIterator extends AtMostOneItemLocalRuntimeIte
         }
         Name fnName = nameItem.getQNameValue();
 
-        Item arityItem = arguments.get(1);
+        Item arityItem = this.getChild(1).materializeFirstItemOrNull(context);
         if (arityItem == null) {
             throw new UnexpectedTypeException(
                     "function-lookup: second argument must be xs:integer",

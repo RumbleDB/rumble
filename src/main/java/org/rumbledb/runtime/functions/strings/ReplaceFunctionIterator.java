@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.runtime.plan.EvaluationArguments;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -50,25 +49,20 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        return evaluate(
-            EvaluationArguments.lazy(
-                this.getChildren().size(),
-                index -> this.getChild(index).materializeFirstItemOrNull(context)
-            )
-        );
+        return evaluate(context);
     }
 
-    private Item evaluate(EvaluationArguments<Item> arguments) {
-        Item stringItem = arguments.get(0);
-        Item patternStringItem = arguments.get(1);
+    private Item evaluate(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstItemOrNull(context);
+        Item patternStringItem = this.getChild(1).materializeFirstItemOrNull(context);
 
         if (patternStringItem == null) {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
         String flags = null;
-        if (arguments.size() == 4) {
-            Item flagsItem = arguments.get(3);
+        if (this.getChildren().size() == 4) {
+            Item flagsItem = this.getChild(3).materializeFirstItemOrNull(context);
             if (flagsItem != null) {
                 flags = flagsItem.getStringValue();
             }
@@ -81,7 +75,7 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        Item replacementStringItem = arguments.get(2);
+        Item replacementStringItem = this.getChild(2).materializeFirstItemOrNull(context);
         String replacement = replacementStringItem.getStringValue();
         if (compiledRegex.isQuote()) {
             replacement = Matcher.quoteReplacement(replacement);

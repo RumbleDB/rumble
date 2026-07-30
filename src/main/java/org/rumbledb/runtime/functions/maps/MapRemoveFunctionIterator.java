@@ -1,5 +1,8 @@
 package org.rumbledb.runtime.functions.maps;
 
+import org.rumbledb.runtime.plan.AtMostOneLocalRuntimePlan;
+
+
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,8 +21,6 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.cursor.ComputedLocalCursor;
-import org.rumbledb.runtime.cursor.Cursor;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -28,14 +29,15 @@ import org.rumbledb.runtime.cursor.Cursor;
  * Removes all entries whose key is the same-key as any supplied key (op:same-key).
  * This built-in is local execution only (consistent with other map/array accessors).
  */
-public class MapRemoveFunctionIterator extends HybridRuntimeIterator implements DataFrameRuntimePlan<Item> {
+public class MapRemoveFunctionIterator extends HybridRuntimeIterator
+        implements
+            DataFrameRuntimePlan<Item>,
+            AtMostOneLocalRuntimePlan<Item> {
+
 
     @Override
-    public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new ComputedLocalCursor<>(
-                () -> computeResult(context),
-                getMetadata()
-        );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        return computeResult(context);
     }
 
     @Serial
