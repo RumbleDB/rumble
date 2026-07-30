@@ -10,6 +10,8 @@ public class IntegerFormatModifier {
 
     private final String numberType;
     private final String formatSpecifier;
+
+    @SuppressWarnings("unused")
     private final String numberingVariant; // not supported yet
 
     public IntegerFormatModifier(
