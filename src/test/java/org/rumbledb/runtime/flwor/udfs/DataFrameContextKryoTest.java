@@ -17,122 +17,80 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.items.FunctionBodyIteratorFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.runtime.update.primitives.Collection;
-import org.rumbledb.types.FieldDescriptor;
-import org.rumbledb.types.FunctionItemType;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.UnionItemType;
-import org.rumbledb.types.XmlNodeItemType;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.AnnotatedItem;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.StringItem;
+import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.IOException;
-import java.lang.reflect.Modifier;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class DataFrameContextKryoTest {
 
     @Test
-    public void allConcreteItemsCanBeInstantiatedByDataFrameContextKryo()
-            throws IOException,
-                URISyntaxException {
-        Kryo kryo = new DataFrameContext().getKryo();
-        List<Class<?>> itemClasses = getConcreteItemClasses();
+    public void kryoRoundTripsItemsWithoutNoArgumentConstructors() {
+        Assertions.assertThrows(NoSuchMethodException.class, StringItem.class::getDeclaredConstructor);
+        Assertions.assertThrows(NoSuchMethodException.class, AnnotatedItem.class::getDeclaredConstructor);
+        Assertions.assertThrows(NoSuchMethodException.class, FunctionIdentifier.class::getDeclaredConstructor);
 
-        Assertions.assertFalse(itemClasses.isEmpty(), "No concrete Item implementations were found.");
-        for (Class<?> itemClass : itemClasses) {
-            Assertions.assertDoesNotThrow(
-                () -> {
-                    itemClass.getDeclaredConstructor();
-                },
-                () -> itemClass.getName() + " must declare a no-argument constructor for DataFrameContext Kryo."
-            );
-            Assertions.assertDoesNotThrow(
-                () -> kryo.getInstantiatorStrategy().newInstantiatorOf(itemClass).newInstance(),
-                () -> itemClass.getName() + " cannot be instantiated by DataFrameContext Kryo."
-            );
-        }
-    }
+        ItemFactory factory = ItemFactory.getInstance();
 
-    @Test
-    public void registeredSupportClassesDeclareNoArgumentConstructors() {
-        List<Class<?>> supportClasses = List.of(
-            FunctionIdentifier.class,
-            Name.class,
-            SequenceType.class,
-            RumbleRuntimeConfiguration.class,
-            FunctionBodyIteratorFactory.class,
-            JSoundDataFrame.class,
-            XMLDocumentPosition.class,
-            Collection.class,
-            FieldDescriptor.class,
-            FunctionItemType.class,
-            FunctionSignature.class,
-            UnionItemType.class,
-            XmlNodeItemType.class
+        FunctionIdentifier identifier = new FunctionIdentifier(new Name("urn:test", "t", "function"), 2);
+        Assertions.assertEquals(identifier, roundTripObject(identifier));
+
+        Item stringCopy = roundTrip(factory.createStringItem("value"));
+        Assertions.assertEquals("value", stringCopy.getStringValue());
+
+        Item arrayCopy = roundTrip(
+            factory.createArrayItem(
+                new ArrayList<>(List.of(factory.createStringItem("first"), factory.createIntItem(2))),
+                false
+            )
         );
+        Assertions.assertEquals(2, arrayCopy.getSize());
+        Assertions.assertEquals("first", arrayCopy.getItemAt(0).getStringValue());
+        Assertions.assertEquals(2, arrayCopy.getItemAt(1).getIntValue());
 
-        for (Class<?> supportClass : supportClasses) {
-            Assertions.assertDoesNotThrow(
-                () -> {
-                    supportClass.getDeclaredConstructor();
-                },
-                () -> supportClass.getName() + " must declare a no-argument constructor for DataFrameContext Kryo."
-            );
-        }
-    }
-
-    private List<Class<?>> getConcreteItemClasses()
-            throws IOException,
-                URISyntaxException {
-        String packagePath = "org/rumbledb/items";
-        ClassLoader classLoader = Item.class.getClassLoader();
-        URL packageUrl = classLoader.getResource(packagePath);
-        Assertions.assertNotNull(packageUrl, "Could not locate compiled Item classes.");
-        Assertions.assertEquals(
-            "file",
-            packageUrl.getProtocol(),
-            "Item classes must be available as files during tests."
+        Item objectCopy = roundTrip(
+            factory.createObjectItem(
+                new ArrayList<>(List.of("key")),
+                new ArrayList<>(List.of(factory.createStringItem("object value"))),
+                ExceptionMetadata.EMPTY_METADATA,
+                false
+            )
         );
+        Assertions.assertEquals("object value", objectCopy.getItemByKey("key").getStringValue());
 
-        Path packageRoot = Path.of(packageUrl.toURI());
-        List<Class<?>> itemClasses = new ArrayList<>();
-        try (Stream<Path> paths = Files.walk(packageRoot)) {
-            paths.filter(path -> path.getFileName().toString().endsWith(".class"))
-                .map(path -> loadClass(packageRoot, path, packagePath, classLoader))
-                .filter(Item.class::isAssignableFrom)
-                .filter(clazz -> !clazz.isInterface())
-                .filter(clazz -> !Modifier.isAbstract(clazz.getModifiers()))
-                .forEach(itemClasses::add);
-        }
-        return itemClasses;
+        Item annotatedCopy = roundTrip(
+            factory.createAnnotatedItem(factory.createStringItem("en"), BuiltinTypesCatalogue.languageItem)
+        );
+        Assertions.assertEquals("en", annotatedCopy.getStringValue());
+        Assertions.assertEquals(BuiltinTypesCatalogue.languageItem.getName(), annotatedCopy.getDynamicType().getName());
+
+        TextItem text = new TextItem("node text");
+        text.setXmlDocumentPosition("document.xml", 1);
+        Item textCopy = roundTrip(text);
+        Assertions.assertEquals("node text", textCopy.getStringValue());
+        Assertions.assertEquals(text.getXmlDocumentPosition(), textCopy.getXmlDocumentPosition());
     }
 
-    private Class<?> loadClass(Path packageRoot, Path classFile, String packagePath, ClassLoader classLoader) {
-        String relativeClassName = packageRoot.relativize(classFile).toString();
-        String className = packagePath.replace('/', '.')
-            + "."
-            + relativeClassName.substring(0, relativeClassName.length() - ".class".length())
-                .replace(classFile.getFileSystem().getSeparator(), ".");
-        try {
-            return Class.forName(className, false, classLoader);
-        } catch (ClassNotFoundException e) {
-            throw new IllegalStateException("Could not load " + className, e);
-        }
+    private Item roundTrip(Item item) {
+        return (Item) roundTripObject(item);
+    }
+
+    private Object roundTripObject(Object value) {
+        DataFrameContext context = new DataFrameContext();
+        context.getOutput().clear();
+        context.getKryo().writeClassAndObject(context.getOutput(), value);
+        byte[] bytes = context.getOutput().toBytes();
+        context.getInput().setBuffer(bytes);
+        return context.getKryo().readClassAndObject(context.getInput());
     }
 }
